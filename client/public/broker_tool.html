@@ -970,11 +970,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   <div class="card">
     <h2>Comp Overview</h2>
     <div class="row c3">
-      <div class="field"><label>LANB Source</label><input id="c-source" placeholder="e.g. CoStar, LoopNet, Broker"></div>
+      <div class="field"><label>LANB Source</label><input id="c-source" placeholder="Broker Name"></div>
       <div class="field"><label>Date</label><input id="c-date" type="date"></div>
-      <div class="field"><label>Deal Type</label>
-        <select id="c-deal-type"><option value="">—</option><option>Direct-New</option><option>Prev Occupied</option><option>New Shell</option><option>Sublease</option><option>New Deal</option><option>Expansion</option><option>Renewal</option><option>Renewal/Expansion</option><option>Renewal/Downsize</option><option>Build-to-Suite</option><option>Ground Lease</option></select>
-      </div>
     </div>
   </div>
 
@@ -1010,52 +1007,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
         <select id="c-bldg-class"><option value="">—</option><option>A</option><option>B</option><option>C</option></select>
       </div>
     </div>
-    <div class="row c2">
-      <div class="field"><label>Space Type / Lease Type</label><input id="c-space-type" placeholder="e.g. Industrial/NNN"></div>
+    <div class="row c3">
+      <div class="field"><label>Space Type</label>
+        <select id="c-deal-type"><option value="">—</option><option>Direct-New</option><option>Prev Occupied</option><option>New Shell</option><option>Sublease</option><option>New Deal</option><option>Expansion</option><option>Renewal</option><option>Renewal/Expansion</option><option>Renewal/Downsize</option><option>Build-to-Suite</option><option>Ground Lease</option></select>
+      </div>
+      <div class="field"><label>Space / Lease Type</label><input id="c-space-type" placeholder="e.g. Industrial/NNN"></div>
       <div class="field"><label>Construction Type</label>
         <select id="c-const-type"><option value="">—</option><option>CTU</option><option>Block</option><option>Metal</option></select>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>Property Features</h2>
-    <div class="row c3">
-      <div class="field"><label>Building SF</label><input id="c-bldg-sf" placeholder="0" type="text"></div>
-      <div class="field"><label>Land / Lot Size (SF)</label><input id="c-land-sf" placeholder="0" type="text"></div>
-      <div class="field"><label>Year Built</label><input id="c-year-built" placeholder="1995"></div>
-    </div>
-    <div class="row c3">
-      <div class="field"><label>Office SF</label><input id="c-office-sf" placeholder="0" type="text"></div>
-      <div class="field"><label>DH (Dock-High Doors)</label><input id="c-dh" placeholder="0" type="text"></div>
-      <div class="field"><label>GL (Grade Level Doors)</label><input id="c-gl" placeholder="0" type="text"></div>
-    </div>
-    <div class="row c3">
-      <div class="field"><label>Clear Height</label><input id="c-clearance" placeholder="24'"></div>
-      <div class="field"><label>Parking Ratio</label><input id="c-parking" placeholder="4/1,000"></div>
-      <div class="field"><label>Amps / Power</label><input id="c-amps" placeholder="e.g. 400A, 3-phase"></div>
-    </div>
-    <div class="row c4">
-      <div class="field"><label>Sprinklers</label><input id="c-sprinklers" placeholder="ESFR"></div>
-      <div class="field"><label>Rail</label>
-        <select id="c-rail"><option value="">—</option><option>Yes</option><option>No</option></select>
-      </div>
-      <div class="field"><label>Yard</label>
-        <select id="c-yard"><option value="">—</option><option>Yes</option><option>No</option></select>
-      </div>
-      <div class="field"><label>Condition</label>
-        <select id="c-condition"><option value="">—</option><option>Average</option><option>Good</option><option>Poor</option></select>
-      </div>
-    </div>
-    <div class="row c3">
-      <div class="field"><label>Multi-Tenant (Y/N)</label>
-        <select id="c-multi-tenant"><option value="">—</option><option>Yes</option><option>No</option></select>
-      </div>
-      <div class="field"><label>Part of Larger (Y/N)</label>
-        <select id="c-pol"><option value="">—</option><option>Yes</option><option>No</option></select>
-      </div>
-      <div class="field"><label>Opex Cost Estimated?</label>
-        <select id="c-opex-est"><option value="">—</option><option>Yes</option><option>No</option></select>
       </div>
     </div>
   </div>
@@ -1088,9 +1046,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
       <div class="field"><label>NNN Charges</label><input id="c-nnn" placeholder="$0.00/SF"></div>
     </div>
     <div class="row c2">
-      <div class="field"><label>Rent Adj / Escalations</label>
-        <select id="c-escalations"><option value="">—</option><option>2%</option><option>3%</option><option>4%</option><option>$0.02/SF/YR</option><option>$0.03/SF/YR</option><option>$0.04/SF/YR</option><option>$0.05/SF/YR</option><option>See comments</option></select>
-      </div>
+      <div class="field"><label>Rent Adj / Escalations</label><input id="c-escalations" placeholder=""></div>
       <div class="field"><label>Options</label>
         <select id="c-options"><option value="">—</option><option>1, 3-year</option><option>1, 5-year</option><option>2, 5-year</option><option>1, 10-year</option><option>Not Disclosed</option><option>See Comments</option><option>None</option><option>NA</option></select>
       </div>
@@ -1101,6 +1057,50 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
       </div>
       <div class="field"><label>Tenant Type</label>
         <select id="c-tenant-type"><option value="">—</option><option>Local</option><option>Regional</option><option>National</option></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Property Features</h2>
+    <div class="row c3">
+      <div class="field"><label>Building SF</label><input id="c-bldg-sf" placeholder="0" type="text"></div>
+      <div class="field"><label>Land / Lot Size (SF)</label><input id="c-land-sf" placeholder="0" type="text"></div>
+      <div class="field"><label>Year Built</label><input id="c-year-built" placeholder="1995"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Office SF</label><input id="c-office-sf" placeholder="0" type="text"></div>
+      <div class="field"><label>DH (Dock-High Doors)</label><input id="c-dh" placeholder="0" type="text"></div>
+      <div class="field"><label>GL (Grade Level Doors)</label><input id="c-gl" placeholder="0" type="text"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Clear Height</label><input id="c-clearance" placeholder="24'"></div>
+      <div class="field"><label>Parking Ratio</label><input id="c-parking" placeholder="4/1,000"></div>
+      <div class="field"><label>Amps / Power</label><input id="c-amps" placeholder="e.g. 400, 1200"></div>
+    </div>
+    <div class="row c4">
+      <div class="field"><label>Sprinklers</label>
+        <select id="c-sprinklers"><option value="">—</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field"><label>Rail</label>
+        <select id="c-rail"><option value="">—</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field"><label>Yard</label>
+        <select id="c-yard"><option value="">—</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field"><label>Condition</label>
+        <select id="c-condition"><option value="">—</option><option>Average</option><option>Good</option><option>Poor</option></select>
+      </div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Multi-Tenant (Y/N)</label>
+        <select id="c-multi-tenant"><option value="">—</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field"><label>Part of Larger (Y/N)</label>
+        <select id="c-pol"><option value="">—</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field"><label>Opex Cost Estimated?</label>
+        <select id="c-opex-est"><option value="">—</option><option>Yes</option><option>No</option></select>
       </div>
     </div>
   </div>
@@ -2756,7 +2756,7 @@ function exportCompPdf() {
 
   // --- COMP OVERVIEW ---
   section('Comp Overview');
-  fieldRow([['Source', gv('c-source')], ['Deal Type', gv('c-deal-type')]]);
+  fieldRow([['Source', gv('c-source')]]);
 
   // --- LOCATION ---
   section('Location');
@@ -2766,15 +2766,7 @@ function exportCompPdf() {
   // --- PROPERTY INFORMATION ---
   section('Property Information');
   fieldRow([['Property Type', gv('c-prop-type')], ['Subtype', gv('c-subtype')], ['Class', gv('c-bldg-class')]]);
-  fieldRow([['Space/Lease Type', gv('c-space-type')], ['Construction', gv('c-const-type')]]);
-
-  // --- PROPERTY FEATURES ---
-  section('Property Features');
-  fieldRow([['Building SF', gv('c-bldg-sf')], ['Land SF', gv('c-land-sf')], ['Year Built', gv('c-year-built')]]);
-  fieldRow([['Office SF', gv('c-office-sf')], ['DH Doors', gv('c-dh')], ['GL Doors', gv('c-gl')]]);
-  fieldRow([['Clear Height', gv('c-clearance')], ['Parking', gv('c-parking')], ['Amps', gv('c-amps')]]);
-  fieldRow([['Sprinklers', gv('c-sprinklers')], ['Rail', gv('c-rail')], ['Yard', gv('c-yard')], ['Condition', gv('c-condition')]]);
-  fieldRow([['Multi-Tenant', gv('c-multi-tenant')], ['Part of Larger', gv('c-pol')], ['Opex Estimated', gv('c-opex-est')]]);
+  fieldRow([['Space Type', gv('c-deal-type')], ['Space/Lease Type', gv('c-space-type')], ['Construction', gv('c-const-type')]]);
 
   // --- LEASE DETAILS ---
   section('Lease Details');
@@ -2784,6 +2776,15 @@ function exportCompPdf() {
   fieldRow([['Free Rent', gv('c-free-rent')], ['TI Allowance', gv('c-ti')], ['NNN Charges', gv('c-nnn')]]);
   fieldRow([['Escalations', gv('c-escalations')], ['Options', gv('c-options')]]);
   fieldRow([['Expense Recovery', gv('c-expense-recovery')], ['Tenant Type', gv('c-tenant-type')]]);
+
+  // --- PROPERTY FEATURES (column order: read down columns, not across rows) ---
+  section('Property Features');
+  fieldRow([['Building SF', gv('c-bldg-sf')], ['DH Doors', gv('c-dh')], ['Sprinklers', gv('c-sprinklers')]]);
+  fieldRow([['Land / Lot Size (SF)', gv('c-land-sf')], ['GL Doors', gv('c-gl')], ['Rail', gv('c-rail')]]);
+  fieldRow([['Year Built', gv('c-year-built')], ['Clear Height', gv('c-clearance')], ['Yard', gv('c-yard')]]);
+  fieldRow([['Office SF', gv('c-office-sf')], ['Parking Ratio', gv('c-parking')], ['Multi-Tenant', gv('c-multi-tenant')]]);
+  fieldRow([['Amps / Power', gv('c-amps')], ['POL (Part of Larger)', gv('c-pol')], ['Condition', gv('c-condition')]]);
+  fieldRow([['Opex Estimated', gv('c-opex-est')]]);
 
   // --- LESSOR / TENANT & BROKER ---
   section('Lessor / Tenant & Broker Info');
