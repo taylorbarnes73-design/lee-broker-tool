@@ -1787,8 +1787,11 @@ function pdfHelpers(doc) {
     doc.setDrawColor(0); doc.setLineWidth(0.5);
     doc.rect(x, yy - 8, 9, 9);
     if (checked) {
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
-      doc.text('\u2713', x + 1.5, yy - 0.5);
+      doc.setLineWidth(1.5);
+      doc.setDrawColor(0);
+      doc.line(x + 1.5, yy - 3.5, x + 3.5, yy - 1);
+      doc.line(x + 3.5, yy - 1, x + 7.5, yy - 7);
+      doc.setLineWidth(0.5);
     }
     doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
     doc.text(text, x + 14, yy);
