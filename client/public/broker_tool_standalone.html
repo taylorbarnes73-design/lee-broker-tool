@@ -1,0 +1,2960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lee &amp; Associates — Broker Submission Tool</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+:root {
+  --red: #c41230; --red-dark: #a00e28; --red-light: #f8d7dc;
+  --bg: #f5f5f5; --card: #fff; --border: #e0e0e0;
+  --text: #222; --text2: #555; --text3: #999;
+  --blue: #1a73e8; --green: #1e7e34; --amber: #f9a825;
+  --radius: 6px; --shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+
+/* Header */
+.header { background: var(--red); color: #fff; padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
+.header h1 { font-size: 18px; font-weight: 700; letter-spacing: .3px; }
+.header .sub { font-size: 12px; opacity: .8; }
+
+/* Tabs */
+.tab-bar { display: flex; background: #fff; border-bottom: 2px solid var(--border); padding: 0 16px; position: sticky; top: 0; z-index: 100; }
+.tab { padding: 12px 20px; cursor: pointer; font-weight: 600; font-size: 13px; color: var(--text2); border-bottom: 3px solid transparent; transition: all .15s; user-select: none; white-space: nowrap; }
+.tab:hover { color: var(--red); background: #fafafa; }
+.tab.active { color: var(--red); border-bottom-color: var(--red); }
+.panel { display: none; max-width: 960px; margin: 0 auto; padding: 20px 16px 60px; }
+.panel.active { display: block; }
+
+/* Cards */
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 16px; box-shadow: var(--shadow); }
+.card h2 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--red); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+.card h3 { font-size: 13px; font-weight: 700; color: var(--text); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: .5px; }
+
+/* Form grid */
+.row { display: grid; gap: 12px; margin-bottom: 12px; }
+.row.c2 { grid-template-columns: 1fr 1fr; }
+.row.c3 { grid-template-columns: 1fr 1fr 1fr; }
+.row.c4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.row.c5 { grid-template-columns: 1fr 1fr 1fr 1fr 1fr; }
+.row.c23 { grid-template-columns: 2fr 1fr; }
+.row.c32 { grid-template-columns: 3fr 2fr; }
+.field { display: flex; flex-direction: column; }
+.field label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text2); margin-bottom: 3px; }
+.field input, .field select, .field textarea { border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; font-size: 14px; font-family: inherit; color: var(--text); background: #fff; transition: border-color .15s; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--red); box-shadow: 0 0 0 2px rgba(196,18,48,.1); }
+.field textarea { resize: vertical; min-height: 60px; }
+.field select { cursor: pointer; }
+
+/* Checkbox/radio groups */
+.check-group { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 6px 0; }
+.check-group label { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text); cursor: pointer; }
+.check-group input[type="checkbox"], .check-group input[type="radio"] { accent-color: var(--red); width: 20px; height: 20px; min-width: 20px; cursor: pointer; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border: none; border-radius: var(--radius); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
+.btn-red { background: var(--red); color: #fff; }
+.btn-red:hover { background: var(--red-dark); }
+.btn-outline { background: #fff; color: var(--red); border: 1px solid var(--red); }
+.btn-outline:hover { background: var(--red-light); }
+.btn-gray { background: #eee; color: var(--text2); }
+.btn-gray:hover { background: #ddd; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+
+/* Conditional sections */
+.type-section { display: none; }
+.type-section.visible { display: block; }
+
+/* Suite table */
+.suite-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+.suite-table th { background: #f8f8f8; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: .5px; padding: 8px; text-align: left; border-bottom: 2px solid var(--border); }
+.suite-table td { padding: 4px; border-bottom: 1px solid #eee; }
+.suite-table input { width: 100%; border: 1px solid #e8e8e8; border-radius: 3px; padding: 6px 8px; font-size: 13px; }
+.suite-table input:focus { border-color: var(--red); outline: none; }
+.suite-table .remove-row { background: none; border: none; color: #ccc; cursor: pointer; font-size: 16px; padding: 4px; }
+.suite-table .remove-row:hover { color: var(--red); }
+
+/* Sign grid */
+.sign-grid { display: grid; grid-template-columns: 1fr 80px 120px; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
+.sign-grid:last-child { border-bottom: none; }
+.sign-grid .label { font-weight: 600; font-size: 13px; }
+.sign-grid input, .sign-grid select { border: 1px solid var(--border); border-radius: 4px; padding: 6px 8px; font-size: 13px; }
+
+/* Rent schedule table */
+.rent-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.rent-table th { background: #f8f8f8; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: .5px; padding: 8px; text-align: left; border-bottom: 2px solid var(--border); }
+.rent-table td { padding: 4px; border-bottom: 1px solid #eee; }
+.rent-table input { width: 100%; border: 1px solid #e8e8e8; border-radius: 3px; padding: 6px 8px; font-size: 13px; }
+
+/* Broker split table */
+.broker-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.broker-table th { background: #f8f8f8; font-weight: 600; text-transform: uppercase; font-size: 11px; padding: 8px; text-align: left; border-bottom: 2px solid var(--border); }
+.broker-table td { padding: 4px; border-bottom: 1px solid #eee; }
+.broker-table input, .broker-table select { width: 100%; border: 1px solid #e8e8e8; border-radius: 3px; padding: 6px 8px; font-size: 13px; }
+
+/* Tip bar */
+.tip { background: #fff8e1; border-left: 3px solid var(--amber); padding: 10px 16px; margin-bottom: 16px; font-size: 13px; color: #6d5a00; border-radius: 0 var(--radius) var(--radius) 0; }
+
+/* Status */
+.status { font-size: 12px; margin-top: 8px; font-weight: 500; }
+
+/* Email modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 1000; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: #fff; border-radius: 8px; padding: 24px; width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; }
+.modal h2 { font-size: 16px; color: var(--red); margin-bottom: 16px; }
+.modal .field { margin-bottom: 12px; }
+.modal .btn-bar { justify-content: flex-end; }
+
+/* Sign support visual */
+.support-options { display: flex; gap: 24px; margin: 12px 0; }
+.support-opt { text-align: center; cursor: pointer; padding: 12px; border: 2px solid var(--border); border-radius: 8px; min-width: 80px; transition: all .15s; }
+.support-opt:hover { border-color: var(--red); }
+.support-opt.selected { border-color: var(--red); background: var(--red-light); }
+.support-opt .icon { font-size: 28px; margin-bottom: 4px; }
+.support-opt .lbl { font-size: 11px; font-weight: 600; }
+
+/* Agent autocomplete */
+.agent-picker { position: relative; }
+.agent-picker input { width: 100%; }
+.agent-picker .agent-dd { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--border); border-top: none; border-radius: 0 0 var(--radius) var(--radius); max-height: 200px; overflow-y: auto; z-index: 200; box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+.agent-picker .agent-dd.open { display: block; }
+.agent-picker .agent-dd .agent-opt { padding: 8px 12px; cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+.agent-picker .agent-dd .agent-opt:hover, .agent-picker .agent-dd .agent-opt.highlighted { background: var(--red-light); }
+.agent-picker .agent-dd .agent-opt .agent-role { font-size: 11px; color: var(--text3); }
+.agent-picker .agent-dd .agent-opt .agent-email { font-size: 11px; color: var(--text3); margin-left: 8px; }
+.agent-picker .agent-dd .no-match { padding: 8px 12px; font-size: 12px; color: var(--text3); font-style: italic; }
+
+/* Dealius credential bar */
+.dx-bar { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 16px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.dx-bar .field { flex: 1; min-width: 160px; }
+.dx-bar .dx-status { font-size: 12px; font-weight: 600; padding: 8px 0; }
+.dx-bar .dx-status.ok { color: var(--green); }
+.dx-bar .dx-status.err { color: var(--red); }
+
+/* Collapsible section toggle */
+.collapse-toggle { display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 12px 16px; background: #f7f7f7; border: 1px solid #e5e5e5; border-radius: var(--radius); margin-bottom: 0; user-select: none; transition: background .15s; }
+.collapse-toggle:hover { background: #f0f0f0; }
+.collapse-toggle h3 { margin: 0; font-size: 14px; font-weight: 700; color: var(--text1); }
+.collapse-toggle .chevron { font-size: 18px; color: var(--text3); transition: transform .2s; }
+.collapse-toggle.open .chevron { transform: rotate(180deg); }
+.collapse-toggle.open { border-radius: var(--radius) var(--radius) 0 0; border-bottom-color: transparent; }
+.collapse-body { display: none; border: 1px solid #e5e5e5; border-top: none; border-radius: 0 0 var(--radius) var(--radius); padding: 16px 18px; background: #fafafa; }
+.collapse-body.open { display: block; }
+.collapse-section { margin-bottom: 12px; }
+
+/* Sub-section divider inside a card */
+.sub-divider { border-top: 1px solid #eee; margin: 16px 0 12px; padding-top: 12px; }
+.sub-divider-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text3); margin-bottom: 8px; }
+
+/* Compact row for dense comp data — smaller inputs */
+.row.compact .field input, .row.compact .field select { padding: 6px 8px; font-size: 13px; }
+.row.compact .field label { font-size: 10px; margin-bottom: 2px; }
+
+/* Print */
+@media print { .tab-bar, .header, .btn-bar, .tip, .dx-bar { display: none; } .panel { display: block !important; max-width: 100%; } }
+@media (max-width: 640px) { .row.c3, .row.c4, .row.c5 { grid-template-columns: 1fr 1fr; } .row.c2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Lee &amp; Associates Newport Beach &mdash; Broker Submission Tool</h1>
+    <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher &bull; Comp Input</div>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="switchTab('listing')">Listing Entry</div>
+  <div class="tab" onclick="switchTab('sign')">Sign Request</div>
+  <div class="tab" onclick="switchTab('voucher')">Commission Voucher</div>
+  <div class="tab" onclick="switchTab('comp')">Comp Input</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- TAB 1: LISTING ENTRY                                                      -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<div id="tab-listing" class="panel active">
+  <div class="tip">Select a property type below. The form will adapt to show only the fields relevant to that type.</div>
+
+  <!-- Agent & Release -->
+  <div class="card">
+    <h2>Listing Agent(s) &amp; Release Instructions</h2>
+    <table class="suite-table" id="listing-agent-table">
+      <thead><tr><th>Agent Name</th><th>Phone</th><th>Email</th><th style="width:40px;"></th></tr></thead>
+      <tbody id="listing-agent-body"></tbody>
+    </table>
+    <button class="btn btn-gray" style="margin-top:8px;" onclick="addListingAgent()">+ Add Agent</button>
+    <div class="row c2" style="margin-top:12px;">
+      <div class="field"><label>Date Entered</label><input id="l-date-entered" type="date"></div>
+      <div class="field"></div>
+    </div>
+    <h3>Listing Release</h3>
+    <div class="check-group">
+      <label><input type="radio" name="l-release" value="hold" checked> Hold Until Further Notice</label>
+      <label><input type="radio" name="l-release" value="immediate"> Release to MLS &amp; Website Immediately</label>
+      <label><input type="radio" name="l-release" value="date"> Release on Date:</label>
+    </div>
+    <div class="row c2" style="margin-top:8px;">
+      <div class="field"><label>MLS &amp; Website Release Date</label><input id="l-release-date" type="date" disabled></div>
+      <div class="field"><label>Notify the Multiple Listing Services?</label>
+        <select id="l-agent-notify"><option value="admin-immediate">Admin releases to MLS immediately</option><option value="admin-date">Notify the MLS on this date</option><option value="agent-notified">Agent will notify / has already notified the MLS</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Listing Type -->
+  <div class="card">
+    <h2>Listing Type &amp; Pricing</h2>
+    <div class="row c3">
+      <div class="field"><label>New or Modification?</label>
+        <select id="l-new-mod"><option value="new">New Listing</option><option value="mod">Listing Modification</option></select>
+      </div>
+      <div class="field"><label>Property Type</label>
+        <select id="l-prop-type" onchange="onPropTypeChange()">
+          <option value="industrial">Industrial</option>
+          <option value="office">Office</option>
+          <option value="retail">Retail</option>
+          <option value="land">Land</option>
+        </select>
+      </div>
+      <div class="field"><label>Transaction Type</label>
+        <select id="l-txn-type" onchange="onTxnTypeChange()">
+          <option value="lease">Lease</option>
+          <option value="sale">Sale</option>
+          <option value="sale-lease">Sale / Lease</option>
+          <option value="sublease">Sublease</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Lease pricing -->
+    <div id="lease-pricing">
+      <div class="row c4">
+        <div class="field"><label>Lease Rate / Mo</label><input id="l-lease-mo" placeholder="$0.00"></div>
+        <div class="field"><label>Lease $/SF</label><input id="l-lease-sf" placeholder="$0.00"></div>
+        <div class="field"><label>Term</label><input id="l-lease-term" placeholder="e.g. 36 months"></div>
+        <div class="field"><label>Lease Type</label>
+          <select id="l-lease-type">
+            <option value="NNN">NNN</option><option value="FSG">FSG (Full Service Gross)</option><option value="MG">MG (Modified Gross)</option><option value="G">Gross</option><option value="N">Net</option><option value="MN">Modified Net</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sale pricing -->
+    <div id="sale-pricing" style="display:none;">
+      <div class="row c3">
+        <div class="field"><label>Sale Price</label>
+          <div style="position:relative;"><span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:14px;pointer-events:none;">$</span><input id="l-sale-price" placeholder="0" style="padding-left:22px;"></div>
+        </div>
+        <div class="field"><label>Sale $/SF</label>
+          <div style="position:relative;"><span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:14px;pointer-events:none;">$</span><input id="l-sale-sf" placeholder="0.00" style="padding-left:22px;"></div>
+        </div>
+        <div class="field"><label>Sale Terms</label><input id="l-sale-terms" placeholder="e.g. All Cash"></div>
+      </div>
+      <div class="row c2" id="cap-rate-row" style="display:none;">
+        <div class="field"><label>CAP Rate</label><input id="l-cap-rate" placeholder="e.g. 5.5%"></div>
+        <div class="field"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Property Details (Common) -->
+  <div class="card">
+    <h2>Property Details</h2>
+    <div class="row c2">
+      <div class="field"><label id="lbl-name">Address</label><input id="l-address" placeholder="123 Main St"></div>
+      <div class="field" id="field-project-name" style="display:none;"><label>Project / Property Name</label><input id="l-project-name" placeholder="Optional"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>City</label><input id="l-city" placeholder="Irvine"></div>
+      <div class="field"><label>State</label><input id="l-state" value="CA"></div>
+      <div class="field"><label>Zip</label><input id="l-zip" placeholder="92618"></div>
+    </div>
+    <div class="row c2">
+      <div class="field"><label>Cross Street(s)</label><input id="l-cross" placeholder="Main St & 1st Ave"></div>
+      <div class="field" id="field-corner" style="display:none;"><label>Corner</label>
+        <select id="l-corner"><option value="">N/A</option><option value="NE">NE</option><option value="NW">NW</option><option value="SE">SE</option><option value="SW">SW</option></select>
+      </div>
+    </div>
+
+    <!-- Size fields (non-land) -->
+    <div id="size-building" class="type-section visible">
+      <div class="row c3">
+        <div class="field"><label id="lbl-sf">Building / GLA SF</label><input id="l-bldg-sf" placeholder="e.g. 50,000"></div>
+        <div class="field"><label>Year Built</label><input id="l-year-built" placeholder="e.g. 1995"></div>
+        <div class="field"><label>Parking Ratio</label><input id="l-parking-ratio" placeholder="e.g. 4/1,000"></div>
+      </div>
+    </div>
+
+    <!-- Size fields (land) -->
+    <div id="size-land" class="type-section">
+      <div class="row c4">
+        <div class="field"><label>Gross Acres</label><input id="l-acres-gross" placeholder="0.00"></div>
+        <div class="field"><label>Net Acres</label><input id="l-acres-net" placeholder="0.00"></div>
+        <div class="field"><label>Gross SF</label><input id="l-land-sf-gross" placeholder="0"></div>
+        <div class="field"><label>Net SF</label><input id="l-land-sf-net" placeholder="0"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Industrial-specific -->
+  <div id="sec-industrial" class="card type-section visible">
+    <h2>Industrial Details</h2>
+    <div class="row c4">
+      <div class="field"><label>Size (SF)</label><input id="l-ind-size" placeholder="Total SF"></div>
+      <div class="field"><label>Office (SF)</label><input id="l-ind-office" placeholder="Office SF"></div>
+      <div class="field"><label>Parking</label><input id="l-ind-parking" placeholder="# spaces"></div>
+      <div class="field"><label>Yard</label><select id="l-ind-yard"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+    </div>
+    <div class="row c4">
+      <div class="field"><label>GL Doors</label><input id="l-ind-gl" placeholder="# or desc"></div>
+      <div class="field"><label>DH Doors</label><input id="l-ind-dh" placeholder="# or desc"></div>
+      <div class="field"><label>Sprinklers</label><input id="l-ind-sprinklers" placeholder="Type"></div>
+      <div class="field"><label>Clearance</label><input id="l-ind-clearance" placeholder="e.g. 24'"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Amps / Power</label><input id="l-ind-amps" placeholder="e.g. 400A, 3-phase"></div>
+      <div class="field"><label>Zoning</label><input id="l-ind-zoning" placeholder="e.g. M-1"></div>
+      <div class="field"><label>Construction Type</label><input id="l-ind-construction" placeholder="e.g. Tilt-up"></div>
+    </div>
+
+    <h3>Building Type</h3>
+    <div class="check-group">
+      <label><input type="checkbox" name="l-bldg-type" value="freestanding"> Freestanding</label>
+      <label><input type="checkbox" name="l-bldg-type" value="pol"> POL</label>
+      <label><input type="checkbox" name="l-bldg-type" value="multi"> Multi</label>
+      <label><input type="checkbox" name="l-bldg-type" value="condo"> Condo</label>
+    </div>
+    <h3>Use</h3>
+    <div class="check-group">
+      <label><input type="checkbox" name="l-use" value="mfg"> Manufacturing</label>
+      <label><input type="checkbox" name="l-use" value="whse"> Warehouse / Distribution</label>
+      <label><input type="checkbox" name="l-use" value="rd"> R&amp;D</label>
+    </div>
+  </div>
+
+  <!-- Office-specific -->
+  <div id="sec-office" class="card type-section">
+    <h2>Office Details</h2>
+    <div class="row c4">
+      <div class="field"><label>Building Class</label><select id="l-off-class"><option value="">—</option><option>A</option><option>B</option><option>C</option></select></div>
+      <div class="field"><label>No. of Floors</label><input id="l-off-floors" placeholder="e.g. 3"></div>
+      <div class="field"><label>Passenger Elevators</label><input id="l-off-pass-elev" placeholder="# or desc"></div>
+      <div class="field"><label>Freight Elevators</label><input id="l-off-freight-elev" placeholder="# or desc"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Load Factor</label><input id="l-off-load" placeholder="e.g. 1.15"></div>
+      <div class="field"><label>Building SF</label><input id="l-off-bldg-sf" placeholder="Total building SF"></div>
+      <div class="field"></div>
+    </div>
+    <h3>Parking</h3>
+    <div class="check-group">
+      <label><input type="checkbox" name="l-off-parking" value="surface"> Surface</label>
+      <label><input type="checkbox" name="l-off-parking" value="covered"> Covered</label>
+      <label><input type="checkbox" name="l-off-parking" value="street"> Street</label>
+      <label><input type="checkbox" name="l-off-parking" value="free"> Free</label>
+    </div>
+    <div class="row c2" style="margin-top:8px;">
+      <div class="field"><label>Reserved $/mo</label><input id="l-off-reserved" placeholder="$0"></div>
+      <div class="field"><label>Non-Reserved $/mo</label><input id="l-off-nonreserved" placeholder="$0"></div>
+    </div>
+    <h3>Floor by Floor Availability</h3>
+    <table class="suite-table" id="office-suite-table">
+      <thead><tr><th>Flr #</th><th>Suite #</th><th>Avail SF</th><th>Date Avail</th><th>Rate/SF</th><th>Sublease</th><th>To Show</th><th>Comments</th><th></th></tr></thead>
+      <tbody id="office-suite-body"></tbody>
+    </table>
+    <button class="btn btn-gray" style="margin-top:8px;" onclick="addSuiteRow('office')">+ Add Row</button>
+  </div>
+
+  <!-- Retail-specific -->
+  <div id="sec-retail" class="card type-section">
+    <h2>Retail Details</h2>
+    <div class="row c3">
+      <div class="field"><label>GLA / Bldg SF</label><input id="l-ret-gla" placeholder="Total GLA"></div>
+      <div class="field"><label>No. of Floors</label><input id="l-ret-floors" placeholder="e.g. 1"></div>
+      <div class="field"><label>NNN Charges</label><input id="l-ret-nnn" placeholder="$/SF"></div>
+    </div>
+    <h3>Property Type</h3>
+    <div class="check-group">
+      <label><input type="radio" name="l-ret-type" value="vacant-land"> Vacant Land</label>
+      <label><input type="radio" name="l-ret-type" value="single-tenant"> Single Tenant</label>
+      <label><input type="radio" name="l-ret-type" value="multi-tenant"> Multi Tenant</label>
+      <label><input type="radio" name="l-ret-type" value="neighborhood"> Neighborhood Center</label>
+      <label><input type="radio" name="l-ret-type" value="strip-mall"> Strip Mall</label>
+      <label><input type="radio" name="l-ret-type" value="convenience"> Convenience</label>
+      <label><input type="radio" name="l-ret-type" value="grocery"> Grocery Anchored</label>
+      <label><input type="radio" name="l-ret-type" value="indoor-mall"> Indoor Shopping Center</label>
+      <label><input type="radio" name="l-ret-type" value="outlet"> Outlet Mall</label>
+    </div>
+    <h3>Demographics</h3>
+    <div class="row c3">
+      <div class="field"><label>Traffic Count</label><input id="l-ret-traffic" placeholder="e.g. 45,000 ADT"></div>
+      <div class="field"><label>Median Income</label><input id="l-ret-income" placeholder="$0"></div>
+      <div class="field"><label># of Households</label><input id="l-ret-households" placeholder="0"></div>
+    </div>
+    <div class="field"><label>Description</label><textarea id="l-ret-desc" rows="3" placeholder="Property description..."></textarea></div>
+    <h3>Suite(s) for Lease or Sublease</h3>
+    <table class="suite-table" id="retail-suite-table">
+      <thead><tr><th>Suite #</th><th>Avail SF</th><th>Date Avail</th><th>Rate/SF</th><th>Sublease</th><th>To Show</th><th>Comments</th><th></th></tr></thead>
+      <tbody id="retail-suite-body"></tbody>
+    </table>
+    <button class="btn btn-gray" style="margin-top:8px;" onclick="addSuiteRow('retail')">+ Add Row</button>
+  </div>
+
+  <!-- Land-specific -->
+  <div id="sec-land" class="card type-section">
+    <h2>Land Details</h2>
+    <div class="row c3">
+      <div class="field"><label>Zoning</label><textarea id="l-land-zoning" rows="2" placeholder="Zoning details..."></textarea></div>
+      <div class="field"><label>Fenced?</label><select id="l-land-fenced"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+      <div class="field"><label>Assessments?</label><select id="l-land-assess"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+    </div>
+    <div class="row c2">
+      <div class="field"><label>Plans Available?</label><select id="l-land-plans"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+      <div class="field"></div>
+    </div>
+    <h3>Condition</h3>
+    <div class="check-group">
+      <label><input type="radio" name="l-land-cond" value="finished"> Finished Lot</label>
+      <label><input type="radio" name="l-land-cond" value="rough"> Rough Graded</label>
+      <label><input type="radio" name="l-land-cond" value="grading"> Grading Required</label>
+    </div>
+    <h3>Existing Use</h3>
+    <div class="check-group">
+      <label><input type="checkbox" name="l-land-exist" value="development"> Development</label>
+      <label><input type="checkbox" name="l-land-exist" value="contractor"> Contractor Yard</label>
+      <label><input type="checkbox" name="l-land-exist" value="storage"> Storage</label>
+    </div>
+    <h3>Possible Use</h3>
+    <div class="check-group">
+      <label><input type="checkbox" name="l-land-possible" value="industrial"> Industrial</label>
+      <label><input type="checkbox" name="l-land-possible" value="office"> Office</label>
+      <label><input type="checkbox" name="l-land-possible" value="retail"> Retail</label>
+    </div>
+    <div class="field"><label>Additional Features</label><textarea id="l-land-features" rows="3" placeholder="Additional features..."></textarea></div>
+  </div>
+
+  <!-- Availability / Showing / Comments (Common) -->
+  <div class="card">
+    <h2>Availability, Showing &amp; Comments</h2>
+    <div class="row c3">
+      <div class="field">
+        <label>Availability</label>
+        <select id="l-avail"><option value="now">Now</option><option value="30days">30 Days</option><option value="coe">Close of Escrow</option><option value="other">Other</option></select>
+      </div>
+      <div class="field" id="field-occupancy">
+        <label>Occupancy</label>
+        <select id="l-occupancy"><option value="vacant">Vacant</option><option value="occupied">Occupied</option><option value="construction">Under Construction</option></select>
+      </div>
+      <div class="field">
+        <label>Showing Instructions</label>
+        <select id="l-showing"><option value="lockbox">Lockbox</option><option value="call">Call to Show</option><option value="see-tenant">See Tenant</option><option value="do-not-disturb">Do Not Disturb</option><option value="show-card">Show Card</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Comments</label><textarea id="l-comments" rows="4" placeholder="Any additional comments or special instructions..."></textarea></div>
+  </div>
+
+  <!-- Actions -->
+  <div class="btn-bar">
+    <button class="btn btn-red" onclick="exportListingPdf()">Export PDF</button>
+    <button class="btn btn-outline" onclick="openEmailModal('listing')">Draft Email to Taylor</button>
+    <button class="btn btn-outline" onclick="copyToSign()">Copy to Sign Request &rarr;</button>
+    <button class="btn btn-gray" onclick="clearListing()">Clear Form</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- TAB 2: SIGN REQUEST                                                       -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<div id="tab-sign" class="panel">
+  <div class="tip">Fill out the sign request and export a PDF to email to Taylor.</div>
+
+  <div class="card">
+    <h2>Sign Request Details</h2>
+    <div class="row c3">
+      <div class="field"><label>Date</label><input id="s-date" type="date"></div>
+      <div class="field"><label>PO #</label><input id="s-po" placeholder="Auto or manual"></div>
+      <div class="field"><label>Order Type</label>
+        <select id="s-order-type"><option value="installation">Installation</option><option value="removal">Removal</option><option value="maintenance">Maintenance</option></select>
+      </div>
+    </div>
+    <div class="row c2">
+      <div class="field"><label>Property Address</label><input id="s-address" placeholder="16441 Scientific Way"></div>
+      <div class="field"><label>City</label><input id="s-city" placeholder="Irvine"></div>
+    </div>
+    <div class="field"><label>Cross Streets / Building Name</label><input id="s-cross" placeholder="Cross streets, building name, etc."></div>
+    <div class="row c3">
+      <div class="field"><label>Access Necessary?</label><select id="s-access"><option value="no">No</option><option value="yes">Yes</option></select></div>
+      <div class="field"><label>Access Contact</label><input id="s-access-contact" placeholder="Contact name / phone"></div>
+      <div class="field"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Sign Specifications</h2>
+    <div class="sign-grid"><span class="label">4' x 8'</span><input id="s-4x8-qty" type="number" min="0" placeholder="Qty"><select id="s-4x8-loc"><option value="">Location</option><option value="posts">Posts</option><option value="bldg">Building</option></select></div>
+    <div class="sign-grid"><span class="label">6' x 8'</span><input id="s-6x8-qty" type="number" min="0" placeholder="Qty"><select id="s-6x8-loc"><option value="">Location</option><option value="posts">Posts</option><option value="bldg">Building</option></select></div>
+    <div class="sign-grid"><span class="label">Other</span><input id="s-other-size" placeholder="Size (e.g. 3x4)"><input id="s-other-qty" type="number" min="0" placeholder="Qty"></div>
+    <div class="sign-grid"><span class="label">Banner</span><input id="s-banner-size" placeholder="Size"><select id="s-banner-loc"><option value="">Location</option><option value="fence">Fence</option><option value="bldg">Building</option></select></div>
+    <div class="row c2" style="margin-top:12px;">
+      <div class="field"><label>Name Rider</label><input id="s-rider" placeholder="e.g. Agent name"></div>
+      <div class="field"><label>Custom Rider</label><input id="s-custom-rider" placeholder="Custom text"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Sign Support Configuration</h2>
+    <div class="support-options">
+      <div class="support-opt" onclick="selectSupport(this, 'sf')"><div class="icon">&#9632;&#9632;</div><div class="lbl">S/F</div></div>
+      <div class="support-opt" onclick="selectSupport(this, 'df')"><div class="icon">&#9646;</div><div class="lbl">D/F</div></div>
+      <div class="support-opt" onclick="selectSupport(this, 'vshape')"><div class="icon">&#10006;</div><div class="lbl">V-Shape</div></div>
+    </div>
+    <input type="hidden" id="s-support" value="">
+  </div>
+
+  <div class="card">
+    <h2>Requested By</h2>
+    <div class="field" style="margin-bottom:12px;"><label>Requested By</label>
+      <div class="agent-picker" id="picker-s-requested-by">
+        <input id="s-requested-by" placeholder="Start typing agent name..." autocomplete="off">
+        <div class="agent-dd" id="dd-s-requested-by"></div>
+      </div>
+    </div>
+    <table class="broker-table" id="sign-agent-table">
+      <thead><tr><th style="width:40px;">#</th><th>Agent Name</th><th style="width:120px;">Percentage</th><th style="width:40px;"></th></tr></thead>
+      <tbody id="sign-agent-body"></tbody>
+    </table>
+    <button class="btn btn-gray" style="margin-top:8px;" onclick="addSignAgent()">+ Add Agent</button>
+  </div>
+
+  <div class="card">
+    <h2>Sign Placement Visual</h2>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:10px;">Upload a photo, diagram, or PDF showing the most desirable placement for the sign(s).</p>
+    <div style="border:2px dashed var(--border);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:border-color .15s;" id="sign-upload-zone" onclick="document.getElementById('s-placement-file').click()">
+      <input type="file" id="s-placement-file" accept="image/*,.pdf" style="display:none;" onchange="handleSignUpload(this)">
+      <div id="sign-upload-placeholder">
+        <div style="font-size:32px;color:var(--text3);margin-bottom:8px;">&#128247;</div>
+        <div style="font-size:13px;color:var(--text2);font-weight:600;">Click to upload or drag &amp; drop</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">JPG, PNG, or PDF &mdash; max 10MB</div>
+      </div>
+      <div id="sign-upload-preview" style="display:none;">
+        <img id="sign-preview-img" style="max-width:100%;max-height:300px;border-radius:4px;">
+        <div id="sign-preview-name" style="font-size:12px;color:var(--text2);margin-top:8px;"></div>
+      </div>
+    </div>
+    <button class="btn btn-gray" style="margin-top:8px;display:none;" id="sign-upload-clear" onclick="clearSignUpload()">Remove Upload</button>
+  </div>
+
+  <div class="field"><label>Comments</label><textarea id="s-comments" rows="3" placeholder="Additional comments or special instructions..."></textarea></div>
+
+  <div class="btn-bar" style="margin-top:16px;">
+    <button class="btn btn-red" onclick="exportSignPdf()">Export PDF</button>
+    <button class="btn btn-outline" onclick="openEmailModal('sign')">Draft Email</button>
+    <button class="btn btn-gray" onclick="clearSign()">Clear Form</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- TAB 3: COMMISSION VOUCHER                                                 -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<div id="tab-voucher" class="panel">
+  <div class="tip">Lease/Sale Commission &amp; Comp Voucher — complete all applicable sections. Matches the Excel voucher layout.</div>
+
+  <!-- 1. HEADER -->
+  <div class="card">
+    <h2>Transaction Overview</h2>
+    <div class="row c4">
+      <div class="field"><label>Transaction Type</label>
+        <select id="v-txn-type" onchange="onVoucherTxnChange()"><option value="lease">Lease</option><option value="sale">Sale</option></select>
+      </div>
+      <div class="field"><label>Property Type</label>
+        <select id="v-prop-type"><option value="industrial">Industrial</option><option value="office">Office</option><option value="retail">Retail</option><option value="land">Land</option><option value="other">Other</option></select>
+      </div>
+      <div class="field"><label>Active Listing?</label><select id="v-active-listing"><option value="yes">Yes</option><option value="no">No</option></select></div>
+      <div class="field"><label>Close this Listing?</label><select id="v-close-listing"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Confidential?</label><select id="v-confidential"><option value="no">No</option><option value="yes">Yes</option></select></div>
+      <div class="field"><label>Date Filled</label><input id="v-date-filled" type="date"></div>
+      <div class="field" id="v-other-type-field" style="display:none;"><label>If Other, Explain</label><input id="v-other-type" placeholder="Describe property type"></div>
+    </div>
+  </div>
+
+  <!-- 2. PROPERTY ADDRESS -->
+  <div class="card">
+    <h2>Property Address</h2>
+    <div class="row c23">
+      <div class="field"><label>Property Street Address</label><input id="v-address" placeholder="123 Main St"></div>
+      <div class="field"><label>Suite / Unit</label><input id="v-suite" placeholder="Ste 100"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>City</label><input id="v-city" placeholder="Irvine"></div>
+      <div class="field"><label>State</label><input id="v-state" value="CA"></div>
+      <div class="field"><label>Zip Code</label><input id="v-zip" placeholder="92618"></div>
+    </div>
+  </div>
+
+  <!-- 3. PARTIES (Lessor/Seller & Lessee/Buyer) -->
+  <div class="card">
+    <h2>Parties</h2>
+
+    <div class="collapse-section">
+      <div class="collapse-toggle" onclick="toggleCollapse(this)">
+        <h3 id="v-lbl-lessor">Lessor / Seller</h3>
+        <span class="chevron">&#9662;</span>
+      </div>
+      <div class="collapse-body" id="cb-lessor">
+        <div class="field"><label>Invoice Lessor/Seller?</label><select id="v-ls-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div class="row c2">
+          <div class="field"><label>Contact Name</label><input id="v-ls-contact" placeholder="Full name"></div>
+          <div class="field"><label>Company</label><input id="v-ls-company" placeholder="Company name"></div>
+        </div>
+        <div class="row c2">
+          <div class="field"><label>Email</label><input id="v-ls-email" type="email" placeholder="email@company.com"></div>
+          <div class="field"><label>Phone</label><input id="v-ls-phone" type="tel"></div>
+        </div>
+        <div class="field"><label>Address</label><input id="v-ls-address" placeholder="Street address"></div>
+        <div class="row c3">
+          <div class="field"><label>City</label><input id="v-ls-city"></div>
+          <div class="field"><label>State</label><input id="v-ls-state" value="CA"></div>
+          <div class="field"><label>Zip</label><input id="v-ls-zip"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="collapse-section">
+      <div class="collapse-toggle" onclick="toggleCollapse(this)">
+        <h3 id="v-lbl-lessee">Lessee / Buyer</h3>
+        <span class="chevron">&#9662;</span>
+      </div>
+      <div class="collapse-body" id="cb-lessee">
+        <div class="field"><label>Invoice Lessee/Buyer?</label><select id="v-lb-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div class="row c2">
+          <div class="field"><label>Contact Name</label><input id="v-lb-contact" placeholder="Full name"></div>
+          <div class="field"><label>Company</label><input id="v-lb-company" placeholder="Company name"></div>
+        </div>
+        <div class="row c2">
+          <div class="field"><label>Email</label><input id="v-lb-email" type="email" placeholder="email@company.com"></div>
+          <div class="field"><label>Phone</label><input id="v-lb-phone" type="tel"></div>
+        </div>
+        <div class="field"><label>Address</label><input id="v-lb-address" placeholder="Street address"></div>
+        <div class="row c3">
+          <div class="field"><label>City</label><input id="v-lb-city"></div>
+          <div class="field"><label>State</label><input id="v-lb-state" value="CA"></div>
+          <div class="field"><label>Zip</label><input id="v-lb-zip"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. PROPERTY INFORMATION (Comp Data) -->
+  <div class="card">
+    <h2>Property Information <span style="font-weight:400;font-size:11px;text-transform:none;letter-spacing:0;color:var(--text3);">(complete all that apply)</span></h2>
+
+    <div class="sub-divider-label">Deal Overview</div>
+    <div class="row c4 compact">
+      <div class="field"><label>Suite/Unit</label><input id="v-pi-suite" placeholder="Ste 100"></div>
+      <div class="field"><label>Occ. Type</label><select id="v-occ-type"><option value="">—</option><option>Direct</option><option>Sublease</option><option>Renewal</option><option>Expansion</option></select></div>
+      <div class="field"><label>Deal Type</label><select id="v-deal-type"><option value="">—</option><option>New</option><option>Renewal</option><option>Expansion</option><option>Relocation</option><option>Blend &amp; Extend</option></select></div>
+      <div class="field"><label>Sub-Market</label><input id="v-submarket" placeholder="Airport Area"></div>
+    </div>
+    <div class="row c2 compact">
+      <div class="field"><label>Prior Tenant Location</label><input id="v-prior-loc" placeholder="City or address"></div>
+      <div class="field"><label>Bldg Condition</label><input id="v-bldg-cond" placeholder="e.g. Good"></div>
+    </div>
+
+    <div class="sub-divider"></div>
+    <div class="sub-divider-label">Size &amp; Construction</div>
+    <div class="row c4 compact">
+      <div class="field"><label>Deal SF</label><input id="v-deal-sf" placeholder="0"></div>
+      <div class="field"><label>Total Bldg SF</label><input id="v-bldg-sf" placeholder="0"></div>
+      <div class="field"><label>Land SF</label><input id="v-land-sf" placeholder="0"></div>
+      <div class="field"><label>Bldg Class</label><select id="v-bldg-class"><option value="">—</option><option>A</option><option>B</option><option>C</option></select></div>
+    </div>
+    <div class="row c4 compact">
+      <div class="field"><label>Ind. SF</label><input id="v-ind-sf" placeholder="0"></div>
+      <div class="field"><label>Whse SF</label><input id="v-whse-sf" placeholder="0"></div>
+      <div class="field"><label>Office SF</label><input id="v-office-sf" placeholder="0"></div>
+      <div class="field"><label>Retail SF</label><input id="v-retail-sf" placeholder="0"></div>
+    </div>
+    <div class="row c4 compact">
+      <div class="field"><label>Const. Type</label><input id="v-const-type" placeholder="Tilt-up"></div>
+      <div class="field"><label>Sub-type</label><input id="v-subtype" placeholder="e.g. Flex"></div>
+      <div class="field"><label>Year Built</label><input id="v-year-built" placeholder="1995"></div>
+      <div class="field"><label># of Floors</label><input id="v-floors" placeholder="1"></div>
+    </div>
+
+    <div class="sub-divider"></div>
+    <div class="sub-divider-label">Building Features</div>
+    <div class="row c4 compact">
+      <div class="field"><label>Elevators</label><select id="v-elevators"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+      <div class="field"><label># of Elevators</label><input id="v-num-elevators" placeholder="0"></div>
+      <div class="field"><label>Load Factor</label><input id="v-load-factor" placeholder="e.g. 1.15"></div>
+      <div class="field"><label>Sprinklers</label><input id="v-sprinklers" placeholder="ESFR"></div>
+    </div>
+    <div class="row c4 compact">
+      <div class="field"><label>DH Doors</label><input id="v-dh" placeholder="0"></div>
+      <div class="field"><label>GL Doors</label><input id="v-gl" placeholder="0"></div>
+      <div class="field"><label>Clear Height</label><input id="v-clearance" placeholder="24'"></div>
+      <div class="field"><label>Amps</label><input id="v-amps" placeholder="e.g. 400A, 3-phase"></div>
+    </div>
+    <div class="row c4 compact">
+      <div class="field"><label>Rail</label><select id="v-rail"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+      <div class="field"><label>Yard</label><select id="v-yard"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+      <div class="field"><label>Multi-Tenant</label><select id="v-multi-tenant"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+      <div class="field"><label>POL</label><select id="v-pol"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+    </div>
+
+    <div class="sub-divider"></div>
+    <div class="sub-divider-label">Parking &amp; Expenses</div>
+    <div class="row c4 compact">
+      <div class="field"><label>Parking Type</label><input id="v-parking-type" placeholder="Surface"></div>
+      <div class="field"><label># of Spaces</label><input id="v-parking-spaces" placeholder="0"></div>
+      <div class="field"><label>Park Ratio</label><input id="v-park-ratio" placeholder="4/1,000"></div>
+      <div class="field"><label>Opex $/SF</label><input id="v-opex" placeholder="$0.00"></div>
+    </div>
+    <div class="row c4 compact">
+      <div class="field"><label>Reserved Spaces</label><input id="v-parking-reserved" placeholder="0"></div>
+      <div class="field"><label>Unreserved Spaces</label><input id="v-parking-unreserved" placeholder="0"></div>
+      <div class="field"><label>Reserved $/mo</label><input id="v-reserved-mo" placeholder="$0"></div>
+      <div class="field"><label>Unreserved $/mo</label><input id="v-unreserved-mo" placeholder="$0"></div>
+    </div>
+    <div class="row c2 compact">
+      <div class="field"><label>Lease Type</label><select id="v-lease-type"><option value="">—</option><option>NNN</option><option>FSG</option><option>MG</option><option>Gross</option></select></div>
+      <div class="field"></div>
+    </div>
+
+    <div class="sub-divider"></div>
+    <div class="field"><label>Additional Comp Comments <span style="font-weight:400;text-transform:none;letter-spacing:0;">(HVAC, expenses, maintenance, taxes, anything else)</span></label><textarea id="v-comp-comments" rows="2" placeholder="Give as much detail as possible..."></textarea></div>
+  </div>
+
+  <!-- 5. LEASE TRANSACTION DETAILS -->
+  <div id="v-lease-section" class="card">
+    <h2>Lease Transaction Details</h2>
+    <div class="row c4">
+      <div class="field"><label>Deal SF</label><input id="v-l-dealsf" placeholder="0"></div>
+      <div class="field"><label>Start Date</label><input id="v-l-start" type="date"></div>
+      <div class="field"><label>End Date</label><input id="v-l-end" type="date"></div>
+      <div class="field"><label>Occupancy Date</label><input id="v-l-occ" type="date"></div>
+    </div>
+    <div class="row c4">
+      <div class="field"><label>Term (months)</label><input id="v-l-term" placeholder="e.g. 60"></div>
+      <div class="field"><label>Total Consideration</label><input id="v-l-consideration" placeholder="$0" readonly style="background:#f8f8f8;font-weight:600;"></div>
+      <div class="field"><label>Months on Market</label><input id="v-l-mkt-months" placeholder="0"></div>
+      <div class="field"></div>
+    </div>
+    <div class="row c4">
+      <div class="field"><label>Rate $/SF</label><input id="v-l-rate" placeholder="$0.00"></div>
+      <div class="field"><label>Rate Type</label><select id="v-l-rate-type"><option value="NNN">NNN</option><option value="FSG">FSG</option><option value="MG">MG</option><option value="G">Gross</option></select></div>
+      <div class="field"><label>Asking Rate $/SF</label><input id="v-l-asking-rate" placeholder="$0.00"></div>
+      <div class="field"><label>Asking Type</label><input id="v-l-asking-type" placeholder="NNN"></div>
+    </div>
+    <div class="row c4">
+      <div class="field"><label>Property Taxes</label><input id="v-l-taxes" placeholder="$0.00/SF"></div>
+      <div class="field"><label>Insurance</label><input id="v-l-insurance" placeholder="$0.00/SF"></div>
+      <div class="field"><label>Miscellaneous</label><input id="v-l-misc" placeholder="$0.00/SF"></div>
+      <div class="field"><label>Total NNN Charges</label><input id="v-l-nnn-total" placeholder="$0.00" readonly style="background:#f8f8f8;"></div>
+    </div>
+    <div class="row c4">
+      <div class="field"><label>TI Allowance $/SF</label><input id="v-l-ti-sf" placeholder="$0.00"></div>
+      <div class="field"><label>TI Allowance Total $</label><input id="v-l-ti-total" placeholder="$0"></div>
+      <div class="field"><label>Gross Eff Rate</label><input id="v-l-grs-eff" placeholder="$0.00" readonly style="background:#f8f8f8;"></div>
+      <div class="field"><label>NNN Eff Rate</label><input id="v-l-nnn-eff" placeholder="$0.00" readonly style="background:#f8f8f8;"></div>
+    </div>
+    <div class="row c2">
+      <div class="field"><label>Escalations</label><input id="v-l-escalations" placeholder="e.g. 3% annual"></div>
+      <div class="field"><label>IG Eff Rate</label><input id="v-l-ig-eff" placeholder="$0.00" readonly style="background:#f8f8f8;"></div>
+    </div>
+    <div class="field"><label>Options</label><textarea id="v-l-options" rows="2" placeholder="Renewal options, expansion options, etc."></textarea></div>
+    <div class="field"><label>Additional Lease Comments</label><textarea id="v-l-comments" rows="2" placeholder="Additional comments..."></textarea></div>
+  </div>
+
+  <!-- 6. SALE TRANSACTION DETAILS -->
+  <div id="v-sale-section" class="card" style="display:none;">
+    <h2>Sale Transaction Details</h2>
+    <div class="row c3">
+      <div class="field"><label>Total Consideration / Sale Price</label><input id="v-s-price" placeholder="$0"></div>
+      <div class="field"><label>Price / SF</label><input id="v-s-price-sf" placeholder="$0.00" readonly style="background:#f8f8f8;"></div>
+      <div class="field"><label>Land Price / SF</label><input id="v-s-land-sf" placeholder="$0.00" readonly style="background:#f8f8f8;"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>User, Investor, or Developer</label><select id="v-s-buyer-type"><option value="">—</option><option>User</option><option>Investor</option><option>Developer</option></select></div>
+      <div class="field"><label>Asking Price</label><input id="v-s-asking" placeholder="$0"></div>
+      <div class="field"><label>CAP Rate %</label><input id="v-s-cap" placeholder="e.g. 5.5"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Commission %</label><input id="v-s-comm-pct" placeholder="e.g. 3"></div>
+      <div class="field"><label>Commission Due $</label><input id="v-s-comm-due" placeholder="$0" readonly style="background:#f8f8f8;font-weight:600;"></div>
+      <div class="field"><label>Escrow Company</label><input id="v-s-escrow" placeholder="Company name"></div>
+    </div>
+    <div class="field"><label>Check/Wire from Escrow?</label><select id="v-s-escrow-check"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+  </div>
+
+  <!-- 7. MONTHLY RENT SCHEDULE -->
+  <div id="v-rent-section" class="card">
+    <h2>Monthly &amp; Free Rent Schedule</h2>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:10px;">Please include free rent months correctly in the schedule below. Enter $0 for free months so effective rates calculate correctly. If the terms don't match, something is wrong!</p>
+    <table class="rent-table" id="v-rent-table">
+      <thead><tr><th style="width:36px;">#</th><th>Monthly Rent $</th><th>Rate/SF</th><th>Months</th><th>Consideration</th><th style="width:36px;"></th></tr></thead>
+      <tbody id="v-rent-body"></tbody>
+    </table>
+    <button class="btn btn-gray" style="margin-top:8px;" onclick="addRentRow()">+ Add Period</button>
+
+    <!-- Rent Summary -->
+    <div style="margin-top:16px;padding-top:12px;border-top:1px solid #eee;">
+      <div class="row c4">
+        <div class="field"><label>Average Rate/SF</label><input id="v-avg-rate-sf" placeholder="$0.00" readonly style="background:#f8f8f8;"></div>
+        <div class="field"><label>Average Monthly Rent</label><input id="v-avg-monthly" placeholder="$0" readonly style="background:#f8f8f8;"></div>
+        <div class="field"></div>
+        <div class="field"></div>
+      </div>
+    </div>
+
+    <!-- Commission Summary -->
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid #eee;">
+      <h3 style="color:var(--red);margin-bottom:12px;">Commission Summary</h3>
+      <div class="row c2">
+        <div>
+          <div class="row c2">
+            <div class="field"><label>Commission Rate %</label><input id="v-l-comm-rate" placeholder="e.g. 4" oninput="calcCommSummary()"></div>
+            <div class="field"><label>Lease Commission Due</label><input id="v-l-comm-due" placeholder="$0" readonly style="background:#f8f8f8;font-weight:600;"></div>
+          </div>
+          <div class="field"><label>Additional Bonus or (Credit/Adjustment)</label><input id="v-comm-bonus" placeholder="$0" oninput="calcCommSummary()"></div>
+          <div class="field"><label>Consulting/Referral, Flat Fee or (Credit/Adjustment)</label><input id="v-comm-consulting" placeholder="$0" oninput="calcCommSummary()"></div>
+        </div>
+        <div>
+          <div class="field"><label>SALE Commission (from Sale section)</label><input id="v-comm-sale" placeholder="$0" readonly style="background:#f8f8f8;"></div>
+          <div class="field" style="margin-top:16px;"><label style="font-size:13px;color:var(--red);font-weight:700;">TOTAL INVOICE</label><input id="v-total-invoice" placeholder="$0" readonly style="background:#fdf5f6;font-weight:700;font-size:16px;border-color:var(--red);"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. BROKER REPRESENTATION -->
+  <div class="card">
+    <h2>Broker Representation</h2>
+    <div class="row c2" style="margin-bottom:16px;">
+      <div class="field"><label>Same Listing &amp; Procuring Agent?</label>
+        <select id="v-same-agent" onchange="onSameAgentChange()"><option value="no">No</option><option value="yes">Yes</option></select>
+      </div>
+      <div style="font-size:11px;color:var(--text3);align-self:end;padding-bottom:10px;">House name, agent name &amp; city are usually sufficient</div>
+    </div>
+
+    <div class="collapse-section">
+      <div class="collapse-toggle" onclick="toggleCollapse(this)">
+        <h3>Listing Agent</h3>
+        <span class="chevron">&#9662;</span>
+      </div>
+      <div class="collapse-body" id="cb-listing-agent">
+        <div class="field"><label>Invoice Listing Agent?</label><select id="v-la-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div class="row c2">
+          <div class="field"><label>House</label><input id="v-la-house" placeholder="Lee & Associates - Newport Beach"></div>
+          <div class="field"><label>Agent Name</label>
+            <div class="agent-picker" id="picker-v-la-name">
+              <input id="v-la-name" placeholder="Start typing agent name..." autocomplete="off">
+              <div class="agent-dd" id="dd-v-la-name"></div>
+            </div>
+          </div>
+        </div>
+        <div class="field"><label>Address</label><input id="v-la-address"></div>
+        <div class="row c3">
+          <div class="field"><label>City</label><input id="v-la-city"></div>
+          <div class="field"><label>State</label><input id="v-la-state" value="CA"></div>
+          <div class="field"><label>Zip</label><input id="v-la-zip"></div>
+        </div>
+        <div class="row c2">
+          <div class="field"><label>Phone</label><input id="v-la-phone" type="tel"></div>
+          <div class="field"><label>Pay fee from commission?</label><select id="v-la-pay-fee"><option value="no">No</option><option value="yes">Yes — agent is not from Lee NB, pay from this commission</option></select></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="collapse-section" id="procuring-section">
+      <div class="collapse-toggle" onclick="toggleCollapse(this)">
+        <h3>Procuring Agent</h3>
+        <span class="chevron">&#9662;</span>
+      </div>
+      <div class="collapse-body" id="cb-procuring-agent">
+        <div class="field"><label>Invoice Procuring Agent?</label><select id="v-pa-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div class="row c2">
+          <div class="field"><label>House</label><input id="v-pa-house" placeholder="Brokerage name"></div>
+          <div class="field"><label>Agent Name</label>
+            <div class="agent-picker" id="picker-v-pa-name">
+              <input id="v-pa-name" placeholder="Start typing agent name..." autocomplete="off">
+              <div class="agent-dd" id="dd-v-pa-name"></div>
+            </div>
+          </div>
+        </div>
+        <div class="field"><label>Address</label><input id="v-pa-address"></div>
+        <div class="row c3">
+          <div class="field"><label>City</label><input id="v-pa-city"></div>
+          <div class="field"><label>State</label><input id="v-pa-state" value="CA"></div>
+          <div class="field"><label>Zip</label><input id="v-pa-zip"></div>
+        </div>
+        <div class="row c2">
+          <div class="field"><label>Phone</label><input id="v-pa-phone" type="tel"></div>
+          <div class="field"><label>Pay fee from commission?</label><select id="v-pa-pay-fee"><option value="no">No</option><option value="yes">Yes — agent is not from Lee NB, pay from this commission</option></select></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. OUTSIDE AGENTS -->
+  <div class="card">
+    <h2>Outside Agents <span style="font-weight:400;font-size:11px;text-transform:none;letter-spacing:0;">(Co-operating brokers, referrals, etc.)</span></h2>
+    <table class="broker-table" id="v-outside-table">
+      <thead><tr><th style="width:110px;">Side</th><th>Name</th><th>Address</th><th style="width:130px;">Amount to Pay</th><th style="width:36px;"></th></tr></thead>
+      <tbody id="v-outside-body"></tbody>
+    </table>
+    <button class="btn btn-gray" style="margin-top:8px;" onclick="addOutsideAgent()">+ Add Outside Agent</button>
+    <div class="row c2" style="margin-top:12px;">
+      <div class="field"><label>Total to Outside Agents</label><input id="v-total-outside" placeholder="$0" readonly style="background:#f8f8f8;font-weight:600;"></div>
+      <div></div>
+    </div>
+    <p style="font-size:11px;color:var(--text3);margin-top:4px;">Note: A completed W9 must be received on all new co-ops/referrals before commissions can be processed. Blank W9 available on the intranet.</p>
+  </div>
+
+  <!-- 10. INVOICE INSTRUCTIONS -->
+  <div class="card">
+    <h2>Invoice Instructions</h2>
+    <div class="row c2">
+      <div class="field"><label>Invoice a Different Company?</label><input id="v-inv-company" placeholder="Company name (leave blank if N/A)"></div>
+      <div class="field"><label>Address</label><input id="v-inv-address" placeholder="Address"></div>
+    </div>
+    <div class="field"><label>Special Invoice Instructions</label><textarea id="v-inv-instructions" rows="2" placeholder="Payment schedule, split payments, etc."></textarea></div>
+    <h3 style="margin-top:12px;">Payment Schedule</h3>
+    <table class="broker-table" id="v-payment-table">
+      <thead><tr><th>Date Due</th><th>Amount Due</th><th>Date Due</th><th>Amount Due</th><th style="width:36px;"></th></tr></thead>
+      <tbody id="v-payment-body"></tbody>
+    </table>
+    <button class="btn btn-gray" style="margin-top:8px;" onclick="addPaymentRow()">+ Add Payment</button>
+  </div>
+
+  <!-- 11. COMMISSION DISTRIBUTION -->
+  <div class="card">
+    <h2>Commission Distribution</h2>
+    <div class="row c3" style="margin-bottom:12px;">
+      <div class="field"><label>Total Invoice</label><input id="v-dist-total-invoice" placeholder="$0" readonly style="background:#f8f8f8;font-weight:700;"></div>
+      <div class="field"><label>Total to Outside Agents</label><input id="v-dist-total-outside" placeholder="$0" readonly style="background:#f8f8f8;"></div>
+      <div class="field"><label>Gross $$ to Distribute</label><input id="v-gross-dist" placeholder="$0" readonly style="background:#fdf5f6;font-weight:700;border-color:var(--red);"></div>
+    </div>
+    <table class="broker-table" id="v-dist-table">
+      <thead><tr><th>Agent Name</th><th style="width:100px;">Side</th><th style="width:65px;">Gross %</th><th>Listing Gross</th><th>Procuring Gross</th><th>Both Gross</th><th>Other Gross</th><th>Referring Gross</th><th>NET (ck amt)</th><th style="width:36px;"></th></tr></thead>
+      <tbody id="v-dist-body"></tbody>
+    </table>
+    <button class="btn btn-gray" style="margin-top:8px;" onclick="addDistRow()">+ Add Agent</button>
+  </div>
+
+  <div class="btn-bar">
+    <button class="btn btn-red" onclick="exportVoucherPdf()">Export PDF</button>
+    <button class="btn btn-outline" onclick="openEmailModal('voucher')">Draft Email to Taylor</button>
+    <button class="btn btn-gray" onclick="clearVoucher()">Clear Form</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- TAB 4: COMP INPUT                                                         -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<div id="tab-comp" class="panel">
+  <div class="tip">Industrial Lease Comp Input Form — fill out and export a PDF to email to the research team.</div>
+
+  <!-- HEADER -->
+  <div class="card">
+    <h2>Comp Overview</h2>
+    <div class="row c3">
+      <div class="field"><label>LANB Source</label><input id="c-source" placeholder="e.g. CoStar, LoopNet, Broker"></div>
+      <div class="field"><label>Date</label><input id="c-date" type="date"></div>
+      <div class="field"><label>Deal Type</label>
+        <select id="c-deal-type"><option value="">—</option><option>Direct-New</option><option>Prev Occupied</option><option>New Shell</option><option>Sublease</option><option>New Deal</option><option>Expansion</option><option>Renewal</option><option>Renewal/Expansion</option><option>Renewal/Downsize</option><option>Build-to-Suite</option><option>Ground Lease</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOCATION -->
+  <div class="card">
+    <h2>Location</h2>
+    <div class="row c2">
+      <div class="field"><label>Address</label><input id="c-address" placeholder="16441 Scientific Way"></div>
+      <div class="field"><label>City</label><input id="c-city" placeholder="Irvine"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Market</label>
+        <select id="c-market"><option value="">—</option><option>Los Angeles</option><option>Orange</option><option>Riverside</option><option>San Bernardino</option></select>
+      </div>
+      <div class="field"><label>Submarket</label>
+        <select id="c-submarket"><option value="">—</option><option>SCM</option><option>IBC</option><option>SAE</option><option>WC</option><option>NM</option><option>SOC</option><option>NOC</option><option>Mid Cities</option></select>
+      </div>
+      <div class="field"><label>Project Name</label><input id="c-project" placeholder="Project or building name"></div>
+    </div>
+  </div>
+
+  <!-- PROPERTY INFO + FEATURES side by side -->
+  <div class="card">
+    <h2>Property Information</h2>
+    <div class="row c3">
+      <div class="field"><label>Property Type</label>
+        <select id="c-prop-type"><option value="">—</option><option>Industrial</option><option>Office</option><option>Retail</option><option>Multi-Family</option><option>Land</option></select>
+      </div>
+      <div class="field"><label>Property Subtype</label>
+        <select id="c-subtype"><option value="">—</option><option>Manufacturing</option><option>Warehouse/Distribution</option><option>Light Industrial</option><option>Showroom</option><option>Flex/R&amp;D</option><option>Land</option></select>
+      </div>
+      <div class="field"><label>Building Class</label>
+        <select id="c-bldg-class"><option value="">—</option><option>A</option><option>B</option><option>C</option></select>
+      </div>
+    </div>
+    <div class="row c2">
+      <div class="field"><label>Space Type / Lease Type</label><input id="c-space-type" placeholder="e.g. Industrial/NNN"></div>
+      <div class="field"><label>Construction Type</label>
+        <select id="c-const-type"><option value="">—</option><option>CTU</option><option>Block</option><option>Metal</option></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Property Features</h2>
+    <div class="row c3">
+      <div class="field"><label>Building SF</label><input id="c-bldg-sf" placeholder="0" type="text"></div>
+      <div class="field"><label>Land / Lot Size (SF)</label><input id="c-land-sf" placeholder="0" type="text"></div>
+      <div class="field"><label>Year Built</label><input id="c-year-built" placeholder="1995"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Office SF</label><input id="c-office-sf" placeholder="0" type="text"></div>
+      <div class="field"><label>DH (Dock-High Doors)</label><input id="c-dh" placeholder="0" type="text"></div>
+      <div class="field"><label>GL (Grade Level Doors)</label><input id="c-gl" placeholder="0" type="text"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Clear Height</label><input id="c-clearance" placeholder="24'"></div>
+      <div class="field"><label>Parking Ratio</label><input id="c-parking" placeholder="4/1,000"></div>
+      <div class="field"><label>Amps / Power</label><input id="c-amps" placeholder="e.g. 400A, 3-phase"></div>
+    </div>
+    <div class="row c4">
+      <div class="field"><label>Sprinklers</label><input id="c-sprinklers" placeholder="ESFR"></div>
+      <div class="field"><label>Rail</label>
+        <select id="c-rail"><option value="">—</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field"><label>Yard</label>
+        <select id="c-yard"><option value="">—</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field"><label>Condition</label>
+        <select id="c-condition"><option value="">—</option><option>Average</option><option>Good</option><option>Poor</option></select>
+      </div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Multi-Tenant (Y/N)</label>
+        <select id="c-multi-tenant"><option value="">—</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field"><label>Part of Larger (Y/N)</label>
+        <select id="c-pol"><option value="">—</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field"><label>Opex Cost Estimated?</label>
+        <select id="c-opex-est"><option value="">—</option><option>Yes</option><option>No</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEASE DETAILS -->
+  <div class="card">
+    <h2>Lease Details</h2>
+    <div class="row c3">
+      <div class="field"><label>Space Leased (SF)</label><input id="c-leased-sf" placeholder="0" type="text"></div>
+      <div class="field"><label>Rent/SF (Start Rate)</label><input id="c-rent-sf" placeholder="$0.00"></div>
+      <div class="field"><label>Rent Type</label>
+        <select id="c-rent-type"><option value="">—</option><option>NNN</option><option>G</option></select>
+      </div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Transaction / Exec. Date</label><input id="c-exec-date" type="date"></div>
+      <div class="field"><label>Occupancy Date</label><input id="c-occ-date" type="date"></div>
+      <div class="field"><label>Expire Date</label><input id="c-expire-date" type="date"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Term (Months)</label><input id="c-term" placeholder="e.g. 60"></div>
+      <div class="field"><label>Effective Rent</label><input id="c-eff-rent" placeholder="$0.00"></div>
+      <div class="field"><label>Months on Market</label><input id="c-mkt-months" placeholder="0"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Free Rent</label><input id="c-free-rent" placeholder="e.g. 2 months"></div>
+      <div class="field"><label>TI Allowance</label>
+        <select id="c-ti"><option value="">—</option><option>As-Is</option><option>Paint &amp; Carpet</option><option>Standard</option><option>Not Disclosed</option><option>See comments</option></select>
+      </div>
+      <div class="field"><label>NNN Charges</label><input id="c-nnn" placeholder="$0.00/SF"></div>
+    </div>
+    <div class="row c2">
+      <div class="field"><label>Rent Adj / Escalations</label>
+        <select id="c-escalations"><option value="">—</option><option>2%</option><option>3%</option><option>4%</option><option>$0.02/SF/YR</option><option>$0.03/SF/YR</option><option>$0.04/SF/YR</option><option>$0.05/SF/YR</option><option>See comments</option></select>
+      </div>
+      <div class="field"><label>Options</label>
+        <select id="c-options"><option value="">—</option><option>1, 3-year</option><option>1, 5-year</option><option>2, 5-year</option><option>1, 10-year</option><option>Not Disclosed</option><option>See Comments</option><option>None</option><option>NA</option></select>
+      </div>
+    </div>
+    <div class="row c2">
+      <div class="field"><label>Expense Recovery Type</label>
+        <select id="c-expense-recovery"><option value="">—</option><option>NNN</option><option>IG</option><option>G</option></select>
+      </div>
+      <div class="field"><label>Tenant Type</label>
+        <select id="c-tenant-type"><option value="">—</option><option>Local</option><option>Regional</option><option>National</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- LESSOR / TENANT & BROKER INFO -->
+  <div class="card">
+    <h2>Lessor / Tenant &amp; Broker Info</h2>
+    <div class="row c2">
+      <div class="field"><label>Lessor / Landlord</label><input id="c-lessor" placeholder="Landlord name"></div>
+      <div class="field"><label>Lessee / Tenant</label><input id="c-lessee" placeholder="Tenant name"></div>
+    </div>
+    <div class="row c2">
+      <div class="field"><label>Listing Brokerage</label><input id="c-list-brokerage" placeholder="e.g. Lee & Associates"></div>
+      <div class="field"><label>Procuring Brokerage</label><input id="c-proc-brokerage" placeholder="e.g. CBRE"></div>
+    </div>
+    <div class="row c2">
+      <div class="field"><label>Listing Agent 1</label><input id="c-list-agent1" placeholder="Agent name"></div>
+      <div class="field"><label>Procuring Agent 1</label><input id="c-proc-agent1" placeholder="Agent name"></div>
+    </div>
+    <div class="row c2">
+      <div class="field"><label>Listing Agent 2</label><input id="c-list-agent2" placeholder="Agent name"></div>
+      <div class="field"><label>Procuring Agent 2</label><input id="c-proc-agent2" placeholder="Agent name"></div>
+    </div>
+  </div>
+
+  <!-- COMMENTS -->
+  <div class="card">
+    <h2>Comments</h2>
+    <div class="field"><textarea id="c-comments" rows="4" placeholder="Additional comments, details, or notes..."></textarea></div>
+  </div>
+
+  <div class="btn-bar" style="margin-top:16px;">
+    <button class="btn btn-red" onclick="exportCompPdf()">Export PDF</button>
+    <button class="btn btn-outline" onclick="openEmailModal('comp')">Draft Email</button>
+    <button class="btn btn-gray" onclick="clearComp()">Clear Form</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- EMAIL MODAL                                                               -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="email-modal">
+  <div class="modal">
+    <h2 id="email-modal-title">Draft Email</h2>
+    <div class="field"><label>To</label><input id="em-to" value="tbarnes@lee-associates.com"></div>
+    <div class="field"><label>CC</label><input id="em-cc" placeholder="Optional"></div>
+    <div class="field"><label>Subject</label><input id="em-subject"></div>
+    <div class="field"><label>Body</label><textarea id="em-body" rows="10"></textarea></div>
+    <div class="btn-bar">
+      <button class="btn btn-gray" onclick="closeEmailModal()">Cancel</button>
+      <button class="btn btn-outline" onclick="copyEmail()">Copy to Clipboard</button>
+      <button class="btn btn-red" onclick="openInMailClient()">Open in Mail Client</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// DEALIUS USER ROSTER
+// ═══════════════════════════════════════════════════════════════════════════════
+const DX_USERS = [
+  { id: '1047', name: 'Tom West', role: 'Broker', email: 'twest@lee-associates.com' },
+  { id: '1051', name: 'Gary McArdell', role: 'Broker', email: 'gmcardell@lee-associates.com' },
+  { id: '1052', name: 'Chris Barnett', role: 'Broker', email: '' },
+  { id: '1054', name: 'Matt Durkin', role: 'Broker', email: 'mdurkin@lee-associates.com' },
+  { id: '1056', name: 'Judd Hietbrink', role: 'Broker', email: 'jhietbrink@lee-associates.com' },
+  { id: '1060', name: 'David Bolt', role: 'Broker', email: 'dbolt@lee-associates.com' },
+  { id: '1063', name: 'Brian Barson', role: 'Broker', email: 'bbarson@lee-associates.com' },
+  { id: '1067', name: 'Tim Walker', role: 'Broker', email: 'timwalker@lee-associates.com' },
+  { id: '1071', name: 'Brad Schneider', role: 'Broker', email: 'bschneider@lee-associates.com' },
+  { id: '1076', name: 'Rick Turner', role: 'Broker, Manager', email: 'rturner@lee-associates.com' },
+  { id: '1078', name: 'Jonathan Mejia', role: 'Broker', email: 'jmejia@lee-associates.com' },
+  { id: '1080', name: 'Matt Christensen', role: 'Broker', email: 'mchristensen@lee-associates.com' },
+  { id: '1083', name: 'David Kluver', role: 'Broker', email: 'dkluver@lee-associates.com' },
+  { id: '1092', name: 'Carter Harrington', role: 'Broker', email: 'charrington@lee-associates.com' },
+  { id: '1095', name: 'Alejandro Sherratt', role: 'Broker', email: 'asherratt@lee-associates.com' },
+  { id: '1099', name: 'Charlie Winn', role: 'Broker', email: 'cwinn@lee-associates.com' },
+  { id: '1102', name: 'Eva Abrego', role: 'Office Admin', email: 'eabrego@lee-associates.com' },
+  { id: '1105', name: 'Kelsey Morris', role: 'Office Admin', email: 'kmorris@lee-associates.com' },
+  { id: '1108', name: 'Hayden Toland', role: 'Broker', email: 'htoland@lee-associates.com' },
+  { id: '1109', name: 'Miles Toland', role: 'Broker', email: 'mtoland@lee-associates.com' },
+  { id: '1110', name: 'Matt Biggs', role: 'Broker', email: 'mbiggs@lee-associates.com' },
+  { id: '1112', name: 'Matt Lawer', role: 'Broker', email: 'mlawer@lee-associates.com' },
+  { id: '1113', name: 'Brendan Smith', role: 'Broker', email: 'bsmith@lee-associates.com' },
+  { id: '1114', name: 'Nick Dumke', role: 'Broker', email: 'ndumke@lee-associates.com' },
+  { id: '1116', name: 'John Gessford', role: 'Broker', email: 'jgessford@lee-associates.com' },
+  { id: '1118', name: 'Stephen Madigan', role: 'Broker', email: 'smadigan@lee-associates.com' },
+  { id: '1119', name: 'Jessica O\'Brien', role: 'Admin Assistant', email: 'jobrien@lee-associates.com' },
+  { id: '1121', name: 'Erissa Kat', role: 'Office Admin', email: 'ekat@lee-associates.com' },
+  { id: '1123', name: 'Pitzer Gills', role: 'Broker', email: 'pgills@lee-associates.com' },
+  { id: '1124', name: 'Taylor Barnes', role: 'Office Admin', email: 'tbarnes@lee-associates.com' },
+  { id: '1125', name: 'Libby Gessford', role: 'Broker', email: 'lgessford@lee-associates.com' }
+];
+
+// Separate brokers for the primary dropdown (show brokers first, then admins)
+const DX_BROKERS = DX_USERS.filter(u => u.role.includes('Broker'));
+const DX_ADMINS = DX_USERS.filter(u => !u.role.includes('Broker'));
+const DX_SORTED = [...DX_BROKERS, ...DX_ADMINS];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AGENT PICKER (searchable dropdown)
+// ═══════════════════════════════════════════════════════════════════════════════
+function initAgentPicker(inputId, opts = {}) {
+  const input = document.getElementById(inputId);
+  const dd = document.getElementById('dd-' + inputId);
+  if (!input || !dd) return;
+
+  const onSelect = opts.onSelect || function() {};
+  const showAll = opts.showAll !== false; // show all users or just brokers
+  const list = showAll ? DX_SORTED : DX_BROKERS;
+  let highlighted = -1;
+
+  function render(filter) {
+    dd.innerHTML = '';
+    const q = (filter || '').toLowerCase();
+    const matches = q ? list.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) : list;
+    if (matches.length === 0) {
+      dd.innerHTML = '<div class="no-match">No matching agents</div>';
+    } else {
+      matches.forEach((u, i) => {
+        const opt = document.createElement('div');
+        opt.className = 'agent-opt';
+        opt.dataset.idx = i;
+        opt.innerHTML = '<span><strong>' + u.name + '</strong></span><span><span class="agent-role">' + u.role + '</span><span class="agent-email">' + u.email + '</span></span>';
+        opt.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          selectUser(u);
+        });
+        dd.appendChild(opt);
+      });
+    }
+    highlighted = -1;
+  }
+
+  function selectUser(u) {
+    input.value = u.name;
+    input.dataset.dxId = u.id;
+    input.dataset.dxEmail = u.email;
+    dd.classList.remove('open');
+    onSelect(u);
+  }
+
+  input.addEventListener('focus', () => {
+    render(input.value);
+    dd.classList.add('open');
+  });
+
+  input.addEventListener('input', () => {
+    render(input.value);
+    dd.classList.add('open');
+    // Clear stored ID if user is typing freely
+    delete input.dataset.dxId;
+    delete input.dataset.dxEmail;
+  });
+
+  input.addEventListener('blur', () => {
+    setTimeout(() => dd.classList.remove('open'), 150);
+  });
+
+  input.addEventListener('keydown', (e) => {
+    const opts = dd.querySelectorAll('.agent-opt');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      highlighted = Math.min(highlighted + 1, opts.length - 1);
+      opts.forEach((o, i) => o.classList.toggle('highlighted', i === highlighted));
+      if (opts[highlighted]) opts[highlighted].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      highlighted = Math.max(highlighted - 1, 0);
+      opts.forEach((o, i) => o.classList.toggle('highlighted', i === highlighted));
+      if (opts[highlighted]) opts[highlighted].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter' && highlighted >= 0 && opts[highlighted]) {
+      e.preventDefault();
+      opts[highlighted].dispatchEvent(new MouseEvent('mousedown'));
+    } else if (e.key === 'Escape') {
+      dd.classList.remove('open');
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════════════════════════════════════
+function toggleCollapse(toggleEl) {
+  toggleEl.classList.toggle('open');
+  const body = toggleEl.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    const tabs = ['listing', 'sign', 'voucher', 'comp'];
+    t.classList.toggle('active', tabs[i] === name);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LISTING FORM: PROPERTY TYPE TOGGLING
+// ═══════════════════════════════════════════════════════════════════════════════
+function onPropTypeChange() {
+  const type = document.getElementById('l-prop-type').value;
+  const sections = { industrial: 'sec-industrial', office: 'sec-office', retail: 'sec-retail', land: 'sec-land' };
+  Object.entries(sections).forEach(([key, id]) => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('visible', key === type);
+  });
+
+  // Show/hide building vs land size fields
+  document.getElementById('size-building').classList.toggle('visible', type !== 'land');
+  document.getElementById('size-land').classList.toggle('visible', type === 'land');
+
+  // Show/hide project name for office/retail
+  document.getElementById('field-project-name').style.display = (type === 'office' || type === 'retail') ? '' : 'none';
+
+  // State field is now always visible
+
+  // Show/hide corner for retail
+  document.getElementById('field-corner').style.display = (type === 'retail') ? '' : 'none';
+
+  // Show/hide occupancy for non-land
+  document.getElementById('field-occupancy').style.display = (type !== 'land') ? '' : 'none';
+
+  // Show/hide cap rate for retail sale
+  updateCapRateVisibility();
+
+  // Update SF label
+  const sfLabel = document.getElementById('lbl-sf');
+  if (type === 'retail') sfLabel.textContent = 'GLA / Bldg SF';
+  else if (type === 'office') sfLabel.textContent = 'Building SF';
+  else sfLabel.textContent = 'Size (SF)';
+}
+
+function onTxnTypeChange() {
+  const txn = document.getElementById('l-txn-type').value;
+  const showLease = txn === 'lease' || txn === 'sale-lease' || txn === 'sublease';
+  const showSale = txn === 'sale' || txn === 'sale-lease';
+  document.getElementById('lease-pricing').style.display = showLease ? '' : 'none';
+  document.getElementById('sale-pricing').style.display = showSale ? '' : 'none';
+  updateCapRateVisibility();
+}
+
+function updateCapRateVisibility() {
+  const type = document.getElementById('l-prop-type').value;
+  const txn = document.getElementById('l-txn-type').value;
+  const showCap = type === 'retail' && (txn === 'sale' || txn === 'sale-lease');
+  document.getElementById('cap-rate-row').style.display = showCap ? '' : 'none';
+}
+
+// Release date toggle
+document.querySelectorAll('input[name="l-release"]').forEach(r => {
+  r.addEventListener('change', () => {
+    document.getElementById('l-release-date').disabled = r.value !== 'date';
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LISTING AGENT TABLE MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════════
+let listingAgentCount = 0;
+function addListingAgent() {
+  listingAgentCount++;
+  const body = document.getElementById('listing-agent-body');
+  const tr = document.createElement('tr');
+  const idx = listingAgentCount;
+  tr.innerHTML =
+    '<td><div class="agent-picker" id="picker-la-' + idx + '"><input id="la-name-' + idx + '" placeholder="Start typing agent name..." autocomplete="off"><div class="agent-dd" id="dd-la-name-' + idx + '"></div></div></td>' +
+    '<td><input id="la-phone-' + idx + '" type="tel" placeholder="949-000-0000"></td>' +
+    '<td><input id="la-email-' + idx + '" type="email" placeholder="agent@lee-associates.com"></td>' +
+    '<td><button class="remove-row" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
+  body.appendChild(tr);
+  // Initialize agent picker for this row
+  initAgentPicker('la-name-' + idx, {
+    onSelect: function(u) {
+      document.getElementById('la-email-' + idx).value = u.email;
+    }
+  });
+}
+
+function getListingAgents() {
+  const rows = document.querySelectorAll('#listing-agent-body tr');
+  const agents = [];
+  rows.forEach(tr => {
+    const inputs = tr.querySelectorAll('input');
+    if (inputs.length >= 3) {
+      const name = inputs[0].value.trim();
+      const phone = inputs[1].value.trim();
+      const email = inputs[2].value.trim();
+      if (name) agents.push({ name, phone, email });
+    }
+  });
+  return agents;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SUITE / FLOOR TABLE MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════════
+function addSuiteRow(type) {
+  const body = document.getElementById(type + '-suite-body');
+  const isOffice = type === 'office';
+  const tr = document.createElement('tr');
+  tr.innerHTML = (isOffice ? '<td><input placeholder="Flr"></td>' : '') +
+    '<td><input placeholder="Suite #"></td>' +
+    '<td><input placeholder="SF"></td>' +
+    '<td><input type="date"></td>' +
+    '<td><input placeholder="$/SF"></td>' +
+    '<td><select><option value="no">No</option><option value="yes">Yes</option></select></td>' +
+    '<td><input placeholder="Instructions"></td>' +
+    '<td><input placeholder="Comments"></td>' +
+    '<td><button class="remove-row" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
+  body.appendChild(tr);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SIGN REQUEST: AGENT TABLE & SUPPORT
+// ═══════════════════════════════════════════════════════════════════════════════
+let signAgentCount = 0;
+function addSignAgent() {
+  signAgentCount++;
+  const body = document.getElementById('sign-agent-body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = '<td>' + signAgentCount + '</td>' +
+    '<td><input placeholder="Agent name"></td>' +
+    '<td><input placeholder="e.g. 50%" style="width:100px;"></td>' +
+    '<td><button class="remove-row" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
+  body.appendChild(tr);
+}
+
+function selectSupport(el, type) {
+  document.querySelectorAll('.support-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('s-support').value = type;
+}
+
+// Sign placement image/PDF upload
+let signUploadData = null;
+function handleSignUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { alert('File too large. Max 10MB.'); return; }
+  signUploadData = file;
+  document.getElementById('sign-upload-placeholder').style.display = 'none';
+  const preview = document.getElementById('sign-upload-preview');
+  preview.style.display = 'block';
+  document.getElementById('sign-preview-name').textContent = file.name + ' (' + (file.size / 1024).toFixed(0) + ' KB)';
+  document.getElementById('sign-upload-clear').style.display = '';
+  if (file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      document.getElementById('sign-preview-img').src = e.target.result;
+      document.getElementById('sign-preview-img').style.display = '';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    document.getElementById('sign-preview-img').style.display = 'none';
+    document.getElementById('sign-preview-name').innerHTML = '<span style="font-size:28px;">&#128196;</span><br>' + file.name + ' (' + (file.size / 1024).toFixed(0) + ' KB)';
+  }
+}
+function clearSignUpload() {
+  signUploadData = null;
+  document.getElementById('s-placement-file').value = '';
+  document.getElementById('sign-upload-placeholder').style.display = '';
+  document.getElementById('sign-upload-preview').style.display = 'none';
+  document.getElementById('sign-preview-img').src = '';
+  document.getElementById('sign-upload-clear').style.display = 'none';
+}
+// Drag & drop support
+document.addEventListener('DOMContentLoaded', () => {
+  const zone = document.getElementById('sign-upload-zone');
+  if (zone) {
+    zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.style.borderColor = 'var(--red)'; });
+    zone.addEventListener('dragleave', () => { zone.style.borderColor = 'var(--border)'; });
+    zone.addEventListener('drop', (e) => {
+      e.preventDefault(); zone.style.borderColor = 'var(--border)';
+      const file = e.dataTransfer.files[0];
+      if (file) { const input = document.getElementById('s-placement-file'); const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files; handleSignUpload(input); }
+    });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VOUCHER: RENT SCHEDULE TABLE
+// ═══════════════════════════════════════════════════════════════════════════════
+let rentRowCount = 0;
+function addRentRow() {
+  rentRowCount++;
+  const body = document.getElementById('v-rent-body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = '<td style="text-align:center;font-weight:600;">' + rentRowCount + '</td>' +
+    '<td><input class="rent-monthly" placeholder="$0" oninput="calcRentRow(this)"></td>' +
+    '<td><input class="rent-rate-sf" placeholder="$0.00" readonly style="background:#f8f8f8;"></td>' +
+    '<td><input class="rent-months" placeholder="12" value="12" oninput="calcRentRow(this)"></td>' +
+    '<td><input class="rent-consideration" placeholder="$0" readonly style="background:#f8f8f8;"></td>' +
+    '<td><button class="remove-row" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
+  body.appendChild(tr);
+}
+
+function calcRentRow(el) {
+  const tr = el.closest('tr');
+  const monthly = parseFloat(tr.querySelector('.rent-monthly').value.replace(/[^0-9.\-]/g, '')) || 0;
+  const months = parseInt(tr.querySelector('.rent-months').value) || 0;
+  const dealSf = parseFloat(document.getElementById('v-l-dealsf').value.replace(/[^0-9.]/g, '')) || 0;
+  const rateSf = dealSf > 0 ? (monthly / dealSf) : 0;
+  const consideration = monthly * months;
+  tr.querySelector('.rent-rate-sf').value = rateSf > 0 ? '$' + rateSf.toFixed(4) : '';
+  tr.querySelector('.rent-consideration').value = consideration > 0 ? '$' + consideration.toLocaleString() : '';
+  calcCommSummary();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VOUCHER: OUTSIDE AGENTS TABLE
+// ═══════════════════════════════════════════════════════════════════════════════
+function addOutsideAgent() {
+  const body = document.getElementById('v-outside-body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = '<td><select><option>Listing</option><option>Procuring</option><option>Other</option></select></td>' +
+    '<td><input placeholder="Name"></td>' +
+    '<td><input placeholder="Address"></td>' +
+    '<td><input placeholder="$0"></td>' +
+    '<td><button class="remove-row" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
+  body.appendChild(tr);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VOUCHER: COMMISSION DISTRIBUTION TABLE
+// ═══════════════════════════════════════════════════════════════════════════════
+function addDistRow() {
+  const body = document.getElementById('v-dist-body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = '<td><input placeholder="Agent name"></td>' +
+    '<td><select><option>Listing</option><option>Procuring</option><option>Both</option><option>Other</option><option>Referring</option></select></td>' +
+    '<td><input placeholder="%" style="width:55px;"></td>' +
+    '<td><input placeholder="$0"></td>' +
+    '<td><input placeholder="$0"></td>' +
+    '<td><input placeholder="$0"></td>' +
+    '<td><input placeholder="$0"></td>' +
+    '<td><input placeholder="$0"></td>' +
+    '<td><input placeholder="$0" style="font-weight:600;"></td>' +
+    '<td><button class="remove-row" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
+  body.appendChild(tr);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VOUCHER: TXN TYPE TOGGLE
+// ═══════════════════════════════════════════════════════════════════════════════
+function onVoucherTxnChange() {
+  const txn = document.getElementById('v-txn-type').value;
+  document.getElementById('v-lease-section').style.display = txn === 'lease' ? '' : 'none';
+  document.getElementById('v-sale-section').style.display = txn === 'sale' ? '' : 'none';
+  document.getElementById('v-rent-section').style.display = txn === 'lease' ? '' : 'none';
+  document.getElementById('v-lbl-lessor').textContent = txn === 'sale' ? 'Seller' : 'Lessor / Seller';
+  document.getElementById('v-lbl-lessee').textContent = txn === 'sale' ? 'Buyer' : 'Lessee / Buyer';
+}
+
+// Show/hide "Other" type explanation
+document.getElementById('v-prop-type')?.addEventListener('change', function() {
+  document.getElementById('v-other-type-field').style.display = this.value === 'other' ? '' : 'none';
+});
+
+// Same agent toggle
+function onSameAgentChange() {
+  if (document.getElementById('v-same-agent').value === 'yes') {
+    const la = document.getElementById('v-la-name').value;
+    const house = document.getElementById('v-la-house').value;
+    if (la) { document.getElementById('v-pa-name').value = la; }
+    if (house) { document.getElementById('v-pa-house').value = house; }
+    document.getElementById('v-pa-city').value = document.getElementById('v-la-city').value;
+    document.getElementById('v-pa-state').value = document.getElementById('v-la-state').value;
+    document.getElementById('v-pa-zip').value = document.getElementById('v-la-zip').value;
+    document.getElementById('v-pa-phone').value = document.getElementById('v-la-phone').value;
+    document.getElementById('v-pa-address').value = document.getElementById('v-la-address').value;
+  }
+}
+
+// Payment schedule rows
+function addPaymentRow() {
+  const body = document.getElementById('v-payment-body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = '<td><input type="date"></td>' +
+    '<td><input placeholder="$0"></td>' +
+    '<td><input type="date"></td>' +
+    '<td><input placeholder="$0"></td>' +
+    '<td><button class="remove-row" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
+  body.appendChild(tr);
+}
+
+// Commission summary calculation
+function calcCommSummary() {
+  const txn = document.getElementById('v-txn-type').value;
+  let leaseComm = 0;
+  let saleComm = 0;
+
+  if (txn === 'lease') {
+    // Calculate total consideration from rent schedule
+    let totalConsideration = 0;
+    document.querySelectorAll('#v-rent-body tr').forEach(tr => {
+      const monthly = parseFloat(tr.querySelector('.rent-monthly')?.value.replace(/[^0-9.\-]/g, '')) || 0;
+      const months = parseInt(tr.querySelector('.rent-months')?.value) || 0;
+      totalConsideration += monthly * months;
+    });
+    document.getElementById('v-l-consideration').value = totalConsideration > 0 ? '$' + totalConsideration.toLocaleString() : '';
+
+    const commRate = parseFloat(document.getElementById('v-l-comm-rate').value) || 0;
+    leaseComm = totalConsideration * (commRate / 100);
+    document.getElementById('v-l-comm-due').value = leaseComm > 0 ? '$' + leaseComm.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '';
+
+    // Average rate/sf and monthly
+    const dealSf = parseFloat(document.getElementById('v-l-dealsf')?.value?.replace(/[^0-9.]/g, '')) || 0;
+    let totalMonths = 0;
+    let weightedRent = 0;
+    document.querySelectorAll('#v-rent-body tr').forEach(tr => {
+      const monthly = parseFloat(tr.querySelector('.rent-monthly')?.value.replace(/[^0-9.\-]/g, '')) || 0;
+      const months = parseInt(tr.querySelector('.rent-months')?.value) || 0;
+      totalMonths += months;
+      weightedRent += monthly * months;
+    });
+    const avgMonthly = totalMonths > 0 ? weightedRent / totalMonths : 0;
+    const avgRateSf = dealSf > 0 ? avgMonthly / dealSf : 0;
+    document.getElementById('v-avg-rate-sf').value = avgRateSf > 0 ? '$' + avgRateSf.toFixed(4) : '';
+    document.getElementById('v-avg-monthly').value = avgMonthly > 0 ? '$' + avgMonthly.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '';
+  } else {
+    const price = parseFloat(document.getElementById('v-s-price')?.value?.replace(/[^0-9.]/g, '')) || 0;
+    const pct = parseFloat(document.getElementById('v-s-comm-pct')?.value) || 0;
+    saleComm = price * (pct / 100);
+    document.getElementById('v-s-comm-due').value = saleComm > 0 ? '$' + saleComm.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '';
+    // Auto-calc price/sf
+    const dealSf = parseFloat(document.getElementById('v-deal-sf')?.value?.replace(/[^0-9.]/g, '')) || 0;
+    const landSf = parseFloat(document.getElementById('v-land-sf')?.value?.replace(/[^0-9.]/g, '')) || 0;
+    if (dealSf > 0) document.getElementById('v-s-price-sf').value = '$' + (price / dealSf).toFixed(2);
+    if (landSf > 0) document.getElementById('v-s-land-sf').value = '$' + (price / landSf).toFixed(2);
+  }
+
+  document.getElementById('v-comm-sale').value = saleComm > 0 ? '$' + saleComm.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '';
+
+  const bonus = parseFloat(document.getElementById('v-comm-bonus')?.value?.replace(/[^0-9.\-]/g, '')) || 0;
+  const consulting = parseFloat(document.getElementById('v-comm-consulting')?.value?.replace(/[^0-9.\-]/g, '')) || 0;
+  const totalInvoice = leaseComm + saleComm + bonus + consulting;
+  document.getElementById('v-total-invoice').value = '$' + totalInvoice.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+
+  // Update distribution summary
+  document.getElementById('v-dist-total-invoice').value = document.getElementById('v-total-invoice').value;
+  const totalOutside = parseFloat(document.getElementById('v-total-outside')?.value?.replace(/[^0-9.\-]/g, '')) || 0;
+  document.getElementById('v-dist-total-outside').value = totalOutside > 0 ? '$' + totalOutside.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '$0.00';
+  const grossDist = totalInvoice - totalOutside;
+  document.getElementById('v-gross-dist').value = '$' + grossDist.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+// Auto-calc NNN total
+function calcNNNTotal() {
+  const taxes = parseFloat(document.getElementById('v-l-taxes')?.value?.replace(/[^0-9.]/g, '')) || 0;
+  const ins = parseFloat(document.getElementById('v-l-insurance')?.value?.replace(/[^0-9.]/g, '')) || 0;
+  const misc = parseFloat(document.getElementById('v-l-misc')?.value?.replace(/[^0-9.]/g, '')) || 0;
+  const total = taxes + ins + misc;
+  document.getElementById('v-l-nnn-total').value = total > 0 ? '$' + total.toFixed(2) : '';
+}
+['v-l-taxes', 'v-l-insurance', 'v-l-misc'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', calcNNNTotal);
+});
+
+// Auto-calc outside agent totals
+function calcOutsideTotals() {
+  let total = 0;
+  document.querySelectorAll('#v-outside-body tr').forEach(tr => {
+    const inputs = tr.querySelectorAll('input');
+    const amtInput = inputs[inputs.length - 1]; // last input is amount
+    total += parseFloat(amtInput?.value?.replace(/[^0-9.\-]/g, '')) || 0;
+  });
+  document.getElementById('v-total-outside').value = total > 0 ? '$' + total.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '';
+  calcCommSummary();
+}
+document.getElementById('v-outside-body')?.addEventListener('input', calcOutsideTotals);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COPY LISTING DATA TO SIGN REQUEST
+// ═══════════════════════════════════════════════════════════════════════════════
+function copyToSign() {
+  document.getElementById('s-address').value = document.getElementById('l-address').value;
+  document.getElementById('s-city').value = document.getElementById('l-city').value;
+  document.getElementById('s-cross').value = document.getElementById('l-cross').value;
+  // Copy listing agents to sign request
+  const agents = getListingAgents();
+  if (agents.length > 0) {
+    document.getElementById('s-requested-by').value = agents[0].name;
+    // Clear existing sign agent rows and rebuild from listing agents
+    document.getElementById('sign-agent-body').innerHTML = '';
+    signAgentCount = 0;
+    agents.forEach(a => {
+      addSignAgent();
+      const rows = document.getElementById('sign-agent-body').querySelectorAll('tr');
+      const lastRow = rows[rows.length - 1];
+      if (lastRow) lastRow.querySelector('input').value = a.name;
+    });
+  }
+  switchTab('sign');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CLEAR FORMS
+// ═══════════════════════════════════════════════════════════════════════════════
+function clearListing() {
+  if (!confirm('Clear all listing entry fields?')) return;
+  document.querySelectorAll('#tab-listing input, #tab-listing textarea').forEach(el => { if (el.type !== 'radio' && el.type !== 'checkbox') el.value = ''; });
+  document.querySelectorAll('#tab-listing input[type="radio"]').forEach(el => el.checked = false);
+  document.querySelectorAll('#tab-listing input[type="checkbox"]').forEach(el => el.checked = false);
+  document.querySelectorAll('#tab-listing select').forEach(el => el.selectedIndex = 0);
+  ['office-suite-body', 'retail-suite-body'].forEach(id => document.getElementById(id).innerHTML = '');
+  // Reset listing agents
+  document.getElementById('listing-agent-body').innerHTML = '';
+  listingAgentCount = 0;
+  addListingAgent(); // Add one empty row
+  onPropTypeChange(); onTxnTypeChange();
+}
+
+function clearSign() {
+  if (!confirm('Clear all sign request fields?')) return;
+  document.querySelectorAll('#tab-sign input, #tab-sign textarea').forEach(el => { if (el.type !== 'radio' && el.type !== 'checkbox' && el.type !== 'file') el.value = ''; });
+  document.querySelectorAll('#tab-sign select').forEach(el => el.selectedIndex = 0);
+  document.getElementById('sign-agent-body').innerHTML = '';
+  document.querySelectorAll('.support-opt').forEach(o => o.classList.remove('selected'));
+  signAgentCount = 0;
+  clearSignUpload();
+}
+
+function clearVoucher() {
+  if (!confirm('Clear all voucher fields?')) return;
+  document.querySelectorAll('#tab-voucher input, #tab-voucher textarea').forEach(el => { if (el.type !== 'radio' && el.type !== 'checkbox' && !el.readOnly) el.value = ''; });
+  document.querySelectorAll('#tab-voucher select').forEach(el => el.selectedIndex = 0);
+  ['v-rent-body', 'v-outside-body', 'v-dist-body', 'v-payment-body'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '';
+  });
+  // Reset readonly fields
+  ['v-l-consideration', 'v-l-comm-due', 'v-l-nnn-total', 'v-l-grs-eff', 'v-l-nnn-eff', 'v-l-ig-eff',
+   'v-s-price-sf', 'v-s-land-sf', 'v-s-comm-due', 'v-comm-sale', 'v-total-invoice',
+   'v-avg-rate-sf', 'v-avg-monthly', 'v-total-outside', 'v-dist-total-invoice', 'v-dist-total-outside', 'v-gross-dist'
+  ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  rentRowCount = 0;
+  onVoucherTxnChange();
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PDF HELPERS — shared drawing primitives that replicate the original form look
+// ═══════════════════════════════════════════════════════════════════════════════
+function pdfHelpers(doc) {
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const M = 36; // margin
+  const cw = W - M * 2;
+  let y = 0;
+
+  function checkPage(need) { if (y + need > H - 40) { doc.addPage(); y = 40; } }
+
+  function header(title, dateVal) {
+    // Black bordered box with title
+    doc.setDrawColor(0); doc.setLineWidth(1.5);
+    doc.rect(M, 24, cw * 0.62, 36);
+    doc.setFontSize(18); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+    doc.text(title, M + 12, 49);
+    // Red SUBMIT box
+    doc.setFillColor(196, 18, 48);
+    doc.rect(M + cw * 0.62, 24, 60, 36, 'F');
+    doc.setTextColor(255); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+    doc.text('SUBMIT', M + cw * 0.62 + 10, 46);
+    // Date
+    doc.setTextColor(0); doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+    doc.text('Date Entered ' + (dateVal || '____________'), M + cw * 0.62 + 70, 46);
+    y = 76;
+  }
+
+  function sectionLine() { checkPage(10); doc.setDrawColor(0); doc.setLineWidth(0.75); doc.line(M, y, W - M, y); y += 14; }
+
+  function label(text, x, yy) { doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(0); doc.text(text, x, yy); }
+  function value(text, x, yy, maxW) {
+    doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
+    if (maxW) { doc.text(String(text || ''), x, yy, { maxWidth: maxW }); }
+    else { doc.text(String(text || ''), x, yy); }
+  }
+  function fieldLine(x, yy, w) { doc.setDrawColor(160); doc.setLineWidth(0.5); doc.line(x, yy + 2, x + w, yy + 2); }
+
+  function checkbox(checked, text, x, yy) {
+    doc.setDrawColor(0); doc.setLineWidth(0.5);
+    doc.rect(x, yy - 8, 9, 9);
+    if (checked) {
+      doc.setLineWidth(1.5);
+      doc.setDrawColor(0);
+      doc.line(x + 1.5, yy - 3.5, x + 3.5, yy - 1);
+      doc.line(x + 3.5, yy - 1, x + 7.5, yy - 7);
+      doc.setLineWidth(0.5);
+    }
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+    doc.text(text, x + 14, yy);
+    return doc.getTextWidth(text) + 18;
+  }
+
+  function fieldWithLine(lbl, val, x, yy, lineW) {
+    label(lbl, x, yy);
+    const lblW = doc.getTextWidth(lbl) + 4;
+    if (val) { value(val, x + lblW + 2, yy); }
+    fieldLine(x + lblW, yy, lineW - lblW);
+  }
+
+  return { doc, W, H, M, cw, getY: () => y, setY: (v) => { y = v; }, addY: (v) => { y += v; }, checkPage, header, sectionLine, label, value, fieldLine, checkbox, fieldWithLine };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PDF EXPORT: LISTING ENTRY — matches original form layouts
+// ═══════════════════════════════════════════════════════════════════════════════
+function exportListingPdf() {
+  const type = document.getElementById('l-prop-type').value;
+  if (type === 'industrial') exportIndustrialPdf();
+  else if (type === 'office') exportOfficePdf();
+  else if (type === 'retail') exportRetailPdf();
+  else if (type === 'land') exportLandPdf();
+}
+
+function getVal(id) { const el = document.getElementById(id); return el ? (el.value || '').trim() : ''; }
+function getChecked(name) { return Array.from(document.querySelectorAll('input[name="' + name + '"]:checked')).map(c => c.value); }
+function getRadio(name) { const c = document.querySelector('input[name="' + name + '"]:checked'); return c ? c.value : ''; }
+function getSelect(id) { const el = document.getElementById(id); return el ? el.selectedOptions[0]?.text || '' : ''; }
+
+function drawReleaseAndAgent(p) {
+  let y = p.getY();
+  const agents = getListingAgents();
+  const rightX = p.M + p.cw * 0.58;
+  const rightW = p.cw * 0.41;
+
+  // Left: Listing Release Instructions
+  p.label('Listing Release Instructions', p.M, y);
+  // Right: Listing Agent(s)
+  p.label('Listing Agent(s)', rightX, y);
+  y += 16;
+
+  const release = getRadio('l-release');
+
+  // Print each agent on the right side
+  const agentStartY = y;
+  agents.forEach((a, i) => {
+    const ay = agentStartY + (i * 42);
+    p.value(a.name, rightX, ay);
+    p.fieldLine(rightX, ay, rightW);
+    if (a.phone) { p.fieldWithLine('Phone:', a.phone, rightX, ay + 14, rightW); }
+    if (a.email) { p.fieldWithLine('Email:', a.email, rightX, ay + 28, rightW); }
+  });
+
+  // Left: Release checkboxes
+  p.checkbox(release === 'hold', 'Hold Until Further Notice', p.M, y); y += 16;
+  p.checkbox(release === 'immediate', 'Release to MLS and Website Immediately', p.M, y); y += 16;
+  p.checkbox(release === 'date', 'Release to MLS and Website on', p.M, y);
+  p.value(getVal('l-release-date') || '________', p.M + 210, y);
+  p.value('(Date)', p.M + 270, y); y += 20;
+  // MLS Notification
+  p.label('Notify the Multiple Listing Services?', p.M, y); y += 16;
+  const agentNotify = getVal('l-agent-notify');
+  p.checkbox(agentNotify === 'admin-immediate', 'Admin releases to MLS immediately', p.M, y); y += 16;
+  p.checkbox(agentNotify === 'admin-date', 'Notify the MLS on this date: ________', p.M, y); y += 16;
+  p.checkbox(agentNotify === 'agent-notified', 'Agent will notify / has already notified the MLS', p.M, y);
+  y += 14;
+
+  // Ensure y is at least past the agent block
+  const agentEndY = agentStartY + (agents.length * 42) + 8;
+  if (y < agentEndY) y = agentEndY;
+
+  p.setY(y);
+}
+
+function drawListingType(p) {
+  let y = p.getY();
+  const txn = getVal('l-txn-type');
+  const newMod = getVal('l-new-mod');
+  // Row 1
+  p.checkbox(newMod === 'new', 'New Listing', p.M, y);
+  p.checkbox(txn === 'lease', 'Lease', p.M + 130, y);
+  p.fieldWithLine('Lease/Mo.:', getVal('l-lease-mo') ? '$' + getVal('l-lease-mo') : '', p.M + 230, y, 130);
+  p.fieldWithLine('Sale Price:', getVal('l-sale-price') ? '$' + getVal('l-sale-price') : '', p.M + 380, y, 140);
+  y += 18;
+  p.checkbox(newMod === 'mod', 'Listing Modification', p.M, y);
+  p.checkbox(txn === 'sale', 'Sale', p.M + 130, y);
+  p.fieldWithLine('$/SF:', getVal('l-lease-sf') ? '$' + getVal('l-lease-sf') : '', p.M + 230, y, 130);
+  p.fieldWithLine('$/SF:', getVal('l-sale-sf') ? '$' + getVal('l-sale-sf') : '', p.M + 380, y, 140);
+  y += 18;
+  p.checkbox(txn === 'sale-lease', 'Sale /Lease', p.M + 130, y);
+  p.fieldWithLine('Term:', getVal('l-lease-term'), p.M + 230, y, 130);
+  p.fieldWithLine('Terms:', getVal('l-sale-terms'), p.M + 380, y, 140);
+  y += 18;
+  p.checkbox(txn === 'sublease', 'Sublease', p.M + 130, y);
+  p.setY(y);
+}
+
+// ─── INDUSTRIAL ─────────────────────────────────────────────────────────────
+function exportIndustrialPdf() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
+  const p = pdfHelpers(doc);
+  p.header('INDUSTRIAL LISTING ENTRY FORM', getVal('l-date-entered'));
+
+  drawReleaseAndAgent(p);
+  p.sectionLine();
+
+  // Listing type
+  drawListingType(p);
+  let y = p.getY();
+  const leaseType = getVal('l-lease-type');
+  p.value('Type:', p.M + 230, y);
+  p.checkbox(leaseType === 'Gross' || leaseType === 'G', 'G', p.M + 265, y);
+  p.checkbox(leaseType === 'NNN', 'NNN', p.M + 295, y);
+  p.checkbox(leaseType === 'FSG (Full Service Gross)' || leaseType === 'FSG', 'FSG', p.M + 345, y);
+  y += 14; p.setY(y);
+  p.sectionLine();
+
+  // Property details — two columns
+  y = p.getY();
+  const leftX = p.M; const rightX = p.M + p.cw * 0.58;
+  p.fieldWithLine('Address:', getVal('l-address'), leftX, y, p.cw * 0.55);
+  p.fieldWithLine('Size:', getVal('l-ind-size') || getVal('l-bldg-sf'), rightX, y, p.cw * 0.4); y += 18;
+  p.fieldWithLine('City:', getVal('l-city'), leftX, y, p.cw * 0.55);
+  p.fieldWithLine('Office:', getVal('l-ind-office'), rightX, y, p.cw * 0.4); y += 18;
+  p.fieldWithLine('Cross Street:', getVal('l-cross'), leftX, y, p.cw * 0.55);
+  p.fieldWithLine('Parking:', getVal('l-ind-parking'), rightX, y, p.cw * 0.4); y += 18;
+  p.fieldWithLine('Zip:', getVal('l-zip'), leftX, y, 220);
+  p.value('Yard:', rightX, y); const yard = getVal('l-ind-yard');
+  p.checkbox(yard === 'yes', 'Yes', rightX + 40, y); p.checkbox(yard === 'no', 'No', rightX + 85, y); y += 18;
+  p.fieldWithLine('Year Built:', getVal('l-year-built'), leftX, y, 100);
+  p.fieldWithLine('Zoning:', getVal('l-ind-zoning'), leftX + 120, y, 120);
+  p.fieldWithLine('GL:', getVal('l-ind-gl'), rightX, y, p.cw * 0.4); y += 18;
+  p.fieldWithLine('Construction Type:', getVal('l-ind-construction'), leftX, y, p.cw * 0.55);
+  p.fieldWithLine('DH:', getVal('l-ind-dh'), rightX, y, p.cw * 0.4); y += 18;
+  // Building type checkboxes
+  const bldgTypes = getChecked('l-bldg-type');
+  p.checkbox(bldgTypes.includes('freestanding'), 'Freestanding', leftX, y);
+  p.checkbox(bldgTypes.includes('pol'), 'POL', leftX + 100, y);
+  p.checkbox(bldgTypes.includes('multi'), 'Multi', leftX + 155, y);
+  p.checkbox(bldgTypes.includes('condo'), 'Condo', leftX + 210, y);
+  p.fieldWithLine('Sprinklers:', getVal('l-ind-sprinklers'), rightX, y, p.cw * 0.4); y += 18;
+  // Use checkboxes
+  const uses = getChecked('l-use');
+  p.value('Use:', leftX, y); p.checkbox(uses.includes('mfg'), 'Mfg', leftX + 30, y);
+  p.checkbox(uses.includes('whse'), 'Whse/Dist.', leftX + 80, y);
+  p.checkbox(uses.includes('rd'), 'R&D', leftX + 160, y);
+  p.fieldWithLine('Clearance:', getVal('l-ind-clearance'), rightX, y, p.cw * 0.4); y += 18;
+  p.fieldWithLine('Amps/Power:', getVal('l-ind-amps'), rightX, y, p.cw * 0.4); y += 14;
+  p.setY(y);
+  p.sectionLine();
+
+  // Availability / Occupancy / Showing / Comments
+  y = p.getY();
+  const avail = getVal('l-avail'); const occ = getVal('l-occupancy'); const show = getVal('l-showing');
+  const col1 = p.M; const col2 = p.M + 120; const col3 = p.M + 260; const col4 = p.M + 380;
+  p.label('Availability:', col1, y); p.label('Occupancy:', col2, y); p.label('Showing:', col3, y); p.label('Comments:', col4, y); y += 14;
+  p.checkbox(avail === 'now', 'Now', col1, y); p.checkbox(occ === 'vacant', 'Vacant', col2, y); p.checkbox(show === 'lockbox', 'Lockbox', col3, y);
+  // Comments box
+  doc.setDrawColor(0); doc.setLineWidth(0.5); doc.rect(col4, y - 10, p.W - p.M - col4, 80);
+  const comments = getVal('l-comments');
+  if (comments) { doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.text(comments, col4 + 4, y + 2, { maxWidth: p.W - p.M - col4 - 8 }); }
+  y += 16;
+  p.checkbox(avail === '30days', '30 Days', col1, y); p.checkbox(occ === 'occupied', 'Occupied', col2, y); p.checkbox(show === 'see-tenant', 'See Tenant', col3, y); y += 16;
+  p.checkbox(avail === 'coe', 'COE', col1, y); p.checkbox(occ === 'construction', 'Under Construction', col2, y); p.checkbox(show === 'do-not-disturb', 'Do Not Disturb', col3, y); y += 16;
+  p.checkbox(show === 'show-card', 'Show Card', col3, y); y += 16;
+  p.checkbox(show === 'call', 'Call to Show', col3, y);
+
+  doc.save('Industrial_Listing_' + (getVal('l-address') || 'Form').replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30) + '.pdf');
+}
+
+// ─── OFFICE ─────────────────────────────────────────────────────────────────
+function exportOfficePdf() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
+  const p = pdfHelpers(doc);
+  p.header('OFFICE LISTING ENTRY FORM', getVal('l-date-entered'));
+
+  drawReleaseAndAgent(p);
+  // Office also has Comm Code in agent section — already handled
+  p.sectionLine();
+
+  // Listing type — office adds Suite(s) for Lease or Sublease
+  drawListingType(p);
+  let y = p.getY();
+  const txn = getVal('l-txn-type');
+  p.checkbox(txn === 'sublease' || txn === 'lease', 'Suite(s) for Lease or Sublease', p.M + 130, y);
+  p.label('(see Floor by Floor below)', p.M + 310, y);
+  const leaseType = getVal('l-lease-type');
+  p.value('Type:', p.M + 230, y + 18);
+  p.checkbox(leaseType.includes('FSG'), 'FSG', p.M + 265, y + 18);
+  p.checkbox(leaseType.includes('MG'), 'MG', p.M + 310, y + 18);
+  p.checkbox(leaseType === 'NNN', 'NNN', p.M + 350, y + 18);
+  y += 32; p.setY(y);
+  p.sectionLine();
+
+  // Property — 3 columns
+  y = p.getY();
+  const leftX = p.M; const midX = p.M + p.cw * 0.45; const rightX = p.M + p.cw * 0.7;
+  p.fieldWithLine('Project Name:', getVal('l-project-name'), leftX, y, p.cw * 0.42);
+  p.fieldWithLine('Building SF:', getVal('l-off-bldg-sf') || getVal('l-bldg-sf'), midX, y, 120);
+  p.fieldWithLine('Parking Ratio:', getVal('l-parking-ratio'), rightX, y, 120); y += 18;
+  p.fieldWithLine('Address:', getVal('l-address'), leftX, y, p.cw * 0.42);
+  p.fieldWithLine('Building Class:', getVal('l-off-class'), midX, y, 120);
+  // Parking checkboxes
+  const parking = getChecked('l-off-parking');
+  p.checkbox(parking.includes('surface'), 'Surface Parking', rightX, y); y += 18;
+  p.fieldWithLine('City:', getVal('l-city'), leftX, y, 180);
+  p.fieldWithLine('Zip:', getVal('l-zip'), leftX + 200, y, 100);
+  p.fieldWithLine('Year Built:', getVal('l-year-built'), midX, y, 120);
+  p.checkbox(parking.includes('covered'), 'Covered Parking', rightX, y); y += 18;
+  p.fieldWithLine('Cross Street:', getVal('l-cross'), leftX, y, p.cw * 0.42);
+  p.fieldWithLine('No. of Floors:', getVal('l-off-floors'), midX, y, 120);
+  p.checkbox(parking.includes('street'), 'Street Parking', rightX, y); y += 18;
+  p.fieldWithLine('Pass. Elev:', getVal('l-off-pass-elev'), midX, y, 120);
+  p.checkbox(false, 'Reserved $', rightX, y); p.value(getVal('l-off-reserved') ? '$' + getVal('l-off-reserved') : '', rightX + 90, y); y += 18;
+  p.fieldWithLine('Freight Elev:', getVal('l-off-freight-elev'), midX, y, 120);
+  p.checkbox(false, 'Non-Reserved $', rightX, y); p.value(getVal('l-off-nonreserved') ? '$' + getVal('l-off-nonreserved') : '', rightX + 110, y); y += 18;
+  p.fieldWithLine('Load Factor:', getVal('l-off-load'), midX, y, 120);
+  p.checkbox(parking.includes('free'), 'Free Parking', rightX, y); y += 18;
+  p.setY(y);
+
+  // Floor by Floor table
+  y = p.getY();
+  p.label('Floor by Floor', p.M, y); y += 4;
+  const offRows = document.getElementById('office-suite-body').querySelectorAll('tr');
+  const tableData = [];
+  offRows.forEach(tr => {
+    const cells = tr.querySelectorAll('input, select');
+    const row = Array.from(cells).map(c => c.value || '');
+    if (row.some(v => v)) tableData.push(row);
+  });
+  // Always show at least 6 empty rows
+  while (tableData.length < 6) tableData.push(['', '', '', '', '', '', '', '']);
+  doc.autoTable({
+    startY: y, margin: { left: p.M, right: p.M },
+    head: [['FLR #', 'SUITE #', 'AVAIL SF', 'DATE AVAIL', 'LEASE RATE/SF', 'SUBLEASE', 'TO SHOW', 'COMMENTS']],
+    body: tableData,
+    styles: { fontSize: 8, cellPadding: 4, lineColor: [0, 0, 0], lineWidth: 0.5 },
+    headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', lineColor: [0, 0, 0], lineWidth: 0.5 },
+    theme: 'grid'
+  });
+  y = doc.lastAutoTable.finalY + 12;
+  p.setY(y);
+
+  // Comments
+  p.label('Comments:', p.M, y); y += 4;
+  doc.setDrawColor(0); doc.setLineWidth(0.5);
+  doc.rect(p.M, y, p.cw, 80);
+  if (getVal('l-comments')) { doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.text(getVal('l-comments'), p.M + 4, y + 12, { maxWidth: p.cw - 8 }); }
+
+  doc.save('Office_Listing_' + (getVal('l-address') || 'Form').replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30) + '.pdf');
+}
+
+// ─── RETAIL ─────────────────────────────────────────────────────────────────
+function exportRetailPdf() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
+  const p = pdfHelpers(doc);
+  p.header('RETAIL LISTING ENTRY FORM', getVal('l-date-entered'));
+
+  drawReleaseAndAgent(p);
+  p.sectionLine();
+
+  // Listing type
+  drawListingType(p);
+  let y = p.getY();
+  const leaseType = getVal('l-lease-type');
+  p.value('Type:', p.M + 230, y);
+  p.checkbox(leaseType.includes('FSG'), 'FSG', p.M + 265, y);
+  p.checkbox(leaseType.includes('MG'), 'MG', p.M + 310, y);
+  p.checkbox(leaseType === 'NNN', 'NNN', p.M + 350, y);
+  // CAP Rate for sale
+  p.fieldWithLine('CAP Rate:', getVal('l-cap-rate'), p.M + 380, y, 140);
+  y += 14; p.setY(y);
+  p.sectionLine();
+
+  // Property — 3 columns
+  y = p.getY();
+  const leftX = p.M; const midX = p.M + p.cw * 0.45; const rightX = p.M + p.cw * 0.7;
+  p.fieldWithLine('Property Name:', getVal('l-project-name'), leftX, y, p.cw * 0.42);
+  p.fieldWithLine('GLA/Bldg. SF:', getVal('l-ret-gla') || getVal('l-bldg-sf'), midX, y, 120);
+  p.label('PROPERTY TYPE', rightX, y); y += 16;
+  p.fieldWithLine('Address:', getVal('l-address'), leftX, y, p.cw * 0.42);
+  p.fieldWithLine('Year Built:', getVal('l-year-built'), midX, y, 120);
+  const retType = getRadio('l-ret-type');
+  p.checkbox(retType === 'vacant-land', 'Vacant Land', rightX, y); y += 16;
+  p.fieldWithLine('City:', getVal('l-city'), leftX, y, 120);
+  p.fieldWithLine('State:', getVal('l-state') || 'CA', leftX + 140, y, 40);
+  p.fieldWithLine('Zip:', getVal('l-zip'), leftX + 210, y, 80);
+  p.fieldWithLine('Parking Ratio:', getVal('l-parking-ratio'), midX, y, 120);
+  p.checkbox(retType === 'single-tenant', 'Single Tenant', rightX, y); y += 16;
+  p.fieldWithLine('Cross Streets:', getVal('l-cross'), leftX, y, 200);
+  p.fieldWithLine('Corner:', getVal('l-corner'), leftX + 220, y, 60);
+  p.fieldWithLine('No. of Floors:', getVal('l-ret-floors'), midX, y, 120);
+  p.checkbox(retType === 'multi-tenant', 'Multi Tenant', rightX, y); y += 16;
+  p.checkbox(retType === 'neighborhood', 'Neighborhood Center', rightX, y);
+  p.fieldWithLine('NNN Charges:', getVal('l-ret-nnn'), midX, y, 120); y += 16;
+  p.checkbox(retType === 'strip-mall', 'Strip Mall', rightX, y);
+  // Description box
+  p.label('Description:', leftX, y); y += 4;
+  doc.setDrawColor(0); doc.setLineWidth(0.5); doc.rect(leftX, y, p.cw * 0.42, 50);
+  if (getVal('l-ret-desc')) { doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.text(getVal('l-ret-desc'), leftX + 4, y + 10, { maxWidth: p.cw * 0.42 - 8 }); }
+  // Demographics
+  p.label('DEMOGRAPHICS', midX, y + 6);
+  p.fieldWithLine('Traffic Count:', getVal('l-ret-traffic'), midX, y + 20, 120);
+  p.fieldWithLine('Median Income:', getVal('l-ret-income'), midX, y + 36, 120);
+  p.fieldWithLine('# of Households:', getVal('l-ret-households'), midX, y + 52, 120);
+  p.checkbox(retType === 'convenience', 'Convenience', rightX, y + 6);
+  p.checkbox(retType === 'grocery', 'Grocery Anchored', rightX, y + 22);
+  p.checkbox(retType === 'indoor-mall', 'Indoor Shopping Center', rightX, y + 38);
+  p.checkbox(retType === 'outlet', 'Outlet Mall', rightX, y + 54);
+  y += 64; p.setY(y);
+
+  // Suite table
+  p.label('Suite(s) for Lease or Sublease:', p.M, y); y += 4;
+  const retRows = document.getElementById('retail-suite-body').querySelectorAll('tr');
+  const tableData = [];
+  retRows.forEach(tr => {
+    const cells = tr.querySelectorAll('input, select');
+    const row = Array.from(cells).map(c => c.value || '');
+    if (row.some(v => v)) tableData.push(row);
+  });
+  while (tableData.length < 6) tableData.push(['', '', '', '', '', '', '']);
+  doc.autoTable({
+    startY: y, margin: { left: p.M, right: p.M },
+    head: [['SUITE #', 'AVAIL SF', 'DATE AVAIL', 'LEASE RATE/SF', 'SUBLEASE', 'TO SHOW', 'COMMENTS']],
+    body: tableData,
+    styles: { fontSize: 8, cellPadding: 4, lineColor: [0, 0, 0], lineWidth: 0.5 },
+    headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', lineColor: [0, 0, 0], lineWidth: 0.5 },
+    theme: 'grid'
+  });
+  y = doc.lastAutoTable.finalY + 12; p.setY(y);
+
+  // Comments
+  p.label('Comments:', p.M, y); y += 4;
+  doc.setDrawColor(0); doc.setLineWidth(0.5); doc.rect(p.M, y, p.cw, 60);
+  if (getVal('l-comments')) { doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.text(getVal('l-comments'), p.M + 4, y + 12, { maxWidth: p.cw - 8 }); }
+
+  doc.save('Retail_Listing_' + (getVal('l-address') || 'Form').replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30) + '.pdf');
+}
+
+// ─── LAND ───────────────────────────────────────────────────────────────────
+function exportLandPdf() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
+  const p = pdfHelpers(doc);
+  p.header('LAND LISTING ENTRY FORM', getVal('l-date-entered'));
+
+  drawReleaseAndAgent(p);
+  p.sectionLine();
+
+  // Listing type
+  drawListingType(p);
+  let y = p.getY();
+  const leaseType = getVal('l-lease-type');
+  p.value('Type:', p.M + 230, y);
+  p.checkbox(leaseType === 'Gross' || leaseType === 'G', 'G', p.M + 265, y);
+  p.checkbox(leaseType === 'Net' || leaseType === 'N', 'N', p.M + 290, y);
+  p.checkbox(leaseType.includes('MG'), 'MG', p.M + 315, y);
+  p.checkbox(leaseType.includes('Modified Net') || leaseType === 'MN', 'MN', p.M + 345, y);
+  p.checkbox(leaseType.includes('FSG'), 'FSG', p.M + 380, y);
+  y += 14; p.setY(y);
+  p.sectionLine();
+
+  // Property — 3 columns
+  y = p.getY();
+  const leftX = p.M; const midX = p.M + p.cw * 0.42; const rightX = p.M + p.cw * 0.58;
+  p.fieldWithLine('Address:', getVal('l-address'), leftX, y, p.cw * 0.4);
+  p.label('Condition', midX, y); p.label('Availability:', rightX, y); y += 16;
+  p.fieldWithLine('City:', getVal('l-city'), leftX, y, p.cw * 0.4);
+  const cond = getRadio('l-land-cond'); const avail = getVal('l-avail');
+  p.checkbox(cond === 'finished', 'Finished Lot', midX, y); p.checkbox(avail === 'now', 'Now', rightX, y); y += 16;
+  p.fieldWithLine('Cross Street:', getVal('l-cross'), leftX, y, p.cw * 0.4);
+  p.checkbox(cond === 'rough', 'Rough Graded', midX, y); p.checkbox(avail === '30days', '30 Days', rightX, y); y += 16;
+  p.fieldWithLine('Zip:', getVal('l-zip'), leftX, y, 220);
+  p.checkbox(cond === 'grading', 'Grading Required', midX, y); p.checkbox(avail === 'coe', 'COE', rightX, y); y += 20;
+
+  // Size
+  p.label('Size - Acres', leftX + 20, y); p.label('Size - Sq. Ft.', leftX + 140, y); y += 16;
+  p.fieldWithLine('Gross', getVal('l-acres-gross'), leftX + 20, y, 100);
+  p.fieldWithLine('Gross', getVal('l-land-sf-gross'), leftX + 140, y, 100);
+  // Existing Use / Possible Use
+  p.label('Existing Use', midX, y); p.label('Possible Use', rightX, y); y += 16;
+  p.fieldWithLine('Net', getVal('l-acres-net'), leftX + 20, y, 100);
+  p.fieldWithLine('Net', getVal('l-land-sf-net'), leftX + 140, y, 100);
+  const exist = getChecked('l-land-exist'); const possible = getChecked('l-land-possible');
+  p.checkbox(exist.includes('development'), 'Development', midX, y); p.checkbox(possible.includes('industrial'), 'Industrial', rightX, y); y += 16;
+  p.checkbox(exist.includes('contractor'), 'Contractor Yard', midX, y); p.checkbox(possible.includes('office'), 'Office', rightX, y); y += 16;
+  // Zoning
+  p.label('Zoning', leftX, y);
+  doc.setDrawColor(0); doc.setLineWidth(0.5); doc.rect(leftX, y + 4, 120, 40);
+  if (getVal('l-land-zoning')) { doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.text(getVal('l-land-zoning'), leftX + 4, y + 16, { maxWidth: 112 }); }
+  p.fieldWithLine('Fenced?', getVal('l-land-fenced'), leftX + 140, y, 100);
+  p.checkbox(exist.includes('storage'), 'Storage', midX, y); p.checkbox(possible.includes('retail'), 'Retail', rightX, y); y += 18;
+  p.fieldWithLine('Assessments?', getVal('l-land-assess'), leftX + 140, y, 100); y += 18;
+  p.fieldWithLine('Plans?', getVal('l-land-plans'), leftX + 140, y, 100);
+  // Showing
+  const show = getVal('l-showing');
+  p.label('Showing:', midX, y); y += 16;
+  p.checkbox(show === 'call', 'Call to Show', midX, y); y += 16;
+  // Additional Features
+  p.label('Additional Features', leftX, y); y += 4;
+  doc.setDrawColor(0); doc.setLineWidth(0.5); doc.rect(leftX, y, p.cw * 0.42, 80);
+  if (getVal('l-land-features')) { doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.text(getVal('l-land-features'), leftX + 4, y + 12, { maxWidth: p.cw * 0.42 - 8 }); }
+  p.checkbox(show === 'lockbox', 'Lockbox', midX, y); y += 16;
+  p.checkbox(show === 'do-not-disturb', 'Do Not Disturb', midX, y);
+
+  doc.save('Land_Listing_' + (getVal('l-address') || 'Form').replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30) + '.pdf');
+}
+
+/* Old listing export removed — now uses type-specific functions above */
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PDF EXPORT: SIGN REQUEST — matches original Cimarron form layout
+// ═══════════════════════════════════════════════════════════════════════════════
+function exportSignPdf() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
+  const W = doc.internal.pageSize.getWidth();
+  let y = 40;
+  const margin = 36;
+
+  // Header — Lee logo area (left) and Cimarron area (right)
+  doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(196, 18, 48);
+  doc.text('LEE & ASSOCIATES', margin, 40);
+  doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(100);
+  doc.text('COMMERCIAL REAL ESTATE SERVICES', margin, 50);
+  doc.text('NEWPORT BEACH', margin, 60);
+  doc.setTextColor(196, 18, 48); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+  doc.text('949.724.1000', margin, 74);
+
+  // Title
+  y = 100;
+  doc.setFontSize(22); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+  doc.text('SIGN REQUEST', W / 2, y, { align: 'center' });
+  y = 130;
+  doc.setTextColor(0, 0, 0);
+
+  // Helper functions
+  function sLabel(text, x, yy) { doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text(text, x, yy); }
+  function sValue(text, x, yy) { doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.text(String(text || ''), x, yy); }
+  function sLine(x, yy, w) { doc.setDrawColor(160); doc.setLineWidth(0.5); doc.line(x, yy + 2, x + w, yy + 2); }
+  function sCheckbox(checked, text, x, yy) {
+    doc.setDrawColor(0); doc.setLineWidth(0.5); doc.rect(x, yy - 8, 9, 9);
+    if (checked) {
+      doc.setLineWidth(1.5);
+      doc.setDrawColor(0);
+      doc.line(x + 1.5, yy - 3.5, x + 3.5, yy - 1);
+      doc.line(x + 3.5, yy - 1, x + 7.5, yy - 7);
+      doc.setLineWidth(0.5);
+    }
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.text(text, x + 14, yy);
+  }
+
+  // DATE and ORDER IS FOR
+  sLabel('DATE', margin, y); sValue(getVal('s-date'), margin + 40, y);
+  sLine(margin + 35, y, 100);
+  sLabel('ORDER IS FOR', margin + 180, y);
+  const orderType = getSelect('s-order-type');
+  sCheckbox(orderType === 'Installation', 'INSTALLATION', margin + 270, y);
+  sCheckbox(orderType === 'Removal', 'REMOVAL', margin + 380, y);
+  sCheckbox(orderType === 'Maintenance', 'MAINTENANCE', W - margin - 100, y);
+  y += 22;
+
+  // PO
+  sLabel('PO:', margin, y); sValue(getVal('s-po'), margin + 25, y); sLine(margin + 22, y, 100); y += 22;
+
+  // PROPERTY ADDRESS
+  sLabel('PROPERTY ADDRESS', margin, y); sValue(getVal('s-address') + (getVal('s-city') ? ', ' + getVal('s-city') : ''), margin + 120, y); sLine(margin + 118, y, W - margin * 2 - 118); y += 22;
+
+  // CROSS STREETS
+  sLabel('CROSS STREETS, BUILDING NAME, ETC.', margin, y); sValue(getVal('s-cross'), margin + 230, y); sLine(margin + 228, y, W - margin * 2 - 228); y += 22;
+
+  // ACCESS
+  sLabel('ACCESS NECESSARY?', margin, y);
+  const access = getVal('s-access');
+  sCheckbox(access === 'no', 'NO', margin + 130, y); sCheckbox(access === 'yes', 'YES', margin + 170, y);
+  sLabel('CONTACT', margin + 220, y); sValue(getVal('s-access-contact'), margin + 280, y); sLine(margin + 278, y, W - margin * 2 - 278);
+  y += 22;
+
+  // Sign specs table — matching original 2-column layout
+  const signTableData = [
+    ["4' x 8'", getVal('s-4x8-qty'), getSelect('s-4x8-loc'), 'OTHER: ' + (getVal('s-other-size') || '__ x __'), getVal('s-other-qty'), ''],
+    ["6' x 8'", getVal('s-6x8-qty'), getSelect('s-6x8-loc'), 'BANNER: ' + (getVal('s-banner-size') || '__ x __'), '', getSelect('s-banner-loc')]
+  ];
+  doc.autoTable({
+    startY: y, margin: { left: margin, right: margin },
+    head: [['SIGN SIZE', 'QUANTITY', 'LOCATION', 'SIGN SIZE', 'QUANTITY', 'LOCATION']],
+    body: signTableData,
+    styles: { fontSize: 9, cellPadding: 5, lineColor: [0, 0, 0], lineWidth: 0.5 },
+    headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', lineColor: [0, 0, 0], lineWidth: 0.5 },
+    theme: 'grid'
+  });
+  y = doc.lastAutoTable.finalY + 16;
+
+  // NAME RIDER / CUSTOM RIDER
+  sLabel('NAME RIDER:', margin, y); sValue(getVal('s-rider'), margin + 85, y); sLine(margin + 83, y, W - margin * 2 - 83); y += 18;
+  sLabel('CUSTOM RIDER:', margin, y); sValue(getVal('s-custom-rider'), margin + 100, y); sLine(margin + 98, y, W - margin * 2 - 98); y += 22;
+
+  // Diagram box
+  doc.setDrawColor(0); doc.setLineWidth(1);
+  doc.line(margin, y, W - margin, y); // double line top
+  doc.line(margin, y + 2, W - margin, y + 2);
+  y += 14;
+  doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+  doc.text('Diagram showing most desirable placement for sign(s):', margin, y); y += 6;
+
+  // Sign support configuration
+  sLabel('SIGN SUPPORT CONFIGURATION:', margin, y + 30);
+  doc.setFontSize(8); doc.text('(Check one, if appropriate)', margin, y + 40);
+  // S/F icon
+  const support = getVal('s-support');
+  const iconX1 = margin + 200; const iconX2 = iconX1 + 80; const iconX3 = iconX2 + 80;
+  doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+  doc.text('S/F', iconX1 + 10, y + 50);
+  doc.text('D/F', iconX2 + 10, y + 50);
+  doc.text('V-SHAPE', iconX3, y + 50);
+  // Checkboxes under each
+  sCheckbox(support === 'sf', '', iconX1 + 12, y + 68);
+  sCheckbox(support === 'df', '', iconX2 + 12, y + 68);
+  sCheckbox(support === 'vshape', '', iconX3 + 12, y + 68);
+  y += 82;
+
+  // COMMENTS
+  sLabel('COMMENTS:', margin, y); sValue(getVal('s-comments'), margin + 80, y); sLine(margin + 78, y, W - margin * 2 - 78); y += 22;
+
+  // Double line divider
+  doc.setDrawColor(0); doc.setLineWidth(1);
+  doc.line(margin, y, W - margin, y);
+  doc.line(margin, y + 2, W - margin, y + 2);
+  y += 18;
+
+  // REQUESTED BY
+  sLabel('REQUESTED BY', margin, y); sValue(getVal('s-requested-by'), margin + 100, y); sLine(margin + 98, y, 200); y += 20;
+
+  // Agent table
+  const agentRows = document.getElementById('sign-agent-body').querySelectorAll('tr');
+  const agentData = [];
+  for (let i = 0; i < 4; i++) {
+    const tr = agentRows[i];
+    const name = tr ? (tr.querySelectorAll('input')[0]?.value || '') : '';
+    const pct = tr ? (tr.querySelectorAll('input')[1]?.value || '') : '';
+    agentData.push(['Agent ' + (i + 1), name, pct]);
+  }
+  doc.autoTable({
+    startY: y, margin: { left: margin, right: margin / 2 + W / 2 - margin },
+    tableWidth: W / 2,
+    head: [['', 'Name', 'Percentage']],
+    body: agentData,
+    styles: { fontSize: 9, cellPadding: 4, lineColor: [0, 0, 0], lineWidth: 0.5 },
+    headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', lineColor: [0, 0, 0], lineWidth: 0.5 },
+    theme: 'grid'
+  });
+  // Rev number
+  doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(100);
+  doc.text('Rev. 09.19.25', W - margin, doc.internal.pageSize.getHeight() - 20, { align: 'right' });
+
+  const addr = getVal('s-address') || 'Sign_Request';
+  doc.save('Sign_Request_' + addr.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30) + '.pdf');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PDF EXPORT: COMMISSION VOUCHER — matches Excel voucher layout
+// ═══════════════════════════════════════════════════════════════════════════════
+function exportVoucherPdf() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
+  const W = doc.internal.pageSize.getWidth();
+  const margin = 36;
+  const cw = W - margin * 2;
+  let y = 30;
+
+  // Header — Lee & Associates style
+  doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(196, 18, 48);
+  doc.text('LEE & ASSOCIATES — NEWPORT BEACH', margin, y);
+  doc.setFontSize(16); doc.setTextColor(0);
+  y += 22;
+  doc.text('LEASE/SALE COMMISSION & COMP VOUCHER', margin, y);
+  doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(100);
+  doc.text('Date: ' + (getVal('v-date-filled') || new Date().toLocaleDateString()), W - margin, y, { align: 'right' });
+  y += 8;
+  doc.setDrawColor(196, 18, 48); doc.setLineWidth(2); doc.line(margin, y, W - margin, y);
+  y += 16;
+  doc.setTextColor(0, 0, 0);
+
+  function vSection(title) {
+    if (y > 700) { doc.addPage(); y = 40; }
+    doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+    doc.setTextColor(196, 18, 48);
+    doc.text(title, margin, y); y += 4;
+    doc.setDrawColor(196, 18, 48); doc.setLineWidth(0.75); doc.line(margin, y, W - margin, y); y += 12;
+    doc.setTextColor(0, 0, 0); doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+  }
+
+  function vRow(label, value, x, yy) {
+    if (!value && value !== 0) return;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.text(label, x || margin, yy || y);
+    const lblW = doc.getTextWidth(label) + 4;
+    doc.setFont('helvetica', 'normal'); doc.text(String(value), (x || margin) + lblW, yy || y);
+    if (!yy) y += 13;
+  }
+
+  function vLine(label, value) {
+    if (!value) return;
+    if (y > 740) { doc.addPage(); y = 40; }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.text(label + ':', margin, y);
+    doc.setFont('helvetica', 'normal'); doc.text(String(value), margin + 130, y);
+    y += 13;
+  }
+
+  // --- TRANSACTION OVERVIEW ---
+  vSection('TRANSACTION OVERVIEW');
+  const midCol = margin + cw * 0.5;
+  vRow('Transaction Type:', getSelect('v-txn-type'), margin, y);
+  vRow('Active Listing:', getSelect('v-active-listing'), midCol, y); y += 13;
+  vRow('Property Type:', getSelect('v-prop-type'), margin, y);
+  vRow('Close Listing:', getSelect('v-close-listing'), midCol, y); y += 13;
+  vRow('Confidential:', getSelect('v-confidential'), margin, y);
+  vRow('Date Filled:', getVal('v-date-filled'), midCol, y); y += 13;
+  if (getVal('v-other-type')) { vRow('Other Type:', getVal('v-other-type'), margin, y); y += 13; }
+  y += 4;
+
+  // --- PROPERTY ADDRESS ---
+  vSection('PROPERTY ADDRESS');
+  vRow('Address:', getVal('v-address'), margin, y);
+  vRow('Suite:', getVal('v-suite'), midCol, y); y += 13;
+  vRow('City:', getVal('v-city'), margin, y);
+  vRow('State:', getVal('v-state'), midCol, y); y += 13;
+  vRow('Zip:', getVal('v-zip'), margin, y); y += 16;
+
+  // --- PROPERTY INFORMATION ---
+  if (y > 600) { doc.addPage(); y = 40; }
+  vSection('PROPERTY INFORMATION (Comp Data)');
+  vRow('Suite/Unit:', getVal('v-pi-suite'), margin, y);
+  vRow('Occ. Type:', getSelect('v-occ-type'), midCol, y); y += 13;
+  vRow('Deal Type:', getSelect('v-deal-type'), margin, y);
+  vRow('Sub-Market:', getVal('v-submarket'), midCol, y); y += 13;
+  vRow('Prior Tenant Loc:', getVal('v-prior-loc'), margin, y); y += 13;
+  vRow('Deal SF:', getVal('v-deal-sf'), margin, y);
+  vRow('Total Bldg SF:', getVal('v-bldg-sf'), midCol, y); y += 13;
+  vRow('Const. Type:', getVal('v-const-type'), margin, y);
+  vRow('Sub-type:', getVal('v-subtype'), midCol, y); y += 13;
+  vRow('Land SF:', getVal('v-land-sf'), margin, y); y += 13;
+  // SF breakdown
+  vRow('Ind. SF:', getVal('v-ind-sf'), margin, y);
+  vRow('Whse SF:', getVal('v-whse-sf'), midCol, y); y += 13;
+  vRow('Office SF:', getVal('v-office-sf'), margin, y);
+  vRow('Retail SF:', getVal('v-retail-sf'), midCol, y); y += 13;
+  vRow('Bldg Class:', getSelect('v-bldg-class'), margin, y);
+  vRow('Year Built:', getVal('v-year-built'), midCol, y); y += 13;
+  vRow('Floors:', getVal('v-floors'), margin, y);
+  vRow('Elevators:', getSelect('v-elevators'), midCol, y); y += 13;
+  vRow('# Elevators:', getVal('v-num-elevators'), margin, y);
+  vRow('Load Factor:', getVal('v-load-factor'), midCol, y); y += 13;
+  // Parking
+  vRow('Parking Type:', getVal('v-parking-type'), margin, y);
+  vRow('# Spaces:', getVal('v-parking-spaces'), midCol, y); y += 13;
+  vRow('Park Ratio:', getVal('v-park-ratio'), margin, y);
+  vRow('Reserved:', getVal('v-parking-reserved'), midCol, y); y += 13;
+  vRow('Unreserved:', getVal('v-parking-unreserved'), margin, y); y += 13;
+  vRow('Opex $/SF:', getVal('v-opex') ? '$' + getVal('v-opex') : '', margin, y);
+  vRow('Lease Type:', getSelect('v-lease-type'), midCol, y); y += 13;
+  vRow('Rsvd $/mo:', getVal('v-reserved-mo') ? '$' + getVal('v-reserved-mo') : '', margin, y);
+  vRow('Unrsvd $/mo:', getVal('v-unreserved-mo') ? '$' + getVal('v-unreserved-mo') : '', midCol, y); y += 13;
+  // Industrial details
+  vRow('DH Doors:', getVal('v-dh'), margin, y);
+  vRow('GL Doors:', getVal('v-gl'), midCol, y); y += 13;
+  vRow('Clear Height:', getVal('v-clearance'), margin, y);
+  vRow('Sprinklers:', getVal('v-sprinklers'), midCol, y); y += 13;
+  vRow('Amps:', getVal('v-amps'), margin, y);
+  vRow('Rail:', getSelect('v-rail'), midCol, y); y += 13;
+  vRow('Yard:', getSelect('v-yard'), margin, y);
+  vRow('Bldg Cond:', getVal('v-bldg-cond'), midCol, y); y += 13;
+  vRow('Multi-Tenant:', getSelect('v-multi-tenant'), margin, y);
+  vRow('POL:', getSelect('v-pol'), midCol, y); y += 13;
+  if (getVal('v-comp-comments')) {
+    vRow('Comments:', '', margin, y); y += 12;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+    doc.text(getVal('v-comp-comments'), margin, y, { maxWidth: cw }); y += 16;
+  }
+  y += 4;
+
+  // --- PARTIES ---
+  if (y > 680) { doc.addPage(); y = 40; }
+  vSection('PARTIES');
+  // Two columns: Lessor/Seller | Lessee/Buyer
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+  doc.text('LESSOR / SELLER', margin, y); doc.text('LESSEE / BUYER', midCol, y); y += 13;
+  doc.setFont('helvetica', 'normal');
+  vRow('Company:', getVal('v-ls-company'), margin, y);
+  vRow('Company:', getVal('v-lb-company'), midCol, y); y += 13;
+  vRow('Contact:', getVal('v-ls-contact'), margin, y);
+  vRow('Contact:', getVal('v-lb-contact'), midCol, y); y += 13;
+  vRow('Email:', getVal('v-ls-email'), margin, y);
+  vRow('Email:', getVal('v-lb-email'), midCol, y); y += 13;
+  vRow('Address:', getVal('v-ls-address'), margin, y);
+  vRow('Address:', getVal('v-lb-address'), midCol, y); y += 13;
+  vRow('City/St/Zip:', [getVal('v-ls-city'), getVal('v-ls-state'), getVal('v-ls-zip')].filter(Boolean).join(', '), margin, y);
+  vRow('City/St/Zip:', [getVal('v-lb-city'), getVal('v-lb-state'), getVal('v-lb-zip')].filter(Boolean).join(', '), midCol, y); y += 13;
+  vRow('Phone:', getVal('v-ls-phone'), margin, y);
+  vRow('Phone:', getVal('v-lb-phone'), midCol, y); y += 13;
+  vRow('Invoice:', getSelect('v-ls-invoice'), margin, y);
+  vRow('Invoice:', getSelect('v-lb-invoice'), midCol, y); y += 16;
+
+  const txn = getVal('v-txn-type');
+  if (txn === 'lease') {
+    if (y > 600) { doc.addPage(); y = 40; }
+    vSection('LEASE TRANSACTION DETAILS');
+    vRow('Deal SF:', getVal('v-l-dealsf'), margin, y);
+    vRow('Start Date:', getVal('v-l-start'), midCol, y); y += 13;
+    vRow('End Date:', getVal('v-l-end'), margin, y);
+    vRow('Occupancy Date:', getVal('v-l-occ'), midCol, y); y += 13;
+    vRow('Term (Months):', getVal('v-l-term'), margin, y);
+    vRow('Total Consideration:', getVal('v-l-consideration') ? '$' + getVal('v-l-consideration') : '', midCol, y); y += 13;
+    vRow('Months on Market:', getVal('v-l-mkt-months'), margin, y); y += 13;
+    vRow('Rate $/SF:', getVal('v-l-rate') ? '$' + getVal('v-l-rate') : '', margin, y);
+    vRow('Rate Type:', getSelect('v-l-rate-type'), midCol, y); y += 13;
+    vRow('Asking Rate:', getVal('v-l-asking-rate') ? '$' + getVal('v-l-asking-rate') : '', margin, y);
+    vRow('Asking Type:', getVal('v-l-asking-type'), midCol, y); y += 13;
+    vRow('Prop Taxes:', getVal('v-l-taxes') ? '$' + getVal('v-l-taxes') : '', margin, y);
+    vRow('Insurance:', getVal('v-l-insurance') ? '$' + getVal('v-l-insurance') : '', midCol, y); y += 13;
+    vRow('Misc:', getVal('v-l-misc') ? '$' + getVal('v-l-misc') : '', margin, y);
+    vRow('Total NNN:', getVal('v-l-nnn-total') ? '$' + getVal('v-l-nnn-total') : '', midCol, y); y += 13;
+    vRow('TI Allow $/SF:', getVal('v-l-ti-sf') ? '$' + getVal('v-l-ti-sf') : '', margin, y);
+    vRow('TI Allow $:', getVal('v-l-ti-total') ? '$' + getVal('v-l-ti-total') : '', midCol, y); y += 13;
+    vRow('Gross Eff Rate:', getVal('v-l-grs-eff') ? '$' + getVal('v-l-grs-eff') : '', margin, y);
+    vRow('NNN Eff Rate:', getVal('v-l-nnn-eff') ? '$' + getVal('v-l-nnn-eff') : '', midCol, y); y += 13;
+    vRow('IG Eff Rate:', getVal('v-l-ig-eff') ? '$' + getVal('v-l-ig-eff') : '', margin, y);
+    vRow('Escalations:', getVal('v-l-escalations'), midCol, y); y += 13;
+    if (getVal('v-l-options')) { vRow('Options:', getVal('v-l-options'), margin, y); y += 13; }
+    if (getVal('v-l-comments')) { vRow('Comments:', getVal('v-l-comments'), margin, y); y += 13; }
+    y += 4;
+
+    // Rent schedule table
+    const rentRows = document.getElementById('v-rent-body').querySelectorAll('tr');
+    if (rentRows.length > 0) {
+      if (y > 620) { doc.addPage(); y = 40; }
+      vSection('MONTHLY RENT SCHEDULE');
+      doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(100);
+      doc.text('Include free rent months in the schedule (enter $0 for free months). Effective rates calculate automatically.', margin, y); y += 10;
+      doc.setTextColor(0);
+      const rentData = [];
+      rentRows.forEach((tr, i) => {
+        const monthly = tr.querySelector('.rent-monthly')?.value || '';
+        const rateSf = tr.querySelector('.rent-rate-sf')?.value || '';
+        const months = tr.querySelector('.rent-months')?.value || '';
+        const consideration = tr.querySelector('.rent-consideration')?.value || '';
+        rentData.push([String(i + 1), monthly, rateSf, months, consideration]);
+      });
+      doc.autoTable({
+        startY: y, margin: { left: margin, right: margin },
+        head: [['#', 'MONTHLY RENT', 'RATE/SF', 'MONTHS', 'CONSIDERATION']],
+        body: rentData,
+        styles: { fontSize: 8, cellPadding: 4, lineColor: [0, 0, 0], lineWidth: 0.5 },
+        headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', lineColor: [0, 0, 0], lineWidth: 0.5 },
+        theme: 'grid'
+      });
+      y = doc.lastAutoTable.finalY + 10;
+    }
+    // Commission summary
+    vRow('Avg Rate/SF:', getVal('v-avg-rate-sf') ? '$' + getVal('v-avg-rate-sf') : '', margin, y);
+    vRow('Avg Monthly Rent:', getVal('v-avg-monthly') ? '$' + getVal('v-avg-monthly') : '', midCol, y); y += 13;
+    vRow('Commission Rate %:', getVal('v-l-comm-rate'), margin, y);
+    vRow('Lease Comm Due:', getVal('v-l-comm-due') ? '$' + getVal('v-l-comm-due') : '', midCol, y); y += 13;
+    if (getVal('v-comm-bonus')) { vRow('Bonus/Adjustment:', '$' + getVal('v-comm-bonus'), margin, y); y += 13; }
+    if (getVal('v-comm-consulting')) { vRow('Consulting/Referral:', '$' + getVal('v-comm-consulting'), margin, y); y += 13; }
+    vRow('TOTAL INVOICE:', getVal('v-total-invoice') ? '$' + getVal('v-total-invoice') : '', margin, y); y += 16;
+  } else {
+    if (y > 600) { doc.addPage(); y = 40; }
+    vSection('SALE TRANSACTION DETAILS');
+    vRow('Sale Price:', getVal('v-s-price') ? '$' + getVal('v-s-price') : '', margin, y);
+    vRow('Price/SF:', getVal('v-s-price-sf') ? '$' + getVal('v-s-price-sf') : '', midCol, y); y += 13;
+    vRow('Land Price/SF:', getVal('v-s-land-sf') ? '$' + getVal('v-s-land-sf') : '', margin, y);
+    vRow('Buyer Type:', getSelect('v-s-buyer-type'), midCol, y); y += 13;
+    vRow('Asking Price:', getVal('v-s-asking') ? '$' + getVal('v-s-asking') : '', margin, y);
+    vRow('CAP Rate:', getVal('v-s-cap'), midCol, y); y += 13;
+    vRow('Commission %:', getVal('v-s-comm-pct'), margin, y);
+    vRow('Commission Due:', getVal('v-s-comm-due') ? '$' + getVal('v-s-comm-due') : '', midCol, y); y += 13;
+    vRow('Escrow:', getVal('v-s-escrow'), margin, y);
+    vRow('Check/Wire from Escrow:', getSelect('v-s-escrow-check'), midCol, y); y += 16;
+  }
+
+  // --- BROKER REPRESENTATION ---
+  if (y > 620) { doc.addPage(); y = 40; }
+  vSection('BROKER REPRESENTATION');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+  doc.text('LISTING AGENT', margin, y); doc.text('PROCURING AGENT', midCol, y); y += 13;
+  doc.setFont('helvetica', 'normal');
+  vRow('House:', getVal('v-la-house'), margin, y);
+  vRow('House:', getVal('v-pa-house'), midCol, y); y += 13;
+  vRow('Name:', getVal('v-la-name'), margin, y);
+  vRow('Name:', getVal('v-pa-name'), midCol, y); y += 13;
+  vRow('Address:', getVal('v-la-address'), margin, y);
+  vRow('Address:', getVal('v-pa-address'), midCol, y); y += 13;
+  vRow('City/St/Zip:', [getVal('v-la-city'), getVal('v-la-state'), getVal('v-la-zip')].filter(Boolean).join(', '), margin, y);
+  vRow('City/St/Zip:', [getVal('v-pa-city'), getVal('v-pa-state'), getVal('v-pa-zip')].filter(Boolean).join(', '), midCol, y); y += 13;
+  vRow('Phone:', getVal('v-la-phone'), margin, y);
+  vRow('Phone:', getVal('v-pa-phone'), midCol, y); y += 13;
+  vRow('Invoice Agent?:', getSelect('v-la-invoice'), margin, y);
+  vRow('Invoice Agent?:', getSelect('v-pa-invoice'), midCol, y); y += 13;
+  vRow('Pay Fee?:', getSelect('v-la-pay-fee'), margin, y);
+  vRow('Pay Fee?:', getSelect('v-pa-pay-fee'), midCol, y); y += 16;
+
+  // --- OUTSIDE AGENTS ---
+  const outsideBody = document.getElementById('v-outside-body');
+  if (outsideBody) {
+    const outsideRows = outsideBody.querySelectorAll('tr');
+    if (outsideRows.length > 0) {
+      vSection('OUTSIDE AGENTS (CO-OPS, REFERRALS)');
+      const outsideData = [];
+      outsideRows.forEach(tr => {
+        const cells = tr.querySelectorAll('input, select');
+        outsideData.push(Array.from(cells).map(c => c.value || ''));
+      });
+      doc.autoTable({
+        startY: y, margin: { left: margin, right: margin },
+        head: [['SIDE', 'NAME', 'ADDRESS', 'AMOUNT TO PAY']],
+        body: outsideData,
+        styles: { fontSize: 8, cellPadding: 4, lineColor: [0, 0, 0], lineWidth: 0.5 },
+        headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', lineColor: [0, 0, 0], lineWidth: 0.5 },
+        theme: 'grid'
+      });
+      y = doc.lastAutoTable.finalY + 10;
+      doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(100);
+      doc.text('Note: A completed W9 must be received on all new co-ops/referrals before commissions can be processed.', margin, y);
+      doc.setTextColor(0); y += 16;
+    }
+  }
+
+  // --- COMMISSION DISTRIBUTION ---
+  if (y > 600) { doc.addPage(); y = 40; }
+  vSection('COMMISSION DISTRIBUTION');
+  vRow('Total Invoice:', getVal('v-total-invoice') ? '$' + getVal('v-total-invoice') : '', margin, y);
+  vRow('To Outside Agents:', getVal('v-total-outside') ? '$' + getVal('v-total-outside') : '', midCol, y); y += 13;
+  vRow('Gross to Distribute:', getVal('v-gross-dist') ? '$' + getVal('v-gross-dist') : '', margin, y); y += 8;
+
+  const distRows = document.getElementById('v-dist-body').querySelectorAll('tr');
+  if (distRows.length > 0) {
+    const distData = [];
+    distRows.forEach(tr => {
+      const cells = tr.querySelectorAll('input, select');
+      distData.push(Array.from(cells).map(c => c.value || ''));
+    });
+    doc.autoTable({
+      startY: y, margin: { left: margin, right: margin },
+      head: [['AGENT', 'SIDE', '%', 'LIST GROSS', 'PROC GROSS', 'BOTH GROSS', 'OTHER', 'REFER', 'NET']],
+      body: distData,
+      styles: { fontSize: 7, cellPadding: 3, lineColor: [0, 0, 0], lineWidth: 0.5 },
+      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', lineColor: [0, 0, 0], lineWidth: 0.5 },
+      columnStyles: { 0: { cellWidth: 80 }, 1: { cellWidth: 50 }, 2: { cellWidth: 30 } },
+      theme: 'grid'
+    });
+    y = doc.lastAutoTable.finalY + 16;
+  }
+
+  // --- INVOICE INSTRUCTIONS ---
+  if (y > 680) { doc.addPage(); y = 40; }
+  vSection('INVOICE INSTRUCTIONS');
+  if (getVal('v-inv-company')) { vRow('Invoice Different Company:', getVal('v-inv-company'), margin, y); y += 13; }
+  if (getVal('v-inv-address')) { vRow('Address:', getVal('v-inv-address'), margin, y); y += 13; }
+  const invInstr = getVal('v-inv-instructions');
+  if (invInstr) {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.text('Special Instructions:', margin, y); y += 12;
+    doc.setFont('helvetica', 'normal'); doc.text(invInstr, margin, y, { maxWidth: cw }); y += 16;
+  }
+
+  // Payment schedule
+  const paymentRows = document.getElementById('v-payment-body')?.querySelectorAll('tr');
+  if (paymentRows && paymentRows.length > 0) {
+    const payData = [];
+    paymentRows.forEach(tr => {
+      const inputs = tr.querySelectorAll('input');
+      payData.push([inputs[0]?.value || '', inputs[1]?.value || '', inputs[2]?.value || '', inputs[3]?.value || '']);
+    });
+    doc.autoTable({
+      startY: y, margin: { left: margin, right: margin },
+      head: [['DATE DUE', 'AMOUNT DUE', 'DATE DUE', 'AMOUNT DUE']],
+      body: payData,
+      styles: { fontSize: 8, cellPadding: 4, lineColor: [0, 0, 0], lineWidth: 0.5 },
+      headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', lineColor: [0, 0, 0], lineWidth: 0.5 },
+      theme: 'grid'
+    });
+    y = doc.lastAutoTable.finalY + 16;
+  }
+
+  // Rev mark
+  doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(100);
+  doc.text('Rev. 3/4/25', W - margin, doc.internal.pageSize.getHeight() - 20, { align: 'right' });
+
+  const addr = getVal('v-address') || 'Voucher';
+  doc.save('Commission_Voucher_' + addr.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30) + '.pdf');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMP INPUT — CLEAR & PDF EXPORT
+// ═══════════════════════════════════════════════════════════════════════════════
+function clearComp() {
+  if (!confirm('Clear all comp input fields?')) return;
+  document.querySelectorAll('#tab-comp input, #tab-comp textarea').forEach(el => {
+    if (el.type !== 'radio' && el.type !== 'checkbox' && !el.readOnly) el.value = '';
+  });
+  document.querySelectorAll('#tab-comp select').forEach(el => el.selectedIndex = 0);
+  document.getElementById('c-date').value = new Date().toISOString().split('T')[0];
+}
+
+function exportCompPdf() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const M = 36;
+  const cw = W - M * 2;
+  let y = 0;
+
+  function checkPage(need) { if (y + need > H - 40) { doc.addPage(); y = 40; } }
+
+  function gv(id) {
+    const el = document.getElementById(id);
+    if (!el) return '';
+    if (el.tagName === 'SELECT') return el.selectedOptions[0]?.text || '';
+    return el.value || '';
+  }
+
+  // --- HEADER ---
+  doc.setDrawColor(0); doc.setLineWidth(1.5);
+  doc.rect(M, 30, cw, 50);
+  doc.setFillColor(0); doc.rect(M, 30, cw, 22, 'F');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255);
+  doc.text('LEE & ASSOCIATES — NEWPORT BEACH', M + 8, 45);
+  doc.setTextColor(0); doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+  doc.text('Industrial Lease Comp Input Form', M + 8, 68);
+  doc.text('Date: ' + gv('c-date'), W - M - 8, 68, { align: 'right' });
+  y = 95;
+
+  // --- Helper: Section title ---
+  function section(title) {
+    checkPage(30);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(180, 0, 0);
+    doc.text(title.toUpperCase(), M, y); y += 4;
+    doc.setDrawColor(180, 0, 0); doc.setLineWidth(0.5); doc.line(M, y, W - M, y); y += 12;
+    doc.setTextColor(0);
+  }
+
+  // --- Helper: Field row (label: value pairs) ---
+  function fieldRow(pairs) {
+    checkPage(16);
+    const colW = cw / pairs.length;
+    doc.setFontSize(7.5);
+    pairs.forEach(function(p, i) {
+      const x = M + colW * i;
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(100);
+      doc.text(p[0] + ':', x, y);
+      doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+      doc.text(String(p[1] || '—'), x + doc.getTextWidth(p[0] + ':  '), y);
+    });
+    y += 14;
+  }
+
+  // --- COMP OVERVIEW ---
+  section('Comp Overview');
+  fieldRow([['Source', gv('c-source')], ['Deal Type', gv('c-deal-type')]]);
+
+  // --- LOCATION ---
+  section('Location');
+  fieldRow([['Address', gv('c-address')], ['City', gv('c-city')]]);
+  fieldRow([['Market', gv('c-market')], ['Submarket', gv('c-submarket')], ['Project', gv('c-project')]]);
+
+  // --- PROPERTY INFORMATION ---
+  section('Property Information');
+  fieldRow([['Property Type', gv('c-prop-type')], ['Subtype', gv('c-subtype')], ['Class', gv('c-bldg-class')]]);
+  fieldRow([['Space/Lease Type', gv('c-space-type')], ['Construction', gv('c-const-type')]]);
+
+  // --- PROPERTY FEATURES ---
+  section('Property Features');
+  fieldRow([['Building SF', gv('c-bldg-sf')], ['Land SF', gv('c-land-sf')], ['Year Built', gv('c-year-built')]]);
+  fieldRow([['Office SF', gv('c-office-sf')], ['DH Doors', gv('c-dh')], ['GL Doors', gv('c-gl')]]);
+  fieldRow([['Clear Height', gv('c-clearance')], ['Parking', gv('c-parking')], ['Amps', gv('c-amps')]]);
+  fieldRow([['Sprinklers', gv('c-sprinklers')], ['Rail', gv('c-rail')], ['Yard', gv('c-yard')], ['Condition', gv('c-condition')]]);
+  fieldRow([['Multi-Tenant', gv('c-multi-tenant')], ['Part of Larger', gv('c-pol')], ['Opex Estimated', gv('c-opex-est')]]);
+
+  // --- LEASE DETAILS ---
+  section('Lease Details');
+  fieldRow([['Space Leased SF', gv('c-leased-sf')], ['Rent/SF', gv('c-rent-sf') ? '$' + gv('c-rent-sf') : ''], ['Rent Type', gv('c-rent-type')]]);
+  fieldRow([['Exec Date', gv('c-exec-date')], ['Occ Date', gv('c-occ-date')], ['Expire Date', gv('c-expire-date')]]);
+  fieldRow([['Term (Mo)', gv('c-term')], ['Effective Rent', gv('c-eff-rent') ? '$' + gv('c-eff-rent') : ''], ['Months on Mkt', gv('c-mkt-months')]]);
+  fieldRow([['Free Rent', gv('c-free-rent')], ['TI Allowance', gv('c-ti')], ['NNN Charges', gv('c-nnn')]]);
+  fieldRow([['Escalations', gv('c-escalations')], ['Options', gv('c-options')]]);
+  fieldRow([['Expense Recovery', gv('c-expense-recovery')], ['Tenant Type', gv('c-tenant-type')]]);
+
+  // --- LESSOR / TENANT & BROKER ---
+  section('Lessor / Tenant & Broker Info');
+  fieldRow([['Lessor', gv('c-lessor')], ['Lessee/Tenant', gv('c-lessee')]]);
+  fieldRow([['Listing Brokerage', gv('c-list-brokerage')], ['Procuring Brokerage', gv('c-proc-brokerage')]]);
+  fieldRow([['Listing Agent 1', gv('c-list-agent1')], ['Procuring Agent 1', gv('c-proc-agent1')]]);
+  fieldRow([['Listing Agent 2', gv('c-list-agent2')], ['Procuring Agent 2', gv('c-proc-agent2')]]);
+
+  // --- COMMENTS ---
+  const comments = gv('c-comments');
+  if (comments) {
+    section('Comments');
+    checkPage(40);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(0);
+    const lines = doc.splitTextToSize(comments, cw);
+    doc.text(lines, M, y); y += lines.length * 11;
+  }
+
+  // --- SAVE ---
+  const addr = gv('c-address') || 'Comp';
+  doc.save('Lease_Comp_' + addr.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30) + '.pdf');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EMAIL MODAL
+// ═══════════════════════════════════════════════════════════════════════════════
+let emailContext = '';
+
+function openEmailModal(context) {
+  emailContext = context;
+  const modal = document.getElementById('email-modal');
+  modal.classList.add('open');
+
+  const to = document.getElementById('em-to');
+  const cc = document.getElementById('em-cc');
+  const subject = document.getElementById('em-subject');
+  const body = document.getElementById('em-body');
+
+  to.value = 'tbarnes@lee-associates.com';
+  cc.value = '';
+
+  if (context === 'listing') {
+    const addr = document.getElementById('l-address').value || '[Address]';
+    const agents = getListingAgents();
+    const agentNames = agents.map(a => a.name).filter(n => n).join(', ') || '[Agent]';
+    const propType = document.getElementById('l-prop-type').selectedOptions[0].text;
+    const txnType = document.getElementById('l-txn-type').selectedOptions[0].text;
+    subject.value = 'New ' + propType + ' Listing Entry — ' + addr;
+    body.value = 'Hi Taylor,\n\nPlease see the attached ' + propType.toLowerCase() + ' listing entry form for ' + addr + '.\n\n' +
+      'Property Type: ' + propType + '\n' +
+      'Transaction: ' + txnType + '\n' +
+      'Listing Agent(s): ' + agentNames + '\n\n' +
+      'Please let me know if you need anything else.\n\n' +
+      'Thank you,\n' + (agents[0]?.name || '[Agent]');
+  } else if (context === 'sign') {
+    const addr = document.getElementById('s-address').value || '[Address]';
+    const orderType = document.getElementById('s-order-type').selectedOptions[0].text;
+    cc.value = '';
+    subject.value = 'Sign ' + orderType + ' Request — ' + addr;
+    body.value = 'Hi Taylor,\n\nPlease see the attached sign request for ' + addr + '.\n\n' +
+      'Order Type: ' + orderType + '\n' +
+      'Address: ' + addr + ', ' + (document.getElementById('s-city').value || '') + '\n\n' +
+      'Thank you,\n' + (document.getElementById('s-requested-by').value || '[Agent]');
+  } else if (context === 'voucher') {
+    const addr = document.getElementById('v-address').value || '[Address]';
+    const txnType = document.getElementById('v-txn-type').selectedOptions[0].text;
+    subject.value = txnType + ' Commission Voucher — ' + addr;
+    body.value = 'Hi Taylor,\n\nPlease see the attached commission voucher for the ' + txnType.toLowerCase() + ' transaction at ' + addr + '.\n\n' +
+      'Address: ' + addr + (document.getElementById('v-suite').value ? ', ' + document.getElementById('v-suite').value : '') + '\n' +
+      'Transaction Type: ' + txnType + '\n\n' +
+      'Please let me know if you need anything else.\n\n' +
+      'Thank you,\n' + (document.getElementById('v-la-name').value || (getListingAgents()[0]?.name) || '[Agent]');
+  } else if (context === 'comp') {
+    const addr = document.getElementById('c-address').value || '[Address]';
+    const city = document.getElementById('c-city').value || '';
+    const dealType = document.getElementById('c-deal-type').value || 'Lease';
+    to.value = 'ekat@lee-associates.com';
+    cc.value = '';
+    subject.value = 'Lease Comp Input — ' + addr + (city ? ', ' + city : '');
+    body.value = 'Hi,\n\nPlease see the attached lease comp input form for the following transaction:\n\n' +
+      'Address: ' + addr + (city ? ', ' + city : '') + '\n' +
+      'Deal Type: ' + dealType + '\n' +
+      'Tenant: ' + (document.getElementById('c-lessee').value || 'N/A') + '\n' +
+      'Space Leased: ' + (document.getElementById('c-leased-sf').value || 'N/A') + ' SF\n' +
+      'Rent/SF: ' + (document.getElementById('c-rent-sf').value || 'N/A') + '\n\n' +
+      'Please let me know if you need any additional information.\n\n' +
+      'Thank you';
+  }
+
+  document.getElementById('email-modal-title').textContent = 'Draft Email — ' + context.charAt(0).toUpperCase() + context.slice(1);
+}
+
+function closeEmailModal() {
+  document.getElementById('email-modal').classList.remove('open');
+}
+
+function copyEmail() {
+  const subject = document.getElementById('em-subject').value;
+  const body = document.getElementById('em-body').value;
+  const to = document.getElementById('em-to').value;
+  const cc = document.getElementById('em-cc').value;
+  const text = 'To: ' + to + (cc ? '\nCC: ' + cc : '') + '\nSubject: ' + subject + '\n\n' + body;
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Email copied to clipboard!');
+    closeEmailModal();
+  });
+}
+
+function openInMailClient() {
+  const to = document.getElementById('em-to').value;
+  const cc = document.getElementById('em-cc').value;
+  const subject = encodeURIComponent(document.getElementById('em-subject').value);
+  const body = encodeURIComponent(document.getElementById('em-body').value);
+  let mailto = 'mailto:' + to + '?subject=' + subject + '&body=' + body;
+  if (cc) mailto += '&cc=' + cc;
+  window.open(mailto, '_blank');
+  closeEmailModal();
+}
+
+// Close modal on overlay click
+document.getElementById('email-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeEmailModal();
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════════
+// Set default dates
+document.getElementById('l-date-entered').value = new Date().toISOString().split('T')[0];
+document.getElementById('s-date').value = new Date().toISOString().split('T')[0];
+document.getElementById('v-date-filled').value = new Date().toISOString().split('T')[0];
+document.getElementById('c-date').value = new Date().toISOString().split('T')[0];
+
+// Initialize property type sections
+onPropTypeChange();
+onTxnTypeChange();
+onVoucherTxnChange();
+
+// Add initial suite rows
+addSuiteRow('office');
+addSuiteRow('retail');
+
+// Add initial sign agent
+addSignAgent();
+
+// Add initial rent row
+addRentRow();
+
+// Add initial distribution row
+addDistRow();
+
+// Add initial payment row
+addPaymentRow();
+
+// Add initial listing agent row
+addListingAgent();
+
+initAgentPicker('s-requested-by');
+
+initAgentPicker('v-la-name', {
+  onSelect: function(u) {
+    document.getElementById('v-la-house').value = 'Lee & Associates - Newport Beach';
+  }
+});
+
+initAgentPicker('v-pa-name', {
+  showAll: true,
+  onSelect: function(u) {
+    document.getElementById('v-pa-house').value = 'Lee & Associates - Newport Beach';
+  }
+});
+</script>
+</body>
+</html>

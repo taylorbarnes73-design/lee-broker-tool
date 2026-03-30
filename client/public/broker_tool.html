@@ -1827,8 +1827,8 @@ function getSelect(id) { const el = document.getElementById(id); return el ? el.
 function drawReleaseAndAgent(p) {
   let y = p.getY();
   const agents = getListingAgents();
-  const rightX = p.M + p.cw * 0.6;
-  const rightW = p.cw * 0.38;
+  const rightX = p.M + p.cw * 0.58;
+  const rightW = p.cw * 0.41;
 
   // Left: Listing Release Instructions
   p.label('Listing Release Instructions', p.M, y);
@@ -1841,11 +1841,11 @@ function drawReleaseAndAgent(p) {
   // Print each agent on the right side
   const agentStartY = y;
   agents.forEach((a, i) => {
-    const ay = agentStartY + (i * 36);
+    const ay = agentStartY + (i * 42);
     p.value(a.name, rightX, ay);
     p.fieldLine(rightX, ay, rightW);
-    if (a.phone) { p.fieldWithLine('Ph:', a.phone, rightX, ay + 14, rightW); }
-    if (a.email) { p.fieldWithLine('Em:', a.email, rightX, ay + 28, rightW); }
+    if (a.phone) { p.fieldWithLine('Phone:', a.phone, rightX, ay + 14, rightW); }
+    if (a.email) { p.fieldWithLine('Email:', a.email, rightX, ay + 28, rightW); }
   });
 
   // Left: Release checkboxes
@@ -1853,7 +1853,7 @@ function drawReleaseAndAgent(p) {
   p.checkbox(release === 'immediate', 'Release to MLS and Website Immediately', p.M, y); y += 16;
   p.checkbox(release === 'date', 'Release to MLS and Website on', p.M, y);
   p.value(getVal('l-release-date') || '________', p.M + 210, y);
-  p.value('(Date)', p.M + 280, y); y += 20;
+  p.value('(Date)', p.M + 270, y); y += 20;
   // MLS Notification
   p.label('Notify the Multiple Listing Services?', p.M, y); y += 16;
   const agentNotify = getVal('l-agent-notify');
@@ -1863,7 +1863,7 @@ function drawReleaseAndAgent(p) {
   y += 14;
 
   // Ensure y is at least past the agent block
-  const agentEndY = agentStartY + (agents.length * 36) + 8;
+  const agentEndY = agentStartY + (agents.length * 42) + 8;
   if (y < agentEndY) y = agentEndY;
 
   p.setY(y);
@@ -1876,12 +1876,12 @@ function drawListingType(p) {
   // Row 1
   p.checkbox(newMod === 'new', 'New Listing', p.M, y);
   p.checkbox(txn === 'lease', 'Lease', p.M + 130, y);
-  p.fieldWithLine('Lease/Mo.:', getVal('l-lease-mo'), p.M + 230, y, 130);
+  p.fieldWithLine('Lease/Mo.:', getVal('l-lease-mo') ? '$' + getVal('l-lease-mo') : '', p.M + 230, y, 130);
   p.fieldWithLine('Sale Price:', getVal('l-sale-price') ? '$' + getVal('l-sale-price') : '', p.M + 380, y, 140);
   y += 18;
   p.checkbox(newMod === 'mod', 'Listing Modification', p.M, y);
   p.checkbox(txn === 'sale', 'Sale', p.M + 130, y);
-  p.fieldWithLine('$/SF:', getVal('l-lease-sf'), p.M + 230, y, 130);
+  p.fieldWithLine('$/SF:', getVal('l-lease-sf') ? '$' + getVal('l-lease-sf') : '', p.M + 230, y, 130);
   p.fieldWithLine('$/SF:', getVal('l-sale-sf') ? '$' + getVal('l-sale-sf') : '', p.M + 380, y, 140);
   y += 18;
   p.checkbox(txn === 'sale-lease', 'Sale /Lease', p.M + 130, y);
@@ -2010,9 +2010,9 @@ function exportOfficePdf() {
   p.fieldWithLine('No. of Floors:', getVal('l-off-floors'), midX, y, 120);
   p.checkbox(parking.includes('street'), 'Street Parking', rightX, y); y += 18;
   p.fieldWithLine('Pass. Elev:', getVal('l-off-pass-elev'), midX, y, 120);
-  p.checkbox(false, 'Reserved $', rightX, y); p.value(getVal('l-off-reserved'), rightX + 90, y); y += 18;
+  p.checkbox(false, 'Reserved $', rightX, y); p.value(getVal('l-off-reserved') ? '$' + getVal('l-off-reserved') : '', rightX + 90, y); y += 18;
   p.fieldWithLine('Freight Elev:', getVal('l-off-freight-elev'), midX, y, 120);
-  p.checkbox(false, 'Non-Reserved $', rightX, y); p.value(getVal('l-off-nonreserved'), rightX + 110, y); y += 18;
+  p.checkbox(false, 'Non-Reserved $', rightX, y); p.value(getVal('l-off-nonreserved') ? '$' + getVal('l-off-nonreserved') : '', rightX + 110, y); y += 18;
   p.fieldWithLine('Load Factor:', getVal('l-off-load'), midX, y, 120);
   p.checkbox(parking.includes('free'), 'Free Parking', rightX, y); y += 18;
   p.setY(y);
@@ -2240,7 +2240,13 @@ function exportSignPdf() {
   function sLine(x, yy, w) { doc.setDrawColor(160); doc.setLineWidth(0.5); doc.line(x, yy + 2, x + w, yy + 2); }
   function sCheckbox(checked, text, x, yy) {
     doc.setDrawColor(0); doc.setLineWidth(0.5); doc.rect(x, yy - 8, 9, 9);
-    if (checked) { doc.setFont('helvetica', 'bold'); doc.text('\u2713', x + 1.5, yy - 0.5); }
+    if (checked) {
+      doc.setLineWidth(1.5);
+      doc.setDrawColor(0);
+      doc.line(x + 1.5, yy - 3.5, x + 3.5, yy - 1);
+      doc.line(x + 3.5, yy - 1, x + 7.5, yy - 7);
+      doc.setLineWidth(0.5);
+    }
     doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.text(text, x + 14, yy);
   }
 
@@ -2450,10 +2456,10 @@ function exportVoucherPdf() {
   vRow('Park Ratio:', getVal('v-park-ratio'), margin, y);
   vRow('Reserved:', getVal('v-parking-reserved'), midCol, y); y += 13;
   vRow('Unreserved:', getVal('v-parking-unreserved'), margin, y); y += 13;
-  vRow('Opex $/SF:', getVal('v-opex'), margin, y);
+  vRow('Opex $/SF:', getVal('v-opex') ? '$' + getVal('v-opex') : '', margin, y);
   vRow('Lease Type:', getSelect('v-lease-type'), midCol, y); y += 13;
-  vRow('Rsrvd $/mo:', getVal('v-reserved-mo'), margin, y);
-  vRow('Unrsvd $/mo:', getVal('v-unreserved-mo'), midCol, y); y += 13;
+  vRow('Rsvd $/mo:', getVal('v-reserved-mo') ? '$' + getVal('v-reserved-mo') : '', margin, y);
+  vRow('Unrsvd $/mo:', getVal('v-unreserved-mo') ? '$' + getVal('v-unreserved-mo') : '', midCol, y); y += 13;
   // Industrial details
   vRow('DH Doors:', getVal('v-dh'), margin, y);
   vRow('GL Doors:', getVal('v-gl'), midCol, y); y += 13;
@@ -2503,21 +2509,21 @@ function exportVoucherPdf() {
     vRow('End Date:', getVal('v-l-end'), margin, y);
     vRow('Occupancy Date:', getVal('v-l-occ'), midCol, y); y += 13;
     vRow('Term (Months):', getVal('v-l-term'), margin, y);
-    vRow('Total Consideration:', getVal('v-l-consideration'), midCol, y); y += 13;
+    vRow('Total Consideration:', getVal('v-l-consideration') ? '$' + getVal('v-l-consideration') : '', midCol, y); y += 13;
     vRow('Months on Market:', getVal('v-l-mkt-months'), margin, y); y += 13;
-    vRow('Rate $/SF:', getVal('v-l-rate'), margin, y);
+    vRow('Rate $/SF:', getVal('v-l-rate') ? '$' + getVal('v-l-rate') : '', margin, y);
     vRow('Rate Type:', getSelect('v-l-rate-type'), midCol, y); y += 13;
-    vRow('Asking Rate:', getVal('v-l-asking-rate'), margin, y);
+    vRow('Asking Rate:', getVal('v-l-asking-rate') ? '$' + getVal('v-l-asking-rate') : '', margin, y);
     vRow('Asking Type:', getVal('v-l-asking-type'), midCol, y); y += 13;
-    vRow('Prop Taxes:', getVal('v-l-taxes'), margin, y);
-    vRow('Insurance:', getVal('v-l-insurance'), midCol, y); y += 13;
-    vRow('Misc:', getVal('v-l-misc'), margin, y);
-    vRow('Total NNN:', getVal('v-l-nnn-total'), midCol, y); y += 13;
-    vRow('TI Allow $/SF:', getVal('v-l-ti-sf'), margin, y);
-    vRow('TI Allow $:', getVal('v-l-ti-total'), midCol, y); y += 13;
-    vRow('Gross Eff Rate:', getVal('v-l-grs-eff'), margin, y);
-    vRow('NNN Eff Rate:', getVal('v-l-nnn-eff'), midCol, y); y += 13;
-    vRow('IG Eff Rate:', getVal('v-l-ig-eff'), margin, y);
+    vRow('Prop Taxes:', getVal('v-l-taxes') ? '$' + getVal('v-l-taxes') : '', margin, y);
+    vRow('Insurance:', getVal('v-l-insurance') ? '$' + getVal('v-l-insurance') : '', midCol, y); y += 13;
+    vRow('Misc:', getVal('v-l-misc') ? '$' + getVal('v-l-misc') : '', margin, y);
+    vRow('Total NNN:', getVal('v-l-nnn-total') ? '$' + getVal('v-l-nnn-total') : '', midCol, y); y += 13;
+    vRow('TI Allow $/SF:', getVal('v-l-ti-sf') ? '$' + getVal('v-l-ti-sf') : '', margin, y);
+    vRow('TI Allow $:', getVal('v-l-ti-total') ? '$' + getVal('v-l-ti-total') : '', midCol, y); y += 13;
+    vRow('Gross Eff Rate:', getVal('v-l-grs-eff') ? '$' + getVal('v-l-grs-eff') : '', margin, y);
+    vRow('NNN Eff Rate:', getVal('v-l-nnn-eff') ? '$' + getVal('v-l-nnn-eff') : '', midCol, y); y += 13;
+    vRow('IG Eff Rate:', getVal('v-l-ig-eff') ? '$' + getVal('v-l-ig-eff') : '', margin, y);
     vRow('Escalations:', getVal('v-l-escalations'), midCol, y); y += 13;
     if (getVal('v-l-options')) { vRow('Options:', getVal('v-l-options'), margin, y); y += 13; }
     if (getVal('v-l-comments')) { vRow('Comments:', getVal('v-l-comments'), margin, y); y += 13; }
@@ -2550,24 +2556,24 @@ function exportVoucherPdf() {
       y = doc.lastAutoTable.finalY + 10;
     }
     // Commission summary
-    vRow('Avg Rate/SF:', getVal('v-avg-rate-sf'), margin, y);
-    vRow('Avg Monthly Rent:', getVal('v-avg-monthly'), midCol, y); y += 13;
+    vRow('Avg Rate/SF:', getVal('v-avg-rate-sf') ? '$' + getVal('v-avg-rate-sf') : '', margin, y);
+    vRow('Avg Monthly Rent:', getVal('v-avg-monthly') ? '$' + getVal('v-avg-monthly') : '', midCol, y); y += 13;
     vRow('Commission Rate %:', getVal('v-l-comm-rate'), margin, y);
-    vRow('Lease Comm Due:', getVal('v-l-comm-due'), midCol, y); y += 13;
-    if (getVal('v-comm-bonus')) { vRow('Bonus/Adjustment:', getVal('v-comm-bonus'), margin, y); y += 13; }
-    if (getVal('v-comm-consulting')) { vRow('Consulting/Referral:', getVal('v-comm-consulting'), margin, y); y += 13; }
-    vRow('TOTAL INVOICE:', getVal('v-total-invoice'), margin, y); y += 16;
+    vRow('Lease Comm Due:', getVal('v-l-comm-due') ? '$' + getVal('v-l-comm-due') : '', midCol, y); y += 13;
+    if (getVal('v-comm-bonus')) { vRow('Bonus/Adjustment:', '$' + getVal('v-comm-bonus'), margin, y); y += 13; }
+    if (getVal('v-comm-consulting')) { vRow('Consulting/Referral:', '$' + getVal('v-comm-consulting'), margin, y); y += 13; }
+    vRow('TOTAL INVOICE:', getVal('v-total-invoice') ? '$' + getVal('v-total-invoice') : '', margin, y); y += 16;
   } else {
     if (y > 600) { doc.addPage(); y = 40; }
     vSection('SALE TRANSACTION DETAILS');
-    vRow('Sale Price:', getVal('v-s-price'), margin, y);
-    vRow('Price/SF:', getVal('v-s-price-sf'), midCol, y); y += 13;
-    vRow('Land Price/SF:', getVal('v-s-land-sf'), margin, y);
+    vRow('Sale Price:', getVal('v-s-price') ? '$' + getVal('v-s-price') : '', margin, y);
+    vRow('Price/SF:', getVal('v-s-price-sf') ? '$' + getVal('v-s-price-sf') : '', midCol, y); y += 13;
+    vRow('Land Price/SF:', getVal('v-s-land-sf') ? '$' + getVal('v-s-land-sf') : '', margin, y);
     vRow('Buyer Type:', getSelect('v-s-buyer-type'), midCol, y); y += 13;
-    vRow('Asking Price:', getVal('v-s-asking'), margin, y);
+    vRow('Asking Price:', getVal('v-s-asking') ? '$' + getVal('v-s-asking') : '', margin, y);
     vRow('CAP Rate:', getVal('v-s-cap'), midCol, y); y += 13;
     vRow('Commission %:', getVal('v-s-comm-pct'), margin, y);
-    vRow('Commission Due:', getVal('v-s-comm-due'), midCol, y); y += 13;
+    vRow('Commission Due:', getVal('v-s-comm-due') ? '$' + getVal('v-s-comm-due') : '', midCol, y); y += 13;
     vRow('Escrow:', getVal('v-s-escrow'), margin, y);
     vRow('Check/Wire from Escrow:', getSelect('v-s-escrow-check'), midCol, y); y += 16;
   }
@@ -2622,9 +2628,9 @@ function exportVoucherPdf() {
   // --- COMMISSION DISTRIBUTION ---
   if (y > 600) { doc.addPage(); y = 40; }
   vSection('COMMISSION DISTRIBUTION');
-  vRow('Total Invoice:', getVal('v-total-invoice'), margin, y);
-  vRow('To Outside Agents:', getVal('v-total-outside'), midCol, y); y += 13;
-  vRow('Gross to Distribute:', getVal('v-gross-dist'), margin, y); y += 8;
+  vRow('Total Invoice:', getVal('v-total-invoice') ? '$' + getVal('v-total-invoice') : '', margin, y);
+  vRow('To Outside Agents:', getVal('v-total-outside') ? '$' + getVal('v-total-outside') : '', midCol, y); y += 13;
+  vRow('Gross to Distribute:', getVal('v-gross-dist') ? '$' + getVal('v-gross-dist') : '', margin, y); y += 8;
 
   const distRows = document.getElementById('v-dist-body').querySelectorAll('tr');
   if (distRows.length > 0) {
@@ -2772,9 +2778,9 @@ function exportCompPdf() {
 
   // --- LEASE DETAILS ---
   section('Lease Details');
-  fieldRow([['Space Leased SF', gv('c-leased-sf')], ['Rent/SF', gv('c-rent-sf')], ['Rent Type', gv('c-rent-type')]]);
+  fieldRow([['Space Leased SF', gv('c-leased-sf')], ['Rent/SF', gv('c-rent-sf') ? '$' + gv('c-rent-sf') : ''], ['Rent Type', gv('c-rent-type')]]);
   fieldRow([['Exec Date', gv('c-exec-date')], ['Occ Date', gv('c-occ-date')], ['Expire Date', gv('c-expire-date')]]);
-  fieldRow([['Term (Mo)', gv('c-term')], ['Effective Rent', gv('c-eff-rent')], ['Months on Mkt', gv('c-mkt-months')]]);
+  fieldRow([['Term (Mo)', gv('c-term')], ['Effective Rent', gv('c-eff-rent') ? '$' + gv('c-eff-rent') : ''], ['Months on Mkt', gv('c-mkt-months')]]);
   fieldRow([['Free Rent', gv('c-free-rent')], ['TI Allowance', gv('c-ti')], ['NNN Charges', gv('c-nnn')]]);
   fieldRow([['Escalations', gv('c-escalations')], ['Options', gv('c-options')]]);
   fieldRow([['Expense Recovery', gv('c-expense-recovery')], ['Tenant Type', gv('c-tenant-type')]]);
