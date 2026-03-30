@@ -53,7 +53,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 /* Checkbox/radio groups */
 .check-group { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 6px 0; }
 .check-group label { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text); cursor: pointer; }
-.check-group input[type="checkbox"], .check-group input[type="radio"] { accent-color: var(--red); width: 16px; height: 16px; cursor: pointer; }
+.check-group input[type="checkbox"], .check-group input[type="radio"] { accent-color: var(--red); width: 20px; height: 20px; min-width: 20px; cursor: pointer; }
 
 /* Buttons */
 .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border: none; border-radius: var(--radius); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
@@ -251,8 +251,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     <!-- Sale pricing -->
     <div id="sale-pricing" style="display:none;">
       <div class="row c3">
-        <div class="field"><label>Sale Price</label><input id="l-sale-price" placeholder="$0"></div>
-        <div class="field"><label>Sale $/SF</label><input id="l-sale-sf" placeholder="$0.00"></div>
+        <div class="field"><label>Sale Price</label>
+          <div style="position:relative;"><span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:14px;pointer-events:none;">$</span><input id="l-sale-price" placeholder="0" style="padding-left:22px;"></div>
+        </div>
+        <div class="field"><label>Sale $/SF</label>
+          <div style="position:relative;"><span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:14px;pointer-events:none;">$</span><input id="l-sale-sf" placeholder="0.00" style="padding-left:22px;"></div>
+        </div>
         <div class="field"><label>Sale Terms</label><input id="l-sale-terms" placeholder="e.g. All Cash"></div>
       </div>
       <div class="row c2" id="cap-rate-row" style="display:none;">
@@ -321,10 +325,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
       <div class="field"><label>Zoning</label><input id="l-ind-zoning" placeholder="e.g. M-1"></div>
       <div class="field"><label>Construction Type</label><input id="l-ind-construction" placeholder="e.g. Tilt-up"></div>
     </div>
-    <div class="row c2">
-      <div class="field"><label>TG (Thomas Guide)</label><input id="l-ind-tg" placeholder="Optional"></div>
-      <div class="field"></div>
-    </div>
+
     <h3>Building Type</h3>
     <div class="check-group">
       <label><input type="checkbox" name="l-bldg-type" value="freestanding"> Freestanding</label>
@@ -1873,12 +1874,12 @@ function drawListingType(p) {
   p.checkbox(newMod === 'new', 'New Listing', p.M, y);
   p.checkbox(txn === 'lease', 'Lease', p.M + 130, y);
   p.fieldWithLine('Lease/Mo.:', getVal('l-lease-mo'), p.M + 230, y, 130);
-  p.fieldWithLine('Sale Price:', getVal('l-sale-price'), p.M + 380, y, 140);
+  p.fieldWithLine('Sale Price:', getVal('l-sale-price') ? '$' + getVal('l-sale-price') : '', p.M + 380, y, 140);
   y += 18;
   p.checkbox(newMod === 'mod', 'Listing Modification', p.M, y);
   p.checkbox(txn === 'sale', 'Sale', p.M + 130, y);
   p.fieldWithLine('$/SF:', getVal('l-lease-sf'), p.M + 230, y, 130);
-  p.fieldWithLine('$/SF:', getVal('l-sale-sf'), p.M + 380, y, 140);
+  p.fieldWithLine('$/SF:', getVal('l-sale-sf') ? '$' + getVal('l-sale-sf') : '', p.M + 380, y, 140);
   y += 18;
   p.checkbox(txn === 'sale-lease', 'Sale /Lease', p.M + 130, y);
   p.fieldWithLine('Term:', getVal('l-lease-term'), p.M + 230, y, 130);
@@ -1918,8 +1919,7 @@ function exportIndustrialPdf() {
   p.fieldWithLine('Office:', getVal('l-ind-office'), rightX, y, p.cw * 0.4); y += 18;
   p.fieldWithLine('Cross Street:', getVal('l-cross'), leftX, y, p.cw * 0.55);
   p.fieldWithLine('Parking:', getVal('l-ind-parking'), rightX, y, p.cw * 0.4); y += 18;
-  p.fieldWithLine('Zip:', getVal('l-zip'), leftX, y, 100);
-  p.fieldWithLine('TG:', getVal('l-ind-tg'), leftX + 120, y, 100);
+  p.fieldWithLine('Zip:', getVal('l-zip'), leftX, y, 220);
   p.value('Yard:', rightX, y); const yard = getVal('l-ind-yard');
   p.checkbox(yard === 'yes', 'Yes', rightX + 40, y); p.checkbox(yard === 'no', 'No', rightX + 85, y); y += 18;
   p.fieldWithLine('Year Built:', getVal('l-year-built'), leftX, y, 100);
@@ -2167,8 +2167,7 @@ function exportLandPdf() {
   p.checkbox(cond === 'finished', 'Finished Lot', midX, y); p.checkbox(avail === 'now', 'Now', rightX, y); y += 16;
   p.fieldWithLine('Cross Street:', getVal('l-cross'), leftX, y, p.cw * 0.4);
   p.checkbox(cond === 'rough', 'Rough Graded', midX, y); p.checkbox(avail === '30days', '30 Days', rightX, y); y += 16;
-  p.fieldWithLine('Zip:', getVal('l-zip'), leftX, y, 100);
-  p.fieldWithLine('TG:', getVal('l-ind-tg'), leftX + 120, y, 100);
+  p.fieldWithLine('Zip:', getVal('l-zip'), leftX, y, 220);
   p.checkbox(cond === 'grading', 'Grading Required', midX, y); p.checkbox(avail === 'coe', 'COE', rightX, y); y += 20;
 
   // Size
