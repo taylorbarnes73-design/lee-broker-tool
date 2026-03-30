@@ -70,6 +70,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .type-section { display: none; }
 .type-section.visible { display: block; }
 
+/* Comp Lease/Sale toggle */
+.comp-sale-only { display: none !important; }
+.comp-lease-only { display: block; }
+div.field.comp-lease-only { display: block; }
+div.field.comp-sale-only { display: none !important; }
+div.row.comp-lease-only { display: grid; }
+div.row.comp-sale-only { display: none !important; }
+#tab-comp.sale-mode .comp-sale-only { display: block !important; }
+#tab-comp.sale-mode div.field.comp-sale-only { display: block !important; }
+#tab-comp.sale-mode div.row.comp-sale-only { display: grid !important; }
+#tab-comp.sale-mode .comp-lease-only { display: none !important; }
+#tab-comp.sale-mode div.field.comp-lease-only { display: none !important; }
+#tab-comp.sale-mode div.row.comp-lease-only { display: none !important; }
+
 /* Suite table */
 .suite-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
 .suite-table th { background: #f8f8f8; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: .5px; padding: 8px; text-align: left; border-bottom: 2px solid var(--border); }
@@ -964,12 +978,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 <!-- TAB 4: COMP INPUT                                                         -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="tab-comp" class="panel">
-  <div class="tip">Industrial Lease Comp Input Form — fill out and export a PDF to email to the research team.</div>
+  <div class="tip">Industrial Comp Input Form — select Lease or Sale comp type, fill out, and export a PDF to email to the research team.</div>
 
-  <!-- HEADER -->
+  <!-- COMP TYPE + HEADER -->
   <div class="card">
     <h2>Comp Overview</h2>
     <div class="row c3">
+      <div class="field"><label>Comp Type</label>
+        <select id="c-comp-type" onchange="onCompTypeChange()">
+          <option value="lease">Lease Comp</option>
+          <option value="sale">Sale Comp</option>
+        </select>
+      </div>
       <div class="field"><label>LANB Source</label><input id="c-source" placeholder="Broker Name"></div>
       <div class="field"><label>Date</label><input id="c-date" type="date"></div>
     </div>
@@ -983,7 +1003,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
       <div class="field"><label>City</label><input id="c-city" placeholder="Irvine"></div>
     </div>
     <div class="row c3">
-      <div class="field"><label>Market</label>
+      <div class="field comp-lease-only"><label>Market</label>
         <select id="c-market"><option value="">—</option><option>Los Angeles</option><option>Orange</option><option>Riverside</option><option>San Bernardino</option></select>
       </div>
       <div class="field"><label>Submarket</label>
@@ -993,50 +1013,47 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     </div>
   </div>
 
-  <!-- PROPERTY INFO + FEATURES side by side -->
+  <!-- PROPERTY INFO -->
   <div class="card">
-    <h2>Property Information</h2>
+    <h2>Property Info</h2>
     <div class="row c3">
       <div class="field"><label>Property Type</label>
         <select id="c-prop-type"><option value="">—</option><option>Industrial</option><option>Office</option><option>Retail</option><option>Multi-Family</option><option>Land</option></select>
       </div>
       <div class="field"><label>Property Subtype</label>
-        <select id="c-subtype"><option value="">—</option><option>Manufacturing</option><option>Warehouse/Distribution</option><option>Light Industrial</option><option>Showroom</option><option>Flex/R&amp;D</option><option>Land</option></select>
+        <select id="c-subtype"><option value="">—</option><option>Manufacturing</option><option>Warehouse/Distribution</option><option>Ware/Dist(Inst.)</option><option>Ware/Dist(Non-Inst.)</option><option>Light Industrial</option><option>R&amp;D</option><option>R&amp;D/Flex</option><option>R&amp;D/Corp HQ</option><option>Truck Term</option><option>Mid Bay</option><option>Other</option></select>
       </div>
-      <div class="field"><label>Building Class</label>
+      <div class="field"><label>Bldg. Class</label>
         <select id="c-bldg-class"><option value="">—</option><option>A</option><option>B</option><option>C</option></select>
       </div>
     </div>
-    <div class="row c3">
-      <div class="field"><label>Space Type</label>
-        <select id="c-deal-type"><option value="">—</option><option>Direct-New</option><option>Prev Occupied</option><option>New Shell</option><option>Sublease</option><option>New Deal</option><option>Expansion</option><option>Renewal</option><option>Renewal/Expansion</option><option>Renewal/Downsize</option><option>Build-to-Suite</option><option>Ground Lease</option></select>
-      </div>
-      <div class="field"><label>Space / Lease Type</label><input id="c-space-type" placeholder="e.g. Industrial/NNN"></div>
-      <div class="field"><label>Construction Type</label>
-        <select id="c-const-type"><option value="">—</option><option>CTU</option><option>Block</option><option>Metal</option></select>
+    <div class="row c2">
+      <div class="field comp-lease-only"><label>Space Type / Lease Type</label><input id="c-space-type" placeholder="e.g. Industrial/NNN"></div>
+      <div class="field comp-sale-only"><label>Construction Type</label>
+        <select id="c-const-type"><option value="">—</option><option>CTU</option><option>Block</option><option>Metal</option><option>Concrete</option><option>Steel</option></select>
       </div>
     </div>
   </div>
 
-  <!-- LEASE DETAILS -->
-  <div class="card">
+  <!-- LEASE DETAILS (Lease only) -->
+  <div class="card comp-lease-only" id="comp-lease-section">
     <h2>Lease Details</h2>
     <div class="row c3">
-      <div class="field"><label>Space Leased (SF)</label><input id="c-leased-sf" placeholder="0" type="text"></div>
-      <div class="field"><label>Rent/SF (Start Rate)</label><input id="c-rent-sf" placeholder="$0.00"></div>
+      <div class="field"><label>Space Leased / Leased SF</label><input id="c-leased-sf" placeholder="0" type="text"></div>
+      <div class="field"><label>Rent/SqFt / Start Rate</label><input id="c-rent-sf" placeholder="$0.00"></div>
       <div class="field"><label>Rent Type</label>
         <select id="c-rent-type"><option value="">—</option><option>NNN</option><option>G</option></select>
       </div>
     </div>
     <div class="row c3">
-      <div class="field"><label>Transaction / Exec. Date</label><input id="c-exec-date" type="date"></div>
-      <div class="field"><label>Occupancy Date</label><input id="c-occ-date" type="date"></div>
+      <div class="field"><label>Trans. / Exec. Date</label><input id="c-exec-date" type="date"></div>
+      <div class="field"><label>Occ Date</label><input id="c-occ-date" type="date"></div>
       <div class="field"><label>Expire Date</label><input id="c-expire-date" type="date"></div>
     </div>
     <div class="row c3">
       <div class="field"><label>Term (Months)</label><input id="c-term" placeholder="e.g. 60"></div>
       <div class="field"><label>Effective Rent</label><input id="c-eff-rent" placeholder="$0.00"></div>
-      <div class="field"><label>Months on Market</label><input id="c-mkt-months" placeholder="0"></div>
+      <div class="field"><label>Mos on Mrkt</label><input id="c-mkt-months" placeholder="0"></div>
     </div>
     <div class="row c3">
       <div class="field"><label>Free Rent</label><input id="c-free-rent" placeholder="e.g. 2 months"></div>
@@ -1051,63 +1068,75 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
         <select id="c-options"><option value="">—</option><option>1, 3-year</option><option>1, 5-year</option><option>2, 5-year</option><option>1, 10-year</option><option>Not Disclosed</option><option>See Comments</option><option>None</option><option>NA</option></select>
       </div>
     </div>
+  </div>
+
+  <!-- SALE DETAILS (Sale only) -->
+  <div class="card comp-sale-only" id="comp-sale-section">
+    <h2>Property Features &amp; Sale Details</h2>
+    <div class="row c3">
+      <div class="field"><label>Building SF</label><input id="cs-bldg-sf" placeholder="0" type="text"></div>
+      <div class="field"><label>Office SF</label><input id="cs-office-sf" placeholder="0" type="text"></div>
+      <div class="field"><label>Land / Lot Size (SF)</label><input id="cs-land-sf" placeholder="0" type="text"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Transaction Date</label><input id="cs-txn-date" type="date"></div>
+      <div class="field"><label>Selling Price</label><input id="cs-sell-price" placeholder="$0"></div>
+      <div class="field"><label>Year Built</label><input id="cs-year-built" placeholder="1995"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Transaction Type (User, Investor)</label><input id="cs-txn-type" placeholder="e.g. User, Investor"></div>
+      <div class="field"><label>Parking Ratio</label><input id="cs-parking" placeholder="4/1,000"></div>
+      <div class="field"><label>Mos on Mrkt</label><input id="cs-mkt-months" placeholder="0"></div>
+    </div>
     <div class="row c2">
-      <div class="field"><label>Expense Recovery Type</label>
-        <select id="c-expense-recovery"><option value="">—</option><option>NNN</option><option>IG</option><option>G</option></select>
-      </div>
-      <div class="field"><label>Tenant Type</label>
-        <select id="c-tenant-type"><option value="">—</option><option>Local</option><option>Regional</option><option>National</option></select>
-      </div>
+      <div class="field"><label>Multi-Ten / Space Type (Y/N)</label><input id="cs-multi-ten" placeholder=""></div>
     </div>
   </div>
 
+  <!-- PROPERTY FEATURES -->
   <div class="card">
-    <h2>Property Features</h2>
-    <div class="row c3">
+    <h2 id="comp-features-title">Property Features</h2>
+    <div class="row c3 comp-lease-only">
       <div class="field"><label>Building SF</label><input id="c-bldg-sf" placeholder="0" type="text"></div>
       <div class="field"><label>Land / Lot Size (SF)</label><input id="c-land-sf" placeholder="0" type="text"></div>
-      <div class="field"><label>Year Built</label><input id="c-year-built" placeholder="1995"></div>
+      <div class="field"><label>Yr Built / Year Built</label><input id="c-year-built" placeholder="1995"></div>
+    </div>
+    <div class="row c3 comp-lease-only">
+      <div class="field"><label>Office SF</label><input id="c-office-sf" placeholder="0" type="text"></div>
     </div>
     <div class="row c3">
-      <div class="field"><label>Office SF</label><input id="c-office-sf" placeholder="0" type="text"></div>
       <div class="field"><label>DH (Dock-High Doors)</label><input id="c-dh" placeholder="0" type="text"></div>
       <div class="field"><label>GL (Grade Level Doors)</label><input id="c-gl" placeholder="0" type="text"></div>
+      <div class="field"><label>Clear Height</label><input id="c-clearance" placeholder="24'"></div>
     </div>
     <div class="row c3">
-      <div class="field"><label>Clear Height</label><input id="c-clearance" placeholder="24'"></div>
-      <div class="field"><label>Parking Ratio</label><input id="c-parking" placeholder="4/1,000"></div>
+      <div class="field comp-lease-only"><label>Parking Ratio</label><input id="c-parking" placeholder="4/1,000"></div>
       <div class="field"><label>Amps / Power</label><input id="c-amps" placeholder="e.g. 400, 1200"></div>
-    </div>
-    <div class="row c4">
       <div class="field"><label>Sprinklers</label>
         <select id="c-sprinklers"><option value="">—</option><option>Yes</option><option>No</option></select>
       </div>
+    </div>
+    <div class="row c3">
       <div class="field"><label>Rail</label>
         <select id="c-rail"><option value="">—</option><option>Yes</option><option>No</option></select>
       </div>
       <div class="field"><label>Yard</label>
         <select id="c-yard"><option value="">—</option><option>Yes</option><option>No</option></select>
       </div>
-      <div class="field"><label>Condition</label>
-        <select id="c-condition"><option value="">—</option><option>Average</option><option>Good</option><option>Poor</option></select>
-      </div>
     </div>
-    <div class="row c3">
-      <div class="field"><label>Multi-Tenant (Y/N)</label>
+    <div class="row c2 comp-lease-only">
+      <div class="field"><label>Multi-Ten (Y/N)</label>
         <select id="c-multi-tenant"><option value="">—</option><option>Yes</option><option>No</option></select>
       </div>
-      <div class="field"><label>Part of Larger (Y/N)</label>
+      <div class="field"><label>POL (Part of Larger) (Y/N)</label>
         <select id="c-pol"><option value="">—</option><option>Yes</option><option>No</option></select>
-      </div>
-      <div class="field"><label>Opex Cost Estimated?</label>
-        <select id="c-opex-est"><option value="">—</option><option>Yes</option><option>No</option></select>
       </div>
     </div>
   </div>
 
-  <!-- LESSOR / TENANT & BROKER INFO -->
-  <div class="card">
-    <h2>Lessor / Tenant &amp; Broker Info</h2>
+  <!-- LESSOR / TENANT & BROKER INFO (Lease) -->
+  <div class="card comp-lease-only">
+    <h2>Lessor/Tenant Info</h2>
     <div class="row c2">
       <div class="field"><label>Lessor / Landlord</label><input id="c-lessor" placeholder="Landlord name"></div>
       <div class="field"><label>Lessee / Tenant</label><input id="c-lessee" placeholder="Tenant name"></div>
@@ -1126,10 +1155,38 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     </div>
   </div>
 
+  <!-- SELLER / BUYER & BROKER INFO (Sale) -->
+  <div class="card comp-sale-only">
+    <h2>Seller/Buyer Info</h2>
+    <div class="row c2">
+      <div class="field"><label>Seller</label><input id="cs-seller" placeholder="Seller name"></div>
+      <div class="field"><label>Buyer</label><input id="cs-buyer" placeholder="Buyer name"></div>
+    </div>
+    <div class="row c2">
+      <div class="field"><label>Listing Brokerage</label><input id="cs-list-brokerage" placeholder="e.g. Lee & Associates"></div>
+      <div class="field"><label>Procuring Brokerage</label><input id="cs-proc-brokerage" placeholder="e.g. CBRE"></div>
+    </div>
+    <div class="row c2">
+      <div class="field"><label>Listing Agent 1</label><input id="cs-list-agent1" placeholder="Agent name"></div>
+      <div class="field"><label>Procuring Agent 1</label><input id="cs-proc-agent1" placeholder="Agent name"></div>
+    </div>
+    <div class="row c2">
+      <div class="field"><label>Listing Agent 2</label><input id="cs-list-agent2" placeholder="Agent name"></div>
+      <div class="field"><label>Procuring Agent 2</label><input id="cs-proc-agent2" placeholder="Agent name"></div>
+    </div>
+  </div>
+
   <!-- COMMENTS -->
   <div class="card">
     <h2>Comments</h2>
-    <div class="field"><textarea id="c-comments" rows="4" placeholder="Additional comments, details, or notes..."></textarea></div>
+    <div class="field comp-lease-only"><label>Opex cost estimated (Y/N)?</label>
+      <select id="c-opex-est"><option value="">—</option><option>Yes</option><option>No</option></select>
+    </div>
+    <div class="field comp-lease-only" style="margin-top:8px;"><label>Single or Multi-Tenant?</label><input id="c-comments-multi" placeholder=""></div>
+    <div class="field comp-lease-only" style="margin-top:8px;"><label>Part of Larger?</label><input id="c-comments-pol" placeholder=""></div>
+    <div class="field comp-sale-only"><label>Approximate Cap Rate?</label><input id="cs-cap-rate" placeholder=""></div>
+    <div class="field comp-sale-only" style="margin-top:8px;"><label>Investment Sale?</label><input id="cs-investment" placeholder=""></div>
+    <div class="field" style="margin-top:8px;"><textarea id="c-comments" rows="3" placeholder="Additional comments..."></textarea></div>
   </div>
 
   <div class="btn-bar" style="margin-top:16px;">
@@ -2690,122 +2747,413 @@ function exportVoucherPdf() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// COMP INPUT — CLEAR & PDF EXPORT
+// COMP INPUT — TOGGLE, CLEAR & PDF EXPORT
 // ═══════════════════════════════════════════════════════════════════════════════
+function onCompTypeChange() {
+  const mode = document.getElementById('c-comp-type').value;
+  const tab = document.getElementById('tab-comp');
+  if (mode === 'sale') {
+    tab.classList.add('sale-mode');
+    document.getElementById('comp-features-title').textContent = 'Property Features (continued)';
+  } else {
+    tab.classList.remove('sale-mode');
+    document.getElementById('comp-features-title').textContent = 'Property Features';
+  }
+}
+
 function clearComp() {
   if (!confirm('Clear all comp input fields?')) return;
   document.querySelectorAll('#tab-comp input, #tab-comp textarea').forEach(el => {
     if (el.type !== 'radio' && el.type !== 'checkbox' && !el.readOnly) el.value = '';
   });
-  document.querySelectorAll('#tab-comp select').forEach(el => el.selectedIndex = 0);
+  document.querySelectorAll('#tab-comp select').forEach(el => {
+    if (el.id === 'c-comp-type') return;
+    el.selectedIndex = 0;
+  });
   document.getElementById('c-date').value = new Date().toISOString().split('T')[0];
 }
 
 function exportCompPdf() {
+  const compType = document.getElementById('c-comp-type').value;
+  if (compType === 'sale') { exportSaleCompPdf(); }
+  else { exportLeaseCompPdf(); }
+}
+
+/* ── Helper: get value from input/select ── */
+function _cgv(id) {
+  const el = document.getElementById(id);
+  if (!el) return '';
+  if (el.tagName === 'SELECT') {
+    const t = el.selectedOptions[0]?.text || '';
+    return (t === '—' || t === '\u2014') ? '' : t;
+  }
+  return el.value || '';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LEASE COMP PDF — exact two-column table layout
+   ══════════════════════════════════════════════════════════════ */
+function exportLeaseCompPdf() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  const W = doc.internal.pageSize.getWidth();  // 612
+  const M = 36; // margin
+  const cw = W - M * 2; // content width
+  const midX = M + cw / 2 + 4; // right column start
+  const leftW = cw / 2 - 4;
+  const rightW = cw / 2 - 4;
+  let y = 0;
+
+  const gv = _cgv;
+
+  /* ── Title ── */
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(150, 0, 0);
+  doc.text('INDUSTRIAL LEASE COMP INPUT FORM', M, 40);
+  y = 58;
+
+  /* ── Table drawing helpers ── */
+  const LH = 16; // line height for rows
+  const HDR = 18; // section header height
+
+  function drawCell(x, w, label, val, isHeader) {
+    doc.setDrawColor(180, 180, 180); doc.setLineWidth(0.5);
+    if (isHeader) {
+      doc.setFillColor(240, 240, 240);
+      doc.rect(x, y, w, HDR, 'FD');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(150, 0, 0);
+      doc.text(label, x + 4, y + 12);
+    } else {
+      doc.rect(x, y, w, LH);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(60);
+      doc.text(label, x + 4, y + 11);
+      if (val !== undefined) {
+        const labelW = doc.getTextWidth(label) + 8;
+        doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+        doc.text(String(val || ''), x + 4 + labelW, y + 11);
+      }
+    }
+  }
+
+  function leftCell(label, val) { drawCell(M, leftW, label, val, false); }
+  function rightCell(label, val) { drawCell(midX, rightW, label, val, false); }
+  function leftHeader(label) { drawCell(M, leftW, label, undefined, true); }
+  function rightHeader(label) { drawCell(midX, rightW, label, undefined, true); }
+  function nextRow(h) { y += (h || LH); }
+
+  /* ── LANB Source / Date ── */
+  doc.setDrawColor(180,180,180); doc.setLineWidth(0.5);
+  // LANB Source row
+  doc.rect(M, y, cw, LH);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(60);
+  doc.text('LANB Source:', M + 4, y + 11);
+  doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
+  doc.text(gv('c-source'), M + 70, y + 11);
+  y += LH;
+  // Date row
+  doc.rect(M, y, cw, LH);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(60);
+  doc.text('Date:', M + 4, y + 11);
+  doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
+  doc.text(gv('c-date'), M + 32, y + 11);
+  y += LH + 10;
+
+  /* ── LEFT: Location  |  RIGHT: Property Features ── */
+  const blockY = y;
+
+  // LEFT column — Location
+  leftHeader('Location:'); y += HDR;
+  leftCell('Address:', gv('c-address')); y += LH;
+  leftCell('City:', gv('c-city')); y += LH;
+  leftCell('Market:', gv('c-market')); y += LH;
+  leftCell('Submarket:', gv('c-submarket')); y += LH;
+  leftCell('Project Name:', gv('c-project')); y += LH;
+  const afterLocY = y;
+
+  // LEFT column — Property Info
+  leftHeader('Property Info:'); y += HDR;
+  leftCell('Property Type:', gv('c-prop-type')); y += LH;
+  leftCell('Property Subtype:', gv('c-subtype')); y += LH;
+  leftCell('Bldg. Class:', gv('c-bldg-class')); y += LH;
+  leftCell('Space Type / Lease Type:', gv('c-space-type')); y += LH;
+  const afterPropInfoY = y;
+
+  // LEFT column — Lease Details
+  leftHeader('Lease Details:'); y += HDR;
+  leftCell('Space Leased / Leased SF:', gv('c-leased-sf')); y += LH;
+  leftCell('Rent/SqFt / Start Rate:', gv('c-rent-sf') ? '$' + gv('c-rent-sf') : ''); y += LH;
+  leftCell('Rent Type:', gv('c-rent-type')); y += LH;
+  leftCell('Trans. / Exec. Date:', gv('c-exec-date')); y += LH;
+  leftCell('Occ Date:', gv('c-occ-date')); y += LH;
+  leftCell('Expire Date:', gv('c-expire-date')); y += LH;
+  leftCell('Term (Months):', gv('c-term')); y += LH;
+  leftCell('Effective Rent:', gv('c-eff-rent') ? '$' + gv('c-eff-rent') : ''); y += LH;
+  leftCell('Mos on Mrkt:', gv('c-mkt-months')); y += LH;
+  leftCell('Free Rent:', gv('c-free-rent')); y += LH;
+  leftCell('TI Allowance:', gv('c-ti')); y += LH;
+  leftCell('NNN Charges:', gv('c-nnn') ? '$' + gv('c-nnn') : ''); y += LH;
+  leftCell('Rent Adj / Escalations:', gv('c-escalations')); y += LH;
+  leftCell('Options:', gv('c-options')); y += LH;
+  const leftEndY = y;
+
+  // RIGHT column — Property Features (start from blockY)
+  y = blockY;
+  rightHeader('Property Features:'); y += HDR;
+  rightCell('Building SF:', gv('c-bldg-sf')); y += LH;
+  rightCell('Land / Lot Size (SF):', gv('c-land-sf')); y += LH;
+  rightCell('Yr Built / Year Built:', gv('c-year-built')); y += LH;
+  rightCell('Office SF:', gv('c-office-sf')); y += LH;
+  rightCell('DH (Dock-high Doors):', gv('c-dh')); y += LH;
+  rightCell('GL (Grade Level Doors):', gv('c-gl')); y += LH;
+  rightCell('Clear Height:', gv('c-clearance')); y += LH;
+  rightCell('Parking Ratio:', gv('c-parking')); y += LH;
+  rightCell('Amps / Power:', gv('c-amps')); y += LH;
+  rightCell('Sprinklers:', gv('c-sprinklers')); y += LH;
+  rightCell('Rail:', gv('c-rail')); y += LH;
+  rightCell('Yard:', gv('c-yard')); y += LH;
+  rightCell('Multi-Ten (Y/N):', gv('c-multi-tenant')); y += LH;
+  rightCell('POL (Part of Larger) (Y/N):', gv('c-pol')); y += LH;
+
+  // RIGHT column — Lessor/Tenant Info
+  rightHeader('Lessor/Tenant Info:'); y += HDR;
+  rightCell('Lessor / Landlord:', gv('c-lessor')); y += LH;
+  rightCell('Lessee / Tenant:', gv('c-lessee')); y += LH;
+  y += LH; // blank spacer
+  rightCell('Listing Brokerage:', gv('c-list-brokerage')); y += LH;
+  rightCell('Listing Agent 1:', gv('c-list-agent1')); y += LH;
+  rightCell('Listing Agent 2:', gv('c-list-agent2')); y += LH;
+  rightCell('Procuring Brokerage:', gv('c-proc-brokerage')); y += LH;
+  rightCell('Procuring Agent 1:', gv('c-proc-agent1')); y += LH;
+  rightCell('Procuring Agent 2:', gv('c-proc-agent2')); y += LH;
+  const rightEndY = y;
+
+  // Move y to whichever column ended lower
+  y = Math.max(leftEndY, rightEndY) + 16;
+
+  /* ── Comments ── */
+  doc.setDrawColor(180,180,180); doc.setLineWidth(0.5);
+  doc.setFillColor(240,240,240); doc.rect(M, y, leftW, HDR, 'FD');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(150,0,0);
+  doc.text('Comments:', M + 4, y + 12); y += HDR;
+  // Opex
+  doc.rect(M, y, leftW, LH);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(60);
+  doc.text('Opex cost estimated (Y/N)?', M + 4, y + 11);
+  doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+  doc.text(gv('c-opex-est'), M + 130, y + 11); y += LH;
+  // Multi-Tenant
+  doc.rect(M, y, leftW, LH);
+  doc.setFont('helvetica', 'normal'); doc.setTextColor(60);
+  doc.text('Single or Multi-Tenant?', M + 4, y + 11);
+  doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+  doc.text(_cgv('c-comments-multi'), M + 120, y + 11); y += LH;
+  // Part of Larger
+  doc.rect(M, y, leftW, LH);
+  doc.setFont('helvetica', 'normal'); doc.setTextColor(60);
+  doc.text('Part of Larger?', M + 4, y + 11);
+  doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+  doc.text(_cgv('c-comments-pol'), M + 80, y + 11); y += LH;
+
+  // Additional comments
+  const comments = gv('c-comments');
+  if (comments) {
+    y += 6;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(0);
+    const lines = doc.splitTextToSize(comments, cw);
+    doc.text(lines, M, y + 10); y += lines.length * 11 + 10;
+  }
+
+  /* ── Property Type / Subtypes reference table ── */
+  y += 10;
+  const refData = [
+    ['Office', 'Low-Rise, Mid-Rise, High-Rise, Medical, Flex, Data Ctr/Telecom, CorpHQ, Creative'],
+    ['Industrial', 'Manuf, Ware/Dist, Ware/Dist(Inst.), Ware/Dist(Non-Inst.), Light, R&D, R&D/Flex, R&D/Corp HQ, Truck Term, Mid Bay, Other'],
+    ['Retail', 'Free-Standing, Neighborhood, Community, Strip, Office, Power, Regional, Super-Regional'],
+    ['Land', 'Industrial Zoned, Office Zoned, Retail Zoned']
+  ];
+  doc.setDrawColor(180,180,180); doc.setLineWidth(0.5);
+  // Header
+  doc.setFillColor(240,240,240); doc.rect(M, y, 80, LH, 'FD'); doc.rect(M + 80, y, cw - 80, LH, 'FD');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(0);
+  doc.text('Property Type', M + 4, y + 11); doc.text('Property Subtypes', M + 84, y + 11); y += LH;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5);
+  refData.forEach(function(r) {
+    const lines = doc.splitTextToSize(r[1], cw - 90);
+    const rh = Math.max(LH, lines.length * 10 + 6);
+    doc.rect(M, y, 80, rh); doc.rect(M + 80, y, cw - 80, rh);
+    doc.text(r[0], M + 4, y + 11);
+    doc.text(lines, M + 84, y + 11);
+    y += rh;
+  });
+
+  const addr = gv('c-address') || 'Comp';
+  doc.save('Lease_Comp_' + addr.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30) + '.pdf');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SALE COMP PDF — exact two-column table layout
+   ══════════════════════════════════════════════════════════════ */
+function exportSaleCompPdf() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'pt', format: 'letter' });
   const W = doc.internal.pageSize.getWidth();
-  const H = doc.internal.pageSize.getHeight();
   const M = 36;
   const cw = W - M * 2;
+  const midX = M + cw / 2 + 4;
+  const leftW = cw / 2 - 4;
+  const rightW = cw / 2 - 4;
   let y = 0;
+  const gv = _cgv;
+  const LH = 16;
+  const HDR = 18;
 
-  function checkPage(need) { if (y + need > H - 40) { doc.addPage(); y = 40; } }
-
-  function gv(id) {
-    const el = document.getElementById(id);
-    if (!el) return '';
-    if (el.tagName === 'SELECT') return el.selectedOptions[0]?.text || '';
-    return el.value || '';
+  function drawCell(x, w, label, val, isHeader) {
+    doc.setDrawColor(180, 180, 180); doc.setLineWidth(0.5);
+    if (isHeader) {
+      doc.setFillColor(240, 240, 240);
+      doc.rect(x, y, w, HDR, 'FD');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(150, 0, 0);
+      doc.text(label, x + 4, y + 12);
+    } else {
+      doc.rect(x, y, w, LH);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(60);
+      doc.text(label, x + 4, y + 11);
+      if (val !== undefined) {
+        const labelW = doc.getTextWidth(label) + 8;
+        doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+        doc.text(String(val || ''), x + 4 + labelW, y + 11);
+      }
+    }
   }
+  function leftCell(label, val) { drawCell(M, leftW, label, val, false); }
+  function rightCell(label, val) { drawCell(midX, rightW, label, val, false); }
+  function leftHeader(label) { drawCell(M, leftW, label, undefined, true); }
+  function rightHeader(label) { drawCell(midX, rightW, label, undefined, true); }
+  function nextRow(h) { y += (h || LH); }
 
-  // --- HEADER ---
-  doc.setDrawColor(0); doc.setLineWidth(1.5);
-  doc.rect(M, 30, cw, 50);
-  doc.setFillColor(0); doc.rect(M, 30, cw, 22, 'F');
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255);
-  doc.text('LEE & ASSOCIATES — NEWPORT BEACH', M + 8, 45);
-  doc.setTextColor(0); doc.setFontSize(9); doc.setFont('helvetica', 'normal');
-  doc.text('Industrial Lease Comp Input Form', M + 8, 68);
-  doc.text('Date: ' + gv('c-date'), W - M - 8, 68, { align: 'right' });
-  y = 95;
+  /* ── Title ── */
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(150, 0, 0);
+  doc.text('INDUSTRIAL SALE COMP INPUT FORM', M, 40);
+  y = 58;
 
-  // --- Helper: Section title ---
-  function section(title) {
-    checkPage(30);
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(180, 0, 0);
-    doc.text(title.toUpperCase(), M, y); y += 4;
-    doc.setDrawColor(180, 0, 0); doc.setLineWidth(0.5); doc.line(M, y, W - M, y); y += 12;
-    doc.setTextColor(0);
-  }
+  /* ── LANB Source / Date ── */
+  doc.setDrawColor(180,180,180); doc.setLineWidth(0.5);
+  doc.rect(M, y, cw, LH);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(60);
+  doc.text('LANB Source:', M + 4, y + 11);
+  doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
+  doc.text(gv('c-source'), M + 70, y + 11);
+  y += LH;
+  doc.rect(M, y, cw, LH);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(60);
+  doc.text('Date:', M + 4, y + 11);
+  doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
+  doc.text(gv('c-date'), M + 32, y + 11);
+  y += LH + 10;
 
-  // --- Helper: Field row (label: value pairs) ---
-  function fieldRow(pairs) {
-    checkPage(16);
-    const colW = cw / pairs.length;
-    doc.setFontSize(7.5);
-    pairs.forEach(function(p, i) {
-      const x = M + colW * i;
-      doc.setFont('helvetica', 'normal'); doc.setTextColor(100);
-      doc.text(p[0] + ':', x, y);
-      doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
-      doc.text(String(p[1] || '—'), x + doc.getTextWidth(p[0] + ':  '), y);
-    });
-    y += 14;
-  }
+  /* ── LEFT: Location  |  RIGHT: Property Features (continued) ── */
+  const blockY = y;
 
-  // --- COMP OVERVIEW ---
-  section('Comp Overview');
-  fieldRow([['Source', gv('c-source')]]);
+  // LEFT — Location
+  leftHeader('Location:'); y += HDR;
+  leftCell('Address:', gv('c-address')); y += LH;
+  leftCell('City:', gv('c-city')); y += LH;
+  leftCell('Submarket:', gv('c-submarket')); y += LH;
+  leftCell('Project Name:', gv('c-project')); y += LH;
 
-  // --- LOCATION ---
-  section('Location');
-  fieldRow([['Address', gv('c-address')], ['City', gv('c-city')]]);
-  fieldRow([['Market', gv('c-market')], ['Submarket', gv('c-submarket')], ['Project', gv('c-project')]]);
+  // LEFT — Property Info
+  leftHeader('Property Info:'); y += HDR;
+  leftCell('Property Type:', gv('c-prop-type')); y += LH;
+  leftCell('Property Sub-Type:', gv('c-subtype')); y += LH;
+  leftCell('Bldg. Class:', gv('c-bldg-class')); y += LH;
+  leftCell('Construction Type:', gv('c-const-type')); y += LH;
 
-  // --- PROPERTY INFORMATION ---
-  section('Property Information');
-  fieldRow([['Property Type', gv('c-prop-type')], ['Subtype', gv('c-subtype')], ['Class', gv('c-bldg-class')]]);
-  fieldRow([['Space Type', gv('c-deal-type')], ['Space/Lease Type', gv('c-space-type')], ['Construction', gv('c-const-type')]]);
+  // LEFT — Property Features
+  leftHeader('Property Features:'); y += HDR;
+  leftCell('Building SF:', gv('cs-bldg-sf')); y += LH;
+  leftCell('Office SF:', gv('cs-office-sf')); y += LH;
+  leftCell('Land / Lot Size (SF):', gv('cs-land-sf')); y += LH;
+  leftCell('Transaction Date:', gv('cs-txn-date')); y += LH;
+  leftCell('Selling Price:', gv('cs-sell-price') ? '$' + gv('cs-sell-price') : ''); y += LH;
+  leftCell('Year Built:', gv('cs-year-built')); y += LH;
+  leftCell('Transaction Type (User, Investor):', gv('cs-txn-type')); y += LH;
+  leftCell('Parking Ratio:', gv('cs-parking')); y += LH;
+  leftCell('Mos on Mrkt:', gv('cs-mkt-months')); y += LH;
+  leftCell('Multi-Ten / Space Type (Y/N):', gv('cs-multi-ten')); y += LH;
+  const leftEndY = y;
 
-  // --- LEASE DETAILS ---
-  section('Lease Details');
-  fieldRow([['Space Leased SF', gv('c-leased-sf')], ['Rent/SF', gv('c-rent-sf') ? '$' + gv('c-rent-sf') : ''], ['Rent Type', gv('c-rent-type')]]);
-  fieldRow([['Exec Date', gv('c-exec-date')], ['Occ Date', gv('c-occ-date')], ['Expire Date', gv('c-expire-date')]]);
-  fieldRow([['Term (Mo)', gv('c-term')], ['Effective Rent', gv('c-eff-rent') ? '$' + gv('c-eff-rent') : ''], ['Months on Mkt', gv('c-mkt-months')]]);
-  fieldRow([['Free Rent', gv('c-free-rent')], ['TI Allowance', gv('c-ti')], ['NNN Charges', gv('c-nnn')]]);
-  fieldRow([['Escalations', gv('c-escalations')], ['Options', gv('c-options')]]);
-  fieldRow([['Expense Recovery', gv('c-expense-recovery')], ['Tenant Type', gv('c-tenant-type')]]);
+  // RIGHT column (start from blockY)
+  y = blockY;
+  rightHeader('Property Features (continued):'); y += HDR;
+  rightCell('DH (Dock-high Doors):', gv('c-dh')); y += LH;
+  rightCell('GL (Grade Level Doors):', gv('c-gl')); y += LH;
+  rightCell('Clear Height:', gv('c-clearance')); y += LH;
+  rightCell('Sprinklers:', gv('c-sprinklers')); y += LH;
+  rightCell('Rail:', gv('c-rail')); y += LH;
+  rightCell('Yard:', gv('c-yard')); y += LH;
+  rightCell('Amps / Power:', gv('c-amps')); y += LH;
 
-  // --- PROPERTY FEATURES (column order: read down columns, not across rows) ---
-  section('Property Features');
-  fieldRow([['Building SF', gv('c-bldg-sf')], ['DH Doors', gv('c-dh')], ['Sprinklers', gv('c-sprinklers')]]);
-  fieldRow([['Land / Lot Size (SF)', gv('c-land-sf')], ['GL Doors', gv('c-gl')], ['Rail', gv('c-rail')]]);
-  fieldRow([['Year Built', gv('c-year-built')], ['Clear Height', gv('c-clearance')], ['Yard', gv('c-yard')]]);
-  fieldRow([['Office SF', gv('c-office-sf')], ['Parking Ratio', gv('c-parking')], ['Multi-Tenant', gv('c-multi-tenant')]]);
-  fieldRow([['Amps / Power', gv('c-amps')], ['POL (Part of Larger)', gv('c-pol')], ['Condition', gv('c-condition')]]);
-  fieldRow([['Opex Estimated', gv('c-opex-est')]]);
+  // RIGHT — Seller/Buyer Info
+  rightHeader('Seller/Buyer Info:'); y += HDR;
+  rightCell('Seller:', gv('cs-seller')); y += LH;
+  rightCell('Buyer:', gv('cs-buyer')); y += LH;
+  rightCell('Listing Brokerage:', gv('cs-list-brokerage')); y += LH;
+  rightCell('Listing Agent 1:', gv('cs-list-agent1')); y += LH;
+  rightCell('Listing Agent 2:', gv('cs-list-agent2')); y += LH;
+  rightCell('Procuring Brokerage:', gv('cs-proc-brokerage')); y += LH;
+  rightCell('Procuring Agent 1:', gv('cs-proc-agent1')); y += LH;
+  rightCell('Procuring Agent 2:', gv('cs-proc-agent2')); y += LH;
+  const rightEndY = y;
 
-  // --- LESSOR / TENANT & BROKER ---
-  section('Lessor / Tenant & Broker Info');
-  fieldRow([['Lessor', gv('c-lessor')], ['Lessee/Tenant', gv('c-lessee')]]);
-  fieldRow([['Listing Brokerage', gv('c-list-brokerage')], ['Procuring Brokerage', gv('c-proc-brokerage')]]);
-  fieldRow([['Listing Agent 1', gv('c-list-agent1')], ['Procuring Agent 1', gv('c-proc-agent1')]]);
-  fieldRow([['Listing Agent 2', gv('c-list-agent2')], ['Procuring Agent 2', gv('c-proc-agent2')]]);
+  y = Math.max(leftEndY, rightEndY) + 16;
 
-  // --- COMMENTS ---
+  /* ── Comments ── */
+  doc.setDrawColor(180,180,180); doc.setLineWidth(0.5);
+  doc.setFillColor(240,240,240); doc.rect(M, y, leftW, HDR, 'FD');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(150,0,0);
+  doc.text('Comments:', M + 4, y + 12); y += HDR;
+  doc.rect(M, y, leftW, LH);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(60);
+  doc.text('Approximate Cap Rate?', M + 4, y + 11);
+  doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+  doc.text(gv('cs-cap-rate'), M + 120, y + 11); y += LH;
+  doc.rect(M, y, leftW, LH);
+  doc.setFont('helvetica', 'normal'); doc.setTextColor(60);
+  doc.text('Investment Sale?', M + 4, y + 11);
+  doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+  doc.text(gv('cs-investment'), M + 85, y + 11); y += LH;
+
   const comments = gv('c-comments');
   if (comments) {
-    section('Comments');
-    checkPage(40);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(0);
+    y += 6;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(0);
     const lines = doc.splitTextToSize(comments, cw);
-    doc.text(lines, M, y); y += lines.length * 11;
+    doc.text(lines, M, y + 10); y += lines.length * 11 + 10;
   }
 
-  // --- SAVE ---
+  /* ── Property Type / Subtypes reference table ── */
+  y += 10;
+  const refData = [
+    ['Office', 'Low-Rise, Mid-Rise, High-Rise, Medical, Flex, Data Ctr/Telecom, CorpHQ, Creative'],
+    ['Industrial', 'Manuf, Ware/Dist, Ware/Dist(Inst.), Ware/Dist(Non-Inst.), Light, R&D, R&D/Flex, R&D/Corp HQ, Truck Term, Mid Bay, Other'],
+    ['Retail', 'Free-Standing, Neighborhood, Community, Strip, Office, Power, Regional, Super-Regional'],
+    ['Land', 'Industrial Zoned, Office Zoned, Retail Zoned']
+  ];
+  doc.setDrawColor(180,180,180); doc.setLineWidth(0.5);
+  doc.setFillColor(240,240,240); doc.rect(M, y, 80, LH, 'FD'); doc.rect(M + 80, y, cw - 80, LH, 'FD');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(0);
+  doc.text('Property Type', M + 4, y + 11); doc.text('Property Subtypes', M + 84, y + 11); y += LH;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5);
+  refData.forEach(function(r) {
+    const lines = doc.splitTextToSize(r[1], cw - 90);
+    const rh = Math.max(LH, lines.length * 10 + 6);
+    doc.rect(M, y, 80, rh); doc.rect(M + 80, y, cw - 80, rh);
+    doc.text(r[0], M + 4, y + 11);
+    doc.text(lines, M + 84, y + 11);
+    y += rh;
+  });
+
   const addr = gv('c-address') || 'Comp';
-  doc.save('Lease_Comp_' + addr.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30) + '.pdf');
+  doc.save('Sale_Comp_' + addr.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30) + '.pdf');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2858,20 +3206,31 @@ function openEmailModal(context) {
       'Please let me know if you need anything else.\n\n' +
       'Thank you,\n' + (document.getElementById('v-la-name').value || (getListingAgents()[0]?.name) || '[Agent]');
   } else if (context === 'comp') {
+    const compType = document.getElementById('c-comp-type').value;
     const addr = document.getElementById('c-address').value || '[Address]';
     const city = document.getElementById('c-city').value || '';
-    const dealType = document.getElementById('c-deal-type').value || 'Lease';
     to.value = 'ekat@lee-associates.com';
     cc.value = '';
-    subject.value = 'Lease Comp Input — ' + addr + (city ? ', ' + city : '');
-    body.value = 'Hi,\n\nPlease see the attached lease comp input form for the following transaction:\n\n' +
-      'Address: ' + addr + (city ? ', ' + city : '') + '\n' +
-      'Deal Type: ' + dealType + '\n' +
-      'Tenant: ' + (document.getElementById('c-lessee').value || 'N/A') + '\n' +
-      'Space Leased: ' + (document.getElementById('c-leased-sf').value || 'N/A') + ' SF\n' +
-      'Rent/SF: ' + (document.getElementById('c-rent-sf').value || 'N/A') + '\n\n' +
-      'Please let me know if you need any additional information.\n\n' +
-      'Thank you';
+    if (compType === 'sale') {
+      subject.value = 'Sale Comp Input \u2014 ' + addr + (city ? ', ' + city : '');
+      body.value = 'Hi,\n\nPlease see the attached sale comp input form for the following transaction:\n\n' +
+        'Address: ' + addr + (city ? ', ' + city : '') + '\n' +
+        'Selling Price: ' + (document.getElementById('cs-sell-price').value || 'N/A') + '\n' +
+        'Buyer: ' + (document.getElementById('cs-buyer').value || 'N/A') + '\n' +
+        'Seller: ' + (document.getElementById('cs-seller').value || 'N/A') + '\n' +
+        'Building SF: ' + (document.getElementById('cs-bldg-sf').value || 'N/A') + '\n\n' +
+        'Please let me know if you need any additional information.\n\n' +
+        'Thank you';
+    } else {
+      subject.value = 'Lease Comp Input \u2014 ' + addr + (city ? ', ' + city : '');
+      body.value = 'Hi,\n\nPlease see the attached lease comp input form for the following transaction:\n\n' +
+        'Address: ' + addr + (city ? ', ' + city : '') + '\n' +
+        'Tenant: ' + (document.getElementById('c-lessee').value || 'N/A') + '\n' +
+        'Space Leased: ' + (document.getElementById('c-leased-sf').value || 'N/A') + ' SF\n' +
+        'Rent/SF: ' + (document.getElementById('c-rent-sf').value || 'N/A') + '\n\n' +
+        'Please let me know if you need any additional information.\n\n' +
+        'Thank you';
+    }
   }
 
   document.getElementById('email-modal-title').textContent = 'Draft Email — ' + context.charAt(0).toUpperCase() + context.slice(1);
