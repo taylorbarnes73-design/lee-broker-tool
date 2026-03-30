@@ -166,7 +166,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 <div class="header">
   <div>
     <h1>Lee &amp; Associates Newport Beach &mdash; Broker Submission Tool</h1>
-    <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher</div>
+    <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher &bull; Comp Input</div>
   </div>
 </div>
 
@@ -174,6 +174,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   <div class="tab active" onclick="switchTab('listing')">Listing Entry</div>
   <div class="tab" onclick="switchTab('sign')">Sign Request</div>
   <div class="tab" onclick="switchTab('voucher')">Commission Voucher</div>
+  <div class="tab" onclick="switchTab('comp')">Comp Input</div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
@@ -959,6 +960,185 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- TAB 4: COMP INPUT                                                         -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<div id="tab-comp" class="panel">
+  <div class="tip">Industrial Lease Comp Input Form — fill out and export a PDF to email to the research team.</div>
+
+  <!-- HEADER -->
+  <div class="card">
+    <h2>Comp Overview</h2>
+    <div class="row c3">
+      <div class="field"><label>LANB Source</label><input id="c-source" placeholder="e.g. CoStar, LoopNet, Broker"></div>
+      <div class="field"><label>Date</label><input id="c-date" type="date"></div>
+      <div class="field"><label>Deal Type</label>
+        <select id="c-deal-type"><option value="">—</option><option>Direct-New</option><option>Prev Occupied</option><option>New Shell</option><option>Sublease</option><option>New Deal</option><option>Expansion</option><option>Renewal</option><option>Renewal/Expansion</option><option>Renewal/Downsize</option><option>Build-to-Suite</option><option>Ground Lease</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOCATION -->
+  <div class="card">
+    <h2>Location</h2>
+    <div class="row c2">
+      <div class="field"><label>Address</label><input id="c-address" placeholder="16441 Scientific Way"></div>
+      <div class="field"><label>City</label><input id="c-city" placeholder="Irvine"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Market</label>
+        <select id="c-market"><option value="">—</option><option>Los Angeles</option><option>Orange</option><option>Riverside</option><option>San Bernardino</option></select>
+      </div>
+      <div class="field"><label>Submarket</label>
+        <select id="c-submarket"><option value="">—</option><option>SCM</option><option>IBC</option><option>SAE</option><option>WC</option><option>NM</option><option>SOC</option><option>NOC</option><option>Mid Cities</option></select>
+      </div>
+      <div class="field"><label>Project Name</label><input id="c-project" placeholder="Project or building name"></div>
+    </div>
+  </div>
+
+  <!-- PROPERTY INFO + FEATURES side by side -->
+  <div class="card">
+    <h2>Property Information</h2>
+    <div class="row c3">
+      <div class="field"><label>Property Type</label>
+        <select id="c-prop-type"><option value="">—</option><option>Industrial</option><option>Office</option><option>Retail</option><option>Multi-Family</option><option>Land</option></select>
+      </div>
+      <div class="field"><label>Property Subtype</label>
+        <select id="c-subtype"><option value="">—</option><option>Manufacturing</option><option>Warehouse/Distribution</option><option>Light Industrial</option><option>Showroom</option><option>Flex/R&amp;D</option><option>Land</option></select>
+      </div>
+      <div class="field"><label>Building Class</label>
+        <select id="c-bldg-class"><option value="">—</option><option>A</option><option>B</option><option>C</option></select>
+      </div>
+    </div>
+    <div class="row c2">
+      <div class="field"><label>Space Type / Lease Type</label><input id="c-space-type" placeholder="e.g. Industrial/NNN"></div>
+      <div class="field"><label>Construction Type</label>
+        <select id="c-const-type"><option value="">—</option><option>CTU</option><option>Block</option><option>Metal</option></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Property Features</h2>
+    <div class="row c3">
+      <div class="field"><label>Building SF</label><input id="c-bldg-sf" placeholder="0" type="text"></div>
+      <div class="field"><label>Land / Lot Size (SF)</label><input id="c-land-sf" placeholder="0" type="text"></div>
+      <div class="field"><label>Year Built</label><input id="c-year-built" placeholder="1995"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Office SF</label><input id="c-office-sf" placeholder="0" type="text"></div>
+      <div class="field"><label>DH (Dock-High Doors)</label><input id="c-dh" placeholder="0" type="text"></div>
+      <div class="field"><label>GL (Grade Level Doors)</label><input id="c-gl" placeholder="0" type="text"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Clear Height</label><input id="c-clearance" placeholder="24'"></div>
+      <div class="field"><label>Parking Ratio</label><input id="c-parking" placeholder="4/1,000"></div>
+      <div class="field"><label>Amps / Power</label><input id="c-amps" placeholder="e.g. 400A, 3-phase"></div>
+    </div>
+    <div class="row c4">
+      <div class="field"><label>Sprinklers</label><input id="c-sprinklers" placeholder="ESFR"></div>
+      <div class="field"><label>Rail</label>
+        <select id="c-rail"><option value="">—</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field"><label>Yard</label>
+        <select id="c-yard"><option value="">—</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field"><label>Condition</label>
+        <select id="c-condition"><option value="">—</option><option>Average</option><option>Good</option><option>Poor</option></select>
+      </div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Multi-Tenant (Y/N)</label>
+        <select id="c-multi-tenant"><option value="">—</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field"><label>Part of Larger (Y/N)</label>
+        <select id="c-pol"><option value="">—</option><option>Yes</option><option>No</option></select>
+      </div>
+      <div class="field"><label>Opex Cost Estimated?</label>
+        <select id="c-opex-est"><option value="">—</option><option>Yes</option><option>No</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEASE DETAILS -->
+  <div class="card">
+    <h2>Lease Details</h2>
+    <div class="row c3">
+      <div class="field"><label>Space Leased (SF)</label><input id="c-leased-sf" placeholder="0" type="text"></div>
+      <div class="field"><label>Rent/SF (Start Rate)</label><input id="c-rent-sf" placeholder="$0.00"></div>
+      <div class="field"><label>Rent Type</label>
+        <select id="c-rent-type"><option value="">—</option><option>NNN</option><option>G</option></select>
+      </div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Transaction / Exec. Date</label><input id="c-exec-date" type="date"></div>
+      <div class="field"><label>Occupancy Date</label><input id="c-occ-date" type="date"></div>
+      <div class="field"><label>Expire Date</label><input id="c-expire-date" type="date"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Term (Months)</label><input id="c-term" placeholder="e.g. 60"></div>
+      <div class="field"><label>Effective Rent</label><input id="c-eff-rent" placeholder="$0.00"></div>
+      <div class="field"><label>Months on Market</label><input id="c-mkt-months" placeholder="0"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label>Free Rent</label><input id="c-free-rent" placeholder="e.g. 2 months"></div>
+      <div class="field"><label>TI Allowance</label>
+        <select id="c-ti"><option value="">—</option><option>As-Is</option><option>Paint &amp; Carpet</option><option>Standard</option><option>Not Disclosed</option><option>See comments</option></select>
+      </div>
+      <div class="field"><label>NNN Charges</label><input id="c-nnn" placeholder="$0.00/SF"></div>
+    </div>
+    <div class="row c2">
+      <div class="field"><label>Rent Adj / Escalations</label>
+        <select id="c-escalations"><option value="">—</option><option>2%</option><option>3%</option><option>4%</option><option>$0.02/SF/YR</option><option>$0.03/SF/YR</option><option>$0.04/SF/YR</option><option>$0.05/SF/YR</option><option>See comments</option></select>
+      </div>
+      <div class="field"><label>Options</label>
+        <select id="c-options"><option value="">—</option><option>1, 3-year</option><option>1, 5-year</option><option>2, 5-year</option><option>1, 10-year</option><option>Not Disclosed</option><option>See Comments</option><option>None</option><option>NA</option></select>
+      </div>
+    </div>
+    <div class="row c2">
+      <div class="field"><label>Expense Recovery Type</label>
+        <select id="c-expense-recovery"><option value="">—</option><option>NNN</option><option>IG</option><option>G</option></select>
+      </div>
+      <div class="field"><label>Tenant Type</label>
+        <select id="c-tenant-type"><option value="">—</option><option>Local</option><option>Regional</option><option>National</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- LESSOR / TENANT & BROKER INFO -->
+  <div class="card">
+    <h2>Lessor / Tenant &amp; Broker Info</h2>
+    <div class="row c2">
+      <div class="field"><label>Lessor / Landlord</label><input id="c-lessor" placeholder="Landlord name"></div>
+      <div class="field"><label>Lessee / Tenant</label><input id="c-lessee" placeholder="Tenant name"></div>
+    </div>
+    <div class="row c2">
+      <div class="field"><label>Listing Brokerage</label><input id="c-list-brokerage" placeholder="e.g. Lee & Associates"></div>
+      <div class="field"><label>Procuring Brokerage</label><input id="c-proc-brokerage" placeholder="e.g. CBRE"></div>
+    </div>
+    <div class="row c2">
+      <div class="field"><label>Listing Agent 1</label><input id="c-list-agent1" placeholder="Agent name"></div>
+      <div class="field"><label>Procuring Agent 1</label><input id="c-proc-agent1" placeholder="Agent name"></div>
+    </div>
+    <div class="row c2">
+      <div class="field"><label>Listing Agent 2</label><input id="c-list-agent2" placeholder="Agent name"></div>
+      <div class="field"><label>Procuring Agent 2</label><input id="c-proc-agent2" placeholder="Agent name"></div>
+    </div>
+  </div>
+
+  <!-- COMMENTS -->
+  <div class="card">
+    <h2>Comments</h2>
+    <div class="field"><textarea id="c-comments" rows="4" placeholder="Additional comments, details, or notes..."></textarea></div>
+  </div>
+
+  <div class="btn-bar" style="margin-top:16px;">
+    <button class="btn btn-red" onclick="exportCompPdf()">Export PDF</button>
+    <button class="btn btn-outline" onclick="openEmailModal('comp')">Draft Email</button>
+    <button class="btn btn-gray" onclick="clearComp()">Clear Form</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <!-- EMAIL MODAL                                                               -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="email-modal">
@@ -1112,7 +1292,7 @@ function toggleCollapse(toggleEl) {
 
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach((t, i) => {
-    const tabs = ['listing', 'sign', 'voucher'];
+    const tabs = ['listing', 'sign', 'voucher', 'comp'];
     t.classList.toggle('active', tabs[i] === name);
   });
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -2502,6 +2682,124 @@ function exportVoucherPdf() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// COMP INPUT — CLEAR & PDF EXPORT
+// ═══════════════════════════════════════════════════════════════════════════════
+function clearComp() {
+  if (!confirm('Clear all comp input fields?')) return;
+  document.querySelectorAll('#tab-comp input, #tab-comp textarea').forEach(el => {
+    if (el.type !== 'radio' && el.type !== 'checkbox' && !el.readOnly) el.value = '';
+  });
+  document.querySelectorAll('#tab-comp select').forEach(el => el.selectedIndex = 0);
+  document.getElementById('c-date').value = new Date().toISOString().split('T')[0];
+}
+
+function exportCompPdf() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const M = 36;
+  const cw = W - M * 2;
+  let y = 0;
+
+  function checkPage(need) { if (y + need > H - 40) { doc.addPage(); y = 40; } }
+
+  function gv(id) {
+    const el = document.getElementById(id);
+    if (!el) return '';
+    if (el.tagName === 'SELECT') return el.selectedOptions[0]?.text || '';
+    return el.value || '';
+  }
+
+  // --- HEADER ---
+  doc.setDrawColor(0); doc.setLineWidth(1.5);
+  doc.rect(M, 30, cw, 50);
+  doc.setFillColor(0); doc.rect(M, 30, cw, 22, 'F');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255);
+  doc.text('LEE & ASSOCIATES — NEWPORT BEACH', M + 8, 45);
+  doc.setTextColor(0); doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+  doc.text('Industrial Lease Comp Input Form', M + 8, 68);
+  doc.text('Date: ' + gv('c-date'), W - M - 8, 68, { align: 'right' });
+  y = 95;
+
+  // --- Helper: Section title ---
+  function section(title) {
+    checkPage(30);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(180, 0, 0);
+    doc.text(title.toUpperCase(), M, y); y += 4;
+    doc.setDrawColor(180, 0, 0); doc.setLineWidth(0.5); doc.line(M, y, W - M, y); y += 12;
+    doc.setTextColor(0);
+  }
+
+  // --- Helper: Field row (label: value pairs) ---
+  function fieldRow(pairs) {
+    checkPage(16);
+    const colW = cw / pairs.length;
+    doc.setFontSize(7.5);
+    pairs.forEach(function(p, i) {
+      const x = M + colW * i;
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(100);
+      doc.text(p[0] + ':', x, y);
+      doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+      doc.text(String(p[1] || '—'), x + doc.getTextWidth(p[0] + ':  '), y);
+    });
+    y += 14;
+  }
+
+  // --- COMP OVERVIEW ---
+  section('Comp Overview');
+  fieldRow([['Source', gv('c-source')], ['Deal Type', gv('c-deal-type')]]);
+
+  // --- LOCATION ---
+  section('Location');
+  fieldRow([['Address', gv('c-address')], ['City', gv('c-city')]]);
+  fieldRow([['Market', gv('c-market')], ['Submarket', gv('c-submarket')], ['Project', gv('c-project')]]);
+
+  // --- PROPERTY INFORMATION ---
+  section('Property Information');
+  fieldRow([['Property Type', gv('c-prop-type')], ['Subtype', gv('c-subtype')], ['Class', gv('c-bldg-class')]]);
+  fieldRow([['Space/Lease Type', gv('c-space-type')], ['Construction', gv('c-const-type')]]);
+
+  // --- PROPERTY FEATURES ---
+  section('Property Features');
+  fieldRow([['Building SF', gv('c-bldg-sf')], ['Land SF', gv('c-land-sf')], ['Year Built', gv('c-year-built')]]);
+  fieldRow([['Office SF', gv('c-office-sf')], ['DH Doors', gv('c-dh')], ['GL Doors', gv('c-gl')]]);
+  fieldRow([['Clear Height', gv('c-clearance')], ['Parking', gv('c-parking')], ['Amps', gv('c-amps')]]);
+  fieldRow([['Sprinklers', gv('c-sprinklers')], ['Rail', gv('c-rail')], ['Yard', gv('c-yard')], ['Condition', gv('c-condition')]]);
+  fieldRow([['Multi-Tenant', gv('c-multi-tenant')], ['Part of Larger', gv('c-pol')], ['Opex Estimated', gv('c-opex-est')]]);
+
+  // --- LEASE DETAILS ---
+  section('Lease Details');
+  fieldRow([['Space Leased SF', gv('c-leased-sf')], ['Rent/SF', gv('c-rent-sf')], ['Rent Type', gv('c-rent-type')]]);
+  fieldRow([['Exec Date', gv('c-exec-date')], ['Occ Date', gv('c-occ-date')], ['Expire Date', gv('c-expire-date')]]);
+  fieldRow([['Term (Mo)', gv('c-term')], ['Effective Rent', gv('c-eff-rent')], ['Months on Mkt', gv('c-mkt-months')]]);
+  fieldRow([['Free Rent', gv('c-free-rent')], ['TI Allowance', gv('c-ti')], ['NNN Charges', gv('c-nnn')]]);
+  fieldRow([['Escalations', gv('c-escalations')], ['Options', gv('c-options')]]);
+  fieldRow([['Expense Recovery', gv('c-expense-recovery')], ['Tenant Type', gv('c-tenant-type')]]);
+
+  // --- LESSOR / TENANT & BROKER ---
+  section('Lessor / Tenant & Broker Info');
+  fieldRow([['Lessor', gv('c-lessor')], ['Lessee/Tenant', gv('c-lessee')]]);
+  fieldRow([['Listing Brokerage', gv('c-list-brokerage')], ['Procuring Brokerage', gv('c-proc-brokerage')]]);
+  fieldRow([['Listing Agent 1', gv('c-list-agent1')], ['Procuring Agent 1', gv('c-proc-agent1')]]);
+  fieldRow([['Listing Agent 2', gv('c-list-agent2')], ['Procuring Agent 2', gv('c-proc-agent2')]]);
+
+  // --- COMMENTS ---
+  const comments = gv('c-comments');
+  if (comments) {
+    section('Comments');
+    checkPage(40);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(0);
+    const lines = doc.splitTextToSize(comments, cw);
+    doc.text(lines, M, y); y += lines.length * 11;
+  }
+
+  // --- SAVE ---
+  const addr = gv('c-address') || 'Comp';
+  doc.save('Lease_Comp_' + addr.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30) + '.pdf');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // EMAIL MODAL
 // ═══════════════════════════════════════════════════════════════════════════════
 let emailContext = '';
@@ -2540,7 +2838,6 @@ function openEmailModal(context) {
     body.value = 'Hi Taylor,\n\nPlease see the attached sign request for ' + addr + '.\n\n' +
       'Order Type: ' + orderType + '\n' +
       'Address: ' + addr + ', ' + (document.getElementById('s-city').value || '') + '\n\n' +
-      'Cimarron has been copied on this thread.\n\n' +
       'Thank you,\n' + (document.getElementById('s-requested-by').value || '[Agent]');
   } else if (context === 'voucher') {
     const addr = document.getElementById('v-address').value || '[Address]';
@@ -2551,6 +2848,21 @@ function openEmailModal(context) {
       'Transaction Type: ' + txnType + '\n\n' +
       'Please let me know if you need anything else.\n\n' +
       'Thank you,\n' + (document.getElementById('v-la-name').value || (getListingAgents()[0]?.name) || '[Agent]');
+  } else if (context === 'comp') {
+    const addr = document.getElementById('c-address').value || '[Address]';
+    const city = document.getElementById('c-city').value || '';
+    const dealType = document.getElementById('c-deal-type').value || 'Lease';
+    to.value = 'ekat@lee-associates.com';
+    cc.value = '';
+    subject.value = 'Lease Comp Input — ' + addr + (city ? ', ' + city : '');
+    body.value = 'Hi,\n\nPlease see the attached lease comp input form for the following transaction:\n\n' +
+      'Address: ' + addr + (city ? ', ' + city : '') + '\n' +
+      'Deal Type: ' + dealType + '\n' +
+      'Tenant: ' + (document.getElementById('c-lessee').value || 'N/A') + '\n' +
+      'Space Leased: ' + (document.getElementById('c-leased-sf').value || 'N/A') + ' SF\n' +
+      'Rent/SF: ' + (document.getElementById('c-rent-sf').value || 'N/A') + '\n\n' +
+      'Please let me know if you need any additional information.\n\n' +
+      'Thank you';
   }
 
   document.getElementById('email-modal-title').textContent = 'Draft Email — ' + context.charAt(0).toUpperCase() + context.slice(1);
@@ -2595,6 +2907,7 @@ document.getElementById('email-modal').addEventListener('click', function(e) {
 document.getElementById('l-date-entered').value = new Date().toISOString().split('T')[0];
 document.getElementById('s-date').value = new Date().toISOString().split('T')[0];
 document.getElementById('v-date-filled').value = new Date().toISOString().split('T')[0];
+document.getElementById('c-date').value = new Date().toISOString().split('T')[0];
 
 // Initialize property type sections
 onPropTypeChange();
