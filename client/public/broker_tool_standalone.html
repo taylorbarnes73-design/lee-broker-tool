@@ -133,6 +133,115 @@ div.row.comp-sale-only { display: none !important; }
 .support-opt .icon { font-size: 28px; margin-bottom: 4px; }
 .support-opt .lbl { font-size: 11px; font-weight: 600; }
 
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* ADMIN PORTAL STYLES                                                       */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+#broker-view { display: block; }
+#admin-view { display: none; }
+body.admin-mode #broker-view { display: none; }
+body.admin-mode #admin-view { display: flex; min-height: calc(100vh - 52px); }
+body.admin-mode .header .sub { display: none; }
+
+.admin-toggle { margin-left: auto; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3); color: #fff; padding: 6px 14px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; display: flex; align-items: center; gap: 6px; }
+.admin-toggle:hover { background: rgba(255,255,255,.25); }
+.admin-toggle svg { width: 14px; height: 14px; }
+
+/* Admin sidebar */
+.admin-sidebar { width: 220px; background: #1a1a2e; color: #c5c1b9; display: flex; flex-direction: column; flex-shrink: 0; }
+.admin-sidebar .sidebar-brand { padding: 16px 18px; border-bottom: 1px solid rgba(255,255,255,.08); display: flex; align-items: center; gap: 10px; }
+.admin-sidebar .sidebar-brand svg { width: 22px; height: 22px; color: #fff; }
+.admin-sidebar .sidebar-brand .brand-name { font-size: 13px; font-weight: 700; color: #fff; letter-spacing: .3px; }
+.admin-sidebar .sidebar-brand .brand-sub { font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; opacity: .6; }
+.admin-sidebar nav { flex: 1; padding: 12px 10px; }
+.admin-sidebar .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 5px; font-size: 13px; font-weight: 500; color: rgba(255,255,255,.65); cursor: pointer; transition: all .15s; margin-bottom: 2px; }
+.admin-sidebar .nav-item:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.9); }
+.admin-sidebar .nav-item.active { background: rgba(196,18,48,.35); color: #fff; }
+.admin-sidebar .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+.admin-sidebar .sidebar-footer { padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.08); font-size: 10px; opacity: .4; }
+
+/* Admin main content */
+.admin-main { flex: 1; background: #f5f5f5; overflow-y: auto; }
+.admin-page { display: none; padding: 28px 32px; max-width: 1100px; }
+.admin-page.active { display: block; }
+.admin-page h1 { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.admin-page .page-desc { font-size: 13px; color: var(--text2); margin-bottom: 24px; }
+
+/* Admin stat cards */
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+.stat-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); }
+.stat-card .stat-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.stat-card .stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--text3); }
+.stat-card .stat-icon { width: 16px; height: 16px; }
+.stat-card .stat-value { font-size: 28px; font-weight: 700; color: var(--text); }
+
+/* Admin table */
+.admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.admin-table th { padding: 10px 16px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--text3); border-bottom: 2px solid var(--border); }
+.admin-table td { padding: 10px 16px; border-bottom: 1px solid #eee; }
+.admin-table tbody tr { cursor: pointer; transition: background .1s; }
+.admin-table tbody tr:hover { background: #f9f9f9; }
+.admin-table tbody tr:last-child td { border-bottom: none; }
+
+/* Badges */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+.badge-pending { background: #fff3cd; color: #856404; }
+.badge-approved { background: #d4edda; color: #155724; }
+.badge-rejected { background: #f8d7da; color: #721c24; }
+.badge-review { background: #d1ecf1; color: #0c5460; }
+
+/* Admin filter bar */
+.filter-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; padding: 12px 16px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+.filter-bar input, .filter-bar select { border: 1px solid var(--border); border-radius: 4px; padding: 7px 10px; font-size: 13px; font-family: inherit; }
+.filter-bar input { flex: 1; min-width: 200px; }
+.filter-bar input:focus, .filter-bar select:focus { outline: none; border-color: var(--red); box-shadow: 0 0 0 2px rgba(196,18,48,.1); }
+
+/* Admin detail modal */
+.admin-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 2000; align-items: center; justify-content: center; }
+.admin-modal-overlay.open { display: flex; }
+.admin-modal { background: #fff; border-radius: 10px; padding: 24px 28px; width: 90%; max-width: 520px; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+.admin-modal .modal-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.admin-modal .modal-subtitle { font-size: 12px; color: var(--text2); margin-bottom: 16px; }
+.admin-modal .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.admin-modal .detail-grid .detail-item .detail-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--text3); margin-bottom: 2px; }
+.admin-modal .detail-grid .detail-item .detail-value { font-size: 13px; color: var(--text); }
+.admin-modal .notes-box { background: #f8f8f8; border: 1px solid #eee; border-radius: 6px; padding: 10px 12px; font-size: 12px; margin-bottom: 16px; }
+.admin-modal .notes-box .notes-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--text3); margin-bottom: 4px; }
+.admin-modal .action-bar { display: flex; gap: 8px; justify-content: flex-end; }
+.admin-modal .action-bar .btn { padding: 7px 14px; font-size: 12px; }
+.btn-blue { background: #1a73e8; color: #fff; border: none; border-radius: 4px; }
+.btn-blue:hover { background: #1557b0; }
+.btn-green { background: #1e7e34; color: #fff; border: none; border-radius: 4px; }
+.btn-green:hover { background: #166528; }
+.btn-danger { background: #c41230; color: #fff; border: none; border-radius: 4px; }
+.btn-danger:hover { background: #a00e28; }
+
+/* Settings tabs */
+.settings-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+.settings-tab { padding: 10px 18px; font-size: 13px; font-weight: 600; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all .15s; }
+.settings-tab:hover { color: var(--red); }
+.settings-tab.active { color: var(--red); border-bottom-color: var(--red); }
+.settings-panel { display: none; }
+.settings-panel.active { display: block; }
+
+/* Switch toggle */
+.switch { position: relative; display: inline-block; width: 36px; height: 20px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch .slider { position: absolute; cursor: pointer; inset: 0; background: #ccc; border-radius: 20px; transition: .2s; }
+.switch .slider:before { content: ''; position: absolute; height: 16px; width: 16px; left: 2px; bottom: 2px; background: #fff; border-radius: 50%; transition: .2s; }
+.switch input:checked + .slider { background: var(--red); }
+.switch input:checked + .slider:before { transform: translateX(16px); }
+
+/* Property type tag */
+.prop-tag { display: inline-flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #f5f5f5; border-radius: 6px; font-size: 13px; font-weight: 500; text-transform: capitalize; }
+.prop-tag .tag-badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border: 1px solid var(--border); border-radius: 10px; color: var(--text2); }
+
+@media (max-width: 768px) {
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+  .admin-sidebar { width: 180px; }
+  .admin-page { padding: 20px 16px; }
+  .admin-modal .detail-grid { grid-template-columns: 1fr; }
+}
+
 /* Agent autocomplete */
 .agent-picker { position: relative; }
 .agent-picker input { width: 100%; }
@@ -182,7 +291,13 @@ div.row.comp-sale-only { display: none !important; }
     <h1>Lee &amp; Associates Newport Beach &mdash; Broker Submission Tool</h1>
     <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher &bull; Comp Input</div>
   </div>
+  <button class="admin-toggle" onclick="toggleAdminMode()">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+    <span id="admin-toggle-label">Admin Portal</span>
+  </button>
 </div>
+
+<div id="broker-view">
 
 <div class="tab-bar">
   <div class="tab active" onclick="switchTab('listing')">Listing Entry</div>
@@ -1193,6 +1308,174 @@ div.row.comp-sale-only { display: none !important; }
     <button class="btn btn-red" onclick="exportCompPdf()">Export PDF</button>
     <button class="btn btn-outline" onclick="openEmailModal('comp')">Draft Email</button>
     <button class="btn btn-gray" onclick="clearComp()">Clear Form</button>
+  </div>
+</div>
+
+</div><!-- /broker-view -->
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- ADMIN PORTAL VIEW                                                         -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<div id="admin-view">
+  <aside class="admin-sidebar">
+    <div class="sidebar-brand">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <div>
+        <div class="brand-name">Lee &amp; Associates</div>
+        <div class="brand-sub">Admin Portal</div>
+      </div>
+    </div>
+    <nav>
+      <div class="nav-item active" onclick="switchAdminPage('dashboard')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" onclick="switchAdminPage('submissions')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Submissions
+      </div>
+      <div class="nav-item" onclick="switchAdminPage('dealentry')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Deal Entry
+      </div>
+      <div class="nav-item" onclick="switchAdminPage('settings')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        Settings
+      </div>
+    </nav>
+    <div class="sidebar-footer">v1.0 &middot; Broker Submission Tool</div>
+  </aside>
+
+  <div class="admin-main">
+    <!-- DASHBOARD PAGE -->
+    <div id="admin-dashboard" class="admin-page active">
+      <h1>Dashboard</h1>
+      <p class="page-desc">Overview of broker submissions</p>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-header"><span class="stat-label">Total</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#222" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div class="stat-value" id="stat-total">8</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header"><span class="stat-label">Pending</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#f9a825" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+          <div class="stat-value" id="stat-pending">3</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header"><span class="stat-label">In Review</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <div class="stat-value" id="stat-review">1</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header"><span class="stat-label">Approved</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1e7e34" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+          <div class="stat-value" id="stat-approved">3</div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <h2 style="margin-bottom:0;padding-bottom:0;border-bottom:none;">Recent Submissions</h2>
+          <a href="#" onclick="switchAdminPage('submissions');return false;" style="font-size:12px;font-weight:600;color:var(--red);text-decoration:none;">View all &rarr;</a>
+        </div>
+        <table class="admin-table">
+          <thead><tr><th>ID</th><th>Type</th><th>Address</th><th>Broker</th><th>Status</th></tr></thead>
+          <tbody id="dashboard-recent"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SUBMISSIONS PAGE -->
+    <div id="admin-submissions" class="admin-page">
+      <h1>Submissions</h1>
+      <p class="page-desc">Review and manage broker submissions</p>
+      <div class="filter-bar">
+        <input type="text" id="sub-search" placeholder="Search by ID, address, or broker..." oninput="filterSubmissions()">
+        <select id="sub-filter-type" onchange="filterSubmissions()">
+          <option value="all">All Types</option>
+          <option value="listing">Listing</option>
+          <option value="comp">Comp</option>
+          <option value="voucher">Voucher</option>
+          <option value="sign">Sign</option>
+        </select>
+        <select id="sub-filter-status" onchange="filterSubmissions()">
+          <option value="all">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="in_review">In Review</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+      <div class="card" style="padding:0;">
+        <table class="admin-table">
+          <thead><tr><th>ID</th><th>Type</th><th>Address</th><th>Broker</th><th>Office</th><th>Status</th><th>Submitted</th></tr></thead>
+          <tbody id="submissions-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DEAL ENTRY PAGE -->
+    <div id="admin-dealentry" class="admin-page">
+      <h1>Deal Entry</h1>
+      <p class="page-desc">Access the broker submission forms</p>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div style="padding:12px 16px;background:#f8f8f8;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);">
+          <strong>Broker Submission Tool</strong> &mdash; Use the tabs below to enter listings, sign requests, vouchers, or comps.
+        </div>
+        <iframe id="deal-entry-iframe" src="broker_tool.html?embedded=1" style="width:100%;min-height:85vh;border:none;"></iframe>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div id="admin-settings" class="admin-page">
+      <h1>Settings</h1>
+      <p class="page-desc">Configure property types, offices, and commissions</p>
+      <div class="settings-tabs">
+        <div class="settings-tab active" onclick="switchSettingsTab('offices')">Offices</div>
+        <div class="settings-tab" onclick="switchSettingsTab('commissions')">Commission Structures</div>
+        <div class="settings-tab" onclick="switchSettingsTab('proptypes')">Property Types</div>
+      </div>
+      <!-- Offices -->
+      <div id="settings-offices" class="settings-panel active">
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <h2 style="margin-bottom:0;padding-bottom:0;border-bottom:none;">Office Locations</h2>
+            <button class="btn btn-outline" style="padding:6px 12px;font-size:12px;" onclick="alert('Feature coming soon')">+ Add Office</button>
+          </div>
+          <table class="admin-table">
+            <thead><tr><th>Office</th><th>Region</th><th>Status</th><th style="text-align:right;">Active</th></tr></thead>
+            <tbody id="offices-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Commissions -->
+      <div id="settings-commissions" class="settings-panel">
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <h2 style="margin-bottom:0;padding-bottom:0;border-bottom:none;">Commission Structures</h2>
+            <button class="btn btn-outline" style="padding:6px 12px;font-size:12px;" onclick="alert('Feature coming soon')">+ Add Structure</button>
+          </div>
+          <table class="admin-table">
+            <thead><tr><th>Name</th><th>Listing Side</th><th>Buyer Side</th><th style="text-align:right;">Actions</th></tr></thead>
+            <tbody id="commissions-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Property Types -->
+      <div id="settings-proptypes" class="settings-panel">
+        <div class="card">
+          <h2>Property Types</h2>
+          <div id="proptypes-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN DETAIL MODAL -->
+<div class="admin-modal-overlay" id="admin-detail-modal">
+  <div class="admin-modal">
+    <div class="modal-title"><span id="adm-detail-id"></span><span id="adm-detail-badge"></span></div>
+    <div class="modal-subtitle" id="adm-detail-subtitle"></div>
+    <div class="detail-grid" id="adm-detail-grid"></div>
+    <div class="notes-box" id="adm-detail-notes" style="display:none;"><div class="notes-label">Notes</div><div id="adm-detail-notes-text"></div></div>
+    <div class="action-bar" id="adm-detail-actions"></div>
   </div>
 </div>
 
@@ -3315,6 +3598,217 @@ initAgentPicker('v-pa-name', {
     document.getElementById('v-pa-house').value = 'Lee & Associates - Newport Beach';
   }
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ADMIN PORTAL LOGIC
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Mock submissions data
+const ADMIN_SUBMISSIONS = [
+  { id: 'SUB-001', type: 'listing', status: 'pending', propertyType: 'industrial', transactionType: 'lease', address: '1450 Von Karman Ave', city: 'Irvine', state: 'CA', zip: '92612', brokerName: 'Mike Chen', brokerEmail: 'mchen@lee-associates.com', office: 'Irvine', submittedAt: '2026-03-28T09:15:00', updatedAt: '2026-03-28T09:15:00', sizeSF: 52000, leaseRate: '$1.15/SF NNN' },
+  { id: 'SUB-002', type: 'comp', status: 'approved', propertyType: 'office', transactionType: 'lease', address: '2600 Michelson Dr', city: 'Irvine', state: 'CA', zip: '92612', brokerName: 'Sarah Kim', brokerEmail: 'skim@lee-associates.com', office: 'Irvine', submittedAt: '2026-03-25T14:30:00', updatedAt: '2026-03-27T11:00:00', sizeSF: 12500, leaseRate: '$3.25/SF FSG' },
+  { id: 'SUB-003', type: 'voucher', status: 'in_review', propertyType: 'industrial', transactionType: 'sale', address: '15231 Springdale St', city: 'Huntington Beach', state: 'CA', zip: '92649', brokerName: 'Tom Rodriguez', brokerEmail: 'trodriguez@lee-associates.com', office: 'Long Beach', submittedAt: '2026-03-26T16:45:00', updatedAt: '2026-03-29T10:20:00', sizeSF: 85000, salePrice: '$14,500,000' },
+  { id: 'SUB-004', type: 'listing', status: 'rejected', propertyType: 'retail', transactionType: 'lease', address: '3200 Park Center Dr', city: 'Costa Mesa', state: 'CA', zip: '92626', brokerName: 'Lisa Park', brokerEmail: 'lpark@lee-associates.com', office: 'Newport Beach', submittedAt: '2026-03-24T08:00:00', updatedAt: '2026-03-25T09:30:00', sizeSF: 4200, leaseRate: '$4.50/SF NNN', notes: 'Missing landlord authorization' },
+  { id: 'SUB-005', type: 'sign', status: 'pending', propertyType: 'industrial', transactionType: 'lease', address: '18000 Studebaker Rd', city: 'Cerritos', state: 'CA', zip: '90703', brokerName: 'James Wu', brokerEmail: 'jwu@lee-associates.com', office: 'Commerce', submittedAt: '2026-03-30T11:00:00', updatedAt: '2026-03-30T11:00:00', sizeSF: 120000, leaseRate: '$0.95/SF NNN' },
+  { id: 'SUB-006', type: 'listing', status: 'approved', propertyType: 'land', transactionType: 'sale', address: 'Jamboree & Barranca', city: 'Irvine', state: 'CA', zip: '92618', brokerName: 'David Nguyen', brokerEmail: 'dnguyen@lee-associates.com', office: 'Irvine', submittedAt: '2026-03-20T10:00:00', updatedAt: '2026-03-22T14:15:00', salePrice: '$8,200,000' },
+  { id: 'SUB-007', type: 'comp', status: 'pending', propertyType: 'industrial', transactionType: 'lease', address: '5 Peters Canyon Rd', city: 'Irvine', state: 'CA', zip: '92606', brokerName: 'Amy Foster', brokerEmail: 'afoster@lee-associates.com', office: 'Irvine', submittedAt: '2026-03-31T08:45:00', updatedAt: '2026-03-31T08:45:00', sizeSF: 35000, leaseRate: '$1.35/SF NNN' },
+  { id: 'SUB-008', type: 'voucher', status: 'approved', propertyType: 'office', transactionType: 'lease', address: '100 Bayview Cir', city: 'Newport Beach', state: 'CA', zip: '92660', brokerName: 'Rachel Torres', brokerEmail: 'rtorres@lee-associates.com', office: 'Newport Beach', submittedAt: '2026-03-18T13:20:00', updatedAt: '2026-03-20T16:00:00', sizeSF: 8900, leaseRate: '$3.85/SF FSG' },
+];
+
+const ADMIN_OFFICES = [
+  { id: 'off-1', name: 'Irvine', region: 'Orange County', active: true },
+  { id: 'off-2', name: 'Newport Beach', region: 'Orange County', active: true },
+  { id: 'off-3', name: 'Long Beach', region: 'LA County', active: true },
+  { id: 'off-4', name: 'Commerce', region: 'LA County', active: true },
+  { id: 'off-5', name: 'Ontario', region: 'Inland Empire', active: true },
+  { id: 'off-6', name: 'Riverside', region: 'Inland Empire', active: false },
+];
+
+const ADMIN_COMMISSIONS = [
+  { id: 'cs-1', name: 'Standard Lease', listingSide: 4, buyerSide: 4 },
+  { id: 'cs-2', name: 'Standard Sale', listingSide: 2.5, buyerSide: 2.5 },
+  { id: 'cs-3', name: 'Investment Sale', listingSide: 2, buyerSide: 2 },
+];
+
+const ADMIN_PROP_TYPES = ['industrial', 'office', 'retail', 'land'];
+
+function statusBadge(status) {
+  const map = { pending: 'badge-pending', approved: 'badge-approved', rejected: 'badge-rejected', in_review: 'badge-review' };
+  const labels = { pending: 'Pending', approved: 'Approved', rejected: 'Rejected', in_review: 'In Review' };
+  return '<span class="badge ' + (map[status]||'') + '">' + (labels[status]||status) + '</span>';
+}
+
+function fmtDate(iso) {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+
+// Toggle admin mode
+function toggleAdminMode() {
+  const isAdmin = document.body.classList.toggle('admin-mode');
+  document.getElementById('admin-toggle-label').textContent = isAdmin ? 'Broker Tool' : 'Admin Portal';
+  if (isAdmin) {
+    renderDashboard();
+    renderSubmissions();
+    renderOffices();
+    renderCommissions();
+    renderPropTypes();
+  }
+}
+
+// If embedded in iframe, hide header and admin toggle
+if (window.location.search.includes('embedded=1')) {
+  var hdr = document.querySelector('.header');
+  if (hdr) hdr.style.display = 'none';
+}
+
+// Switch admin pages
+function switchAdminPage(page) {
+  document.querySelectorAll('.admin-page').forEach(p => p.classList.remove('active'));
+  document.getElementById('admin-' + page).classList.add('active');
+  document.querySelectorAll('.admin-sidebar .nav-item').forEach((n, i) => {
+    const pages = ['dashboard', 'submissions', 'dealentry', 'settings'];
+    n.classList.toggle('active', pages[i] === page);
+  });
+}
+
+// Render dashboard
+function renderDashboard() {
+  const total = ADMIN_SUBMISSIONS.length;
+  const pending = ADMIN_SUBMISSIONS.filter(s => s.status === 'pending').length;
+  const review = ADMIN_SUBMISSIONS.filter(s => s.status === 'in_review').length;
+  const approved = ADMIN_SUBMISSIONS.filter(s => s.status === 'approved').length;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-pending').textContent = pending;
+  document.getElementById('stat-review').textContent = review;
+  document.getElementById('stat-approved').textContent = approved;
+
+  const recent = [...ADMIN_SUBMISSIONS].sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)).slice(0, 5);
+  const tbody = document.getElementById('dashboard-recent');
+  tbody.innerHTML = recent.map(s => 
+    '<tr onclick="openSubmissionDetail(\'' + s.id + '\')"><td style="font-family:monospace;font-size:12px;">' + s.id + '</td><td style="text-transform:capitalize;">' + s.type + '</td><td>' + s.address + ', ' + s.city + '</td><td>' + s.brokerName + '</td><td>' + statusBadge(s.status) + '</td></tr>'
+  ).join('');
+}
+
+// Render & filter submissions
+function renderSubmissions() { filterSubmissions(); }
+
+function filterSubmissions() {
+  const search = (document.getElementById('sub-search').value || '').toLowerCase();
+  const fType = document.getElementById('sub-filter-type').value;
+  const fStatus = document.getElementById('sub-filter-status').value;
+  const filtered = ADMIN_SUBMISSIONS.filter(s => {
+    const matchSearch = !search || s.address.toLowerCase().includes(search) || s.brokerName.toLowerCase().includes(search) || s.id.toLowerCase().includes(search);
+    const matchType = fType === 'all' || s.type === fType;
+    const matchStatus = fStatus === 'all' || s.status === fStatus;
+    return matchSearch && matchType && matchStatus;
+  });
+  const tbody = document.getElementById('submissions-tbody');
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text3);">No submissions match your filters.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(s =>
+    '<tr onclick="openSubmissionDetail(\'' + s.id + '\')"><td style="font-family:monospace;font-size:12px;">' + s.id + '</td><td style="text-transform:capitalize;">' + s.type + '</td><td>' + s.address + ', ' + s.city + '</td><td>' + s.brokerName + '</td><td>' + s.office + '</td><td>' + statusBadge(s.status) + '</td><td style="font-size:12px;color:var(--text3);">' + fmtDate(s.submittedAt) + '</td></tr>'
+  ).join('');
+}
+
+// Submission detail modal
+function openSubmissionDetail(id) {
+  const s = ADMIN_SUBMISSIONS.find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('adm-detail-id').textContent = s.id;
+  document.getElementById('adm-detail-badge').innerHTML = ' ' + statusBadge(s.status);
+  document.getElementById('adm-detail-subtitle').textContent = cap(s.type) + ' \u00B7 ' + cap(s.propertyType) + ' \u00B7 ' + cap(s.transactionType);
+
+  let grid = '';
+  grid += '<div class="detail-item"><div class="detail-label">Address</div><div class="detail-value">' + s.address + '</div></div>';
+  grid += '<div class="detail-item"><div class="detail-label">City</div><div class="detail-value">' + s.city + ', ' + s.state + ' ' + s.zip + '</div></div>';
+  grid += '<div class="detail-item"><div class="detail-label">Broker</div><div class="detail-value">' + s.brokerName + '</div></div>';
+  grid += '<div class="detail-item"><div class="detail-label">Office</div><div class="detail-value">' + s.office + '</div></div>';
+  if (s.sizeSF) grid += '<div class="detail-item"><div class="detail-label">Size</div><div class="detail-value">' + s.sizeSF.toLocaleString() + ' SF</div></div>';
+  if (s.leaseRate) grid += '<div class="detail-item"><div class="detail-label">Lease Rate</div><div class="detail-value">' + s.leaseRate + '</div></div>';
+  if (s.salePrice) grid += '<div class="detail-item"><div class="detail-label">Sale Price</div><div class="detail-value">' + s.salePrice + '</div></div>';
+  grid += '<div class="detail-item"><div class="detail-label">Submitted</div><div class="detail-value">' + new Date(s.submittedAt).toLocaleString() + '</div></div>';
+  document.getElementById('adm-detail-grid').innerHTML = grid;
+
+  const notesBox = document.getElementById('adm-detail-notes');
+  if (s.notes) {
+    notesBox.style.display = 'block';
+    document.getElementById('adm-detail-notes-text').textContent = s.notes;
+  } else {
+    notesBox.style.display = 'none';
+  }
+
+  let actions = '';
+  actions += '<button class="btn btn-blue" ' + (s.status === 'in_review' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'in_review\')"><svg style="width:13px;height:13px;margin-right:4px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Review</button>';
+  actions += '<button class="btn btn-green" ' + (s.status === 'approved' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'approved\')"><svg style="width:13px;height:13px;margin-right:4px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Approve</button>';
+  actions += '<button class="btn btn-danger" ' + (s.status === 'rejected' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'rejected\')"><svg style="width:13px;height:13px;margin-right:4px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Reject</button>';
+  document.getElementById('adm-detail-actions').innerHTML = actions;
+
+  document.getElementById('admin-detail-modal').classList.add('open');
+}
+
+function closeAdminModal() {
+  document.getElementById('admin-detail-modal').classList.remove('open');
+}
+
+document.getElementById('admin-detail-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeAdminModal();
+});
+
+function updateSubStatus(id, status) {
+  const sub = ADMIN_SUBMISSIONS.find(s => s.id === id);
+  if (sub) {
+    sub.status = status;
+    sub.updatedAt = new Date().toISOString();
+  }
+  renderDashboard();
+  renderSubmissions();
+  openSubmissionDetail(id);
+}
+
+// Render offices
+function renderOffices() {
+  const tbody = document.getElementById('offices-tbody');
+  tbody.innerHTML = ADMIN_OFFICES.map(o =>
+    '<tr><td style="font-weight:500;">' + o.name + '</td><td style="color:var(--text2);">' + o.region + '</td><td>' + (o.active ? '<span class="badge badge-approved">Active</span>' : '<span class="badge" style="background:#eee;color:#666;">Inactive</span>') + '</td><td style="text-align:right;"><label class="switch"><input type="checkbox" ' + (o.active ? 'checked' : '') + ' onchange="toggleOffice(\'' + o.id + '\')"><span class="slider"></span></label></td></tr>'
+  ).join('');
+}
+
+function toggleOffice(id) {
+  const o = ADMIN_OFFICES.find(x => x.id === id);
+  if (o) o.active = !o.active;
+  renderOffices();
+}
+
+// Render commissions
+function renderCommissions() {
+  const tbody = document.getElementById('commissions-tbody');
+  tbody.innerHTML = ADMIN_COMMISSIONS.map(c =>
+    '<tr><td style="font-weight:500;">' + c.name + '</td><td>' + c.listingSide + '%</td><td>' + c.buyerSide + '%</td><td style="text-align:right;"><button class="btn btn-gray" style="padding:4px 8px;font-size:11px;" onclick="alert(\'Feature coming soon\')">\u2716</button></td></tr>'
+  ).join('');
+}
+
+// Render property types
+function renderPropTypes() {
+  const list = document.getElementById('proptypes-list');
+  list.innerHTML = ADMIN_PROP_TYPES.map(pt =>
+    '<div class="prop-tag"><span>' + cap(pt) + '</span><span class="tag-badge">Active</span></div>'
+  ).join('');
+}
+
+// Settings tabs
+function switchSettingsTab(tab) {
+  document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('settings-' + tab).classList.add('active');
+  document.querySelectorAll('.settings-tab').forEach((t, i) => {
+    const tabs = ['offices', 'commissions', 'proptypes'];
+    t.classList.toggle('active', tabs[i] === tab);
+  });
+}
+
 </script>
 </body>
 </html>
