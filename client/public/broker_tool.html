@@ -7,6 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <style>
 :root {
   --red: #c41230; --red-dark: #a00e28; --red-light: #f8d7dc;
@@ -479,6 +480,15 @@ body.admin-mode .header .sub { display: none; }
 <div id="tab-listing" class="panel active">
   <div class="tip">Select a property type below. The form will adapt to show only the fields relevant to that type.</div>
 
+  <!-- Supporting Documents -->
+  <div class="card">
+    <h2>Listing Agreements & Disclosures</h2>
+    <div class="row c2">
+      <div class="field"><label>Listing Agreement</label><input type="file" id="l-doc-agreement" accept=".pdf,.doc,.docx" style="padding:6px;cursor:pointer;"></div>
+      <div class="field"><label>Agency Disclosure</label><input type="file" id="l-doc-disclosure" accept=".pdf,.doc,.docx" style="padding:6px;cursor:pointer;"></div>
+    </div>
+  </div>
+
   <!-- Agent & Release -->
   <div class="card">
     <h2>Listing Agent(s) &amp; Release Instructions</h2>
@@ -760,8 +770,8 @@ body.admin-mode .header .sub { display: none; }
 
   <!-- Actions -->
   <div class="btn-bar">
-    <button class="btn btn-red" onclick="exportListingPdf()">Export PDF</button>
-    <button class="btn btn-outline" onclick="openEmailModal('listing')">Draft Email to Taylor</button>
+    <button class="btn btn-gray" onclick="exportListingPdf()">Review (PDF)</button>
+    <button class="btn btn-red" onclick="openEmailModal('listing')">Submit Listing</button>
     <button class="btn btn-outline" onclick="copyToSign()">Copy to Sign Request &rarr;</button>
     <button class="btn btn-gray" onclick="clearListing()">Clear Form</button>
   </div>
@@ -852,8 +862,8 @@ body.admin-mode .header .sub { display: none; }
   <div class="field"><label>Comments</label><textarea id="s-comments" rows="3" placeholder="Additional comments or special instructions..."></textarea></div>
 
   <div class="btn-bar" style="margin-top:16px;">
-    <button class="btn btn-red" onclick="exportSignPdf()">Export PDF</button>
-    <button class="btn btn-outline" onclick="openEmailModal('sign')">Draft Email</button>
+    <button class="btn btn-gray" onclick="exportSignPdf()">Review (PDF)</button>
+    <button class="btn btn-red" onclick="openEmailModal('sign')">Submit Sign Request</button>
     <button class="btn btn-gray" onclick="clearSign()">Clear Form</button>
   </div>
 </div>
@@ -1250,8 +1260,8 @@ body.admin-mode .header .sub { display: none; }
   </div>
 
   <div class="btn-bar">
-    <button class="btn btn-red" onclick="exportVoucherPdf()">Export PDF</button>
-    <button class="btn btn-outline" onclick="openEmailModal('voucher')">Draft Email to Taylor</button>
+    <button class="btn btn-gray" onclick="exportVoucherPdf()">Review (PDF)</button>
+    <button class="btn btn-red" onclick="openEmailModal('voucher')">Submit Voucher</button>
     <button class="btn btn-gray" onclick="clearVoucher()">Clear Form</button>
   </div>
 </div>
@@ -1472,8 +1482,8 @@ body.admin-mode .header .sub { display: none; }
   </div>
 
   <div class="btn-bar" style="margin-top:16px;">
-    <button class="btn btn-red" onclick="exportCompPdf()">Export PDF</button>
-    <button class="btn btn-outline" onclick="openEmailModal('comp')">Draft Email</button>
+    <button class="btn btn-gray" onclick="exportCompPdf()">Review (PDF)</button>
+    <button class="btn btn-red" onclick="openEmailModal('comp')">Submit Comp</button>
     <button class="btn btn-gray" onclick="clearComp()">Clear Form</button>
   </div>
 </div>
@@ -3826,13 +3836,17 @@ function copyEmail() {
   const to = document.getElementById('em-to').value;
   const cc = document.getElementById('em-cc').value;
   const text = 'To: ' + to + (cc ? '\nCC: ' + cc : '') + '\nSubject: ' + subject + '\n\n' + body;
+  // Save submission to localStorage
+  const sub = saveSubmission(emailContext);
   navigator.clipboard.writeText(text).then(() => {
-    alert('Email copied to clipboard!');
+    alert('Email copied to clipboard!\n\nSubmission ' + sub.id + ' saved to Admin Portal.');
     closeEmailModal();
   });
 }
 
 function openInMailClient() {
+  // Save submission to localStorage
+  const sub = saveSubmission(emailContext);
   const to = document.getElementById('em-to').value;
   const cc = document.getElementById('em-cc').value;
   const subject = encodeURIComponent(document.getElementById('em-subject').value);
@@ -3900,8 +3914,8 @@ initAgentPicker('v-pa-name', {
 // ADMIN PORTAL LOGIC
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Mock submissions data
-const ADMIN_SUBMISSIONS = [
+// ═══ SUBMISSION PERSISTENCE (localStorage) ═══
+const SEED_SUBMISSIONS = [
   { id: 'SUB-001', type: 'listing', status: 'pending', propertyType: 'industrial', transactionType: 'lease', address: '1450 Von Karman Ave', city: 'Irvine', state: 'CA', zip: '92612', brokerName: 'Mike Chen', brokerEmail: 'mchen@lee-associates.com', office: 'Irvine', submittedAt: '2026-03-28T09:15:00', updatedAt: '2026-03-28T09:15:00', sizeSF: 52000, leaseRate: '$1.15/SF NNN' },
   { id: 'SUB-002', type: 'comp', status: 'approved', propertyType: 'office', transactionType: 'lease', address: '2600 Michelson Dr', city: 'Irvine', state: 'CA', zip: '92612', brokerName: 'Sarah Kim', brokerEmail: 'skim@lee-associates.com', office: 'Irvine', submittedAt: '2026-03-25T14:30:00', updatedAt: '2026-03-27T11:00:00', sizeSF: 12500, leaseRate: '$3.25/SF FSG' },
   { id: 'SUB-003', type: 'voucher', status: 'in_review', propertyType: 'industrial', transactionType: 'sale', address: '15231 Springdale St', city: 'Huntington Beach', state: 'CA', zip: '92649', brokerName: 'Tom Rodriguez', brokerEmail: 'trodriguez@lee-associates.com', office: 'Long Beach', submittedAt: '2026-03-26T16:45:00', updatedAt: '2026-03-29T10:20:00', sizeSF: 85000, salePrice: '$14,500,000' },
@@ -3912,7 +3926,165 @@ const ADMIN_SUBMISSIONS = [
   { id: 'SUB-008', type: 'voucher', status: 'approved', propertyType: 'office', transactionType: 'lease', address: '100 Bayview Cir', city: 'Newport Beach', state: 'CA', zip: '92660', brokerName: 'Rachel Torres', brokerEmail: 'rtorres@lee-associates.com', office: 'Newport Beach', submittedAt: '2026-03-18T13:20:00', updatedAt: '2026-03-20T16:00:00', sizeSF: 8900, leaseRate: '$3.85/SF FSG' },
 ];
 
+// Load submissions from localStorage, seed with mock data on first visit
+function loadSubmissions() {
+  const stored = localStorage.getItem('lee_submissions');
+  if (stored) {
+    try { return JSON.parse(stored); } catch(e) { /* fall through */ }
+  }
+  localStorage.setItem('lee_submissions', JSON.stringify(SEED_SUBMISSIONS));
+  return [...SEED_SUBMISSIONS];
+}
 
+function persistSubmissions() {
+  localStorage.setItem('lee_submissions', JSON.stringify(ADMIN_SUBMISSIONS));
+}
+
+let ADMIN_SUBMISSIONS = loadSubmissions();
+
+// Generate next submission ID
+function nextSubId() {
+  const nums = ADMIN_SUBMISSIONS.map(s => parseInt(s.id.replace('SUB-','')) || 0);
+  const next = Math.max(0, ...nums) + 1;
+  return 'SUB-' + String(next).padStart(3, '0');
+}
+
+// Collect form data and save as a submission
+function saveSubmission(type) {
+  const now = new Date().toISOString();
+  const base = { id: nextSubId(), type: type, status: 'pending', submittedAt: now, updatedAt: now, office: 'Newport Beach' };
+
+  if (type === 'listing') {
+    const agents = getListingAgents();
+    const propType = document.getElementById('l-prop-type').selectedOptions[0].text;
+    const txnType = document.getElementById('l-txn-type').selectedOptions[0].text;
+    Object.assign(base, {
+      propertyType: propType.toLowerCase(),
+      transactionType: txnType.toLowerCase(),
+      address: document.getElementById('l-address').value || '',
+      city: document.getElementById('l-city').value || '',
+      state: document.getElementById('l-state').value || 'CA',
+      zip: document.getElementById('l-zip').value || '',
+      brokerName: agents[0]?.name || 'Unknown',
+      brokerEmail: agents[0]?.email || '',
+      sizeSF: parseInt((document.getElementById('l-bldg-sf').value || '0').replace(/,/g,'')) || 0,
+      leaseRate: document.getElementById('l-lease-sf').value ? document.getElementById('l-lease-sf').value + '/SF ' + (document.getElementById('l-lease-type').selectedOptions[0]?.text || '') : '',
+      salePrice: document.getElementById('l-sale-price') ? document.getElementById('l-sale-price').value : '',
+      yearBuilt: document.getElementById('l-year-built').value || '',
+      crossStreet: document.getElementById('l-cross').value || '',
+      parkingRatio: document.getElementById('l-parking-ratio').value || '',
+      leaseMo: document.getElementById('l-lease-mo').value || '',
+      leaseTerm: document.getElementById('l-lease-term').value || '',
+      leaseType: document.getElementById('l-lease-type').selectedOptions[0]?.text || '',
+      agents: agents
+    });
+  } else if (type === 'voucher') {
+    const txnType = document.getElementById('v-txn-type').selectedOptions[0].text;
+    const propType = document.getElementById('v-prop-type').selectedOptions[0].text;
+    const laName = document.getElementById('v-la-name') ? document.getElementById('v-la-name').value : '';
+    Object.assign(base, {
+      propertyType: propType.toLowerCase(),
+      transactionType: txnType.toLowerCase(),
+      address: document.getElementById('v-address').value || '',
+      city: document.getElementById('v-city').value || '',
+      state: document.getElementById('v-state').value || 'CA',
+      zip: document.getElementById('v-zip').value || '',
+      brokerName: laName || 'Unknown',
+      brokerEmail: '',
+      suite: document.getElementById('v-suite').value || '',
+      sizeSF: parseInt((document.getElementById('v-deal-sf').value || '0').replace(/,/g,'')) || 0,
+      bldgSF: parseInt((document.getElementById('v-bldg-sf').value || '0').replace(/,/g,'')) || 0,
+      occType: document.getElementById('v-occ-type').selectedOptions[0]?.text || '',
+      dealType: document.getElementById('v-deal-type').selectedOptions[0]?.text || '',
+      submarket: document.getElementById('v-submarket').value || '',
+      leaseType: document.getElementById('v-lease-type').selectedOptions[0]?.text || '',
+      leaseRate: document.getElementById('v-l-rate') ? document.getElementById('v-l-rate').value + '/SF ' + (document.getElementById('v-l-rate-type')?.selectedOptions[0]?.text || '') : '',
+      totalInvoice: document.getElementById('v-total-invoice') ? document.getElementById('v-total-invoice').value : '',
+      consideration: document.getElementById('v-l-consideration') ? document.getElementById('v-l-consideration').value : '',
+      leaseTerm: document.getElementById('v-l-term') ? document.getElementById('v-l-term').value : '',
+      leaseStart: document.getElementById('v-l-start') ? document.getElementById('v-l-start').value : '',
+      leaseEnd: document.getElementById('v-l-end') ? document.getElementById('v-l-end').value : '',
+      salePrice: document.getElementById('v-s-price') ? document.getElementById('v-s-price').value : '',
+      commRate: document.getElementById('v-l-comm-rate') ? document.getElementById('v-l-comm-rate').value : '',
+      commDue: document.getElementById('v-l-comm-due') ? document.getElementById('v-l-comm-due').value : '',
+      // Store full voucher form data for Dealius push
+      voucherData: collectVoucherData()
+    });
+  } else if (type === 'comp') {
+    const compType = document.getElementById('c-comp-type').value;
+    Object.assign(base, {
+      propertyType: (document.getElementById('c-prop-type').selectedOptions[0]?.text || 'industrial').toLowerCase(),
+      transactionType: compType === 'sale' ? 'sale' : 'lease',
+      address: document.getElementById('c-address').value || '',
+      city: document.getElementById('c-city').value || '',
+      state: 'CA',
+      zip: '',
+      brokerName: document.getElementById('c-source').value || 'Unknown',
+      brokerEmail: '',
+      sizeSF: parseInt((document.getElementById('c-leased-sf')?.value || document.getElementById('cs-bldg-sf')?.value || '0').replace(/,/g,'')) || 0,
+      leaseRate: compType !== 'sale' ? (document.getElementById('c-rent-sf').value || '') + '/SF' : '',
+      salePrice: compType === 'sale' ? (document.getElementById('cs-sell-price')?.value || '') : ''
+    });
+  } else if (type === 'sign') {
+    Object.assign(base, {
+      propertyType: 'industrial',
+      transactionType: 'lease',
+      address: document.getElementById('s-address').value || '',
+      city: document.getElementById('s-city').value || '',
+      state: 'CA',
+      zip: '',
+      brokerName: document.getElementById('s-requested-by').value || 'Unknown',
+      brokerEmail: '',
+      sizeSF: 0
+    });
+  }
+
+  ADMIN_SUBMISSIONS.unshift(base);
+  persistSubmissions();
+  return base;
+}
+
+// Collect full voucher form data for Dealius push
+function collectVoucherData() {
+  const gv = id => { const el = document.getElementById(id); if (!el) return ''; return el.tagName === 'SELECT' ? (el.selectedOptions[0]?.text || '') : el.value; };
+  return {
+    txnType: gv('v-txn-type'), propType: gv('v-prop-type'),
+    activeListing: gv('v-active-listing'), closeListing: gv('v-close-listing'),
+    confidential: gv('v-confidential'), dateFilled: gv('v-date-filled'),
+    address: gv('v-address'), suite: gv('v-suite'), city: gv('v-city'),
+    state: gv('v-state'), zip: gv('v-zip'),
+    piSuite: gv('v-pi-suite'), occType: gv('v-occ-type'), dealType: gv('v-deal-type'),
+    submarket: gv('v-submarket'), priorLoc: gv('v-prior-loc'), bldgCond: gv('v-bldg-cond'),
+    dealSF: gv('v-deal-sf'), bldgSF: gv('v-bldg-sf'), landSF: gv('v-land-sf'),
+    bldgClass: gv('v-bldg-class'), indSF: gv('v-ind-sf'), whseSF: gv('v-whse-sf'),
+    officeSF: gv('v-office-sf'), retailSF: gv('v-retail-sf'),
+    constType: gv('v-const-type'), subtype: gv('v-subtype'),
+    yearBuilt: gv('v-year-built'), floors: gv('v-floors'),
+    sprinklers: gv('v-sprinklers'), dh: gv('v-dh'), gl: gv('v-gl'),
+    clearance: gv('v-clearance'), amps: gv('v-amps'),
+    rail: gv('v-rail'), yard: gv('v-yard'),
+    parkingType: gv('v-parking-type'), parkingSpaces: gv('v-parking-spaces'),
+    parkRatio: gv('v-park-ratio'), opex: gv('v-opex'),
+    leaseType: gv('v-lease-type'),
+    // Lease transaction
+    lDealSF: gv('v-l-dealsf'), lStart: gv('v-l-start'), lEnd: gv('v-l-end'),
+    lOcc: gv('v-l-occ'), lTerm: gv('v-l-term'), lConsideration: gv('v-l-consideration'),
+    lMktMonths: gv('v-l-mkt-months'), lRate: gv('v-l-rate'), lRateType: gv('v-l-rate-type'),
+    lAskingRate: gv('v-l-asking-rate'), lTiSF: gv('v-l-ti-sf'), lTiTotal: gv('v-l-ti-total'),
+    lGrsEff: gv('v-l-grs-eff'), lNnnEff: gv('v-l-nnn-eff'), lEscalations: gv('v-l-escalations'),
+    lNnnTotal: gv('v-l-nnn-total'),
+    // Sale transaction
+    sPrice: gv('v-s-price'), sPriceSF: gv('v-s-price-sf'), sCapRate: gv('v-s-cap-rate'),
+    sNoi: gv('v-s-noi'), sClose: gv('v-s-close'), sMktMonths: gv('v-s-mkt-months'),
+    // Commission
+    lCommRate: gv('v-l-comm-rate'), lCommDue: gv('v-l-comm-due'),
+    commBonus: gv('v-comm-bonus'), commConsulting: gv('v-comm-consulting'),
+    commSale: gv('v-comm-sale'), totalInvoice: gv('v-total-invoice'),
+    // Agents
+    laName: gv('v-la-name'), laHouse: gv('v-la-house'),
+    paName: gv('v-pa-name'), paHouse: gv('v-pa-house')
+  };
+}
 
 function statusBadge(status) {
   const map = { pending: 'badge-pending', approved: 'badge-approved', rejected: 'badge-rejected', in_review: 'badge-review' };
@@ -4022,6 +4194,12 @@ function openSubmissionDetail(id) {
   }
 
   let actions = '';
+  if (s.type === 'listing' || s.type === 'Listing') {
+    actions += '<button class="btn btn-blue" style="background:#2563eb;" onclick="dxPushListing(\'' + s.id + '\')"><svg style="width:13px;height:13px;margin-right:4px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Push to Dealius</button>';
+  }
+  if (s.type === 'voucher') {
+    actions += '<button class="btn btn-blue" style="background:#7c3aed;" onclick="dxPushVoucher(\'' + s.id + '\')"><svg style="width:13px;height:13px;margin-right:4px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Push to Dealius Deal</button>';
+  }
   actions += '<button class="btn btn-blue" ' + (s.status === 'in_review' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'in_review\')"><svg style="width:13px;height:13px;margin-right:4px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Review</button>';
   actions += '<button class="btn btn-green" ' + (s.status === 'approved' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'approved\')"><svg style="width:13px;height:13px;margin-right:4px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Approve</button>';
   actions += '<button class="btn btn-danger" ' + (s.status === 'rejected' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'rejected\')"><svg style="width:13px;height:13px;margin-right:4px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Reject</button>';
@@ -4044,9 +4222,98 @@ function updateSubStatus(id, status) {
     sub.status = status;
     sub.updatedAt = new Date().toISOString();
   }
+  persistSubmissions();
   renderDashboard();
   renderSubmissions();
   openSubmissionDetail(id);
+}
+
+function dxPushListing(id) {
+  const sub = ADMIN_SUBMISSIONS.find(s => s.id === id);
+  if (!sub) return;
+  // Switch to Deal Entry page and pre-fill the Dealius form with listing data
+  closeAdminModal();
+  switchAdminPage('dealentry');
+  // Pre-fill the Dealius form fields from the listing submission
+  setTimeout(function() {
+    const setVal = function(elId, val) { const el = document.getElementById(elId); if (el && val) el.value = val; };
+    setVal('dx_address', sub.address || '');
+    setVal('dx_city', sub.city || '');
+    setVal('dx_state', sub.state || 'CA');
+    setVal('dx_zip', sub.zip || '');
+    // Map property type to Dealius space type
+    const spSel = document.getElementById('dx_space_type');
+    if (spSel && sub.propertyType) {
+      const ptMap = { industrial: '3', office: '2', retail: '1', land: '5' };
+      const val = ptMap[sub.propertyType.toLowerCase()];
+      if (val) { for (let i = 0; i < spSel.options.length; i++) { if (spSel.options[i].value === val) { spSel.selectedIndex = i; break; } } }
+    }
+    setVal('dx_deal_sf', sub.sizeSF ? String(sub.sizeSF) : '');
+    setVal('dx_year_built', sub.yearBuilt || '');
+    // Set deal type to listing (Landlord Rep = 2)
+    const dtSel = document.getElementById('dx_deal_type');
+    if (dtSel) { for (let i = 0; i < dtSel.options.length; i++) { if (dtSel.options[i].value === '2') { dtSel.selectedIndex = i; break; } } }
+    alert('Listing data for "' + sub.address + '" has been pre-filled in the Dealius Deal Entry form.\n\nReview the fields and click Submit to push to Dealius.');
+  }, 300);
+  updateSubStatus(id, 'in_review');
+}
+
+function dxPushVoucher(id) {
+  const sub = ADMIN_SUBMISSIONS.find(s => s.id === id);
+  if (!sub) return;
+  // Switch to Deal Entry page and pre-fill the Dealius form with voucher data
+  closeAdminModal();
+  switchAdminPage('dealentry');
+  setTimeout(function() {
+    const setVal = function(elId, val) { const el = document.getElementById(elId); if (el && val) el.value = val; };
+    const vd = sub.voucherData || {};
+    setVal('dx_address', vd.address || sub.address || '');
+    setVal('dx_city', vd.city || sub.city || '');
+    setVal('dx_state', vd.state || sub.state || 'CA');
+    setVal('dx_zip', vd.zip || sub.zip || '');
+    setVal('dx_suite', vd.suite || sub.suite || '');
+    // Map property type
+    const spSel = document.getElementById('dx_space_type');
+    if (spSel) {
+      const pt = (vd.propType || sub.propertyType || '').toLowerCase();
+      const ptMap = { industrial: '3', office: '2', retail: '1', land: '5' };
+      const val = ptMap[pt];
+      if (val) { for (let i = 0; i < spSel.options.length; i++) { if (spSel.options[i].value === val) { spSel.selectedIndex = i; break; } } }
+    }
+    setVal('dx_deal_sf', vd.dealSF || (sub.sizeSF ? String(sub.sizeSF) : ''));
+    setVal('dx_bldg_sf', vd.bldgSF || '');
+    setVal('dx_year_built', vd.yearBuilt || '');
+    setVal('dx_submarket', vd.submarket || '');
+    // Lease details
+    setVal('dx_lease_start', vd.lStart || '');
+    setVal('dx_lease_end', vd.lEnd || '');
+    setVal('dx_term_months', vd.lTerm || '');
+    setVal('dx_rate', vd.lRate || '');
+    setVal('dx_consideration', vd.lConsideration || '');
+    setVal('dx_ti', vd.lTiSF || '');
+    setVal('dx_escalations', vd.lEscalations || '');
+    // Sale details
+    setVal('dx_sale_price', vd.sPrice || sub.salePrice || '');
+    // Commission
+    setVal('dx_comm_rate', vd.lCommRate || '');
+    setVal('dx_comm_amount', vd.lCommDue || '');
+    // Agents
+    setVal('dx_la_name', vd.laName || sub.brokerName || '');
+    setVal('dx_la_house', vd.laHouse || '');
+    setVal('dx_pa_name', vd.paName || '');
+    setVal('dx_pa_house', vd.paHouse || '');
+    // Set deal type based on transaction type
+    const dtSel = document.getElementById('dx_deal_type');
+    if (dtSel) {
+      const txn = (vd.txnType || sub.transactionType || '').toLowerCase();
+      // 1=Tenant Rep, 2=Landlord Rep, 3=Buyer Rep, 4=Seller Rep
+      const txnMap = { lease: '1', sale: '3' };
+      const val = txnMap[txn] || '1';
+      for (let i = 0; i < dtSel.options.length; i++) { if (dtSel.options[i].value === val) { dtSel.selectedIndex = i; break; } }
+    }
+    alert('Commission voucher data for "' + (sub.address || 'this deal') + '" has been pre-filled in the Dealius Deal Entry form.\n\nReview the fields and click Submit to push to Dealius.');
+  }, 300);
+  updateSubStatus(id, 'in_review');
 }
 
 /* ═══ DEALIUS TOOL JS ═══ */
@@ -5018,6 +5285,226 @@ function dxResetTool() {
   btn.style.color = '';
 }
 
+</script>
+
+<!-- Auto-Calculation Script Injected by Update -->
+<script>
+document.addEventListener('input', (e) => {
+  const cleanNum = (str) => {
+    if(!str) return NaN;
+    return parseFloat(str.replace(/[^0-9.-]/g, ''));
+  };
+  const formatMoney = (num) => '$' + num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+  // Lease $/SF (Listing Entry)
+  const lLeaseMo = cleanNum(document.getElementById('l-lease-mo')?.value);
+  const lBldgSf = cleanNum(document.getElementById('l-bldg-sf')?.value);
+  if (!isNaN(lLeaseMo) && !isNaN(lBldgSf) && lBldgSf > 0) {
+    const el = document.getElementById('l-lease-sf');
+    if (el && document.activeElement !== el && document.activeElement.id !== 'l-lease-sf') {
+      el.value = formatMoney(lLeaseMo / lBldgSf);
+    }
+  }
+
+  // Sale $/SF (Listing Entry)
+  const lSalePrice = cleanNum(document.getElementById('l-sale-price')?.value);
+  if (!isNaN(lSalePrice) && !isNaN(lBldgSf) && lBldgSf > 0) {
+    const el = document.getElementById('l-sale-sf');
+    if (el && document.activeElement !== el && document.activeElement.id !== 'l-sale-sf') {
+      el.value = '$' + (lSalePrice / lBldgSf).toFixed(2);
+    }
+  }
+
+  // Voucher Consideration
+  const vDealSf = cleanNum(document.getElementById('v-l-dealsf')?.value);
+  const vRate = cleanNum(document.getElementById('v-l-rate')?.value);
+  const vTerm = cleanNum(document.getElementById('v-l-term')?.value);
+  if (!isNaN(vDealSf) && !isNaN(vRate) && !isNaN(vTerm)) {
+    const el = document.getElementById('v-l-consideration');
+    if (el) el.value = formatMoney(vDealSf * vRate * vTerm);
+  }
+
+  // Voucher Sale Commission Due
+  const vSPrice = cleanNum(document.getElementById('v-s-price')?.value);
+  const vSCommPct = cleanNum(document.getElementById('v-s-comm-pct')?.value);
+  if (!isNaN(vSPrice) && !isNaN(vSCommPct)) {
+    const el = document.getElementById('v-s-comm-due');
+    if (el) el.value = formatMoney(vSPrice * (vSCommPct / 100));
+  }
+});
+
+// Auto-format numbers with commas on blur
+document.addEventListener('blur', (e) => {
+  if (e.target.tagName !== 'INPUT' || e.target.type === 'date' || e.target.type === 'file') return;
+  
+  const val = e.target.value.trim();
+  if (!val || val === '$') return;
+  
+  const isMoney = val.startsWith('$') || (e.target.placeholder && e.target.placeholder.startsWith('$'));
+  const hasNumIdentifier = ['price','mo','sf','rate','term','due','consideration'].some(str => e.target.id.includes(str));
+  const isExcluded = ['zip','phone','apn','year'].some(str => e.target.id.includes(str));
+  
+  if (isExcluded) return;
+  
+  const cleanNum = parseFloat(val.replace(/[^0-9.-]/g, ''));
+  if (!isNaN(cleanNum) && (hasNumIdentifier || isMoney || String(cleanNum) === val)) {
+      if (document.activeElement !== e.target) {
+          e.target.value = (isMoney ? '$' : '') + cleanNum.toLocaleString('en-US', {maximumFractionDigits: 2});
+      }
+  }
+}, true);
+</script>
+
+<!-- Free Address Autocomplete Integration (Photon / OpenStreetMap) -->
+<style>
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  max-height: 200px;
+  overflow-y: auto;
+  width: 100%;
+  z-index: 2000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  display: none;
+}
+.autocomplete-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  line-height: 1.4;
+}
+.autocomplete-item:hover {
+  background: var(--red-light);
+}
+.autocomplete-main { font-weight: 600; color: var(--text); font-size: 13px; }
+.autocomplete-sub { font-size: 11px; color: var(--text2); }
+</style>
+<script>
+function initFreeAutocomplete() {
+  const addressFieldGroups = [
+    { addr: 'l-address', city: 'l-city', zip: 'l-zip' },       // Listing
+    { addr: 's-address', city: 's-city', zip: null },          // Sign Note: no specific zip field currently visible
+    { addr: 'v-address', city: null, zip: null },              // Voucher
+    { addr: 'c-address', city: 'c-city', zip: null },          // Comp Input
+    { addr: 'v-ls-address', city: 'v-ls-city', zip: 'v-ls-zip' }, // Voucher Lessor
+    { addr: 'v-lb-address', city: 'v-lb-city', zip: 'v-lb-zip' }  // Voucher Lessee
+  ];
+
+  addressFieldGroups.forEach(group => {
+    const input = document.getElementById(group.addr);
+    if (!input) return;
+
+    // Use placeholder text to inform the user that it autofills
+    input.placeholder = "Start typing an address...";
+    
+    // Ensure parent is position relative for dropdown positioning
+    const parent = input.parentElement;
+    parent.style.position = 'relative';
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'autocomplete-dropdown';
+    parent.appendChild(dropdown);
+
+    let timeout = null;
+
+    input.addEventListener('input', () => {
+      clearTimeout(timeout);
+      const query = input.value.trim();
+      
+      if (query.length < 3) {
+        dropdown.style.display = 'none';
+        return;
+      }
+
+      timeout = setTimeout(async () => {
+        try {
+          const res = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(query) + '&limit=5');
+          const data = await res.json();
+          
+          dropdown.innerHTML = '';
+          if (data.features && data.features.length > 0) {
+            data.features.forEach(feature => {
+              const p = feature.properties;
+              const house = p.housenumber || '';
+              const street = p.street || p.name || '';
+              const city = p.city || p.county || '';
+              const state = p.state || '';
+              const zip = p.postcode || '';
+              
+              const addressLine = (house + ' ' + street).trim() || p.name;
+              const subText = [city, state, zip].filter(x => x).join(', ');
+              
+              const item = document.createElement('div');
+              item.className = 'autocomplete-item';
+              
+              const mainDiv = document.createElement('div');
+              mainDiv.className = 'autocomplete-main';
+              mainDiv.textContent = addressLine;
+              
+              const subDiv = document.createElement('div');
+              subDiv.className = 'autocomplete-sub';
+              subDiv.textContent = subText;
+
+              item.appendChild(mainDiv);
+              item.appendChild(subDiv);
+              
+              item.addEventListener('mousedown', (e) => {
+                e.preventDefault(); // Stop blur from firing before click registers
+                input.value = addressLine;
+                
+                if (group.city) {
+                  const cityInput = document.getElementById(group.city);
+                  if (cityInput) cityInput.value = city;
+                }
+                
+                if (group.zip) {
+                  const zipInput = document.getElementById(group.zip);
+                  if (zipInput) zipInput.value = zip;
+                }
+                
+                const idPrefix = group.addr.substring(0, group.addr.lastIndexOf('-'));
+                const stateInput = document.getElementById(idPrefix + '-state');
+                if (stateInput && state) stateInput.value = state;
+                
+                dropdown.style.display = 'none';
+              });
+              
+              dropdown.appendChild(item);
+            });
+            dropdown.style.display = 'block';
+          } else {
+            dropdown.style.display = 'none';
+          }
+        } catch (e) {
+          console.error("Autocomplete error:", e);
+        }
+      }, 300); // 300ms debounce
+    });
+
+    input.addEventListener('blur', () => {
+      dropdown.style.display = 'none';
+    });
+    
+    input.addEventListener('focus', () => {
+      if (input.value.trim().length >= 3 && dropdown.children.length > 0) {
+        dropdown.style.display = 'block';
+      }
+    });
+
+    // Prevent form submission on enter while focused in dropdown context
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+      }
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', initFreeAutocomplete);
 </script>
 </body>
 </html>
