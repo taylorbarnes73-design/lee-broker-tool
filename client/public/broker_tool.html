@@ -287,6 +287,15 @@ body.admin-mode .header .sub { display: none; }
 .row.compact .field input, .row.compact .field select { padding: 6px 8px; font-size: 13px; }
 .row.compact .field label { font-size: 10px; margin-bottom: 2px; }
 
+/* Upload zones */
+.upload-zone { border: 2px dashed var(--border); border-radius: var(--radius); transition: border-color .15s; }
+.upload-zone-inner { padding: 14px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.upload-zone-inner:hover { background: #fafafa; }
+.upload-icon { font-size: 20px; }
+.upload-label { font-size: 13px; color: var(--text2); }
+.upload-status { padding: 4px 12px 8px; font-size: 12px; min-height: 20px; }
+.upload-zone:hover { border-color: var(--red); }
+
 /* Print */
 @media print { .tab-bar, .header, .btn-bar, .tip, .dx-bar { display: none; } .panel { display: block !important; max-width: 100%; } }
 @media (max-width: 640px) { .row.c3, .row.c4, .row.c5 { grid-template-columns: 1fr 1fr; } .row.c2 { grid-template-columns: 1fr; } }
@@ -616,8 +625,28 @@ body.admin-mode .header .sub { display: none; }
   <div class="card">
     <h2>Listing Agreements &amp; Disclosures</h2>
     <div class="row c2">
-      <div class="field"><label>Listing Agreement</label><input type="file" id="l-doc-agreement" accept=".pdf,.doc,.docx" style="padding:6px;cursor:pointer;"></div>
-      <div class="field"><label>Agency Disclosure</label><input type="file" id="l-doc-disclosure" accept=".pdf,.doc,.docx" style="padding:6px;cursor:pointer;"></div>
+      <div class="field">
+        <label>Listing Agreement</label>
+        <div class="upload-zone" id="uz-l-agreement" data-category="listing_agreement" data-field="l-doc-agreement">
+          <input type="file" id="l-doc-agreement" accept=".pdf,.doc,.docx" style="display:none;">
+          <div class="upload-zone-inner" onclick="document.getElementById('l-doc-agreement').click()">
+            <span class="upload-icon">&#128196;</span>
+            <span class="upload-label">Click to upload PDF / DOC</span>
+          </div>
+          <div class="upload-status" id="us-l-agreement"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Agency Disclosure</label>
+        <div class="upload-zone" id="uz-l-disclosure" data-category="agency_disclosure" data-field="l-doc-disclosure">
+          <input type="file" id="l-doc-disclosure" accept=".pdf,.doc,.docx" style="display:none;">
+          <div class="upload-zone-inner" onclick="document.getElementById('l-doc-disclosure').click()">
+            <span class="upload-icon">&#128196;</span>
+            <span class="upload-label">Click to upload PDF / DOC</span>
+          </div>
+          <div class="upload-status" id="us-l-disclosure"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -5625,6 +5654,106 @@ function initFreeAutocomplete() {
 }
 
 document.addEventListener('DOMContentLoaded', initFreeAutocomplete);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// S3 FILE UPLOAD — uploads files to backend /api/trpc/files.upload
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Store uploaded file metadata keyed by field id
+const uploadedFiles = {};
+
+async function uploadFileToBrokerStorage(file, category, fieldId, statusId, uploaderName) {
+  const statusEl = document.getElementById(statusId);
+  if (statusEl) {
+    statusEl.innerHTML = '<span style="color:var(--text3);">&#8987; Uploading...</span>';
+  }
+
+  try {
+    // Read file as base64
+    const base64Data = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const payload = {
+      filename: file.name,
+      mimeType: file.type || 'application/octet-stream',
+      base64Data,
+      category,
+      uploaderName: uploaderName || '',
+      reference: document.getElementById('v-address')?.value || document.getElementById('l-address')?.value || ''
+    };
+
+    const res = await fetch('/api/trpc/files.upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ json: payload })
+    });
+
+    if (!res.ok) throw new Error('Upload failed: ' + res.statusText);
+    const data = await res.json();
+    const result = data.result?.data?.json;
+
+    if (result?.success) {
+      uploadedFiles[fieldId] = { url: result.url, fileKey: result.fileKey, filename: result.filename };
+      if (statusEl) {
+        statusEl.innerHTML = `<span style="color:var(--green);">&#10003; <a href="${result.url}" target="_blank" style="color:var(--green);">${result.filename}</a></span>
+          <button onclick="clearUpload('${fieldId}','${statusId}')" style="margin-left:8px;font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;">&#10005; Remove</button>`;
+      }
+      // Update zone appearance
+      const zone = document.querySelector(`[data-field="${fieldId}"]`);
+      if (zone) zone.style.borderColor = 'var(--green)';
+    } else {
+      throw new Error('Unexpected response');
+    }
+  } catch (err) {
+    console.error('Upload error:', err);
+    if (statusEl) {
+      statusEl.innerHTML = '<span style="color:var(--red);">&#10005; Upload failed. Try again.</span>';
+    }
+  }
+}
+
+function clearUpload(fieldId, statusId) {
+  delete uploadedFiles[fieldId];
+  const statusEl = document.getElementById(statusId);
+  if (statusEl) statusEl.innerHTML = '';
+  const input = document.getElementById(fieldId);
+  if (input) input.value = '';
+  const zone = document.querySelector(`[data-field="${fieldId}"]`);
+  if (zone) zone.style.borderColor = '';
+}
+
+function initS3Uploads() {
+  document.querySelectorAll('.upload-zone').forEach(zone => {
+    const category = zone.dataset.category || 'other';
+    const fieldId = zone.dataset.field;
+    const statusId = 'us-' + fieldId.replace('l-doc-', 'l-').replace('s-', 's-');
+    const input = document.getElementById(fieldId);
+    if (!input) return;
+
+    input.addEventListener('change', () => {
+      const file = input.files[0];
+      if (!file) return;
+      uploadFileToBrokerStorage(file, category, fieldId, statusId, '');
+    });
+
+    // Drag & drop
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = 'var(--red)'; });
+    zone.addEventListener('dragleave', () => { zone.style.borderColor = ''; });
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.style.borderColor = '';
+      const file = e.dataTransfer.files[0];
+      if (!file) return;
+      uploadFileToBrokerStorage(file, category, fieldId, statusId, '');
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', initS3Uploads);
 </script>
 </body>
 </html>
