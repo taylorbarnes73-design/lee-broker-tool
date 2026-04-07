@@ -1089,7 +1089,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       <div class="row c4">
         <div class="field"><label class="req">City</label><input id="v-city" placeholder="Irvine"></div>
         <div class="field"><label class="req">State</label><input id="v-state" value="CA"></div>
-        <div class="field"><label class="req">Zip</label><input id="v-zip" placeholder="92618"></div>
+        <div class="field"><label class="req">Zip</label><input id="v-zip" placeholder="92618" onblur="voucherZipAutofill(this.value)"></div>
         <div class="field"><label class="req">Deal SF</label><input id="v-l-dealsf" placeholder="0" oninput="calcVoucherLease()"></div>
       </div>
     </div>
@@ -1335,7 +1335,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 
   <!-- STEP 8: Upload Documents + Commission Distribution -->
   <div class="card" style="border-color:var(--red);">
-    <h2>Step 7 — Upload Documents &amp; Commission Distribution</h2>
+    <h2>Step 8 — Upload Documents &amp; Commission Distribution</h2>
     <h3>Upload Documents</h3>
     <div class="row c2">
       <div class="field">
@@ -2618,6 +2618,23 @@ function addOutsideAgent() {
 // ═══════════════════════════════════════════════════════════════════════════════
 // VOUCHER: COMMISSION DISTRIBUTION TABLE
 // ═══════════════════════════════════════════════════════════════════════════════
+// ── Zip → City Autofill (Voucher) ──
+function voucherZipAutofill(zip) {
+  const z = zip.trim();
+  if (z.length !== 5 || !/^\d{5}$/.test(z)) return;
+  fetch('https://api.zippopotam.us/us/' + z)
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (!data || !data.places || !data.places[0]) return;
+      const place = data.places[0];
+      const cityEl = document.getElementById('v-city');
+      const stateEl = document.getElementById('v-state');
+      if (cityEl && !cityEl.value) cityEl.value = place['place name'] || '';
+      if (stateEl) stateEl.value = place['state abbreviation'] || 'CA';
+    })
+    .catch(() => {});
+}
+
 function addDistRow() {
   const body = document.getElementById('v-dist-body');
   const tr = document.createElement('tr');
