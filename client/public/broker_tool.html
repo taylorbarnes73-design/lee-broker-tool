@@ -723,72 +723,140 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
     </div>
 
-    <!-- Optional Additional Details -->
-    <div class="optional-wrapper">
-      <div class="optional-toggle" onclick="toggleOptional(this)">
-        <h2>Additional Details <span class="optional-badge">Optional</span></h2>
-        <span class="opt-chevron">&#9662;</span>
-      </div>
-      <div class="optional-body">
+    <!-- Property Details — always visible, switches by property type -->
+    <div class="card" id="property-details-card">
+      <h2>Property Details</h2>
+      <p style="font-size:11px;color:var(--text3);margin-bottom:12px;">Fields shown are specific to the selected property type.</p>
 
-    <!-- Industrial-specific -->
-    <div id="sec-industrial" class="card type-section visible">
-      <h2>Industrial Details</h2>
-      <div class="row c4">
-        <div class="field"><label>Size (SF)</label><input id="l-ind-size" placeholder="Total SF"></div>
-        <div class="field"><label>Office (SF)</label><input id="l-ind-office" placeholder="Office SF"></div>
-        <div class="field"><label>Parking</label><input id="l-ind-parking" placeholder="# spaces"></div>
-        <div class="field"><label>Yard</label><select id="l-ind-yard"><option value="">&#8212;</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+      <!-- Industrial -->
+      <div id="sec-industrial" class="type-section visible">
+        <div class="row c4">
+          <div class="field"><label>Size (SF)</label><input id="l-ind-size" placeholder="Total SF"></div>
+          <div class="field"><label>Office (SF)</label><input id="l-ind-office" placeholder="Office SF"></div>
+          <div class="field"><label>Parking</label><input id="l-ind-parking" placeholder="# spaces"></div>
+          <div class="field"><label>Yard</label><select id="l-ind-yard"><option value="">&#8212;</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+        </div>
+        <div class="row c4">
+          <div class="field"><label>GL Doors</label><input id="l-ind-gl" placeholder="# or desc"></div>
+          <div class="field"><label>DH Doors</label><input id="l-ind-dh" placeholder="# or desc"></div>
+          <div class="field"><label>Sprinklers</label><input id="l-ind-sprinklers" placeholder="Type"></div>
+          <div class="field"><label>Clearance</label><input id="l-ind-clearance" placeholder="e.g. 24'"></div>
+        </div>
+        <div class="row c3">
+          <div class="field"><label>Amps / Power</label><input id="l-ind-amps" placeholder="e.g. 400A, 3-phase"></div>
+          <div class="field"><label>Zoning</label><input id="l-ind-zoning" placeholder="e.g. M-1"></div>
+          <div class="field"><label>Construction Type</label><input id="l-ind-construction" placeholder="e.g. Tilt-up"></div>
+        </div>
+        <h3>Building Type</h3>
+        <div class="check-group">
+          <label><input type="checkbox" name="l-bldg-type" value="freestanding"> Freestanding</label>
+          <label><input type="checkbox" name="l-bldg-type" value="pol"> POL</label>
+          <label><input type="checkbox" name="l-bldg-type" value="multi"> Multi</label>
+          <label><input type="checkbox" name="l-bldg-type" value="condo"> Condo</label>
+        </div>
+        <h3>Use</h3>
+        <div class="check-group">
+          <label><input type="checkbox" name="l-use" value="mfg"> Manufacturing</label>
+          <label><input type="checkbox" name="l-use" value="whse"> Warehouse / Distribution</label>
+          <label><input type="checkbox" name="l-use" value="rd"> R&amp;D</label>
+        </div>
       </div>
-      <div class="row c4">
-        <div class="field"><label>GL Doors</label><input id="l-ind-gl" placeholder="# or desc"></div>
-        <div class="field"><label>DH Doors</label><input id="l-ind-dh" placeholder="# or desc"></div>
-        <div class="field"><label>Sprinklers</label><input id="l-ind-sprinklers" placeholder="Type"></div>
-        <div class="field"><label>Clearance</label><input id="l-ind-clearance" placeholder="e.g. 24'"></div>
+
+      <!-- Office -->
+      <div id="sec-office" class="type-section">
+        <div class="row c4">
+          <div class="field"><label>Rentable SF</label><input id="l-off-rsf" placeholder="0"></div>
+          <div class="field"><label>Usable SF</label><input id="l-off-usf" placeholder="0"></div>
+          <div class="field"><label>Floor</label><input id="l-off-floor" placeholder="e.g. 3rd"></div>
+          <div class="field"><label>Parking Ratio</label><input id="l-off-parking" placeholder="e.g. 4/1,000"></div>
+        </div>
+        <div class="row c3">
+          <div class="field"><label>Building Class</label><select id="l-off-class"><option value="">—</option><option>A</option><option>B</option><option>C</option></select></div>
+          <div class="field"><label>Zoning</label><input id="l-off-zoning" placeholder="e.g. C-2"></div>
+          <div class="field"><label>HVAC</label><input id="l-off-hvac" placeholder="e.g. Central, VAV"></div>
+        </div>
+        <h3>Office Type</h3>
+        <div class="check-group">
+          <label><input type="checkbox" name="l-off-type" value="single_tenant"> Single Tenant</label>
+          <label><input type="checkbox" name="l-off-type" value="multi_tenant"> Multi-Tenant</label>
+          <label><input type="checkbox" name="l-off-type" value="medical"> Medical</label>
+          <label><input type="checkbox" name="l-off-type" value="creative"> Creative / Flex</label>
+        </div>
       </div>
-      <div class="row c3">
-        <div class="field"><label>Amps / Power</label><input id="l-ind-amps" placeholder="e.g. 400A, 3-phase"></div>
-        <div class="field"><label>Zoning</label><input id="l-ind-zoning" placeholder="e.g. M-1"></div>
-        <div class="field"><label>Construction Type</label><input id="l-ind-construction" placeholder="e.g. Tilt-up"></div>
+
+      <!-- Retail -->
+      <div id="sec-retail" class="type-section">
+        <div class="row c4">
+          <div class="field"><label>GLA (SF)</label><input id="l-ret-gla" placeholder="0"></div>
+          <div class="field"><label>Frontage (ft)</label><input id="l-ret-frontage" placeholder="0"></div>
+          <div class="field"><label>Parking</label><input id="l-ret-parking" placeholder="# spaces or ratio"></div>
+          <div class="field"><label>Traffic Count</label><input id="l-ret-traffic" placeholder="e.g. 35,000 ADT"></div>
+        </div>
+        <div class="row c3">
+          <div class="field"><label>Zoning</label><input id="l-ret-zoning" placeholder="e.g. C-1"></div>
+          <div class="field"><label>Anchor Tenant</label><input id="l-ret-anchor" placeholder="e.g. Target"></div>
+          <div class="field"><label>Center Type</label><select id="l-ret-center-type"><option value="">—</option><option>Strip</option><option>Power Center</option><option>Regional Mall</option><option>Neighborhood</option><option>Freestanding</option></select></div>
+        </div>
+        <h3>Retail Use</h3>
+        <div class="check-group">
+          <label><input type="checkbox" name="l-ret-use" value="restaurant"> Restaurant</label>
+          <label><input type="checkbox" name="l-ret-use" value="service"> Service</label>
+          <label><input type="checkbox" name="l-ret-use" value="medical"> Medical / Dental</label>
+          <label><input type="checkbox" name="l-ret-use" value="general"> General Retail</label>
+        </div>
       </div>
-      <h3>Building Type</h3>
-      <div class="check-group">
-        <label><input type="checkbox" name="l-bldg-type" value="freestanding"> Freestanding</label>
-        <label><input type="checkbox" name="l-bldg-type" value="pol"> POL</label>
-        <label><input type="checkbox" name="l-bldg-type" value="multi"> Multi</label>
-        <label><input type="checkbox" name="l-bldg-type" value="condo"> Condo</label>
+
+      <!-- Land -->
+      <div id="sec-land" class="type-section">
+        <div class="row c3">
+          <div class="field"><label>Zoning</label><input id="l-land-zoning" placeholder="e.g. M-1, R-2"></div>
+          <div class="field"><label>Utilities</label><input id="l-land-utilities" placeholder="e.g. All at site"></div>
+          <div class="field"><label>Topography</label><select id="l-land-topo"><option value="">—</option><option>Flat</option><option>Sloped</option><option>Irregular</option></select></div>
+        </div>
+        <div class="row c3">
+          <div class="field"><label>Entitlements</label><input id="l-land-entitle" placeholder="e.g. Approved for industrial"></div>
+          <div class="field"><label>APN</label><input id="l-land-apn" placeholder="Parcel number"></div>
+          <div class="field"><label>Flood Zone</label><select id="l-land-flood"><option value="">—</option><option>Zone A</option><option>Zone X</option><option>Zone AE</option></select></div>
+        </div>
       </div>
-      <h3>Use</h3>
-      <div class="check-group">
-        <label><input type="checkbox" name="l-use" value="mfg"> Manufacturing</label>
-        <label><input type="checkbox" name="l-use" value="whse"> Warehouse / Distribution</label>
-        <label><input type="checkbox" name="l-use" value="rd"> R&amp;D</label>
+
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid #eee;">
+        <div class="field"><label>Comments / Special Instructions</label><textarea id="l-comments" rows="4" placeholder="Any additional comments or special instructions..."></textarea></div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="field"><label>Comments / Special Instructions</label><textarea id="l-comments" rows="4" placeholder="Any additional comments or special instructions..."></textarea></div>
-    </div>
-
-      </div><!-- end optional-body -->
-    </div><!-- end optional-wrapper -->
-
-    <div class="btn-bar">
-      <button class="btn btn-gray" onclick="exportListingPdf()">Review (PDF)</button>
-      <button class="btn btn-red" onclick="openEmailModal('listing')">Send to MLS</button>
-      <button class="btn btn-outline" onclick="showListingSummary()">Review &amp; Confirm</button>
-      <button class="btn btn-outline" onclick="copyToSign()">Copy to Sign Request &rarr;</button>
+    <div class="btn-bar" id="listing-form-actions">
+      <button class="btn btn-red" onclick="showListingReview()">Review &amp; Confirm &rarr;</button>
+      <button class="btn btn-gray" onclick="exportListingPdf()">Download PDF</button>
       <button class="btn btn-gray" onclick="clearListing()">Clear Form</button>
     </div>
 
-    <!-- Listing Summary / Confirmation Panel -->
-    <div id="listing-summary-panel" style="display:none;" class="card">
-      <h2 style="color:var(--red);">Review &amp; Confirm Listing</h2>
-      <div id="listing-summary-content" style="font-size:13px;line-height:1.8;"></div>
-      <div class="btn-bar" style="margin-top:16px;">
-        <button class="btn btn-red" onclick="openEmailModal('listing')">Confirm &amp; Send to MLS</button>
-        <button class="btn btn-outline" onclick="switchTab('sign')">Create Sign Order &rarr;</button>
-        <button class="btn btn-gray" onclick="document.getElementById('listing-summary-panel').style.display='none'">Edit</button>
+    <!-- ── REVIEW & CONFIRM PAGE ── -->
+    <div id="listing-review-page" style="display:none;">
+      <div class="card" style="border-color:var(--red);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <h2 style="color:var(--red);margin:0;">Review &amp; Confirm Listing</h2>
+          <button class="btn btn-gray" onclick="hideListingReview()" style="font-size:12px;">&#8592; Back to Edit</button>
+        </div>
+        <div id="listing-review-content" style="font-size:13px;line-height:1.9;"></div>
+      </div>
+      <!-- Submit to MLS — revealed only on confirm page -->
+      <div class="btn-bar" style="margin-top:0;">
+        <button class="btn btn-red" style="font-size:15px;padding:12px 32px;" onclick="submitListingToMLS()">&#10003; Submit to MLS</button>
+        <button class="btn btn-gray" onclick="exportListingPdf()">Download PDF</button>
+      </div>
+      <!-- Post-submit actions — hidden until Submit is pressed -->
+      <div id="listing-post-submit" style="display:none;" class="card" style="border-color:#22c55e;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <span style="font-size:24px;">&#10003;</span>
+          <h2 style="color:#16a34a;margin:0;">Listing Submitted to MLS</h2>
+        </div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">Your listing has been sent. Would you like to create a sign order for this property?</p>
+        <div class="btn-bar" style="margin-top:0;">
+          <button class="btn btn-red" onclick="copyToSign(); switchTab('sign');">Create Sign Order &rarr;</button>
+          <button class="btn btn-gray" onclick="exportListingPdf()">Download PDF</button>
+          <button class="btn btn-outline" onclick="hideListingReview()">Return to Form</button>
+        </div>
       </div>
     </div>
   </div><!-- end listing-add-mode -->
@@ -831,7 +899,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 
     <div class="row c3">
       <div class="field"><label>Date</label><input id="s-date" type="date"></div>
-      <div class="field"><label>PO # <span style="font-weight:400;font-size:10px;text-transform:none;">(auto-generated)</span></label><input id="s-po" placeholder="Auto" readonly style="background:#f8f8f8;font-weight:600;"></div>
+      <div class="field" style="display:none;"><label>PO #</label><input id="s-po" placeholder="Auto" readonly style="background:#f8f8f8;font-weight:600;"></div>
       <div class="field"><label>Order Type</label>
         <select id="s-order-type"><option value="installation">Installation</option><option value="removal">Removal</option><option value="maintenance">Maintenance</option></select>
       </div>
@@ -843,8 +911,17 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
     <div class="field"><label class="req">Cross Streets / Building Name</label><input id="s-cross" placeholder="Cross streets, building name, etc."></div>
 
-    <h3 style="margin-top:16px;">Sign Specifications</h3>
-    <p style="font-size:11px;color:var(--text3);margin-bottom:8px;">Use the +/- buttons to set quantity. Select placement location for each sign type.</p>
+    <!-- Sign Support Configuration — moved above Sign Specifications -->
+    <h3 style="margin-top:16px;">Configuration</h3>
+    <div class="support-options">
+      <div class="support-opt" onclick="selectSupport(this, 'sf')"><div class="icon">&#9632;&#9632;</div><div class="lbl">S/F</div></div>
+      <div class="support-opt" onclick="selectSupport(this, 'df')"><div class="icon">&#9646;</div><div class="lbl">D/F</div></div>
+      <div class="support-opt" onclick="selectSupport(this, 'vshape')"><div class="icon">&#8897;</div><div class="lbl">V-Shape</div></div>
+    </div>
+    <input type="hidden" id="s-support" value="">
+
+    <h3 style="margin-top:20px;">Sign Specifications</h3>
+    <p style="font-size:11px;color:var(--text3);margin-bottom:8px;">Use the +/- buttons to set quantity for each sign type needed.</p>
 
     <!-- 4x8 sign -->
     <div class="sign-grid-new">
@@ -854,7 +931,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         <input id="s-4x8-qty" type="number" min="0" value="0" class="qty-input">
         <button type="button" class="qty-btn" onclick="stepQty('s-4x8-qty', 1)">+</button>
       </div>
-      <select id="s-4x8-loc"><option value="">Location</option><option value="posts">Posts</option><option value="bldg">Building</option></select>
     </div>
 
     <!-- 6x8 sign -->
@@ -865,7 +941,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         <input id="s-6x8-qty" type="number" min="0" value="0" class="qty-input">
         <button type="button" class="qty-btn" onclick="stepQty('s-6x8-qty', 1)">+</button>
       </div>
-      <select id="s-6x8-loc"><option value="">Location</option><option value="posts">Posts</option><option value="bldg">Building</option></select>
     </div>
 
     <!-- Other sign -->
@@ -888,22 +963,12 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         <input id="s-banner-qty" type="number" min="0" value="0" class="qty-input">
         <button type="button" class="qty-btn" onclick="stepQty('s-banner-qty', 1)">+</button>
       </div>
-      <select id="s-banner-loc"><option value="">Location</option><option value="fence">Fence</option><option value="bldg">Building</option></select>
     </div>
-
-    <!-- Sign Support Configuration -->
-    <h3 style="margin-top:16px;">Configuration</h3>
-    <div class="support-options">
-      <div class="support-opt" onclick="selectSupport(this, 'sf')"><div class="icon">&#9632;&#9632;</div><div class="lbl">S/F</div></div>
-      <div class="support-opt" onclick="selectSupport(this, 'df')"><div class="icon">&#9646;</div><div class="lbl">D/F</div></div>
-      <div class="support-opt" onclick="selectSupport(this, 'vshape')"><div class="icon">&#8897;</div><div class="lbl">V-Shape</div></div>
-    </div>
-    <input type="hidden" id="s-support" value="">
 
     <!-- Name Rider -->
     <div class="row c2" style="margin-top:12px;">
       <div class="field">
-        <label>Name Rider</label>
+        <label>Name Rider <span style="font-weight:400;font-size:10px;color:var(--text3);">(Optional)</span></label>
         <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
           <label class="toggle-switch">
             <input type="checkbox" id="s-rider-toggle" onchange="toggleNameRider(this.checked)">
@@ -917,7 +982,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 
     <!-- Placement toggle -->
     <div style="margin-top:12px;">
-      <label style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);">Sign Placement</label>
+      <label style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);">Sign Placement <span style="font-weight:400;font-size:10px;text-transform:none;color:var(--text3);">(Optional)</span></label>
       <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
         <label class="toggle-switch">
           <input type="checkbox" id="s-placement-toggle" onchange="togglePlacementUpload(this.checked)">
@@ -951,20 +1016,13 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
     </div>
     <table class="broker-table" id="sign-agent-table">
-      <thead><tr><th style="width:40px;">#</th><th>Agent Name</th><th style="width:120px;">Percentage</th><th style="width:40px;"></th></tr></thead>
+      <thead><tr><th style="width:40px;">#</th><th>Agent Name</th><th style="width:140px;">Shared Expense %</th><th style="width:40px;"></th></tr></thead>
       <tbody id="sign-agent-body"></tbody>
     </table>
     <button class="btn btn-gray" style="margin-top:8px;" onclick="addSignAgent()">+ Add Agent</button>
   </div><!-- end required-section -->
 
-  <!-- Optional -->
-  <div class="optional-wrapper">
-    <div class="optional-toggle" onclick="toggleOptional(this)">
-      <h2>Additional Details <span class="optional-badge">Optional</span></h2>
-      <span class="opt-chevron">&#9662;</span>
-    </div>
-    <div class="optional-body">
-
+  <!-- Access & Comments — always visible -->
   <div class="card">
     <h2>Access &amp; Comments</h2>
     <div class="row c2">
@@ -973,9 +1031,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
     <div class="field"><label>Comments</label><textarea id="s-comments" rows="3" placeholder="Additional comments or special instructions..."></textarea></div>
   </div>
-
-    </div><!-- end optional-body -->
-  </div><!-- end optional-wrapper -->
 
   <div class="btn-bar" style="margin-top:16px;">
     <button class="btn btn-gray" onclick="exportSignPdf()">Review (PDF)</button>
@@ -1022,43 +1077,27 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       <div class="field" id="v-other-type-field" style="display:none;"><label>If Other, Explain</label><input id="v-other-type" placeholder="Describe property type"></div>
     </div>
     <div class="row c2" style="margin-top:8px;">
-      <div class="field"><label>On Behalf Of <span style="font-weight:400;font-size:10px;">(auto-filled from agent)</span></label><input id="v-on-behalf" placeholder="Client / Company name"></div>
+      <div class="field"><label class="req">Client Name</label><input id="v-on-behalf" placeholder="Client / Company name"></div>
       <div class="field"></div>
     </div>
-  </div>
-
-  <!-- STEP 2: Upload Documents -->
-  <div class="card">
-    <h2>Step 2 — Upload Documents</h2>
-    <div class="row c2">
-      <div class="field">
-        <label>Agency Disclosure</label>
-        <div class="upload-zone" id="uz-v-disclosure" data-category="agency_disclosure" data-field="v-doc-disclosure">
-          <input type="file" id="v-doc-disclosure" accept=".pdf,.doc,.docx" style="display:none;">
-          <div class="upload-zone-inner" onclick="document.getElementById('v-doc-disclosure').click()">
-            <span class="upload-icon">&#128196;</span>
-            <span class="upload-label">Click to upload PDF / DOC</span>
-          </div>
-          <div class="upload-status" id="us-v-disclosure"></div>
-        </div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid #eee;">
+      <h3 style="margin-bottom:8px;">Property Address</h3>
+      <div class="row c23">
+        <div class="field"><label class="req">Street Address</label><input id="v-address" placeholder="123 Main St"></div>
+        <div class="field"><label>APN / Parcel</label><input id="v-apn" placeholder="Optional"></div>
       </div>
-      <div class="field">
-        <label>Exclusive Listing Agreement</label>
-        <div class="upload-zone" id="uz-v-agreement" data-category="listing_agreement" data-field="v-doc-agreement">
-          <input type="file" id="v-doc-agreement" accept=".pdf,.doc,.docx" style="display:none;">
-          <div class="upload-zone-inner" onclick="document.getElementById('v-doc-agreement').click()">
-            <span class="upload-icon">&#128196;</span>
-            <span class="upload-label">Click to upload PDF / DOC</span>
-          </div>
-          <div class="upload-status" id="us-v-agreement"></div>
-        </div>
+      <div class="row c4">
+        <div class="field"><label class="req">City</label><input id="v-city" placeholder="Irvine"></div>
+        <div class="field"><label class="req">State</label><input id="v-state" value="CA"></div>
+        <div class="field"><label class="req">Zip</label><input id="v-zip" placeholder="92618"></div>
+        <div class="field"><label class="req">Deal SF</label><input id="v-l-dealsf" placeholder="0" oninput="calcVoucherLease()"></div>
       </div>
     </div>
   </div>
 
-  <!-- STEP 3: Broker Information -->
+  <!-- STEP 2: Broker Information (Upload Documents moved to Step 8) -->
   <div class="card">
-    <h2>Step 3 — Broker Information</h2>
+    <h2>Step 2 — Broker Information</h2>
     <div class="row c2" style="margin-bottom:8px;">
       <div class="field"><label>Same Listing &amp; Procuring Agent?</label>
         <select id="v-same-agent" onchange="onSameAgentChange()"><option value="no">No</option><option value="yes">Yes</option></select>
@@ -1125,17 +1164,10 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 
   <!-- STEP 4: Client & Property Info -->
   <div class="card">
-    <h2>Step 4 — Client &amp; Property Info</h2>
-    <!-- Property Address -->
-    <h3>Property Address</h3>
-    <div class="row c23">
-      <div class="field"><label class="req">Property Street Address</label><input id="v-address" placeholder="123 Main St"></div>
-      <div class="field"><label>APN / Parcel</label><input id="v-apn" placeholder="Optional"></div>
-    </div>
-    <div class="row c3">
-      <div class="field"><label class="req">City</label><input id="v-city" placeholder="Irvine"></div>
-      <div class="field"><label class="req">State</label><input id="v-state" value="CA"></div>
-      <div class="field"><label class="req">Zip Code</label><input id="v-zip" placeholder="92618"></div>
+    <h2>Step 3 — Client &amp; Property Info</h2>
+    <!-- Property Address (entered in Step 1 — shown here for reference) -->
+    <div class="card" style="background:#f8f8f8;border-style:dashed;margin-bottom:0;" id="v-addr-ref">
+      <p style="font-size:12px;color:var(--text3);margin:0;">&#8593; Property address and Deal SF are entered in Step 1 above.</p>
     </div>
     <!-- Parties -->
     <div style="margin-top:16px;">
@@ -1194,12 +1226,11 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 
   <!-- STEP 5: Financial Details -->
   <div class="card">
-    <h2>Step 5 — Financial Details</h2>
+    <h2>Step 4 — Financial Details</h2>
     <!-- Key Deal Metrics (Lease) -->
     <div id="v-req-lease">
       <h3>Key Lease Terms</h3>
-      <div class="row c4">
-        <div class="field"><label class="req">Deal SF</label><input id="v-l-dealsf" placeholder="0" oninput="calcVoucherLease()"></div>
+      <div class="row c3">
         <div class="field"><label class="req">Start Date</label><input id="v-l-start" type="date"></div>
         <div class="field"><label class="req">End Date</label><input id="v-l-end" type="date"></div>
         <div class="field"><label>Occupancy Date</label><input id="v-l-occ" type="date"></div>
@@ -1224,7 +1255,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 
   <!-- STEP 6: Commission Calculation -->
   <div class="card" style="border-color:var(--red);">
-    <h2>Step 6 — Commission &amp; Invoice</h2>
+    <h2>Step 5 — Commission &amp; Invoice</h2>
     <!-- Lease commission -->
     <div id="v-req-comm-lease">
       <div class="row c4">
@@ -1281,24 +1312,11 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- STEP 7: Commission Distribution (directly under broker section) -->
-  <div class="card">
-    <h2>Step 7 — Commission Distribution</h2>
-    <div class="row c3" style="margin-bottom:12px;">
-      <div class="field"><label>Total Invoice</label><input id="v-dist-total-invoice" placeholder="$0" readonly style="background:#f8f8f8;font-weight:700;"></div>
-      <div class="field"><label>Total to Outside Agents</label><input id="v-dist-total-outside" placeholder="$0" readonly style="background:#f8f8f8;"></div>
-      <div class="field"><label>Gross $$ to Distribute</label><input id="v-gross-dist" placeholder="$0" readonly style="background:#fdf5f6;font-weight:700;border-color:var(--red);"></div>
-    </div>
-    <table class="broker-table" id="v-dist-table">
-      <thead><tr><th>Agent Name</th><th style="width:100px;">Side</th><th style="width:65px;">Gross %</th><th>Listing Gross</th><th>Procuring Gross</th><th>Both Gross</th><th>Other Gross</th><th>Referring Gross</th><th>NET (ck amt)</th><th style="width:36px;"></th></tr></thead>
-      <tbody id="v-dist-body"></tbody>
-    </table>
-    <button class="btn btn-gray" style="margin-top:8px;" onclick="addDistRow()">+ Add Agent</button>
-  </div>
+
 
   <!-- STEP 8: Monthly Rent Schedule (after commission) -->
   <div id="v-rent-section" class="card">
-    <h2>Step 8 — Monthly &amp; Free Rent Schedule</h2>
+    <h2>Step 6 — Monthly &amp; Free Rent Schedule</h2>
     <p style="font-size:12px;color:var(--text3);margin-bottom:10px;">Enter $0 for free rent months so effective rates calculate correctly.</p>
     <table class="rent-table" id="v-rent-table">
       <thead><tr><th style="width:36px;">#</th><th>Monthly Rent $</th><th>Rate/SF/Mo</th><th>Comm %</th><th>Months</th><th>Consideration</th><th style="width:36px;"></th></tr></thead>
@@ -1313,6 +1331,47 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         <div class="field"></div>
       </div>
     </div>
+  </div>
+
+  <!-- STEP 8: Upload Documents + Commission Distribution -->
+  <div class="card" style="border-color:var(--red);">
+    <h2>Step 7 — Upload Documents &amp; Commission Distribution</h2>
+    <h3>Upload Documents</h3>
+    <div class="row c2">
+      <div class="field">
+        <label>Agency Disclosure</label>
+        <div class="upload-zone" id="uz-v-disclosure" data-category="agency_disclosure" data-field="v-doc-disclosure">
+          <input type="file" id="v-doc-disclosure" accept=".pdf,.doc,.docx" style="display:none;">
+          <div class="upload-zone-inner" onclick="document.getElementById('v-doc-disclosure').click()">
+            <span class="upload-icon">&#128196;</span>
+            <span class="upload-label">Click to upload PDF / DOC</span>
+          </div>
+          <div class="upload-status" id="us-v-disclosure"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Exclusive Listing Agreement</label>
+        <div class="upload-zone" id="uz-v-agreement" data-category="listing_agreement" data-field="v-doc-agreement">
+          <input type="file" id="v-doc-agreement" accept=".pdf,.doc,.docx" style="display:none;">
+          <div class="upload-zone-inner" onclick="document.getElementById('v-doc-agreement').click()">
+            <span class="upload-icon">&#128196;</span>
+            <span class="upload-label">Click to upload PDF / DOC</span>
+          </div>
+          <div class="upload-status" id="us-v-agreement"></div>
+        </div>
+      </div>
+    </div>
+    <h3 style="margin-top:20px;padding-top:16px;border-top:1px solid #eee;">Commission Distribution</h3>
+    <div class="row c3" style="margin-bottom:12px;">
+      <div class="field"><label>Total Invoice</label><input id="v-dist-total-invoice" placeholder="$0" readonly style="background:#f8f8f8;font-weight:700;"></div>
+      <div class="field"><label>Total to Outside Agents</label><input id="v-dist-total-outside" placeholder="$0" readonly style="background:#f8f8f8;"></div>
+      <div class="field"><label>Gross $$ to Distribute</label><input id="v-gross-dist" placeholder="$0" readonly style="background:#fdf5f6;font-weight:700;border-color:var(--red);"></div>
+    </div>
+    <table class="broker-table" id="v-dist-table">
+      <thead><tr><th>Agent Name</th><th style="width:100px;">Side</th><th style="width:65px;">Gross %</th><th>Listing Gross</th><th>Procuring Gross</th><th>Both Gross</th><th>Other Gross</th><th>Referring Gross</th><th>NET (ck amt)</th><th style="width:36px;"></th></tr></thead>
+      <tbody id="v-dist-body"></tbody>
+    </table>
+    <button class="btn btn-gray" style="margin-top:8px;" onclick="addDistRow()">+ Add Agent</button>
   </div>
 
   <!-- Optional: Additional Details -->
@@ -2262,7 +2321,88 @@ function toggleLeaseTerm(val) {
   if (el) el.style.display = val === 'custom' ? '' : 'none';
 }
 
-// ── Listing Summary ──
+// ── Listing Review & Confirm Page ──
+function showListingReview() {
+  const formEl = document.getElementById('listing-add-mode');
+  const reviewPage = document.getElementById('listing-review-page');
+  const postSubmit = document.getElementById('listing-post-submit');
+  if (!reviewPage) return;
+
+  // Build summary content
+  const addr = (document.getElementById('l-address') || {}).value || '—';
+  const city = (document.getElementById('l-city') || {}).value || '';
+  const state = (document.getElementById('l-state') || {}).value || '';
+  const zip = (document.getElementById('l-zip') || {}).value || '';
+  const propType = (document.getElementById('l-prop-type') || {}).value || '';
+  const txnType = (document.getElementById('l-txn-type') || {}).value || '';
+  const leaseSF = (document.getElementById('l-lease-sf') || {}).value || '';
+  const leaseType = (document.getElementById('l-lease-type') || {}).value || '';
+  const salePrice = (document.getElementById('l-sale-price') || {}).value || '';
+  const bldgSF = (document.getElementById('l-bldg-sf') || {}).value || '';
+  const agents = getListingAgents();
+  const agentNames = agents.map(a => a.name + (a.shared ? ' (' + a.shared + '%)' : '')).join(', ') || '—';
+  const reveal = (document.getElementById('l-reveal-prices') || {}).checked;
+  const dateEntered = (document.getElementById('l-date-entered') || {}).value || '—';
+  const releaseVal = document.querySelector('input[name="l-release"]:checked');
+  const release = releaseVal ? releaseVal.value : '—';
+  const comments = (document.getElementById('l-comments') || {}).value || '';
+
+  const rows = [
+    ['Date Entered', dateEntered],
+    ['Property Type', propType.charAt(0).toUpperCase() + propType.slice(1)],
+    ['Transaction', txnType.charAt(0).toUpperCase() + txnType.slice(1)],
+    ['Address', addr + (city ? ', ' + city : '') + (state ? ', ' + state : '') + (zip ? ' ' + zip : '')],
+    ['Building SF', bldgSF || '—'],
+    txnType === 'lease' ? ['Rate $/SF/Mo', leaseSF ? '$' + leaseSF + ' ' + leaseType : '—'] : ['Asking Price', salePrice ? '$' + salePrice : '—'],
+    ['MLS Pricing', reveal ? '✓ Visible on MLS' : '✗ Hidden from MLS'],
+    ['Listing Agents', agentNames],
+    ['MLS Release', release],
+    comments ? ['Comments', comments] : null,
+  ].filter(Boolean);
+
+  const content = document.getElementById('listing-review-content');
+  if (content) {
+    content.innerHTML = '<table style="width:100%;border-collapse:collapse;">' +
+      rows.map((r, i) =>
+        '<tr style="' + (i % 2 === 0 ? 'background:#f8f8f8;' : '') + '">' +
+        '<td style="padding:6px 12px;font-weight:600;width:180px;vertical-align:top;">' + r[0] + '</td>' +
+        '<td style="padding:6px 12px;">' + r[1] + '</td></tr>'
+      ).join('') + '</table>';
+  }
+
+  // Hide form, show review page
+  const formActions = document.getElementById('listing-form-actions');
+  if (formActions) formActions.style.display = 'none';
+  // Hide all cards in listing-add-mode except the review page
+  const cards = document.querySelectorAll('#listing-add-mode > .card, #listing-add-mode > .optional-wrapper');
+  cards.forEach(c => { if (c.id !== 'listing-review-page') c.style.display = 'none'; });
+  if (postSubmit) postSubmit.style.display = 'none';
+  reviewPage.style.display = '';
+  reviewPage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function hideListingReview() {
+  const reviewPage = document.getElementById('listing-review-page');
+  const formActions = document.getElementById('listing-form-actions');
+  if (reviewPage) reviewPage.style.display = 'none';
+  if (formActions) formActions.style.display = '';
+  // Restore all cards
+  const cards = document.querySelectorAll('#listing-add-mode > .card, #listing-add-mode > .optional-wrapper');
+  cards.forEach(c => { c.style.display = ''; });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function submitListingToMLS() {
+  // Open the email modal for MLS submission
+  openEmailModal('listing');
+  // After a short delay, reveal the post-submit actions
+  setTimeout(() => {
+    const postSubmit = document.getElementById('listing-post-submit');
+    if (postSubmit) postSubmit.style.display = '';
+  }, 300);
+}
+
+// ── Listing Summary (legacy — kept for PDF export) ──
 function showListingSummary() {
   const panel = document.getElementById('listing-summary-panel');
   if (!panel) return;

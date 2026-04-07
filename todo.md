@@ -48,3 +48,27 @@
 - [x] Add quantity steppers (+/- buttons) under Sign Specifications
 - [x] Add Name Rider toggle (On/Off) with text field
 - [x] Make Sign Placement Visual an optional toggle
+
+## Round 3 Changes
+
+### Listing Entry
+- [ ] Rename "Industrial Details" → "Property Details"; show dynamically based on selected property type (Industrial / Office / Retail / Land / Other fields)
+- [ ] Move Property Details out of "Additional Details" — always visible in the main form flow
+- [ ] Review & Confirm: build as a full new page/view (hide the form, show a read-only summary of all inputs with edit buttons)
+- [ ] Review & Confirm: reveal "Submit to MLS" button only on the confirm page
+- [ ] After "Submit to MLS" is pressed: reveal "Create Sign Order?" prompt and "Download PDF" button
+
+### Sign Request
+- [ ] Hide PO # field from the form (keep auto-generation in background)
+- [ ] Move Configuration section above Sign Specifications
+- [ ] Remove location dropdown next to sign size options (keep only the size/qty controls)
+- [ ] Mark Name Rider as "Optional"
+- [ ] Mark Sign Placement image upload as "Optional"
+- [ ] Rename "%" to "Shared Expense %" in Requested By section
+- [ ] Show Access and Comments fields always (not hidden in additional details)
+
+### Commission Voucher
+- [ ] Move Property Address, City, Zip (with city/zip autofill) and Deal SF to the very top (Step 1 or Step 2)
+- [ ] Rename "On Behalf Of" → "Client Name"
+- [ ] Move Upload Documents to Step 8 (end of form)
+- [ ] Move Commission Distribution to Step 8 (end of form)
