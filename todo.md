@@ -72,3 +72,48 @@
 - [x] Rename "On Behalf Of" → "Client Name"
 - [x] Move Upload Documents to Step 8 (end of form)
 - [x] Move Commission Distribution to Step 8 (end of form)
+
+## Visual Design Overhaul
+
+### Global CSS
+- [ ] Color palette: red reserved for header/primary buttons/active tab; charcoal #1A1A1A for section headers; warm gray #6B7280 for labels; cream #FAFAF8 background; green for success; amber for callouts
+- [ ] Typography: Inter font for UI, JetBrains Mono for numbers; section headers 14px all-caps 0.05em letter-spacing; labels 12-13px medium charcoal; inputs 15-16px near-black
+- [ ] Spacing: 24px between fields, 40px between sections, 16px input padding, 48px min input height
+- [ ] Input styles: editable = white bg + red focus border + red glow; auto-calc = #F3F4F6 bg + no border + "auto" label
+- [ ] Required fields: red asterisk + slightly stronger border only (no red background)
+- [ ] Focus states: 2px red border + box-shadow 0 0 0 3px rgba(183,28,28,0.1)
+- [ ] Button styles: primary = red bg/white text; secondary = white bg/gray border; disabled = light gray
+- [ ] Inline validation on blur: red border + "Required" text; amber for format errors; green checkmark flash on valid
+
+### Progressive Disclosure Cards
+- [ ] Active card: white bg, shadow 0 2px 8px rgba(0,0,0,0.08), 4px red left border
+- [ ] Completed card: #F0FDF4 tint, green checkmark, collapsed to 1-line summary showing entered values
+- [ ] Locked card: #F3F4F6 bg, muted text, lock icon, visible but inactive
+- [ ] Optional sections: lighter gray left border, "Optional" tag instead of "REQUIRED"
+- [ ] Click completed card to expand/edit
+- [ ] Progress bar below tab nav: red fill, gray remaining, "Step X of Y — Z%"
+
+### Table Visuals
+- [ ] Rent schedule: alternating row bg (white/#F9FAFB), totals row bold with heavier top border, right-aligned monospaced numbers, free rent rows yellow-highlighted
+- [ ] Commission distribution: colored side chips (Listing=blue, Procuring=green, Both=purple, Referral=amber), % total shows green ✓ or red ✗
+
+### Sign Request
+- [ ] Selected config icon gets red border/bg highlight (not just checkmark)
+- [ ] Quantity +/- buttons minimum 44×44px tap targets
+- [ ] Active quantity rows subtly highlighted
+
+### Mobile
+- [ ] All inputs full-width below 640px
+- [ ] Sticky tab bar
+- [ ] Sticky progress bar below tabs
+- [ ] Sticky bottom action buttons on mobile
+- [ ] Rent schedule table horizontal scroll with right-edge shadow
+- [ ] Optional sections collapsed by default on mobile
+
+### Polish
+- [ ] Section expand/collapse transitions 200-300ms ease-out
+- [ ] Toast notification after successful submission (green, top-right, 4s)
+- [ ] Loading spinner on PDF generate / Dealius submit buttons
+- [ ] Admin Portal empty state illustration/message
+- [ ] Tab switch 200ms slide transition
+- [ ] Scrollable tab bar with right-edge gradient fade indicator
