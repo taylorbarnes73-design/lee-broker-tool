@@ -4,23 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lee &amp; Associates — Broker Submission Tool</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
 :root {
-  --red: #B71C1C; --red-dark: #A00E28; --red-light: #F8D7DC;
-  --bg: #FAFAF8; --card: #fff; --border: #E5E7EB;
-  --text: #1A1A1A; --text2: #6B7280; --text3: #9CA3AF;
-  --blue: #1a73e8; --green: #2E7D32; --amber: #FFF8E1;
-  --radius: 6px; --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --red: #c41230; --red-dark: #a00e28; --red-light: #f8d7dc;
+  --bg: #f5f5f5; --card: #fff; --border: #e0e0e0;
+  --text: #222; --text2: #555; --text3: #999;
+  --blue: #1a73e8; --green: #1e7e34; --amber: #f9a825;
+  --radius: 6px; --shadow: 0 1px 4px rgba(0,0,0,.08);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
 
 /* Header */
 .header { background: var(--red); color: #fff; padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
@@ -32,47 +29,16 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Robo
 .tab { padding: 12px 20px; cursor: pointer; font-weight: 600; font-size: 13px; color: var(--text2); border-bottom: 3px solid transparent; transition: all .15s; user-select: none; white-space: nowrap; }
 .tab:hover { color: var(--red); background: #fafafa; }
 .tab.active { color: var(--red); border-bottom-color: var(--red); }
-.progress-bar { width: 100%; height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 20px; overflow: hidden; }
-.progress-fill { height: 100%; background: var(--red); transition: width 0.3s ease; }
 .panel { display: none; max-width: 960px; margin: 0 auto; padding: 20px 16px 60px; }
 .panel.active { display: block; }
 
 /* Cards */
-.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; box-shadow: var(--shadow); }
-.card h2 { font-size: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
-.card h3 { font-size: 13px; font-weight: 600; color: var(--text); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: .5px; }
-
-/* Progressive disclosure cards */
-.progressive-card { margin-bottom: 16px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.2s ease; }
-.progressive-card.active { border-left: 4px solid var(--red); }
-.progressive-card.completed { background: #F0FDF4; border-color: #D1FAE5; }
-.progressive-card.locked { background: #F9FAFB; opacity: 0.7; }
-
-.card-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; cursor: pointer; background: #fff; border-bottom: 1px solid #E5E7EB; transition: background 0.15s; }
-.card-header:hover { background: #F9FAFB; }
-
-.card-status { display: flex; align-items: center; gap: 12px; }
-.status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.status-dot.active { background: var(--red); }
-.status-dot.completed { background: var(--green); }
-.status-dot.locked { background: #9CA3AF; }
-
-.card-title { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text); }
-.card-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 2px 8px; border-radius: 10px; }
-.card-badge.required { background: var(--red); color: #fff; }
-.card-badge.optional { background: #E5E7EB; color: var(--text3); }
-
-.card-summary { display: flex; align-items: center; gap: 12px; flex: 1; margin-left: 20px; }
-.summary-text { font-size: 13px; color: var(--text2); flex: 1; }
-
-.card-toggle { display: flex; align-items: center; }
-.expand-icon { font-size: 12px; color: var(--text3); transition: transform 0.2s; }
-
-.card-content { padding: 20px; background: #fff; }
-.card-actions { display: flex; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid #F3F4F6; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 16px; box-shadow: var(--shadow); }
+.card h2 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--red); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+.card h3 { font-size: 13px; font-weight: 700; color: var(--text); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: .5px; }
 
 /* Form grid */
-.row { display: grid; gap: 24px; margin-bottom: 24px; }
+.row { display: grid; gap: 12px; margin-bottom: 12px; }
 .row.c2 { grid-template-columns: 1fr 1fr; }
 .row.c3 { grid-template-columns: 1fr 1fr 1fr; }
 .row.c4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
@@ -80,11 +46,9 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Robo
 .row.c23 { grid-template-columns: 2fr 1fr; }
 .row.c32 { grid-template-columns: 3fr 2fr; }
 .field { display: flex; flex-direction: column; }
-.field label { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: .5px; color: var(--text2); margin-bottom: 6px; }
-.field input, .field select, .field textarea { border: 1px solid var(--border); border-radius: 6px; padding: 12px 16px; font-size: 15px; font-family: inherit; color: var(--text); background: #fff; transition: border-color .15s; min-height: 48px; }
-.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--red); box-shadow: 0 0 0 3px rgba(183,28,28,0.1); }
-.field.auto-calculated input, .field.auto-calculated select { background: #F3F4F6; border-color: #E5E7EB; }
-.field.auto-calculated .auto-label { font-size: 10px; color: var(--text3); font-style: italic; margin-top: 4px; }
+.field label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text2); margin-bottom: 3px; }
+.field input, .field select, .field textarea { border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; font-size: 14px; font-family: inherit; color: var(--text); background: #fff; transition: border-color .15s; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--red); box-shadow: 0 0 0 2px rgba(196,18,48,.1); }
 .field textarea { resize: vertical; min-height: 60px; }
 .field select { cursor: pointer; }
 
@@ -138,25 +102,23 @@ div.row.comp-sale-only { display: none !important; }
 .sign-grid input, .sign-grid select { border: 1px solid var(--border); border-radius: 4px; padding: 6px 8px; font-size: 13px; }
 
 /* Rent schedule table */
-.rent-table { width: 100%; border-collapse: collapse; margin-top: 8px; background: #F9FAFB; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-.rent-table th { background: #F3F4F6; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: .5px; padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
-.rent-table td { padding: 12px; border-bottom: 1px solid var(--border); background: #fff; }
-.rent-table tbody tr:nth-child(even) td { background: #F9FAFB; }
-.rent-table input { width: 100%; border: 1px solid #e8e8e8; border-radius: 4px; padding: 8px 10px; font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+.rent-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.rent-table th { background: #f8f8f8; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: .5px; padding: 8px; text-align: left; border-bottom: 2px solid var(--border); }
+.rent-table td { padding: 4px; border-bottom: 1px solid #eee; }
+.rent-table input { width: 100%; border: 1px solid #e8e8e8; border-radius: 3px; padding: 6px 8px; font-size: 13px; }
 
 /* Broker split table */
-.broker-table { width: 100%; border-collapse: collapse; margin-top: 8px; background: #F9FAFB; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-.broker-table th { background: #F3F4F6; font-weight: 600; text-transform: uppercase; font-size: 11px; padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
-.broker-table td { padding: 12px; border-bottom: 1px solid var(--border); background: #fff; }
-.broker-table tbody tr:nth-child(even) td { background: #F9FAFB; }
-.broker-table input, .broker-table select { width: 100%; border: 1px solid #e8e8e8; border-radius: 4px; padding: 8px 10px; font-size: 13px; }
+.broker-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.broker-table th { background: #f8f8f8; font-weight: 600; text-transform: uppercase; font-size: 11px; padding: 8px; text-align: left; border-bottom: 2px solid var(--border); }
+.broker-table td { padding: 4px; border-bottom: 1px solid #eee; }
+.broker-table input, .broker-table select { width: 100%; border: 1px solid #e8e8e8; border-radius: 3px; padding: 6px 8px; font-size: 13px; }
 
 /* Tip bar */
-.tip { background: var(--amber); border-left: 3px solid #F59E0B; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #92400E; border-radius: 0 6px 6px 0; }
+.tip { background: #fff8e1; border-left: 3px solid var(--amber); padding: 10px 16px; margin-bottom: 16px; font-size: 13px; color: #6d5a00; border-radius: 0 var(--radius) var(--radius) 0; }
 
 /* ═══ Required / Optional field hierarchy ═══ */
 .req::after { content: ' *'; color: var(--red); font-weight: 700; }
-.required-section { border-left: 4px solid var(--red); }
+.required-section { border-left: 3px solid var(--red); }
 .required-section h2 { display: flex; align-items: center; gap: 8px; }
 .required-section h2::before { content: ''; display: inline-block; width: 8px; height: 8px; background: var(--red); border-radius: 50%; flex-shrink: 0; }
 .required-badge { display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #fff; background: var(--red); padding: 2px 8px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
@@ -164,9 +126,9 @@ div.row.comp-sale-only { display: none !important; }
 
 /* Optional section - collapsible with dimmed appearance */
 .optional-wrapper { margin-bottom: 16px; }
-.optional-toggle { display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 16px 20px; background: #fafafa; border: 1px solid var(--border); border-radius: var(--radius); user-select: none; transition: all .15s; }
-.optional-toggle:hover { background: #f5f5f5; }
-.optional-toggle h2 { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--text2); margin: 0; padding: 0; border: none; display: flex; align-items: center; gap: 8px; }
+.optional-toggle { display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 14px 20px; background: #fafafa; border: 1px solid var(--border); border-radius: var(--radius); user-select: none; transition: all .15s; }
+.optional-toggle:hover { background: #f0f0f0; }
+.optional-toggle h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--text2); margin: 0; padding: 0; border: none; display: flex; align-items: center; gap: 8px; }
 .optional-toggle .opt-chevron { font-size: 14px; color: var(--text3); transition: transform .2s; }
 .optional-toggle.open .opt-chevron { transform: rotate(180deg); }
 .optional-toggle.open { border-radius: var(--radius) var(--radius) 0 0; border-bottom-color: transparent; }
@@ -336,18 +298,7 @@ body.admin-mode .header .sub { display: none; }
 
 /* Print */
 @media print { .tab-bar, .header, .btn-bar, .tip, .dx-bar { display: none; } .panel { display: block !important; max-width: 100%; } }
-@media (max-width: 640px) {
-  .row.c2, .row.c3, .row.c4, .row.c5 { grid-template-columns: 1fr; }
-  .progressive-card { margin-bottom: 12px; }
-  .card-header { padding: 14px 16px; }
-  .card-content { padding: 16px; }
-  .card-status { gap: 8px; }
-  .card-title { font-size: 13px; }
-  .summary-text { font-size: 12px; }
-  .field input, .field select, .field textarea { padding: 12px; min-height: 44px; }
-  .tab-bar { overflow-x: auto; }
-  .progress-bar { margin-bottom: 16px; }
-}
+@media (max-width: 640px) { .row.c3, .row.c4, .row.c5 { grid-template-columns: 1fr 1fr; } .row.c2 { grid-template-columns: 1fr; } }
 /* ═══ DEALIUS TOOL STYLES ═══ */
 #dealius-tool { max-width: 900px; }
 #dealius-tool .dx-header {
@@ -596,83 +547,27 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 
   <!-- ADD LISTING MODE -->
   <div id="listing-add-mode">
-    <div class="progress-bar">
-      <div class="progress-fill" id="listing-progress-fill" style="width: 0%;"></div>
-    </div>
     <div class="tip">Required fields are marked with <span style="color:var(--red);font-weight:700;">*</span> — complete these first, then expand optional sections as needed.</div>
 
-    <!-- TRANSACTION TYPE CARD -->
-    <div class="progressive-card active" id="card-transaction" data-step="1">
-      <div class="card-header" onclick="toggleCard('card-transaction')">
-        <div class="card-status">
-          <div class="status-dot active"></div>
-          <span class="card-title">TRANSACTION TYPE</span>
-          <span class="card-badge required">Required</span>
+    <div class="card required-section">
+      <h2>Add Listing <span class="required-badge">Required</span></h2>
+      <div class="row c3">
+        <div class="field"><label class="req">Date Entered</label><input id="l-date-entered" type="date"></div>
+        <div class="field"><label class="req">Property Type</label>
+          <select id="l-prop-type" onchange="onPropTypeChange()">
+            <option value="industrial">Industrial</option>
+            <option value="office">Office</option>
+            <option value="retail">Retail</option>
+            <option value="land">Land</option>
+          </select>
         </div>
-        <div class="card-summary" id="card-transaction-summary" style="display: none;">
-          <span class="summary-text">Lease · Industrial · <span id="transaction-date-summary">Date TBD</span></span>
-          <span class="expand-icon">▼</span>
-        </div>
-        <div class="card-toggle">
-          <span class="expand-icon">▼</span>
-        </div>
-      </div>
-      <div class="card-content">
-        <div class="row c3">
-          <div class="field">
-            <label class="req">Date Entered</label>
-            <input id="l-date-entered" type="date" required onchange="updateTransactionSummary()">
-          </div>
-          <div class="field">
-            <label class="req">Property Type</label>
-            <select id="l-prop-type" required onchange="onPropTypeChange(); updateTransactionSummary()">
-              <option value="">— Select —</option>
-              <option value="industrial">Industrial</option>
-              <option value="office">Office</option>
-              <option value="retail">Retail</option>
-              <option value="land">Land</option>
-            </select>
-          </div>
-          <div class="field">
-            <label class="req">Transaction Type</label>
-            <select id="l-txn-type" required onchange="onTxnTypeChange(); updateTransactionSummary()">
-              <option value="">— Select —</option>
-              <option value="lease">Lease</option>
-              <option value="sale">Sale</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="row c2">
-          <div class="field">
-            <label>Listing Agreement</label>
-            <div class="upload-zone" id="uz-l-agreement" data-category="listing_agreement" data-field="l-doc-agreement">
-              <input type="file" id="l-doc-agreement" accept=".pdf,.doc,.docx" style="display:none;">
-              <div class="upload-zone-inner" onclick="document.getElementById('l-doc-agreement').click()">
-                <span class="upload-icon">📄</span>
-                <span class="upload-label">Click to upload PDF / DOC</span>
-              </div>
-              <div class="upload-status" id="us-l-agreement"></div>
-            </div>
-          </div>
-          <div class="field">
-            <label>Agency Disclosure</label>
-            <div class="upload-zone" id="uz-l-disclosure" data-category="agency_disclosure" data-field="l-doc-disclosure">
-              <input type="file" id="l-doc-disclosure" accept=".pdf,.doc,.docx" style="display:none;">
-              <div class="upload-zone-inner" onclick="document.getElementById('l-doc-disclosure').click()">
-                <span class="upload-icon">📄</span>
-                <span class="upload-label">Click to upload PDF / DOC</span>
-              </div>
-              <div class="upload-status" id="us-l-disclosure"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card-actions">
-          <button class="btn btn-red" onclick="completeCard('card-transaction')">Continue</button>
+        <div class="field"><label class="req">Transaction Type</label>
+          <select id="l-txn-type" onchange="onTxnTypeChange()">
+            <option value="lease">Lease</option>
+            <option value="sale">Sale</option>
+          </select>
         </div>
       </div>
-    </div>
 
       <h3 style="margin-top:16px;">Upload Documents</h3>
       <div class="row c2">
@@ -700,59 +595,25 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         </div>
       </div>
 
-    </div>
-
-    <!-- LEASE PRICING CARD -->
-    <div class="progressive-card locked" id="card-lease-pricing" data-step="2">
-      <div class="card-header" onclick="toggleCard('card-lease-pricing')">
-        <div class="card-status">
-          <div class="status-dot locked"></div>
-          <span class="card-title">LEASE PRICING</span>
-          <span class="card-badge required">Required</span>
-        </div>
-        <div class="card-summary" id="card-lease-pricing-summary" style="display: none;">
-          <span class="summary-text" id="lease-pricing-summary-text">Rate: TBD · Term: TBD · Type: TBD</span>
-          <span class="expand-icon">▼</span>
-        </div>
-        <div class="card-toggle">
-          <span class="expand-icon">▶</span>
-        </div>
-      </div>
-      <div class="card-content" style="display: none;">
+      <!-- Lease pricing -->
+      <div id="lease-pricing">
+        <h3 style="margin-top:16px;">Lease Pricing</h3>
         <div class="row c4">
-          <div class="field">
-            <label class="req">Rate $/SF/Mo</label>
-            <input id="l-lease-sf" placeholder="$0.00" oninput="calcLeaseMonthly(); updateLeasePricingSummary()">
-          </div>
-          <div class="field auto-calculated">
-            <label>Monthly Rent (auto)</label>
-            <input id="l-lease-mo" placeholder="$0.00" readonly>
-            <div class="auto-label">Calculated automatically</div>
-          </div>
-          <div class="field">
-            <label>Term</label>
-            <select id="l-lease-term-type" onchange="toggleLeaseTerm(this.value); updateLeasePricingSummary()">
+          <div class="field"><label class="req">Rate $/SF/Mo</label><input id="l-lease-sf" placeholder="$0.00" oninput="calcLeaseMonthly()"></div>
+          <div class="field"><label>Monthly Rent (auto)</label><input id="l-lease-mo" placeholder="$0.00" readonly style="background:#f8f8f8;"></div>
+          <div class="field"><label>Term</label>
+            <select id="l-lease-term-type" onchange="toggleLeaseTerm(this.value)">
               <option value="">— Select —</option>
               <option value="negotiable">Negotiable</option>
               <option value="custom">Custom</option>
             </select>
           </div>
-          <div class="field" id="l-lease-term-custom-field" style="display:none;">
-            <label>Term (months)</label>
-            <input id="l-lease-term" placeholder="e.g. 36" oninput="updateLeasePricingSummary()">
-          </div>
+          <div class="field" id="l-lease-term-custom-field" style="display:none;"><label>Term (months)</label><input id="l-lease-term" placeholder="e.g. 36"></div>
         </div>
         <div class="row c3">
-          <div class="field">
-            <label>Lease Type</label>
-            <select id="l-lease-type" onchange="updateLeasePricingSummary()">
-              <option value="">— Select —</option>
-              <option value="NNN">NNN</option>
-              <option value="FSG">FSG (Full Service Gross)</option>
-              <option value="MG">MG (Modified Gross)</option>
-              <option value="G">Gross</option>
-              <option value="N">Net</option>
-              <option value="MN">Modified Net</option>
+          <div class="field"><label>Lease Type</label>
+            <select id="l-lease-type">
+              <option value="NNN">NNN</option><option value="FSG">FSG (Full Service Gross)</option><option value="MG">MG (Modified Gross)</option><option value="G">Gross</option><option value="N">Net</option><option value="MN">Modified Net</option>
             </select>
           </div>
           <div class="field">
@@ -767,45 +628,17 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
           </div>
           <div class="field"></div>
         </div>
-
-        <div class="card-actions">
-          <button class="btn btn-red" onclick="completeCard('card-lease-pricing')">Continue</button>
-        </div>
       </div>
-    </div>
 
-    <!-- SALE PRICING CARD -->
-    <div class="progressive-card locked" id="card-sale-pricing" data-step="2" style="display: none;">
-      <div class="card-header" onclick="toggleCard('card-sale-pricing')">
-        <div class="card-status">
-          <div class="status-dot locked"></div>
-          <span class="card-title">SALE PRICING</span>
-          <span class="card-badge required">Required</span>
-        </div>
-        <div class="card-summary" id="card-sale-pricing-summary" style="display: none;">
-          <span class="summary-text" id="sale-pricing-summary-text">Price: TBD · $/SF: TBD</span>
-          <span class="expand-icon">▼</span>
-        </div>
-        <div class="card-toggle">
-          <span class="expand-icon">▶</span>
-        </div>
-      </div>
-      <div class="card-content" style="display: none;">
+      <!-- Sale pricing -->
+      <div id="sale-pricing" style="display:none;">
+        <h3 style="margin-top:16px;">Sale Pricing</h3>
         <div class="row c3">
-          <div class="field">
-            <label class="req">Asking Price</label>
-            <div style="position:relative;">
-              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:15px;pointer-events:none;">$</span>
-              <input id="l-sale-price" placeholder="0" style="padding-left:24px;" oninput="calcSaleSF(); updateSalePricingSummary()">
-            </div>
+          <div class="field"><label class="req">Asking Price</label>
+            <div style="position:relative;"><span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:14px;pointer-events:none;">$</span><input id="l-sale-price" placeholder="0" style="padding-left:22px;" oninput="calcSaleSF()"></div>
           </div>
-          <div class="field auto-calculated">
-            <label>Sale $/SF (auto)</label>
-            <div style="position:relative;">
-              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:15px;pointer-events:none;">$</span>
-              <input id="l-sale-sf" placeholder="0.00" style="padding-left:24px;" readonly>
-            </div>
-            <div class="auto-label">Calculated automatically</div>
+          <div class="field"><label>Sale $/SF (auto)</label>
+            <div style="position:relative;"><span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:14px;pointer-events:none;">$</span><input id="l-sale-sf" placeholder="0.00" style="padding-left:22px;background:#f8f8f8;" readonly></div>
           </div>
           <div class="field">
             <label>Reveal Prices to MLS?</label>
@@ -819,127 +652,47 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
           </div>
         </div>
         <div class="row c2">
-          <div class="field">
-            <label>Sale Terms</label>
-            <input id="l-sale-terms" placeholder="e.g. All Cash" oninput="updateSalePricingSummary()">
-          </div>
-          <div class="field" id="cap-rate-row" style="display:none;">
-            <label>CAP Rate</label>
-            <input id="l-cap-rate" placeholder="e.g. 5.5%" oninput="updateSalePricingSummary()">
-          </div>
-        </div>
-
-        <div class="card-actions">
-          <button class="btn btn-red" onclick="completeCard('card-sale-pricing')">Continue</button>
+          <div class="field"><label>Sale Terms</label><input id="l-sale-terms" placeholder="e.g. All Cash"></div>
+          <div class="field" id="cap-rate-row" style="display:none;"><label>CAP Rate</label><input id="l-cap-rate" placeholder="e.g. 5.5%"></div>
         </div>
       </div>
-    </div>
 
-    </div>
-
-    <!-- PROPERTY ADDRESS CARD -->
-    <div class="progressive-card locked" id="card-property-address" data-step="3">
-      <div class="card-header" onclick="toggleCard('card-property-address')">
-        <div class="card-status">
-          <div class="status-dot locked"></div>
-          <span class="card-title">PROPERTY ADDRESS</span>
-          <span class="card-badge required">Required</span>
-        </div>
-        <div class="card-summary" id="card-property-address-summary" style="display: none;">
-          <span class="summary-text" id="property-address-summary-text">Address TBD</span>
-          <span class="expand-icon">▼</span>
-        </div>
-        <div class="card-toggle">
-          <span class="expand-icon">▶</span>
+      <!-- Address -->
+      <h3 style="margin-top:20px;">Property Address</h3>
+      <div class="row c2">
+        <div class="field"><label id="lbl-name" class="req">Address</label><input id="l-address" placeholder="123 Main St"></div>
+        <div class="field" id="field-project-name" style="display:none;"><label>Project / Property Name</label><input id="l-project-name" placeholder="Optional"></div>
+      </div>
+      <div class="row c3">
+        <div class="field"><label class="req">City</label><input id="l-city" placeholder="Irvine"></div>
+        <div class="field"><label class="req">State</label><input id="l-state" value="CA"></div>
+        <div class="field"><label class="req">Zip</label><input id="l-zip" placeholder="92618"></div>
+      </div>
+      <div class="row c2">
+        <div class="field"><label>Cross Street(s)</label><input id="l-cross" placeholder="Main St &amp; 1st Ave"></div>
+        <div class="field" id="field-corner" style="display:none;"><label>Corner</label>
+          <select id="l-corner"><option value="">N/A</option><option value="NE">NE</option><option value="NW">NW</option><option value="SE">SE</option><option value="SW">SW</option></select>
         </div>
       </div>
-      <div class="card-content" style="display: none;">
-        <div class="row c2">
-          <div class="field">
-            <label id="lbl-name" class="req">Address</label>
-            <input id="l-address" placeholder="123 Main St" required oninput="updatePropertyAddressSummary()">
-          </div>
-          <div class="field" id="field-project-name" style="display:none;">
-            <label>Project / Property Name</label>
-            <input id="l-project-name" placeholder="Optional" oninput="updatePropertyAddressSummary()">
-          </div>
-        </div>
+
+      <!-- Size fields (non-land) -->
+      <div id="size-building" class="type-section visible">
         <div class="row c3">
-          <div class="field">
-            <label class="req">City</label>
-            <input id="l-city" placeholder="Irvine" required oninput="updatePropertyAddressSummary()">
-          </div>
-          <div class="field">
-            <label class="req">State</label>
-            <input id="l-state" value="CA" required oninput="updatePropertyAddressSummary()">
-          </div>
-          <div class="field">
-            <label class="req">Zip</label>
-            <input id="l-zip" placeholder="92618" required oninput="updatePropertyAddressSummary()">
-          </div>
-        </div>
-        <div class="row c2">
-          <div class="field">
-            <label>Cross Street(s)</label>
-            <input id="l-cross" placeholder="Main St &amp; 1st Ave" oninput="updatePropertyAddressSummary()">
-          </div>
-          <div class="field" id="field-corner" style="display:none;">
-            <label>Corner</label>
-            <select id="l-corner" onchange="updatePropertyAddressSummary()">
-              <option value="">N/A</option>
-              <option value="NE">NE</option>
-              <option value="NW">NW</option>
-              <option value="SE">SE</option>
-              <option value="SW">SW</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Size fields (non-land) -->
-        <div id="size-building" class="type-section visible">
-          <div class="row c3">
-            <div class="field">
-              <label id="lbl-sf" class="req">Building / GLA SF</label>
-              <input id="l-bldg-sf" placeholder="e.g. 50,000" required oninput="calcSaleSF(); updatePropertyAddressSummary()">
-            </div>
-            <div class="field">
-              <label>Year Built</label>
-              <input id="l-year-built" placeholder="e.g. 1995" oninput="updatePropertyAddressSummary()">
-            </div>
-            <div class="field">
-              <label>Parking Ratio</label>
-              <input id="l-parking-ratio" placeholder="e.g. 4/1,000" oninput="updatePropertyAddressSummary()">
-            </div>
-          </div>
-        </div>
-
-        <!-- Size fields (land) -->
-        <div id="size-land" class="type-section">
-          <div class="row c4">
-            <div class="field">
-              <label class="req">Gross Acres</label>
-              <input id="l-acres-gross" placeholder="0.00" oninput="updatePropertyAddressSummary()">
-            </div>
-            <div class="field">
-              <label>Net Acres</label>
-              <input id="l-acres-net" placeholder="0.00" oninput="updatePropertyAddressSummary()">
-            </div>
-            <div class="field">
-              <label>Gross SF</label>
-              <input id="l-land-sf-gross" placeholder="0" oninput="updatePropertyAddressSummary()">
-            </div>
-            <div class="field">
-              <label>Net SF</label>
-              <input id="l-land-sf-net" placeholder="0" oninput="updatePropertyAddressSummary()">
-            </div>
-          </div>
-        </div>
-
-        <div class="card-actions">
-          <button class="btn btn-red" onclick="completeCard('card-property-address')">Continue</button>
+          <div class="field"><label id="lbl-sf" class="req">Building / GLA SF</label><input id="l-bldg-sf" placeholder="e.g. 50,000" oninput="calcSaleSF()"></div>
+          <div class="field"><label>Year Built</label><input id="l-year-built" placeholder="e.g. 1995"></div>
+          <div class="field"><label>Parking Ratio</label><input id="l-parking-ratio" placeholder="e.g. 4/1,000"></div>
         </div>
       </div>
-    </div>
+
+      <!-- Size fields (land) -->
+      <div id="size-land" class="type-section">
+        <div class="row c4">
+          <div class="field"><label class="req">Gross Acres</label><input id="l-acres-gross" placeholder="0.00"></div>
+          <div class="field"><label>Net Acres</label><input id="l-acres-net" placeholder="0.00"></div>
+          <div class="field"><label>Gross SF</label><input id="l-land-sf-gross" placeholder="0"></div>
+          <div class="field"><label>Net SF</label><input id="l-land-sf-net" placeholder="0"></div>
+        </div>
+      </div>
     </div><!-- end required-section -->
 
     <!-- Agents Section with Shared Expenses -->
@@ -1297,7 +1050,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     <h2>Step 1 — Transaction Type <span class="required-badge">Required</span></h2>
     <div class="row c4">
       <div class="field"><label class="req">Representation Type</label>
-        <select id="v-rep-type" required>
+        <select id="v-rep-type">
           <option value="tenant_rep">Tenant Rep</option>
           <option value="landlord_rep">Landlord Rep</option>
           <option value="buyer_rep">Buyer Rep</option>
@@ -1306,17 +1059,17 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         </select>
       </div>
       <div class="field"><label class="req">Transaction Type</label>
-        <select id="v-txn-type" onchange="onVoucherTxnChange()" required><option value="lease">Lease</option><option value="sale">Sale</option></select>
+        <select id="v-txn-type" onchange="onVoucherTxnChange()"><option value="lease">Lease</option><option value="sale">Sale</option></select>
       </div>
       <div class="field"><label class="req">Property Type</label>
-        <select id="v-prop-type" required><option value="industrial">Industrial</option><option value="office">Office</option><option value="retail">Retail</option><option value="land">Land</option><option value="other">Other</option></select>
+        <select id="v-prop-type"><option value="industrial">Industrial</option><option value="office">Office</option><option value="retail">Retail</option><option value="land">Land</option><option value="other">Other</option></select>
       </div>
-      <div class="field"><label class="req">Date Filled</label><input id="v-date-filled" type="date" required></div>
+      <div class="field"><label class="req">Date Filled</label><input id="v-date-filled" type="date"></div>
     </div>
     <div class="row c3">
-      <div class="field"><label class="req">Suite / Unit</label><input id="v-suite" placeholder="Ste 100" required></div>
+      <div class="field"><label class="req">Suite / Unit</label><input id="v-suite" placeholder="Ste 100"></div>
       <div class="field"><label class="req">Deal Type</label>
-        <select id="v-deal-type-req" required>
+        <select id="v-deal-type-req">
           <option value="">—</option>
           <option>New</option><option>Renewal</option><option>Expansion</option><option>Relocation</option><option>Blend &amp; Extend</option>
         </select>
@@ -1324,20 +1077,20 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       <div class="field" id="v-other-type-field" style="display:none;"><label>If Other, Explain</label><input id="v-other-type" placeholder="Describe property type"></div>
     </div>
     <div class="row c2" style="margin-top:8px;">
-      <div class="field"><label class="req">Client Name</label><input id="v-on-behalf" placeholder="Client / Company name" required></div>
+      <div class="field"><label class="req">Client Name</label><input id="v-on-behalf" placeholder="Client / Company name"></div>
       <div class="field"></div>
     </div>
     <div style="margin-top:12px;padding-top:12px;border-top:1px solid #eee;">
       <h3 style="margin-bottom:8px;">Property Address</h3>
       <div class="row c23">
-        <div class="field"><label class="req">Street Address</label><input id="v-address" placeholder="123 Main St" required></div>
+        <div class="field"><label class="req">Street Address</label><input id="v-address" placeholder="123 Main St"></div>
         <div class="field"><label>APN / Parcel</label><input id="v-apn" placeholder="Optional"></div>
       </div>
       <div class="row c4">
-        <div class="field"><label class="req">City</label><input id="v-city" placeholder="Irvine" required></div>
-        <div class="field"><label class="req">State</label><input id="v-state" value="CA" required></div>
-        <div class="field"><label class="req">Zip</label><input id="v-zip" placeholder="92618" onblur="voucherZipAutofill(this.value)" required></div>
-        <div class="field"><label class="req">Deal SF</label><input id="v-l-dealsf" placeholder="0" oninput="calcVoucherLease()" required></div>
+        <div class="field"><label class="req">City</label><input id="v-city" placeholder="Irvine"></div>
+        <div class="field"><label class="req">State</label><input id="v-state" value="CA"></div>
+        <div class="field"><label class="req">Zip</label><input id="v-zip" placeholder="92618" onblur="voucherZipAutofill(this.value)"></div>
+        <div class="field"><label class="req">Deal SF</label><input id="v-l-dealsf" placeholder="0" oninput="calcVoucherLease()"></div>
       </div>
     </div>
   </div>
@@ -1356,7 +1109,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         <div class="sub-divider-label">Listing Agent</div>
         <div class="field"><label class="req">Agent Name</label>
           <div class="agent-picker" id="picker-v-la-name">
-            <input id="v-la-name" placeholder="Start typing agent name..." autocomplete="off" required>
+            <input id="v-la-name" placeholder="Start typing agent name..." autocomplete="off">
             <div class="agent-dd" id="dd-v-la-name"></div>
           </div>
         </div>
@@ -1367,7 +1120,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         <div class="sub-divider-label">Procuring Agent</div>
         <div class="field"><label class="req">Agent Name</label>
           <div class="agent-picker" id="picker-v-pa-name">
-            <input id="v-pa-name" placeholder="Start typing agent name..." autocomplete="off" required>
+            <input id="v-pa-name" placeholder="Start typing agent name..." autocomplete="off">
             <div class="agent-dd" id="dd-v-pa-name"></div>
           </div>
         </div>
@@ -1483,7 +1236,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         <div class="field"><label>Occupancy Date</label><input id="v-l-occ" type="date"></div>
       </div>
       <div class="row c4">
-        <div class="field"><label class="req">Rate per SF per Month</label><input id="v-l-rate" placeholder="$0.00" oninput="calcVoucherLease()" required></div>
+        <div class="field"><label class="req">Rate per SF per Month</label><input id="v-l-rate" placeholder="$0.00" oninput="calcVoucherLease()"></div>
         <div class="field"><label>Rate Type</label><select id="v-l-rate-type"><option value="NNN">NNN</option><option value="FSG">FSG</option><option value="MG">MG</option><option value="G">Gross</option></select></div>
         <div class="field"><label>Term (months)</label><input id="v-l-term" placeholder="e.g. 60" oninput="calcVoucherLease()"></div>
         <div class="field"><label>Total Consideration</label><input id="v-l-consideration" placeholder="$0" readonly style="background:#f8f8f8;font-weight:600;"></div>
@@ -1493,7 +1246,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     <div id="v-req-sale" style="display:none;">
       <h3>Key Sale Terms</h3>
       <div class="row c3">
-        <div class="field"><label class="req">Total Consideration / Sale Price</label><input id="v-s-price" placeholder="$0" oninput="calcVoucherSale()" required></div>
+        <div class="field"><label class="req">Total Consideration / Sale Price</label><input id="v-s-price" placeholder="$0" oninput="calcVoucherSale()"></div>
         <div class="field"><label>Price / SF</label><input id="v-s-price-sf" placeholder="$0.00" readonly style="background:#f8f8f8;"></div>
         <div class="field"><label>Land Price / SF</label><input id="v-s-land-sf" placeholder="$0.00" readonly style="background:#f8f8f8;"></div>
       </div>
@@ -1506,7 +1259,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     <!-- Lease commission -->
     <div id="v-req-comm-lease">
       <div class="row c4">
-        <div class="field"><label class="req">Commission Rate %</label><input id="v-l-comm-rate" placeholder="e.g. 4" oninput="calcCommSummary()" required></div>
+        <div class="field"><label class="req">Commission Rate %</label><input id="v-l-comm-rate" placeholder="e.g. 4" oninput="calcCommSummary()"></div>
         <div class="field"><label>Lease Commission Due</label><input id="v-l-comm-due" placeholder="$0" readonly style="background:#f8f8f8;font-weight:600;"></div>
         <div class="field"><label>Additional Bonus / (Adjustment)</label><input id="v-comm-bonus" placeholder="$0" oninput="calcCommSummary()"></div>
         <div class="field"><label style="font-size:13px;color:var(--red);font-weight:700;">TOTAL INVOICE</label><input id="v-total-invoice" placeholder="$0" readonly style="background:#fdf5f6;font-weight:700;font-size:16px;border-color:var(--red);"></div>
@@ -1520,7 +1273,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     <!-- Sale commission -->
     <div id="v-req-comm-sale" style="display:none;">
       <div class="row c3">
-        <div class="field"><label class="req">Commission %</label><input id="v-s-comm-pct" placeholder="e.g. 3" oninput="calcVoucherSale()" required></div>
+        <div class="field"><label class="req">Commission %</label><input id="v-s-comm-pct" placeholder="e.g. 3" oninput="calcVoucherSale()"></div>
         <div class="field"><label>Commission Due $</label><input id="v-s-comm-due" placeholder="$0" readonly style="background:#f8f8f8;font-weight:600;"></div>
         <div class="field"><label>SALE Commission (auto)</label><input id="v-comm-sale" placeholder="$0" readonly style="background:#f8f8f8;"></div>
       </div>
@@ -2425,191 +2178,6 @@ function switchTab(name) {
   });
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
-
-  // Initialize cards when switching to listing tab
-  if (name === 'listing') {
-    setTimeout(initializeCards, 100); // Small delay to ensure DOM is ready
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// PROGRESSIVE DISCLOSURE CARD SYSTEM
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function toggleCard(cardId) {
-  const card = document.getElementById(cardId);
-  if (!card) return;
-
-  const isLocked = card.classList.contains('locked');
-  if (isLocked) return; // Don't allow interaction with locked cards
-
-  const content = card.querySelector('.card-content');
-  const header = card.querySelector('.card-header');
-  const toggleIcon = header.querySelector('.expand-icon');
-  const summary = card.querySelector('.card-summary');
-
-  if (content.style.display === 'none' || content.style.display === '') {
-    content.style.display = 'block';
-    if (summary) summary.style.display = 'none';
-    toggleIcon.style.transform = 'rotate(180deg)';
-  } else {
-    content.style.display = 'none';
-    if (card.classList.contains('completed') && summary) {
-      summary.style.display = 'flex';
-    }
-    toggleIcon.style.transform = 'rotate(0deg)';
-  }
-}
-
-function completeCard(cardId) {
-  const card = document.getElementById(cardId);
-  if (!card) return;
-
-  // Basic validation - check if required fields are filled
-  const requiredFields = card.querySelectorAll('input[required], select[required]');
-  let isValid = true;
-
-  requiredFields.forEach(field => {
-    if (!field.value.trim()) {
-      field.style.borderColor = '#EF4444';
-      isValid = false;
-    } else {
-      field.style.borderColor = 'var(--border)';
-    }
-  });
-
-  if (!isValid) {
-    // Show error message
-    const existingError = card.querySelector('.card-error');
-    if (!existingError) {
-      const errorDiv = document.createElement('div');
-      errorDiv.className = 'card-error';
-      errorDiv.style.cssText = 'color: #EF4444; font-size: 12px; margin-top: 8px;';
-      errorDiv.textContent = 'Please fill in all required fields.';
-      card.querySelector('.card-actions').prepend(errorDiv);
-    }
-    return;
-  }
-
-  // Remove any error messages
-  const errorMsg = card.querySelector('.card-error');
-  if (errorMsg) errorMsg.remove();
-
-  // Mark as completed
-  card.classList.remove('active', 'locked');
-  card.classList.add('completed');
-
-  // Update status dot
-  const statusDot = card.querySelector('.status-dot');
-  statusDot.classList.remove('active', 'locked');
-  statusDot.classList.add('completed');
-
-  // Show summary, hide content
-  const summary = card.querySelector('.card-summary');
-  const content = card.querySelector('.card-content');
-  const toggleIcon = card.querySelector('.expand-icon');
-
-  summary.style.display = 'flex';
-  content.style.display = 'none';
-  toggleIcon.style.transform = 'rotate(0deg)';
-
-  // Unlock next card
-  const currentStep = parseInt(card.dataset.step);
-  const nextCard = document.querySelector(`.progressive-card[data-step="${currentStep + 1}"]`);
-  if (nextCard) {
-    nextCard.classList.remove('locked');
-    nextCard.classList.add('active');
-    const nextStatusDot = nextCard.querySelector('.status-dot');
-    nextStatusDot.classList.remove('locked');
-    nextStatusDot.classList.add('active');
-  }
-
-  // Update progress bar
-  updateProgressBar();
-
-  // Make card clickable for editing
-  card.onclick = (e) => {
-    // Don't toggle if clicking on a button or input
-    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
-      return;
-    }
-    toggleCard(cardId);
-  };
-}
-
-function updateProgressBar() {
-  const completedCards = document.querySelectorAll('.progressive-card.completed').length;
-  const totalCards = document.querySelectorAll('.progressive-card').length;
-  const progressPercent = (completedCards / totalCards) * 100;
-
-  const progressFill = document.getElementById('listing-progress-fill');
-  if (progressFill) {
-    progressFill.style.width = progressPercent + '%';
-  }
-}
-
-function updateTransactionSummary() {
-  const date = document.getElementById('l-date-entered').value;
-  const propType = document.getElementById('l-prop-type').value;
-  const txnType = document.getElementById('l-txn-type').value;
-
-  const dateStr = date ? new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Date TBD';
-  const propTypeStr = propType ? propType.charAt(0).toUpperCase() + propType.slice(1) : 'Property TBD';
-  const txnTypeStr = txnType ? txnType.charAt(0).toUpperCase() + txnType.slice(1) : 'Type TBD';
-
-  const summaryText = `${txnTypeStr} · ${propTypeStr} · ${dateStr}`;
-  document.getElementById('transaction-date-summary').textContent = dateStr;
-  document.getElementById('card-transaction-summary').querySelector('.summary-text').textContent = summaryText;
-}
-
-function updateLeasePricingSummary() {
-  const rate = document.getElementById('l-lease-sf').value;
-  const termType = document.getElementById('l-lease-term-type').value;
-  const term = document.getElementById('l-lease-term').value;
-  const leaseType = document.getElementById('l-lease-type').value;
-
-  let termStr = 'Term TBD';
-  if (termType === 'negotiable') termStr = 'Negotiable';
-  else if (termType === 'custom' && term) termStr = `${term} months`;
-  else if (term) termStr = `${term} months`;
-
-  const rateStr = rate ? `$${rate}/SF` : 'Rate TBD';
-  const typeStr = leaseType ? leaseType : 'Type TBD';
-
-  const summaryText = `${rateStr} · ${termStr} · ${typeStr}`;
-  document.getElementById('lease-pricing-summary-text').textContent = summaryText;
-}
-
-function updateSalePricingSummary() {
-  const price = document.getElementById('l-sale-price').value;
-  const sf = document.getElementById('l-sale-sf').value;
-  const terms = document.getElementById('l-sale-terms').value;
-
-  const priceStr = price ? `$${parseInt(price).toLocaleString()}` : 'Price TBD';
-  const sfStr = sf ? `$${sf}/SF` : '$TBD/SF';
-  const termsStr = terms || 'Terms TBD';
-
-  const summaryText = `${priceStr} · ${sfStr} · ${termsStr}`;
-  document.getElementById('sale-pricing-summary-text').textContent = summaryText;
-}
-
-function updatePropertyAddressSummary() {
-  const address = document.getElementById('l-address').value;
-  const city = document.getElementById('l-city').value;
-  const state = document.getElementById('l-state').value;
-  const zip = document.getElementById('l-zip').value;
-  const sf = document.getElementById('l-bldg-sf').value;
-
-  let summary = '';
-  if (address) summary += address;
-  if (city) summary += (summary ? ', ' : '') + city;
-  if (state) summary += (summary ? ', ' : '') + state;
-  if (zip) summary += (summary ? ' ' : '') + zip;
-  if (sf) summary += (summary ? ' · ' : '') + `${parseInt(sf).toLocaleString()} SF`;
-
-  if (!summary) summary = 'Address TBD';
-
-  document.getElementById('property-address-summary-text').textContent = summary;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2652,14 +2220,8 @@ function onTxnTypeChange() {
   const txn = document.getElementById('l-txn-type').value;
   const showLease = txn === 'lease' || txn === 'sale-lease' || txn === 'sublease';
   const showSale = txn === 'sale' || txn === 'sale-lease';
-
-  // Show/hide pricing cards
-  const leaseCard = document.getElementById('card-lease-pricing');
-  const saleCard = document.getElementById('card-sale-pricing');
-
-  if (leaseCard) leaseCard.style.display = showLease ? '' : 'none';
-  if (saleCard) saleCard.style.display = showSale ? '' : 'none';
-
+  document.getElementById('lease-pricing').style.display = showLease ? '' : 'none';
+  document.getElementById('sale-pricing').style.display = showSale ? '' : 'none';
   updateCapRateVisibility();
 }
 
@@ -2736,37 +2298,13 @@ function calcLeaseMonthly() {
   }
 }
 
-// ── Voucher Lease Auto-calc ──
-function calcVoucherLease() {
-  const rate = parseFloat((document.getElementById('v-l-rate') || {}).value.replace(/[$,]/g,'')) || 0;
-  const term = parseFloat((document.getElementById('v-l-term') || {}).value) || 0;
-  const dealSF = parseFloat((document.getElementById('v-l-dealsf') || {}).value.replace(/,/g,'')) || 0;
-
-  if (rate && term && dealSF) {
-    const monthlyRent = rate * dealSF;
-    const totalConsideration = monthlyRent * term;
-    const el = document.getElementById('v-l-consideration');
-    if (el) el.value = '$' + totalConsideration.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
-  }
-}
-
-// ── Voucher Sale Auto-calc ──
-function calcVoucherSale() {
-  const price = parseFloat((document.getElementById('v-s-price') || {}).value.replace(/[$,]/g,'')) || 0;
-  const dealSF = parseFloat((document.getElementById('v-l-dealsf') || {}).value.replace(/,/g,'')) || 0;
-
-  if (price && dealSF) {
-    const pricePerSF = price / dealSF;
-    const el = document.getElementById('v-s-price-sf');
-    if (el) el.value = '$' + pricePerSF.toFixed(2);
-
-    // Also calculate land price per SF if land SF is available
-    const landSF = parseFloat((document.getElementById('v-land-sf') || {}).value.replace(/,/g,'')) || 0;
-    if (landSF) {
-      const landPricePerSF = price / landSF;
-      const landEl = document.getElementById('v-s-land-sf');
-      if (landEl) landEl.value = '$' + landPricePerSF.toFixed(2);
-    }
+// ── Sale $/SF Auto-calc ──
+function calcSaleSF() {
+  const price = parseFloat((document.getElementById('l-sale-price') || {}).value.replace(/[$,]/g,'')) || 0;
+  const bldgSF = parseFloat((document.getElementById('l-bldg-sf') || {}).value.replace(/,/g,'')) || 0;
+  if (price && bldgSF) {
+    const el = document.getElementById('l-sale-sf');
+    if (el) el.value = (price / bldgSF).toFixed(2);
   }
 }
 
@@ -3032,33 +2570,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Set today's date on listing
   const lDate = document.getElementById('l-date-entered');
   if (lDate && !lDate.value) lDate.value = new Date().toISOString().split('T')[0];
-
-  // Initialize progressive disclosure cards
-  initializeCards();
 });
-
-function initializeCards() {
-  // Only initialize cards for the listing tab
-  if (document.getElementById('tab-listing').classList.contains('active')) {
-    // Set initial state - only first card is active
-    const cards = document.querySelectorAll('.progressive-card');
-    cards.forEach((card, index) => {
-      if (index === 0) {
-        card.classList.add('active');
-        card.classList.remove('locked', 'completed');
-      } else {
-        card.classList.add('locked');
-        card.classList.remove('active', 'completed');
-      }
-    });
-
-    // Update initial summaries
-    updateTransactionSummary();
-    updateLeasePricingSummary();
-    updateSalePricingSummary();
-    updatePropertyAddressSummary();
-  }
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VOUCHER: RENT SCHEDULE TABLE
