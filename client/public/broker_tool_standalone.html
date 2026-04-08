@@ -4,20 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lee &amp; Associates — Broker Submission Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
 :root {
-  --red: #c41230; --red-dark: #a00e28; --red-light: #f8d7dc;
-  --bg: #f5f5f5; --card: #fff; --border: #e0e0e0;
-  --text: #222; --text2: #555; --text3: #999;
-  --blue: #1a73e8; --green: #1e7e34; --amber: #f9a825;
-  --radius: 6px; --shadow: 0 1px 4px rgba(0,0,0,.08);
+  --red: #B71C1C; --red-dark: #A00E28; --red-light: #F8D7DC;
+  --bg: #FAFAF8; --card: #fff; --border: #E5E7EB;
+  --text: #1A1A1A; --text2: #6B7280; --text3: #9CA3AF;
+  --blue: #1a73e8; --green: #2E7D32; --amber: #FFF8E1;
+  --radius: 6px; --shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
 
 /* Header */
 .header { background: var(--red); color: #fff; padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
