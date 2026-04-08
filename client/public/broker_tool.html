@@ -232,6 +232,10 @@ body {
 .type-section { display: none; }
 .type-section.visible { display: block; }
 
+/* Panel fade-in on tab switch */
+@keyframes panelIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.panel.active { animation: panelIn .2s ease-out; }
+
 /* Comp Lease/Sale toggle */
 .comp-sale-only { display: none !important; }
 .comp-lease-only { display: block; }
@@ -386,8 +390,17 @@ div.row.comp-sale-only { display: none !important; }
 .optional-toggle .opt-chevron { font-size: 14px; color: var(--text3); transition: transform .2s; }
 .optional-toggle.open .opt-chevron { transform: rotate(180deg); }
 .optional-toggle.open { border-radius: var(--radius) var(--radius) 0 0; border-bottom-color: transparent; }
-.optional-body { display: none; border: 1px solid var(--border); border-top: none; border-radius: 0 0 var(--radius) var(--radius); padding: 0; background: #fff; }
-.optional-body.open { display: block; }
+.optional-body {
+  max-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 0;
+  background: #fff;
+  transition: max-height .25s ease-out;
+}
+.optional-body.open { max-height: 9999px; transition: max-height .35s ease-in; }
 .optional-body .card { border: none; border-radius: 0; box-shadow: none; margin-bottom: 0; border-bottom: 1px solid #f0f0f0; }
 .optional-body .card:last-child { border-bottom: none; }
 
@@ -1245,9 +1258,9 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
 
     <div class="btn-bar" id="listing-form-actions">
-      <button class="btn btn-red" onclick="showListingReview()">Review &amp; Confirm &rarr;</button>
-      <button class="btn btn-gray" onclick="exportListingPdf()">Download PDF</button>
-      <button class="btn btn-gray" onclick="clearListing()">Clear Form</button>
+      <button class="btn btn-red" onclick="showListingReview()"><span class="btn-label">Review &amp; Confirm &rarr;</span></button>
+      <button class="btn btn-gray" id="btn-listing-pdf" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
+      <button class="btn btn-gray" onclick="clearListing()"><span class="btn-label">Clear Form</span></button>
     </div>
 
     <!-- ── REVIEW & CONFIRM PAGE ── -->
@@ -1261,8 +1274,8 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
       <!-- Submit to MLS — revealed only on confirm page -->
       <div class="btn-bar" style="margin-top:0;">
-        <button class="btn btn-red" style="font-size:15px;padding:12px 32px;" onclick="submitListingToMLS()">&#10003; Submit to MLS</button>
-        <button class="btn btn-gray" onclick="exportListingPdf()">Download PDF</button>
+        <button class="btn btn-red" style="font-size:15px;padding:12px 32px;" onclick="submitListingToMLS(this)"><span class="btn-spinner"></span><span class="btn-label">&#10003; Submit to MLS</span></button>
+        <button class="btn btn-gray" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
       </div>
       <!-- Post-submit actions — hidden until Submit is pressed -->
       <div id="listing-post-submit" style="display:none;" class="card" style="border-color:#22c55e;">
@@ -1452,7 +1465,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   </div>
 
   <div class="btn-bar" style="margin-top:16px;">
-    <button class="btn btn-gray" onclick="exportSignPdf()">Review (PDF)</button>
+    <button class="btn btn-gray" onclick="exportSignPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
     <button class="btn btn-red" onclick="openEmailModal('sign')">Submit Sign Request</button>
     <button class="btn btn-gray" onclick="clearSign()">Clear Form</button>
   </div>
@@ -1880,7 +1893,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   </div>
 
   <div class="btn-bar">
-    <button class="btn btn-gray" onclick="exportVoucherPdf()">Review (PDF)</button>
+    <button class="btn btn-gray" onclick="exportVoucherPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
     <button class="btn btn-red" onclick="openEmailModal('voucher')">Submit Voucher</button>
     <button class="btn btn-outline" onclick="notifyMLS()">Notify MLS</button>
     <button class="btn btn-outline" onclick="switchTab('sign')">Remove Signs &rarr;</button>
@@ -2127,7 +2140,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   </div><!-- end optional-wrapper -->
 
   <div class="btn-bar" style="margin-top:16px;">
-    <button class="btn btn-gray" onclick="exportCompPdf()">Review (PDF)</button>
+    <button class="btn btn-gray" onclick="exportCompPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
     <button class="btn btn-red" onclick="openEmailModal('comp')">Submit Comp</button>
     <button class="btn btn-gray" onclick="clearComp()">Clear Form</button>
   </div>
@@ -2225,7 +2238,15 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       <div class="card" style="padding:0;">
         <table class="admin-table">
           <thead><tr><th>ID</th><th>Type</th><th>Address</th><th>Broker</th><th>Office</th><th>Status</th><th>Submitted</th></tr></thead>
-          <tbody id="submissions-tbody"></tbody>
+          <tbody id="submissions-tbody">
+            <tr><td colspan="7">
+              <div class="empty-state">
+                <div class="empty-icon">📋</div>
+                <h3>No submissions yet</h3>
+                <p>Broker submissions will appear here once brokers begin submitting listings, sign requests, vouchers, and comps.</p>
+              </div>
+            </td></tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -2393,7 +2414,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
             <div id="dxAiPanel" style="display:none;margin-top:16px;"></div>
 
             <div class="dx-btns">
-              <button class="dx-btn dx-primary" id="dxSb" onclick="dxSubmitDeal()">Submit to Dealius</button>
+              <button class="dx-btn dx-primary btn" id="dxSb" onclick="dxSubmitDeal()"><span class="btn-spinner"></span><span class="btn-label">Submit to Dealius</span></button>
               <button class="dx-btn dx-ghost" id="dxAib" onclick="dxRunAIReview()" style="display:none;">&x2728; AI Review</button>
               <button class="dx-btn dx-ghost" onclick="dxResetTool()">Reset</button>
             </div>
@@ -2587,7 +2608,23 @@ function toggleCollapse(toggleEl) {
 function toggleOptional(toggleEl) {
   toggleEl.classList.toggle('open');
   const body = toggleEl.nextElementSibling;
-  if (body) body.classList.toggle('open');
+  if (!body) return;
+  if (body.classList.contains('open')) {
+    // Collapse: set explicit height then animate to 0
+    body.style.maxHeight = body.scrollHeight + 'px';
+    requestAnimationFrame(() => {
+      body.style.maxHeight = '0';
+      body.classList.remove('open');
+    });
+  } else {
+    // Expand
+    body.classList.add('open');
+    body.style.maxHeight = body.scrollHeight + 'px';
+    body.addEventListener('transitionend', function handler() {
+      body.style.maxHeight = '9999px'; // allow dynamic content
+      body.removeEventListener('transitionend', handler);
+    });
+  }
 }
 
 function switchTab(name) {
@@ -2811,13 +2848,23 @@ function hideListingReview() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function submitListingToMLS() {
+function submitListingToMLS(btn) {
+  if (btn) { btn.classList.add('loading'); btn.disabled = true; }
   // Open the email modal for MLS submission
   openEmailModal('listing');
-  // After a short delay, reveal the post-submit actions
+  // After a short delay, reveal the post-submit actions and remove spinner
   setTimeout(() => {
     const postSubmit = document.getElementById('listing-post-submit');
     if (postSubmit) postSubmit.style.display = '';
+    if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+  }, 800);
+}
+
+function exportListingPdfWithSpinner(btn) {
+  if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+  setTimeout(() => {
+    exportListingPdf();
+    if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
   }, 300);
 }
 
@@ -2989,6 +3036,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Set today's date on listing
   const lDate = document.getElementById('l-date-entered');
   if (lDate && !lDate.value) lDate.value = new Date().toISOString().split('T')[0];
+
+  // Initialize voucher steps 2-8 as locked (step 1 is already card-active)
+  [2, 3, 4, 5, 6, 8].forEach(n => vstepMarkLocked(n));
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -3029,11 +3079,30 @@ const VSTEP_SUMMARIES = {
   8: () => 'Documents & distribution entered'
 };
 
+function vstepMarkLocked(stepNum) {
+  const card = document.getElementById('vstep-' + stepNum);
+  if (!card) return;
+  card.classList.remove('card-active', 'card-done');
+  card.classList.add('card-locked');
+  // Add lock icon to h2 if not already present
+  const h2 = card.querySelector('h2');
+  if (h2 && !h2.querySelector('.lock-icon')) {
+    const lock = document.createElement('span');
+    lock.className = 'lock-icon';
+    lock.textContent = ' 🔒';
+    lock.style.cssText = 'font-size:13px;opacity:.5;margin-left:6px;';
+    h2.appendChild(lock);
+  }
+}
+
 function vstepMarkDone(stepNum) {
   const card = document.getElementById('vstep-' + stepNum);
   if (!card) return;
   card.classList.remove('card-active', 'card-locked');
   card.classList.add('card-done');
+  // Remove lock icon if present
+  const lock = card.querySelector('.lock-icon');
+  if (lock) lock.remove();
   // Add or update summary line
   let summary = card.querySelector('.card-summary');
   if (!summary) {
@@ -3062,6 +3131,9 @@ function vstepExpand(stepNum) {
   if (!card) return;
   card.classList.remove('card-done', 'card-locked');
   card.classList.add('card-active');
+  // Remove lock icon if present
+  const lock = card.querySelector('.lock-icon');
+  if (lock) lock.remove();
   Array.from(card.children).forEach(el => { el.style.display = ''; });
   card.style.cursor = '';
   card.onclick = null;
@@ -5210,7 +5282,7 @@ function filterSubmissions() {
   });
   const tbody = document.getElementById('submissions-tbody');
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text3);">No submissions match your filters.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🔍</div><h3>No matching submissions</h3><p>Try adjusting your search or filter criteria.</p></div></td></tr>';
     return;
   }
   tbody.innerHTML = filtered.map(s =>
@@ -5822,7 +5894,9 @@ async function dxSubmitDeal() {
 
   const btn = document.getElementById('dxSb');
   btn.disabled = true;
-  btn.textContent = 'Authenticating…';
+  btn.classList.add('loading');
+  const btnLabel = btn.querySelector('.btn-label');
+  if (btnLabel) btnLabel.textContent = 'Authenticating…';
   document.getElementById('dxStepBar').style.display = '';
   document.getElementById('dxLg').classList.add('on');
 
@@ -5846,11 +5920,12 @@ async function dxSubmitDeal() {
     dxStat('err', 'Authentication failed: ' + e.message);
     dxAddLog('err', 'Auth error: ' + e.message);
     btn.disabled = false;
-    btn.textContent = 'Retry';
+    btn.classList.remove('loading');
+    if (btnLabel) btnLabel.textContent = 'Retry';
     return;
   }
 
-  btn.textContent = 'Submitting…';
+  if (btnLabel) btnLabel.textContent = 'Submitting…';
   const H = { 'Content-Type': 'application/json' };
   window._dealius_token = authToken;
   const toISO = s => s ? new Date(s + 'T00:00:00').toISOString() : undefined;
@@ -6078,7 +6153,8 @@ async function dxSubmitDeal() {
     if (d.outsideBrokers && d.outsideBrokers.length) {
       dxAddLog('warn', 'Outside brokers (add manually): ' + d.outsideBrokers.map(b => b.name + ' — $' + b.amt.toLocaleString()).join(', '));
     }
-    btn.textContent = 'Done';
+    btn.classList.remove('loading');
+    if (btnLabel) btnLabel.textContent = 'Done';
     btn.style.background = '#059669';
     btn.style.color = '#fff';
   } catch (err) {
@@ -6093,7 +6169,8 @@ async function dxSubmitDeal() {
     }
     document.querySelectorAll('.dx-step.active').forEach(s => s.classList.replace('active', 'err'));
     btn.disabled = false;
-    btn.textContent = 'Retry';
+    btn.classList.remove('loading');
+    if (btnLabel) btnLabel.textContent = 'Retry';
   }
 }
 
@@ -6332,7 +6409,9 @@ function dxResetTool() {
   });
   const btn = document.getElementById('dxSb');
   btn.disabled = false;
-  btn.textContent = 'Submit to Dealius';
+  const btnLabel2 = btn.querySelector('.btn-label');
+  if (btnLabel2) btnLabel2.textContent = 'Submit to Dealius';
+  btn.classList.remove('loading');
   btn.style.background = '';
   btn.style.color = '';
 }
