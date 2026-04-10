@@ -9,10 +9,12 @@ import { desc, eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { nanoid } from "nanoid";
 import { aiAssistRouter } from "./routers/aiAssist";
+import { emailRouter } from "./routers/email";
 
 export const appRouter = router({
   system: systemRouter,
   aiAssist: aiAssistRouter,
+  email: emailRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

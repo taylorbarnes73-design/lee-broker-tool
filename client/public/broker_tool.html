@@ -1281,6 +1281,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     <div class="btn-bar" id="listing-form-actions">
       <button class="btn btn-red" onclick="showListingReview()"><span class="btn-label">Review &amp; Confirm &rarr;</span></button>
       <button class="btn btn-gray" id="btn-listing-pdf" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
+      <button class="btn btn-green" id="btn-listing-send-admin" onclick="openSendToAdminModal('listing')"><span class="btn-spinner"></span><span class="btn-label">&#9993; Send to Admin</span></button>
       <button class="btn btn-gray" onclick="clearListing()"><span class="btn-label">Clear Form</span></button>
     </div>
 
@@ -1936,6 +1937,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   <div class="btn-bar">
     <button class="btn btn-gray" onclick="exportVoucherPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
     <button class="btn btn-red" onclick="openEmailModal('voucher')">Submit Voucher</button>
+    <button class="btn btn-green" id="btn-voucher-send-admin" onclick="openSendToAdminModal('voucher')"><span class="btn-spinner"></span><span class="btn-label">&#9993; Send to Admin</span></button>
     <button class="btn btn-outline" onclick="notifyMLS()">Notify MLS</button>
     <button class="btn btn-outline" onclick="switchTab('sign')">Remove Signs &rarr;</button>
     <button class="btn btn-gray" onclick="clearVoucher()">Clear Form</button>
@@ -2849,6 +2851,32 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- SEND TO ADMIN MODAL                                                       -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="send-admin-modal">
+  <div class="modal" style="max-width:520px;">
+    <h2 id="send-admin-modal-title" style="display:flex;align-items:center;gap:8px;">&#9993; Send to Admin</h2>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;" id="send-admin-modal-desc">This will email all filled form fields to the office admin. Taylor will be CC&rsquo;d automatically.</p>
+    <div class="field">
+      <label>Your Name (Broker)</label>
+      <input id="sta-broker-name" placeholder="e.g. Taylor Barnes" value="Taylor Barnes">
+    </div>
+    <div class="field">
+      <label>Your Email (for CC)</label>
+      <input id="sta-sender-email" placeholder="e.g. tbarnes@lee-associates.com" value="tbarnes@lee-associates.com">
+    </div>
+    <div class="field">
+      <label>Notes to Admin <span style="font-weight:400;color:var(--text3);">(optional)</span></label>
+      <textarea id="sta-notes" rows="3" placeholder="Any additional context for the admin..."></textarea>
+    </div>
+    <div id="sta-status" style="font-size:13px;min-height:20px;margin-bottom:8px;"></div>
+    <div class="btn-bar">
+      <button class="btn btn-gray" onclick="closeSendToAdminModal()">Cancel</button>
+      <button class="btn btn-green" id="sta-send-btn" onclick="submitSendToAdmin()"><span class="btn-spinner"></span><span class="btn-label">&#9993; Send Email</span></button>
+    </div>
+  </div>
+</div>
+
 <!-- EMAIL MODAL                                                               -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="email-modal">
@@ -8089,6 +8117,248 @@ document.addEventListener('DOMContentLoaded', () => {
     tab.addEventListener('click', () => setTimeout(updateAiTabBadge, 50));
   });
 });
+
+// ─── SEND TO ADMIN ────────────────────────────────────────────────────────────────
+
+let _staFormType = 'listing';
+
+function openSendToAdminModal(formType) {
+  _staFormType = formType;
+  const modal = document.getElementById('send-admin-modal');
+  const title = document.getElementById('send-admin-modal-title');
+  const desc = document.getElementById('send-admin-modal-desc');
+  const status = document.getElementById('sta-status');
+  const btn = document.getElementById('sta-send-btn');
+  if (!modal) return;
+  const label = formType === 'listing' ? 'Listing Entry' : 'Commission Voucher';
+  title.innerHTML = `&#9993; Send ${label} to Admin`;
+  desc.textContent = `This will email all filled ${label} fields to the office admin. You will be CC’d automatically.`;
+  status.textContent = '';
+  status.style.color = '';
+  btn.classList.remove('loading');
+  btn.querySelector('.btn-label').textContent = '\u2709\uFE0F Send Email';
+  modal.classList.add('open');
+}
+
+function closeSendToAdminModal() {
+  const modal = document.getElementById('send-admin-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+// Close on backdrop click
+document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('send-admin-modal');
+  if (modal) modal.addEventListener('click', e => { if (e.target === modal) closeSendToAdminModal(); });
+});
+
+/**
+ * Collect all filled fields from the listing form and return structured sections.
+ */
+function collectListingSections(notes) {
+  const sections = [];
+
+  // Helper to grab a field value
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  const sel = id => { const el = document.getElementById(id); return el ? (el.options[el.selectedIndex]?.text || '') : ''; };
+
+  sections.push({
+    title: 'Property Details',
+    fields: [
+      { label: 'Date Entered', value: v('l-date') },
+      { label: 'Property Type', value: sel('l-type') },
+      { label: 'Transaction Type', value: sel('l-transaction') },
+      { label: 'Address', value: v('l-address') },
+      { label: 'City', value: v('l-city') },
+      { label: 'State', value: v('l-state') },
+      { label: 'Zip', value: v('l-zip') },
+      { label: 'County', value: v('l-county') },
+      { label: 'APN', value: v('l-apn') },
+    ]
+  });
+
+  sections.push({
+    title: 'Building Information',
+    fields: [
+      { label: 'Building SF', value: v('l-building-sf') },
+      { label: 'Suite SF', value: v('l-suite-sf') },
+      { label: 'Lot Size (SF)', value: v('l-lot-sf') },
+      { label: 'Lot Size (Acres)', value: v('l-lot-acres') },
+      { label: 'Year Built', value: v('l-year-built') },
+      { label: 'Zoning', value: v('l-zoning') },
+      { label: 'Dock Doors', value: v('l-dock-doors') },
+      { label: 'Grade Doors', value: v('l-grade-doors') },
+      { label: 'Clear Height', value: v('l-clear-height') },
+      { label: 'Office SF', value: v('l-office-sf') },
+      { label: 'Power', value: v('l-power') },
+    ]
+  });
+
+  sections.push({
+    title: 'Lease Pricing',
+    fields: [
+      { label: 'Rate ($/SF/Mo)', value: v('l-rate-sf-mo') },
+      { label: 'Rate ($/SF/Yr)', value: v('l-rate-sf-yr') },
+      { label: 'Lease Type', value: sel('l-lease-type') },
+      { label: 'Lease Term', value: v('l-lease-term') },
+      { label: 'Available Date', value: v('l-avail-date') },
+    ]
+  });
+
+  sections.push({
+    title: 'Sale Pricing',
+    fields: [
+      { label: 'Asking Price', value: v('l-asking-price') },
+      { label: 'Price Per SF', value: v('l-price-per-sf') },
+      { label: 'Cap Rate', value: v('l-cap-rate') },
+    ]
+  });
+
+  sections.push({
+    title: 'Listing Agents',
+    fields: [
+      { label: 'Agent 1 Name', value: v('l-agent1-name') },
+      { label: 'Agent 1 Email', value: v('l-agent1-email') },
+      { label: 'Agent 1 Phone', value: v('l-agent1-phone') },
+      { label: 'Agent 2 Name', value: v('l-agent2-name') },
+      { label: 'Agent 2 Email', value: v('l-agent2-email') },
+      { label: 'Agent 2 Phone', value: v('l-agent2-phone') },
+    ]
+  });
+
+  sections.push({
+    title: 'Owner / Contact',
+    fields: [
+      { label: 'Owner Name', value: v('l-owner-name') },
+      { label: 'Owner Phone', value: v('l-owner-phone') },
+      { label: 'Owner Email', value: v('l-owner-email') },
+      { label: 'Owner Address', value: v('l-owner-address') },
+    ]
+  });
+
+  if (notes) sections.push({ title: 'Notes to Admin', fields: [{ label: 'Notes', value: notes }] });
+
+  return sections;
+}
+
+/**
+ * Collect all filled fields from the voucher form and return structured sections.
+ */
+function collectVoucherSections(notes) {
+  const sections = [];
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  const sel = id => { const el = document.getElementById(id); return el ? (el.options[el.selectedIndex]?.text || '') : ''; };
+
+  sections.push({
+    title: 'Deal Information',
+    fields: [
+      { label: 'Date', value: v('v-date') },
+      { label: 'Property Type', value: sel('v-type') },
+      { label: 'Transaction Type', value: sel('v-transaction') },
+      { label: 'Address', value: v('v-address') },
+      { label: 'City', value: v('v-city') },
+      { label: 'State', value: v('v-state') },
+      { label: 'Zip', value: v('v-zip') },
+    ]
+  });
+
+  sections.push({
+    title: 'Lease / Sale Terms',
+    fields: [
+      { label: 'Deal SF', value: v('v-deal-sf') },
+      { label: 'Lease Term (months)', value: v('v-lease-term') },
+      { label: 'Commencement Date', value: v('v-commence-date') },
+      { label: 'Expiration Date', value: v('v-expire-date') },
+      { label: 'Base Rent ($/SF/Mo)', value: v('v-base-rent') },
+      { label: 'Total Consideration', value: v('v-total-consideration') },
+      { label: 'Lease Type', value: sel('v-lease-type') },
+    ]
+  });
+
+  sections.push({
+    title: 'Parties',
+    fields: [
+      { label: 'Lessor / Seller', value: v('v-lessor') },
+      { label: 'Lessee / Buyer', value: v('v-lessee') },
+      { label: 'Listing Agent', value: v('v-listing-agent') },
+      { label: 'Procuring Agent', value: v('v-procuring-agent') },
+      { label: 'Outside Broker', value: v('v-outside-broker') },
+      { label: 'Outside Broker Company', value: v('v-outside-broker-co') },
+    ]
+  });
+
+  sections.push({
+    title: 'Commission',
+    fields: [
+      { label: 'Total Commission %', value: v('v-total-commission-pct') },
+      { label: 'Total Commission $', value: v('v-total-commission-amt') },
+      { label: 'Outside Agent Commission %', value: v('v-outside-pct') },
+      { label: 'Outside Agent Commission $', value: v('v-outside-amt') },
+    ]
+  });
+
+  if (notes) sections.push({ title: 'Notes to Admin', fields: [{ label: 'Notes', value: notes }] });
+
+  return sections;
+}
+
+async function submitSendToAdmin() {
+  const btn = document.getElementById('sta-send-btn');
+  const status = document.getElementById('sta-status');
+  const brokerName = (document.getElementById('sta-broker-name')?.value || '').trim();
+  const senderEmail = (document.getElementById('sta-sender-email')?.value || '').trim();
+  const notes = (document.getElementById('sta-notes')?.value || '').trim();
+
+  btn.classList.add('loading');
+  btn.querySelector('.btn-label').textContent = 'Sending…';
+  status.textContent = '';
+  status.style.color = '';
+
+  const sections = _staFormType === 'listing'
+    ? collectListingSections(notes)
+    : collectVoucherSections(notes);
+
+  // Determine property address for subject line
+  const addrId = _staFormType === 'listing' ? 'l-address' : 'v-address';
+  const cityId = _staFormType === 'listing' ? 'l-city' : 'v-city';
+  const address = [(document.getElementById(addrId)?.value||'').trim(), (document.getElementById(cityId)?.value||'').trim()].filter(Boolean).join(', ');
+
+  try {
+    const resp = await fetch('/api/trpc/email.sendToAdmin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        json: {
+          formType: _staFormType,
+          brokerName,
+          propertyAddress: address,
+          sections,
+          senderEmail,
+        }
+      })
+    });
+    const data = await resp.json();
+    const result = data?.result?.data?.json;
+    if (result?.success) {
+      status.textContent = '\u2713 Email sent successfully! The admin has been notified.';
+      status.style.color = '#16a34a';
+      btn.querySelector('.btn-label').textContent = '\u2713 Sent!';
+      showToast('\u2709\uFE0F Email sent to admin successfully');
+      setTimeout(closeSendToAdminModal, 2000);
+    } else {
+      const errMsg = result?.error || 'Unknown error';
+      status.textContent = '\u2717 Failed to send: ' + errMsg;
+      status.style.color = '#dc2626';
+      btn.classList.remove('loading');
+      btn.querySelector('.btn-label').textContent = '\u2709\uFE0F Send Email';
+    }
+  } catch(err) {
+    status.textContent = '\u2717 Error: ' + err.message;
+    status.style.color = '#dc2626';
+    btn.classList.remove('loading');
+    btn.querySelector('.btn-label').textContent = '\u2709\uFE0F Send Email';
+  }
+}
 </script>
 </body>
 </html>

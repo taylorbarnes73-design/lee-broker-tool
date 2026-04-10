@@ -154,3 +154,12 @@
 - [x] Add search/filter bar to Documents tab
 - [x] Add brochure upload zone + AI Scrape button to Commission Voucher tab (Step 2 / Upload Docs section)
 - [x] Wire voucher brochure scrape to aiAssist.scrapeBrochure (voucher tab field mapping)
+
+## Send to Admin Email Feature
+- [x] Add ADMIN_EMAIL secret/env var for the office admin email address
+- [x] Create sendToAdmin tRPC procedure in server/routers/email.ts using Outlook MCP
+- [x] Add Send to Admin button + modal to Listing Entry tab (collects all filled fields)
+- [x] Add Send to Admin button + modal to Commission Voucher tab (collects all filled fields)
+- [x] Format email body as clean HTML table with all form sections
+- [x] CC Taylor (sender) on every admin email
+- [x] Write vitest tests for sendToAdmin procedure
