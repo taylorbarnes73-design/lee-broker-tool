@@ -178,7 +178,7 @@
 - [x] Add PDF upload zone for broker-submitted Adobe drafts
 - [x] Add extractContract tRPC procedure that uses AI to extract fields + detect redlines from uploaded PDF
 - [x] Build AI Review Screen: show extracted fields in editable form with confidence indicators
-- [ ] Add "Generate AIR CRE Data Sheet" that produces formatted PDF summary
+- [x] Add "Generate AIR CRE Data Sheet" that produces formatted PDF summary
 - [x] Extend Send to Admin email to include contract data sheet attachment
 - [x] Add CSS and JS for Contract Intake tab
 - [x] Write vitest tests for extractContract procedure

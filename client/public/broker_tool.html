@@ -2731,6 +2731,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     <!-- SUBMIT BAR -->
     <div class="btn-bar" style="margin-top:24px;">
       <button class="btn btn-green" id="btn-ci-send" onclick="ciSubmitToAdmin()"><span class="btn-spinner"></span><span class="btn-label">&#9993; Submit to Admin</span></button>
+      <button class="btn btn-outline" onclick="ciDownloadDataSheet()" title="Download a formatted AIR CRE Data Sheet as a text file">&#8595; Download Data Sheet</button>
       <button class="btn btn-gray" onclick="ciReset()">Clear Form</button>
     </div>
     <div id="ci-submit-status" style="margin-top:10px;font-size:13px;"></div>
@@ -9073,6 +9074,102 @@ async function ciSubmitToAdmin() {
     btn.classList.remove('loading');
     btn.querySelector('.btn-label').textContent = '\u2709 Submit to Admin';
   }
+}
+
+function ciDownloadDataSheet() {
+  const data = ciCollectData();
+  if (!data.contractType || data.contractType.includes('Select a contract')) {
+    alert('Please select a contract type and fill in the form before downloading.');
+    return;
+  }
+
+  // Build the data sheet text client-side (mirrors server buildDataSheet)
+  const line = (label, val) => val ? `  ${label}: ${val}` : null;
+  const redlineLines = (data.redlines || [])
+    .map((r, i) => `  ${i+1}. Para ${r.paragraph} \u2014 ${r.type.toUpperCase()}: ${r.note}`)
+    .join('\n');
+
+  const rows = [
+    '\u2550'.repeat(64),
+    `AIR CRE DATA SHEET \u2014 ${data.contractType.toUpperCase()}`,
+    `Generated: ${new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })}`,
+    '\u2550'.repeat(64),
+    '',
+    '\u2500\u2500 BASIC PROVISIONS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+    line('Agreement Date', data.agreementDate),
+    '',
+    '\u2500\u2500 PARTY 1 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+    line('Name', data.party1Name),
+    line('Entity Type', data.party1Entity),
+    line('Address', data.party1Address),
+    line('Phone', data.party1Phone),
+    line('Fax', data.party1Fax),
+    '',
+    '\u2500\u2500 AGENT / BROKER \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+    line('Agent Name', data.agentName),
+    line('Agent Address', data.agentAddress),
+    line('Agent Phone', data.agentPhone),
+    line('Agent Fax', data.agentFax),
+    line('Broker DRE #', data.brokerDre),
+    line('Agent (Individual)', data.agentIndividual),
+    line('Agent Title', data.agentTitle),
+    line('Agent DRE #', data.agentDre),
+    line('Agent Email', data.agentEmail),
+    '',
+    '\u2500\u2500 PROPERTY \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+    line('Address', data.propAddress),
+    line('City', data.propCity),
+    line('State', data.propState),
+    line('Zip', data.propZip),
+    line('County', data.propCounty),
+    line('Description', data.propDesc),
+    ...(data.mlDate || data.mlLessor ? [
+      '',
+      '\u2500\u2500 MASTER LEASE \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+      line('Master Lease Date', data.mlDate),
+      line('Amendment Dates', data.mlAmendments),
+      line('Master Lessor', data.mlLessor),
+      line('Master Lessee', data.mlLessee),
+    ] : []),
+    '',
+    '\u2500\u2500 TERM OF AGREEMENT \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+    line('Commencement', data.termStart),
+    line('Expiration', data.termEnd),
+    line('Sublease/Lease Terms', data.subleaseTerms),
+    '',
+    '\u2500\u2500 COMMISSION \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+    line('Commission Type', data.commType),
+    line('Commission Amount/Rate', data.commAmount),
+    '',
+    '\u2500\u2500 ARBITRATION \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+    line('Arbitration Body', data.arbitration),
+    '',
+    '\u2500\u2500 ADDITIONAL PROVISIONS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+    line('Additional Provisions', data.additionalProvisions),
+    '',
+    '\u2500\u2500 SIGNATORIES \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+    line('Party 1 Signatory', data.sig1Name),
+    line('Party 1 Title', data.sig1Title),
+    ...(redlineLines ? [
+      '',
+      '\u2500\u2500 REDLINES / MODIFICATIONS TO APPLY IN AIR CRE \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+      redlineLines,
+    ] : []),
+    '',
+    '\u2550'.repeat(64),
+    'Enter these values into AIR CRE Contracts at https://www.aircre.com',
+    'Taylor Barnes | Lee & Associates Newport Beach | (949) 724-4755',
+  ].filter(l => l !== null && l !== '  : ');
+
+  const text = rows.join('\n');
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const safeName = (data.propAddress || data.contractType || 'contract').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 40);
+  a.href = url;
+  a.download = `AIR_CRE_Data_Sheet_${safeName}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function ciReset() {
