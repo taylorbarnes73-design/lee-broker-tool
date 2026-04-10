@@ -169,3 +169,16 @@
 - [x] Add collectSignSections JS function to gather all sign form fields
 - [x] Extend emailRouter formType enum to include "sign"
 - [x] Add vitest tests for sign formType
+
+## Contract Intake Tab (Tab 6)
+- [x] Add Contract Intake tab button to tab bar
+- [x] Add contract type selector (Exclusive Listing Sublease, Exclusive Right to Represent Owner Sale/Lease, Exclusive Right Buyer/Lessee, Limited Listing, Commission Agreement Lease, Commission Agreement Sale)
+- [x] Add two-path entry UI: "Fill Out Here" vs "Upload PDF"
+- [x] Build Fill Out Here form with all AIR CRE Basic Provisions fields (parties, address, dates, commission, arbitration, additional provisions)
+- [x] Add PDF upload zone for broker-submitted Adobe drafts
+- [x] Add extractContract tRPC procedure that uses AI to extract fields + detect redlines from uploaded PDF
+- [x] Build AI Review Screen: show extracted fields in editable form with confidence indicators
+- [ ] Add "Generate AIR CRE Data Sheet" that produces formatted PDF summary
+- [x] Extend Send to Admin email to include contract data sheet attachment
+- [x] Add CSS and JS for Contract Intake tab
+- [x] Write vitest tests for extractContract procedure

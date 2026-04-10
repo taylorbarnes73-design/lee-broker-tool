@@ -10,11 +10,13 @@ import { z } from "zod/v4";
 import { nanoid } from "nanoid";
 import { aiAssistRouter } from "./routers/aiAssist";
 import { emailRouter } from "./routers/email";
+import { contractsRouter } from "./routers/contracts";
 
 export const appRouter = router({
   system: systemRouter,
   aiAssist: aiAssistRouter,
   email: emailRouter,
+  contracts: contractsRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

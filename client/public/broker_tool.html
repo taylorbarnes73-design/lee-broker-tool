@@ -949,7 +949,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 <div class="header">
   <div>
     <h1>Lee &amp; Associates Newport Beach &mdash; Broker Submission Tool</h1>
-    <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher &bull; Comp Input &bull; Documents</div>
+    <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher &bull; Comp Input &bull; Documents &bull; Contracts</div>
   </div>
   <button class="admin-toggle" onclick="toggleAdminMode()">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -965,6 +965,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   <div class="tab" onclick="switchTab('voucher')">Commission Voucher</div>
   <div class="tab" onclick="switchTab('comp')">Comp Input</div>
   <div class="tab" onclick="switchTab('docs')">&#128196; Documents</div>
+  <div class="tab" onclick="switchTab('contracts')">&#128221; Contracts</div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
@@ -2544,6 +2545,198 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 
 </div><!-- /tab-docs -->
 
+<!-- TAB 6: CONTRACT INTAKE                                                     -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<div id="tab-contracts" class="panel">
+  <div class="ci-hero">
+    <h2>&#128221; Contract Intake</h2>
+    <p>Submit an AIR CRE contract to the admin — fill it out here or upload your Adobe-completed PDF for AI extraction.</p>
+  </div>
+
+  <!-- CONTRACT TYPE SELECTOR -->
+  <div class="ci-type-bar">
+    <label class="ci-type-label">Contract Type</label>
+    <select id="ci-contract-type" onchange="ciOnContractTypeChange()">
+      <option value="">— Select a contract type —</option>
+      <option value="excl-sublease">Exclusive Listing Agreement — Sublease</option>
+      <option value="excl-sale-lease">Exclusive Right to Represent Owner — Sale or Lease</option>
+      <option value="excl-buyer">Exclusive Right to Represent Buyer/Lessee</option>
+      <option value="limited-listing">Limited Listing Agreement — Sale or Lease</option>
+      <option value="commission-lease">Commission Agreement — Lease</option>
+      <option value="commission-sale">Commission Agreement — Sale</option>
+    </select>
+  </div>
+
+  <!-- TWO-PATH CHOOSER (shown after type selected) -->
+  <div id="ci-path-chooser" style="display:none;">
+    <div class="ci-path-cards">
+      <div class="ci-path-card" id="ci-path-fill" onclick="ciSelectPath('fill')">
+        <div class="ci-path-icon">&#9998;</div>
+        <div class="ci-path-title">Fill Out Here</div>
+        <div class="ci-path-desc">Complete the contract fields directly in the tool. All standard AIR CRE fields are provided.</div>
+      </div>
+      <div class="ci-path-card" id="ci-path-upload" onclick="ciSelectPath('upload')">
+        <div class="ci-path-icon">&#128196;</div>
+        <div class="ci-path-title">Upload PDF</div>
+        <div class="ci-path-desc">Upload your Adobe-filled PDF draft. AI will extract all fields and redlines for your review.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPLOAD PATH -->
+  <div id="ci-upload-path" style="display:none;">
+    <div class="ci-section">
+      <h3>Upload Broker-Completed PDF</h3>
+      <p class="ci-hint">Upload the PDF the broker filled out in Adobe. The AI will read all typed fields, checkboxes, and struck-through (redlined) text.</p>
+      <div class="ci-upload-zone" id="ci-upload-zone" onclick="document.getElementById('ci-pdf-input').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="ciHandleDrop(event)">
+        <input type="file" id="ci-pdf-input" accept=".pdf" style="display:none;" onchange="ciHandleFileSelect(this)">
+        <div class="ci-upload-icon">&#128196;</div>
+        <div class="ci-upload-text">Click to upload or drag &amp; drop</div>
+        <div class="ci-upload-sub">PDF only &mdash; broker-completed Adobe form</div>
+      </div>
+      <div id="ci-upload-status" style="display:none;margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <!-- FILL PATH + REVIEW SCREEN (shared) -->
+  <div id="ci-form-area" style="display:none;">
+    <div id="ci-ai-banner" style="display:none;" class="ci-ai-banner">
+      <span class="ci-ai-icon">&#10024;</span>
+      <span id="ci-ai-banner-text">AI extracted the fields below. Review and correct anything that looks wrong before submitting.</span>
+    </div>
+
+    <!-- BASIC PROVISIONS -->
+    <div class="ci-section">
+      <h3>1. Basic Provisions</h3>
+      <div class="row">
+        <div class="field"><label class="req">Agreement Date</label><input id="ci-date" type="date"></div>
+        <div class="field"><label>Reference Date Only</label><select id="ci-date-ref"><option value="yes">Yes — for reference only</option><option value="no">No</option></select></div>
+      </div>
+      <div class="ci-party-block">
+        <h4 id="ci-party1-label">Sublessor / Owner / Client</h4>
+        <div class="row">
+          <div class="field" style="flex:2"><label class="req">Party 1 Name</label><input id="ci-party1-name" placeholder="e.g. Sinclair Pharma US Inc., a California corporation"></div>
+          <div class="field"><label>Entity Type</label><input id="ci-party1-entity" placeholder="e.g. a California corporation"></div>
+        </div>
+        <div class="row">
+          <div class="field" style="flex:2"><label>Address</label><input id="ci-party1-address" placeholder="Street address"></div>
+          <div class="field"><label>Phone</label><input id="ci-party1-phone" placeholder="(949) 000-0000"></div>
+          <div class="field"><label>Fax</label><input id="ci-party1-fax" placeholder="Fax No."></div>
+        </div>
+      </div>
+      <div class="ci-party-block">
+        <h4>Agent / Broker</h4>
+        <div class="row">
+          <div class="field" style="flex:2"><label>Agent Name</label><input id="ci-agent-name" value="Lee &amp; Associates&#174;-Newport Beach"></div>
+          <div class="field"><label>Agent Address</label><input id="ci-agent-address" value="100 Bayview Circle, Suite 600, Newport Beach, CA 92660"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Agent Phone</label><input id="ci-agent-phone" value="(949) 724-4755"></div>
+          <div class="field"><label>Agent Fax</label><input id="ci-agent-fax"></div>
+          <div class="field"><label>Broker DRE #</label><input id="ci-broker-dre" value="01197433"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Agent (Individual) Name</label><input id="ci-agent-individual" placeholder="e.g. Nick Dumke"></div>
+          <div class="field"><label>Agent Title</label><input id="ci-agent-title" placeholder="e.g. Associate"></div>
+          <div class="field"><label>Agent DRE #</label><input id="ci-agent-dre"></div>
+          <div class="field"><label>Agent Email</label><input id="ci-agent-email" placeholder="agent@lee-associates.com"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROPERTY -->
+    <div class="ci-section">
+      <h3>Property</h3>
+      <div class="row">
+        <div class="field" style="flex:2"><label class="req">Property Address</label><input id="ci-prop-address" placeholder="18 Technology Drive, Suite 134"></div>
+        <div class="field"><label class="req">City</label><input id="ci-prop-city" placeholder="Irvine"></div>
+        <div class="field"><label>State</label><input id="ci-prop-state" value="CA"></div>
+        <div class="field"><label>Zip</label><input id="ci-prop-zip"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>County</label><input id="ci-prop-county" placeholder="Orange"></div>
+        <div class="field" style="flex:2"><label>Property Description</label><input id="ci-prop-desc" placeholder="e.g. An approximate 3,440 sq ft flex/industrial building"></div>
+      </div>
+      <!-- Sublease-specific: Master Lease -->
+      <div id="ci-master-lease-block" style="display:none;">
+        <h4>Master Lease</h4>
+        <div class="row">
+          <div class="field"><label>Master Lease Date</label><input id="ci-ml-date" type="date"></div>
+          <div class="field" style="flex:2"><label>Amendment Dates</label><input id="ci-ml-amendments" placeholder="e.g. 11/18/2011, 01/17/2013..."></div>
+        </div>
+        <div class="row">
+          <div class="field" style="flex:2"><label>Master Lessor</label><input id="ci-ml-lessor" placeholder="e.g. Irvine Tech Link LLC"></div>
+          <div class="field" style="flex:2"><label>Master Lessee</label><input id="ci-ml-lessee" placeholder="e.g. Sinclair Pharma US Inc."></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TERM -->
+    <div class="ci-section">
+      <h3>Term of Agreement</h3>
+      <div class="row">
+        <div class="field"><label class="req">Commencement Date</label><input id="ci-term-start" type="date"></div>
+        <div class="field"><label class="req">Expiration Date</label><input id="ci-term-end" type="date"></div>
+      </div>
+      <div class="field"><label>Sublease / Lease Terms</label><input id="ci-sublease-terms" placeholder="e.g. in accordance with the Master Lease"></div>
+    </div>
+
+    <!-- COMMISSION -->
+    <div class="ci-section">
+      <h3>Commission</h3>
+      <div class="row">
+        <div class="field"><label>Commission Type</label><select id="ci-comm-type"><option value="percent">Percentage of total consideration</option><option value="schedule">Per attached commission schedule</option><option value="flat">Flat fee</option></select></div>
+        <div class="field"><label>Commission Amount / Rate</label><input id="ci-comm-amount" placeholder="e.g. 6% or $25,000"></div>
+      </div>
+    </div>
+
+    <!-- ARBITRATION -->
+    <div class="ci-section">
+      <h3>Arbitration</h3>
+      <div class="row">
+        <div class="field"><label>Arbitration Body</label><select id="ci-arbitration"><option value="AAA">AAA — American Arbitration Association</option><option value="JAMS">JAMS</option><option value="none">None selected</option></select></div>
+      </div>
+    </div>
+
+    <!-- ADDITIONAL PROVISIONS -->
+    <div class="ci-section">
+      <h3>Additional Provisions</h3>
+      <div class="field"><label>Additional Provisions (Paragraph 11)</label><textarea id="ci-add-provisions" rows="3" placeholder="Write NONE if no additional provisions"></textarea></div>
+    </div>
+
+    <!-- REDLINES -->
+    <div class="ci-section">
+      <h3>Redlines / Modifications</h3>
+      <p class="ci-hint">List any struck-through clauses or added text from the broker's draft. These will be noted in the AIR CRE Data Sheet for the admin to apply.</p>
+      <div id="ci-redlines-list">
+        <div class="ci-redline-row" id="ci-redline-0">
+          <input class="ci-redline-para" placeholder="Paragraph # (e.g. 4.1(b))">
+          <select class="ci-redline-type"><option value="strikethrough">Strike Through</option><option value="added">Added Text</option><option value="modified">Modified</option></select>
+          <input class="ci-redline-note" placeholder="Brief description of the change" style="flex:3">
+          <button class="btn btn-gray" style="padding:4px 10px;font-size:12px;" onclick="ciRemoveRedline(this)">&#10005;</button>
+        </div>
+      </div>
+      <button class="btn btn-outline" style="margin-top:8px;font-size:13px;" onclick="ciAddRedline()">+ Add Redline</button>
+    </div>
+
+    <!-- SIGNATORIES -->
+    <div class="ci-section">
+      <h3>Signatories</h3>
+      <div class="row">
+        <div class="field"><label>Party 1 Signatory Name</label><input id="ci-sig1-name" placeholder="e.g. Yuan Yuan"></div>
+        <div class="field"><label>Party 1 Title</label><input id="ci-sig1-title" placeholder="e.g. Director"></div>
+      </div>
+    </div>
+
+    <!-- SUBMIT BAR -->
+    <div class="btn-bar" style="margin-top:24px;">
+      <button class="btn btn-green" id="btn-ci-send" onclick="ciSubmitToAdmin()"><span class="btn-spinner"></span><span class="btn-label">&#9993; Submit to Admin</span></button>
+      <button class="btn btn-gray" onclick="ciReset()">Clear Form</button>
+    </div>
+    <div id="ci-submit-status" style="margin-top:10px;font-size:13px;"></div>
+  </div>
+</div><!-- /tab-contracts -->
+
 </div><!-- /broker-view -->
 
 
@@ -3053,7 +3246,7 @@ function toggleOptional(toggleEl) {
 
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach((t, i) => {
-    const tabs = ['listing', 'sign', 'voucher', 'comp', 'docs'];
+    const tabs = ['listing', 'sign', 'voucher', 'comp', 'docs', 'contracts'];
     t.classList.toggle('active', tabs[i] === name);
   });
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -7455,6 +7648,159 @@ async function scrapeVoucherBrochure() {
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════
+     CONTRACT INTAKE TAB STYLES
+     ═══════════════════════════════════════════════════════════ -->
+<style>
+/* Contract Intake tab */
+.ci-hero {
+  padding: 28px 32px 20px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, #fff 0%, #f8f9ff 100%);
+}
+.ci-hero h2 { font-size: 20px; font-weight: 700; color: var(--red); margin: 0 0 4px; }
+.ci-hero p  { font-size: 13px; color: var(--text2); margin: 0; }
+
+.ci-type-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 32px;
+  border-bottom: 1px solid var(--border);
+  background: #fafafa;
+}
+.ci-type-label { font-size: 13px; font-weight: 600; color: var(--text2); white-space: nowrap; }
+.ci-type-bar select {
+  flex: 1;
+  max-width: 420px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.ci-path-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 28px 32px;
+  max-width: 700px;
+}
+.ci-path-card {
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 24px 20px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  background: #fff;
+}
+.ci-path-card:hover {
+  border-color: var(--red);
+  box-shadow: 0 4px 16px rgba(183,28,28,0.10);
+  background: #fff8f8;
+}
+.ci-path-card.selected {
+  border-color: var(--red);
+  background: #fff8f8;
+  box-shadow: 0 4px 16px rgba(183,28,28,0.12);
+}
+.ci-path-icon { font-size: 32px; margin-bottom: 10px; }
+.ci-path-title { font-size: 16px; font-weight: 700; color: var(--text1); margin-bottom: 6px; }
+.ci-path-desc  { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
+.ci-upload-zone {
+  border: 2px dashed #7B1FA2;
+  border-radius: 10px;
+  padding: 36px 24px;
+  text-align: center;
+  cursor: pointer;
+  background: #fdf8ff;
+  transition: background 0.2s, border-color 0.2s;
+}
+.ci-upload-zone:hover, .ci-upload-zone.drag-over {
+  background: #f3e5f5;
+  border-color: #4a148c;
+}
+.ci-upload-icon { font-size: 36px; margin-bottom: 8px; }
+.ci-upload-text { font-size: 15px; font-weight: 600; color: var(--text1); }
+.ci-upload-sub  { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+.ci-ai-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(90deg, #f3e5f5, #e8f5e9);
+  border: 1px solid #ce93d8;
+  border-radius: 8px;
+  padding: 12px 18px;
+  margin: 16px 32px 0;
+  font-size: 13px;
+  color: #4a148c;
+  font-weight: 500;
+}
+.ci-ai-icon { font-size: 18px; flex-shrink: 0; }
+
+.ci-section {
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--border);
+}
+.ci-section h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--red);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 14px;
+}
+.ci-section h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  margin: 12px 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.ci-party-block {
+  background: #fafafa;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+.ci-hint {
+  font-size: 12px;
+  color: var(--text2);
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+.ci-redline-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.ci-redline-para  { width: 130px; min-width: 100px; }
+.ci-redline-type  { width: 150px; min-width: 120px; }
+.ci-redline-note  { flex: 3; min-width: 200px; }
+.ci-redline-row input, .ci-redline-row select {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-size: 13px;
+  background: #fff;
+}
+
+/* AI-extracted field highlight */
+.ci-ai-field {
+  border-color: #7B1FA2 !important;
+  background: #FAF5FF !important;
+}
+</style>
+
+<!-- ═══════════════════════════════════════════════════════════
      DOCUMENTS TAB STYLES
      ═══════════════════════════════════════════════════════════ -->
 <style>
@@ -8417,6 +8763,344 @@ async function submitSendToAdmin() {
     btn.classList.remove('loading');
     btn.querySelector('.btn-label').textContent = '\u2709\uFE0F Send Email';
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONTRACT INTAKE TAB JAVASCRIPT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let _ciCurrentPath = null; // 'fill' | 'upload'
+let _ciRedlineCount = 0;
+
+function ciOnContractTypeChange() {
+  const type = document.getElementById('ci-contract-type').value;
+  const chooser = document.getElementById('ci-path-chooser');
+  chooser.style.display = type ? '' : 'none';
+  // Show/hide master lease block for sublease contracts
+  const mlBlock = document.getElementById('ci-master-lease-block');
+  if (mlBlock) mlBlock.style.display = (type === 'excl-sublease') ? '' : 'none';
+  // Update party 1 label based on contract type
+  const party1Label = document.getElementById('ci-party1-label');
+  if (party1Label) {
+    const labels = {
+      'excl-sublease': 'Sublessor',
+      'excl-sale-lease': 'Owner / Seller',
+      'excl-buyer': 'Buyer / Lessee (Client)',
+      'limited-listing': 'Owner',
+      'commission-lease': 'Broker / Principal',
+      'commission-sale': 'Broker / Principal',
+    };
+    party1Label.textContent = labels[type] || 'Party 1';
+  }
+  // Reset path selection
+  _ciCurrentPath = null;
+  document.getElementById('ci-upload-path').style.display = 'none';
+  document.getElementById('ci-form-area').style.display = 'none';
+  document.querySelectorAll('.ci-path-card').forEach(c => c.classList.remove('selected'));
+}
+
+function ciSelectPath(path) {
+  _ciCurrentPath = path;
+  document.querySelectorAll('.ci-path-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('ci-path-' + path).classList.add('selected');
+  if (path === 'fill') {
+    document.getElementById('ci-upload-path').style.display = 'none';
+    document.getElementById('ci-form-area').style.display = '';
+    document.getElementById('ci-ai-banner').style.display = 'none';
+  } else {
+    document.getElementById('ci-upload-path').style.display = '';
+    document.getElementById('ci-form-area').style.display = 'none';
+  }
+}
+
+function ciHandleDrop(event) {
+  event.preventDefault();
+  document.getElementById('ci-upload-zone').classList.remove('drag-over');
+  const file = event.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') {
+    ciProcessPdf(file);
+  } else {
+    alert('Please drop a PDF file.');
+  }
+}
+
+function ciHandleFileSelect(input) {
+  const file = input.files[0];
+  if (file) ciProcessPdf(file);
+}
+
+async function ciProcessPdf(file) {
+  const statusEl = document.getElementById('ci-upload-status');
+  const zone = document.getElementById('ci-upload-zone');
+  statusEl.style.display = '';
+  statusEl.innerHTML = '<span style="color:#7B1FA2;font-weight:600;">&#9654; Uploading PDF&hellip;</span>';
+
+  try {
+    // 1. Read file as base64
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    // 2. Upload to S3 via tRPC
+    statusEl.innerHTML = '<span style="color:#7B1FA2;font-weight:600;">&#9654; Uploading to secure storage&hellip;</span>';
+    const uploadRes = await window.trpcClient.files.upload.mutate({
+      filename: file.name,
+      mimeType: 'application/pdf',
+      base64Data: base64,
+      category: 'contract-intake',
+    });
+
+    if (!uploadRes.success) throw new Error('Upload failed');
+
+    // 3. Extract fields via AI
+    const contractType = document.getElementById('ci-contract-type').value;
+    statusEl.innerHTML = '<span style="color:#7B1FA2;font-weight:600;">&#10024; AI is reading the contract&hellip; (this may take 10-20 seconds)</span>';
+
+    const extractRes = await window.trpcClient.contracts.extractContract.mutate({
+      pdfUrl: uploadRes.url,
+      contractType,
+    });
+
+    if (!extractRes.success || !extractRes.data) {
+      throw new Error(extractRes.error || 'AI extraction failed');
+    }
+
+    // 4. Populate form fields
+    ciPopulateFromExtraction(extractRes.data);
+
+    // 5. Show form with AI banner
+    document.getElementById('ci-form-area').style.display = '';
+    const banner = document.getElementById('ci-ai-banner');
+    banner.style.display = 'flex';
+    document.getElementById('ci-ai-banner-text').textContent =
+      '\u2728 AI extracted the fields below from "' + file.name + '". Review and correct anything that looks wrong before submitting.';
+
+    statusEl.innerHTML = '<span style="color:#16a34a;font-weight:600;">\u2713 Extraction complete — review the fields below</span>';
+    zone.style.borderColor = '#16a34a';
+
+  } catch(err) {
+    statusEl.innerHTML = '<span style="color:#dc2626;font-weight:600;">\u2717 ' + err.message + '</span>';
+  }
+}
+
+function ciPopulateFromExtraction(data) {
+  const fieldMap = {
+    'ci-date': 'agreementDate',
+    'ci-party1-name': 'party1Name',
+    'ci-party1-entity': 'party1Entity',
+    'ci-party1-address': 'party1Address',
+    'ci-party1-phone': 'party1Phone',
+    'ci-party1-fax': 'party1Fax',
+    'ci-agent-name': 'agentName',
+    'ci-agent-address': 'agentAddress',
+    'ci-agent-phone': 'agentPhone',
+    'ci-agent-fax': 'agentFax',
+    'ci-broker-dre': 'brokerDre',
+    'ci-agent-individual': 'agentIndividual',
+    'ci-agent-title': 'agentTitle',
+    'ci-agent-dre': 'agentDre',
+    'ci-agent-email': 'agentEmail',
+    'ci-prop-address': 'propAddress',
+    'ci-prop-city': 'propCity',
+    'ci-prop-state': 'propState',
+    'ci-prop-zip': 'propZip',
+    'ci-prop-county': 'propCounty',
+    'ci-prop-desc': 'propDesc',
+    'ci-ml-date': 'mlDate',
+    'ci-ml-amendments': 'mlAmendments',
+    'ci-ml-lessor': 'mlLessor',
+    'ci-ml-lessee': 'mlLessee',
+    'ci-term-start': 'termStart',
+    'ci-term-end': 'termEnd',
+    'ci-sublease-terms': 'subleaseTerms',
+    'ci-comm-amount': 'commAmount',
+    'ci-add-provisions': 'additionalProvisions',
+    'ci-sig1-name': 'sig1Name',
+    'ci-sig1-title': 'sig1Title',
+  };
+
+  // Populate text/date inputs
+  Object.entries(fieldMap).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el && data[key]) {
+      el.value = data[key];
+      el.classList.add('ci-ai-field');
+    }
+  });
+
+  // Commission type select
+  if (data.commType) {
+    const commSel = document.getElementById('ci-comm-type');
+    if (commSel) {
+      const map = { percent: 'percent', schedule: 'schedule', flat: 'flat' };
+      commSel.value = map[data.commType] || 'percent';
+    }
+  }
+
+  // Arbitration select
+  if (data.arbitration) {
+    const arbSel = document.getElementById('ci-arbitration');
+    if (arbSel) {
+      const map = { AAA: 'AAA', JAMS: 'JAMS', none: 'none' };
+      arbSel.value = map[data.arbitration] || 'AAA';
+    }
+  }
+
+  // Populate redlines
+  if (data.redlines && data.redlines.length > 0) {
+    // Clear existing redline rows
+    const list = document.getElementById('ci-redlines-list');
+    list.innerHTML = '';
+    _ciRedlineCount = 0;
+    data.redlines.forEach(r => {
+      ciAddRedline(r.paragraph, r.type, r.note);
+    });
+  }
+}
+
+function ciAddRedline(para = '', type = 'strikethrough', note = '') {
+  const list = document.getElementById('ci-redlines-list');
+  const id = 'ci-redline-' + _ciRedlineCount++;
+  const row = document.createElement('div');
+  row.className = 'ci-redline-row';
+  row.id = id;
+  row.innerHTML = `
+    <input class="ci-redline-para" placeholder="Paragraph # (e.g. 4.1(b))" value="${para}">
+    <select class="ci-redline-type">
+      <option value="strikethrough"${type==='strikethrough'?' selected':''}>Strike Through</option>
+      <option value="added"${type==='added'?' selected':''}>Added Text</option>
+      <option value="modified"${type==='modified'?' selected':''}>Modified</option>
+    </select>
+    <input class="ci-redline-note" placeholder="Brief description of the change" style="flex:3" value="${note}">
+    <button class="btn btn-gray" style="padding:4px 10px;font-size:12px;" onclick="ciRemoveRedline(this)">&#10005;</button>
+  `;
+  list.appendChild(row);
+}
+
+function ciRemoveRedline(btn) {
+  btn.closest('.ci-redline-row').remove();
+}
+
+function ciCollectData() {
+  const g = id => (document.getElementById(id) || {}).value || '';
+  const redlines = [];
+  document.querySelectorAll('.ci-redline-row').forEach(row => {
+    const para = row.querySelector('.ci-redline-para')?.value?.trim();
+    const type = row.querySelector('.ci-redline-type')?.value;
+    const note = row.querySelector('.ci-redline-note')?.value?.trim();
+    if (para || note) redlines.push({ paragraph: para || '', type: type || 'strikethrough', note: note || '' });
+  });
+  return {
+    contractType: document.getElementById('ci-contract-type')?.options[document.getElementById('ci-contract-type')?.selectedIndex]?.text || '',
+    agreementDate: g('ci-date'),
+    party1Name: g('ci-party1-name'),
+    party1Entity: g('ci-party1-entity'),
+    party1Address: g('ci-party1-address'),
+    party1Phone: g('ci-party1-phone'),
+    party1Fax: g('ci-party1-fax'),
+    agentName: g('ci-agent-name'),
+    agentAddress: g('ci-agent-address'),
+    agentPhone: g('ci-agent-phone'),
+    agentFax: g('ci-agent-fax'),
+    brokerDre: g('ci-broker-dre'),
+    agentIndividual: g('ci-agent-individual'),
+    agentTitle: g('ci-agent-title'),
+    agentDre: g('ci-agent-dre'),
+    agentEmail: g('ci-agent-email'),
+    propAddress: g('ci-prop-address'),
+    propCity: g('ci-prop-city'),
+    propState: g('ci-prop-state'),
+    propZip: g('ci-prop-zip'),
+    propCounty: g('ci-prop-county'),
+    propDesc: g('ci-prop-desc'),
+    mlDate: g('ci-ml-date'),
+    mlAmendments: g('ci-ml-amendments'),
+    mlLessor: g('ci-ml-lessor'),
+    mlLessee: g('ci-ml-lessee'),
+    termStart: g('ci-term-start'),
+    termEnd: g('ci-term-end'),
+    subleaseTerms: g('ci-sublease-terms'),
+    commType: g('ci-comm-type'),
+    commAmount: g('ci-comm-amount'),
+    arbitration: g('ci-arbitration'),
+    additionalProvisions: g('ci-add-provisions'),
+    sig1Name: g('ci-sig1-name'),
+    sig1Title: g('ci-sig1-title'),
+    redlines,
+  };
+}
+
+async function ciSubmitToAdmin() {
+  const btn = document.getElementById('btn-ci-send');
+  const statusEl = document.getElementById('ci-submit-status');
+
+  const contractData = ciCollectData();
+  const propAddr = [contractData.propAddress, contractData.propCity].filter(Boolean).join(', ');
+
+  if (!contractData.contractType || contractData.contractType === '\u2014 Select a contract type \u2014') {
+    statusEl.textContent = '\u2717 Please select a contract type first.';
+    statusEl.style.color = '#dc2626';
+    return;
+  }
+
+  btn.classList.add('loading');
+  btn.querySelector('.btn-label').textContent = 'Sending\u2026';
+  statusEl.textContent = '';
+
+  try {
+    const res = await window.trpcClient.contracts.submitContractToAdmin.mutate({
+      contractData,
+      brokerName: 'Taylor Barnes',
+      senderEmail: 'tbarnes@lee-associates.com',
+      notes: '',
+    });
+
+    if (res.success) {
+      statusEl.innerHTML = '<span style="color:#16a34a;font-weight:600;">\u2713 Contract submitted to admin successfully!</span>';
+      btn.querySelector('.btn-label').textContent = '\u2713 Submitted!';
+      setTimeout(() => {
+        btn.classList.remove('loading');
+        btn.querySelector('.btn-label').textContent = '\u2709 Submit to Admin';
+      }, 3000);
+    } else {
+      throw new Error(res.error || 'Submission failed');
+    }
+  } catch(err) {
+    statusEl.innerHTML = '<span style="color:#dc2626;font-weight:600;">\u2717 ' + err.message + '</span>';
+    btn.classList.remove('loading');
+    btn.querySelector('.btn-label').textContent = '\u2709 Submit to Admin';
+  }
+}
+
+function ciReset() {
+  // Reset contract type
+  document.getElementById('ci-contract-type').value = '';
+  // Hide sections
+  document.getElementById('ci-path-chooser').style.display = 'none';
+  document.getElementById('ci-upload-path').style.display = 'none';
+  document.getElementById('ci-form-area').style.display = 'none';
+  document.getElementById('ci-ai-banner').style.display = 'none';
+  // Clear all inputs
+  document.querySelectorAll('#tab-contracts input, #tab-contracts textarea').forEach(el => el.value = '');
+  document.querySelectorAll('#tab-contracts select').forEach(el => el.selectedIndex = 0);
+  // Reset redlines to one blank row
+  const list = document.getElementById('ci-redlines-list');
+  list.innerHTML = '';
+  _ciRedlineCount = 0;
+  ciAddRedline();
+  // Clear AI highlights
+  document.querySelectorAll('.ci-ai-field').forEach(el => el.classList.remove('ci-ai-field'));
+  // Reset upload zone
+  const zone = document.getElementById('ci-upload-zone');
+  if (zone) zone.style.borderColor = '';
+  const uploadStatus = document.getElementById('ci-upload-status');
+  if (uploadStatus) { uploadStatus.style.display = 'none'; uploadStatus.innerHTML = ''; }
+  document.getElementById('ci-submit-status').textContent = '';
+  _ciCurrentPath = null;
+  document.querySelectorAll('.ci-path-card').forEach(c => c.classList.remove('selected'));
 }
 </script>
 </body>
