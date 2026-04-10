@@ -8,9 +8,11 @@ import { uploads } from "../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { nanoid } from "nanoid";
+import { aiAssistRouter } from "./routers/aiAssist";
 
 export const appRouter = router({
   system: systemRouter,
+  aiAssist: aiAssistRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

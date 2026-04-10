@@ -122,11 +122,20 @@
 - [x] Comp Input tab shows blank/empty when clicked — fixed (root cause: 2 unclosed divs in voucher tab nesting comp tab inside hidden voucher panel)
 
 ## Power Automate Custom Connector
-- [ ] Add POST /api/submit/listing REST endpoint
-- [ ] Add POST /api/submit/voucher REST endpoint
-- [ ] Add POST /api/submit/sign-request REST endpoint
-- [ ] Add POST /api/submit/comp REST endpoint
-- [ ] Add GET /api/files/list REST endpoint
-- [ ] Add GET /api/files/url/:key REST endpoint
-- [ ] Generate OpenAPI 2.0 (Swagger) JSON definition for Power Automate import
-- [ ] Write vitest tests for all new REST endpoints
+- [x] Add POST /api/v1/submit/listing REST endpoint
+- [x] Add POST /api/v1/submit/voucher REST endpoint
+- [x] Add POST /api/v1/submit/sign-request REST endpoint
+- [x] Add POST /api/v1/submit/comp REST endpoint
+- [x] Add GET /api/v1/files REST endpoint
+- [x] Add GET /api/v1/files/url REST endpoint
+- [x] Generate OpenAPI 2.0 (Swagger) JSON definition for Power Automate import
+- [x] Write vitest tests for all new REST endpoints (16 tests, 20 total passing)
+
+## AI Field Assist
+- [x] Add tRPC aiAssist.parse procedure — takes natural language deal description + active tab, returns structured field values via Claude
+- [x] Add tRPC aiAssist.smartComplete procedure — takes current form state + active tab, returns suggested values for empty fields
+- [x] Add AI Assist panel UI to broker_tool.html — floating button (sparkle icon) that opens a slide-in panel
+- [x] Natural language input: text area + "Populate Form" button — calls parse, fills fields with animation
+- [x] Smart Complete button: reads current form values, calls smartComplete, fills empty fields with amber highlight
+- [x] Show AI confidence indicators on filled fields (subtle "AI" badge that clears on user edit)
+- [x] Write vitest tests for aiAssist.parse and aiAssist.smartComplete procedures (7 tests, 27 total passing)

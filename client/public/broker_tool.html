@@ -6784,5 +6784,494 @@ function initS3Uploads() {
 
 document.addEventListener('DOMContentLoaded', initS3Uploads);
 </script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     AI FIELD ASSIST PANEL
+     ═══════════════════════════════════════════════════════════ -->
+<style>
+/* AI Assist floating button */
+.ai-fab {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #B71C1C 0%, #7B1FA2 100%);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 4px 16px rgba(183,28,28,0.35);
+  z-index: 1100;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.ai-fab:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(183,28,28,0.45); }
+.ai-fab:active { transform: scale(0.96); }
+
+/* AI Assist slide-in panel */
+.ai-panel {
+  position: fixed;
+  bottom: 90px;
+  right: 28px;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+  z-index: 1099;
+  overflow: hidden;
+  transform: translateY(20px) scale(0.97);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+.ai-panel.open {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+  pointer-events: all;
+}
+.ai-panel-header {
+  background: linear-gradient(135deg, #B71C1C 0%, #7B1FA2 100%);
+  color: #fff;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+.ai-panel-header span { font-size: 18px; margin-right: 8px; }
+.ai-panel-close {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.8);
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+.ai-panel-close:hover { color: #fff; }
+.ai-panel-body { padding: 18px; }
+.ai-tab-badge {
+  display: inline-block;
+  background: #F3F4F6;
+  color: #6B7280;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+.ai-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1A1A1A;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+.ai-textarea {
+  width: 100%;
+  min-height: 90px;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+.ai-textarea:focus { border-color: #B71C1C; box-shadow: 0 0 0 3px rgba(183,28,28,0.08); }
+.ai-textarea::placeholder { color: #9CA3AF; }
+.ai-btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.ai-btn {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.ai-btn:active { transform: scale(0.97); }
+.ai-btn-primary { background: #B71C1C; color: #fff; }
+.ai-btn-primary:hover { opacity: 0.9; }
+.ai-btn-secondary { background: #F3F4F6; color: #374151; border: 1.5px solid #E5E7EB; }
+.ai-btn-secondary:hover { background: #E5E7EB; }
+.ai-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.ai-divider { border: none; border-top: 1px solid #F3F4F6; margin: 14px 0; }
+.ai-status {
+  font-size: 12px;
+  color: #6B7280;
+  min-height: 18px;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ai-status.success { color: #15803D; }
+.ai-status.error { color: #B91C1C; }
+.ai-spinner {
+  width: 14px; height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+/* AI badge on filled fields */
+.ai-filled-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #B71C1C, #7B1FA2);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+input.ai-filled, select.ai-filled, textarea.ai-filled {
+  border-color: #7B1FA2 !important;
+  background: #FAF5FF !important;
+  transition: border-color 0.3s, background 0.3s;
+}
+input.ai-smart, select.ai-smart, textarea.ai-smart {
+  border-color: #D97706 !important;
+  background: #FFFBEB !important;
+  transition: border-color 0.3s, background 0.3s;
+}
+@keyframes ai-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(123,31,162,0.4); }
+  60%  { box-shadow: 0 0 0 6px rgba(123,31,162,0); }
+  100% { box-shadow: 0 0 0 0 rgba(123,31,162,0); }
+}
+@keyframes ai-pulse-amber {
+  0%   { box-shadow: 0 0 0 0 rgba(217,119,6,0.4); }
+  60%  { box-shadow: 0 0 0 6px rgba(217,119,6,0); }
+  100% { box-shadow: 0 0 0 0 rgba(217,119,6,0); }
+}
+input.ai-filled, select.ai-filled, textarea.ai-filled { animation: ai-pulse 0.5s ease-out; }
+input.ai-smart, select.ai-smart, textarea.ai-smart { animation: ai-pulse-amber 0.5s ease-out; }
+</style>
+
+<!-- Floating AI button -->
+<button class="ai-fab" id="ai-fab" title="AI Field Assist" onclick="toggleAiPanel()">
+  ✦
+</button>
+
+<!-- AI Assist Panel -->
+<div class="ai-panel" id="ai-panel">
+  <div class="ai-panel-header">
+    <div><span>✦</span> AI Field Assist</div>
+    <button class="ai-panel-close" onclick="toggleAiPanel()">×</button>
+  </div>
+  <div class="ai-panel-body">
+    <div class="ai-tab-badge" id="ai-current-tab">Listing Entry</div>
+
+    <!-- Natural Language Input -->
+    <p class="ai-section-title">Describe the deal</p>
+    <textarea
+      class="ai-textarea"
+      id="ai-nl-input"
+      placeholder="e.g. 5-year NNN lease at $1.10/SF/mo on 8,500 SF industrial in Irvine, tenant is Acme Corp, landlord rep, commission 4%"
+    ></textarea>
+    <div class="ai-btn-row">
+      <button class="ai-btn ai-btn-primary" id="ai-parse-btn" onclick="aiParseDescription()">
+        <span id="ai-parse-icon">✦</span> Populate Form
+      </button>
+    </div>
+    <div class="ai-status" id="ai-parse-status"></div>
+
+    <hr class="ai-divider">
+
+    <!-- Smart Complete -->
+    <p class="ai-section-title">Smart Complete</p>
+    <p style="font-size:12px;color:#6B7280;margin:0 0 10px;">Fill in empty fields based on what you've already entered.</p>
+    <div class="ai-btn-row">
+      <button class="ai-btn ai-btn-secondary" id="ai-smart-btn" onclick="aiSmartComplete()">
+        <span id="ai-smart-icon">⚡</span> Smart Complete
+      </button>
+    </div>
+    <div class="ai-status" id="ai-smart-status"></div>
+  </div>
+</div>
+
+<script>
+// ─── AI Assist Panel Logic ────────────────────────────────────────────────────
+
+function toggleAiPanel() {
+  const panel = document.getElementById('ai-panel');
+  const isOpen = panel.classList.contains('open');
+  if (isOpen) {
+    panel.classList.remove('open');
+  } else {
+    updateAiTabBadge();
+    panel.classList.add('open');
+  }
+}
+
+function updateAiTabBadge() {
+  const badge = document.getElementById('ai-current-tab');
+  const activeTab = document.querySelector('.tab.active');
+  if (activeTab && badge) {
+    badge.textContent = activeTab.textContent.trim();
+  }
+}
+
+function getActiveTabKey() {
+  const activeTab = document.querySelector('.tab.active');
+  if (!activeTab) return 'listing';
+  const text = activeTab.textContent.trim().toLowerCase();
+  if (text.includes('listing')) return 'listing';
+  if (text.includes('sign')) return 'sign';
+  if (text.includes('voucher') || text.includes('commission')) return 'voucher';
+  if (text.includes('comp')) return 'comp';
+  return 'listing';
+}
+
+// Field ID maps per tab — maps AI field names to HTML element IDs
+const AI_FIELD_MAP = {
+  listing: {
+    propertyType: 'l-prop-type',
+    transactionType: 'l-trans-type',
+    address: 'l-address',
+    city: 'l-city',
+    state: 'l-state',
+    zip: 'l-zip',
+    rateSfMo: 'l-rate',
+    term: 'l-term',
+    leaseType: 'l-lease-type',
+    buildingSf: 'l-bldg-sf',
+    suiteSf: 'l-suite-sf',
+    askingPrice: 'l-asking-price',
+    listingAgentName: 'l-la-name',
+    listingAgentLicense: 'l-la-lic',
+    comments: 'l-comments',
+  },
+  voucher: {
+    representationType: 'v-rep-type',
+    clientName: 'v-on-behalf',
+    transactionType: 'v-trans-type',
+    address: 'v-address',
+    city: 'v-city',
+    state: 'v-state',
+    zip: 'v-zip',
+    dealSf: 'v-deal-sf',
+    commissionRate: 'v-comm-rate',
+    term: 'v-term',
+    commencementDate: 'v-commence',
+    expirationDate: 'v-expire',
+    baseRent: 'v-base-rent',
+    lessorName: 'v-lessor-name',
+    lesseeName: 'v-lessee-name',
+    listingAgentName: 'v-la-name',
+    procuringAgentName: 'v-pa-name',
+    totalConsideration: 'v-total-consideration',
+    notes: 'v-notes',
+  },
+  sign: {
+    propertyAddress: 's-address',
+    city: 's-city',
+    state: 's-state',
+    zip: 's-zip',
+    nameRider: 's-rider-text',
+    requestedBy: 's-req-name',
+    specialInstructions: 's-special',
+    accessInstructions: 's-access',
+  },
+  comp: {
+    compType: 'c-comp-type',
+    address: 'c-address',
+    city: 'c-city',
+    state: 'c-state',
+    zip: 'c-zip',
+    buildingSf: 'c-bldg-sf',
+    dealSf: 'c-deal-sf',
+    leaseRate: 'c-lease-rate',
+    term: 'c-term',
+    commencementDate: 'c-commence',
+    tenantName: 'c-tenant',
+    landlordName: 'c-landlord',
+    salePrice: 'c-sale-price',
+    pricePerSf: 'c-price-psf',
+    propertyType: 'c-prop-type',
+    brokerName: 'c-broker-name',
+    comments: 'c-comments',
+  },
+};
+
+function addAiBadge(el) {
+  // Remove any existing badge first
+  const existing = el.parentNode.querySelector('.ai-filled-badge');
+  if (existing) existing.remove();
+  const badge = document.createElement('span');
+  badge.className = 'ai-filled-badge';
+  badge.textContent = 'AI';
+  el.parentNode.insertBefore(badge, el.nextSibling);
+  return badge;
+}
+
+function applyAiFields(tab, fields) {
+  const map = AI_FIELD_MAP[tab] || {};
+  let applied = 0;
+  Object.entries(fields).forEach(([key, value]) => {
+    const elId = map[key];
+    if (!elId) return;
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const oldVal = el.value || '';
+    if (oldVal.trim() !== '') return; // don't overwrite existing values
+    el.value = value;
+    el.classList.add('ai-filled');
+    const badge = addAiBadge(el);
+    el.addEventListener('input', function onEdit() {
+      el.classList.remove('ai-filled');
+      badge.remove();
+      el.removeEventListener('input', onEdit);
+    }, { once: true });
+    // Trigger change event so any dependent calculations update
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    applied++;
+  });
+  return applied;
+}
+
+function applyAiFieldsForce(tab, fields) {
+  // Like applyAiFields but uses amber highlight (smart complete)
+  const map = AI_FIELD_MAP[tab] || {};
+  let applied = 0;
+  Object.entries(fields).forEach(([key, value]) => {
+    const elId = map[key];
+    if (!elId) return;
+    const el = document.getElementById(elId);
+    if (!el) return;
+    if (el.value && el.value.trim() !== '') return; // still don't overwrite user input
+    el.value = value;
+    el.classList.add('ai-smart');
+    const badge = addAiBadge(el);
+    el.addEventListener('input', function onEdit() {
+      el.classList.remove('ai-smart');
+      badge.remove();
+      el.removeEventListener('input', onEdit);
+    }, { once: true });
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    applied++;
+  });
+  return applied;
+}
+
+function getCurrentFormState(tab) {
+  const map = AI_FIELD_MAP[tab] || {};
+  const state = {};
+  Object.entries(map).forEach(([key, elId]) => {
+    const el = document.getElementById(elId);
+    state[key] = el ? (el.value || '') : '';
+  });
+  return state;
+}
+
+async function callTrpc(procedure, input) {
+  const res = await fetch('/api/trpc/' + procedure, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ json: input }),
+  });
+  if (!res.ok) throw new Error('API error ' + res.status);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message || 'AI error');
+  return data.result?.data?.json ?? data.result?.data;
+}
+
+async function aiParseDescription() {
+  const tab = getActiveTabKey();
+  const desc = document.getElementById('ai-nl-input').value.trim();
+  if (!desc) {
+    setAiStatus('ai-parse-status', 'Please enter a deal description first.', 'error');
+    return;
+  }
+  const btn = document.getElementById('ai-parse-btn');
+  const icon = document.getElementById('ai-parse-icon');
+  btn.disabled = true;
+  icon.innerHTML = '<span class="ai-spinner"></span>';
+  setAiStatus('ai-parse-status', 'Analyzing...', '');
+  try {
+    const result = await callTrpc('aiAssist.parse', { description: desc, tab });
+    const count = applyAiFields(tab, result.fields || {});
+    if (count > 0) {
+      setAiStatus('ai-parse-status', `✓ Filled ${count} field${count !== 1 ? 's' : ''}`, 'success');
+      document.getElementById('ai-nl-input').value = '';
+    } else {
+      setAiStatus('ai-parse-status', 'No matching fields found. Try being more specific.', 'error');
+    }
+  } catch (e) {
+    setAiStatus('ai-parse-status', 'Error: ' + (e.message || 'Something went wrong'), 'error');
+  } finally {
+    btn.disabled = false;
+    icon.textContent = '✦';
+  }
+}
+
+async function aiSmartComplete() {
+  const tab = getActiveTabKey();
+  const currentFields = getCurrentFormState(tab);
+  const btn = document.getElementById('ai-smart-btn');
+  const icon = document.getElementById('ai-smart-icon');
+  btn.disabled = true;
+  icon.innerHTML = '<span class="ai-spinner"></span>';
+  setAiStatus('ai-smart-status', 'Thinking...', '');
+  try {
+    const result = await callTrpc('aiAssist.smartComplete', { currentFields, tab });
+    const count = applyAiFieldsForce(tab, result.fields || {});
+    if (count > 0) {
+      setAiStatus('ai-smart-status', `✓ Suggested ${count} field${count !== 1 ? 's' : ''}`, 'success');
+    } else {
+      setAiStatus('ai-smart-status', result.message || 'No suggestions — fill in more fields first.', '');
+    }
+  } catch (e) {
+    setAiStatus('ai-smart-status', 'Error: ' + (e.message || 'Something went wrong'), 'error');
+  } finally {
+    btn.disabled = false;
+    icon.textContent = '⚡';
+  }
+}
+
+function setAiStatus(id, msg, type) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'ai-status' + (type ? ' ' + type : '');
+}
+
+// Update badge when tab changes
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => setTimeout(updateAiTabBadge, 50));
+  });
+});
+</script>
 </body>
 </html>
