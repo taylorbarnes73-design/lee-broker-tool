@@ -333,7 +333,7 @@ export const aiAssistRouter = router({
               properties: Object.fromEntries(
                 Object.keys(listingFields.shape).map((k) => [k, { type: "string" }])
               ),
-              required: [],
+              required: Object.keys(listingFields.shape),
               additionalProperties: false,
             },
           },

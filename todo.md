@@ -192,3 +192,10 @@
 - [x] Wire pre-fill to Commission Voucher agent fields
 - [x] Wire pre-fill to Contracts tab agent fields
 - [x] Write vitest tests for broker profile localStorage helpers
+
+## Bug Fixes & Code Cleanup
+- [x] Fix document upload not working (Listing brochure upload, Voucher brochure upload)
+- [x] Fix AI scrape not extracting/populating fields correctly
+- [x] Fix other broken features identified during audit
+- [x] Remove unused/dead code to reduce broker_tool.html file size
+- [x] Verify all features work end-to-end after cleanup

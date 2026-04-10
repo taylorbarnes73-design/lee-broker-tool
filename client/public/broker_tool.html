@@ -537,11 +537,6 @@ body.admin-mode .header .sub { display: none; }
 .btn-danger { background: #c41230; color: #fff; border: none; border-radius: 4px; }
 .btn-danger:hover { background: #a00e28; }
 
-
-
-
-
-
 @media (max-width: 768px) {
   .stat-grid { grid-template-columns: 1fr 1fr; }
   .admin-sidebar { width: 180px; }
@@ -952,7 +947,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher &bull; Comp Input &bull; Documents &bull; Contracts</div>
   </div>
   <div style="display:flex;align-items:center;gap:10px;">
-    <!-- Broker Profile Selector -->
     <div id="bp-selector-wrap" style="display:flex;align-items:center;gap:6px;">
       <select id="bp-active-select" onchange="bpApplyProfile(this.value)" title="Select a broker profile to pre-fill agent fields" style="font-size:13px;padding:5px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;max-width:180px;">
         <option value="">&#128100; Select Broker&hellip;</option>
@@ -977,17 +971,14 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-<!-- TAB 1: LISTING ENTRY                                                      -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="tab-listing" class="panel active">
 
-  <!-- Sub-tab selector -->
   <div class="sub-tab-bar">
     <button class="sub-tab active" id="subtab-add" onclick="switchListingMode('add')">Add Listing</button>
     <button class="sub-tab" id="subtab-mod" onclick="switchListingMode('mod')">Listing Modification</button>
   </div>
 
-  <!-- ADD LISTING MODE -->
   <div id="listing-add-mode">
     <div class="tip">Required fields are marked with <span style="color:var(--red);font-weight:700;">*</span> — complete these first, then expand optional sections as needed.</div>
 
@@ -1013,7 +1004,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 
       <h3 style="margin-top:16px;">Upload Documents</h3>
 
-      <!-- Brochure upload + AI scrape -->
       <div class="field" style="margin-bottom:16px;">
         <label style="display:flex;align-items:center;gap:6px;">&#10024; Property Brochure <span style="font-size:11px;color:#7B1FA2;font-weight:600;background:#FAF5FF;border:1px solid #c4b5fd;border-radius:4px;padding:1px 6px;">AI Scrape</span></label>
         <div class="brochure-zone" id="brochure-zone" onclick="document.getElementById('l-brochure-file').click()">
@@ -1057,7 +1047,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         </div>
       </div>
 
-      <!-- Lease pricing -->
       <div id="lease-pricing">
         <h3 style="margin-top:16px;">Lease Pricing</h3>
         <div class="row c4">
@@ -1092,7 +1081,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         </div>
       </div>
 
-      <!-- Sale pricing -->
       <div id="sale-pricing" style="display:none;">
         <h3 style="margin-top:16px;">Sale Pricing</h3>
         <div class="row c3">
@@ -1119,7 +1107,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         </div>
       </div>
 
-      <!-- Address -->
       <h3 style="margin-top:20px;">Property Address</h3>
       <div class="row c2">
         <div class="field"><label id="lbl-name" class="req">Address</label><input id="l-address" placeholder="123 Main St"></div>
@@ -1137,7 +1124,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         </div>
       </div>
 
-      <!-- Size fields (non-land) -->
       <div id="size-building" class="type-section visible">
         <div class="row c3">
           <div class="field"><label id="lbl-sf" class="req">Building / GLA SF</label><input id="l-bldg-sf" placeholder="e.g. 50,000" oninput="calcSaleSF()"></div>
@@ -1146,7 +1132,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         </div>
       </div>
 
-      <!-- Size fields (land) -->
       <div id="size-land" class="type-section">
         <div class="row c4">
           <div class="field"><label class="req">Gross Acres</label><input id="l-acres-gross" placeholder="0.00"></div>
@@ -1157,7 +1142,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
     </div><!-- end required-section -->
 
-    <!-- Agents Section with Shared Expenses -->
     <div class="card">
       <h2>Listing Agents</h2>
       <table class="suite-table" id="listing-agent-table">
@@ -1168,7 +1152,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       <p style="font-size:11px;color:var(--text3);margin-top:6px;">Shared Expenses: commission split / cost sharing between co-listing agents.</p>
     </div>
 
-    <!-- Release Instructions -->
     <div class="card">
       <h2>Release Instructions</h2>
       <h3>Listing Release</h3>
@@ -1185,12 +1168,10 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
     </div>
 
-    <!-- Property Details — always visible, switches by property type -->
     <div class="card" id="property-details-card">
       <h2>Property Details</h2>
       <p style="font-size:11px;color:var(--text3);margin-bottom:12px;">Fields shown are specific to the selected property type.</p>
 
-      <!-- Industrial -->
       <div id="sec-industrial" class="type-section visible">
         <div class="row c4">
           <div class="field"><label>Size (SF)</label><input id="l-ind-size" placeholder="Total SF"></div>
@@ -1224,7 +1205,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         </div>
       </div>
 
-      <!-- Office -->
       <div id="sec-office" class="type-section">
         <div class="row c4">
           <div class="field"><label>Rentable SF</label><input id="l-off-rsf" placeholder="0"></div>
@@ -1246,7 +1226,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         </div>
       </div>
 
-      <!-- Retail -->
       <div id="sec-retail" class="type-section">
         <div class="row c4">
           <div class="field"><label>GLA (SF)</label><input id="l-ret-gla" placeholder="0"></div>
@@ -1268,7 +1247,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         </div>
       </div>
 
-      <!-- Land -->
       <div id="sec-land" class="type-section">
         <div class="row c3">
           <div class="field"><label>Zoning</label><input id="l-land-zoning" placeholder="e.g. M-1, R-2"></div>
@@ -1303,12 +1281,10 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         </div>
         <div id="listing-review-content" style="font-size:13px;line-height:1.9;"></div>
       </div>
-      <!-- Submit to MLS — revealed only on confirm page -->
       <div class="btn-bar" style="margin-top:0;">
         <button class="btn btn-red" style="font-size:15px;padding:12px 32px;" onclick="submitListingToMLS(this)"><span class="btn-spinner"></span><span class="btn-label">&#10003; Submit to MLS</span></button>
         <button class="btn btn-gray" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
       </div>
-      <!-- Post-submit actions — hidden until Submit is pressed -->
       <div id="listing-post-submit" style="display:none;" class="card" style="border-color:#22c55e;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
           <span style="font-size:24px;">&#10003;</span>
@@ -1324,7 +1300,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div><!-- end listing-add-mode -->
 
-  <!-- LISTING MODIFICATION MODE -->
   <div id="listing-mod-mode" style="display:none;">
     <div class="tip">Enter the property address and describe the changes needed. Select which listing service(s) to notify.</div>
     <div class="card required-section">
@@ -1351,7 +1326,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 
 </div>
 
-<!-- TAB 2: SIGN REQUEST                                                       -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="tab-sign" class="panel">
   <div class="tip">Required fields are marked with <span style="color:var(--red);font-weight:700;">*</span> — complete these first, then expand optional sections as needed.</div>
@@ -1374,7 +1348,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
     <div class="field"><label class="req">Cross Streets / Building Name</label><input id="s-cross" placeholder="Cross streets, building name, etc."></div>
 
-    <!-- Sign Support Configuration — moved above Sign Specifications -->
     <h3 style="margin-top:16px;">Configuration</h3>
     <div class="support-options">
       <div class="support-opt" onclick="selectSupport(this, 'sf')"><div class="icon">&#9632;&#9632;</div><div class="lbl">S/F</div></div>
@@ -1386,7 +1359,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     <h3 style="margin-top:20px;">Sign Specifications</h3>
     <p style="font-size:11px;color:var(--text3);margin-bottom:8px;">Use the +/- buttons to set quantity for each sign type needed.</p>
 
-    <!-- 4x8 sign -->
     <div class="sign-grid-new">
       <span class="label">4&prime; &times; 8&prime;</span>
       <div class="qty-stepper">
@@ -1396,7 +1368,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
     </div>
 
-    <!-- 6x8 sign -->
     <div class="sign-grid-new">
       <span class="label">6&prime; &times; 8&prime;</span>
       <div class="qty-stepper">
@@ -1406,7 +1377,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
     </div>
 
-    <!-- Other sign -->
     <div class="sign-grid-new">
       <span class="label">Other</span>
       <input id="s-other-size" placeholder="Size (e.g. 3x4)" style="flex:1;">
@@ -1417,7 +1387,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
     </div>
 
-    <!-- Banner -->
     <div class="sign-grid-new">
       <span class="label">Banner</span>
       <input id="s-banner-size" placeholder="Size" style="flex:1;">
@@ -1428,7 +1397,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
     </div>
 
-    <!-- Name Rider -->
     <div class="row c2" style="margin-top:12px;">
       <div class="field">
         <label>Name Rider <span style="font-weight:400;font-size:10px;color:var(--text3);">(Optional)</span></label>
@@ -1443,7 +1411,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       <div class="field" id="s-rider-field" style="display:none;"><label>Rider Text</label><input id="s-rider" placeholder="Agent name or custom text"></div>
     </div>
 
-    <!-- Placement toggle -->
     <div style="margin-top:12px;">
       <label style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);">Sign Placement <span style="font-weight:400;font-size:10px;text-transform:none;color:var(--text3);">(Optional)</span></label>
       <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
@@ -1485,7 +1452,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     <button class="btn btn-gray" style="margin-top:8px;" onclick="addSignAgent()">+ Add Agent</button>
   </div><!-- end required-section -->
 
-  <!-- Access & Comments — always visible -->
   <div class="card">
     <h2>Access &amp; Comments</h2>
     <div class="row c2">
@@ -1503,13 +1469,10 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   </div>
 </div>
 
-
-<!-- TAB 3: COMMISSION VOUCHER                                                 -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="tab-voucher" class="panel">
   <div class="tip">Required fields are marked with <span style="color:var(--red);font-weight:700;">*</span> — complete all steps in order for fastest processing.</div>
 
-  <!-- STEP 1: Transaction Type & Representation -->
   <div class="card required-section card-active" id="vstep-1" data-vstep="1">
     <h2>Step 1 — Transaction Type <span class="required-badge">Required</span></h2>
     <div class="row c4">
@@ -1559,7 +1522,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- STEP 2: Broker Information (Upload Documents moved to Step 8) -->
   <div class="card" id="vstep-2" data-vstep="2">
     <h2>Step 2 — Broker Information</h2>
     <div class="row c2" style="margin-bottom:8px;">
@@ -1592,7 +1554,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         <div class="field"><label>City</label><input id="v-pa-city"></div>
       </div>
     </div>
-    <!-- Additional Internal Agents -->
     <div style="margin-top:12px;">
       <div class="sub-divider-label">Additional Internal Agents (Collaborators)</div>
       <table class="broker-table" id="v-collab-table" style="margin-top:8px;">
@@ -1601,7 +1562,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </table>
       <button class="btn btn-gray" style="margin-top:8px;" onclick="addVoucherCollab()">+ Add Agent</button>
     </div>
-    <!-- Outside Agents Toggle -->
     <div style="margin-top:16px;padding-top:12px;border-top:1px solid #eee;">
       <div style="display:flex;align-items:center;gap:12px;">
         <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);">Outside Agents?</label>
@@ -1626,14 +1586,11 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- STEP 4: Client & Property Info -->
   <div class="card" id="vstep-3" data-vstep="3">
     <h2>Step 3 — Client &amp; Property Info</h2>
-    <!-- Property Address (entered in Step 1 — shown here for reference) -->
     <div class="card" style="background:#f8f8f8;border-style:dashed;margin-bottom:0;" id="v-addr-ref">
       <p style="font-size:12px;color:var(--text3);margin:0;">&#8593; Property address and Deal SF are entered in Step 1 above.</p>
     </div>
-    <!-- Parties -->
     <div style="margin-top:16px;">
       <div class="row c2">
         <div>
@@ -1688,10 +1645,8 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- STEP 5: Financial Details -->
   <div class="card" id="vstep-4" data-vstep="4">
     <h2>Step 4 — Financial Details</h2>
-    <!-- Key Deal Metrics (Lease) -->
     <div id="v-req-lease">
       <h3>Key Lease Terms</h3>
       <div class="row c3">
@@ -1706,7 +1661,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         <div class="field"><label>Total Consideration</label><input id="v-l-consideration" placeholder="$0" readonly style="background:#f8f8f8;font-weight:600;"></div>
       </div>
     </div>
-    <!-- Key Deal Metrics (Sale) -->
     <div id="v-req-sale" style="display:none;">
       <h3>Key Sale Terms</h3>
       <div class="row c3">
@@ -1717,10 +1671,8 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- STEP 6: Commission Calculation -->
   <div class="card" id="vstep-5" data-vstep="5">
     <h2>Step 5 — Commission &amp; Invoice</h2>
-    <!-- Lease commission -->
     <div id="v-req-comm-lease">
       <div class="row c4">
         <div class="field"><label class="req">Commission Rate %</label><input id="v-l-comm-rate" placeholder="e.g. 4" oninput="calcCommSummary()"></div>
@@ -1734,7 +1686,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         <div class="field"></div>
       </div>
     </div>
-    <!-- Sale commission -->
     <div id="v-req-comm-sale" style="display:none;">
       <div class="row c3">
         <div class="field"><label class="req">Commission %</label><input id="v-s-comm-pct" placeholder="e.g. 3" oninput="calcVoucherSale()"></div>
@@ -1742,7 +1693,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         <div class="field"><label>SALE Commission (auto)</label><input id="v-comm-sale" placeholder="$0" readonly style="background:#f8f8f8;"></div>
       </div>
     </div>
-    <!-- Invoice To -->
     <div style="margin-top:16px;padding-top:12px;border-top:1px solid #eee;">
       <h3>Invoice To</h3>
       <div class="row c3">
@@ -1776,9 +1726,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-
-
-  <!-- STEP 8: Monthly Rent Schedule (after commission) -->
   <div id="vstep-6" class="card" data-vstep="6">
     <h2>Step 6 — Monthly &amp; Free Rent Schedule</h2>
     <p style="font-size:12px;color:var(--text3);margin-bottom:10px;">Enter $0 for free rent months so effective rates calculate correctly.</p>
@@ -1797,12 +1744,10 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- STEP 8: Upload Documents + Commission Distribution -->
   <div class="card" id="vstep-8" data-vstep="8">
     <h2>Step 8 — Upload Documents &amp; Commission Distribution</h2>
     <h3>Upload Documents</h3>
 
-    <!-- Voucher brochure / commission agreement upload + AI scrape -->
     <div class="field" style="margin-bottom:16px;">
       <label style="display:flex;align-items:center;gap:6px;">&#10024; Deal Brochure / Commission Agreement <span style="font-size:11px;color:#7B1FA2;font-weight:600;background:#FAF5FF;border:1px solid #c4b5fd;border-radius:4px;padding:1px 6px;">AI Scrape</span></label>
       <div class="brochure-zone" id="v-brochure-zone" onclick="document.getElementById('v-brochure-file').click()">
@@ -1858,7 +1803,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     <button class="btn btn-gray" style="margin-top:8px;" onclick="addDistRow()">+ Add Agent</button>
   </div>
 
-  <!-- Optional: Additional Details -->
   <div class="optional-wrapper">
     <div class="optional-toggle" onclick="toggleOptional(this)">
       <h2>Additional Details <span class="optional-badge">Optional</span></h2>
@@ -1866,7 +1810,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
     <div class="optional-body">
 
-  <!-- Listing Status -->
   <div class="card">
     <h2>Listing Status</h2>
     <div class="row c3">
@@ -1876,7 +1819,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- Property Information (Comp Data) — trimmed to Deal Overview only -->
   <div class="card">
     <h2>Property Information (Comp Data)</h2>
     <div class="row c3 compact">
@@ -1891,7 +1833,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- Sale Transaction Details (extended) -->
   <div id="v-sale-section" class="card" style="display:none;">
     <h2>Sale Transaction Details (Extended)</h2>
     <div class="row c3">
@@ -1903,7 +1844,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     <div class="field"><label>Check/Wire from Escrow?</label><select id="v-s-escrow-check"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
   </div>
 
-  <!-- Broker Details (extended) -->
   <div class="card">
     <h2>Broker Details (Extended)</h2>
     <div class="collapse-section">
@@ -1956,9 +1896,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   </div><!-- end optional-wrapper -->
 </div>
 
-
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-<!-- TAB 4: COMP INPUT                                                         -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="tab-comp" class="panel">
   <div class="tip">Required fields are marked with <span style="color:var(--red);font-weight:700;">*</span> — complete these first, then expand optional sections for additional detail.</div>
@@ -1967,7 +1905,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   <div class="card required-section">
     <h2>Required Information <span class="required-badge">Required</span></h2>
 
-    <!-- Comp Type -->
     <div class="row c3">
       <div class="field"><label class="req">Comp Type</label>
         <select id="c-comp-type" onchange="onCompTypeChange()">
@@ -1979,14 +1916,12 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       <div class="field"><label>Date</label><input id="c-date" type="date"></div>
     </div>
 
-    <!-- Location -->
     <h3 style="margin-top:16px;">Location</h3>
     <div class="row c2">
       <div class="field"><label class="req">Address</label><input id="c-address" placeholder="16441 Scientific Way"></div>
       <div class="field"><label class="req">City</label><input id="c-city" placeholder="Irvine"></div>
     </div>
 
-    <!-- Property Type -->
     <h3 style="margin-top:16px;">Property</h3>
     <div class="row c3">
       <div class="field"><label class="req">Property Type</label>
@@ -2000,7 +1935,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
     </div>
 
-    <!-- Key Lease Fields (required) -->
     <div class="comp-lease-only">
       <h3 style="margin-top:16px;">Key Lease Terms</h3>
       <div class="row c3">
@@ -2022,7 +1956,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
     </div>
 
-    <!-- Key Sale Fields (required) -->
     <div class="comp-sale-only">
       <h3 style="margin-top:16px;">Key Sale Terms</h3>
       <div class="row c3">
@@ -2046,7 +1979,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
     <div class="optional-body">
 
-  <!-- Location Details -->
   <div class="card">
     <h2>Location Details</h2>
     <div class="row c3">
@@ -2066,7 +1998,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- Lease Details (extended) -->
   <div class="card comp-lease-only" id="comp-lease-section">
     <h2>Lease Details (Extended)</h2>
     <div class="row c3">
@@ -2088,7 +2019,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- Sale Details (extended) -->
   <div class="card comp-sale-only" id="comp-sale-section">
     <h2>Sale Details (Extended)</h2>
     <div class="row c3">
@@ -2103,7 +2033,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- Property Features -->
   <div class="card">
     <h2 id="comp-features-title">Property Features</h2>
     <div class="row c3 comp-lease-only">
@@ -2144,7 +2073,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- Broker Info (Lease) -->
   <div class="card comp-lease-only">
     <h2>Brokerage Info</h2>
     <div class="row c2">
@@ -2161,7 +2089,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- Broker Info (Sale) -->
   <div class="card comp-sale-only">
     <h2>Brokerage Info</h2>
     <div class="row c2">
@@ -2178,7 +2105,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- Comments -->
   <div class="card">
     <h2>Comments</h2>
     <div class="field comp-lease-only"><label>Opex cost estimated (Y/N)?</label>
@@ -2202,7 +2128,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-<!-- TAB 5: DOCUMENTS                                                          -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="tab-docs" class="panel">
 
@@ -2216,7 +2141,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- LISTING ENTRY FORMS -->
   <div class="docs-section">
     <div class="docs-section-header">&#127968; Listing Entry Forms</div>
     <div class="docs-grid">
@@ -2255,7 +2179,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- SIGN REQUEST -->
   <div class="docs-section">
     <div class="docs-section-header">&#128721; Sign Request</div>
     <div class="docs-grid">
@@ -2278,7 +2201,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- COMMISSION VOUCHER -->
   <div class="docs-section">
     <div class="docs-section-header">&#128181; Commission Voucher</div>
     <div class="docs-grid">
@@ -2317,7 +2239,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- COMP INPUT FORMS -->
   <div class="docs-section">
     <div class="docs-section-header">&#128200; Comp Input Forms</div>
     <div class="docs-grid">
@@ -2356,7 +2277,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- LISTING AGREEMENTS -->
   <div class="docs-section">
     <div class="docs-section-header">&#128221; Listing Agreements</div>
     <div class="docs-grid">
@@ -2395,7 +2315,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- GENERAL / ADMIN -->
   <div class="docs-section">
     <div class="docs-section-header">&#128203; General &amp; Admin</div>
     <div class="docs-grid">
@@ -2427,7 +2346,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- INDUSTRIAL LEASES (collapsible) -->
   <div class="docs-section docs-collapsible" id="sec-industrial-leases">
     <div class="docs-section-header docs-toggle" onclick="toggleDocsSection('industrial-leases')">
       &#127981; Industrial Leases <span class="docs-toggle-arrow" id="arr-industrial-leases">&#9660;</span>
@@ -2456,7 +2374,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- OFFICE LEASES (collapsible) -->
   <div class="docs-section docs-collapsible" id="sec-office-leases">
     <div class="docs-section-header docs-toggle" onclick="toggleDocsSection('office-leases')">
       &#127970; Office Leases <span class="docs-toggle-arrow" id="arr-office-leases">&#9660;</span>
@@ -2473,7 +2390,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- RETAIL LEASES (collapsible) -->
   <div class="docs-section docs-collapsible" id="sec-retail-leases">
     <div class="docs-section-header docs-toggle" onclick="toggleDocsSection('retail-leases')">
       &#127978; Retail Leases <span class="docs-toggle-arrow" id="arr-retail-leases">&#9660;</span>
@@ -2488,7 +2404,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- LEASE ADDENDA (collapsible) -->
   <div class="docs-section docs-collapsible" id="sec-lease-addenda">
     <div class="docs-section-header docs-toggle" onclick="toggleDocsSection('lease-addenda')">
       &#128203; Lease Addenda &amp; Amendments <span class="docs-toggle-arrow" id="arr-lease-addenda">&#9660;</span>
@@ -2524,7 +2439,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- PURCHASE DOCS (collapsible) -->
   <div class="docs-section docs-collapsible" id="sec-purchase-docs">
     <div class="docs-section-header docs-toggle" onclick="toggleDocsSection('purchase-docs')">
       &#127968; Purchase &amp; Sale Documents <span class="docs-toggle-arrow" id="arr-purchase-docs">&#9660;</span>
@@ -2546,14 +2460,12 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- NO RESULTS MESSAGE -->
   <div id="docs-no-results" style="display:none;padding:32px;text-align:center;color:var(--text2);font-size:14px;">
     No forms match your search. Try a different keyword.
   </div>
 
 </div><!-- /tab-docs -->
 
-<!-- TAB 6: CONTRACT INTAKE                                                     -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="tab-contracts" class="panel">
   <div class="ci-hero">
@@ -2561,7 +2473,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     <p>Submit an AIR CRE contract to the admin — fill it out here or upload your Adobe-completed PDF for AI extraction.</p>
   </div>
 
-  <!-- CONTRACT TYPE SELECTOR -->
   <div class="ci-type-bar">
     <label class="ci-type-label">Contract Type</label>
     <select id="ci-contract-type" onchange="ciOnContractTypeChange()">
@@ -2575,7 +2486,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </select>
   </div>
 
-  <!-- TWO-PATH CHOOSER (shown after type selected) -->
   <div id="ci-path-chooser" style="display:none;">
     <div class="ci-path-cards">
       <div class="ci-path-card" id="ci-path-fill" onclick="ciSelectPath('fill')">
@@ -2591,7 +2501,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- UPLOAD PATH -->
   <div id="ci-upload-path" style="display:none;">
     <div class="ci-section">
       <h3>Upload Broker-Completed PDF</h3>
@@ -2606,14 +2515,12 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 
-  <!-- FILL PATH + REVIEW SCREEN (shared) -->
   <div id="ci-form-area" style="display:none;">
     <div id="ci-ai-banner" style="display:none;" class="ci-ai-banner">
       <span class="ci-ai-icon">&#10024;</span>
       <span id="ci-ai-banner-text">AI extracted the fields below. Review and correct anything that looks wrong before submitting.</span>
     </div>
 
-    <!-- BASIC PROVISIONS -->
     <div class="ci-section">
       <h3>1. Basic Provisions</h3>
       <div class="row">
@@ -2652,7 +2559,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
     </div>
 
-    <!-- PROPERTY -->
     <div class="ci-section">
       <h3>Property</h3>
       <div class="row">
@@ -2665,7 +2571,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         <div class="field"><label>County</label><input id="ci-prop-county" placeholder="Orange"></div>
         <div class="field" style="flex:2"><label>Property Description</label><input id="ci-prop-desc" placeholder="e.g. An approximate 3,440 sq ft flex/industrial building"></div>
       </div>
-      <!-- Sublease-specific: Master Lease -->
       <div id="ci-master-lease-block" style="display:none;">
         <h4>Master Lease</h4>
         <div class="row">
@@ -2679,7 +2584,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
     </div>
 
-    <!-- TERM -->
     <div class="ci-section">
       <h3>Term of Agreement</h3>
       <div class="row">
@@ -2689,7 +2593,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       <div class="field"><label>Sublease / Lease Terms</label><input id="ci-sublease-terms" placeholder="e.g. in accordance with the Master Lease"></div>
     </div>
 
-    <!-- COMMISSION -->
     <div class="ci-section">
       <h3>Commission</h3>
       <div class="row">
@@ -2698,7 +2601,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
     </div>
 
-    <!-- ARBITRATION -->
     <div class="ci-section">
       <h3>Arbitration</h3>
       <div class="row">
@@ -2706,13 +2608,11 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
     </div>
 
-    <!-- ADDITIONAL PROVISIONS -->
     <div class="ci-section">
       <h3>Additional Provisions</h3>
       <div class="field"><label>Additional Provisions (Paragraph 11)</label><textarea id="ci-add-provisions" rows="3" placeholder="Write NONE if no additional provisions"></textarea></div>
     </div>
 
-    <!-- REDLINES -->
     <div class="ci-section">
       <h3>Redlines / Modifications</h3>
       <p class="ci-hint">List any struck-through clauses or added text from the broker's draft. These will be noted in the AIR CRE Data Sheet for the admin to apply.</p>
@@ -2727,7 +2627,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       <button class="btn btn-outline" style="margin-top:8px;font-size:13px;" onclick="ciAddRedline()">+ Add Redline</button>
     </div>
 
-    <!-- SIGNATORIES -->
     <div class="ci-section">
       <h3>Signatories</h3>
       <div class="row">
@@ -2736,7 +2635,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
     </div>
 
-    <!-- SUBMIT BAR -->
     <div class="btn-bar" style="margin-top:24px;">
       <button class="btn btn-green" id="btn-ci-send" onclick="ciSubmitToAdmin()"><span class="btn-spinner"></span><span class="btn-label">&#9993; Submit to Admin</span></button>
       <button class="btn btn-outline" onclick="ciDownloadDataSheet()" title="Download a formatted AIR CRE Data Sheet as a text file">&#8595; Download Data Sheet</button>
@@ -2748,9 +2646,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 
 </div><!-- /broker-view -->
 
-
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-<!-- ADMIN PORTAL VIEW                                                         -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="admin-view">
   <aside class="admin-sidebar">
@@ -2780,7 +2676,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   </aside>
 
   <div class="admin-main">
-    <!-- DASHBOARD PAGE -->
     <div id="admin-dashboard" class="admin-page active">
       <h1>Dashboard</h1>
       <p class="page-desc">Overview of broker submissions</p>
@@ -2814,7 +2709,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
     </div>
 
-    <!-- SUBMISSIONS PAGE -->
     <div id="admin-submissions" class="admin-page">
       <h1>Submissions</h1>
       <p class="page-desc">Review and manage broker submissions</p>
@@ -2851,7 +2745,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
     </div>
 
-    <!-- DEAL ENTRY PAGE -->
     <div id="admin-dealentry" class="admin-page">
       <div id="dealius-tool">
         <div class="dx-header">
@@ -2875,7 +2768,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
           <a href="http://localhost:8080">localhost:8080</a>.
         </div>
 
-        <!-- Credentials -->
         <div class="dx-card">
           <div class="dx-card-title">Dealius Credentials</div>
           <div class="dx-cred-grid">
@@ -2885,7 +2777,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
           </div>
         </div>
 
-        <!-- Drop zone -->
         <div class="dx-drop" id="dxDz">
           <input type="file" id="dxFi" accept=".xlsm,.xlsx"/>
           <span class="dx-drop-icon">&#128203;</span>
@@ -2893,10 +2784,8 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
           <p>.xlsm or .xlsx — Lee &amp; Associates commission voucher</p>
         </div>
 
-        <!-- Status bar -->
         <div class="dx-status" id="dxSt"><div class="dx-spin" id="dxSp"></div><span id="dxSm"></span></div>
 
-        <!-- Preview / edit form -->
         <div class="dx-preview" id="dxPv">
           <div class="dx-card">
             <div class="dx-card-title">Deal</div>
@@ -2910,7 +2799,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
               </select>
             </div>
 
-            <!-- Property -->
             <div class="dx-slabel">Property</div>
             <div class="dx-edit-grid dx-cols3">
               <div class="dx-field"><label>Address</label><input type="text" id="dx_address"/></div>
@@ -2934,7 +2822,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
               <div class="dx-field"><label>Parking Spaces</label><input type="number" id="dx_numParkingSpaces"/></div>
             </div>
 
-            <!-- Lease fields -->
             <div id="dx_lease_section">
               <div class="dx-slabel">Lease Parties</div>
               <div class="dx-edit-grid">
@@ -2968,7 +2855,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
                 <div class="dx-field"><label>CAMs ($/SF/yr)</label><input type="number" step="0.01" id="dx_cams"/></div>
                 <div class="dx-field"><label>Months on Market</label><input type="number" id="dx_monthsOnMkt"/></div>
               </div>
-              <!-- Rent schedule -->
               <div class="dx-slabel" style="display:flex;align-items:center;justify-content:space-between;">
                 <span>Rent Schedule</span>
                 <button class="dx-btn dx-ghost" style="font-size:11px;padding:4px 12px;" onclick="dxAddRentRow()">+ Add Row</button>
@@ -2980,7 +2866,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
               <p class="dx-hint">All fields are editable. Monthly $/SF auto-calculates from Monthly Rent &divide; Deal SF.</p>
             </div>
 
-            <!-- Sale fields -->
             <div id="dx_sale_section" style="display:none;">
               <div class="dx-slabel">Sale Parties</div>
               <div class="dx-edit-grid">
@@ -3004,13 +2889,11 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 
             <div class="dx-divider"></div>
 
-            <!-- Brokers (display only) -->
             <div class="dx-slabel">Brokers (from voucher — reference only)</div>
             <div id="dxBd"></div>
             <div class="dx-outside-warn" id="dxOw">&x26A0; Outside broker(s) must be added manually in Dealius.</div>
             <p class="dx-hint">Broker commission assignments are not submitted via API — add them in Dealius after the deal is created.</p>
 
-            <!-- AI review panel -->
             <div id="dxAiPanel" style="display:none;margin-top:16px;"></div>
 
             <div class="dx-btns">
@@ -3021,7 +2904,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
           </div>
         </div>
 
-        <!-- Progress steps -->
         <div id="dxStepBar" style="display:none;">
           <div class="dx-steps">
             <div class="dx-step" id="dxS1">1 &middot; Property</div>
@@ -3038,11 +2920,9 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
     </div>
 
-
   </div>
 </div>
 
-<!-- ADMIN DETAIL MODAL -->
 <div class="admin-modal-overlay" id="admin-detail-modal">
   <div class="admin-modal">
     <div class="modal-title"><span id="adm-detail-id"></span><span id="adm-detail-badge"></span></div>
@@ -3054,17 +2934,14 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-<!-- BROKER PROFILES MODAL                                                     -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="bp-modal">
   <div class="modal" style="max-width:640px;">
     <h2 style="display:flex;align-items:center;gap:8px;">&#128100; Broker Profiles</h2>
     <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">Save agent details here. Select a profile from the header to pre-fill agent fields on any tab.</p>
 
-    <!-- Profile list -->
     <div id="bp-list" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;margin-bottom:16px;"></div>
 
-    <!-- Add / Edit form -->
     <div id="bp-form-wrap" style="border:1px solid var(--border);border-radius:8px;padding:16px;background:var(--bg2);">
       <h3 id="bp-form-title" style="margin:0 0 12px;font-size:14px;font-weight:600;">Add New Profile</h3>
       <input type="hidden" id="bp-edit-id">
@@ -3092,7 +2969,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-<!-- SEND TO ADMIN MODAL                                                       -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="send-admin-modal">
   <div class="modal" style="max-width:520px;">
@@ -3118,7 +2994,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   </div>
 </div>
 
-<!-- EMAIL MODAL                                                               -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="email-modal">
   <div class="modal">
@@ -3134,7 +3009,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
   </div>
 </div>
-
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -4174,7 +4048,6 @@ function clearVoucher() {
   rentRowCount = 0;
   onVoucherTxnChange();
 }
-
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PDF HELPERS — shared drawing primitives that replicate the original form look
@@ -7127,7 +7000,6 @@ document.addEventListener('blur', function(e) {
 
 </script>
 
-<!-- Auto-Calculation Script Injected by Update -->
 <script>
 document.addEventListener('input', (e) => {
   const cleanNum = (str) => {
@@ -7195,7 +7067,6 @@ document.addEventListener('blur', (e) => {
 }, true);
 </script>
 
-<!-- Free Address Autocomplete Integration (Photon / OpenStreetMap) -->
 <style>
 .autocomplete-dropdown {
   position: absolute;
@@ -7541,7 +7412,7 @@ function onBrochureSelected(input) {
           json: {
             filename: file.name,
             mimeType: brochureMimeType,
-            base64,
+            base64Data: base64,
             category: 'brochure',
             reference: 'listing'
           }
@@ -7619,7 +7490,7 @@ function onVoucherBrochureSelected(input) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          json: { filename: file.name, mimeType: voucherBrochureMimeType, base64, category: 'brochure', reference: 'voucher' }
+          json: { filename: file.name, mimeType: voucherBrochureMimeType, base64Data: base64, category: 'brochure', reference: 'voucher' }
         })
       });
       const data = await resp.json();
@@ -7673,8 +7544,8 @@ async function scrapeVoucherBrochure() {
           const el = document.getElementById(elId);
           if (el && !el.readOnly && !el.value) {
             el.value = val;
-            el.classList.add('ai-filled-purple');
-            injectAiBadge(el, 'purple');
+            el.classList.add('ai-filled');
+            addAiBadge(el);
             count++;
           }
         }
@@ -8214,12 +8085,10 @@ input.ai-filled, select.ai-filled, textarea.ai-filled { animation: ai-pulse 0.5s
 input.ai-smart, select.ai-smart, textarea.ai-smart { animation: ai-pulse-amber 0.5s ease-out; }
 </style>
 
-<!-- Floating AI button -->
 <button class="ai-fab" id="ai-fab" title="AI Field Assist" onclick="toggleAiPanel()">
   ✦
 </button>
 
-<!-- AI Assist Panel -->
 <div class="ai-panel" id="ai-panel">
   <div class="ai-panel-header">
     <div><span>✦</span> AI Field Assist</div>
@@ -8228,7 +8097,6 @@ input.ai-smart, select.ai-smart, textarea.ai-smart { animation: ai-pulse-amber 0
   <div class="ai-panel-body">
     <div class="ai-tab-badge" id="ai-current-tab">Listing Entry</div>
 
-    <!-- Natural Language Input -->
     <p class="ai-section-title">Describe the deal</p>
     <textarea
       class="ai-textarea"
@@ -8244,7 +8112,6 @@ input.ai-smart, select.ai-smart, textarea.ai-smart { animation: ai-pulse-amber 0
 
     <hr class="ai-divider">
 
-    <!-- Smart Complete -->
     <p class="ai-section-title">Smart Complete</p>
     <p style="font-size:12px;color:#6B7280;margin:0 0 10px;">Fill in empty fields based on what you've already entered.</p>
     <div class="ai-btn-row">
@@ -8891,25 +8758,28 @@ async function ciProcessPdf(file) {
       reader.readAsDataURL(file);
     });
 
-    // 2. Upload to S3 via tRPC
+    // 2. Upload to S3 via tRPC (raw fetch)
     statusEl.innerHTML = '<span style="color:#7B1FA2;font-weight:600;">&#9654; Uploading to secure storage&hellip;</span>';
-    const uploadRes = await window.trpcClient.files.upload.mutate({
-      filename: file.name,
-      mimeType: 'application/pdf',
-      base64Data: base64,
-      category: 'contract-intake',
+    const uploadResp = await fetch('/api/trpc/files.upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ json: { filename: file.name, mimeType: 'application/pdf', base64Data: base64, category: 'contract-intake' } })
     });
-
-    if (!uploadRes.success) throw new Error('Upload failed');
+    const uploadData = await uploadResp.json();
+    const uploadRes = uploadData?.result?.data?.json;
+    if (!uploadRes || !uploadRes.url) throw new Error('Upload failed');
 
     // 3. Extract fields via AI
     const contractType = document.getElementById('ci-contract-type').value;
     statusEl.innerHTML = '<span style="color:#7B1FA2;font-weight:600;">&#10024; AI is reading the contract&hellip; (this may take 10-20 seconds)</span>';
 
-    const extractRes = await window.trpcClient.contracts.extractContract.mutate({
-      pdfUrl: uploadRes.url,
-      contractType,
+    const extractResp = await fetch('/api/trpc/contracts.extractContract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ json: { pdfUrl: uploadRes.url, contractType } })
     });
+    const extractData = await extractResp.json();
+    const extractRes = extractData?.result?.data?.json;
 
     if (!extractRes.success || !extractRes.data) {
       throw new Error(extractRes.error || 'AI extraction failed');
@@ -9098,14 +8968,15 @@ async function ciSubmitToAdmin() {
   statusEl.textContent = '';
 
   try {
-    const res = await window.trpcClient.contracts.submitContractToAdmin.mutate({
-      contractData,
-      brokerName: 'Taylor Barnes',
-      senderEmail: 'tbarnes@lee-associates.com',
-      notes: '',
+    const submitResp = await fetch('/api/trpc/contracts.submitContractToAdmin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ json: { contractData, brokerName: 'Taylor Barnes', senderEmail: 'tbarnes@lee-associates.com', notes: '' } })
     });
+    const submitJson = await submitResp.json();
+    const res = submitJson?.result?.data?.json;
 
-    if (res.success) {
+    if (res && res.success) {
       statusEl.innerHTML = '<span style="color:#16a34a;font-weight:600;">\u2713 Contract submitted to admin successfully!</span>';
       btn.querySelector('.btn-label').textContent = '\u2713 Submitted!';
       setTimeout(() => {
