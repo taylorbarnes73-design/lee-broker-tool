@@ -949,7 +949,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 <div class="header">
   <div>
     <h1>Lee &amp; Associates Newport Beach &mdash; Broker Submission Tool</h1>
-    <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher &bull; Comp Input</div>
+    <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher &bull; Comp Input &bull; Documents</div>
   </div>
   <button class="admin-toggle" onclick="toggleAdminMode()">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -964,6 +964,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   <div class="tab" onclick="switchTab('sign')">Sign Request</div>
   <div class="tab" onclick="switchTab('voucher')">Commission Voucher</div>
   <div class="tab" onclick="switchTab('comp')">Comp Input</div>
+  <div class="tab" onclick="switchTab('docs')">&#128196; Documents</div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
@@ -1002,6 +1003,26 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       </div>
 
       <h3 style="margin-top:16px;">Upload Documents</h3>
+
+      <!-- Brochure upload + AI scrape -->
+      <div class="field" style="margin-bottom:16px;">
+        <label style="display:flex;align-items:center;gap:6px;">&#10024; Property Brochure <span style="font-size:11px;color:#7B1FA2;font-weight:600;background:#FAF5FF;border:1px solid #c4b5fd;border-radius:4px;padding:1px 6px;">AI Scrape</span></label>
+        <div class="brochure-zone" id="brochure-zone" onclick="document.getElementById('l-brochure-file').click()">
+          <input type="file" id="l-brochure-file" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display:none;" onchange="onBrochureSelected(this)">
+          <div class="brochure-zone-inner">
+            <span class="brochure-zone-icon">&#128196;</span>
+            <div>
+              <div class="brochure-zone-label">Upload property brochure or flyer</div>
+              <div class="brochure-zone-sub">PDF, JPG, PNG &mdash; AI will extract address, size, rate, and more</div>
+            </div>
+          </div>
+          <div class="brochure-status" id="brochure-status"></div>
+        </div>
+        <button class="brochure-scrape-btn" id="brochure-scrape-btn" onclick="scrapeBrochure()">
+          &#10024; Scrape &amp; Fill Listing Fields
+        </button>
+      </div>
+
       <div class="row c2">
         <div class="field">
           <label>Listing Agreement</label>
@@ -2148,6 +2169,244 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- TAB 5: DOCUMENTS                                                          -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<div id="tab-docs" class="panel">
+
+  <div class="docs-hero">
+    <h2>Blank Forms &amp; Reference Documents</h2>
+    <p>Download, print, or fill these forms manually. All documents are the official Lee &amp; Associates Newport Beach versions.</p>
+  </div>
+
+  <!-- LISTING ENTRY FORMS -->
+  <div class="docs-section">
+    <div class="docs-section-header">&#127968; Listing Entry Forms</div>
+    <div class="docs-grid">
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Industrial_Listing_Entry_Form_b17ff126.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">Industrial Listing Entry Form</div>
+          <div class="doc-meta">PDF &middot; Listing</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Office_Space_Listing_Entry_Form(v2)_c63ac25b.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">Office Space Listing Entry Form</div>
+          <div class="doc-meta">PDF &middot; Listing</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Retail_Space_Listing_Entry_Form(v2)_8e20d02c.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">Retail Space Listing Entry Form</div>
+          <div class="doc-meta">PDF &middot; Listing</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Land%20Listing%20Entry%20Form_2807aba9.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">Land Listing Entry Form</div>
+          <div class="doc-meta">PDF &middot; Listing</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- SIGN REQUEST -->
+  <div class="docs-section">
+    <div class="docs-section-header">&#128721; Sign Request</div>
+    <div class="docs-grid">
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Sign%20Request%20Form%20Rev.%2009.19.2025_19a3aea0.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">Sign Request Form</div>
+          <div class="doc-meta">PDF &middot; Rev. 09.19.2025</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/PO_Request_Form_1b082191.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">PO Request Form</div>
+          <div class="doc-meta">PDF &middot; Sign / Expenses</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- COMMISSION VOUCHER -->
+  <div class="docs-section">
+    <div class="docs-section-header">&#128181; Commission Voucher</div>
+    <div class="docs-grid">
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Updated%20Voucher%20(4.3.26)_6067b612.xlsm" target="_blank" download>
+        <div class="doc-icon">&#128202;</div>
+        <div class="doc-info">
+          <div class="doc-title">Commission Voucher (Updated 4.3.26)</div>
+          <div class="doc-meta">Excel Macro (.xlsm) &middot; Latest Version</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Schedule_of_Commissions_(2018)_a854c58c.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">Schedule of Commissions</div>
+          <div class="doc-meta">PDF &middot; 2018</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Commission_Agreement_(Lease)_66093690.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">Commission Agreement (Lease)</div>
+          <div class="doc-meta">PDF</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Commission_Agreement_(Sale)_acbc3751.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">Commission Agreement (Sale)</div>
+          <div class="doc-meta">PDF</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- COMP INPUT FORMS -->
+  <div class="docs-section">
+    <div class="docs-section-header">&#128200; Comp Input Forms</div>
+    <div class="docs-grid">
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/LA%20NB%20Industrial%20Lease%20Comp%20Input%20Form_v_Dec25_2f70a587.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">Industrial Lease Comp Input</div>
+          <div class="doc-meta">PDF &middot; Dec 2025</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/LA%20NB%20Industrial%20Sale%20Comp%20Input%20Form_v_Dec25_8a40be32.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">Industrial Sale Comp Input</div>
+          <div class="doc-meta">PDF &middot; Dec 2025</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Office_Sale_Comp_Input_Form-For_all_deals_9ed87367.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">Office Sale Comp Input</div>
+          <div class="doc-meta">PDF &middot; All Deals</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Retail_Comp_Input_Form_23317c8e.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">Retail Comp Input Form</div>
+          <div class="doc-meta">PDF</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- LISTING AGREEMENTS -->
+  <div class="docs-section">
+    <div class="docs-section-header">&#128221; Listing Agreements</div>
+    <div class="docs-grid">
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Exclusive_Right_to_Represent_Owner_for_Sale_or_Lease%20of%20Real_Property_c1be207b.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">Exclusive Right to Represent Owner (Sale or Lease)</div>
+          <div class="doc-meta">PDF</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Exclusive_Right_to_Represent_Owner_for_Sale_or_Lease%20of%20Real_Property_with_Property_Info_672fd1d5.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">Exclusive Right to Represent Owner (with Property Info)</div>
+          <div class="doc-meta">PDF</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Exclusive_Right_to_Represent_Buyer_Lessee_for_Purchase_or_Lease_of_Real_Property_928b250a.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">Exclusive Right to Represent Buyer / Lessee</div>
+          <div class="doc-meta">PDF</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Listing_Shared_Expense_Form_77474b9b.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">Listing Shared Expense Form</div>
+          <div class="doc-meta">PDF</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- GENERAL / ADMIN -->
+  <div class="docs-section">
+    <div class="docs-section-header">&#128203; General &amp; Admin</div>
+    <div class="docs-grid">
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Deal-Listing%20Submission%20checklists_8deddb4e.pdf" target="_blank" download>
+        <div class="doc-icon">&#9989;</div>
+        <div class="doc-info">
+          <div class="doc-title">Deal &amp; Listing Submission Checklists</div>
+          <div class="doc-meta">PDF</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/ACH%20Authorization%20Form_cd8f7e84.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">ACH Authorization Form</div>
+          <div class="doc-meta">PDF</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/LANB%20Form%20W-9_2026_29770bde.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">LANB Form W-9 (2026)</div>
+          <div class="doc-meta">PDF</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Blank_W-9%20(Rev.%20October%202018)_9bd38519.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">Blank W-9 (Rev. October 2018)</div>
+          <div class="doc-meta">PDF</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Standard_Form_for_Classifieds_Ads_b24e7cf4.pdf" target="_blank" download>
+        <div class="doc-icon">&#128196;</div>
+        <div class="doc-info">
+          <div class="doc-title">Standard Form for Classifieds Ads</div>
+          <div class="doc-meta">PDF</div>
+        </div>
+        <div class="doc-dl">&#8595;</div>
+      </a>
+    </div>
+  </div>
+
+</div><!-- /tab-docs -->
+
 </div><!-- /broker-view -->
 
 
@@ -2631,7 +2890,7 @@ function toggleOptional(toggleEl) {
 
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach((t, i) => {
-    const tabs = ['listing', 'sign', 'voucher', 'comp'];
+    const tabs = ['listing', 'sign', 'voucher', 'comp', 'docs'];
     t.classList.toggle('active', tabs[i] === name);
   });
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -6783,7 +7042,212 @@ function initS3Uploads() {
 }
 
 document.addEventListener('DOMContentLoaded', initS3Uploads);
+
+// ─── BROCHURE UPLOAD + AI SCRAPE ─────────────────────────────────────────────
+
+let brochureFileUrl = null;
+let brochureMimeType = 'application/pdf';
+
+function onBrochureSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const status = document.getElementById('brochure-status');
+  const btn = document.getElementById('brochure-scrape-btn');
+  status.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(0)} KB) — uploading…`;
+  btn.style.display = 'none';
+  brochureFileUrl = null;
+
+  // Determine MIME type
+  if (file.type === 'application/pdf') brochureMimeType = 'application/pdf';
+  else if (file.type.startsWith('image/')) brochureMimeType = file.type;
+  else brochureMimeType = 'application/pdf';
+
+  // Convert to base64 and upload via tRPC files.upload
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      const base64 = e.target.result.split(',')[1];
+      const resp = await fetch('/api/trpc/files.upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          json: {
+            filename: file.name,
+            mimeType: brochureMimeType,
+            base64,
+            category: 'brochure',
+            reference: 'listing'
+          }
+        })
+      });
+      const data = await resp.json();
+      const url = data?.result?.data?.json?.url;
+      if (url) {
+        brochureFileUrl = url;
+        status.textContent = `✓ Uploaded: ${file.name}`;
+        btn.style.display = 'block';
+      } else {
+        status.textContent = '✗ Upload failed — please try again';
+      }
+    } catch(err) {
+      status.textContent = '✗ Upload error: ' + err.message;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function scrapeBrochure() {
+  if (!brochureFileUrl) return;
+  const btn = document.getElementById('brochure-scrape-btn');
+  const status = document.getElementById('brochure-status');
+  btn.classList.add('loading');
+  btn.textContent = '✦ Analyzing brochure…';
+  try {
+    const resp = await fetch('/api/trpc/aiAssist.scrapeBrochure', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ json: { fileUrl: brochureFileUrl, mimeType: brochureMimeType } })
+    });
+    const data = await resp.json();
+    const result = data?.result?.data?.json;
+    if (result && result.success) {
+      const count = applyAiFields('listing', result.fields);
+      status.textContent = `✓ Extracted ${result.fieldCount || count} fields from brochure`;
+      if (count > 0) showToast(`✨ Filled ${count} field${count !== 1 ? 's' : ''} from brochure`);
+      else showToast('No matching fields found in brochure', 'warn');
+    } else {
+      status.textContent = '✗ Could not extract fields — try a clearer brochure';
+    }
+  } catch(err) {
+    status.textContent = '✗ Error: ' + err.message;
+  } finally {
+    btn.classList.remove('loading');
+    btn.innerHTML = '&#10024; Scrape &amp; Fill Listing Fields';
+  }
+}
 </script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     DOCUMENTS TAB STYLES
+     ═══════════════════════════════════════════════════════════ -->
+<style>
+/* Documents tab */
+.docs-hero {
+  padding: 28px 32px 20px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, #fff 0%, #fafaf8 100%);
+}
+.docs-hero h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 6px;
+}
+.docs-hero p {
+  font-size: 13px;
+  color: var(--text2);
+  margin: 0;
+}
+.docs-section {
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--border);
+}
+.docs-section:last-child { border-bottom: none; }
+.docs-section-header {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-bottom: 12px;
+}
+.docs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+.doc-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  cursor: pointer;
+}
+.doc-card:hover {
+  border-color: var(--red);
+  box-shadow: 0 2px 8px rgba(183,28,28,0.08);
+  background: #fff9f9;
+}
+.doc-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  width: 32px;
+  text-align: center;
+}
+.doc-info { flex: 1; min-width: 0; }
+.doc-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.doc-meta {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 2px;
+}
+.doc-dl {
+  font-size: 16px;
+  color: var(--red);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+/* Brochure upload zone */
+.brochure-zone {
+  border: 2px dashed #7B1FA2;
+  border-radius: 8px;
+  background: #FAF5FF;
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  position: relative;
+}
+.brochure-zone:hover { border-color: #5b21b6; background: #f3e8ff; }
+.brochure-zone-inner { display: flex; align-items: center; gap: 10px; }
+.brochure-zone-icon { font-size: 22px; }
+.brochure-zone-label { font-size: 13px; color: #5b21b6; font-weight: 500; }
+.brochure-zone-sub { font-size: 11px; color: #7c3aed; margin-top: 2px; }
+.brochure-status { font-size: 12px; margin-top: 8px; color: var(--text2); }
+.brochure-scrape-btn {
+  display: none;
+  margin-top: 10px;
+  width: 100%;
+  padding: 9px 14px;
+  background: linear-gradient(135deg, #7B1FA2, #5b21b6);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.brochure-scrape-btn:hover { opacity: 0.9; }
+.brochure-scrape-btn.loading { opacity: 0.6; pointer-events: none; }
+@media (max-width: 640px) {
+  .docs-section { padding: 16px; }
+  .docs-grid { grid-template-columns: 1fr; }
+  .docs-hero { padding: 20px 16px 14px; }
+}
+</style>
 
 <!-- ═══════════════════════════════════════════════════════════
      AI FIELD ASSIST PANEL

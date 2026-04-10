@@ -139,3 +139,11 @@
 - [x] Smart Complete button: reads current form values, calls smartComplete, fills empty fields with amber highlight
 - [x] Show AI confidence indicators on filled fields (subtle "AI" badge that clears on user edit)
 - [x] Write vitest tests for aiAssist.parse and aiAssist.smartComplete procedures (7 tests, 27 total passing)
+
+## Documents Tab & Brochure AI Scrape
+- [x] Add Documents tab (5th tab) to broker_tool.html with downloadable copies of all original forms
+- [x] Upload original form PDFs to CDN and link them in the Documents tab
+- [x] Add brochure upload zone to Listing Entry (Add Listing sub-tab)
+- [x] Add tRPC aiAssist.scrapeBrochure procedure — accepts uploaded file URL, extracts property fields via AI, returns structured field values
+- [x] Wire brochure upload → "Scrape & Fill" button → calls scrapeBrochure → applies fields with AI fill animation
+- [x] Write vitest tests for aiAssist.scrapeBrochure procedure (4 tests, 31 total passing)

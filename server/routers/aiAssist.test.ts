@@ -130,6 +130,116 @@ describe("aiAssist.parse", () => {
   });
 });
 
+describe("aiAssist.scrapeBrochure", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns extracted fields from a brochure PDF URL", async () => {
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              propertyType: "Industrial",
+              address: "123 Commerce Way",
+              city: "Irvine",
+              state: "CA",
+              zip: "92618",
+              buildingSf: "12500",
+              rateSfMo: "1.10",
+              leaseType: "NNN",
+            }),
+          },
+        },
+      ],
+    } as any);
+
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.scrapeBrochure({
+      fileUrl: "https://example.com/brochure.pdf",
+      mimeType: "application/pdf",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.tab).toBe("listing");
+    expect(result.fields.propertyType).toBe("Industrial");
+    expect(result.fields.city).toBe("Irvine");
+    expect(result.fields.buildingSf).toBe("12500");
+    expect(result.fieldCount).toBe(8);
+  });
+
+  it("handles image brochure URLs", async () => {
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              propertyType: "Office",
+              city: "Newport Beach",
+              state: "CA",
+            }),
+          },
+        },
+      ],
+    } as any);
+
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.scrapeBrochure({
+      fileUrl: "https://example.com/flyer.jpg",
+      mimeType: "image/jpeg",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.fields.propertyType).toBe("Office");
+    expect(result.fields.city).toBe("Newport Beach");
+  });
+
+  it("filters empty fields from brochure scrape result", async () => {
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              propertyType: "Retail",
+              address: "",
+              city: "Costa Mesa",
+              rateSfMo: "  ",
+            }),
+          },
+        },
+      ],
+    } as any);
+
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.scrapeBrochure({
+      fileUrl: "https://example.com/retail.pdf",
+      mimeType: "application/pdf",
+    });
+
+    expect(result.fields.propertyType).toBe("Retail");
+    expect(result.fields.city).toBe("Costa Mesa");
+    expect(result.fields.address).toBeUndefined();
+    expect(result.fields.rateSfMo).toBeUndefined();
+  });
+
+  it("handles malformed JSON from brochure scrape gracefully", async () => {
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      choices: [{ message: { content: "not json" } }],
+    } as any);
+
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.scrapeBrochure({
+      fileUrl: "https://example.com/bad.pdf",
+      mimeType: "application/pdf",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.fields).toEqual({});
+    expect(result.fieldCount).toBe(0);
+  });
+});
+
 describe("aiAssist.smartComplete", () => {
   beforeEach(() => {
     vi.clearAllMocks();

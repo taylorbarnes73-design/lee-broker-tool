@@ -120,6 +120,28 @@ Rules:
 - Keep suggestions realistic and conservative.`;
 }
 
+function buildBrochureScrapeSystemPrompt(): string {
+  return `You are an AI assistant for a commercial real estate broker submission tool at Lee & Associates Newport Beach.
+Your job is to extract structured listing field values from a commercial real estate property brochure or flyer.
+
+Rules:
+- Return ONLY a valid JSON object. No markdown, no explanation.
+- Extract as many fields as you can confidently identify from the brochure content.
+- For monetary values, return numbers as strings without $ or commas (e.g. "1.25" not "$1.25/SF/Mo").
+- For dates, use MM/DD/YYYY format.
+- For property type, use one of: Industrial, Office, Retail, Land, Other.
+- For transaction type, use: Lease or Sale.
+- For term, return number of months as a string (e.g. "60" for 5 years).
+- For building SF and suite SF, return numeric strings without commas (e.g. "12500").
+- For asking price on sales, return the number without $ or commas (e.g. "2500000").
+- For rate $/SF/Mo on leases, return just the number (e.g. "1.25").
+- Extract agent/broker names if visible.
+- Extract property address, city, state, zip if present.
+- Extract lease type (NNN, FSG, MG, Gross, Net) if mentioned.
+- Extract any relevant comments or property highlights.
+- If a field cannot be determined, omit it entirely.`;
+}
+
 // ─── Router ───────────────────────────────────────────────────────────────────
 
 export const aiAssistRouter = router({
@@ -251,5 +273,87 @@ export const aiAssistRouter = router({
       );
 
       return { success: true, fields, tab };
+    }),
+
+  /**
+   * Scrape a property brochure (PDF or image URL) and extract listing fields.
+   * Accepts a publicly accessible file URL (e.g. from S3 after upload).
+   */
+  scrapeBrochure: publicProcedure
+    .input(
+      z.object({
+        fileUrl: z.string().url(),
+        mimeType: z.enum(["application/pdf", "image/jpeg", "image/png", "image/webp"]).default("application/pdf"),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { fileUrl, mimeType } = input;
+      const fieldNames = Object.keys(listingFields.shape).join(", ");
+      const systemPrompt = buildBrochureScrapeSystemPrompt();
+
+      const isImage = mimeType.startsWith("image/");
+
+      const userContent: Array<{ type: string; text?: string; image_url?: { url: string }; file_url?: { url: string; mime_type: string } }> = isImage
+        ? [
+            {
+              type: "image_url",
+              image_url: { url: fileUrl },
+            },
+            {
+              type: "text",
+              text: `Extract listing fields from this property brochure image.\nAvailable fields: ${fieldNames}\n\nReturn as JSON:`,
+            },
+          ]
+        : [
+            {
+              type: "file_url",
+              file_url: { url: fileUrl, mime_type: mimeType },
+            },
+            {
+              type: "text",
+              text: `Extract listing fields from this property brochure PDF.\nAvailable fields: ${fieldNames}\n\nReturn as JSON:`,
+            },
+          ];
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: systemPrompt },
+          {
+            role: "user",
+            content: userContent as any,
+          },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "brochure_listing_fields",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: Object.fromEntries(
+                Object.keys(listingFields.shape).map((k) => [k, { type: "string" }])
+              ),
+              required: [],
+              additionalProperties: false,
+            },
+          },
+        },
+      });
+
+      const rawContent = response.choices?.[0]?.message?.content;
+      const content = typeof rawContent === "string" ? rawContent : "{}";
+      let parsed: Record<string, string> = {};
+      try {
+        parsed = JSON.parse(content);
+      } catch {
+        parsed = {};
+      }
+
+      // Remove empty strings
+      const fields = Object.fromEntries(
+        Object.entries(parsed).filter(([, v]) => v && v.trim() !== "")
+      );
+
+      return { success: true, fields, tab: "listing" as const, fieldCount: Object.keys(fields).length };
     }),
 });
