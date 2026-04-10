@@ -951,12 +951,20 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     <h1>Lee &amp; Associates Newport Beach &mdash; Broker Submission Tool</h1>
     <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher &bull; Comp Input &bull; Documents &bull; Contracts</div>
   </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <!-- Broker Profile Selector -->
+    <div id="bp-selector-wrap" style="display:flex;align-items:center;gap:6px;">
+      <select id="bp-active-select" onchange="bpApplyProfile(this.value)" title="Select a broker profile to pre-fill agent fields" style="font-size:13px;padding:5px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;max-width:180px;">
+        <option value="">&#128100; Select Broker&hellip;</option>
+      </select>
+      <button onclick="bpOpenModal()" title="Manage broker profiles" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.4);color:#fff;border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer;white-space:nowrap;">&#9998; Profiles</button>
+    </div>
   <button class="admin-toggle" onclick="toggleAdminMode()">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
     <span id="admin-toggle-label">Admin Portal</span>
   </button>
-</div>
-
+  </div><!-- /header-right -->
+</div><!-- /header -->
 <div id="broker-view">
 
 <div class="tab-bar">
@@ -3042,6 +3050,44 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     <div class="detail-grid" id="adm-detail-grid"></div>
     <div class="notes-box" id="adm-detail-notes" style="display:none;"><div class="notes-label">Notes</div><div id="adm-detail-notes-text"></div></div>
     <div class="action-bar" id="adm-detail-actions"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- BROKER PROFILES MODAL                                                     -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="bp-modal">
+  <div class="modal" style="max-width:640px;">
+    <h2 style="display:flex;align-items:center;gap:8px;">&#128100; Broker Profiles</h2>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">Save agent details here. Select a profile from the header to pre-fill agent fields on any tab.</p>
+
+    <!-- Profile list -->
+    <div id="bp-list" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;margin-bottom:16px;"></div>
+
+    <!-- Add / Edit form -->
+    <div id="bp-form-wrap" style="border:1px solid var(--border);border-radius:8px;padding:16px;background:var(--bg2);">
+      <h3 id="bp-form-title" style="margin:0 0 12px;font-size:14px;font-weight:600;">Add New Profile</h3>
+      <input type="hidden" id="bp-edit-id">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="field"><label>Full Name *</label><input id="bp-f-name" placeholder="e.g. Nick Dumke"></div>
+        <div class="field"><label>Title</label><input id="bp-f-title" placeholder="e.g. Associate"></div>
+        <div class="field"><label>Direct Phone</label><input id="bp-f-phone" placeholder="e.g. (949) 724-4755" type="tel"></div>
+        <div class="field"><label>Fax</label><input id="bp-f-fax" placeholder="e.g. (949) 724-4799" type="tel"></div>
+        <div class="field" style="grid-column:1/-1;"><label>Email *</label><input id="bp-f-email" placeholder="agent@lee-associates.com" type="email"></div>
+        <div class="field"><label>Agent DRE #</label><input id="bp-f-dre" placeholder="e.g. 02123456"></div>
+        <div class="field"><label>Broker DRE # (firm)</label><input id="bp-f-broker-dre" placeholder="e.g. 01197433" value="01197433"></div>
+        <div class="field" style="grid-column:1/-1;"><label>Brokerage / Company</label><input id="bp-f-company" placeholder="Lee &amp; Associates&#174;-Newport Beach" value="Lee &amp; Associates&#174;-Newport Beach"></div>
+        <div class="field" style="grid-column:1/-1;"><label>Office Address</label><input id="bp-f-address" placeholder="100 Bayview Circle, Suite 600, Newport Beach, CA 92660" value="100 Bayview Circle, Suite 600, Newport Beach, CA 92660"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn btn-primary" onclick="bpSaveProfile()"><span id="bp-save-label">Save Profile</span></button>
+        <button class="btn btn-gray" onclick="bpCancelEdit()">Cancel</button>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+      <button class="btn btn-gray" onclick="bpCloseModal()">Close</button>
+    </div>
   </div>
 </div>
 
@@ -9200,5 +9246,6 @@ function ciReset() {
   document.querySelectorAll('.ci-path-card').forEach(c => c.classList.remove('selected'));
 }
 </script>
+<script src="/broker_profiles.js"></script>
 </body>
 </html>

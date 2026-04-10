@@ -182,3 +182,13 @@
 - [x] Extend Send to Admin email to include contract data sheet attachment
 - [x] Add CSS and JS for Contract Intake tab
 - [x] Write vitest tests for extractContract procedure
+
+## Broker Profiles Feature
+- [x] Add Broker Profiles modal (create/edit/delete profiles with name, title, DRE#, email, phone, fax, license)
+- [x] Add profile selector dropdown in the tool header bar
+- [x] Persist profiles to localStorage
+- [x] Wire pre-fill to Listing Entry agent fields
+- [x] Wire pre-fill to Sign Request agent fields
+- [x] Wire pre-fill to Commission Voucher agent fields
+- [x] Wire pre-fill to Contracts tab agent fields
+- [x] Write vitest tests for broker profile localStorage helpers
