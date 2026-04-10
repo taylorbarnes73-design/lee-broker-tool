@@ -1790,6 +1790,26 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   <div class="card" id="vstep-8" data-vstep="8">
     <h2>Step 8 — Upload Documents &amp; Commission Distribution</h2>
     <h3>Upload Documents</h3>
+
+    <!-- Voucher brochure / commission agreement upload + AI scrape -->
+    <div class="field" style="margin-bottom:16px;">
+      <label style="display:flex;align-items:center;gap:6px;">&#10024; Deal Brochure / Commission Agreement <span style="font-size:11px;color:#7B1FA2;font-weight:600;background:#FAF5FF;border:1px solid #c4b5fd;border-radius:4px;padding:1px 6px;">AI Scrape</span></label>
+      <div class="brochure-zone" id="v-brochure-zone" onclick="document.getElementById('v-brochure-file').click()">
+        <input type="file" id="v-brochure-file" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display:none;" onchange="onVoucherBrochureSelected(this)">
+        <div class="brochure-zone-inner">
+          <span class="brochure-zone-icon">&#128196;</span>
+          <div>
+            <div class="brochure-zone-label">Upload deal brochure, OM, or commission agreement</div>
+            <div class="brochure-zone-sub">PDF, JPG, PNG &mdash; AI will extract deal details and fill voucher fields</div>
+          </div>
+        </div>
+        <div class="brochure-status" id="v-brochure-status"></div>
+      </div>
+      <button class="brochure-scrape-btn" id="v-brochure-scrape-btn" onclick="scrapeVoucherBrochure()">
+        &#10024; Scrape &amp; Fill Voucher Fields
+      </button>
+    </div>
+
     <div class="row c2">
       <div class="field">
         <label>Agency Disclosure</label>
@@ -2177,6 +2197,11 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   <div class="docs-hero">
     <h2>Blank Forms &amp; Reference Documents</h2>
     <p>Download, print, or fill these forms manually. All documents are the official Lee &amp; Associates Newport Beach versions.</p>
+    <div class="docs-search-wrap">
+      <span class="docs-search-icon">&#128269;</span>
+      <input type="text" id="docs-search" class="docs-search-input" placeholder="Search forms&hellip; e.g. &ldquo;industrial lease&rdquo; or &ldquo;W-9&rdquo;" oninput="filterDocs(this.value)">
+      <span class="docs-count" id="docs-count"></span>
+    </div>
   </div>
 
   <!-- LISTING ENTRY FORMS -->
@@ -2364,45 +2389,154 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     <div class="docs-grid">
       <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Deal-Listing%20Submission%20checklists_8deddb4e.pdf" target="_blank" download>
         <div class="doc-icon">&#9989;</div>
-        <div class="doc-info">
-          <div class="doc-title">Deal &amp; Listing Submission Checklists</div>
-          <div class="doc-meta">PDF</div>
-        </div>
+        <div class="doc-info"><div class="doc-title">Deal &amp; Listing Submission Checklists</div><div class="doc-meta">PDF</div></div>
         <div class="doc-dl">&#8595;</div>
       </a>
       <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/ACH%20Authorization%20Form_cd8f7e84.pdf" target="_blank" download>
         <div class="doc-icon">&#128196;</div>
-        <div class="doc-info">
-          <div class="doc-title">ACH Authorization Form</div>
-          <div class="doc-meta">PDF</div>
-        </div>
+        <div class="doc-info"><div class="doc-title">ACH Authorization Form</div><div class="doc-meta">PDF</div></div>
         <div class="doc-dl">&#8595;</div>
       </a>
       <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/LANB%20Form%20W-9_2026_29770bde.pdf" target="_blank" download>
         <div class="doc-icon">&#128196;</div>
-        <div class="doc-info">
-          <div class="doc-title">LANB Form W-9 (2026)</div>
-          <div class="doc-meta">PDF</div>
-        </div>
+        <div class="doc-info"><div class="doc-title">LANB Form W-9 (2026)</div><div class="doc-meta">PDF</div></div>
         <div class="doc-dl">&#8595;</div>
       </a>
       <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Blank_W-9%20(Rev.%20October%202018)_9bd38519.pdf" target="_blank" download>
         <div class="doc-icon">&#128196;</div>
-        <div class="doc-info">
-          <div class="doc-title">Blank W-9 (Rev. October 2018)</div>
-          <div class="doc-meta">PDF</div>
-        </div>
+        <div class="doc-info"><div class="doc-title">Blank W-9 (Rev. October 2018)</div><div class="doc-meta">PDF</div></div>
         <div class="doc-dl">&#8595;</div>
       </a>
       <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Standard_Form_for_Classifieds_Ads_b24e7cf4.pdf" target="_blank" download>
         <div class="doc-icon">&#128196;</div>
-        <div class="doc-info">
-          <div class="doc-title">Standard Form for Classifieds Ads</div>
-          <div class="doc-meta">PDF</div>
-        </div>
+        <div class="doc-info"><div class="doc-title">Standard Form for Classifieds Ads</div><div class="doc-meta">PDF</div></div>
         <div class="doc-dl">&#8595;</div>
       </a>
     </div>
+  </div>
+
+  <!-- INDUSTRIAL LEASES (collapsible) -->
+  <div class="docs-section docs-collapsible" id="sec-industrial-leases">
+    <div class="docs-section-header docs-toggle" onclick="toggleDocsSection('industrial-leases')">
+      &#127981; Industrial Leases <span class="docs-toggle-arrow" id="arr-industrial-leases">&#9660;</span>
+      <span class="docs-badge">19 forms</span>
+    </div>
+    <div class="docs-grid docs-collapsible-body" id="body-industrial-leases">
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Single_Tenant_Lease _ Net_8127af05.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Single Tenant Lease &mdash; Net</div><div class="doc-meta">PDF &middot; Industrial</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Single_Tenant_Lease _ Net_with_Addenda_c5974f5d.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Single Tenant Lease &mdash; Net with Addenda</div><div class="doc-meta">PDF &middot; Industrial</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Single_Tenant_Lease _ Gross_4a4cb8f4.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Single Tenant Lease &mdash; Gross</div><div class="doc-meta">PDF &middot; Industrial</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Single_Tenant_Lease _ Gross_with_Addenda_584ef80b.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Single Tenant Lease &mdash; Gross with Addenda</div><div class="doc-meta">PDF &middot; Industrial</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Multi_Tenant_Lease_Net_fc1baa3d.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Multi Tenant Lease &mdash; Net</div><div class="doc-meta">PDF &middot; Industrial</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Multi_Tenant_Lease_Net_with_Addenda_c7fc64fa.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Multi Tenant Lease &mdash; Net with Addenda</div><div class="doc-meta">PDF &middot; Industrial</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Multi_Tenant_Lease_Gross_36703a66.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Multi Tenant Lease &mdash; Gross</div><div class="doc-meta">PDF &middot; Industrial</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Multi_Tenant_Lease_Gross_with_Addenda_6d02899e.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Multi Tenant Lease &mdash; Gross with Addenda</div><div class="doc-meta">PDF &middot; Industrial</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Multi_Tenant_Lease_MTM_Gross_4454afdb.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Multi Tenant Lease &mdash; MTM Gross</div><div class="doc-meta">PDF &middot; Industrial</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Land_Lease_Gross_24697e6d.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Land Lease &mdash; Gross</div><div class="doc-meta">PDF &middot; Industrial</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Standard_Sublease_Multi_Tenant_63f224c3.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Standard Sublease &mdash; Multi Tenant</div><div class="doc-meta">PDF &middot; Industrial</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Standard_Sublease_Single_Tenant_6d806895.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Standard Sublease &mdash; Single Tenant</div><div class="doc-meta">PDF &middot; Industrial</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Assignment_&_Assumption_of_Lease_and_Consent_of_Lessor_1b5e7fd8.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Assignment &amp; Assumption of Lease (Consent of Lessor)</div><div class="doc-meta">PDF &middot; Industrial</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Assignment_&_Assumption_of_Lessor's_Interest_in_Lease_d4a90755.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Assignment &amp; Assumption of Lessor&rsquo;s Interest</div><div class="doc-meta">PDF &middot; Industrial</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/～Buyer_Broker_Exclusive_Representation Agreement_e4469e1e.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Buyer Broker Exclusive Representation Agreement</div><div class="doc-meta">PDF &middot; Industrial</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Single_Tenant_Lease _Gross_23927586.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Single Tenant Lease &mdash; Gross (Alt)</div><div class="doc-meta">PDF &middot; Industrial</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Single_Tenant_Lease _Gross_with_Addenda_ae23192a.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Single Tenant Lease &mdash; Gross with Addenda (Alt)</div><div class="doc-meta">PDF &middot; Industrial</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Single_Tenant_Lease _Net_64088710.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Single Tenant Lease &mdash; Net (Alt)</div><div class="doc-meta">PDF &middot; Industrial</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Single_Tenant_Lease _Net_with_Addenda_1e2a159f.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Single Tenant Lease &mdash; Net with Addenda (Alt)</div><div class="doc-meta">PDF &middot; Industrial</div></div><div class="doc-dl">&#8595;</div></a>
+    </div>
+  </div>
+
+  <!-- OFFICE LEASES (collapsible) -->
+  <div class="docs-section docs-collapsible" id="sec-office-leases">
+    <div class="docs-section-header docs-toggle" onclick="toggleDocsSection('office-leases')">
+      &#127970; Office Leases <span class="docs-toggle-arrow" id="arr-office-leases">&#9660;</span>
+      <span class="docs-badge">7 forms</span>
+    </div>
+    <div class="docs-grid docs-collapsible-body" id="body-office-leases">
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Multi_Tenant_Office_Lease_Gross_17a8ecbd.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Multi Tenant Office Lease &mdash; Gross</div><div class="doc-meta">PDF &middot; Office</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Multi_Tenant_Office_Lease_Net_b320f054.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Multi Tenant Office Lease &mdash; Net</div><div class="doc-meta">PDF &middot; Office</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Standard_Sublease_Multi_Tenant_3017073a.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Standard Sublease &mdash; Multi Tenant</div><div class="doc-meta">PDF &middot; Office</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Standard_Sublease_Single_Tenant_45a9e02b.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Standard Sublease &mdash; Single Tenant</div><div class="doc-meta">PDF &middot; Office</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Rules_&_Regulations_341d1371.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Rules &amp; Regulations</div><div class="doc-meta">PDF &middot; Office</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Floor_Plan_eebd20f1.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Floor Plan</div><div class="doc-meta">PDF &middot; Office</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Work_Letter_66c14aa7.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Work Letter</div><div class="doc-meta">PDF &middot; Office</div></div><div class="doc-dl">&#8595;</div></a>
+    </div>
+  </div>
+
+  <!-- RETAIL LEASES (collapsible) -->
+  <div class="docs-section docs-collapsible" id="sec-retail-leases">
+    <div class="docs-section-header docs-toggle" onclick="toggleDocsSection('retail-leases')">
+      &#127978; Retail Leases <span class="docs-toggle-arrow" id="arr-retail-leases">&#9660;</span>
+      <span class="docs-badge">5 forms</span>
+    </div>
+    <div class="docs-grid docs-collapsible-body" id="body-retail-leases">
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Multi_Tenant_Shopping_Center_Lease_Net_195f71d5.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Multi Tenant Shopping Center Lease &mdash; Net</div><div class="doc-meta">PDF &middot; Retail</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Standard_Sublease_Multi_Tenant_9af29bac.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Standard Sublease &mdash; Multi Tenant</div><div class="doc-meta">PDF &middot; Retail</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Standard_Sublease_Single_Tenant_d4be59f3.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Standard Sublease &mdash; Single Tenant</div><div class="doc-meta">PDF &middot; Retail</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Percentage_Rent_e90dedf7.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Percentage Rent</div><div class="doc-meta">PDF &middot; Retail</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Merchant's_Association_61a17080.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Merchant&rsquo;s Association</div><div class="doc-meta">PDF &middot; Retail</div></div><div class="doc-dl">&#8595;</div></a>
+    </div>
+  </div>
+
+  <!-- LEASE ADDENDA (collapsible) -->
+  <div class="docs-section docs-collapsible" id="sec-lease-addenda">
+    <div class="docs-section-header docs-toggle" onclick="toggleDocsSection('lease-addenda')">
+      &#128203; Lease Addenda &amp; Amendments <span class="docs-toggle-arrow" id="arr-lease-addenda">&#9660;</span>
+      <span class="docs-badge">27 forms</span>
+    </div>
+    <div class="docs-grid docs-collapsible-body" id="body-lease-addenda">
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Addendum_c435071c.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Addendum</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Amendment_to_Lease_66f2d5c5.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Amendment to Lease</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Amendment_to_Lease_Base_Rent_Reduction_Deferral_e8992164.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Amendment to Lease &mdash; Base Rent Reduction / Deferral</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Arbitration_Agreement_8eac8096.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Arbitration Agreement</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Commencement_Date_Memorandum_8db9cd97.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Commencement Date Memorandum</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Counter_Proposal_Lessor_3bfcb265.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Counter Proposal &mdash; Lessor</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Exhibits_to_Lease_a2c7fa31.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Exhibits to Lease</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Exhibits_to_Sublease_f8a45b93.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Exhibits to Sublease</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Guaranty_of_Lease_809d276d.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Guaranty of Lease</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Lessor's_Option_to_Cancel_11157df2.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Lessor&rsquo;s Option to Cancel</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Notice_of_Election_to_Extend_Term-of_Lease_23293a69.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Notice of Election to Extend Term of Lease</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Notice_of_Election_to_Purchase_d6fc1b72.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Notice of Election to Purchase</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Option_to_Extend_dd16f7bf.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Option to Extend</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Option_to_Purchase_c8404de2.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Option to Purchase</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Rent_Adjustments_8a18b230.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Rent Adjustments</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Rent_Adjustments_Sublease_cafa7ce0.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Rent Adjustments &mdash; Sublease</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Right_Of_First_Refusal_to_Lease_Additional_Space_22daa149.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Right of First Refusal to Lease Additional Space</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Right_of_First_Offer_to_Purchase_d43839f1.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Right of First Offer to Purchase</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Right_of_First_Refusal_to_Purchase_3d0168cd.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Right of First Refusal to Purchase</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Service_Agreement_HVAC_66ab8a37.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Service Agreement &mdash; HVAC</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Standard_Non_Binding_Proposal_to_Lease_or_Sublease_2a24ed68.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Standard Non-Binding Proposal to Lease or Sublease</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Tenant_Application_e9935e5b.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Tenant Application</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Uniform_Disclaimer_form_Lease_(Lessor_Lessee)_7770bd7e.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Uniform Disclaimer &mdash; Lease (Lessor / Lessee)</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Uniform_Disclaimer_form_Lease_(Tenant_Landlord)_30a2d9ce.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Uniform Disclaimer &mdash; Lease (Tenant / Landlord)</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Uniform_Disclaimer_form_Sale_(Buyer_Seller)_a0b0f8a0.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Uniform Disclaimer &mdash; Sale (Buyer / Seller)</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Work_Letter_81b504fd.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Work Letter</div><div class="doc-meta">PDF</div></div><div class="doc-dl">&#8595;</div></a>
+    </div>
+  </div>
+
+  <!-- PURCHASE DOCS (collapsible) -->
+  <div class="docs-section docs-collapsible" id="sec-purchase-docs">
+    <div class="docs-section-header docs-toggle" onclick="toggleDocsSection('purchase-docs')">
+      &#127968; Purchase &amp; Sale Documents <span class="docs-toggle-arrow" id="arr-purchase-docs">&#9660;</span>
+      <span class="docs-badge">12 forms</span>
+    </div>
+    <div class="docs-grid docs-collapsible-body" id="body-purchase-docs">
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Standard_Offer_Agreement_and_Escrow_Instructions_for_Purchase_of_Real_Estate_146cedf7.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Standard Offer Agreement &amp; Escrow Instructions</div><div class="doc-meta">PDF &middot; Purchase</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Standard_Offer_Agreement_and_Escrow_Instructions_for_Purchase_of_Real_Estate_Vacant_Land_41c7b2da.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Standard Offer Agreement &amp; Escrow &mdash; Vacant Land</div><div class="doc-meta">PDF &middot; Purchase</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Standard_Offer_Agreement_and_Escrow_Instructions_Residential_Income_Properties_4936f047.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Standard Offer Agreement &mdash; Residential Income Properties</div><div class="doc-meta">PDF &middot; Purchase</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Addendum_to_Standard_Offer_Agreement_and_Escrow_Instructions_82959f0e.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Addendum to Standard Offer Agreement</div><div class="doc-meta">PDF &middot; Purchase</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Amendment_to_Purchase_&_Sale_Agreement_2225f969.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Amendment to Purchase &amp; Sale Agreement</div><div class="doc-meta">PDF &middot; Purchase</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Counter_Offer_Buyer_e9107ac7.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Counter Offer &mdash; Buyer</div><div class="doc-meta">PDF &middot; Purchase</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Property_Information_cb545e6c.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Property Information</div><div class="doc-meta">PDF &middot; Purchase</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Property_Information_Sublease_01654625.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Property Information &mdash; Sublease</div><div class="doc-meta">PDF &middot; Purchase</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Seller's_Mandatory_Disclosure_Statement_b7fcd21b.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Seller&rsquo;s Mandatory Disclosure Statement</div><div class="doc-meta">PDF &middot; Purchase</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Standard_Estoppel_Certificate_By_Lessee_0cd61da7.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Standard Estoppel Certificate &mdash; By Lessee</div><div class="doc-meta">PDF &middot; Purchase</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Standard_Estoppel_Certificate_By_Lessor_530ff6a8.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Standard Estoppel Certificate &mdash; By Lessor</div><div class="doc-meta">PDF &middot; Purchase</div></div><div class="doc-dl">&#8595;</div></a>
+      <a class="doc-card" href="https://d2xsxph8kpxj0f.cloudfront.net/310519663385913751/dopYj5Ly6eeHCpQSwQH5qz/Uniform_Disclaimer_form_Sale_(Buyer_Seller)_a4fb9569.pdf" target="_blank" download><div class="doc-icon">&#128196;</div><div class="doc-info"><div class="doc-title">Uniform Disclaimer &mdash; Sale (Buyer / Seller)</div><div class="doc-meta">PDF &middot; Purchase</div></div><div class="doc-dl">&#8595;</div></a>
+    </div>
+  </div>
+
+  <!-- NO RESULTS MESSAGE -->
+  <div id="docs-no-results" style="display:none;padding:32px;text-align:center;color:var(--text2);font-size:14px;">
+    No forms match your search. Try a different keyword.
   </div>
 
 </div><!-- /tab-docs -->
@@ -7043,6 +7177,70 @@ function initS3Uploads() {
 
 document.addEventListener('DOMContentLoaded', initS3Uploads);
 
+// ─── DOCUMENTS TAB: SEARCH + COLLAPSE ───────────────────────────────────────
+
+function toggleDocsSection(id) {
+  const body = document.getElementById('body-' + id);
+  const arrow = document.getElementById('arr-' + id);
+  if (!body) return;
+  const isCollapsed = body.classList.toggle('collapsed');
+  if (arrow) arrow.classList.toggle('collapsed', isCollapsed);
+}
+
+function filterDocs(query) {
+  const q = query.trim().toLowerCase();
+  const allCards = document.querySelectorAll('#tab-docs .doc-card');
+  const countEl = document.getElementById('docs-count');
+  const noResults = document.getElementById('docs-no-results');
+  let visible = 0;
+
+  if (!q) {
+    // Reset: show all cards, restore section visibility
+    allCards.forEach(c => c.style.display = '');
+    document.querySelectorAll('#tab-docs .docs-section').forEach(s => s.style.display = '');
+    // Re-collapse the collapsible bodies that were collapsed
+    document.querySelectorAll('#tab-docs .docs-collapsible-body').forEach(b => {
+      if (!b.classList.contains('collapsed')) b.classList.add('collapsed');
+    });
+    document.querySelectorAll('#tab-docs .docs-toggle-arrow').forEach(a => a.classList.add('collapsed'));
+    if (countEl) countEl.textContent = '';
+    if (noResults) noResults.style.display = 'none';
+    return;
+  }
+
+  // Searching: expand all sections, filter cards
+  document.querySelectorAll('#tab-docs .docs-collapsible-body').forEach(b => b.classList.remove('collapsed'));
+  document.querySelectorAll('#tab-docs .docs-toggle-arrow').forEach(a => a.classList.remove('collapsed'));
+
+  allCards.forEach(card => {
+    const title = (card.querySelector('.doc-title')?.textContent || '').toLowerCase();
+    const meta = (card.querySelector('.doc-meta')?.textContent || '').toLowerCase();
+    const match = title.includes(q) || meta.includes(q);
+    card.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+
+  // Hide sections where all cards are hidden
+  document.querySelectorAll('#tab-docs .docs-section').forEach(section => {
+    const cards = section.querySelectorAll('.doc-card');
+    const anyVisible = Array.from(cards).some(c => c.style.display !== 'none');
+    section.style.display = anyVisible ? '' : 'none';
+  });
+
+  if (countEl) countEl.textContent = visible > 0 ? `${visible} result${visible !== 1 ? 's' : ''}` : '';
+  if (noResults) noResults.style.display = visible === 0 ? 'block' : 'none';
+}
+
+// On page load: collapse the large sections by default
+document.addEventListener('DOMContentLoaded', () => {
+  ['industrial-leases', 'office-leases', 'retail-leases', 'lease-addenda', 'purchase-docs'].forEach(id => {
+    const body = document.getElementById('body-' + id);
+    const arrow = document.getElementById('arr-' + id);
+    if (body) body.classList.add('collapsed');
+    if (arrow) arrow.classList.add('collapsed');
+  });
+});
+
 // ─── BROCHURE UPLOAD + AI SCRAPE ─────────────────────────────────────────────
 
 let brochureFileUrl = null;
@@ -7123,6 +7321,106 @@ async function scrapeBrochure() {
   } finally {
     btn.classList.remove('loading');
     btn.innerHTML = '&#10024; Scrape &amp; Fill Listing Fields';
+  }
+}
+
+// ─── VOUCHER BROCHURE UPLOAD + AI SCRAPE ────────────────────────────────────
+
+let voucherBrochureFileUrl = null;
+let voucherBrochureMimeType = 'application/pdf';
+
+function onVoucherBrochureSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const status = document.getElementById('v-brochure-status');
+  const btn = document.getElementById('v-brochure-scrape-btn');
+  status.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(0)} KB) — uploading…`;
+  btn.style.display = 'none';
+  voucherBrochureFileUrl = null;
+
+  if (file.type === 'application/pdf') voucherBrochureMimeType = 'application/pdf';
+  else if (file.type.startsWith('image/')) voucherBrochureMimeType = file.type;
+  else voucherBrochureMimeType = 'application/pdf';
+
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      const base64 = e.target.result.split(',')[1];
+      const resp = await fetch('/api/trpc/files.upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          json: { filename: file.name, mimeType: voucherBrochureMimeType, base64, category: 'brochure', reference: 'voucher' }
+        })
+      });
+      const data = await resp.json();
+      const url = data?.result?.data?.json?.url;
+      if (url) {
+        voucherBrochureFileUrl = url;
+        status.textContent = `✓ Uploaded: ${file.name}`;
+        btn.style.display = 'block';
+      } else {
+        status.textContent = '✗ Upload failed — please try again';
+      }
+    } catch(err) {
+      status.textContent = '✗ Upload error: ' + err.message;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function scrapeVoucherBrochure() {
+  if (!voucherBrochureFileUrl) return;
+  const btn = document.getElementById('v-brochure-scrape-btn');
+  const status = document.getElementById('v-brochure-status');
+  btn.classList.add('loading');
+  btn.textContent = '✦ Analyzing document…';
+  try {
+    const resp = await fetch('/api/trpc/aiAssist.scrapeBrochure', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ json: { fileUrl: voucherBrochureFileUrl, mimeType: voucherBrochureMimeType } })
+    });
+    const data = await resp.json();
+    const result = data?.result?.data?.json;
+    if (result && result.success) {
+      // Map listing fields to voucher fields where they overlap
+      const voucherMapping = {
+        address: 'v-address',
+        city: 'v-city',
+        state: 'v-state',
+        zip: 'v-zip',
+        buildingSf: 'v-deal-sf',
+        suiteSf: 'v-deal-sf',
+        rateSfMo: 'v-base-rent',
+        askingPrice: 'v-total-consideration',
+        listingAgentName: 'v-listing-agent',
+        comments: 'v-notes',
+      };
+      let count = 0;
+      Object.entries(result.fields).forEach(([key, val]) => {
+        const elId = voucherMapping[key];
+        if (elId) {
+          const el = document.getElementById(elId);
+          if (el && !el.readOnly && !el.value) {
+            el.value = val;
+            el.classList.add('ai-filled-purple');
+            injectAiBadge(el, 'purple');
+            count++;
+          }
+        }
+      });
+      status.textContent = `✓ Filled ${count} voucher field${count !== 1 ? 's' : ''} from document`;
+      if (count > 0) showToast(`✨ Filled ${count} voucher field${count !== 1 ? 's' : ''} from document`);
+      else showToast('No matching voucher fields found in document', 'warn');
+    } else {
+      status.textContent = '✗ Could not extract fields — try a clearer document';
+    }
+  } catch(err) {
+    status.textContent = '✗ Error: ' + err.message;
+  } finally {
+    btn.classList.remove('loading');
+    btn.innerHTML = '&#10024; Scrape &amp; Fill Voucher Fields';
   }
 }
 </script>
@@ -7209,6 +7507,61 @@ async function scrapeBrochure() {
   color: var(--red);
   font-weight: 700;
   flex-shrink: 0;
+}
+/* Search bar */
+.docs-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  transition: border-color 0.15s;
+}
+.docs-search-wrap:focus-within { border-color: var(--red); }
+.docs-search-icon { font-size: 15px; color: var(--text3); flex-shrink: 0; }
+.docs-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  color: var(--text);
+  background: transparent;
+}
+.docs-search-input::placeholder { color: var(--text3); }
+.docs-count { font-size: 11px; color: var(--text3); white-space: nowrap; }
+/* Collapsible sections */
+.docs-toggle {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.docs-toggle:hover { color: var(--red); }
+.docs-toggle-arrow { font-size: 10px; transition: transform 0.2s; }
+.docs-toggle-arrow.collapsed { transform: rotate(-90deg); }
+.docs-badge {
+  margin-left: auto;
+  font-size: 10px;
+  background: #f0f0f0;
+  color: var(--text2);
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-weight: 600;
+}
+.docs-collapsible-body {
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.2s;
+  max-height: 2000px;
+  opacity: 1;
+}
+.docs-collapsible-body.collapsed {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 /* Brochure upload zone */
 .brochure-zone {

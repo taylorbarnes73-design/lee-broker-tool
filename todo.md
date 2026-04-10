@@ -147,3 +147,10 @@
 - [x] Add tRPC aiAssist.scrapeBrochure procedure — accepts uploaded file URL, extracts property fields via AI, returns structured field values
 - [x] Wire brochure upload → "Scrape & Fill" button → calls scrapeBrochure → applies fields with AI fill animation
 - [x] Write vitest tests for aiAssist.scrapeBrochure procedure (4 tests, 31 total passing)
+
+## Documents Tab Expansion & Voucher Brochure Scrape
+- [x] Upload Lease Addenda, Industrial/Office/Retail Leases, Purchase Docs to CDN
+- [x] Add collapsible sections to Documents tab for new form folders
+- [x] Add search/filter bar to Documents tab
+- [x] Add brochure upload zone + AI Scrape button to Commission Voucher tab (Step 2 / Upload Docs section)
+- [x] Wire voucher brochure scrape to aiAssist.scrapeBrochure (voucher tab field mapping)
