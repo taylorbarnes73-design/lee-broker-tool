@@ -16,7 +16,7 @@ const sectionSchema = z.object({
 });
 
 const sendToAdminInput = z.object({
-  formType: z.enum(["listing", "voucher"]),
+  formType: z.enum(["listing", "voucher", "sign"]),
   brokerName: z.string().optional(),
   propertyAddress: z.string().optional(),
   sections: z.array(sectionSchema),
@@ -27,12 +27,12 @@ const sendToAdminInput = z.object({
 // ─── Email body formatter ─────────────────────────────────────────────────────
 
 function buildEmailBody(
-  formType: "listing" | "voucher",
+  formType: "listing" | "voucher" | "sign",
   brokerName: string,
   propertyAddress: string,
   sections: Array<{ title: string; fields: Array<{ label: string; value: string }> }>
 ): string {
-  const formLabel = formType === "listing" ? "Listing Entry" : "Commission Voucher";
+  const formLabel = formType === "listing" ? "Listing Entry" : formType === "sign" ? "Sign Request" : "Commission Voucher";
   const now = new Date().toLocaleString("en-US", {
     timeZone: "America/Los_Angeles",
     dateStyle: "full",
@@ -107,7 +107,7 @@ export const emailRouter = router({
         return { success: false, error: "Admin email not configured. Please set ADMIN_EMAIL in environment variables." };
       }
 
-      const formLabel = formType === "listing" ? "Listing Entry" : "Commission Voucher";
+      const formLabel = formType === "listing" ? "Listing Entry" : formType === "sign" ? "Sign Request" : "Commission Voucher";
       const addressPart = propertyAddress ? ` — ${propertyAddress}` : "";
       const subject = `[Lee & Associates] ${formLabel} Submission${addressPart}`;
 

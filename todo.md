@@ -163,3 +163,9 @@
 - [x] Format email body as clean HTML table with all form sections
 - [x] CC Taylor (sender) on every admin email
 - [x] Write vitest tests for sendToAdmin procedure
+
+## Sign Request Send to Admin
+- [x] Add Send to Admin button to Sign Request tab action bar
+- [x] Add collectSignSections JS function to gather all sign form fields
+- [x] Extend emailRouter formType enum to include "sign"
+- [x] Add vitest tests for sign formType

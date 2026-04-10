@@ -1489,6 +1489,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   <div class="btn-bar" style="margin-top:16px;">
     <button class="btn btn-gray" onclick="exportSignPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
     <button class="btn btn-red" onclick="openEmailModal('sign')">Submit Sign Request</button>
+    <button class="btn btn-green" id="btn-sign-send-admin" onclick="openSendToAdminModal('sign')"><span class="btn-spinner"></span><span class="btn-label">&#9993; Send to Admin</span></button>
     <button class="btn btn-gray" onclick="clearSign()">Clear Form</button>
   </div>
 </div>
@@ -8301,6 +8302,62 @@ function collectVoucherSections(notes) {
   return sections;
 }
 
+/**
+ * Collect all filled fields from the Sign Request form and return structured sections.
+ */
+function collectSignSections(notes) {
+  const sections = [];
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  const sel = id => { const el = document.getElementById(id); return el ? (el.options[el.selectedIndex]?.text || '') : ''; };
+  const chk = id => document.getElementById(id)?.checked ? 'Yes' : 'No';
+
+  sections.push({
+    title: 'Sign Order Details',
+    fields: [
+      { label: 'Date', value: v('s-date') },
+      { label: 'Order Type', value: sel('s-order-type') },
+      { label: 'Property Address', value: v('s-address') },
+      { label: 'City', value: v('s-city') },
+      { label: 'Cross Streets / Building Name', value: v('s-cross') },
+    ]
+  });
+
+  sections.push({
+    title: 'Sign Quantities',
+    fields: [
+      { label: '4x8 Signs', value: v('s-4x8-qty') },
+      { label: '6x8 Signs', value: v('s-6x8-qty') },
+      { label: 'Other Size', value: v('s-other-size') },
+      { label: 'Other Qty', value: v('s-other-qty') },
+      { label: 'Banner Size', value: v('s-banner-size') },
+      { label: 'Banner Qty', value: v('s-banner-qty') },
+    ]
+  });
+
+  sections.push({
+    title: 'Rider & Placement',
+    fields: [
+      { label: 'Name Rider', value: chk('s-rider-toggle') },
+      { label: 'Rider Text', value: v('s-rider') },
+      { label: 'Custom Placement', value: chk('s-placement-toggle') },
+    ]
+  });
+
+  sections.push({
+    title: 'Contact & Access',
+    fields: [
+      { label: 'Requested By', value: v('s-requested-by') },
+      { label: 'Access Necessary', value: sel('s-access') },
+      { label: 'Access Contact', value: v('s-access-contact') },
+      { label: 'Comments', value: v('s-comments') },
+    ]
+  });
+
+  if (notes) sections.push({ title: 'Notes to Admin', fields: [{ label: 'Notes', value: notes }] });
+
+  return sections;
+}
+
 async function submitSendToAdmin() {
   const btn = document.getElementById('sta-send-btn');
   const status = document.getElementById('sta-status');
@@ -8315,11 +8372,13 @@ async function submitSendToAdmin() {
 
   const sections = _staFormType === 'listing'
     ? collectListingSections(notes)
-    : collectVoucherSections(notes);
+    : _staFormType === 'sign'
+      ? collectSignSections(notes)
+      : collectVoucherSections(notes);
 
   // Determine property address for subject line
-  const addrId = _staFormType === 'listing' ? 'l-address' : 'v-address';
-  const cityId = _staFormType === 'listing' ? 'l-city' : 'v-city';
+  const addrId = _staFormType === 'listing' ? 'l-address' : _staFormType === 'sign' ? 's-address' : 'v-address';
+  const cityId = _staFormType === 'listing' ? 'l-city' : _staFormType === 'sign' ? 's-city' : 'v-city';
   const address = [(document.getElementById(addrId)?.value||'').trim(), (document.getElementById(cityId)?.value||'').trim()].filter(Boolean).join(', ');
 
   try {

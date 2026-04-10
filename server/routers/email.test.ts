@@ -150,4 +150,41 @@ describe("email.sendToAdmin", () => {
     const callArg = (execSync as any).mock.calls[0][0] as string;
     expect(callArg).toContain("100 Newport Center Dr");
   });
+
+  it("sends a sign request email and returns success", async () => {
+    const caller = makeCaller();
+    const result = await caller.sendToAdmin({
+      formType: "sign",
+      brokerName: "Taylor Barnes",
+      propertyAddress: "200 Commerce Dr, Irvine",
+      sections: [
+        {
+          title: "Sign Order Details",
+          fields: [
+            { label: "Order Type", value: "Installation" },
+            { label: "Property Address", value: "200 Commerce Dr" },
+          ],
+        },
+      ],
+      senderEmail: "tbarnes@lee-associates.com",
+    });
+
+    expect(result.success).toBe(true);
+    const callArg = (execSync as any).mock.calls[0][0] as string;
+    expect(callArg).toContain("Sign Request");
+    expect(callArg).toContain("admin@lee-associates.com");
+  });
+
+  it("sign request email subject includes property address", async () => {
+    const caller = makeCaller();
+    await caller.sendToAdmin({
+      formType: "sign",
+      brokerName: "Taylor",
+      propertyAddress: "555 Industrial Blvd",
+      sections: sampleSections,
+    });
+
+    const callArg = (execSync as any).mock.calls[0][0] as string;
+    expect(callArg).toContain("555 Industrial Blvd");
+  });
 });
