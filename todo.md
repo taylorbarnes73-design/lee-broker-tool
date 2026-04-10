@@ -117,3 +117,6 @@
 - [x] Admin Portal empty state illustration/message
 - [x] Tab switch 200ms slide transition
 - [x] Scrollable tab bar with right-edge gradient fade indicator
+
+## Bug Fixes
+- [ ] Comp Input tab shows blank/empty when clicked — fix tab switching
