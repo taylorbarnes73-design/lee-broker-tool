@@ -47,3 +47,23 @@ export const uploads = mysqlTable("uploads", {
 
 export type Upload = typeof uploads.$inferSelect;
 export type InsertUpload = typeof uploads.$inferInsert;
+
+/**
+ * Stores form submissions from all 4 broker tool tabs.
+ * The full form payload is stored as JSON in the payload column.
+ */
+export const submissions = mysqlTable("submissions", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Which form was submitted: listing | voucher | sign-request | comp */
+  formType: varchar("formType", { length: 32 }).notNull(),
+  /** Full JSON payload of the submitted form */
+  payload: text("payload"),
+  /** Property address or other reference string */
+  reference: varchar("reference", { length: 512 }),
+  /** Name of the submitting broker/agent */
+  submittedBy: varchar("submittedBy", { length: 128 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Submission = typeof submissions.$inferSelect;
+export type InsertSubmission = typeof submissions.$inferInsert;

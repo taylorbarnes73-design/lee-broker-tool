@@ -119,4 +119,14 @@
 - [x] Scrollable tab bar with right-edge gradient fade indicator
 
 ## Bug Fixes
-- [ ] Comp Input tab shows blank/empty when clicked — fix tab switching
+- [x] Comp Input tab shows blank/empty when clicked — fixed (root cause: 2 unclosed divs in voucher tab nesting comp tab inside hidden voucher panel)
+
+## Power Automate Custom Connector
+- [ ] Add POST /api/submit/listing REST endpoint
+- [ ] Add POST /api/submit/voucher REST endpoint
+- [ ] Add POST /api/submit/sign-request REST endpoint
+- [ ] Add POST /api/submit/comp REST endpoint
+- [ ] Add GET /api/files/list REST endpoint
+- [ ] Add GET /api/files/url/:key REST endpoint
+- [ ] Generate OpenAPI 2.0 (Swagger) JSON definition for Power Automate import
+- [ ] Write vitest tests for all new REST endpoints

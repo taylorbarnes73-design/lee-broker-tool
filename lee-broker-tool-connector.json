@@ -1,0 +1,455 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Lee Broker Tool",
+    "description": "Custom connector for the Lee & Associates Newport Beach Broker Submission Tool. Enables Power Automate flows to receive form submissions (Listing Entry, Commission Voucher, Sign Request, Comp Input) and query uploaded documents.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Lee & Associates Newport Beach"
+    }
+  },
+  "host": "leebrokertool.manus.space",
+  "basePath": "/api/v1",
+  "schemes": ["https"],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "paths": {
+    "/submit/listing": {
+      "post": {
+        "summary": "Submit Listing Entry",
+        "description": "Submit a new property listing. Stores the full form payload and returns a submission ID.",
+        "operationId": "SubmitListing",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/ListingSubmission" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listing submitted successfully",
+            "schema": { "$ref": "#/definitions/SubmissionResponse" }
+          },
+          "400": { "description": "Missing required field", "schema": { "$ref": "#/definitions/ErrorResponse" } },
+          "500": { "description": "Server error", "schema": { "$ref": "#/definitions/ErrorResponse" } }
+        }
+      }
+    },
+    "/submit/voucher": {
+      "post": {
+        "summary": "Submit Commission Voucher",
+        "description": "Submit a commission voucher for a completed deal. Stores the full form payload and returns a submission ID.",
+        "operationId": "SubmitVoucher",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/VoucherSubmission" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Voucher submitted successfully",
+            "schema": { "$ref": "#/definitions/VoucherSubmissionResponse" }
+          },
+          "400": { "description": "Missing required field", "schema": { "$ref": "#/definitions/ErrorResponse" } },
+          "500": { "description": "Server error", "schema": { "$ref": "#/definitions/ErrorResponse" } }
+        }
+      }
+    },
+    "/submit/sign-request": {
+      "post": {
+        "summary": "Submit Sign Request",
+        "description": "Submit a yard sign order. Auto-generates a PO number if not provided.",
+        "operationId": "SubmitSignRequest",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/SignRequestSubmission" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sign request submitted successfully",
+            "schema": { "$ref": "#/definitions/SignRequestResponse" }
+          },
+          "400": { "description": "Missing required field", "schema": { "$ref": "#/definitions/ErrorResponse" } },
+          "500": { "description": "Server error", "schema": { "$ref": "#/definitions/ErrorResponse" } }
+        }
+      }
+    },
+    "/submit/comp": {
+      "post": {
+        "summary": "Submit Comp Input",
+        "description": "Submit a lease or sale comp record for market tracking.",
+        "operationId": "SubmitComp",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/CompSubmission" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comp submitted successfully",
+            "schema": { "$ref": "#/definitions/SubmissionResponse" }
+          },
+          "400": { "description": "Missing required field", "schema": { "$ref": "#/definitions/ErrorResponse" } },
+          "500": { "description": "Server error", "schema": { "$ref": "#/definitions/ErrorResponse" } }
+        }
+      }
+    },
+    "/submissions": {
+      "get": {
+        "summary": "List Submissions",
+        "description": "Retrieve recent form submissions. Optionally filter by form type.",
+        "operationId": "ListSubmissions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "formType",
+            "type": "string",
+            "description": "Filter by form type: listing, voucher, sign-request, or comp",
+            "enum": ["listing", "voucher", "sign-request", "comp"]
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "type": "integer",
+            "description": "Maximum number of results to return (default 50, max 200)",
+            "default": 50
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of submissions",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": { "type": "boolean" },
+                "data": {
+                  "type": "array",
+                  "items": { "$ref": "#/definitions/SubmissionSummary" }
+                }
+              }
+            }
+          },
+          "500": { "description": "Server error", "schema": { "$ref": "#/definitions/ErrorResponse" } }
+        }
+      }
+    },
+    "/submissions/{id}": {
+      "get": {
+        "summary": "Get Submission Detail",
+        "description": "Retrieve the full form payload of a single submission by its ID.",
+        "operationId": "GetSubmission",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer",
+            "description": "Submission ID returned from a submit operation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Submission detail with full payload",
+            "schema": { "$ref": "#/definitions/SubmissionDetail" }
+          },
+          "404": { "description": "Submission not found", "schema": { "$ref": "#/definitions/ErrorResponse" } },
+          "500": { "description": "Server error", "schema": { "$ref": "#/definitions/ErrorResponse" } }
+        }
+      }
+    },
+    "/files": {
+      "get": {
+        "summary": "List Uploaded Files",
+        "description": "Retrieve metadata for uploaded documents. Optionally filter by category or property address reference.",
+        "operationId": "ListFiles",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "category",
+            "type": "string",
+            "description": "Filter by category: listing_agreement, agency_disclosure, voucher_doc, comp_doc, other"
+          },
+          {
+            "in": "query",
+            "name": "reference",
+            "type": "string",
+            "description": "Filter by property address or reference string"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "type": "integer",
+            "description": "Maximum number of results (default 50, max 200)",
+            "default": 50
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of uploaded files",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": { "type": "boolean" },
+                "data": {
+                  "type": "array",
+                  "items": { "$ref": "#/definitions/FileMetadata" }
+                }
+              }
+            }
+          },
+          "500": { "description": "Server error", "schema": { "$ref": "#/definitions/ErrorResponse" } }
+        }
+      }
+    },
+    "/files/url": {
+      "get": {
+        "summary": "Get File Download URL",
+        "description": "Get a fresh download URL for a file by its S3 key.",
+        "operationId": "GetFileUrl",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "key",
+            "required": true,
+            "type": "string",
+            "description": "S3 file key returned when the file was uploaded"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Download URL for the file",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": { "type": "boolean" },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "fileKey": { "type": "string" },
+                    "url": { "type": "string", "description": "Direct download URL" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Missing key parameter", "schema": { "$ref": "#/definitions/ErrorResponse" } },
+          "500": { "description": "Server error", "schema": { "$ref": "#/definitions/ErrorResponse" } }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "ListingSubmission": {
+      "type": "object",
+      "required": ["propertyAddress", "propertyType", "transactionType"],
+      "properties": {
+        "propertyAddress": { "type": "string", "description": "Street address of the property", "example": "1234 Commerce Way" },
+        "city": { "type": "string", "example": "Irvine" },
+        "state": { "type": "string", "example": "CA" },
+        "zip": { "type": "string", "example": "92618" },
+        "propertyType": { "type": "string", "enum": ["Industrial", "Office", "Retail", "Land", "Other"], "example": "Industrial" },
+        "transactionType": { "type": "string", "enum": ["Lease", "Sale"], "example": "Lease" },
+        "dateEntered": { "type": "string", "format": "date", "example": "2026-04-10" },
+        "rate": { "type": "string", "description": "Rate per SF per month", "example": "0.85" },
+        "term": { "type": "string", "description": "Lease term in months or Negotiable", "example": "36" },
+        "leaseType": { "type": "string", "example": "NNN" },
+        "revealPricesToMLS": { "type": "boolean", "default": false },
+        "agentName": { "type": "string", "example": "Taylor Barnes" },
+        "agentEmail": { "type": "string", "format": "email" },
+        "agentPhone": { "type": "string" },
+        "sharedExpensePct": { "type": "number", "description": "Shared expense percentage", "example": 50 },
+        "buildingSF": { "type": "number", "example": 25000 },
+        "listingAgreementUrl": { "type": "string", "description": "S3 URL of uploaded listing agreement" },
+        "agencyDisclosureUrl": { "type": "string", "description": "S3 URL of uploaded agency disclosure" },
+        "notes": { "type": "string" }
+      }
+    },
+    "VoucherSubmission": {
+      "type": "object",
+      "required": ["propertyAddress", "representationType"],
+      "properties": {
+        "propertyAddress": { "type": "string", "example": "1234 Commerce Way" },
+        "city": { "type": "string", "example": "Irvine" },
+        "state": { "type": "string", "example": "CA" },
+        "zip": { "type": "string", "example": "92618" },
+        "dealSF": { "type": "number", "example": 10000 },
+        "representationType": { "type": "string", "enum": ["Tenant Rep", "Landlord Rep", "Buyer Rep", "Seller Rep", "Other"], "example": "Tenant Rep" },
+        "clientName": { "type": "string", "example": "Acme Corp" },
+        "transactionType": { "type": "string", "enum": ["Lease", "Sale"], "example": "Lease" },
+        "listingAgentName": { "type": "string" },
+        "procuringAgentName": { "type": "string" },
+        "commissionRate": { "type": "number", "description": "Commission rate as percentage", "example": 4 },
+        "totalCommission": { "type": "number", "example": 34000 },
+        "leaseCommissionDue": { "type": "number" },
+        "totalInvoice": { "type": "number" },
+        "invoiceTo": { "type": "string", "example": "Landlord" },
+        "lessorName": { "type": "string" },
+        "lesseeName": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    },
+    "SignRequestSubmission": {
+      "type": "object",
+      "required": ["propertyAddress"],
+      "properties": {
+        "propertyAddress": { "type": "string", "example": "1234 Commerce Way" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "zip": { "type": "string" },
+        "poNumber": { "type": "string", "description": "Leave blank to auto-generate", "example": "PO-260410-A1B" },
+        "configuration": { "type": "string", "enum": ["Single Face (S/F)", "Double Face (D/F)", "V-Shape"], "example": "Single Face (S/F)" },
+        "nameRider": { "type": "string", "description": "Name to print on rider panel" },
+        "requestedBy": { "type": "string", "example": "Taylor Barnes" },
+        "sharedExpensePct": { "type": "number", "example": 50 },
+        "accessInstructions": { "type": "string" },
+        "comments": { "type": "string" },
+        "signSizes": {
+          "type": "array",
+          "description": "List of sign sizes and quantities ordered",
+          "items": {
+            "type": "object",
+            "properties": {
+              "size": { "type": "string", "example": "4x8" },
+              "quantity": { "type": "integer", "example": 2 }
+            }
+          }
+        }
+      }
+    },
+    "CompSubmission": {
+      "type": "object",
+      "required": ["address", "compType"],
+      "properties": {
+        "compType": { "type": "string", "enum": ["Lease Comp", "Sale Comp"], "example": "Lease Comp" },
+        "lanbSource": { "type": "string", "description": "Broker name / data source", "example": "Taylor Barnes" },
+        "date": { "type": "string", "format": "date" },
+        "address": { "type": "string", "example": "1234 Commerce Way" },
+        "city": { "type": "string", "example": "Irvine" },
+        "propertyType": { "type": "string", "enum": ["Industrial", "Office", "Retail", "Multi-Family"] },
+        "propertySubtype": { "type": "string" },
+        "buildingClass": { "type": "string", "enum": ["A", "B", "C"] },
+        "spaceLeasedSF": { "type": "number", "example": 10000 },
+        "rentPerSF": { "type": "number", "example": 0.85 },
+        "rentType": { "type": "string", "enum": ["NNN", "G"] },
+        "execDate": { "type": "string", "format": "date" },
+        "occDate": { "type": "string", "format": "date" },
+        "expireDate": { "type": "string", "format": "date" },
+        "termMonths": { "type": "integer", "example": 36 },
+        "lessee": { "type": "string", "example": "Acme Corp" },
+        "lessor": { "type": "string", "example": "Landlord LLC" },
+        "listBrokerage": { "type": "string" },
+        "procBrokerage": { "type": "string" },
+        "listAgent1": { "type": "string" },
+        "procAgent1": { "type": "string" },
+        "comments": { "type": "string" }
+      }
+    },
+    "SubmissionResponse": {
+      "type": "object",
+      "properties": {
+        "success": { "type": "boolean" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "submissionId": { "type": "integer", "description": "Unique ID of the stored submission" },
+            "formType": { "type": "string" },
+            "propertyAddress": { "type": "string" },
+            "submittedAt": { "type": "string", "format": "date-time" }
+          }
+        }
+      }
+    },
+    "VoucherSubmissionResponse": {
+      "type": "object",
+      "properties": {
+        "success": { "type": "boolean" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "submissionId": { "type": "integer" },
+            "formType": { "type": "string" },
+            "propertyAddress": { "type": "string" },
+            "totalCommission": { "type": "number" },
+            "submittedAt": { "type": "string", "format": "date-time" }
+          }
+        }
+      }
+    },
+    "SignRequestResponse": {
+      "type": "object",
+      "properties": {
+        "success": { "type": "boolean" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "submissionId": { "type": "integer" },
+            "formType": { "type": "string" },
+            "poNumber": { "type": "string", "description": "Auto-generated or provided PO number" },
+            "propertyAddress": { "type": "string" },
+            "submittedAt": { "type": "string", "format": "date-time" }
+          }
+        }
+      }
+    },
+    "SubmissionSummary": {
+      "type": "object",
+      "properties": {
+        "submissionId": { "type": "integer" },
+        "formType": { "type": "string" },
+        "reference": { "type": "string", "description": "Property address or reference" },
+        "submittedBy": { "type": "string" },
+        "submittedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "SubmissionDetail": {
+      "type": "object",
+      "properties": {
+        "success": { "type": "boolean" },
+        "data": {
+          "type": "object",
+          "properties": {
+            "submissionId": { "type": "integer" },
+            "formType": { "type": "string" },
+            "reference": { "type": "string" },
+            "submittedBy": { "type": "string" },
+            "submittedAt": { "type": "string", "format": "date-time" },
+            "payload": { "type": "object", "description": "Full form data as submitted" }
+          }
+        }
+      }
+    },
+    "FileMetadata": {
+      "type": "object",
+      "properties": {
+        "fileKey": { "type": "string", "description": "S3 key — use this with Get File Download URL" },
+        "filename": { "type": "string" },
+        "url": { "type": "string", "description": "Direct CDN URL" },
+        "mimeType": { "type": "string" },
+        "fileSize": { "type": "integer", "description": "File size in bytes" },
+        "category": { "type": "string" },
+        "reference": { "type": "string" },
+        "uploaderName": { "type": "string" },
+        "uploadedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "properties": {
+        "success": { "type": "boolean", "example": false },
+        "error": { "type": "string", "example": "propertyAddress is required" }
+      }
+    }
+  }
+}
