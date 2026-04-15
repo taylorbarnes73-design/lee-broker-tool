@@ -5,73 +5,72 @@ name: Build and deploy Node.js app to Azure Web App - lee-broker-tool
 
 on:
   push:
-      branches:
-            - main
-              workflow_dispatch:
+    branches:
+      - main
+  workflow_dispatch:
 
-              jobs:
-                build:
-                    runs-on: ubuntu-latest
-                        permissions:
-                              contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
-                                  steps:
-                                        - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-                                              - name: Set up Node.js
-                                                      uses: actions/setup-node@v4
-                                                              with:
-                                                                        node-version: '22.x'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
 
-                                                                              - name: Install pnpm
-                                                                                      uses: pnpm/action-setup@v4
-                                                                                              with:
-                                                                                                        version: 10
-                                                                                                        
-                                                                                                              - name: Install dependencies
-                                                                                                                      run: pnpm install --frozen-lockfile
-                                                                                                                      
-                                                                                                                            - name: Build application
-                                                                                                                                    run: pnpm run build
-                                                                                                                                    
-                                                                                                                                          - name: Prepare deployment package
-                                                                                                                                                  run: |
-                                                                                                                                                            mkdir -p deploy
-                                                                                                                                                                      cp -r dist deploy/
-                                                                                                                                                                                cp package.json deploy/
-                                                                                                                                                                                          cp pnpm-lock.yaml deploy/
-                                                                                                                                                                                                    cd deploy && npm install --omit=dev --ignore-scripts 2>/dev/null || true
-                                                                                                                                                                                                    
-                                                                                                                                                                                                          - name: Upload artifact for deployment job
-                                                                                                                                                                                                                  uses: actions/upload-artifact@v4
-                                                                                                                                                                                                                          with:
-                                                                                                                                                                                                                                    name: node-app
-                                                                                                                                                                                                                                              path: deploy
-                                                                                                                                                                                                                                              
-                                                                                                                                                                                                                                                deploy:
-                                                                                                                                                                                                                                                    runs-on: ubuntu-latest
-                                                                                                                                                                                                                                                        needs: build
-                                                                                                                                                                                                                                                            permissions:
-                                                                                                                                                                                                                                                                  id-token: write
-                                                                                                                                                                                                                                                                        contents: read
-                                                                                                                                                                                                                                                                        
-                                                                                                                                                                                                                                                                            steps:
-                                                                                                                                                                                                                                                                                  - name: Download artifact from build job
-                                                                                                                                                                                                                                                                                          uses: actions/download-artifact@v4
-                                                                                                                                                                                                                                                                                                  with:
-                                                                                                                                                                                                                                                                                                            name: node-app
-                                                                                                                                                                                                                                                                                                            
-                                                                                                                                                                                                                                                                                                                  - name: Login to Azure
-                                                                                                                                                                                                                                                                                                                          uses: azure/login@v2
-                                                                                                                                                                                                                                                                                                                                  with:
-                                                                                                                                                                                                                                                                                                                                            client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_364E7EF752AD4DCE82C9B75ECB22DC74 }}
-                                                                                                                                                                                                                                                                                                                                                      tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_1990620105E94C21AFC0F39EC53B1D95 }}
-                                                                                                                                                                                                                                                                                                                                                                subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_ECFDAB52AD1046F3ACF98188F745E91D }}
-                                                                                                                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                                                                                                                      - name: Deploy to Azure Web App
-                                                                                                                                                                                                                                                                                                                                                                              id: deploy-to-webapp
-                                                                                                                                                                                                                                                                                                                                                                                      uses: azure/webapps-deploy@v3
-                                                                                                                                                                                                                                                                                                                                                                                              with:
-                                                                                                                                                                                                                                                                                                                                                                                                        app-name: 'lee-broker-tool'
-                                                                                                                                                                                                                                                                                                                                                                                                                  slot-name: 'Production'
-                                                                                                                                                                                                                                                                                                                                                                                                                            package: .
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build application
+        run: pnpm run build
+
+      - name: Prepare deployment package
+        run: |
+          mkdir -p deploy
+          cp -r dist deploy/
+          cp package.json deploy/
+          cp pnpm-lock.yaml deploy/
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-app
+          path: deploy
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: node-app
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_364E7EF752AD4DCE82C9B75ECB22DC74 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_1990620105E94C21AFC0F39EC53B1D95 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_ECFDAB52AD1046F3ACF98188F745E91D }}
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'lee-broker-tool'
+          slot-name: 'Production'
+          package: .
