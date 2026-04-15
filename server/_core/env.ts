@@ -1,11 +1,25 @@
 export const ENV = {
-  appId: process.env.VITE_APP_ID ?? "",
-  cookieSecret: process.env.JWT_SECRET ?? "",
-  databaseUrl: process.env.DATABASE_URL ?? "",
-  oAuthServerUrl: process.env.OAUTH_SERVER_URL ?? "",
-  ownerOpenId: process.env.OWNER_OPEN_ID ?? "",
-  isProduction: process.env.NODE_ENV === "production",
-  forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
-  forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
-  adminEmail: process.env.ADMIN_EMAIL ?? "",
+    // Microsoft Entra ID (Azure AD) OAuth
+    azureClientId: process.env.AZURE_CLIENT_ID ?? "",
+    azureClientSecret: process.env.AZURE_CLIENT_SECRET ?? "",
+    azureTenantId: process.env.AZURE_TENANT_ID ?? "",
+
+    // Session / cookies
+    cookieSecret: process.env.JWT_SECRET ?? "",
+
+    // Database
+    databaseUrl: process.env.DATABASE_URL ?? "",
+
+    // Owner identity (Microsoft object ID of the admin user)
+    ownerOpenId: process.env.OWNER_OPEN_ID ?? "",
+
+    // Runtime
+    isProduction: process.env.NODE_ENV === "production",
+
+    // Azure Blob Storage
+    azureStorageConnectionString: process.env.AZURE_STORAGE_CONNECTION_STRING ?? "",
+    azureStorageContainer: process.env.AZURE_STORAGE_CONTAINER ?? "uploads",
+
+    // Admin
+    adminEmail: process.env.ADMIN_EMAIL ?? "",
 };
