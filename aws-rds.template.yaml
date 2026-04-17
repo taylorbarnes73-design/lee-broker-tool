@@ -1,0 +1,81 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lee Broker Tool dev RDS MySQL scaffold
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+  DbInstanceIdentifier:
+    Type: String
+    Default: lee-broker-tool-db
+  DbName:
+    Type: String
+    Default: lee_broker_tool
+  DbUsername:
+    Type: String
+    Default: leeadmin
+  DbPassword:
+    Type: String
+    NoEcho: true
+    MinLength: 8
+  DbInstanceClass:
+    Type: String
+    Default: db.t3.micro
+  AllocatedStorage:
+    Type: Number
+    Default: 20
+  AllowedCidr:
+    Type: String
+    Description: Public CIDR allowed to connect to MySQL, for example 203.0.113.10/32
+
+Resources:
+  DbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Lee Broker Tool MySQL access
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: !Ref AllowedCidr
+
+  DbSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Lee Broker Tool RDS subnet group
+      SubnetIds: !Ref SubnetIds
+
+  DbInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Ref DbInstanceIdentifier
+      DBName: !Ref DbName
+      Engine: mysql
+      MasterUsername: !Ref DbUsername
+      MasterUserPassword: !Ref DbPassword
+      DBInstanceClass: !Ref DbInstanceClass
+      AllocatedStorage: !Ref AllocatedStorage
+      StorageEncrypted: true
+      PubliclyAccessible: true
+      MultiAZ: false
+      BackupRetentionPeriod: 1
+      DBSubnetGroupName: !Ref DbSubnetGroup
+      VPCSecurityGroups:
+        - !GetAtt DbSecurityGroup.GroupId
+      DeletionProtection: false
+
+Outputs:
+  DbEndpoint:
+    Description: RDS endpoint hostname
+    Value: !GetAtt DbInstance.Endpoint.Address
+  DbPort:
+    Description: RDS endpoint port
+    Value: !GetAtt DbInstance.Endpoint.Port
+  DbName:
+    Description: Database name
+    Value: !Ref DbName
+  DbSecurityGroupId:
+    Description: Security group attached to the DB
+    Value: !GetAtt DbSecurityGroup.GroupId

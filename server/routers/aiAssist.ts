@@ -87,59 +87,83 @@ const tabFieldSchemas: Record<string, z.ZodObject<any>> = {
 
 // ─── System prompts ───────────────────────────────────────────────────────────
 
-function buildParseSystemPrompt(tab: string): string {
-  return `You are an AI assistant for a commercial real estate broker submission tool at Lee & Associates Newport Beach.
-Your job is to extract structured field values from a natural language deal description for the "${tab}" form tab.
+const PARSE_SYSTEM = `You are a commercial real estate data extraction specialist for Lee & Associates Newport Beach.
+Extract structured field values from a broker's natural language deal description.
 
-Rules:
-- Return ONLY a valid JSON object with the field names listed below. No markdown, no explanation.
-- Only include fields you can confidently extract from the description.
-- For monetary values, return numbers as strings without $ or commas (e.g. "1.25" not "$1.25/SF").
-- For dates, use MM/DD/YYYY format.
-- For property type, use one of: Industrial, Office, Retail, Land, Other.
-- For transaction type, use: Lease or Sale.
-- For representation type, use: Tenant Rep, Landlord Rep, Buyer Rep, Seller Rep, or Dual.
-- For term, use a number (months) or descriptive string like "60" or "5 years".
-- If the description mentions a broker name, put it in listingAgentName or brokerName.
-- Keep values concise and clean — no extra punctuation.`;
-}
+CRITICAL RULES — follow exactly:
+- Return ONLY a valid JSON object. No markdown fences, no explanation, no extra text.
+- Include ONLY fields you can extract with high confidence. Omit uncertain fields entirely.
+- Monetary values: numbers as strings, no $ or commas. "1.25" not "$1.25/SF".
+- Dates: MM/DD/YYYY format only.
+- Property type: exactly one of Industrial, Office, Retail, Land, Other.
+- Transaction type: exactly Lease or Sale.
+- Representation type: Tenant Rep, Landlord Rep, Buyer Rep, Seller Rep, or Dual.
+- Term: integer months as string. "60" = 5 years, "36" = 3 years. "5 years" → "60".
+- Building SF / suite SF: numeric string without commas. "12500" not "12,500".
+- Asking price (sale): numeric string without commas. "2500000" not "$2.5M".
+- Lease rate: monthly per-SF as string. "$1.25/SF/Mo" → "1.25".
+- Broker/agent names: full name only, no phone or email.
+- Address: street address only (no city/state). City and state go in their own fields.
+- State: two-letter abbreviation. "California" → "CA".`;
 
-function buildSmartCompleteSystemPrompt(tab: string): string {
-  return `You are an AI assistant for a commercial real estate broker submission tool at Lee & Associates Newport Beach.
-Your job is to intelligently suggest values for EMPTY fields in the "${tab}" form tab, based on the values already filled in.
+const SMART_COMPLETE_SYSTEM = `You are a commercial real estate expert assistant for Lee & Associates Newport Beach.
+Suggest plausible values for EMPTY form fields based on filled context and Southern California market norms.
 
-Rules:
-- Return ONLY a valid JSON object with suggested field names and values. No markdown, no explanation.
-- Only suggest values for fields that are currently empty (provided as null or "").
-- Base your suggestions on standard commercial real estate practices in Southern California.
-- For commission rates: industrial lease = 3-4% of total consideration; office = 4-5%; retail = 4-6%.
-- For lease type: if industrial → NNN; if office → Full Service or Modified Gross; if retail → NNN.
-- For term: if not specified, suggest "60" months for industrial, "36" for office, "60" for retail.
-- For state: if city is in Orange County or LA area, suggest "CA".
-- Do not suggest values that contradict already-filled fields.
-- Keep suggestions realistic and conservative.`;
-}
-
-function buildBrochureScrapeSystemPrompt(): string {
-  return `You are an AI assistant for a commercial real estate broker submission tool at Lee & Associates Newport Beach.
-Your job is to extract structured listing field values from a commercial real estate property brochure or flyer.
-
-Rules:
+CRITICAL RULES:
 - Return ONLY a valid JSON object. No markdown, no explanation.
-- Extract as many fields as you can confidently identify from the brochure content.
-- For monetary values, return numbers as strings without $ or commas (e.g. "1.25" not "$1.25/SF/Mo").
-- For dates, use MM/DD/YYYY format.
-- For property type, use one of: Industrial, Office, Retail, Land, Other.
-- For transaction type, use: Lease or Sale.
-- For term, return number of months as a string (e.g. "60" for 5 years).
-- For building SF and suite SF, return numeric strings without commas (e.g. "12500").
-- For asking price on sales, return the number without $ or commas (e.g. "2500000").
-- For rate $/SF/Mo on leases, return just the number (e.g. "1.25").
-- Extract agent/broker names if visible.
-- Extract property address, city, state, zip if present.
-- Extract lease type (NNN, FSG, MG, Gross, Net) if mentioned.
-- Extract any relevant comments or property highlights.
-- If a field cannot be determined, omit it entirely.`;
+- Suggest values ONLY for the empty fields listed in the request.
+- Never contradict or modify already-filled fields.
+- Use realistic Southern California CRE market values:
+  * Commission rates: Industrial lease 3–4%, Office 4–5%, Retail 4–6% of total consideration.
+  * Lease type defaults: Industrial → NNN; Office → Full Service; Retail → NNN.
+  * Term defaults if unknown: Industrial 60 months, Office 36 months, Retail 60 months.
+  * State: default "CA" for Orange County / LA cities.
+  * Lease rate: if building type known, apply realistic Orange County range.
+- Keep suggestions conservative and realistic. When uncertain, omit the field.`;
+
+const BROCHURE_SYSTEM = `You are a commercial real estate data extraction specialist for Lee & Associates Newport Beach.
+Extract structured listing data from a property marketing brochure or flyer.
+
+CRITICAL RULES — follow exactly:
+- Return ONLY a valid JSON object. No markdown fences, no explanation.
+- Extract ONLY fields you can identify with high confidence. Omit everything else.
+- Monetary values: numeric strings without $ or commas. "$1.25/SF/Mo" → "1.25".
+- Building/suite SF: numeric string without commas. "12,500 SF" → "12500".
+- Asking price for sales: numeric string. "$2,500,000" → "2500000".
+- Dates: MM/DD/YYYY format.
+- Property type: exactly one of Industrial, Office, Retail, Land, Other.
+- Transaction type: Lease or Sale.
+- Lease type: NNN, FSG, MG, Gross, or Net.
+- Term: integer months as string if stated. "5 years" → "60".
+- Address: street only (no city/state). Put city and state in separate fields.
+- State: two-letter abbreviation.
+- Extract agent/broker full name if visible.
+- Extract all highlights/features into comments as a concise bullet list.`;
+
+const VOUCHER_REVIEW_SYSTEM = `You are a commercial real estate deal-entry quality reviewer for Lee & Associates Newport Beach.
+Review parsed voucher data and identify genuine errors, inconsistencies, or suspicious values.
+
+CRITICAL RULES:
+- Return ONLY a raw JSON array (no markdown, no explanation).
+- Each item: { "field": "human-readable field name", "issue": "brief description", "suggestion": "corrected value as string", "reason": "why this looks wrong", "inputId": "html_input_id_or_null" }
+- Only flag REAL problems. Do not flag minor formatting differences.
+- Return [] if everything looks correct — do not fabricate issues.
+- Flag: date ranges where end is before start; term mismatch vs date range; rent rows that don't match term length; commission percentages above 10% or below 0.5%; missing required fields for lease vs sale type; address with no city or state; impossible SF values (negative, or >10M for a single deal).
+- Do NOT flag: missing optional fields, minor date format differences, missing phone/email.`;
+
+// ─── Shared JSON schema builder ───────────────────────────────────────────────
+
+function buildJsonSchema(name: string, fieldNames: string[]) {
+  return {
+    name,
+    strict: true,
+    schema: {
+      type: "object",
+      properties: Object.fromEntries(fieldNames.map((k) => [k, { type: "string" }])),
+      required: [] as string[],
+      additionalProperties: false,
+    },
+  };
 }
 
 // ─── Router ───────────────────────────────────────────────────────────────────
@@ -151,61 +175,46 @@ export const aiAssistRouter = router({
   parse: publicProcedure
     .input(
       z.object({
-        description: z.string().min(5).max(2000),
+        description: z.string().min(5).max(3000),
         tab: z.enum(["listing", "voucher", "sign", "comp"]),
       })
     )
     .mutation(async ({ input }) => {
       const { description, tab } = input;
       const schema = tabFieldSchemas[tab];
-
-      const systemPrompt = buildParseSystemPrompt(tab);
-      const fieldNames = Object.keys(schema.shape).join(", ");
+      const fieldNames = Object.keys(schema.shape);
 
       const response = await invokeLLM({
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: PARSE_SYSTEM },
           {
             role: "user",
-            content: `Available fields: ${fieldNames}\n\nDeal description: "${description}"\n\nExtract field values as JSON:`,
+            content: `Extract fields for the "${tab}" form tab.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nDeal description:\n"${description}"\n\nReturn JSON:`,
           },
         ],
         response_format: {
           type: "json_schema",
-          json_schema: {
-            name: `${tab}_fields`,
-            strict: true,
-            schema: {
-              type: "object",
-              properties: Object.fromEntries(
-                Object.keys(schema.shape).map((k) => [k, { type: "string" }])
-              ),
-              required: [],
-              additionalProperties: false,
-            },
-          },
+          json_schema: buildJsonSchema(`${tab}_fields`, fieldNames),
         },
       });
 
-      const rawContent = response.choices?.[0]?.message?.content;
-      const content = typeof rawContent === "string" ? rawContent : "{}";
+      const raw = response.choices?.[0]?.message?.content;
       let parsed: Record<string, string> = {};
       try {
-        parsed = JSON.parse(content);
+        parsed = JSON.parse(typeof raw === "string" ? raw : "{}");
       } catch {
         parsed = {};
       }
 
-      // Remove empty strings
       const fields = Object.fromEntries(
-        Object.entries(parsed).filter(([, v]) => v && v.trim() !== "")
+        Object.entries(parsed).filter(([, v]) => typeof v === "string" && v.trim() !== "")
       );
 
       return { success: true, fields, tab };
     }),
 
   /**
-   * Smart complete: given current form state, suggest values for empty fields.
+   * Smart complete: suggest values for empty fields based on what is already filled.
    */
   smartComplete: publicProcedure
     .input(
@@ -218,7 +227,6 @@ export const aiAssistRouter = router({
       const { currentFields, tab } = input;
       const schema = tabFieldSchemas[tab];
 
-      // Find which fields are empty
       const emptyFields = Object.keys(schema.shape).filter(
         (k) => !currentFields[k] || currentFields[k].trim() === ""
       );
@@ -227,7 +235,6 @@ export const aiAssistRouter = router({
         return { success: true, fields: {}, tab, message: "All fields already filled" };
       }
 
-      const systemPrompt = buildSmartCompleteSystemPrompt(tab);
       const filledSummary = Object.entries(currentFields)
         .filter(([, v]) => v && v.trim() !== "")
         .map(([k, v]) => `${k}: "${v}"`)
@@ -235,125 +242,150 @@ export const aiAssistRouter = router({
 
       const response = await invokeLLM({
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: SMART_COMPLETE_SYSTEM },
           {
             role: "user",
-            content: `Currently filled fields:\n${filledSummary || "(none)"}\n\nEmpty fields to suggest values for: ${emptyFields.join(", ")}\n\nSuggest values as JSON:`,
+            content: `Tab: ${tab}\n\nFilled fields:\n${filledSummary || "(none yet)"}\n\nSuggest values for these empty fields only: ${emptyFields.join(", ")}\n\nReturn JSON:`,
           },
         ],
         response_format: {
           type: "json_schema",
-          json_schema: {
-            name: `${tab}_suggestions`,
-            strict: true,
-            schema: {
-              type: "object",
-              properties: Object.fromEntries(
-                emptyFields.map((k) => [k, { type: "string" }])
-              ),
-              required: [],
-              additionalProperties: false,
-            },
-          },
+          json_schema: buildJsonSchema(`${tab}_suggestions`, emptyFields),
         },
       });
 
-      const rawContent2 = response.choices?.[0]?.message?.content;
-      const content = typeof rawContent2 === "string" ? rawContent2 : "{}";
+      const raw = response.choices?.[0]?.message?.content;
       let parsed: Record<string, string> = {};
       try {
-        parsed = JSON.parse(content);
+        parsed = JSON.parse(typeof raw === "string" ? raw : "{}");
       } catch {
         parsed = {};
       }
 
-      // Only return non-empty suggestions
       const fields = Object.fromEntries(
-        Object.entries(parsed).filter(([, v]) => v && v.trim() !== "")
+        Object.entries(parsed).filter(([, v]) => typeof v === "string" && v.trim() !== "")
       );
 
       return { success: true, fields, tab };
     }),
 
   /**
-   * Scrape a property brochure (PDF or image URL) and extract listing fields.
-   * Accepts a publicly accessible file URL (e.g. from S3 after upload).
+   * Scrape a property brochure (PDF or image) and extract listing fields.
+   * Fetches the file server-side to avoid CORS issues and sends as base64.
    */
   scrapeBrochure: publicProcedure
     .input(
       z.object({
         fileUrl: z.string().url(),
-        mimeType: z.enum(["application/pdf", "image/jpeg", "image/png", "image/webp"]).default("application/pdf"),
+        mimeType: z
+          .enum(["application/pdf", "image/jpeg", "image/png", "image/webp"])
+          .default("application/pdf"),
       })
     )
     .mutation(async ({ input }) => {
       const { fileUrl, mimeType } = input;
-      const fieldNames = Object.keys(listingFields.shape).join(", ");
-      const systemPrompt = buildBrochureScrapeSystemPrompt();
+      const fieldNames = Object.keys(listingFields.shape);
 
-      const isImage = mimeType.startsWith("image/");
+      // Fetch file server-side → avoids CORS and lets us send as base64 inline data
+      let base64Data: string;
+      try {
+        const fileResp = await fetch(fileUrl, { signal: AbortSignal.timeout(30_000) });
+        if (!fileResp.ok) throw new Error(`File fetch failed: ${fileResp.status}`);
+        const buffer = await fileResp.arrayBuffer();
+        base64Data = Buffer.from(buffer).toString("base64");
+      } catch (e: any) {
+        return {
+          success: false,
+          fields: {},
+          tab: "listing" as const,
+          fieldCount: 0,
+          error: `Could not fetch file: ${e.message}`,
+        };
+      }
 
-      const userContent: Array<{ type: string; text?: string; image_url?: { url: string }; file_url?: { url: string; mime_type: string } }> = isImage
-        ? [
-            {
-              type: "image_url",
-              image_url: { url: fileUrl },
-            },
-            {
-              type: "text",
-              text: `Extract listing fields from this property brochure image.\nAvailable fields: ${fieldNames}\n\nReturn as JSON:`,
-            },
-          ]
-        : [
-            {
-              type: "file_url",
-              file_url: { url: fileUrl, mime_type: mimeType },
-            },
-            {
-              type: "text",
-              text: `Extract listing fields from this property brochure PDF.\nAvailable fields: ${fieldNames}\n\nReturn as JSON:`,
-            },
-          ];
+      // Use data URL — works for images; for PDFs some providers support it too
+      const dataUrl = `data:${mimeType};base64,${base64Data}`;
+
+      const userContent: any[] = [
+        {
+          type: "image_url",
+          image_url: { url: dataUrl, detail: "high" },
+        },
+        {
+          type: "text",
+          text: `Extract all listing fields you can identify from this ${mimeType === "application/pdf" ? "PDF brochure" : "brochure image"}.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nReturn JSON with only fields you can confidently extract:`,
+        },
+      ];
 
       const response = await invokeLLM({
         messages: [
-          { role: "system", content: systemPrompt },
-          {
-            role: "user",
-            content: userContent as any,
-          },
+          { role: "system", content: BROCHURE_SYSTEM },
+          { role: "user", content: userContent },
         ],
         response_format: {
           type: "json_schema",
-          json_schema: {
-            name: "brochure_listing_fields",
-            strict: true,
-            schema: {
-              type: "object",
-              properties: Object.fromEntries(
-                Object.keys(listingFields.shape).map((k) => [k, { type: "string" }])
-              ),
-              required: Object.keys(listingFields.shape),
-              additionalProperties: false,
-            },
-          },
+          json_schema: buildJsonSchema("brochure_listing_fields", fieldNames),
         },
       });
 
-      const rawContent = response.choices?.[0]?.message?.content;
-      const content = typeof rawContent === "string" ? rawContent : "{}";
+      const raw = response.choices?.[0]?.message?.content;
       let parsed: Record<string, string> = {};
       try {
-        parsed = JSON.parse(content);
+        parsed = JSON.parse(typeof raw === "string" ? raw : "{}");
       } catch {
         parsed = {};
       }
 
-      // Remove empty strings
       const fields = Object.fromEntries(
-        Object.entries(parsed).filter(([, v]) => v && v.trim() !== "")
+        Object.entries(parsed).filter(([, v]) => typeof v === "string" && v.trim() !== "")
       );
 
-      return { success: true, fields, tab: "listing" as const, fieldCount: Object.keys(fields).length };
+      return {
+        success: true,
+        fields,
+        tab: "listing" as const,
+        fieldCount: Object.keys(fields).length,
+      };
+    }),
+
+  /**
+   * Review parsed voucher/deal data and return structured suggestions.
+   * Used by the Dealius integration panel — no external API key required.
+   */
+  reviewVoucher: publicProcedure
+    .input(
+      z.object({
+        dealData: z.record(z.string(), z.unknown()),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const dataStr = JSON.stringify(input.dealData, null, 2);
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: VOUCHER_REVIEW_SYSTEM },
+          {
+            role: "user",
+            content: `Review this parsed Lee & Associates commission voucher data for errors or inconsistencies:\n\n${dataStr}\n\nReturn a JSON array of issues (or [] if everything looks correct):`,
+          },
+        ],
+        // No json_schema — array response; parse as text
+        response_format: { type: "json_object" },
+      });
+
+      const raw = response.choices?.[0]?.message?.content;
+      let suggestions: unknown[] = [];
+      try {
+        const text = typeof raw === "string" ? raw.trim() : "[]";
+        // Model may return { "suggestions": [...] } or a bare array
+        const parsed = JSON.parse(text);
+        if (Array.isArray(parsed)) suggestions = parsed;
+        else if (Array.isArray(parsed?.suggestions)) suggestions = parsed.suggestions;
+        else if (Array.isArray(parsed?.issues)) suggestions = parsed.issues;
+      } catch {
+        suggestions = [];
+      }
+
+      return { success: true, suggestions };
     }),
 });

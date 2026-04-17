@@ -1,0 +1,257 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lee Broker Tool EC2 deployment using a packaged build artifact
+
+Parameters:
+  ServiceName:
+    Type: String
+    Default: lee-broker-tool
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  PublicSubnetId:
+    Type: AWS::EC2::Subnet::Id
+  InstanceType:
+    Type: String
+    Default: t3.small
+  ArtifactBucket:
+    Type: String
+  ArtifactKey:
+    Type: String
+  AppPort:
+    Type: Number
+    Default: 3000
+  DatabaseSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+  DatabaseUrl:
+    Type: String
+    NoEcho: true
+    Default: ''
+  DatabaseSslMode:
+    Type: String
+    Default: require
+  DatabaseSslRejectUnauthorized:
+    Type: String
+    Default: 'false'
+  JwtSecret:
+    Type: String
+    NoEcho: true
+    Default: ''
+  ConnectorApiKey:
+    Type: String
+    NoEcho: true
+    Default: ''
+  OwnerOpenId:
+    Type: String
+    Default: ''
+  AdminEmail:
+    Type: String
+    Default: ''
+  LocalAuthEnabled:
+    Type: String
+    Default: 'true'
+  LocalAuthEmailDomain:
+    Type: String
+    Default: ''
+  LocalAdminEmails:
+    Type: String
+    Default: ''
+  OAuthServerUrl:
+    Type: String
+    Default: ''
+  ViteOAuthPortalUrl:
+    Type: String
+    Default: ''
+  ViteEnableAuthRedirect:
+    Type: String
+    Default: 'false'
+  ViteAppId:
+    Type: String
+    Default: ''
+  BuiltInForgeApiUrl:
+    Type: String
+    Default: ''
+  BuiltInForgeApiKey:
+    Type: String
+    NoEcho: true
+    Default: ''
+  AwsRegion:
+    Type: String
+    Default: ''
+  AwsCognitoUserPoolId:
+    Type: String
+    Default: ''
+  AwsCognitoClientId:
+    Type: String
+    Default: ''
+  AwsCognitoDomain:
+    Type: String
+    Default: ''
+  AwsS3Bucket:
+    Type: String
+    Default: ''
+  AwsS3Region:
+    Type: String
+    Default: ''
+
+Mappings:
+  RegionMap:
+    us-east-2:
+      Ami: ami-0d1b5a8c13042c939
+
+Resources:
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: ArtifactReadAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub 'arn:aws:s3:::${ArtifactBucket}/${ArtifactKey}'
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref InstanceRole
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Lee Broker Tool EC2 access
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  DatabaseIngressFromInstance:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref DatabaseSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 3306
+      ToPort: 3306
+      SourceSecurityGroupId: !Ref InstanceSecurityGroup
+      Description: Allow EC2 app instance to reach RDS MySQL
+
+  Instance:
+    Type: AWS::EC2::Instance
+    DependsOn:
+      - DatabaseIngressFromInstance
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref AWS::Region, Ami]
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref InstanceProfile
+      SubnetId: !Ref PublicSubnetId
+      SecurityGroupIds:
+        - !Ref InstanceSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Ref ServiceName
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euxo pipefail
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -y
+          apt-get install -y nodejs npm unzip python3-venv caddy
+          python3 -m venv /opt/awscli-venv
+          /opt/awscli-venv/bin/pip install --upgrade pip
+          /opt/awscli-venv/bin/pip install awscli
+          npm install -g pnpm@10.4.1
+          mkdir -p /opt/${ServiceName}
+          /opt/awscli-venv/bin/aws s3 cp s3://${ArtifactBucket}/${ArtifactKey} /tmp/${ServiceName}.zip
+          unzipStatus=0
+          unzip -o /tmp/${ServiceName}.zip -d /opt/${ServiceName} || unzipStatus=$?
+          if [ "$unzipStatus" -gt 1 ]; then
+            exit "$unzipStatus"
+          fi
+          cd /opt/${ServiceName}
+          pnpm install --prod --frozen-lockfile
+          cat >/etc/${ServiceName}.env <<'EOF'
+          PORT=${AppPort}
+          NODE_ENV=production
+          DATABASE_URL=${DatabaseUrl}
+          DATABASE_SSL_MODE=${DatabaseSslMode}
+          DATABASE_SSL_REJECT_UNAUTHORIZED=${DatabaseSslRejectUnauthorized}
+          JWT_SECRET=${JwtSecret}
+          CONNECTOR_API_KEY=${ConnectorApiKey}
+          OWNER_OPEN_ID=${OwnerOpenId}
+          ADMIN_EMAIL=${AdminEmail}
+          LOCAL_AUTH_ENABLED=${LocalAuthEnabled}
+          LOCAL_AUTH_EMAIL_DOMAIN=${LocalAuthEmailDomain}
+          LOCAL_ADMIN_EMAILS=${LocalAdminEmails}
+          OAUTH_SERVER_URL=${OAuthServerUrl}
+          VITE_OAUTH_PORTAL_URL=${ViteOAuthPortalUrl}
+          VITE_ENABLE_AUTH_REDIRECT=${ViteEnableAuthRedirect}
+          VITE_APP_ID=${ViteAppId}
+          BUILT_IN_FORGE_API_URL=${BuiltInForgeApiUrl}
+          BUILT_IN_FORGE_API_KEY=${BuiltInForgeApiKey}
+          AWS_REGION=${AwsRegion}
+          AWS_COGNITO_USER_POOL_ID=${AwsCognitoUserPoolId}
+          AWS_COGNITO_CLIENT_ID=${AwsCognitoClientId}
+          AWS_COGNITO_DOMAIN=${AwsCognitoDomain}
+          AWS_S3_BUCKET=${AwsS3Bucket}
+          AWS_S3_REGION=${AwsS3Region}
+          EOF
+          cat >/etc/systemd/system/${ServiceName}.service <<'EOF'
+          [Unit]
+          Description=Lee Broker Tool
+          After=network.target
+
+          [Service]
+          Type=simple
+          WorkingDirectory=/opt/${ServiceName}
+          EnvironmentFile=/etc/${ServiceName}.env
+          ExecStart=/usr/bin/node dist/index.js
+          Restart=always
+          RestartSec=5
+          User=root
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+          TOKEN="$(curl -sX PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")"
+          PUBLIC_IP="$(curl -sf -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4)"
+          PUBLIC_HOSTNAME="${!PUBLIC_IP}.sslip.io"
+          cat >/etc/caddy/Caddyfile <<EOF
+          ${!PUBLIC_HOSTNAME} {
+              reverse_proxy 127.0.0.1:${AppPort}
+          }
+          EOF
+          systemctl daemon-reload
+          systemctl enable ${ServiceName}
+          systemctl start ${ServiceName}
+          systemctl enable caddy
+          systemctl restart caddy
+
+Outputs:
+  AppUrl:
+    Description: Public HTTPS URL for the Lee Broker Tool service
+    Value: !Sub 'https://${Instance.PublicIp}.sslip.io'
+  PublicDnsName:
+    Description: EC2 public DNS name
+    Value: !GetAtt Instance.PublicDnsName
+  PublicIp:
+    Description: EC2 public IP
+    Value: !GetAtt Instance.PublicIp
+  InstanceId:
+    Description: EC2 instance id
+    Value: !Ref Instance

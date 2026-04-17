@@ -42,6 +42,8 @@ export const uploads = mysqlTable("uploads", {
   reference: varchar("reference", { length: 512 }),
   /** Optional: uploader name (broker) */
   uploaderName: varchar("uploaderName", { length: 128 }),
+  /** Optional: owning broker identity */
+  uploaderOpenId: varchar("uploaderOpenId", { length: 64 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -62,6 +64,10 @@ export const submissions = mysqlTable("submissions", {
   reference: varchar("reference", { length: 512 }),
   /** Name of the submitting broker/agent */
   submittedBy: varchar("submittedBy", { length: 128 }),
+  /** Stable owner identity used to scope broker access */
+  submittedByOpenId: varchar("submittedByOpenId", { length: 64 }),
+  /** Broker email snapshot for convenience */
+  submittedByEmail: varchar("submittedByEmail", { length: 320 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

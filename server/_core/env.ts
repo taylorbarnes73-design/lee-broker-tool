@@ -1,8 +1,13 @@
 export const ENV = {
-    // Microsoft Entra ID (Azure AD) OAuth
-    azureClientId: process.env.AZURE_CLIENT_ID ?? "",
-    azureClientSecret: process.env.AZURE_CLIENT_SECRET ?? "",
-    azureTenantId: process.env.AZURE_TENANT_ID ?? "",
+    // Public OAuth app metadata used by the custom OAuth service
+    appId: process.env.VITE_APP_ID ?? process.env.APP_ID ?? "",
+    oAuthServerUrl: process.env.OAUTH_SERVER_URL ?? process.env.VITE_OAUTH_PORTAL_URL ?? "",
+
+    // AWS identity configuration for future Cognito-based auth
+    awsRegion: process.env.AWS_REGION ?? "",
+    awsCognitoUserPoolId: process.env.AWS_COGNITO_USER_POOL_ID ?? "",
+    awsCognitoClientId: process.env.AWS_COGNITO_CLIENT_ID ?? "",
+    awsCognitoDomain: process.env.AWS_COGNITO_DOMAIN ?? "",
 
     // Session / cookies
     cookieSecret: process.env.JWT_SECRET ?? "",
@@ -10,16 +15,30 @@ export const ENV = {
     // Database
     databaseUrl: process.env.DATABASE_URL ?? "",
 
-    // Owner identity (Microsoft object ID of the admin user)
-    ownerOpenId: process.env.OWNER_OPEN_ID ?? "",
+    // Owner identity subject / openId for the admin user
+    ownerOpenId: process.env.OWNER_OPEN_ID ?? process.env.OWNER_USER_ID ?? "",
 
     // Runtime
     isProduction: process.env.NODE_ENV === "production",
 
-    // Azure Blob Storage
-    azureStorageConnectionString: process.env.AZURE_STORAGE_CONNECTION_STRING ?? "",
-    azureStorageContainer: process.env.AZURE_STORAGE_CONTAINER ?? "uploads",
+    // Built-in Forge proxy backing storage, LLM, maps, and other managed services
+    forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
+    forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
+
+    // AWS storage placeholders for future direct-S3 integration
+    awsS3Bucket: process.env.AWS_S3_BUCKET ?? "",
+    awsS3Region: process.env.AWS_S3_REGION ?? process.env.AWS_REGION ?? "",
 
     // Admin
     adminEmail: process.env.ADMIN_EMAIL ?? "",
+
+    // Local broker auth
+    localAuthEnabled:
+        (process.env.LOCAL_AUTH_ENABLED ?? "").toLowerCase() === "true" ||
+        !(process.env.OAUTH_SERVER_URL || process.env.VITE_OAUTH_PORTAL_URL),
+    localAuthEmailDomain: process.env.LOCAL_AUTH_EMAIL_DOMAIN ?? "",
+    localAdminEmails: (process.env.LOCAL_ADMIN_EMAILS ?? "")
+        .split(",")
+        .map(value => value.trim().toLowerCase())
+        .filter(Boolean),
 };

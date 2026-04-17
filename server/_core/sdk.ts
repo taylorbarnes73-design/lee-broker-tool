@@ -22,11 +22,22 @@ export type SessionPayload = {
   openId: string;
   appId: string;
   name: string;
+  email?: string;
 };
 
 const EXCHANGE_TOKEN_PATH = `/webdev.v1.WebDevAuthPublicService/ExchangeToken`;
 const GET_USER_INFO_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserInfo`;
 const GET_USER_INFO_WITH_JWT_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserInfoWithJwt`;
+const LOCAL_OPEN_ID_PREFIX = "local:";
+
+const normalizeEmail = (value: string) => value.trim().toLowerCase();
+
+const toLocalOpenId = (email: string) => `${LOCAL_OPEN_ID_PREFIX}${normalizeEmail(email)}`;
+
+const isLocalOpenId = (openId: string) => openId.startsWith(LOCAL_OPEN_ID_PREFIX);
+
+const emailFromLocalOpenId = (openId: string) =>
+  isLocalOpenId(openId) ? openId.slice(LOCAL_OPEN_ID_PREFIX.length) : null;
 
 class OAuthService {
   constructor(private client: ReturnType<typeof axios.create>) {
@@ -155,8 +166,13 @@ class SDKServer {
   }
 
   private getSessionSecret() {
-    const secret = ENV.cookieSecret;
+    const secret =
+      ENV.cookieSecret || (ENV.isProduction ? "" : "dev-local-broker-tool-secret");
     return new TextEncoder().encode(secret);
+  }
+
+  private getSessionAppId() {
+    return ENV.appId || "lee-broker-tool";
   }
 
   /**
@@ -166,13 +182,14 @@ class SDKServer {
    */
   async createSessionToken(
     openId: string,
-    options: { expiresInMs?: number; name?: string } = {}
+    options: { expiresInMs?: number; name?: string; email?: string } = {}
   ): Promise<string> {
     return this.signSession(
       {
         openId,
-        appId: ENV.appId,
+        appId: this.getSessionAppId(),
         name: options.name || "",
+        email: options.email,
       },
       options
     );
@@ -191,6 +208,7 @@ class SDKServer {
       openId: payload.openId,
       appId: payload.appId,
       name: payload.name,
+      email: payload.email,
     })
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
       .setExpirationTime(expirationSeconds)
@@ -199,7 +217,7 @@ class SDKServer {
 
   async verifySession(
     cookieValue: string | undefined | null
-  ): Promise<{ openId: string; appId: string; name: string } | null> {
+  ): Promise<{ openId: string; appId: string; name: string; email?: string } | null> {
     if (!cookieValue) {
       console.warn("[Auth] Missing session cookie");
       return null;
@@ -210,7 +228,7 @@ class SDKServer {
       const { payload } = await jwtVerify(cookieValue, secretKey, {
         algorithms: ["HS256"],
       });
-      const { openId, appId, name } = payload as Record<string, unknown>;
+      const { openId, appId, name, email } = payload as Record<string, unknown>;
 
       if (
         !isNonEmptyString(openId) ||
@@ -225,6 +243,7 @@ class SDKServer {
         openId,
         appId,
         name,
+        email: isNonEmptyString(email) ? email : undefined,
       };
     } catch (error) {
       console.warn("[Auth] Session verification failed", String(error));
@@ -270,6 +289,45 @@ class SDKServer {
     const signedInAt = new Date();
     let user = await db.getUserByOpenId(sessionUserId);
 
+    if (isLocalOpenId(sessionUserId)) {
+      const email = session.email ?? emailFromLocalOpenId(sessionUserId);
+
+      if (!user) {
+        await db.upsertUser({
+          openId: sessionUserId,
+          name: session.name || email || "Broker",
+          email: email ?? null,
+          loginMethod: "local",
+          lastSignedIn: signedInAt,
+          role:
+            email && ENV.localAdminEmails.includes(email.toLowerCase())
+              ? "admin"
+              : undefined,
+        });
+        user = await db.getUserByOpenId(sessionUserId);
+      }
+
+      if (!user) {
+        throw ForbiddenError("Local user not found");
+      }
+
+      await db.upsertUser({
+        openId: user.openId,
+        name: session.name || user.name,
+        email: email ?? user.email,
+        loginMethod: "local",
+        lastSignedIn: signedInAt,
+      });
+
+      return {
+        ...user,
+        name: session.name || user.name,
+        email: email ?? user.email,
+        loginMethod: "local",
+        lastSignedIn: signedInAt,
+      };
+    }
+
     // If user not in DB, sync from OAuth server automatically
     if (!user) {
       try {
@@ -302,3 +360,8 @@ class SDKServer {
 }
 
 export const sdk = new SDKServer();
+export const localAuth = {
+  isEnabled: () => ENV.localAuthEnabled,
+  normalizeEmail,
+  toLocalOpenId,
+};

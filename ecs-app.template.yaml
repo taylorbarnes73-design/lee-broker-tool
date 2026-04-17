@@ -1,0 +1,311 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lee Broker Tool ECS Fargate deployment with public ALB
+
+Parameters:
+  ServiceName:
+    Type: String
+    Default: lee-broker-tool
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  PublicSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+  ContainerImageUri:
+    Type: String
+  AppPort:
+    Type: Number
+    Default: 3000
+  TaskCpu:
+    Type: String
+    Default: '512'
+  TaskMemory:
+    Type: String
+    Default: '1024'
+  DesiredCount:
+    Type: Number
+    Default: 1
+  DatabaseSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+  DatabaseUrl:
+    Type: String
+    NoEcho: true
+    Default: ''
+  DatabaseSslMode:
+    Type: String
+    Default: require
+  DatabaseSslRejectUnauthorized:
+    Type: String
+    Default: 'false'
+  JwtSecret:
+    Type: String
+    NoEcho: true
+    Default: ''
+  ConnectorApiKey:
+    Type: String
+    NoEcho: true
+    Default: ''
+  OwnerOpenId:
+    Type: String
+    Default: ''
+  AdminEmail:
+    Type: String
+    Default: ''
+  LocalAuthEnabled:
+    Type: String
+    Default: 'true'
+  LocalAuthEmailDomain:
+    Type: String
+    Default: ''
+  LocalAdminEmails:
+    Type: String
+    Default: ''
+  OAuthServerUrl:
+    Type: String
+    Default: ''
+  ViteOAuthPortalUrl:
+    Type: String
+    Default: ''
+  ViteEnableAuthRedirect:
+    Type: String
+    Default: 'false'
+  ViteAppId:
+    Type: String
+    Default: ''
+  BuiltInForgeApiUrl:
+    Type: String
+    Default: ''
+  BuiltInForgeApiKey:
+    Type: String
+    NoEcho: true
+    Default: ''
+  AwsRegion:
+    Type: String
+    Default: ''
+  AwsCognitoUserPoolId:
+    Type: String
+    Default: ''
+  AwsCognitoClientId:
+    Type: String
+    Default: ''
+  AwsCognitoDomain:
+    Type: String
+    Default: ''
+  AwsS3Bucket:
+    Type: String
+    Default: ''
+  AwsS3Region:
+    Type: String
+    Default: ''
+
+Resources:
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub '${ServiceName}-cluster'
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/ecs/${ServiceName}'
+      RetentionInDays: 14
+
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Public access to Lee Broker Tool ALB
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  ServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Lee Broker Tool ECS service access
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref AppPort
+          ToPort: !Ref AppPort
+          SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+
+  DatabaseIngressFromService:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref DatabaseSecurityGroupId
+      IpProtocol: tcp
+      FromPort: 3306
+      ToPort: 3306
+      SourceSecurityGroupId: !Ref ServiceSecurityGroup
+      Description: Allow ECS service to reach RDS MySQL
+
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub '${ServiceName}-alb'
+      Scheme: internet-facing
+      Type: application
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Subnets: !Ref PublicSubnetIds
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub '${ServiceName}-tg'
+      Port: !Ref AppPort
+      Protocol: HTTP
+      TargetType: ip
+      VpcId: !Ref VpcId
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      Matcher:
+        HttpCode: 200-499
+
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub '${ServiceName}-task'
+      Cpu: !Ref TaskCpu
+      Memory: !Ref TaskMemory
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt ExecutionRole.Arn
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      ContainerDefinitions:
+        - Name: !Ref ServiceName
+          Image: !Ref ContainerImageUri
+          Essential: true
+          PortMappings:
+            - ContainerPort: !Ref AppPort
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+          Environment:
+            - Name: PORT
+              Value: !Sub '${AppPort}'
+            - Name: NODE_ENV
+              Value: production
+            - Name: DATABASE_URL
+              Value: !Ref DatabaseUrl
+            - Name: DATABASE_SSL_MODE
+              Value: !Ref DatabaseSslMode
+            - Name: DATABASE_SSL_REJECT_UNAUTHORIZED
+              Value: !Ref DatabaseSslRejectUnauthorized
+            - Name: JWT_SECRET
+              Value: !Ref JwtSecret
+            - Name: CONNECTOR_API_KEY
+              Value: !Ref ConnectorApiKey
+            - Name: OWNER_OPEN_ID
+              Value: !Ref OwnerOpenId
+            - Name: ADMIN_EMAIL
+              Value: !Ref AdminEmail
+            - Name: LOCAL_AUTH_ENABLED
+              Value: !Ref LocalAuthEnabled
+            - Name: LOCAL_AUTH_EMAIL_DOMAIN
+              Value: !Ref LocalAuthEmailDomain
+            - Name: LOCAL_ADMIN_EMAILS
+              Value: !Ref LocalAdminEmails
+            - Name: OAUTH_SERVER_URL
+              Value: !Ref OAuthServerUrl
+            - Name: VITE_OAUTH_PORTAL_URL
+              Value: !Ref ViteOAuthPortalUrl
+            - Name: VITE_ENABLE_AUTH_REDIRECT
+              Value: !Ref ViteEnableAuthRedirect
+            - Name: VITE_APP_ID
+              Value: !Ref ViteAppId
+            - Name: BUILT_IN_FORGE_API_URL
+              Value: !Ref BuiltInForgeApiUrl
+            - Name: BUILT_IN_FORGE_API_KEY
+              Value: !Ref BuiltInForgeApiKey
+            - Name: AWS_REGION
+              Value: !Ref AwsRegion
+            - Name: AWS_COGNITO_USER_POOL_ID
+              Value: !Ref AwsCognitoUserPoolId
+            - Name: AWS_COGNITO_CLIENT_ID
+              Value: !Ref AwsCognitoClientId
+            - Name: AWS_COGNITO_DOMAIN
+              Value: !Ref AwsCognitoDomain
+            - Name: AWS_S3_BUCKET
+              Value: !Ref AwsS3Bucket
+            - Name: AWS_S3_REGION
+              Value: !Ref AwsS3Region
+
+  Service:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - Listener
+      - DatabaseIngressFromService
+    Properties:
+      ServiceName: !Ref ServiceName
+      Cluster: !Ref Cluster
+      DesiredCount: !Ref DesiredCount
+      LaunchType: FARGATE
+      TaskDefinition: !Ref TaskDefinition
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref ServiceSecurityGroup
+          Subnets: !Ref PublicSubnetIds
+      LoadBalancers:
+        - ContainerName: !Ref ServiceName
+          ContainerPort: !Ref AppPort
+          TargetGroupArn: !Ref TargetGroup
+
+Outputs:
+  AppUrl:
+    Description: Public URL for the Lee Broker Tool service
+    Value: !Sub 'http://${LoadBalancer.DNSName}'
+  LoadBalancerDnsName:
+    Description: Application Load Balancer DNS name
+    Value: !GetAtt LoadBalancer.DNSName
+  ClusterArn:
+    Description: ECS cluster ARN
+    Value: !Ref Cluster
+  ServiceName:
+    Description: ECS service name
+    Value: !GetAtt Service.Name
+  ServiceSecurityGroupId:
+    Description: Security group attached to the ECS service
+    Value: !Ref ServiceSecurityGroup

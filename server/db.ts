@@ -1,17 +1,71 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import { createPool, type Pool, type PoolOptions } from "mysql2";
 import { InsertUser, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _pool: Pool | null = null;
+
+function getDatabaseUrl() {
+  return process.env.DATABASE_URL?.trim() ?? "";
+}
+
+function resolveSslOptions(hostname: string): PoolOptions["ssl"] | undefined {
+  const sslMode = (process.env.DATABASE_SSL_MODE ?? "").trim().toLowerCase();
+  const rejectUnauthorized =
+    (process.env.DATABASE_SSL_REJECT_UNAUTHORIZED ?? "").trim().toLowerCase() !== "false";
+  const isLocalHost = hostname === "localhost" || hostname === "127.0.0.1";
+
+  if (sslMode === "disabled") return undefined;
+  if (sslMode === "require") {
+    return { rejectUnauthorized };
+  }
+
+  if (process.env.NODE_ENV === "production" && !isLocalHost) {
+    return { rejectUnauthorized };
+  }
+
+  return undefined;
+}
+
+export function getDatabasePoolConfig(): PoolOptions | null {
+  const connectionString = getDatabaseUrl();
+  if (!connectionString) return null;
+
+  const parsed = new URL(connectionString);
+  const database = parsed.pathname.replace(/^\//, "");
+
+  return {
+    host: parsed.hostname,
+    port: parsed.port ? Number(parsed.port) : 3306,
+    user: decodeURIComponent(parsed.username),
+    password: decodeURIComponent(parsed.password),
+    database,
+    waitForConnections: true,
+    connectionLimit: Number(process.env.DATABASE_POOL_SIZE ?? "10"),
+    queueLimit: 0,
+    ssl: resolveSslOptions(parsed.hostname),
+  };
+}
+
+export function createDatabasePool() {
+  const config = getDatabasePoolConfig();
+  if (!config) return null;
+
+  return createPool(config);
+}
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
+  if (!_db && getDatabaseUrl()) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      _pool = createDatabasePool();
+      if (!_pool) return null;
+      _db = drizzle(_pool);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
+      _pool = null;
       _db = null;
     }
   }

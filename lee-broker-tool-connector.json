@@ -13,6 +13,18 @@
   "schemes": ["https"],
   "consumes": ["application/json"],
   "produces": ["application/json"],
+  "securityDefinitions": {
+    "api_key": {
+      "type": "apiKey",
+      "name": "x-api-key",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "api_key": []
+    }
+  ],
   "paths": {
     "/submit/listing": {
       "post": {
@@ -32,6 +44,7 @@
             "description": "Listing submitted successfully",
             "schema": { "$ref": "#/definitions/SubmissionResponse" }
           },
+          "401": { "description": "Invalid or missing API key", "schema": { "$ref": "#/definitions/ErrorResponse" } },
           "400": { "description": "Missing required field", "schema": { "$ref": "#/definitions/ErrorResponse" } },
           "500": { "description": "Server error", "schema": { "$ref": "#/definitions/ErrorResponse" } }
         }
@@ -55,6 +68,7 @@
             "description": "Voucher submitted successfully",
             "schema": { "$ref": "#/definitions/VoucherSubmissionResponse" }
           },
+          "401": { "description": "Invalid or missing API key", "schema": { "$ref": "#/definitions/ErrorResponse" } },
           "400": { "description": "Missing required field", "schema": { "$ref": "#/definitions/ErrorResponse" } },
           "500": { "description": "Server error", "schema": { "$ref": "#/definitions/ErrorResponse" } }
         }
@@ -78,6 +92,7 @@
             "description": "Sign request submitted successfully",
             "schema": { "$ref": "#/definitions/SignRequestResponse" }
           },
+          "401": { "description": "Invalid or missing API key", "schema": { "$ref": "#/definitions/ErrorResponse" } },
           "400": { "description": "Missing required field", "schema": { "$ref": "#/definitions/ErrorResponse" } },
           "500": { "description": "Server error", "schema": { "$ref": "#/definitions/ErrorResponse" } }
         }
@@ -101,6 +116,7 @@
             "description": "Comp submitted successfully",
             "schema": { "$ref": "#/definitions/SubmissionResponse" }
           },
+          "401": { "description": "Invalid or missing API key", "schema": { "$ref": "#/definitions/ErrorResponse" } },
           "400": { "description": "Missing required field", "schema": { "$ref": "#/definitions/ErrorResponse" } },
           "500": { "description": "Server error", "schema": { "$ref": "#/definitions/ErrorResponse" } }
         }
@@ -141,6 +157,7 @@
               }
             }
           },
+          "401": { "description": "Invalid or missing API key", "schema": { "$ref": "#/definitions/ErrorResponse" } },
           "500": { "description": "Server error", "schema": { "$ref": "#/definitions/ErrorResponse" } }
         }
       }
@@ -164,6 +181,7 @@
             "description": "Submission detail with full payload",
             "schema": { "$ref": "#/definitions/SubmissionDetail" }
           },
+          "401": { "description": "Invalid or missing API key", "schema": { "$ref": "#/definitions/ErrorResponse" } },
           "404": { "description": "Submission not found", "schema": { "$ref": "#/definitions/ErrorResponse" } },
           "500": { "description": "Server error", "schema": { "$ref": "#/definitions/ErrorResponse" } }
         }
@@ -209,6 +227,7 @@
               }
             }
           },
+          "401": { "description": "Invalid or missing API key", "schema": { "$ref": "#/definitions/ErrorResponse" } },
           "500": { "description": "Server error", "schema": { "$ref": "#/definitions/ErrorResponse" } }
         }
       }
@@ -244,6 +263,7 @@
               }
             }
           },
+          "401": { "description": "Invalid or missing API key", "schema": { "$ref": "#/definitions/ErrorResponse" } },
           "400": { "description": "Missing key parameter", "schema": { "$ref": "#/definitions/ErrorResponse" } },
           "500": { "description": "Server error", "schema": { "$ref": "#/definitions/ErrorResponse" } }
         }

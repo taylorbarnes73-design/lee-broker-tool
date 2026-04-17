@@ -1,9 +1,9 @@
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { storagePut, storageGet } from "./storage";
-import { getDb } from "./db";
+import { getDb, upsertUser } from "./db";
 import { uploads } from "../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod/v4";
@@ -11,14 +11,69 @@ import { nanoid } from "nanoid";
 import { aiAssistRouter } from "./routers/aiAssist";
 import { emailRouter } from "./routers/email";
 import { contractsRouter } from "./routers/contracts";
+import { submissionsRouter } from "./routers/submissions";
+import { localAuth, sdk } from "./_core/sdk";
 
 export const appRouter = router({
   system: systemRouter,
   aiAssist: aiAssistRouter,
   email: emailRouter,
   contracts: contractsRouter,
+  submissions: submissionsRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
+    login: publicProcedure
+      .input(
+        z.object({
+          name: z.string().trim().min(2).max(120),
+          email: z.string().trim().email(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        if (!localAuth.isEnabled()) {
+          return { success: false as const, error: "Local auth is disabled." };
+        }
+
+        const email = localAuth.normalizeEmail(input.email);
+        const allowedDomain = (process.env.LOCAL_AUTH_EMAIL_DOMAIN ?? "").trim().toLowerCase();
+        if (allowedDomain && !email.endsWith(`@${allowedDomain}`)) {
+          return {
+            success: false as const,
+            error: `Use your ${allowedDomain} email address.`,
+          };
+        }
+
+        const openId = localAuth.toLocalOpenId(email);
+
+        await upsertUser({
+          openId,
+          name: input.name.trim(),
+          email,
+          loginMethod: "local",
+          role:
+            (process.env.LOCAL_ADMIN_EMAILS ?? "")
+              .split(",")
+              .map(value => value.trim().toLowerCase())
+              .filter(Boolean)
+              .includes(email)
+              ? "admin"
+              : undefined,
+          lastSignedIn: new Date(),
+        });
+
+        const sessionToken = await sdk.createSessionToken(openId, {
+          name: input.name.trim(),
+          email,
+        });
+
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, sessionToken, {
+          ...cookieOptions,
+          maxAge: ONE_YEAR_MS,
+        });
+
+        return { success: true as const };
+      }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
@@ -42,7 +97,7 @@ export const appRouter = router({
           uploaderName: z.string().optional(),
         })
       )
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const { filename, mimeType, base64Data, category, reference, uploaderName } = input;
 
         // Decode base64 to buffer
@@ -68,7 +123,8 @@ export const appRouter = router({
             fileSize,
             category,
             reference: reference ?? null,
-            uploaderName: uploaderName ?? null,
+            uploaderName: uploaderName ?? ctx.user?.name ?? null,
+            uploaderOpenId: ctx.user?.openId ?? null,
           });
         }
 

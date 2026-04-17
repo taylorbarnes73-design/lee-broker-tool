@@ -3,10 +3,11 @@
  * Base path: /api/v1
  *
  * All endpoints accept and return JSON.
- * No authentication required (open connector).
+ * Requests must include the shared connector API key in the x-api-key header.
  */
 
 import { Router, Request, Response } from "express";
+import { timingSafeEqual } from "node:crypto";
 import { getDb } from "./db";
 import { uploads, submissions } from "../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
@@ -24,6 +25,38 @@ function ok(res: Response, data: unknown) {
 function err(res: Response, status: number, message: string) {
   res.status(status).json({ success: false, error: message });
 }
+
+function getConnectorApiKey(): string {
+  return process.env.CONNECTOR_API_KEY ?? "";
+}
+
+function hasValidApiKey(req: Request): boolean {
+  const configuredApiKey = getConnectorApiKey();
+  if (!configuredApiKey) return false;
+
+  const providedApiKey = req.header("x-api-key");
+  if (!providedApiKey) return false;
+
+  const expected = Buffer.from(configuredApiKey, "utf8");
+  const provided = Buffer.from(providedApiKey, "utf8");
+  if (expected.length !== provided.length) return false;
+
+  return timingSafeEqual(expected, provided);
+}
+
+restApiRouter.use((req: Request, res: Response, next) => {
+  if (!getConnectorApiKey()) {
+    err(res, 503, "Connector API key is not configured");
+    return;
+  }
+
+  if (!hasValidApiKey(req)) {
+    err(res, 401, "Invalid or missing API key");
+    return;
+  }
+
+  next();
+});
 
 // ─── POST /api/v1/submit/listing ─────────────────────────────────────────────
 /**

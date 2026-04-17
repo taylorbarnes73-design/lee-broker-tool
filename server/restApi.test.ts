@@ -3,6 +3,8 @@ import express from "express";
 import request from "supertest";
 import { restApiRouter } from "./restApi";
 
+const TEST_API_KEY = "test-connector-key";
+
 // Mock the database and storage modules
 vi.mock("./db", () => ({
   getDb: vi.fn().mockResolvedValue({
@@ -45,20 +47,32 @@ function buildApp() {
   return app;
 }
 
+function withApiKey(req: request.Test) {
+  return req.set("x-api-key", TEST_API_KEY);
+}
+
 describe("REST API — /api/v1", () => {
   let app: ReturnType<typeof buildApp>;
 
   beforeEach(() => {
+    process.env.CONNECTOR_API_KEY = TEST_API_KEY;
     app = buildApp();
     vi.clearAllMocks();
+  });
+
+  it("returns 401 when the API key header is missing", async () => {
+    const res = await request(app).get("/api/v1/submissions");
+    expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error).toMatch(/API key/i);
   });
 
   // ── Listing ──────────────────────────────────────────────────────────────
 
   describe("POST /submit/listing", () => {
     it("returns 400 when propertyAddress is missing", async () => {
-      const res = await request(app)
-        .post("/api/v1/submit/listing")
+      const res = await withApiKey(request(app)
+        .post("/api/v1/submit/listing"))
         .send({ propertyType: "Industrial", transactionType: "Lease" });
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
@@ -66,16 +80,16 @@ describe("REST API — /api/v1", () => {
     });
 
     it("returns 400 when propertyType is missing", async () => {
-      const res = await request(app)
-        .post("/api/v1/submit/listing")
+      const res = await withApiKey(request(app)
+        .post("/api/v1/submit/listing"))
         .send({ propertyAddress: "123 Main St", transactionType: "Lease" });
       expect(res.status).toBe(400);
       expect(res.body.error).toMatch(/propertyType/);
     });
 
     it("returns 200 with submissionId on valid payload", async () => {
-      const res = await request(app)
-        .post("/api/v1/submit/listing")
+      const res = await withApiKey(request(app)
+        .post("/api/v1/submit/listing"))
         .send({ propertyAddress: "123 Main St", propertyType: "Industrial", transactionType: "Lease" });
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -91,24 +105,24 @@ describe("REST API — /api/v1", () => {
 
   describe("POST /submit/voucher", () => {
     it("returns 400 when propertyAddress is missing", async () => {
-      const res = await request(app)
-        .post("/api/v1/submit/voucher")
+      const res = await withApiKey(request(app)
+        .post("/api/v1/submit/voucher"))
         .send({ representationType: "Tenant Rep" });
       expect(res.status).toBe(400);
       expect(res.body.error).toMatch(/propertyAddress/);
     });
 
     it("returns 400 when representationType is missing", async () => {
-      const res = await request(app)
-        .post("/api/v1/submit/voucher")
+      const res = await withApiKey(request(app)
+        .post("/api/v1/submit/voucher"))
         .send({ propertyAddress: "123 Main St" });
       expect(res.status).toBe(400);
       expect(res.body.error).toMatch(/representationType/);
     });
 
     it("returns 200 with submissionId on valid payload", async () => {
-      const res = await request(app)
-        .post("/api/v1/submit/voucher")
+      const res = await withApiKey(request(app)
+        .post("/api/v1/submit/voucher"))
         .send({ propertyAddress: "123 Main St", representationType: "Tenant Rep", totalCommission: 34000 });
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -121,14 +135,14 @@ describe("REST API — /api/v1", () => {
 
   describe("POST /submit/sign-request", () => {
     it("returns 400 when propertyAddress is missing", async () => {
-      const res = await request(app).post("/api/v1/submit/sign-request").send({});
+      const res = await withApiKey(request(app).post("/api/v1/submit/sign-request")).send({});
       expect(res.status).toBe(400);
       expect(res.body.error).toMatch(/propertyAddress/);
     });
 
     it("returns 200 and auto-generates a PO number", async () => {
-      const res = await request(app)
-        .post("/api/v1/submit/sign-request")
+      const res = await withApiKey(request(app)
+        .post("/api/v1/submit/sign-request"))
         .send({ propertyAddress: "123 Main St", requestedBy: "Taylor Barnes" });
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -137,8 +151,8 @@ describe("REST API — /api/v1", () => {
     });
 
     it("uses provided PO number when given", async () => {
-      const res = await request(app)
-        .post("/api/v1/submit/sign-request")
+      const res = await withApiKey(request(app)
+        .post("/api/v1/submit/sign-request"))
         .send({ propertyAddress: "123 Main St", poNumber: "PO-CUSTOM-001" });
       expect(res.status).toBe(200);
       expect(res.body.data.poNumber).toBe("PO-CUSTOM-001");
@@ -149,24 +163,24 @@ describe("REST API — /api/v1", () => {
 
   describe("POST /submit/comp", () => {
     it("returns 400 when address is missing", async () => {
-      const res = await request(app)
-        .post("/api/v1/submit/comp")
+      const res = await withApiKey(request(app)
+        .post("/api/v1/submit/comp"))
         .send({ compType: "Lease Comp" });
       expect(res.status).toBe(400);
       expect(res.body.error).toMatch(/address/);
     });
 
     it("returns 400 when compType is missing", async () => {
-      const res = await request(app)
-        .post("/api/v1/submit/comp")
+      const res = await withApiKey(request(app)
+        .post("/api/v1/submit/comp"))
         .send({ address: "123 Main St" });
       expect(res.status).toBe(400);
       expect(res.body.error).toMatch(/compType/);
     });
 
     it("returns 200 on valid payload", async () => {
-      const res = await request(app)
-        .post("/api/v1/submit/comp")
+      const res = await withApiKey(request(app)
+        .post("/api/v1/submit/comp"))
         .send({ address: "123 Main St", compType: "Lease Comp", lanbSource: "Taylor Barnes" });
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -178,7 +192,7 @@ describe("REST API — /api/v1", () => {
 
   describe("GET /submissions", () => {
     it("returns 200 with empty array when no submissions exist", async () => {
-      const res = await request(app).get("/api/v1/submissions");
+      const res = await withApiKey(request(app).get("/api/v1/submissions"));
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(Array.isArray(res.body.data)).toBe(true);
@@ -189,7 +203,7 @@ describe("REST API — /api/v1", () => {
 
   describe("GET /files", () => {
     it("returns 200 with empty array when no files exist", async () => {
-      const res = await request(app).get("/api/v1/files");
+      const res = await withApiKey(request(app).get("/api/v1/files"));
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(Array.isArray(res.body.data)).toBe(true);
@@ -198,13 +212,13 @@ describe("REST API — /api/v1", () => {
 
   describe("GET /files/url", () => {
     it("returns 400 when key is missing", async () => {
-      const res = await request(app).get("/api/v1/files/url");
+      const res = await withApiKey(request(app).get("/api/v1/files/url"));
       expect(res.status).toBe(400);
       expect(res.body.error).toMatch(/key/);
     });
 
     it("returns 200 with a download URL when key is provided", async () => {
-      const res = await request(app).get("/api/v1/files/url?key=broker-docs%2Ftest-file.pdf");
+      const res = await withApiKey(request(app).get("/api/v1/files/url?key=broker-docs%2Ftest-file.pdf"));
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data.url).toBeDefined();

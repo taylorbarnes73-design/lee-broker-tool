@@ -1,0 +1,187 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lee Broker Tool deployment scaffold for AWS App Runner
+
+Parameters:
+  AppRunnerServiceName:
+    Type: String
+    Default: lee-broker-tool
+  ContainerImageUri:
+    Type: String
+    Description: Full ECR image URI, for example 123456789012.dkr.ecr.us-west-2.amazonaws.com/lee-broker-tool:latest
+  AppPort:
+    Type: Number
+    Default: 3000
+  Cpu:
+    Type: String
+    Default: '1 vCPU'
+    AllowedValues:
+      - '0.25 vCPU'
+      - '0.5 vCPU'
+      - '1 vCPU'
+      - '2 vCPU'
+      - '4 vCPU'
+  Memory:
+    Type: String
+    Default: '2 GB'
+    AllowedValues:
+      - '0.5 GB'
+      - '1 GB'
+      - '2 GB'
+      - '3 GB'
+      - '4 GB'
+      - '6 GB'
+      - '8 GB'
+      - '10 GB'
+      - '12 GB'
+  DatabaseUrl:
+    Type: String
+    NoEcho: true
+    Default: ''
+  DatabaseSslMode:
+    Type: String
+    Default: require
+  JwtSecret:
+    Type: String
+    NoEcho: true
+    Default: ''
+  ConnectorApiKey:
+    Type: String
+    NoEcho: true
+    Default: ''
+  OwnerOpenId:
+    Type: String
+    Default: ''
+  AdminEmail:
+    Type: String
+    Default: ''
+  LocalAuthEnabled:
+    Type: String
+    Default: 'true'
+  LocalAuthEmailDomain:
+    Type: String
+    Default: ''
+  LocalAdminEmails:
+    Type: String
+    Default: ''
+  OAuthServerUrl:
+    Type: String
+    Default: ''
+  ViteOAuthPortalUrl:
+    Type: String
+    Default: ''
+  ViteAppId:
+    Type: String
+    Default: ''
+  BuiltInForgeApiUrl:
+    Type: String
+    Default: ''
+  BuiltInForgeApiKey:
+    Type: String
+    NoEcho: true
+    Default: ''
+  AwsRegion:
+    Type: String
+    Default: ''
+  AwsCognitoUserPoolId:
+    Type: String
+    Default: ''
+  AwsCognitoClientId:
+    Type: String
+    Default: ''
+  AwsCognitoDomain:
+    Type: String
+    Default: ''
+  AwsS3Bucket:
+    Type: String
+    Default: ''
+  AwsS3Region:
+    Type: String
+    Default: ''
+
+Resources:
+  AppRunnerAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: build.apprunner.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess
+
+  AppRunnerService:
+    Type: AWS::AppRunner::Service
+    Properties:
+      ServiceName: !Ref AppRunnerServiceName
+      SourceConfiguration:
+        AuthenticationConfiguration:
+          AccessRoleArn: !GetAtt AppRunnerAccessRole.Arn
+        AutoDeploymentsEnabled: false
+        ImageRepository:
+          ImageIdentifier: !Ref ContainerImageUri
+          ImageRepositoryType: ECR
+          ImageConfiguration:
+            Port: !Sub '${AppPort}'
+            RuntimeEnvironmentVariables:
+              - Name: PORT
+                Value: !Sub '${AppPort}'
+              - Name: NODE_ENV
+                Value: production
+              - Name: DATABASE_URL
+                Value: !Ref DatabaseUrl
+              - Name: DATABASE_SSL_MODE
+                Value: !Ref DatabaseSslMode
+              - Name: JWT_SECRET
+                Value: !Ref JwtSecret
+              - Name: CONNECTOR_API_KEY
+                Value: !Ref ConnectorApiKey
+              - Name: OWNER_OPEN_ID
+                Value: !Ref OwnerOpenId
+              - Name: ADMIN_EMAIL
+                Value: !Ref AdminEmail
+              - Name: LOCAL_AUTH_ENABLED
+                Value: !Ref LocalAuthEnabled
+              - Name: LOCAL_AUTH_EMAIL_DOMAIN
+                Value: !Ref LocalAuthEmailDomain
+              - Name: LOCAL_ADMIN_EMAILS
+                Value: !Ref LocalAdminEmails
+              - Name: OAUTH_SERVER_URL
+                Value: !Ref OAuthServerUrl
+              - Name: VITE_OAUTH_PORTAL_URL
+                Value: !Ref ViteOAuthPortalUrl
+              - Name: VITE_APP_ID
+                Value: !Ref ViteAppId
+              - Name: BUILT_IN_FORGE_API_URL
+                Value: !Ref BuiltInForgeApiUrl
+              - Name: BUILT_IN_FORGE_API_KEY
+                Value: !Ref BuiltInForgeApiKey
+              - Name: AWS_REGION
+                Value: !Ref AwsRegion
+              - Name: AWS_COGNITO_USER_POOL_ID
+                Value: !Ref AwsCognitoUserPoolId
+              - Name: AWS_COGNITO_CLIENT_ID
+                Value: !Ref AwsCognitoClientId
+              - Name: AWS_COGNITO_DOMAIN
+                Value: !Ref AwsCognitoDomain
+              - Name: AWS_S3_BUCKET
+                Value: !Ref AwsS3Bucket
+              - Name: AWS_S3_REGION
+                Value: !Ref AwsS3Region
+      InstanceConfiguration:
+        Cpu: !Ref Cpu
+        Memory: !Ref Memory
+      HealthCheckConfiguration:
+        Protocol: HTTP
+        Path: /
+        HealthyThreshold: 1
+        UnhealthyThreshold: 5
+        Interval: 10
+        Timeout: 5
+
+Outputs:
+  ServiceUrl:
+    Description: Public App Runner URL
+    Value: !GetAtt AppRunnerService.ServiceUrl
