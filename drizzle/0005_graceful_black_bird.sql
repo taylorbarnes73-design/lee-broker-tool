@@ -1,0 +1,63 @@
+CREATE TABLE `compImports` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`sourceFileKey` varchar(512),
+	`sourceUrl` text,
+	`sourceFilename` varchar(255),
+	`workbookName` varchar(255) NOT NULL,
+	`canonicalLeaseSheet` varchar(128) NOT NULL,
+	`canonicalSaleSheet` varchar(128) NOT NULL,
+	`leaseCount` int NOT NULL DEFAULT 0,
+	`saleCount` int NOT NULL DEFAULT 0,
+	`status` enum('active','archived','failed') NOT NULL DEFAULT 'active',
+	`importedByOpenId` varchar(64),
+	`importedByEmail` varchar(320),
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `compImports_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `leaseComps` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`importId` int NOT NULL,
+	`externalId` int,
+	`sourceSheet` varchar(128) NOT NULL,
+	`address` varchar(512) NOT NULL DEFAULT '',
+	`city` varchar(128) NOT NULL DEFAULT '',
+	`state` varchar(32) NOT NULL DEFAULT '',
+	`zipCode` varchar(32) NOT NULL DEFAULT '',
+	`market` varchar(128) NOT NULL DEFAULT '',
+	`subMarket` varchar(128) NOT NULL DEFAULT '',
+	`projectName` varchar(255) NOT NULL DEFAULT '',
+	`propertyType` varchar(128) NOT NULL DEFAULT '',
+	`propertySubType` varchar(128) NOT NULL DEFAULT '',
+	`transactionDate` varchar(32) NOT NULL DEFAULT '',
+	`listingBroker` varchar(255) NOT NULL DEFAULT '',
+	`procuringBroker` varchar(255) NOT NULL DEFAULT '',
+	`source` varchar(128) NOT NULL DEFAULT '',
+	`rawPayload` text NOT NULL,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	CONSTRAINT `leaseComps_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `saleComps` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`importId` int NOT NULL,
+	`externalId` int,
+	`sourceSheet` varchar(128) NOT NULL,
+	`address` varchar(512) NOT NULL DEFAULT '',
+	`city` varchar(128) NOT NULL DEFAULT '',
+	`state` varchar(32) NOT NULL DEFAULT '',
+	`zipCode` varchar(32) NOT NULL DEFAULT '',
+	`market` varchar(128) NOT NULL DEFAULT '',
+	`subMarket` varchar(128) NOT NULL DEFAULT '',
+	`projectName` varchar(255) NOT NULL DEFAULT '',
+	`propertyType` varchar(128) NOT NULL DEFAULT '',
+	`propertySubType` varchar(128) NOT NULL DEFAULT '',
+	`transactionDate` varchar(32) NOT NULL DEFAULT '',
+	`listingBroker` varchar(255) NOT NULL DEFAULT '',
+	`procuringBroker` varchar(255) NOT NULL DEFAULT '',
+	`source` varchar(128) NOT NULL DEFAULT '',
+	`rawPayload` text NOT NULL,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	CONSTRAINT `saleComps_id` PRIMARY KEY(`id`)
+);

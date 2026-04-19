@@ -133,6 +133,13 @@ describe("aiAssist.parse", () => {
 describe("aiAssist.scrapeBrochure", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8)),
+      })
+    );
   });
 
   it("returns extracted fields from a brochure PDF URL", async () => {
@@ -245,35 +252,20 @@ describe("aiAssist.smartComplete", () => {
     vi.clearAllMocks();
   });
 
-  it("returns suggestions for empty fields based on filled context", async () => {
-    vi.mocked(invokeLLM).mockResolvedValueOnce({
-      choices: [
-        {
-          message: {
-            content: JSON.stringify({
-              leaseType: "NNN",
-              term: "60",
-              state: "CA",
-            }),
-          },
-        },
-      ],
-    } as any);
-
+  it("derives directly supported suggestions from the current form state", async () => {
     const caller = aiAssistRouter.createCaller(createCtx());
     const result = await caller.smartComplete({
       currentFields: {
-        propertyType: "Industrial",
-        city: "Irvine",
-        rateSfMo: "1.25",
+        address: "123 Commerce Way, Irvine, California 92618",
       },
       tab: "listing",
     });
 
     expect(result.success).toBe(true);
-    expect(result.fields.leaseType).toBe("NNN");
-    expect(result.fields.term).toBe("60");
+    expect(result.fields.city).toBe("Irvine");
     expect(result.fields.state).toBe("CA");
+    expect(result.fields.zip).toBe("92618");
+    expect(invokeLLM).not.toHaveBeenCalled();
   });
 
   it("returns message when all fields are already filled", async () => {
@@ -294,29 +286,68 @@ describe("aiAssist.smartComplete", () => {
     expect(invokeLLM).not.toHaveBeenCalled();
   });
 
-  it("filters out empty suggestions from LLM response", async () => {
-    vi.mocked(invokeLLM).mockResolvedValueOnce({
-      choices: [
-        {
-          message: {
-            content: JSON.stringify({
-              leaseType: "NNN",
-              term: "",
-              state: "  ",
-            }),
-          },
-        },
-      ],
-    } as any);
-
+  it("returns an explanatory message when there is nothing safe to derive", async () => {
     const caller = aiAssistRouter.createCaller(createCtx());
     const result = await caller.smartComplete({
       currentFields: { propertyType: "Industrial" },
       tab: "listing",
     });
 
-    expect(result.fields.leaseType).toBe("NNN");
-    expect(result.fields.term).toBeUndefined();
-    expect(result.fields.state).toBeUndefined();
+    expect(result.fields).toEqual({});
+    expect(result.message).toContain("No directly-supported suggestions");
+    expect(invokeLLM).not.toHaveBeenCalled();
+  });
+});
+
+describe("aiAssist.reviewVoucher", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("flags deterministic lease issues without calling the LLM", async () => {
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.reviewVoucher({
+      dealData: {
+        isLease: true,
+        isSale: false,
+        address: "123 Commerce Way",
+        city: "",
+        sqft: 8500,
+        startDate: "01/15/2026",
+        endDate: "01/14/2031",
+        term: 72,
+        rentRowMonthTotal: 60,
+      },
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.suggestions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ field: "City", inputId: "dx_city" }),
+        expect.objectContaining({ field: "Term", inputId: "dx_term" }),
+        expect.objectContaining({ field: "Rent Schedule", inputId: "dx_term" }),
+      ])
+    );
+    expect(invokeLLM).not.toHaveBeenCalled();
+  });
+
+  it("flags missing sale consideration and commission", async () => {
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.reviewVoucher({
+      dealData: {
+        isLease: false,
+        isSale: true,
+        address: "9 Main Street",
+        city: "Newport Beach",
+        totalConsideration: 0,
+      },
+    });
+
+    expect(result.suggestions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ field: "Purchase Price", inputId: "dx_totalConsideration" }),
+        expect.objectContaining({ field: "Commission", inputId: "dx_saleCommPct" }),
+      ])
+    );
   });
 });

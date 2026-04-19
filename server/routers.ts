@@ -9,6 +9,7 @@ import { desc, eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { nanoid } from "nanoid";
 import { aiAssistRouter } from "./routers/aiAssist";
+import { compDataRouter } from "./routers/compData";
 import { emailRouter } from "./routers/email";
 import { contractsRouter } from "./routers/contracts";
 import { submissionsRouter } from "./routers/submissions";
@@ -17,6 +18,7 @@ import { localAuth, sdk } from "./_core/sdk";
 export const appRouter = router({
   system: systemRouter,
   aiAssist: aiAssistRouter,
+  compData: compDataRouter,
   email: emailRouter,
   contracts: contractsRouter,
   submissions: submissionsRouter,

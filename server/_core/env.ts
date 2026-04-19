@@ -32,6 +32,14 @@ export const ENV = {
     // Admin
     adminEmail: process.env.ADMIN_EMAIL ?? "",
 
+    // SMTP email delivery for reliable PDF attachments
+    smtpHost: process.env.SMTP_HOST ?? "",
+    smtpPort: parseInt(process.env.SMTP_PORT ?? "587", 10),
+    smtpSecure: (process.env.SMTP_SECURE ?? "").toLowerCase() === "true",
+    smtpUser: process.env.SMTP_USER ?? "",
+    smtpPass: process.env.SMTP_PASS ?? "",
+    smtpFrom: process.env.SMTP_FROM ?? process.env.ADMIN_EMAIL ?? "",
+
     // Local broker auth
     localAuthEnabled:
         (process.env.LOCAL_AUTH_ENABLED ?? "").toLowerCase() === "true" ||

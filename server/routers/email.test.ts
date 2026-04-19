@@ -1,11 +1,44 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// ─── Mock execSync so tests never actually call Outlook MCP ──────────────────
-vi.mock("child_process", () => ({
-  execSync: vi.fn(),
+const {
+  execSyncMock,
+  storagePutMock,
+  dbInsertValuesMock,
+  sendMailMock,
+} = vi.hoisted(() => ({
+  execSyncMock: vi.fn(),
+  storagePutMock: vi.fn().mockResolvedValue({
+    key: "broker-docs/submissions/listing/test-file.pdf",
+    url: "https://cdn.example.com/broker-docs/submissions/listing/test-file.pdf",
+  }),
+  dbInsertValuesMock: vi.fn().mockResolvedValue([{ insertId: 101 }]),
+  sendMailMock: vi.fn().mockResolvedValue({ messageId: "smtp-1" }),
 }));
 
-// ─── Mock ENV so we can control adminEmail ───────────────────────────────────
+vi.mock("child_process", () => ({
+  execSync: execSyncMock,
+}));
+
+vi.mock("../storage", () => ({
+  storagePut: storagePutMock,
+}));
+
+vi.mock("../db", () => ({
+  getDb: vi.fn().mockResolvedValue({
+    insert: vi.fn().mockReturnValue({
+      values: dbInsertValuesMock,
+    }),
+  }),
+}));
+
+vi.mock("nodemailer", () => ({
+  default: {
+    createTransport: vi.fn(() => ({
+      sendMail: sendMailMock,
+    })),
+  },
+}));
+
 vi.mock("../_core/env", () => ({
   ENV: {
     adminEmail: "admin@lee-associates.com",
@@ -17,16 +50,29 @@ vi.mock("../_core/env", () => ({
     databaseUrl: "",
     oAuthServerUrl: "",
     isProduction: false,
+    smtpHost: "",
+    smtpPort: 587,
+    smtpSecure: false,
+    smtpUser: "",
+    smtpPass: "",
+    smtpFrom: "",
   },
 }));
 
 import { execSync } from "child_process";
 import { emailRouter } from "./email";
 
-// Helper: create a minimal tRPC-like caller
 function makeCaller() {
-  const caller = emailRouter.createCaller({} as any);
-  return caller;
+  return emailRouter.createCaller({
+    req: {} as any,
+    res: {} as any,
+    user: {
+      openId: "local-taylor",
+      name: "Taylor Barnes",
+      email: "tbarnes@lee-associates.com",
+      role: "admin",
+    },
+  } as any);
 }
 
 const sampleSections = [
@@ -49,10 +95,16 @@ const sampleSections = [
 describe("email.sendToAdmin", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (execSync as any).mockReturnValue(Buffer.from("OK"));
+    execSyncMock.mockReturnValue(Buffer.from("OK"));
+    storagePutMock.mockResolvedValue({
+      key: "broker-docs/submissions/listing/test-file.pdf",
+      url: "https://cdn.example.com/broker-docs/submissions/listing/test-file.pdf",
+    });
+    dbInsertValuesMock.mockResolvedValue([{ insertId: 101 }]);
+    sendMailMock.mockResolvedValue({ messageId: "smtp-1" });
   });
 
-  it("sends a listing email and returns success", async () => {
+  it("sends a listing email and records the request", async () => {
     const caller = makeCaller();
     const result = await caller.sendToAdmin({
       formType: "listing",
@@ -64,26 +116,13 @@ describe("email.sendToAdmin", () => {
 
     expect(result.success).toBe(true);
     expect(execSync).toHaveBeenCalledOnce();
+    expect(dbInsertValuesMock).toHaveBeenCalledOnce();
 
-    // Verify the MCP call contains the right tool name and recipient
-    const callArg = (execSync as any).mock.calls[0][0] as string;
+    const callArg = execSyncMock.mock.calls[0][0] as string;
     expect(callArg).toContain("outlook_send_messages");
     expect(callArg).toContain("admin@lee-associates.com");
-  });
-
-  it("sends a voucher email and returns success", async () => {
-    const caller = makeCaller();
-    const result = await caller.sendToAdmin({
-      formType: "voucher",
-      brokerName: "Taylor Barnes",
-      propertyAddress: "456 Commerce Dr",
-      sections: sampleSections,
-      senderEmail: "tbarnes@lee-associates.com",
-    });
-
-    expect(result.success).toBe(true);
-    const callArg = (execSync as any).mock.calls[0][0] as string;
-    expect(callArg).toContain("Commission Voucher");
+    expect(result.submissionId).toBe(101);
+    expect(result.status).toBe("pending");
   });
 
   it("includes CC when senderEmail is provided", async () => {
@@ -96,95 +135,115 @@ describe("email.sendToAdmin", () => {
       senderEmail: "tbarnes@lee-associates.com",
     });
 
-    const callArg = (execSync as any).mock.calls[0][0] as string;
+    const callArg = execSyncMock.mock.calls[0][0] as string;
     expect(callArg).toContain("tbarnes@lee-associates.com");
   });
 
-  it("returns error when adminEmail is not configured", async () => {
-    // Temporarily override ENV.adminEmail to empty
-    const envMod = await import("../_core/env");
-    const original = (envMod.ENV as any).adminEmail;
-    (envMod.ENV as any).adminEmail = "";
-
-    const caller = makeCaller();
-    const result = await caller.sendToAdmin({
-      formType: "listing",
-      brokerName: "Taylor",
-      propertyAddress: "",
-      sections: sampleSections,
-    });
-
-    expect(result.success).toBe(false);
-    expect(result.error).toContain("Admin email not configured");
-
-    // Restore
-    (envMod.ENV as any).adminEmail = original;
-  });
-
-  it("returns error when execSync throws", async () => {
-    (execSync as any).mockImplementation(() => {
-      throw new Error("MCP connection failed");
-    });
-
+  it("archives the generated PDF and includes attachment metadata for Outlook", async () => {
     const caller = makeCaller();
     const result = await caller.sendToAdmin({
       formType: "voucher",
-      brokerName: "Taylor",
-      propertyAddress: "123 Test Blvd",
+      brokerName: "Taylor Barnes",
+      propertyAddress: "456 Commerce Dr",
       sections: sampleSections,
+      senderEmail: "tbarnes@lee-associates.com",
+      pdfAttachment: {
+        filename: "Voucher Draft.pdf",
+        mimeType: "application/pdf",
+        base64Data: Buffer.from("pdf-data").toString("base64"),
+      },
     });
 
-    expect(result.success).toBe(false);
-    expect(result.error).toContain("MCP connection failed");
+    expect(result.success).toBe(true);
+    expect(storagePutMock).toHaveBeenCalledOnce();
+    expect(result.archivedFile?.url).toContain("https://cdn.example.com/");
+
+    const callArg = execSyncMock.mock.calls[0][0] as string;
+    expect(callArg).toContain("Voucher_Draft.pdf");
+    expect(callArg).toContain("contentBytes");
   });
 
-  it("includes property address in email subject", async () => {
-    const caller = makeCaller();
-    await caller.sendToAdmin({
-      formType: "listing",
-      brokerName: "Taylor",
-      propertyAddress: "100 Newport Center Dr",
-      sections: sampleSections,
-    });
+  it("falls back to a secure link email when Outlook attachment sending fails", async () => {
+    execSyncMock
+      .mockImplementationOnce(() => {
+        throw new Error("attachment payload rejected");
+      })
+      .mockImplementationOnce(() => Buffer.from("OK"));
 
-    const callArg = (execSync as any).mock.calls[0][0] as string;
-    expect(callArg).toContain("100 Newport Center Dr");
-  });
-
-  it("sends a sign request email and returns success", async () => {
     const caller = makeCaller();
     const result = await caller.sendToAdmin({
       formType: "sign",
       brokerName: "Taylor Barnes",
       propertyAddress: "200 Commerce Dr, Irvine",
-      sections: [
-        {
-          title: "Sign Order Details",
-          fields: [
-            { label: "Order Type", value: "Installation" },
-            { label: "Property Address", value: "200 Commerce Dr" },
-          ],
-        },
-      ],
+      sections: sampleSections,
       senderEmail: "tbarnes@lee-associates.com",
+      pdfAttachment: {
+        filename: "Sign Request.pdf",
+        mimeType: "application/pdf",
+        base64Data: Buffer.from("pdf-data").toString("base64"),
+      },
     });
 
     expect(result.success).toBe(true);
-    const callArg = (execSync as any).mock.calls[0][0] as string;
-    expect(callArg).toContain("Sign Request");
-    expect(callArg).toContain("admin@lee-associates.com");
+    expect(result.attachmentIncluded).toBe(false);
+    expect(result.deliveryMethod).toBe("outlook-mcp-link");
+    expect(execSyncMock).toHaveBeenCalledTimes(2);
   });
 
-  it("sign request email subject includes property address", async () => {
-    const caller = makeCaller();
-    await caller.sendToAdmin({
-      formType: "sign",
-      brokerName: "Taylor",
-      propertyAddress: "555 Industrial Blvd",
-      sections: sampleSections,
-    });
+  it("uses SMTP with a true attachment when configured", async () => {
+    const envMod = await import("../_core/env");
+    const originalHost = (envMod.ENV as any).smtpHost;
+    const originalFrom = (envMod.ENV as any).smtpFrom;
+    (envMod.ENV as any).smtpHost = "smtp.example.com";
+    (envMod.ENV as any).smtpFrom = "ops@lee-associates.com";
 
-    const callArg = (execSync as any).mock.calls[0][0] as string;
-    expect(callArg).toContain("555 Industrial Blvd");
+    try {
+      const caller = makeCaller();
+      const result = await caller.sendToAdmin({
+        formType: "listing",
+        brokerName: "Taylor Barnes",
+        propertyAddress: "100 Newport Center Dr",
+        sections: sampleSections,
+        senderEmail: "tbarnes@lee-associates.com",
+        pdfAttachment: {
+          filename: "Listing Packet.pdf",
+          mimeType: "application/pdf",
+          base64Data: Buffer.from("pdf-data").toString("base64"),
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.deliveryMethod).toBe("smtp");
+      expect(result.attachmentIncluded).toBe(true);
+      expect(sendMailMock).toHaveBeenCalledOnce();
+      expect(execSyncMock).not.toHaveBeenCalled();
+
+      const smtpCall = sendMailMock.mock.calls[0][0];
+      expect(smtpCall.attachments[0].filename).toBe("Listing_Packet.pdf");
+    } finally {
+      (envMod.ENV as any).smtpHost = originalHost;
+      (envMod.ENV as any).smtpFrom = originalFrom;
+    }
+  });
+
+  it("returns error when adminEmail is not configured", async () => {
+    const envMod = await import("../_core/env");
+    const original = (envMod.ENV as any).adminEmail;
+    (envMod.ENV as any).adminEmail = "";
+
+    try {
+      const caller = makeCaller();
+      const result = await caller.sendToAdmin({
+        formType: "listing",
+        brokerName: "Taylor",
+        propertyAddress: "",
+        sections: sampleSections,
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Admin email not configured");
+    } finally {
+      (envMod.ENV as any).adminEmail = original;
+    }
   });
 });

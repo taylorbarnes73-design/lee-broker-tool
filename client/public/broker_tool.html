@@ -14,23 +14,23 @@
 <style>
 :root {
   /* Brand */
-  --red: #C10F4D; --red-dark: #97093C; --red-light: #FFF0F5;
-  --navy: #08384C; --navy-deep: #062837; --navy-soft: #0D425B;
-  --sand: #F5EFE7; --shell: #FBF8F4; --stone: #D8CDC0;
+  --red: #C32033; --red-dark: #A61B2B; --red-light: #FDF0F2;
+  --navy: #31343A; --navy-deep: #1F2227; --navy-soft: #666C75;
+  --sand: #ECECE8; --shell: #F8F8F5; --stone: #D6D5CF;
   /* Backgrounds */
-  --bg: #F7F2EB; --card: rgba(255,255,255,.94); --border: #DDD2C6;
+  --bg: #F2F2EF; --card: rgba(255,255,255,.98); --border: #DAD9D3;
   /* Text */
-  --text: #1D252D; --text2: #65707A; --text3: #8D98A3;
+  --text: #1F2328; --text2: #656B73; --text3: #8B9198;
   /* Semantic */
-  --blue: #1D4ED8; --green: #2E7D32; --amber: #F59E0B;
+  --blue: #646B74; --green: #2E7D32; --amber: #F59E0B;
   --green-light: #F0FDF4; --green-border: #BBF7D0;
   --amber-light: #FFFBEB; --amber-border: #FDE68A;
-  --locked-bg: #ECE5DD;
+  --locked-bg: #ECEBE6;
   /* Spacing */
   --radius: 14px;
-  --shadow-sm: 0 10px 24px rgba(7, 29, 41, .06);
-  --shadow-card: 0 22px 42px rgba(7, 29, 41, .1);
-  --shadow-focus: 0 0 0 4px rgba(193,15,77,.14);
+  --shadow-sm: 0 10px 24px rgba(31, 35, 40, .05);
+  --shadow-card: 0 18px 36px rgba(31, 35, 40, .08);
+  --shadow-focus: 0 0 0 4px rgba(195,32,51,.12);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -41,29 +41,29 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   background-image:
-    radial-gradient(circle at top left, rgba(193,15,77,.08), transparent 26%),
-    linear-gradient(180deg, rgba(8,56,76,.04), transparent 30%);
+    radial-gradient(circle at top left, rgba(195,32,51,.07), transparent 24%),
+    linear-gradient(180deg, rgba(31,35,40,.04), transparent 30%);
 }
 
 /* Header */
 .header {
   background:
-    radial-gradient(circle at top right, rgba(193,15,77,.24), transparent 28%),
-    linear-gradient(135deg, var(--navy) 0%, var(--navy-deep) 100%);
-  color: #fff;
-  padding: 18px 24px;
+    radial-gradient(circle at top right, rgba(195,32,51,.12), transparent 28%),
+    linear-gradient(180deg, #fafaf8 0%, #efefec 100%);
+  color: var(--text);
+  padding: 16px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
   flex-wrap: wrap;
-  box-shadow: 0 18px 42px rgba(6, 24, 37, .22);
-  border-bottom: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 12px 28px rgba(31, 35, 40, .08);
+  border-bottom: 1px solid var(--border);
 }
 .header-main { display: flex; align-items: center; gap: 18px; min-width: 0; }
 .header-logo {
-  width: min(120px, 22vw);
-  min-width: 80px;
+  width: min(94px, 18vw);
+  min-width: 68px;
   height: auto;
 }
 .header-copy { min-width: 0; }
@@ -72,12 +72,12 @@ body {
   font-weight: 700;
   letter-spacing: .28em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.64);
+  color: #7b8088;
   margin-bottom: 5px;
 }
 .header h1 {
   font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: clamp(28px, 3vw, 38px);
+  font-size: clamp(24px, 2.6vw, 32px);
   line-height: .98;
   font-weight: 600;
   letter-spacing: .01em;
@@ -86,7 +86,7 @@ body {
   font-size: 12px;
   letter-spacing: .05em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.78);
+  color: #6b7178;
   margin-top: 7px;
 }
 .header-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
@@ -114,7 +114,7 @@ body {
   top: 0;
   bottom: 1.5px;
   width: 40px;
-  background: linear-gradient(to right, transparent, rgba(255,255,255,.97));
+  background: linear-gradient(to right, transparent, rgba(248,248,245,.98));
   pointer-events: none;
 }
 .tab {
@@ -130,7 +130,7 @@ body {
   letter-spacing: .04em;
   text-transform: uppercase;
 }
-.tab:hover { color: var(--navy); }
+.tab:hover { color: var(--text); }
 .tab.active { color: var(--red); border-bottom-color: var(--red); }
 .panel { display: none; max-width: 1080px; margin: 0 auto; padding: 30px 18px 88px; }
 .panel.active { display: block; }
@@ -139,13 +139,13 @@ body {
 .card {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 22px;
-  padding: 26px 30px;
+  border-radius: 18px;
+  padding: 24px 28px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(7,29,41,.04), 0 10px 24px rgba(7,29,41,.06);
+  box-shadow: 0 2px 8px rgba(31,35,40,.03), 0 10px 20px rgba(31,35,40,.05);
   transition: box-shadow .2s;
 }
-.card:focus-within { box-shadow: 0 4px 16px rgba(7,29,41,.08), 0 18px 40px rgba(7,29,41,.10); }
+.card:focus-within { box-shadow: 0 4px 16px rgba(31,35,40,.06), 0 18px 34px rgba(31,35,40,.08); }
 /* Active card state */
 .card.card-active {
   border-left: 4px solid var(--red);
@@ -259,8 +259,8 @@ body {
 .btn-red:hover { background: var(--red-dark); box-shadow: 0 20px 34px rgba(151,9,60,.28); }
 .btn-outline { background: #fff; color: var(--red); border: 1.5px solid var(--red); }
 .btn-outline:hover { background: var(--red-light); }
-.btn-gray { background: rgba(255,255,255,.92); color: var(--navy); border: 1.5px solid rgba(8,56,76,.14); }
-.btn-gray:hover { background: #fff; border-color: rgba(8,56,76,.26); }
+.btn-gray { background: rgba(255,255,255,.96); color: var(--text); border: 1.5px solid rgba(31,35,40,.12); }
+.btn-gray:hover { background: #fff; border-color: rgba(31,35,40,.2); }
 .btn:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
 .btn-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
 /* Loading spinner inside button */
@@ -370,7 +370,7 @@ div.row.comp-sale-only { display: none !important; }
   font-weight: 600;
   white-space: nowrap;
 }
-.side-chip.listing { background: #DBEAFE; color: #1D4ED8; }
+.side-chip.listing { background: #F0F0ED; color: #4E545B; }
 .side-chip.procuring { background: #D1FAE5; color: #065F46; }
 .side-chip.both { background: #EDE9FE; color: #5B21B6; }
 .side-chip.referral { background: #FEF3C7; color: #92400E; }
@@ -578,8 +578,8 @@ body.admin-mode .header .sub { display: none; }
 .admin-modal .notes-box .notes-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--text3); margin-bottom: 4px; }
 .admin-modal .action-bar { display: flex; gap: 8px; justify-content: flex-end; }
 .admin-modal .action-bar .btn { padding: 7px 14px; font-size: 12px; }
-.btn-blue { background: #1a73e8; color: #fff; border: none; border-radius: 4px; }
-.btn-blue:hover { background: #1557b0; }
+.btn-blue { background: var(--navy); color: #fff; border: none; border-radius: 4px; }
+.btn-blue:hover { background: var(--navy-deep); }
 .btn-green { background: #1e7e34; color: #fff; border: none; border-radius: 4px; }
 .btn-green:hover { background: #166528; }
 .btn-danger { background: #c41230; color: #fff; border: none; border-radius: 4px; }
@@ -671,25 +671,24 @@ body.admin-mode .header .sub { display: none; }
 #dealius-tool .dx-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 20px 28px; margin-bottom: 28px;
-  background: radial-gradient(circle at top right, rgba(193,15,77,.20), transparent 40%), linear-gradient(135deg, var(--navy-deep) 0%, var(--navy) 100%);
+  background: linear-gradient(180deg, #fbfbf9 0%, #f0f0ec 100%);
+  border: 1px solid var(--border);
   border-radius: 14px;
-  box-shadow: 0 2px 20px rgba(8,56,76,.22);
+  box-shadow: 0 10px 24px rgba(31,35,40,.05);
 }
 #dealius-tool .dx-header-left { display: flex; align-items: center; gap: 14px; }
 #dealius-tool .dx-header-logo {
-  width: 36px; height: 36px; border-radius: 9px;
-  background: rgba(255,255,255,.12); backdrop-filter: blur(8px);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px; font-weight: 800; color: #fff;
-  border: 1px solid rgba(255,255,255,.15);
+  width: 58px;
+  height: auto;
+  display: block;
 }
 #dealius-tool .dx-header-titles { display: flex; flex-direction: column; gap: 2px; }
-#dealius-tool .dx-header h1 { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -.2px; line-height: 1.2; margin: 0; padding: 0; border: none; }
-#dealius-tool .dx-header-tag { font-size: 11px; font-weight: 500; letter-spacing: .5px; color: rgba(255,255,255,.55); }
+#dealius-tool .dx-header h1 { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -.2px; line-height: 1.2; margin: 0; padding: 0; border: none; }
+#dealius-tool .dx-header-tag { font-size: 11px; font-weight: 600; letter-spacing: .5px; color: var(--text2); }
 #dealius-tool .dx-version-badge {
-  font-size: 10px; background: rgba(255,255,255,.1); color: rgba(255,255,255,.7);
-  border: 1px solid rgba(255,255,255,.15); border-radius: 20px; padding: 3px 12px;
-  font-weight: 600; letter-spacing: .5px; backdrop-filter: blur(4px);
+  font-size: 10px; background: #fff; color: var(--text2);
+  border: 1px solid var(--border); border-radius: 20px; padding: 3px 12px;
+  font-weight: 700; letter-spacing: .5px;
 }
 #dealius-tool .dx-card {
   background: #fff; border: 1px solid #e2e5ec; border-radius: 14px;
@@ -733,8 +732,8 @@ body.admin-mode .header .sub { display: none; }
   background: #fff; margin-bottom: 16px; position: relative;
 }
 #dealius-tool .dx-drop:hover, #dealius-tool .dx-drop.over {
-  border-color: var(--navy); background: rgba(8,56,76,.04);
-  box-shadow: 0 0 0 4px rgba(8,56,76,.12);
+  border-color: var(--red); background: rgba(195,32,51,.04);
+  box-shadow: 0 0 0 4px rgba(195,32,51,.08);
 }
 #dealius-tool .dx-drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
 #dealius-tool .dx-drop-icon { font-size: 32px; margin-bottom: 10px; display: block; }
@@ -745,7 +744,7 @@ body.admin-mode .header .sub { display: none; }
   padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; margin-bottom: 14px;
 }
 #dealius-tool .dx-status.on { display: flex; }
-#dealius-tool .dx-status.load { background: rgba(8,56,76,.05); border: 1px solid rgba(8,56,76,.15); color: var(--navy); }
+#dealius-tool .dx-status.load { background: rgba(31,35,40,.05); border: 1px solid rgba(31,35,40,.12); color: var(--text); }
 #dealius-tool .dx-status.ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: #059669; }
 #dealius-tool .dx-status.err { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
 #dealius-tool .dx-spin { width: 14px; height: 14px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: dxSp .7s linear infinite; flex-shrink: 0; }
@@ -757,15 +756,15 @@ body.admin-mode .header .sub { display: none; }
   background: #f7f8fa; border: 2px solid var(--navy); border-radius: 10px; color: #0f172a;
   font-size: 16px; font-weight: 600; padding: 10px 14px; outline: none; flex: 1;
 }
-#dealius-tool .dx-deal-name-row input:focus { box-shadow: 0 0 0 4px rgba(8,56,76,.15); background: #fff; }
+#dealius-tool .dx-deal-name-row input:focus { box-shadow: 0 0 0 4px rgba(195,32,51,.1); background: #fff; border-color: var(--red); }
 #dealius-tool .dx-rep-select {
   font-size: 12px; font-weight: 600; padding: 8px 14px; border-radius: 24px;
   letter-spacing: .3px; text-transform: uppercase; white-space: nowrap;
-  background: rgba(8,56,76,.07); color: var(--navy); border: 1.5px solid rgba(8,56,76,.2);
+  background: #f2f2ef; color: var(--text); border: 1.5px solid var(--border);
   cursor: pointer; outline: none; font-family: 'Inter', sans-serif;
 }
-#dealius-tool .dx-rep-select:hover { background: rgba(8,56,76,.12); }
-#dealius-tool .dx-rep-select:focus { box-shadow: 0 0 0 3px rgba(8,56,76,.15); }
+#dealius-tool .dx-rep-select:hover { background: #ebebe7; }
+#dealius-tool .dx-rep-select:focus { box-shadow: 0 0 0 3px rgba(195,32,51,.08); }
 #dealius-tool .dx-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
 #dealius-tool .dx-edit-grid.dx-cols3 { grid-template-columns: 1fr 1fr 1fr; }
 #dealius-tool .dx-edit-grid.dx-cols1 { grid-template-columns: 1fr; }
@@ -797,10 +796,11 @@ body.admin-mode .header .sub { display: none; }
   transition: all .2s ease; display: inline-flex; align-items: center; gap: 8px;
 }
 #dealius-tool .dx-btn.dx-primary {
-  background: linear-gradient(135deg, var(--navy) 0%, var(--red) 100%);
-  color: #fff; box-shadow: 0 2px 8px rgba(8,56,76,.3);
+  background: var(--red);
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(195,32,51,.16);
 }
-#dealius-tool .dx-btn.dx-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(8,56,76,.35); }
+#dealius-tool .dx-btn.dx-primary:hover { transform: translateY(-1px); box-shadow: 0 14px 24px rgba(195,32,51,.2); }
 #dealius-tool .dx-btn.dx-primary:disabled { background: #cdd2db; color: #94a3b8; cursor: not-allowed; transform: none; box-shadow: none; }
 #dealius-tool .dx-btn.dx-ghost { background: #fff; color: #475569; border: 1.5px solid #e2e5ec; }
 #dealius-tool .dx-btn.dx-ghost:hover { border-color: var(--navy); color: var(--navy); background: var(--sand); }
@@ -811,7 +811,7 @@ body.admin-mode .header .sub { display: none; }
   color: #94a3b8; background: #fff; border-right: 1px solid #e2e5ec; transition: all .25s;
 }
 #dealius-tool .dx-step:last-child { border-right: none; }
-#dealius-tool .dx-step.active { background: rgba(8,56,76,.06); color: var(--navy); box-shadow: inset 0 -2px 0 var(--navy); }
+#dealius-tool .dx-step.active { background: rgba(195,32,51,.05); color: var(--text); box-shadow: inset 0 -2px 0 var(--red); }
 #dealius-tool .dx-step.done { background: #ecfdf5; color: #059669; }
 #dealius-tool .dx-step.err { background: #fef2f2; color: #dc2626; }
 #dealius-tool .dx-step.skip { background: #f7f8fa; color: #94a3b8; opacity: .4; }
@@ -827,19 +827,19 @@ body.admin-mode .header .sub { display: none; }
 #dealius-tool .dx-log .ll .ts { color: #475569; flex-shrink: 0; }
 #dealius-tool .dx-log .ll.ok .msg { color: #34d399; }
 #dealius-tool .dx-log .ll.err .msg { color: #f87171; }
-#dealius-tool .dx-log .ll.info .msg { color: #60a5fa; }
+#dealius-tool .dx-log .ll.info .msg { color: #aeb4bc; }
 #dealius-tool .dx-log .ll.warn .msg { color: #fbbf24; }
-#dealius-tool .dx-log a.rl { color: #60a5fa; text-decoration: none; font-weight: 600; }
-#dealius-tool .dx-log a.rl:hover { text-decoration: underline; color: #93bbfd; }
-#dealius-tool .ai-panel { background: linear-gradient(135deg, #f0f5f8 0%, #fff5f8 100%); border: 1px solid rgba(193,15,77,0.2); border-radius: 14px; padding: 18px 20px; }
-#dealius-tool .ai-panel-header { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; color: var(--navy); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; }
+#dealius-tool .dx-log a.rl { color: #d89aa3; text-decoration: none; font-weight: 600; }
+#dealius-tool .dx-log a.rl:hover { text-decoration: underline; color: #efb7bf; }
+#dealius-tool .ai-panel { background: #fcfcfa; border: 1px solid #e4e2dc; border-radius: 14px; padding: 18px 20px; }
+#dealius-tool .ai-panel-header { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; color: var(--text); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; }
 #dealius-tool .ai-suggestion { background: #fff; border: 1px solid rgba(193,15,77,0.15); border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; display: flex; gap: 14px; align-items: flex-start; }
 #dealius-tool .ai-sug-field { font-size: 10px; font-weight: 700; color: var(--red-dark); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 4px; }
 #dealius-tool .ai-sug-text { font-size: 13px; color: #0f172a; margin-bottom: 4px; }
 #dealius-tool .ai-sug-reason { font-size: 11px; color: #475569; line-height: 1.6; }
 #dealius-tool .ai-sug-actions { display: flex; gap: 8px; margin-top: 10px; }
-#dealius-tool .ai-btn-accept { font-size: 11px; font-weight: 700; padding: 5px 14px; border-radius: 6px; border: none; cursor: pointer; background: var(--navy); color: #fff; }
-#dealius-tool .ai-btn-accept:hover { background: var(--navy-soft); }
+#dealius-tool .ai-btn-accept { font-size: 11px; font-weight: 700; padding: 5px 14px; border-radius: 6px; border: none; cursor: pointer; background: var(--red); color: #fff; }
+#dealius-tool .ai-btn-accept:hover { background: var(--red-dark); }
 #dealius-tool .ai-btn-dismiss { font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--stone); cursor: pointer; background: #fff; color: #6b7280; }
 #dealius-tool .ai-btn-dismiss:hover { border-color: var(--navy); color: var(--navy); }
 @media (max-width: 640px) {
@@ -1044,7 +1044,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 
 <div class="header">
   <div class="header-main">
-    <img class="header-logo" src="lee-newport-beach-white.png" alt="Lee &amp; Associates Newport Beach">
+    <img class="header-logo" src="lee-newport-beach-fullcolor.png" alt="Lee &amp; Associates Newport Beach">
     <div class="header-copy">
     <div class="header-kicker">Lee &amp; Associates Newport Beach</div>
     <h1>Broker Submission Tool</h1>
@@ -1053,10 +1053,10 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   </div>
   <div class="header-actions">
     <div id="bp-selector-wrap" style="display:flex;align-items:center;gap:6px;">
-      <select id="bp-active-select" onchange="bpApplyProfile(this.value)" title="Select a broker profile to pre-fill agent fields" style="font-size:13px;padding:5px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;max-width:180px;">
+      <select id="bp-active-select" onchange="bpApplyProfile(this.value)" title="Select a broker profile to pre-fill agent fields" style="font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);cursor:pointer;max-width:180px;">
         <option value="">Select Broker&hellip;</option>
       </select>
-      <button onclick="bpOpenModal()" title="Manage broker profiles" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.4);color:#fff;border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer;white-space:nowrap;">Profiles</button>
+      <button onclick="bpOpenModal()" title="Manage broker profiles" style="background:#fff;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-size:13px;cursor:pointer;white-space:nowrap;">Profiles</button>
     </div>
     <button class="admin-toggle" onclick="toggleAdminMode()">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -1110,7 +1110,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       <h3 style="margin-top:16px;">Upload Documents</h3>
 
       <div class="field" style="margin-bottom:16px;">
-        <label style="display:flex;align-items:center;gap:6px;">Property Brochure <span style="font-size:10px;color:#fff;font-weight:700;background:linear-gradient(135deg,var(--navy),var(--red));border-radius:4px;padding:2px 7px;letter-spacing:.04em;">AI Scrape</span></label>
+        <label style="display:flex;align-items:center;gap:6px;">Property Brochure <span style="font-size:10px;color:#fff;font-weight:700;background:var(--red);border-radius:4px;padding:2px 7px;letter-spacing:.04em;">AI Scrape</span></label>
         <div class="brochure-zone" id="brochure-zone" onclick="document.getElementById('l-brochure-file').click()">
           <input type="file" id="l-brochure-file" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display:none;" onchange="onBrochureSelected(this)">
           <div class="brochure-zone-inner">
@@ -1854,7 +1854,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     <h3>Upload Documents</h3>
 
     <div class="field" style="margin-bottom:16px;">
-      <label style="display:flex;align-items:center;gap:6px;">Deal Brochure / Commission Agreement <span style="font-size:10px;color:#fff;font-weight:700;background:linear-gradient(135deg,var(--navy),var(--red));border-radius:4px;padding:2px 7px;letter-spacing:.04em;">AI Scrape</span></label>
+      <label style="display:flex;align-items:center;gap:6px;">Deal Brochure / Commission Agreement <span style="font-size:10px;color:#fff;font-weight:700;background:var(--red);border-radius:4px;padding:2px 7px;letter-spacing:.04em;">AI Scrape</span></label>
       <div class="brochure-zone" id="v-brochure-zone" onclick="document.getElementById('v-brochure-file').click()">
         <input type="file" id="v-brochure-file" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display:none;" onchange="onVoucherBrochureSelected(this)">
         <div class="brochure-zone-inner">
@@ -2794,7 +2794,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
           <div class="stat-value" id="stat-pending">3</div>
         </div>
         <div class="stat-card">
-          <div class="stat-header"><span class="stat-label">In Review</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <div class="stat-header"><span class="stat-label">In Review</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#646B74" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
           <div class="stat-value" id="stat-review">1</div>
         </div>
         <div class="stat-card">
@@ -2854,7 +2854,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       <div id="dealius-tool">
         <div class="dx-header">
           <div class="dx-header-left">
-            <div class="dx-header-logo">L</div>
+            <img class="dx-header-logo" src="lee-newport-beach-fullcolor.png" alt="Lee &amp; Associates Newport Beach">
             <div class="dx-header-titles">
               <h1>Dealius Deal Entry</h1>
               <span class="dx-header-tag">Lee &amp; Associates &middot; Voucher to Deal</span>
@@ -3841,6 +3841,18 @@ function calcRentRow(el) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // VOUCHER: OUTSIDE AGENTS TABLE
 // ═══════════════════════════════════════════════════════════════════════════════
+function addVoucherCollab() {
+  const body = document.getElementById('v-collab-body');
+  if (!body) return;
+  const activeProfileId = document.getElementById('bp-active-select')?.value || '';
+  const profile = bpGetProfiles().find(item => item.id === activeProfileId);
+  const tr = document.createElement('tr');
+  tr.innerHTML = '<td><input placeholder="Agent name" value="' + bpEscAttr(profile?.name || '') + '"></td>' +
+    '<td><input placeholder="Role / Team" value="' + bpEscAttr(profile?.title || '') + '"></td>' +
+    '<td><button class="remove-row" onclick="this.closest(\\'tr\\').remove()">&times;</button></td>';
+  body.appendChild(tr);
+}
+
 function addOutsideAgent() {
   const body = document.getElementById('v-outside-body');
   const tr = document.createElement('tr');
@@ -5691,14 +5703,13 @@ const SEED_SUBMISSIONS = [
   { id: 'SUB-008', type: 'voucher', status: 'approved', propertyType: 'office', transactionType: 'lease', address: '100 Bayview Cir', city: 'Newport Beach', state: 'CA', zip: '92660', brokerName: 'Rachel Torres', brokerEmail: 'rtorres@lee-associates.com', office: 'Newport Beach', submittedAt: '2026-03-18T13:20:00', updatedAt: '2026-03-20T16:00:00', sizeSF: 8900, leaseRate: '$3.85/SF FSG' },
 ];
 
-// Load submissions from localStorage, seed with mock data on first visit
+// Load any locally cached submissions. The admin portal now prefers live DB data.
 function loadSubmissions() {
   const stored = localStorage.getItem('lee_submissions');
   if (stored) {
     try { return JSON.parse(stored); } catch(e) { /* fall through */ }
   }
-  localStorage.setItem('lee_submissions', JSON.stringify(SEED_SUBMISSIONS));
-  return [...SEED_SUBMISSIONS];
+  return [];
 }
 
 function persistSubmissions() {
@@ -5706,6 +5717,58 @@ function persistSubmissions() {
 }
 
 let ADMIN_SUBMISSIONS = loadSubmissions();
+
+function splitSubmissionAddress(address) {
+  const parts = String(address || '').split(',').map(part => part.trim()).filter(Boolean);
+  return {
+    street: parts[0] || '',
+    city: parts[1] || '',
+    stateZip: parts[2] || '',
+  };
+}
+
+function normalizeSubmissionType(type) {
+  return type === 'sign-request' ? 'sign' : type;
+}
+
+function mapServerSubmission(row) {
+  const payload = row?.payload || {};
+  const addressText = payload.propertyAddress || payload.address || row.reference || '';
+  const addressParts = splitSubmissionAddress(addressText);
+  return {
+    id: 'SUB-' + String(row.id).padStart(4, '0'),
+    serverSubmissionId: row.id,
+    type: normalizeSubmissionType(row.formType || payload.type || ''),
+    status: row.status || payload.status || 'pending',
+    propertyType: payload.propertyType || '',
+    transactionType: payload.transactionType || '',
+    address: payload.address || addressParts.street,
+    city: payload.city || addressParts.city,
+    state: payload.state || '',
+    zip: payload.zip || '',
+    brokerName: row.submittedBy || payload.brokerName || 'Unknown',
+    brokerEmail: row.submittedByEmail || payload.brokerEmail || payload.senderEmail || '',
+    office: payload.office || 'Newport Beach',
+    submittedAt: row.createdAt || payload.submittedAt || new Date().toISOString(),
+    updatedAt: row.updatedAt || payload.updatedAt || row.createdAt || new Date().toISOString(),
+    notes: payload.notes || '',
+    sections: Array.isArray(payload.sections) ? payload.sections : [],
+    archivedFile: payload.archivedFile || null,
+    pdfUrl: row.pdfUrl || payload.archivedFile?.url || '',
+    pdfFileKey: row.pdfFileKey || payload.archivedFile?.fileKey || '',
+    payload: payload,
+  };
+}
+
+async function refreshAdminSubmissions() {
+  try {
+    const rows = await callTrpc('submissions.adminList', { limit: 300 });
+    ADMIN_SUBMISSIONS = Array.isArray(rows) ? rows.map(mapServerSubmission) : [];
+    persistSubmissions();
+  } catch (error) {
+    console.warn('Admin submissions refresh failed:', error && error.message ? error.message : error);
+  }
+}
 
 async function syncSubmissionToServer(submission) {
   try {
@@ -5877,10 +5940,11 @@ function fmtDate(iso) {
 function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
 
 // Toggle admin mode
-function toggleAdminMode() {
+async function toggleAdminMode() {
   const isAdmin = document.body.classList.toggle('admin-mode');
   document.getElementById('admin-toggle-label').textContent = isAdmin ? 'Broker Tool' : 'Admin Portal';
   if (isAdmin) {
+    await refreshAdminSubmissions();
     renderDashboard();
     renderSubmissions();
 
@@ -5917,7 +5981,7 @@ function renderDashboard() {
   const recent = [...ADMIN_SUBMISSIONS].sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)).slice(0, 5);
   const tbody = document.getElementById('dashboard-recent');
   tbody.innerHTML = recent.map(s => 
-    '<tr onclick="openSubmissionDetail(\'' + s.id + '\')"><td style="font-family:monospace;font-size:12px;">' + s.id + '</td><td style="text-transform:capitalize;">' + s.type + '</td><td>' + s.address + ', ' + s.city + '</td><td>' + s.brokerName + '</td><td>' + statusBadge(s.status) + '</td></tr>'
+    '<tr onclick="openSubmissionDetail(\'' + s.id + '\')"><td style="font-family:monospace;font-size:12px;">' + s.id + '</td><td style="text-transform:capitalize;">' + s.type + '</td><td>' + ([s.address, s.city].filter(Boolean).join(', ') || '-') + '</td><td>' + (s.brokerName || '-') + '</td><td>' + statusBadge(s.status) + '</td></tr>'
   ).join('');
 }
 
@@ -5929,7 +5993,7 @@ function filterSubmissions() {
   const fType = document.getElementById('sub-filter-type').value;
   const fStatus = document.getElementById('sub-filter-status').value;
   const filtered = ADMIN_SUBMISSIONS.filter(s => {
-    const matchSearch = !search || s.address.toLowerCase().includes(search) || s.brokerName.toLowerCase().includes(search) || s.id.toLowerCase().includes(search);
+    const matchSearch = !search || String(s.address || '').toLowerCase().includes(search) || String(s.brokerName || '').toLowerCase().includes(search) || String(s.id || '').toLowerCase().includes(search);
     const matchType = fType === 'all' || s.type === fType;
     const matchStatus = fStatus === 'all' || s.status === fStatus;
     return matchSearch && matchType && matchStatus;
@@ -5940,7 +6004,7 @@ function filterSubmissions() {
     return;
   }
   tbody.innerHTML = filtered.map(s =>
-    '<tr onclick="openSubmissionDetail(\'' + s.id + '\')"><td style="font-family:monospace;font-size:12px;">' + s.id + '</td><td style="text-transform:capitalize;">' + s.type + '</td><td>' + s.address + ', ' + s.city + '</td><td>' + s.brokerName + '</td><td>' + s.office + '</td><td>' + statusBadge(s.status) + '</td><td style="font-size:12px;color:var(--text3);">' + fmtDate(s.submittedAt) + '</td></tr>'
+    '<tr onclick="openSubmissionDetail(\'' + s.id + '\')"><td style="font-family:monospace;font-size:12px;">' + s.id + '</td><td style="text-transform:capitalize;">' + s.type + '</td><td>' + ([s.address, s.city].filter(Boolean).join(', ') || '-') + '</td><td>' + (s.brokerName || '-') + '</td><td>' + (s.office || '-') + '</td><td>' + statusBadge(s.status) + '</td><td style="font-size:12px;color:var(--text3);">' + fmtDate(s.submittedAt) + '</td></tr>'
   ).join('');
 }
 
@@ -5950,33 +6014,50 @@ function openSubmissionDetail(id) {
   if (!s) return;
   document.getElementById('adm-detail-id').textContent = s.id;
   document.getElementById('adm-detail-badge').innerHTML = ' ' + statusBadge(s.status);
-  document.getElementById('adm-detail-subtitle').textContent = cap(s.type) + ' \u00B7 ' + cap(s.propertyType) + ' \u00B7 ' + cap(s.transactionType);
+  document.getElementById('adm-detail-subtitle').textContent = [cap(s.type), cap(s.propertyType), cap(s.transactionType)].filter(Boolean).join(' \u00B7 ');
 
   let grid = '';
-  grid += '<div class="detail-item"><div class="detail-label">Address</div><div class="detail-value">' + s.address + '</div></div>';
-  grid += '<div class="detail-item"><div class="detail-label">City</div><div class="detail-value">' + s.city + ', ' + s.state + ' ' + s.zip + '</div></div>';
-  grid += '<div class="detail-item"><div class="detail-label">Broker</div><div class="detail-value">' + s.brokerName + '</div></div>';
-  grid += '<div class="detail-item"><div class="detail-label">Office</div><div class="detail-value">' + s.office + '</div></div>';
+  grid += '<div class="detail-item"><div class="detail-label">Address</div><div class="detail-value">' + (s.address || '-') + '</div></div>';
+  grid += '<div class="detail-item"><div class="detail-label">City</div><div class="detail-value">' + ([s.city, s.state, s.zip].filter(Boolean).join(', ') || '-') + '</div></div>';
+  grid += '<div class="detail-item"><div class="detail-label">Broker</div><div class="detail-value">' + (s.brokerName || '-') + '</div></div>';
+  grid += '<div class="detail-item"><div class="detail-label">Broker Email</div><div class="detail-value">' + (s.brokerEmail || '-') + '</div></div>';
+  grid += '<div class="detail-item"><div class="detail-label">Office</div><div class="detail-value">' + (s.office || '-') + '</div></div>';
   if (s.sizeSF) grid += '<div class="detail-item"><div class="detail-label">Size</div><div class="detail-value">' + s.sizeSF.toLocaleString() + ' SF</div></div>';
   if (s.leaseRate) grid += '<div class="detail-item"><div class="detail-label">Lease Rate</div><div class="detail-value">' + s.leaseRate + '</div></div>';
   if (s.salePrice) grid += '<div class="detail-item"><div class="detail-label">Sale Price</div><div class="detail-value">' + s.salePrice + '</div></div>';
+  if (s.archivedFile && s.archivedFile.filename) grid += '<div class="detail-item"><div class="detail-label">Submission PDF</div><div class="detail-value">' + s.archivedFile.filename + '</div></div>';
   grid += '<div class="detail-item"><div class="detail-label">Submitted</div><div class="detail-value">' + new Date(s.submittedAt).toLocaleString() + '</div></div>';
   document.getElementById('adm-detail-grid').innerHTML = grid;
 
   const notesBox = document.getElementById('adm-detail-notes');
-  if (s.notes) {
+  const sectionSummary = Array.isArray(s.sections) && s.sections.length
+    ? s.sections
+        .map(section => {
+          const lines = (section.fields || [])
+            .filter(field => field.value)
+            .map(field => field.label + ': ' + field.value)
+            .join('\n');
+          return lines ? section.title + '\n' + lines : '';
+        })
+        .filter(Boolean)
+        .join('\n\n')
+    : '';
+  if (s.notes || sectionSummary) {
     notesBox.style.display = 'block';
-    document.getElementById('adm-detail-notes-text').textContent = s.notes;
+    document.getElementById('adm-detail-notes-text').textContent = [s.notes, sectionSummary].filter(Boolean).join('\n\n');
   } else {
     notesBox.style.display = 'none';
   }
 
   let actions = '';
+  if (s.pdfUrl) {
+    actions += '<a class="btn btn-gray" href="' + s.pdfUrl + '" target="_blank" rel="noopener noreferrer">Open Submission PDF</a>';
+  }
   if (s.type === 'listing' || s.type === 'Listing') {
-    actions += '<button class="btn btn-blue" style="background:#2563eb;" onclick="dxPushListing(\'' + s.id + '\')"><svg style="width:13px;height:13px;margin-right:4px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Push to Dealius</button>';
+    actions += '<button class="btn btn-blue" style="background:var(--navy);" onclick="dxPushListing(\'' + s.id + '\')"><svg style="width:13px;height:13px;margin-right:4px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Push to Dealius</button>';
   }
   if (s.type === 'voucher') {
-    actions += '<button class="btn btn-blue" style="background:#7c3aed;" onclick="dxPushVoucher(\'' + s.id + '\')"><svg style="width:13px;height:13px;margin-right:4px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Push to Dealius Deal</button>';
+    actions += '<button class="btn btn-blue" style="background:var(--red);" onclick="dxPushVoucher(\'' + s.id + '\')"><svg style="width:13px;height:13px;margin-right:4px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Push to Dealius Deal</button>';
   }
   actions += '<button class="btn btn-blue" ' + (s.status === 'in_review' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'in_review\')"><svg style="width:13px;height:13px;margin-right:4px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Review</button>';
   actions += '<button class="btn btn-green" ' + (s.status === 'approved' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'approved\')"><svg style="width:13px;height:13px;margin-right:4px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Approve</button>';
@@ -6001,9 +6082,21 @@ function updateSubStatus(id, status) {
     sub.updatedAt = new Date().toISOString();
   }
   persistSubmissions();
-  renderDashboard();
-  renderSubmissions();
-  openSubmissionDetail(id);
+  Promise.resolve()
+    .then(async function() {
+      if (sub && sub.serverSubmissionId) {
+        await callTrpc('submissions.updateStatus', { id: sub.serverSubmissionId, status: status });
+        await refreshAdminSubmissions();
+      }
+    })
+    .catch(function(error) {
+      console.warn('Submission status sync failed:', error && error.message ? error.message : error);
+    })
+    .finally(function() {
+      renderDashboard();
+      renderSubmissions();
+      openSubmissionDetail(id);
+    });
 }
 
 function dxPushListing(id) {
@@ -6924,7 +7017,7 @@ async function dxRunAIReview() {
   if (!DX_P) { alert('Load a voucher first.'); return; }
   const panel = document.getElementById('dxAiPanel');
   panel.style.display = '';
-  panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>✨</span> AI Review</div><div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#5b21b6;"><div class="dx-spin" style="border-color:#7c3aed;border-top-color:transparent"></div> Analyzing deal data…</div></div>';
+  panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>Review</span> Review Checks</div><div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#626872;"><div class="dx-spin" style="border-color:var(--red);border-top-color:transparent"></div> Checking the voucher for date, term, address, and commission issues.</div></div>';
   const d = dxCollectForm();
   const rentTotal = d.rentRows ? d.rentRows.reduce((s,r) => s + (r.months||0), 0) : 0;
   const dealData = {
@@ -6943,16 +7036,16 @@ async function dxRunAIReview() {
     const result = await callTrpc('aiAssist.reviewVoucher', { dealData });
     dxRenderAISuggestions(result.suggestions || [], panel);
   } catch (e) {
-    panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>✨</span> AI Review</div><div style="color:#dc2626;font-size:13px;">Error: ' + dxEscHtml(e.message) + '</div></div>';
+    panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>Review</span> Review Checks</div><div style="color:#dc2626;font-size:13px;">Error: ' + dxEscHtml(e.message) + '</div></div>';
   }
 }
 
 function dxRenderAISuggestions(suggestions, panel) {
   if (!suggestions || suggestions.length === 0) {
-    panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>✨</span> AI Review</div><div style="color:#059669;font-size:13px;">✓ Everything looks good — no issues found.</div></div>';
+    panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>Review</span> Review Checks</div><div style="color:#059669;font-size:13px;">No rule-based issues were found.</div></div>';
     return;
   }
-  let html = '<div class="ai-panel"><div class="ai-panel-header"><span>✨</span> AI Review — ' + suggestions.length + ' suggestion' + (suggestions.length > 1 ? 's' : '') + '</div>';
+  let html = '<div class="ai-panel"><div class="ai-panel-header"><span>Review</span> Review Checks - ' + suggestions.length + ' suggestion' + (suggestions.length > 1 ? 's' : '') + '</div>';
   suggestions.forEach((s, i) => {
     html += '<div class="ai-suggestion" id="dxAisug_' + i + '"><div class="ai-sug-body"><div class="ai-sug-field">' + dxEscHtml(s.field) + '</div><div class="ai-sug-text">' + dxEscHtml(s.issue) + '</div>';
     if (s.suggestion) html += '<div class="ai-sug-reason"><strong>Suggested value:</strong> ' + dxEscHtml(s.suggestion) + '</div>';
@@ -6966,7 +7059,7 @@ function dxRenderAISuggestions(suggestions, panel) {
 
 function dxAcceptSuggestion(i, inputId, value) {
   const el = document.getElementById(inputId);
-  if (el) { el.value = value; el.style.borderColor = '#7c3aed'; el.style.boxShadow = '0 0 0 3px rgba(124,58,237,.15)'; setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 2000); }
+  if (el) { el.value = value; el.style.borderColor = 'var(--red)'; el.style.boxShadow = '0 0 0 3px rgba(195,32,51,.15)'; setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 2000); }
   dxDismissSuggestion(i);
 }
 
@@ -7075,6 +7168,195 @@ function showToast(msg, type = 'success', duration = 4000) {
     setTimeout(() => toast.remove(), 300);
   }, duration);
 }
+
+const BP_STORAGE_KEY = 'lee-broker-tool.broker-profiles';
+
+function bpLoadProfiles() {
+  try {
+    const raw = localStorage.getItem(BP_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function bpPersistProfiles(profiles) {
+  localStorage.setItem(BP_STORAGE_KEY, JSON.stringify(profiles));
+}
+
+function bpEsc(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function bpEscAttr(value) {
+  return bpEsc(value).replace(/'/g, '&#39;');
+}
+
+function bpGetProfiles() {
+  return bpLoadProfiles().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+}
+
+function bpResetForm() {
+  document.getElementById('bp-edit-id').value = '';
+  document.getElementById('bp-form-title').textContent = 'Add New Profile';
+  document.getElementById('bp-save-label').textContent = 'Save Profile';
+  ['bp-f-name', 'bp-f-title', 'bp-f-phone', 'bp-f-fax', 'bp-f-email', 'bp-f-dre'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('bp-f-broker-dre').value = '01197433';
+  document.getElementById('bp-f-company').value = 'Lee & Associates - Newport Beach';
+  document.getElementById('bp-f-address').value = '100 Bayview Circle, Suite 600, Newport Beach, CA 92660';
+}
+
+function bpRenderSelector() {
+  const select = document.getElementById('bp-active-select');
+  if (!select) return;
+  const currentValue = select.value;
+  const profiles = bpGetProfiles();
+  select.innerHTML = '<option value=\"\">Select Broker...</option>' +
+    profiles.map(profile => '<option value="' + profile.id + '">' + bpEsc(profile.name) + '</option>').join('');
+  if (profiles.some(profile => profile.id === currentValue)) select.value = currentValue;
+}
+
+function bpRenderList() {
+  const list = document.getElementById('bp-list');
+  if (!list) return;
+  const profiles = bpGetProfiles();
+  if (!profiles.length) {
+    list.innerHTML = '<div style="padding:12px 14px;border:1px dashed var(--border);border-radius:10px;background:#fff;font-size:13px;color:var(--text2);">No broker profiles saved yet.</div>';
+    return;
+  }
+
+  list.innerHTML = profiles.map(profile =>
+    '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:#fff;">' +
+      '<div style="min-width:0;">' +
+        '<div style="font-size:13px;font-weight:700;color:var(--text);">' + bpEsc(profile.name) + '</div>' +
+        '<div style="font-size:12px;color:var(--text2);margin-top:4px;">' + bpEsc(profile.title || profile.email || 'Lee broker') + '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">' +
+        '<button class="btn btn-gray" type="button" onclick="bpEditProfile('' + bpEscAttr(profile.id) + '')">Edit</button>' +
+        '<button class="btn btn-outline" type="button" onclick="bpApplyProfile('' + bpEscAttr(profile.id) + '')">Apply</button>' +
+        '<button class="btn btn-gray" type="button" onclick="bpDeleteProfile('' + bpEscAttr(profile.id) + '')">Delete</button>' +
+      '</div>' +
+    '</div>'
+  ).join('');
+}
+
+function bpReadForm() {
+  return {
+    id: document.getElementById('bp-edit-id').value || String(Date.now()),
+    name: document.getElementById('bp-f-name').value.trim(),
+    title: document.getElementById('bp-f-title').value.trim(),
+    phone: document.getElementById('bp-f-phone').value.trim(),
+    fax: document.getElementById('bp-f-fax').value.trim(),
+    email: document.getElementById('bp-f-email').value.trim(),
+    dre: document.getElementById('bp-f-dre').value.trim(),
+    brokerDre: document.getElementById('bp-f-broker-dre').value.trim(),
+    company: document.getElementById('bp-f-company').value.trim(),
+    address: document.getElementById('bp-f-address').value.trim(),
+  };
+}
+
+function bpOpenModal() {
+  bpRenderList();
+  document.getElementById('bp-modal').classList.add('open');
+}
+
+function bpCloseModal() {
+  document.getElementById('bp-modal').classList.remove('open');
+}
+
+function bpCancelEdit() {
+  bpResetForm();
+}
+
+function bpEditProfile(id) {
+  const profile = bpGetProfiles().find(item => item.id === id);
+  if (!profile) return;
+  document.getElementById('bp-edit-id').value = profile.id;
+  document.getElementById('bp-form-title').textContent = 'Edit Profile';
+  document.getElementById('bp-save-label').textContent = 'Update Profile';
+  document.getElementById('bp-f-name').value = profile.name || '';
+  document.getElementById('bp-f-title').value = profile.title || '';
+  document.getElementById('bp-f-phone').value = profile.phone || '';
+  document.getElementById('bp-f-fax').value = profile.fax || '';
+  document.getElementById('bp-f-email').value = profile.email || '';
+  document.getElementById('bp-f-dre').value = profile.dre || '';
+  document.getElementById('bp-f-broker-dre').value = profile.brokerDre || '01197433';
+  document.getElementById('bp-f-company').value = profile.company || 'Lee & Associates - Newport Beach';
+  document.getElementById('bp-f-address').value = profile.address || '100 Bayview Circle, Suite 600, Newport Beach, CA 92660';
+}
+
+function bpDeleteProfile(id) {
+  bpPersistProfiles(bpGetProfiles().filter(profile => profile.id !== id));
+  bpRenderSelector();
+  bpRenderList();
+  showToast('Broker profile deleted.', 'info');
+}
+
+function bpSaveProfile() {
+  const profile = bpReadForm();
+  if (!profile.name || !profile.email) {
+    showToast('Name and email are required for broker profiles.', 'error');
+    return;
+  }
+
+  const profiles = bpGetProfiles().filter(item => item.id !== profile.id);
+  profiles.push(profile);
+  bpPersistProfiles(profiles);
+  bpRenderSelector();
+  bpRenderList();
+  document.getElementById('bp-active-select').value = profile.id;
+  bpResetForm();
+  showToast('Broker profile saved.', 'success');
+}
+
+function bpFillIfPresent(id, value) {
+  if (!value) return;
+  const el = document.getElementById(id);
+  if (el) el.value = value;
+}
+
+function bpApplyProfile(id) {
+  if (!id) return;
+  const profile = bpGetProfiles().find(item => item.id === id);
+  if (!profile) {
+    showToast('Broker profile not found.', 'error');
+    return;
+  }
+
+  const activeTab = typeof getActiveTabKey === 'function' ? getActiveTabKey() : 'listing';
+
+  if (activeTab === 'listing') {
+    const body = document.getElementById('listing-agent-body');
+    if (body && !body.children.length && typeof addListingAgent === 'function') addListingAgent();
+    bpFillIfPresent('la-name-1', profile.name);
+    bpFillIfPresent('la-phone-1', profile.phone);
+    bpFillIfPresent('la-email-1', profile.email);
+  }
+
+  if (activeTab === 'voucher') {
+    bpFillIfPresent('v-la-name', profile.name);
+    bpFillIfPresent('v-la-house', profile.company);
+    bpFillIfPresent('v-la-city', 'Newport Beach');
+  }
+
+  if (activeTab === 'sign') bpFillIfPresent('s-requested-by', profile.name);
+  if (activeTab === 'comp') {
+    bpFillIfPresent('c-broker-name', profile.name);
+    bpFillIfPresent('cs-broker-name', profile.name);
+  }
+
+  showToast('Broker profile applied to the current tab.', 'success');
+}
+
+
 
 // ── Inline validation on blur ──
 document.addEventListener('blur', function(e) {
@@ -7818,7 +8100,7 @@ async function scrapeVoucherBrochure() {
 /* AI-extracted field highlight */
 .ci-ai-field {
   border-color: var(--navy) !important;
-  background: rgba(8,56,76,.04) !important;
+  background: rgba(31,35,40,.04) !important;
 }
 </style>
 
@@ -7983,7 +8265,7 @@ async function scrapeVoucherBrochure() {
   margin-top: 10px;
   width: 100%;
   padding: 10px 14px;
-  background: linear-gradient(135deg, var(--navy) 0%, var(--red) 100%);
+  background: var(--red);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -8011,26 +8293,28 @@ async function scrapeVoucherBrochure() {
   position: fixed;
   bottom: 28px;
   right: 28px;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--navy) 0%, var(--red) 100%);
+  min-width: 108px;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--red);
   color: #fff;
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: .04em;
+  letter-spacing: .12em;
+  text-transform: uppercase;
   font-family: 'Manrope', sans-serif;
-  box-shadow: 0 4px 20px rgba(8,56,76,0.38);
+  box-shadow: 0 12px 24px rgba(195,32,51,0.18);
   z-index: 1100;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.ai-fab:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(193,15,77,0.4); }
-.ai-fab:active { transform: scale(0.96); }
+.ai-fab:hover { transform: translateY(-1px); box-shadow: 0 16px 28px rgba(195,32,51,0.2); }
+.ai-fab:active { transform: translateY(0); }
 
 /* AI Assist slide-in panel */
 .ai-panel {
@@ -8055,7 +8339,7 @@ async function scrapeVoucherBrochure() {
   pointer-events: all;
 }
 .ai-panel-header {
-  background: linear-gradient(135deg, var(--navy-deep) 0%, var(--navy-soft) 60%, rgba(193,15,77,0.18) 100%);
+  background: #2b2e33;
   color: #fff;
   padding: 14px 18px;
   display: flex;
@@ -8065,7 +8349,7 @@ async function scrapeVoucherBrochure() {
   font-size: 14px;
   letter-spacing: 0.04em;
 }
-.ai-panel-header span { font-size: 18px; margin-right: 8px; }
+.ai-panel-header span { font-size: 12px; margin-right: 8px; letter-spacing: .12em; text-transform: uppercase; }
 .ai-panel-close {
   background: none;
   border: none;
@@ -8161,7 +8445,7 @@ async function scrapeVoucherBrochure() {
 /* AI badge on filled fields */
 .ai-filled-badge {
   display: inline-block;
-  background: linear-gradient(135deg, var(--navy), var(--red));
+  background: var(--red);
   color: #fff;
   font-size: 9px;
   font-weight: 800;
@@ -8195,13 +8479,13 @@ input.ai-filled, select.ai-filled, textarea.ai-filled { animation: ai-pulse 0.5s
 input.ai-smart, select.ai-smart, textarea.ai-smart { animation: ai-pulse-amber 0.5s ease-out; }
 </style>
 
-<button class="ai-fab" id="ai-fab" title="AI Field Assist" onclick="toggleAiPanel()">
-  AI
+<button class="ai-fab" id="ai-fab" title="AI Assist" onclick="toggleAiPanel()">
+  AI Assist
 </button>
 
 <div class="ai-panel" id="ai-panel">
   <div class="ai-panel-header">
-    <div><span style="font-size:11px;font-weight:800;letter-spacing:.06em;">AI</span> Field Assist</div>
+    <div><span>AI</span> Assist</div>
     <button class="ai-panel-close" onclick="toggleAiPanel()">×</button>
   </div>
   <div class="ai-panel-body">
@@ -8222,11 +8506,11 @@ input.ai-smart, select.ai-smart, textarea.ai-smart { animation: ai-pulse-amber 0
 
     <hr class="ai-divider">
 
-    <p class="ai-section-title">Smart Complete</p>
-    <p style="font-size:12px;color:#6B7280;margin:0 0 10px;">Fill in empty fields based on what you've already entered.</p>
+    <p class="ai-section-title">Field Suggestions</p>
+    <p style="font-size:12px;color:#6B7280;margin:0 0 10px;">Suggest only fields that are directly supported by information already on the form.</p>
     <div class="ai-btn-row">
       <button class="ai-btn ai-btn-secondary" id="ai-smart-btn" onclick="aiSmartComplete()">
-        <span id="ai-smart-icon">⚡</span> Smart Complete
+        <span id="ai-smart-icon">+</span> Suggest Related Fields
       </button>
     </div>
     <div class="ai-status" id="ai-smart-status"></div>
@@ -8728,6 +9012,55 @@ function collectSignSections(notes) {
   return sections;
 }
 
+async function blobToBase64(blob) {
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || '');
+      const commaIndex = result.indexOf(',');
+      resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
+    };
+    reader.onerror = () => reject(reader.error || new Error('Unable to read the generated PDF.'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function buildSendToAdminPdfAttachment() {
+  const jsPDFCtor = window.jspdf?.jsPDF;
+  if (!jsPDFCtor || !jsPDFCtor.API || typeof jsPDFCtor.API.save !== 'function') {
+    throw new Error('PDF export is unavailable in this browser session.');
+  }
+
+  const originalSave = jsPDFCtor.API.save;
+  let captured = null;
+
+  jsPDFCtor.API.save = function(fileName) {
+    captured = {
+      doc: this,
+      fileName: String(fileName || 'submission.pdf')
+    };
+    return this;
+  };
+
+  try {
+    if (_staFormType === 'listing') exportListingPdf();
+    else if (_staFormType === 'sign') exportSignPdf();
+    else exportVoucherPdf();
+  } finally {
+    jsPDFCtor.API.save = originalSave;
+  }
+
+  if (!captured || !captured.doc) {
+    throw new Error('The PDF could not be generated. Please review the form and try again.');
+  }
+
+  return {
+    filename: captured.fileName,
+    mimeType: 'application/pdf',
+    base64Data: await blobToBase64(captured.doc.output('blob')),
+  };
+}
+
 async function submitSendToAdmin() {
   const btn = document.getElementById('sta-send-btn');
   const status = document.getElementById('sta-status');
@@ -8736,7 +9069,7 @@ async function submitSendToAdmin() {
   const notes = (document.getElementById('sta-notes')?.value || '').trim();
 
   btn.classList.add('loading');
-  btn.querySelector('.btn-label').textContent = 'Sending…';
+  btn.querySelector('.btn-label').textContent = 'Preparing PDF...';
   status.textContent = '';
   status.style.color = '';
 
@@ -8752,6 +9085,9 @@ async function submitSendToAdmin() {
   const address = [(document.getElementById(addrId)?.value||'').trim(), (document.getElementById(cityId)?.value||'').trim()].filter(Boolean).join(', ');
 
   try {
+    const pdfAttachment = await buildSendToAdminPdfAttachment();
+    btn.querySelector('.btn-label').textContent = 'Uploading & Sending...';
+
     const resp = await fetch('/api/trpc/email.sendToAdmin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -8763,16 +9099,23 @@ async function submitSendToAdmin() {
           propertyAddress: address,
           sections,
           senderEmail,
+          pdfAttachment,
         }
       })
     });
     const data = await resp.json();
     const result = data?.result?.data?.json;
     if (result?.success) {
-      status.textContent = '\u2713 Email sent successfully! The admin has been notified.';
+      const sentWithAttachment = Boolean(result?.attachmentIncluded);
+      const archivedLink = result?.archivedFile?.url;
+      status.textContent = sentWithAttachment
+        ? '\u2713 Email sent successfully with the PDF attached and archived.'
+        : archivedLink
+          ? '\u2713 Email sent successfully. The PDF was archived and included as a secure link.'
+          : '\u2713 Email sent successfully!';
       status.style.color = '#16a34a';
       btn.querySelector('.btn-label').textContent = '\u2713 Sent!';
-      showToast('\u2709\uFE0F Email sent to admin successfully');
+      showToast(sentWithAttachment ? '\u2709\uFE0F Submission emailed with PDF attached' : '\u2709\uFE0F Submission emailed and archived');
       setTimeout(closeSendToAdminModal, 2000);
     } else {
       const errMsg = result?.error || 'Unknown error';

@@ -45,6 +45,25 @@ Parameters:
   AdminEmail:
     Type: String
     Default: ''
+  SmtpHost:
+    Type: String
+    Default: ''
+  SmtpPort:
+    Type: String
+    Default: '587'
+  SmtpSecure:
+    Type: String
+    Default: 'false'
+  SmtpUser:
+    Type: String
+    Default: ''
+  SmtpPass:
+    Type: String
+    NoEcho: true
+    Default: ''
+  SmtpFrom:
+    Type: String
+    Default: ''
   LocalAuthEnabled:
     Type: String
     Default: 'true'
@@ -195,6 +214,12 @@ Resources:
           CONNECTOR_API_KEY=${ConnectorApiKey}
           OWNER_OPEN_ID=${OwnerOpenId}
           ADMIN_EMAIL=${AdminEmail}
+          SMTP_HOST=${SmtpHost}
+          SMTP_PORT=${SmtpPort}
+          SMTP_SECURE=${SmtpSecure}
+          SMTP_USER=${SmtpUser}
+          SMTP_PASS=${SmtpPass}
+          SMTP_FROM=${SmtpFrom}
           LOCAL_AUTH_ENABLED=${LocalAuthEnabled}
           LOCAL_AUTH_EMAIL_DOMAIN=${LocalAuthEmailDomain}
           LOCAL_ADMIN_EMAILS=${LocalAdminEmails}

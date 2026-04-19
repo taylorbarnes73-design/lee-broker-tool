@@ -45,54 +45,55 @@
 :root {
   --font-sans: "Manrope", "Segoe UI", sans-serif;
   --font-serif: "Cormorant Garamond", Georgia, serif;
-  --lee-navy: #08384c;
-  --lee-navy-deep: #062837;
-  --lee-magenta: #c10f4d;
-  --lee-magenta-deep: #8d0938;
-  --lee-sand: #f5efe7;
-  --lee-shell: #fbf8f4;
-  --lee-stone: #d8cdc0;
-  --lee-slate: #67717a;
-  --primary: var(--lee-navy);
-  --primary-foreground: #f7f1ea;
-  --sidebar-primary: var(--lee-navy);
-  --sidebar-primary-foreground: #f7f1ea;
-  --chart-1: #c10f4d;
-  --chart-2: #8b2750;
-  --chart-3: #0d425b;
-  --chart-4: #2f5564;
-  --chart-5: #7c8791;
+  --lee-charcoal: #31343a;
+  --lee-charcoal-deep: #1f2227;
+  --lee-charcoal-soft: #636973;
+  --lee-red: #c32033;
+  --lee-red-deep: #9f1828;
+  --lee-fog: #f2f2ef;
+  --lee-cloud: #f8f8f6;
+  --lee-stone: #d8d7d2;
+  --lee-slate: #6b7078;
+  --primary: var(--lee-red);
+  --primary-foreground: #fff8f6;
+  --sidebar-primary: var(--lee-charcoal);
+  --sidebar-primary-foreground: #fff8f6;
+  --chart-1: #c32033;
+  --chart-2: #9f1828;
+  --chart-3: #4f545c;
+  --chart-4: #747a83;
+  --chart-5: #b9bab6;
   --radius: 0.65rem;
-  --background: #f7f2eb;
-  --foreground: #1d252d;
+  --background: #f2f2ef;
+  --foreground: #1f2328;
   --card: #fffdfb;
-  --card-foreground: #1d252d;
+  --card-foreground: #1f2328;
   --popover: #fffdfb;
-  --popover-foreground: #1d252d;
-  --secondary: #efe6dc;
-  --secondary-foreground: #32414d;
-  --muted: #f1ebe4;
-  --muted-foreground: #66707a;
-  --accent: #f9f2f5;
-  --accent-foreground: #4d1030;
+  --popover-foreground: #1f2328;
+  --secondary: #e7e6e1;
+  --secondary-foreground: #3d4249;
+  --muted: #ecece8;
+  --muted-foreground: #666c74;
+  --accent: #fbf0f2;
+  --accent-foreground: #52161d;
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: #ddd2c6;
-  --input: #ddd2c6;
-  --ring: rgba(193, 15, 77, 0.3);
-  --sidebar: #fffaf4;
-  --sidebar-foreground: #1d252d;
-  --sidebar-accent: #f3e8df;
-  --sidebar-accent-foreground: #1d252d;
-  --sidebar-border: #ddd2c6;
-  --sidebar-ring: rgba(193, 15, 77, 0.3);
+  --border: #d8d7d2;
+  --input: #d8d7d2;
+  --ring: rgba(195, 32, 51, 0.24);
+  --sidebar: #fcfcfa;
+  --sidebar-foreground: #1f2328;
+  --sidebar-accent: #ededea;
+  --sidebar-accent-foreground: #1f2328;
+  --sidebar-border: #d8d7d2;
+  --sidebar-ring: rgba(195, 32, 51, 0.24);
 }
 
 .dark {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-500);
-  --sidebar-primary-foreground: var(--color-blue-50);
+  --primary: #cf3648;
+  --primary-foreground: #fff8f6;
+  --sidebar-primary: #525862;
+  --sidebar-primary-foreground: #fff8f6;
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.85 0.005 65);
   --card: oklch(0.21 0.006 285.885);
@@ -109,12 +110,12 @@
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.488 0.243 264.376);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
+  --ring: rgba(207, 54, 72, 0.35);
+  --chart-1: #cf3648;
+  --chart-2: #b82d3e;
+  --chart-3: #888d95;
+  --chart-4: #717781;
+  --chart-5: #5d636d;
   --sidebar: oklch(0.21 0.006 285.885);
   --sidebar-foreground: oklch(0.85 0.005 65);
   --sidebar-accent: oklch(0.274 0.006 286.033);
@@ -134,8 +135,8 @@
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
     background-image:
-      radial-gradient(circle at top left, rgba(193, 15, 77, 0.08), transparent 30%),
-      linear-gradient(180deg, rgba(8, 56, 76, 0.03), transparent 28%);
+      radial-gradient(circle at top left, rgba(195, 32, 51, 0.08), transparent 28%),
+      linear-gradient(180deg, rgba(31, 35, 40, 0.04), transparent 30%);
     min-height: 100vh;
   }
   img {
@@ -154,8 +155,8 @@
     @apply cursor-pointer;
   }
   ::selection {
-    background: rgba(193, 15, 77, 0.18);
-    color: #10212b;
+    background: rgba(195, 32, 51, 0.16);
+    color: #1f2328;
   }
 }
 

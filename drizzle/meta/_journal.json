@@ -29,6 +29,20 @@
       "when": 1776447802156,
       "tag": "0003_round_unus",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1776564339916,
+      "tag": "0004_glamorous_power_pack",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1776567172896,
+      "tag": "0005_graceful_black_bird",
+      "breakpoints": true
     }
   ]
 }

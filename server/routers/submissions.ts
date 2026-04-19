@@ -24,6 +24,8 @@ const submissionSummarySchema = z
   })
   .catchall(z.unknown());
 
+const adminStatusSchema = z.enum(["pending", "in_review", "approved", "rejected"]);
+
 function parsePayload(payload: string | null) {
   if (!payload) return {};
 
@@ -51,6 +53,7 @@ export const submissionsRouter = router({
       const reference = [input.address, input.city].filter(Boolean).join(", ") || null;
       const [result] = await db.insert(submissions).values({
         formType: input.type,
+        status: input.status?.trim() || "pending",
         payload: JSON.stringify(input),
         reference,
         submittedBy: input.brokerName || ctx.user.name || ctx.user.email || ctx.user.openId,
@@ -82,10 +85,14 @@ export const submissionsRouter = router({
       return rows.map(row => ({
         id: row.id,
         formType: row.formType,
+        status: row.status,
         reference: row.reference,
         submittedBy: row.submittedBy,
         submittedByEmail: row.submittedByEmail,
+        pdfFileKey: row.pdfFileKey,
+        pdfUrl: row.pdfUrl,
         createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
         payload: parsePayload(row.payload),
       }));
     }),
@@ -112,11 +119,75 @@ export const submissionsRouter = router({
       return {
         id: row.id,
         formType: row.formType,
+        status: row.status,
         reference: row.reference,
         submittedBy: row.submittedBy,
         submittedByEmail: row.submittedByEmail,
+        pdfFileKey: row.pdfFileKey,
+        pdfUrl: row.pdfUrl,
         createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
         payload: parsePayload(row.payload),
       };
+    }),
+
+  adminList: protectedProcedure
+    .input(z.object({ limit: z.number().min(1).max(500).default(200) }).optional())
+    .query(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+      }
+
+      const db = await getDb();
+      if (!db) return [];
+      const limit = input?.limit ?? 200;
+
+      const rows = await db
+        .select()
+        .from(submissions)
+        .orderBy(desc(submissions.createdAt))
+        .limit(limit);
+
+      return rows.map(row => ({
+        id: row.id,
+        formType: row.formType,
+        status: row.status,
+        reference: row.reference,
+        submittedBy: row.submittedBy,
+        submittedByEmail: row.submittedByEmail,
+        pdfFileKey: row.pdfFileKey,
+        pdfUrl: row.pdfUrl,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        payload: parsePayload(row.payload),
+      }));
+    }),
+
+  updateStatus: protectedProcedure
+    .input(
+      z.object({
+        id: z.number().int().positive(),
+        status: adminStatusSchema,
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+      }
+
+      const db = await getDb();
+      if (!db) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      }
+
+      await db
+        .update(submissions)
+        .set({
+          status: input.status,
+          updatedAt: new Date(),
+        })
+        .where(eq(submissions.id, input.id));
+
+      return { success: true as const };
     }),
 });
