@@ -372,7 +372,7 @@ div.row.comp-sale-only { display: none !important; }
 }
 .side-chip.listing { background: #F0F0ED; color: #4E545B; }
 .side-chip.procuring { background: #D1FAE5; color: #065F46; }
-.side-chip.both { background: #EDE9FE; color: #5B21B6; }
+.side-chip.both { background: #FEF2F2; color: #991B1B; }
 .side-chip.referral { background: #FEF3C7; color: #92400E; }
 .side-chip.other { background: #F3F4F6; color: #374151; }
 /* % total validation indicator */
@@ -894,11 +894,10 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 .toast {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 18px;
+  padding: 12px 16px;
   border-radius: 8px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   box-shadow: 0 4px 20px rgba(0,0,0,.15);
   pointer-events: all;
   animation: toastIn .3s ease;
@@ -906,7 +905,8 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 }
 .toast.toast-success { background: #fff; border-left: 4px solid var(--green); color: var(--text); }
 .toast.toast-error { background: #fff; border-left: 4px solid var(--red); color: var(--text); }
-.toast.toast-info { background: #fff; border-left: 4px solid var(--blue); color: var(--text); }
+.toast.toast-info { background: #fff; border-left: 4px solid #8B9198; color: var(--text); }
+.toast.toast-warn { background: #fff; border-left: 4px solid var(--amber); color: var(--text); }
 .toast.toast-out { animation: toastOut .3s ease forwards; }
 @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(20px); } }
@@ -916,7 +916,25 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   padding: 60px 24px;
   color: var(--text3);
 }
-.empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
+.empty-state .empty-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(180deg, #fff, #f5f5f1);
+  position: relative;
+  font-size: 0;
+  color: transparent;
+  overflow: hidden;
+}
+.empty-state .empty-icon::before {
+  content: '';
+  position: absolute;
+  inset: 14px 16px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 24' fill='none'%3E%3Cpath d='M4 1.5h8l4 4V20a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 2 20V4A2.5 2.5 0 0 1 4.5 1.5Z' stroke='%238B9198' stroke-width='1.5'/%3E%3Cpath d='M12 1.5V6h4' stroke='%238B9198' stroke-width='1.5'/%3E%3Cpath d='M5.5 10h9M5.5 13.5h9M5.5 17h6' stroke='%23C32033' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;
+}
 .empty-state h3 { font-size: 16px; font-weight: 600; color: var(--text2); margin-bottom: 8px; }
 .empty-state p { font-size: 13px; line-height: 1.6; max-width: 320px; margin: 0 auto; }
 
@@ -932,10 +950,10 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   white-space: nowrap;
   user-select: none;
 }
-.side-chip.listing    { background: #EEF2FF; color: #4338CA; }
+.side-chip.listing    { background: #F3F4F6; color: #4B5563; }
 .side-chip.procuring  { background: #ECFDF5; color: #065F46; }
-.side-chip.both       { background: #FFF7ED; color: #92400E; }
-.side-chip.referral   { background: #F5F3FF; color: #6D28D9; }
+.side-chip.both       { background: #FEF2F2; color: #991B1B; }
+.side-chip.referral   { background: #FFF7ED; color: #9A3412; }
 .side-chip.other      { background: #F3F4F6; color: #374151; }
 
 /* ── % total indicator ── */
@@ -952,15 +970,16 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
+  min-width: 26px;
   height: 18px;
   background: var(--green);
   color: #fff;
-  border-radius: 50%;
-  font-size: 11px;
+  border-radius: 999px;
+  font-size: 9px;
   font-weight: 700;
   margin-right: 8px;
   flex-shrink: 0;
+  padding: 0 6px;
 }
 .card-summary {
   font-size: 13px;
@@ -1037,6 +1056,89 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   height: 40px;
   margin: 0 auto;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='17 8 12 3 7 8'/%3E%3Cline x1='12' y1='3' x2='12' y2='15'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+.doc-dl {
+  font-size: 0 !important;
+  min-width: 54px;
+  text-align: right;
+}
+.doc-dl::before {
+  content: 'Open';
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+.ci-path-icon,
+.ci-upload-icon,
+.ci-ai-icon {
+  font-size: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.ci-path-icon::before,
+.ci-upload-icon::before,
+.ci-ai-icon::before {
+  content: '';
+  display: block;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+.ci-path-icon-entry::before {
+  width: 32px;
+  height: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C32033' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20h9'/%3E%3Cpath d='M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5Z'/%3E%3C/svg%3E");
+}
+.ci-path-icon-upload::before,
+.ci-upload-icon::before {
+  width: 34px;
+  height: 34px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C32033' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7Z'/%3E%3Cpath d='M14 2v5h5'/%3E%3Cpath d='M12 17V11'/%3E%3Cpath d='m9.5 13.5 2.5-2.5 2.5 2.5'/%3E%3C/svg%3E");
+}
+.ci-ai-icon::before {
+  width: 18px;
+  height: 18px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23C32033' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 2 11.8 7.2 17 9l-5.2 1.8L10 16l-1.8-5.2L3 9l5.2-1.8L10 2Z'/%3E%3C/svg%3E");
+}
+.comp-photo-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(240px, .9fr);
+  gap: 16px;
+  align-items: stretch;
+}
+.comp-photo-preview {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, #fdfdfb, #f3f3ef);
+  min-height: 168px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.comp-photo-preview.empty {
+  color: var(--text3);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  font-weight: 700;
+}
+.comp-photo-preview img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+}
+.comp-photo-meta {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text2);
 }
 </style>
 </head>
@@ -1373,7 +1475,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     <div class="btn-bar" id="listing-form-actions">
       <button class="btn btn-red" onclick="showListingReview()"><span class="btn-label">Review &amp; Confirm &rarr;</span></button>
       <button class="btn btn-gray" id="btn-listing-pdf" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
-      <button class="btn btn-green" id="btn-listing-send-admin" onclick="openSendToAdminModal('listing')"><span class="btn-spinner"></span><span class="btn-label">&#9993; Send to Admin</span></button>
+    <button class="btn btn-green" id="btn-listing-send-admin" onclick="openSendToAdminModal('listing')"><span class="btn-spinner"></span><span class="btn-label">Send to Admin</span></button>
       <button class="btn btn-gray" onclick="clearListing()"><span class="btn-label">Clear Form</span></button>
     </div>
 
@@ -1387,12 +1489,11 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
         <div id="listing-review-content" style="font-size:13px;line-height:1.9;"></div>
       </div>
       <div class="btn-bar" style="margin-top:0;">
-        <button class="btn btn-red" style="font-size:15px;padding:12px 32px;" onclick="submitListingToMLS(this)"><span class="btn-spinner"></span><span class="btn-label">&#10003; Submit to MLS</span></button>
+        <button class="btn btn-red" style="font-size:15px;padding:12px 32px;" onclick="submitListingToMLS(this)"><span class="btn-spinner"></span><span class="btn-label">Submit to MLS</span></button>
         <button class="btn btn-gray" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
       </div>
       <div id="listing-post-submit" style="display:none;" class="card" style="border-color:#22c55e;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          <span style="font-size:24px;">&#10003;</span>
           <h2 style="color:#16a34a;margin:0;">Listing Submitted to MLS</h2>
         </div>
         <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">Your listing has been sent. Would you like to create a sign order for this property?</p>
@@ -1569,7 +1670,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   <div class="btn-bar" style="margin-top:16px;">
     <button class="btn btn-gray" onclick="exportSignPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
     <button class="btn btn-red" onclick="openEmailModal('sign')">Submit Sign Request</button>
-    <button class="btn btn-green" id="btn-sign-send-admin" onclick="openSendToAdminModal('sign')"><span class="btn-spinner"></span><span class="btn-label">&#9993; Send to Admin</span></button>
+    <button class="btn btn-green" id="btn-sign-send-admin" onclick="openSendToAdminModal('sign')"><span class="btn-spinner"></span><span class="btn-label">Send to Admin</span></button>
     <button class="btn btn-gray" onclick="clearSign()">Clear Form</button>
   </div>
 </div>
@@ -1992,7 +2093,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   <div class="btn-bar">
     <button class="btn btn-gray" onclick="exportVoucherPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
     <button class="btn btn-red" onclick="openEmailModal('voucher')">Submit Voucher</button>
-    <button class="btn btn-green" id="btn-voucher-send-admin" onclick="openSendToAdminModal('voucher')"><span class="btn-spinner"></span><span class="btn-label">&#9993; Send to Admin</span></button>
+    <button class="btn btn-green" id="btn-voucher-send-admin" onclick="openSendToAdminModal('voucher')"><span class="btn-spinner"></span><span class="btn-label">Send to Admin</span></button>
     <button class="btn btn-outline" onclick="notifyMLS()">Notify MLS</button>
     <button class="btn btn-outline" onclick="switchTab('sign')">Remove Signs &rarr;</button>
     <button class="btn btn-gray" onclick="clearVoucher()">Clear Form</button>
@@ -2025,6 +2126,22 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     <div class="row c2">
       <div class="field"><label class="req">Address</label><input id="c-address" placeholder="16441 Scientific Way"></div>
       <div class="field"><label class="req">City</label><input id="c-city" placeholder="Irvine"></div>
+    </div>
+
+    <h3 style="margin-top:16px;">Property Photo</h3>
+    <div class="comp-photo-grid">
+      <div class="upload-zone" id="uz-c-photo" data-category="comp_photo" data-field="c-property-photo">
+        <input type="file" id="c-property-photo" accept="image/png,image/jpeg,image/webp" style="display:none;">
+        <div class="upload-zone-inner" onclick="document.getElementById('c-property-photo').click()">
+          <span class="upload-icon"></span>
+          <span class="upload-label">Upload property photo</span>
+        </div>
+        <div class="upload-status" id="us-c-property-photo"></div>
+      </div>
+      <div>
+        <div class="comp-photo-preview empty" id="comp-photo-preview">No photo selected</div>
+        <div class="comp-photo-meta" id="comp-photo-meta">The uploaded image will be stored with the comp submission and included in the PDF review output.</div>
+      </div>
     </div>
 
     <h3 style="margin-top:16px;">Property</h3>
@@ -2087,7 +2204,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   <div class="card">
     <h2>Location Details</h2>
     <div class="row c3">
-      <div class="field comp-lease-only"><label>Market</label>
+      <div class="field"><label>Market</label>
         <select id="c-market"><option value="">—</option><option>Los Angeles</option><option>Orange</option><option>Riverside</option><option>San Bernardino</option></select>
       </div>
       <div class="field"><label>Submarket</label>
@@ -2574,7 +2691,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="tab-contracts" class="panel">
   <div class="ci-hero">
-    <h2>&#128221; Contract Intake</h2>
+    <h2>Contract Intake</h2>
     <p>Submit an AIR CRE contract to the admin — fill it out here or upload your Adobe-completed PDF for AI extraction.</p>
   </div>
 
@@ -2594,12 +2711,12 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   <div id="ci-path-chooser" style="display:none;">
     <div class="ci-path-cards">
       <div class="ci-path-card" id="ci-path-fill" onclick="ciSelectPath('fill')">
-        <div class="ci-path-icon">&#9998;</div>
+        <div class="ci-path-icon ci-path-icon-entry"></div>
         <div class="ci-path-title">Fill Out Here</div>
         <div class="ci-path-desc">Complete the contract fields directly in the tool. All standard AIR CRE fields are provided.</div>
       </div>
       <div class="ci-path-card" id="ci-path-upload" onclick="ciSelectPath('upload')">
-        <div class="ci-path-icon">&#128196;</div>
+        <div class="ci-path-icon ci-path-icon-upload"></div>
         <div class="ci-path-title">Upload PDF</div>
         <div class="ci-path-desc">Upload your Adobe-filled PDF draft. AI will extract all fields and redlines for your review.</div>
       </div>
@@ -2612,7 +2729,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
       <p class="ci-hint">Upload the PDF the broker filled out in Adobe. The AI will read all typed fields, checkboxes, and struck-through (redlined) text.</p>
       <div class="ci-upload-zone" id="ci-upload-zone" onclick="document.getElementById('ci-pdf-input').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="ciHandleDrop(event)">
         <input type="file" id="ci-pdf-input" accept=".pdf" style="display:none;" onchange="ciHandleFileSelect(this)">
-        <div class="ci-upload-icon">&#128196;</div>
+        <div class="ci-upload-icon"></div>
         <div class="ci-upload-text">Click to upload or drag &amp; drop</div>
         <div class="ci-upload-sub">PDF only &mdash; broker-completed Adobe form</div>
       </div>
@@ -2622,7 +2739,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 
   <div id="ci-form-area" style="display:none;">
     <div id="ci-ai-banner" style="display:none;" class="ci-ai-banner">
-      <span class="ci-ai-icon">&#10024;</span>
+      <span class="ci-ai-icon"></span>
       <span id="ci-ai-banner-text">AI extracted the fields below. Review and correct anything that looks wrong before submitting.</span>
     </div>
 
@@ -2741,8 +2858,8 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     </div>
 
     <div class="btn-bar" style="margin-top:24px;">
-      <button class="btn btn-green" id="btn-ci-send" onclick="ciSubmitToAdmin()"><span class="btn-spinner"></span><span class="btn-label">&#9993; Submit to Admin</span></button>
-      <button class="btn btn-outline" onclick="ciDownloadDataSheet()" title="Download a formatted AIR CRE Data Sheet as a text file">&#8595; Download Data Sheet</button>
+      <button class="btn btn-green" id="btn-ci-send" onclick="ciSubmitToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Submit to Admin</span></button>
+      <button class="btn btn-outline" onclick="ciDownloadDataSheet()" title="Download a formatted AIR CRE Data Sheet as a text file">Download Data Sheet</button>
       <button class="btn btn-gray" onclick="ciReset()">Clear Form</button>
     </div>
     <div id="ci-submit-status" style="margin-top:10px;font-size:13px;"></div>
@@ -2840,7 +2957,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
           <tbody id="submissions-tbody">
             <tr><td colspan="7">
               <div class="empty-state">
-                <div class="empty-icon">📋</div>
+                <div class="empty-icon"></div>
                 <h3>No submissions yet</h3>
                 <p>Broker submissions will appear here once brokers begin submitting listings, sign requests, vouchers, and comps.</p>
               </div>
@@ -3002,7 +3119,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 
             <div class="dx-btns">
               <button class="dx-btn dx-primary btn" id="dxSb" onclick="dxSubmitDeal()"><span class="btn-spinner"></span><span class="btn-label">Submit to Dealius</span></button>
-              <button class="dx-btn dx-ghost" id="dxAib" onclick="dxRunAIReview()" style="display:none;">&x2728; AI Review</button>
+              <button class="dx-btn dx-ghost" id="dxAib" onclick="dxRunAIReview()" style="display:none;">AI Review</button>
               <button class="dx-btn dx-ghost" onclick="dxResetTool()">Reset</button>
             </div>
           </div>
@@ -3041,7 +3158,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="bp-modal">
   <div class="modal" style="max-width:640px;">
-    <h2 style="display:flex;align-items:center;gap:8px;">&#128100; Broker Profiles</h2>
+    <h2 style="display:flex;align-items:center;gap:8px;">Broker Profiles</h2>
     <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">Save agent details here. Select a profile from the header to pre-fill agent fields on any tab.</p>
 
     <div id="bp-list" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;margin-bottom:16px;"></div>
@@ -3076,7 +3193,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="send-admin-modal">
   <div class="modal" style="max-width:520px;">
-    <h2 id="send-admin-modal-title" style="display:flex;align-items:center;gap:8px;">&#9993; Send to Admin</h2>
+    <h2 id="send-admin-modal-title" style="display:flex;align-items:center;gap:8px;">Send to Admin</h2>
     <p style="font-size:13px;color:var(--text2);margin-bottom:16px;" id="send-admin-modal-desc">This will email all filled form fields to the office admin. Taylor will be CC&rsquo;d automatically.</p>
     <div class="field">
       <label>Your Name (Broker)</label>
@@ -3093,7 +3210,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     <div id="sta-status" style="font-size:13px;min-height:20px;margin-bottom:8px;"></div>
     <div class="btn-bar">
       <button class="btn btn-gray" onclick="closeSendToAdminModal()">Cancel</button>
-      <button class="btn btn-green" id="sta-send-btn" onclick="submitSendToAdmin()"><span class="btn-spinner"></span><span class="btn-label">&#9993; Send Email</span></button>
+      <button class="btn btn-green" id="sta-send-btn" onclick="submitSendToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Send Email</span></button>
     </div>
   </div>
 </div>
@@ -3452,7 +3569,7 @@ function showListingReview() {
     ['Address', addr + (city ? ', ' + city : '') + (state ? ', ' + state : '') + (zip ? ' ' + zip : '')],
     ['Building SF', bldgSF || '—'],
     txnType === 'lease' ? ['Rate $/SF/Mo', leaseSF ? '$' + leaseSF + ' ' + leaseType : '—'] : ['Asking Price', salePrice ? '$' + salePrice : '—'],
-    ['MLS Pricing', reveal ? '✓ Visible on MLS' : '✗ Hidden from MLS'],
+    ['MLS Pricing', reveal ? 'Visible on MLS' : 'Hidden from MLS'],
     ['Listing Agents', agentNames],
     ['MLS Release', release],
     comments ? ['Comments', comments] : null,
@@ -3536,7 +3653,7 @@ function showListingSummary() {
       (txnType === 'lease' ? '<tr style="background:#f8f8f8;"><td style="padding:4px 8px;font-weight:600;">Rate $/SF/Mo</td><td style="padding:4px 8px;">' + leaseSF + ' ' + leaseType + '</td></tr>' : '') +
       (txnType === 'sale' ? '<tr style="background:#f8f8f8;"><td style="padding:4px 8px;font-weight:600;">Asking Price</td><td style="padding:4px 8px;">$' + salePrice + '</td></tr>' : '') +
       '<tr><td style="padding:4px 8px;font-weight:600;">Agents</td><td style="padding:4px 8px;">' + agentNames + '</td></tr>' +
-      '<tr style="background:#f8f8f8;"><td style="padding:4px 8px;font-weight:600;">MLS Pricing</td><td style="padding:4px 8px;">' + (reveal ? '&#10003; Visible' : '&#10007; Hidden') + '</td></tr>' +
+      '<tr style="background:#f8f8f8;"><td style="padding:4px 8px;font-weight:600;">MLS Pricing</td><td style="padding:4px 8px;">' + (reveal ? 'Visible' : 'Hidden') + '</td></tr>' +
       '</table>';
   }
   panel.style.display = '';
@@ -3643,7 +3760,7 @@ function handleSignUpload(input) {
     reader.readAsDataURL(file);
   } else {
     document.getElementById('sign-preview-img').style.display = 'none';
-    document.getElementById('sign-preview-name').innerHTML = '<span style="font-size:28px;">&#128196;</span><br>' + file.name + ' (' + (file.size / 1024).toFixed(0) + ' KB)';
+    document.getElementById('sign-preview-name').textContent = file.name + ' (' + (file.size / 1024).toFixed(0) + ' KB)';
   }
 }
 function clearSignUpload() {
@@ -3755,7 +3872,7 @@ function vstepMarkDone(stepNum) {
   }
   const fn = VSTEP_SUMMARIES[stepNum];
   const text = fn ? fn() : '';
-  summary.innerHTML = '<span class="card-done-icon">✓</span>' + text;
+  summary.innerHTML = '<span class="card-done-icon">OK</span>' + text;
   // Collapse content (hide everything after h2)
   const h2 = card.querySelector('h2');
   if (h2) {
@@ -3918,10 +4035,10 @@ function updateDistPctTotal() {
   const rounded = Math.round(total * 10) / 10;
   if (Math.abs(rounded - 100) < 0.1) {
     indicator.className = 'pct-total-ok';
-    indicator.textContent = '100% ✓ — Fully distributed';
+    indicator.textContent = '100% allocated - fully distributed';
   } else {
     indicator.className = 'pct-total-err';
-    indicator.textContent = rounded + '% ✗ — Must total 100%';
+    indicator.textContent = rounded + '% allocated - must total 100%';
   }
 }
 
@@ -5135,6 +5252,8 @@ function clearComp() {
     el.selectedIndex = 0;
   });
   document.getElementById('c-date').value = new Date().toISOString().split('T')[0];
+  clearUpload('c-property-photo', 'us-c-property-photo');
+  renderCompPhotoPreview();
 }
 
 function exportCompPdf() {
@@ -5152,6 +5271,113 @@ function _cgv(id) {
     return (t === '—' || t === '\u2014') ? '' : t;
   }
   return el.value || '';
+}
+
+let compPropertyPhotoDataUrl = '';
+let compPropertyPhotoFilename = '';
+let compPropertyPhotoStorageUrl = '';
+
+function getCompPhotoFormat() {
+  if (compPropertyPhotoDataUrl.startsWith('data:image/png')) return 'PNG';
+  if (compPropertyPhotoDataUrl.startsWith('data:image/webp')) return 'WEBP';
+  return 'JPEG';
+}
+
+function renderCompPhotoPreview() {
+  const preview = document.getElementById('comp-photo-preview');
+  const meta = document.getElementById('comp-photo-meta');
+  if (!preview || !meta) return;
+
+  if (!compPropertyPhotoDataUrl) {
+    preview.classList.add('empty');
+    preview.textContent = 'No photo selected';
+    meta.textContent = 'The uploaded image will be stored with the comp submission and included in the PDF review output.';
+    return;
+  }
+
+  preview.classList.remove('empty');
+  preview.innerHTML = `<img src="${compPropertyPhotoDataUrl}" alt="Property photo preview">`;
+
+  const metaParts = [];
+  if (compPropertyPhotoFilename) metaParts.push(compPropertyPhotoFilename);
+  metaParts.push(compPropertyPhotoStorageUrl ? 'Stored in secure file storage' : 'Ready to include in the PDF output');
+  meta.textContent = metaParts.join(' · ');
+}
+
+function loadCompPhotoPreview(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    compPropertyPhotoDataUrl = String(reader.result || '');
+    compPropertyPhotoFilename = file.name || 'Property photo';
+    compPropertyPhotoStorageUrl = '';
+    renderCompPhotoPreview();
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearCompPhotoState() {
+  compPropertyPhotoDataUrl = '';
+  compPropertyPhotoFilename = '';
+  compPropertyPhotoStorageUrl = '';
+}
+
+function appendCompPhotoSection(doc, y, margin, width) {
+  if (!compPropertyPhotoDataUrl) return y;
+
+  const pageBottom = doc.internal.pageSize.getHeight() - 40;
+  const headerHeight = 18;
+  const previewPadding = 10;
+  const previewHeight = 180;
+  const captionHeight = 18;
+  const totalHeight = headerHeight + previewPadding + previewHeight + captionHeight + 14;
+
+  if (y + totalHeight > pageBottom) {
+    doc.addPage();
+    y = 40;
+  }
+
+  doc.setDrawColor(180, 180, 180);
+  doc.setLineWidth(0.5);
+  doc.setFillColor(240, 240, 240);
+  doc.rect(margin, y, width, headerHeight, 'FD');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(150, 0, 0);
+  doc.text('Property Photo:', margin + 4, y + 12);
+
+  const frameY = y + headerHeight;
+  const frameHeight = previewPadding + previewHeight + captionHeight + 6;
+  doc.rect(margin, frameY, width, frameHeight);
+
+  const imageX = margin + previewPadding;
+  const imageY = frameY + previewPadding;
+  const imageW = width - previewPadding * 2;
+  const imageH = previewHeight;
+  doc.setDrawColor(214, 213, 207);
+  doc.rect(imageX, imageY, imageW, imageH);
+
+  try {
+    const props = doc.getImageProperties(compPropertyPhotoDataUrl);
+    const scale = Math.min(imageW / props.width, imageH / props.height);
+    const drawW = props.width * scale;
+    const drawH = props.height * scale;
+    const drawX = imageX + (imageW - drawW) / 2;
+    const drawY = imageY + (imageH - drawH) / 2;
+    doc.addImage(compPropertyPhotoDataUrl, getCompPhotoFormat(), drawX, drawY, drawW, drawH);
+  } catch (error) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(99, 104, 112);
+    doc.text('Photo preview unavailable in this export.', imageX + 8, imageY + 16);
+  }
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(99, 104, 112);
+  doc.text(compPropertyPhotoFilename || 'Property photo', imageX, imageY + imageH + 14);
+
+  return frameY + frameHeight + 14;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -5328,6 +5554,11 @@ function exportLeaseCompPdf() {
 
   /* ── Property Type / Subtypes reference table ── */
   y += 10;
+  y = appendCompPhotoSection(doc, y + 6, M, cw);
+  if (y + 130 > doc.internal.pageSize.getHeight() - 40) {
+    doc.addPage();
+    y = 40;
+  }
   const refData = [
     ['Office', 'Low-Rise, Mid-Rise, High-Rise, Medical, Flex, Data Ctr/Telecom, CorpHQ, Creative'],
     ['Industrial', 'Manuf, Ware/Dist, Ware/Dist(Inst.), Ware/Dist(Non-Inst.), Light, R&D, R&D/Flex, R&D/Corp HQ, Truck Term, Mid Bay, Other'],
@@ -5421,6 +5652,7 @@ function exportSaleCompPdf() {
   leftHeader('Location:'); y += HDR;
   leftCell('Address:', gv('c-address')); y += LH;
   leftCell('City:', gv('c-city')); y += LH;
+  leftCell('Market:', gv('c-market')); y += LH;
   leftCell('Submarket:', gv('c-submarket')); y += LH;
   leftCell('Project Name:', gv('c-project')); y += LH;
 
@@ -5496,6 +5728,11 @@ function exportSaleCompPdf() {
 
   /* ── Property Type / Subtypes reference table ── */
   y += 10;
+  y = appendCompPhotoSection(doc, y, M, cw);
+  if (y + 130 > doc.internal.pageSize.getHeight() - 40) {
+    doc.addPage();
+    y = 40;
+  }
   const refData = [
     ['Office', 'Low-Rise, Mid-Rise, High-Rise, Medical, Flex, Data Ctr/Telecom, CorpHQ, Creative'],
     ['Industrial', 'Manuf, Ware/Dist, Ware/Dist(Inst.), Ware/Dist(Non-Inst.), Light, R&D, R&D/Flex, R&D/Corp HQ, Truck Term, Mid Bay, Other'],
@@ -7159,9 +7396,9 @@ function showToast(msg, type = 'success', duration = 4000) {
     document.body.appendChild(container);
   }
   const toast = document.createElement('div');
-  const icons = { success: '✓', error: '✕', info: 'ℹ' };
-  toast.className = 'toast toast-' + type;
-  toast.innerHTML = '<span style="font-size:16px;flex-shrink:0;">' + (icons[type] || '✓') + '</span><span>' + msg + '</span>';
+  const tone = type === 'warn' ? 'warn' : type;
+  toast.className = 'toast toast-' + tone;
+  toast.textContent = msg;
   container.appendChild(toast);
   setTimeout(() => {
     toast.classList.add('toast-out');
@@ -7613,7 +7850,7 @@ const uploadedFiles = {};
 async function uploadFileToBrokerStorage(file, category, fieldId, statusId, uploaderName) {
   const statusEl = document.getElementById(statusId);
   if (statusEl) {
-    statusEl.innerHTML = '<span style="color:var(--text3);">&#8987; Uploading...</span>';
+    statusEl.innerHTML = '<span style="color:var(--text3);">Uploading...</span>';
   }
 
   try {
@@ -7646,9 +7883,14 @@ async function uploadFileToBrokerStorage(file, category, fieldId, statusId, uplo
 
     if (result?.success) {
       uploadedFiles[fieldId] = { url: result.url, fileKey: result.fileKey, filename: result.filename };
+      if (fieldId === 'c-property-photo') {
+        compPropertyPhotoStorageUrl = result.url;
+        if (!compPropertyPhotoFilename) compPropertyPhotoFilename = result.filename || file.name || 'Property photo';
+        renderCompPhotoPreview();
+      }
       if (statusEl) {
-        statusEl.innerHTML = `<span style="color:var(--green);">&#10003; <a href="${result.url}" target="_blank" style="color:var(--green);">${result.filename}</a></span>
-          <button onclick="clearUpload('${fieldId}','${statusId}')" style="margin-left:8px;font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;">&#10005; Remove</button>`;
+        statusEl.innerHTML = `<span style="color:var(--green);">Stored: <a href="${result.url}" target="_blank" style="color:var(--green);">${result.filename}</a></span>
+          <button onclick="clearUpload('${fieldId}','${statusId}')" style="margin-left:8px;font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;">Remove</button>`;
       }
       // Update zone appearance
       const zone = document.querySelector(`[data-field="${fieldId}"]`);
@@ -7658,8 +7900,12 @@ async function uploadFileToBrokerStorage(file, category, fieldId, statusId, uplo
     }
   } catch (err) {
     console.error('Upload error:', err);
+    if (fieldId === 'c-property-photo') {
+      compPropertyPhotoStorageUrl = '';
+      renderCompPhotoPreview();
+    }
     if (statusEl) {
-      statusEl.innerHTML = '<span style="color:var(--red);">&#10005; Upload failed. Try again.</span>';
+      statusEl.innerHTML = '<span style="color:var(--red);">Upload failed. Try again.</span>';
     }
   }
 }
@@ -7672,6 +7918,10 @@ function clearUpload(fieldId, statusId) {
   if (input) input.value = '';
   const zone = document.querySelector(`[data-field="${fieldId}"]`);
   if (zone) zone.style.borderColor = '';
+  if (fieldId === 'c-property-photo') {
+    clearCompPhotoState();
+    renderCompPhotoPreview();
+  }
 }
 
 function initS3Uploads() {
@@ -7685,6 +7935,7 @@ function initS3Uploads() {
     input.addEventListener('change', () => {
       const file = input.files[0];
       if (!file) return;
+      if (fieldId === 'c-property-photo') loadCompPhotoPreview(file);
       uploadFileToBrokerStorage(file, category, fieldId, statusId, '');
     });
 
@@ -7696,6 +7947,7 @@ function initS3Uploads() {
       zone.style.borderColor = '';
       const file = e.dataTransfer.files[0];
       if (!file) return;
+      if (fieldId === 'c-property-photo') loadCompPhotoPreview(file);
       uploadFileToBrokerStorage(file, category, fieldId, statusId, '');
     });
   });
@@ -7808,13 +8060,13 @@ function onBrochureSelected(input) {
       const url = data?.result?.data?.json?.url;
       if (url) {
         brochureFileUrl = url;
-        status.textContent = `✓ Uploaded: ${file.name}`;
+        status.textContent = `Uploaded: ${file.name}`;
         btn.style.display = 'block';
       } else {
-        status.textContent = '✗ Upload failed — please try again';
+        status.textContent = 'Upload failed. Please try again.';
       }
     } catch(err) {
-      status.textContent = '✗ Upload error: ' + err.message;
+      status.textContent = 'Upload error: ' + err.message;
     }
   };
   reader.readAsDataURL(file);
@@ -7825,7 +8077,7 @@ async function scrapeBrochure() {
   const btn = document.getElementById('brochure-scrape-btn');
   const status = document.getElementById('brochure-status');
   btn.classList.add('loading');
-  btn.textContent = '✦ Analyzing brochure…';
+  btn.textContent = 'Analyzing brochure...';
   try {
     const resp = await fetch('/api/trpc/aiAssist.scrapeBrochure', {
       method: 'POST',
@@ -7836,17 +8088,17 @@ async function scrapeBrochure() {
     const result = data?.result?.data?.json;
     if (result && result.success) {
       const count = applyAiFields('listing', result.fields);
-      status.textContent = `✓ Extracted ${result.fieldCount || count} fields from brochure`;
-      if (count > 0) showToast(`✨ Filled ${count} field${count !== 1 ? 's' : ''} from brochure`);
+      status.textContent = `Extracted ${result.fieldCount || count} fields from brochure`;
+      if (count > 0) showToast(`Filled ${count} field${count !== 1 ? 's' : ''} from brochure`);
       else showToast('No matching fields found in brochure', 'warn');
     } else {
-      status.textContent = '✗ Could not extract fields — try a clearer brochure';
+      status.textContent = 'Could not extract fields. Try a clearer brochure.';
     }
   } catch(err) {
-    status.textContent = '✗ Error: ' + err.message;
+    status.textContent = 'Error: ' + err.message;
   } finally {
     btn.classList.remove('loading');
-    btn.innerHTML = '&#10024; Scrape &amp; Fill Listing Fields';
+    btn.textContent = 'Scrape and Fill Listing Fields';
   }
 }
 
@@ -7883,13 +8135,13 @@ function onVoucherBrochureSelected(input) {
       const url = data?.result?.data?.json?.url;
       if (url) {
         voucherBrochureFileUrl = url;
-        status.textContent = `✓ Uploaded: ${file.name}`;
+        status.textContent = `Uploaded: ${file.name}`;
         btn.style.display = 'block';
       } else {
-        status.textContent = '✗ Upload failed — please try again';
+        status.textContent = 'Upload failed. Please try again.';
       }
     } catch(err) {
-      status.textContent = '✗ Upload error: ' + err.message;
+      status.textContent = 'Upload error: ' + err.message;
     }
   };
   reader.readAsDataURL(file);
@@ -7900,7 +8152,7 @@ async function scrapeVoucherBrochure() {
   const btn = document.getElementById('v-brochure-scrape-btn');
   const status = document.getElementById('v-brochure-status');
   btn.classList.add('loading');
-  btn.textContent = '✦ Analyzing document…';
+  btn.textContent = 'Analyzing document...';
   try {
     const resp = await fetch('/api/trpc/aiAssist.scrapeBrochure', {
       method: 'POST',
@@ -7936,17 +8188,17 @@ async function scrapeVoucherBrochure() {
           }
         }
       });
-      status.textContent = `✓ Filled ${count} voucher field${count !== 1 ? 's' : ''} from document`;
-      if (count > 0) showToast(`✨ Filled ${count} voucher field${count !== 1 ? 's' : ''} from document`);
+      status.textContent = `Filled ${count} voucher field${count !== 1 ? 's' : ''} from document`;
+      if (count > 0) showToast(`Filled ${count} voucher field${count !== 1 ? 's' : ''} from document`);
       else showToast('No matching voucher fields found in document', 'warn');
     } else {
-      status.textContent = '✗ Could not extract fields — try a clearer document';
+      status.textContent = 'Could not extract fields. Try a clearer document.';
     }
   } catch(err) {
-    status.textContent = '✗ Error: ' + err.message;
+    status.textContent = 'Error: ' + err.message;
   } finally {
     btn.classList.remove('loading');
-    btn.innerHTML = '&#10024; Scrape &amp; Fill Voucher Fields';
+    btn.textContent = 'Scrape and Fill Voucher Fields';
   }
 }
 </script>
@@ -8009,24 +8261,24 @@ async function scrapeVoucherBrochure() {
   background: #fff8f8;
   box-shadow: 0 4px 16px rgba(183,28,28,0.12);
 }
-.ci-path-icon { font-size: 32px; margin-bottom: 10px; }
+.ci-path-icon { margin-bottom: 10px; min-height: 34px; }
 .ci-path-title { font-size: 16px; font-weight: 700; color: var(--text1); margin-bottom: 6px; }
 .ci-path-desc  { font-size: 12px; color: var(--text2); line-height: 1.5; }
 
 .ci-upload-zone {
-  border: 2px dashed #7B1FA2;
+  border: 2px dashed rgba(195,32,51,.28);
   border-radius: 10px;
   padding: 36px 24px;
   text-align: center;
   cursor: pointer;
-  background: #fdf8ff;
+  background: #fff8f8;
   transition: background 0.2s, border-color 0.2s;
 }
 .ci-upload-zone:hover, .ci-upload-zone.drag-over {
-  background: #f3e5f5;
-  border-color: #4a148c;
+  background: #fff2f4;
+  border-color: var(--red);
 }
-.ci-upload-icon { font-size: 36px; margin-bottom: 8px; }
+.ci-upload-icon { margin-bottom: 8px; min-height: 36px; }
 .ci-upload-text { font-size: 15px; font-weight: 600; color: var(--text1); }
 .ci-upload-sub  { font-size: 12px; color: var(--text2); margin-top: 4px; }
 
@@ -8034,16 +8286,16 @@ async function scrapeVoucherBrochure() {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: linear-gradient(90deg, #f3e5f5, #e8f5e9);
-  border: 1px solid #ce93d8;
+  background: linear-gradient(90deg, #fff5f6, #f6f4f1);
+  border: 1px solid #ebc9cf;
   border-radius: 8px;
   padding: 12px 18px;
   margin: 16px 32px 0;
   font-size: 13px;
-  color: #4a148c;
+  color: #7a2a35;
   font-weight: 500;
 }
-.ci-ai-icon { font-size: 18px; flex-shrink: 0; }
+.ci-ai-icon { flex-shrink: 0; }
 
 .ci-section {
   padding: 20px 32px;
@@ -8722,7 +8974,7 @@ async function aiParseDescription() {
     const result = await callTrpc('aiAssist.parse', { description: desc, tab });
     const count = applyAiFields(tab, result.fields || {});
     if (count > 0) {
-      setAiStatus('ai-parse-status', `✓ Filled ${count} field${count !== 1 ? 's' : ''}`, 'success');
+      setAiStatus('ai-parse-status', `Filled ${count} field${count !== 1 ? 's' : ''}`, 'success');
       document.getElementById('ai-nl-input').value = '';
     } else {
       setAiStatus('ai-parse-status', 'No matching fields found. Try being more specific.', 'error');
@@ -8731,7 +8983,7 @@ async function aiParseDescription() {
     setAiStatus('ai-parse-status', 'Error: ' + (e.message || 'Something went wrong'), 'error');
   } finally {
     btn.disabled = false;
-    icon.textContent = '✦';
+    icon.textContent = '';
   }
 }
 
@@ -8747,7 +8999,7 @@ async function aiSmartComplete() {
     const result = await callTrpc('aiAssist.smartComplete', { currentFields, tab });
     const count = applyAiFieldsForce(tab, result.fields || {});
     if (count > 0) {
-      setAiStatus('ai-smart-status', `✓ Suggested ${count} field${count !== 1 ? 's' : ''}`, 'success');
+      setAiStatus('ai-smart-status', `Suggested ${count} field${count !== 1 ? 's' : ''}`, 'success');
     } else {
       setAiStatus('ai-smart-status', result.message || 'No suggestions — fill in more fields first.', '');
     }
@@ -8755,7 +9007,7 @@ async function aiSmartComplete() {
     setAiStatus('ai-smart-status', 'Error: ' + (e.message || 'Something went wrong'), 'error');
   } finally {
     btn.disabled = false;
-    icon.textContent = '⚡';
+    icon.textContent = '+';
   }
 }
 
@@ -8786,12 +9038,12 @@ function openSendToAdminModal(formType) {
   const btn = document.getElementById('sta-send-btn');
   if (!modal) return;
   const label = formType === 'listing' ? 'Listing Entry' : 'Commission Voucher';
-  title.innerHTML = `&#9993; Send ${label} to Admin`;
+  title.textContent = `Send ${label} to Admin`;
   desc.textContent = `This will email all filled ${label} fields to the office admin. You will be CC’d automatically.`;
   status.textContent = '';
   status.style.color = '';
   btn.classList.remove('loading');
-  btn.querySelector('.btn-label').textContent = '\u2709\uFE0F Send Email';
+  btn.querySelector('.btn-label').textContent = 'Send Email';
   modal.classList.add('open');
 }
 
@@ -9109,26 +9361,26 @@ async function submitSendToAdmin() {
       const sentWithAttachment = Boolean(result?.attachmentIncluded);
       const archivedLink = result?.archivedFile?.url;
       status.textContent = sentWithAttachment
-        ? '\u2713 Email sent successfully with the PDF attached and archived.'
+        ? 'Email sent successfully with the PDF attached and archived.'
         : archivedLink
-          ? '\u2713 Email sent successfully. The PDF was archived and included as a secure link.'
-          : '\u2713 Email sent successfully!';
+          ? 'Email sent successfully. The PDF was archived and included as a secure link.'
+          : 'Email sent successfully.';
       status.style.color = '#16a34a';
-      btn.querySelector('.btn-label').textContent = '\u2713 Sent!';
-      showToast(sentWithAttachment ? '\u2709\uFE0F Submission emailed with PDF attached' : '\u2709\uFE0F Submission emailed and archived');
+      btn.querySelector('.btn-label').textContent = 'Sent';
+      showToast(sentWithAttachment ? 'Submission emailed with PDF attached.' : 'Submission emailed and archived.');
       setTimeout(closeSendToAdminModal, 2000);
     } else {
       const errMsg = result?.error || 'Unknown error';
-      status.textContent = '\u2717 Failed to send: ' + errMsg;
+      status.textContent = 'Failed to send: ' + errMsg;
       status.style.color = '#dc2626';
       btn.classList.remove('loading');
-      btn.querySelector('.btn-label').textContent = '\u2709\uFE0F Send Email';
+      btn.querySelector('.btn-label').textContent = 'Send Email';
     }
   } catch(err) {
-    status.textContent = '\u2717 Error: ' + err.message;
+    status.textContent = 'Error: ' + err.message;
     status.style.color = '#dc2626';
     btn.classList.remove('loading');
-    btn.querySelector('.btn-label').textContent = '\u2709\uFE0F Send Email';
+    btn.querySelector('.btn-label').textContent = 'Send Email';
   }
 }
 
@@ -9200,7 +9452,7 @@ async function ciProcessPdf(file) {
   const statusEl = document.getElementById('ci-upload-status');
   const zone = document.getElementById('ci-upload-zone');
   statusEl.style.display = '';
-  statusEl.innerHTML = '<span style="color:#7B1FA2;font-weight:600;">&#9654; Uploading PDF&hellip;</span>';
+  statusEl.innerHTML = '<span style="color:var(--text2);font-weight:600;">Uploading PDF...</span>';
 
   try {
     // 1. Read file as base64
@@ -9212,7 +9464,7 @@ async function ciProcessPdf(file) {
     });
 
     // 2. Upload to S3 via tRPC (raw fetch)
-    statusEl.innerHTML = '<span style="color:#7B1FA2;font-weight:600;">&#9654; Uploading to secure storage&hellip;</span>';
+    statusEl.innerHTML = '<span style="color:var(--text2);font-weight:600;">Uploading to secure storage...</span>';
     const uploadResp = await fetch('/api/trpc/files.upload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -9224,7 +9476,7 @@ async function ciProcessPdf(file) {
 
     // 3. Extract fields via AI
     const contractType = document.getElementById('ci-contract-type').value;
-    statusEl.innerHTML = '<span style="color:#7B1FA2;font-weight:600;">&#10024; AI is reading the contract&hellip; (this may take 10-20 seconds)</span>';
+    statusEl.innerHTML = '<span style="color:var(--red);font-weight:600;">Reading the contract and extracting fields...</span>';
 
     const extractResp = await fetch('/api/trpc/contracts.extractContract', {
       method: 'POST',
