@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { restApiRouter } from "../restApi";
+import { sdk } from "./sdk";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -34,6 +35,21 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  app.use(async (req, res, next) => {
+    const requestPath = req.path || req.originalUrl || "";
+    if (requestPath !== "/broker_tool.html") {
+      return next();
+    }
+
+    try {
+      await sdk.authenticateRequest(req);
+      return next();
+    } catch {
+      return res.redirect("/");
+    }
+  });
+
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // REST API for Power Automate Custom Connector

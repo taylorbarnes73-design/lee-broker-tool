@@ -2,6 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
+import { sdk } from "./_core/sdk";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,6 +16,20 @@ async function startServer() {
     process.env.NODE_ENV === "production"
       ? path.resolve(__dirname, "public")
       : path.resolve(__dirname, "..", "dist", "public");
+
+  app.use(async (req, res, next) => {
+    const requestPath = req.path || req.originalUrl || "";
+    if (requestPath !== "/broker_tool.html") {
+      return next();
+    }
+
+    try {
+      await sdk.authenticateRequest(req);
+      return next();
+    } catch {
+      return res.redirect("/");
+    }
+  });
 
   app.use(express.static(staticPath));
 

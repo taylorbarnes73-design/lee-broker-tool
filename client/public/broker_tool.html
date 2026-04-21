@@ -10047,63 +10047,19 @@ async function ensureSharedBrokerSession() {
   if (sharedBrokerSessionPromise) return sharedBrokerSessionPromise;
 
   sharedBrokerSessionPromise = (async () => {
-    const saved = readSharedBrokerIdentity();
-    if (saved) applySharedBrokerIdentity(saved);
-
     try {
       const me = await callTrpc('auth.me');
       if (me) {
         compReportsUser = me;
         applySharedBrokerIdentity(me);
         return me;
-      }
-    } catch {}
-
-    if (!saved || !saved.email) return null;
-
-    try {
-      const nameParts = splitBrokerName(saved.name);
-      const attempts = [
-        {
-          firstName: nameParts.firstName,
-          lastName: nameParts.lastName,
-          email: saved.email,
-        },
-        {
-          name: saved.name || saved.email.split('@')[0],
-          email: saved.email,
-        },
-      ];
-
-      let loginResult = null;
-      for (const payload of attempts) {
-        try {
-          loginResult = await callTrpc('auth.login', payload);
-          if (loginResult && loginResult.success) break;
-        } catch (error) {
-          loginResult = null;
-        }
-      }
-
-      if (!loginResult || !loginResult.success) return saved;
-
-      const me = await callTrpc('auth.me');
-      if (me) {
-        compReportsUser = me;
-        applySharedBrokerIdentity(me);
-        return me;
-      }
-
-      if (loginResult.user) {
-        compReportsUser = loginResult.user;
-        applySharedBrokerIdentity(loginResult.user);
-        return loginResult.user;
       }
     } catch (error) {
-      console.warn('Unable to restore broker session:', error && error.message ? error.message : error);
+      console.warn('Unable to verify broker session:', error && error.message ? error.message : error);
     }
 
-    return saved;
+    updateHeaderUserDisplay(null);
+    return null;
   })();
 
   try {
@@ -11278,7 +11234,6 @@ function ciReset() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  applySharedBrokerIdentity(readSharedBrokerIdentity());
   void ensureSharedBrokerSession();
 });
 </script>
