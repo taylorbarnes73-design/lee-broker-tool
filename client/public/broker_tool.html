@@ -1406,7 +1406,35 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   letter-spacing: .12em;
 }
 .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   justify-content: flex-end;
+}
+.header-user {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  min-width: 0;
+}
+.header-user-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: #8a9198;
+}
+.header-user-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+.header-user-email {
+  font-size: 12px;
+  color: var(--text2);
+  white-space: nowrap;
 }
 .admin-toggle {
   margin-left: 0;
@@ -1919,6 +1947,10 @@ body.admin-mode #admin-view {
   .header-copy {
     width: 100%;
   }
+  .header-user {
+    width: 100%;
+    align-items: flex-start;
+  }
   .admin-page h1 {
     font-size: 24px;
   }
@@ -1935,7 +1967,6 @@ body.admin-mode #admin-view {
   <div class="header-main">
     <div class="header-access">
       <a class="top-access-link" href="/">Home / Sign In</a>
-      <div class="header-access-note">Return to the broker workspace landing page at any time.</div>
     </div>
     <img class="header-logo" src="lee-newport-beach-fullcolor.png" alt="Lee &amp; Associates Newport Beach">
     <div class="header-copy">
@@ -1945,11 +1976,10 @@ body.admin-mode #admin-view {
     </div>
   </div>
   <div class="header-actions">
-    <div id="bp-selector-wrap" style="display:flex;align-items:center;gap:6px;">
-      <select id="bp-active-select" onchange="bpApplyProfile(this.value)" title="Select a broker profile to pre-fill agent fields" style="font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);cursor:pointer;max-width:180px;">
-        <option value="">Select Broker&hellip;</option>
-      </select>
-      <button onclick="bpOpenModal()" title="Manage broker profiles" style="background:#fff;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-size:13px;cursor:pointer;white-space:nowrap;">Profiles</button>
+    <div class="header-user" id="header-user">
+      <div class="header-user-label">Signed In</div>
+      <div class="header-user-name" id="header-user-name">Broker session</div>
+      <div class="header-user-email" id="header-user-email">Sign in on the home page</div>
     </div>
     <button class="admin-toggle" onclick="toggleAdminMode()">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -9959,6 +9989,19 @@ function writeSharedBrokerIdentity(user) {
   localStorage.setItem(LEGACY_AUTH_STORAGE_KEY, payload);
 }
 
+function updateHeaderUserDisplay(user) {
+  const nameEl = document.getElementById('header-user-name');
+  const emailEl = document.getElementById('header-user-email');
+  if (!nameEl || !emailEl) return;
+  if (user && user.email) {
+    nameEl.textContent = user.name || 'Lee Broker';
+    emailEl.textContent = user.email;
+    return;
+  }
+  nameEl.textContent = 'Broker session';
+  emailEl.textContent = 'Sign in on the home page';
+}
+
 function fillFieldIfEmpty(id, value) {
   if (!value) return;
   const el = document.getElementById(id);
@@ -9972,6 +10015,7 @@ function getSignedInBrokerIdentity() {
 }
 
 function applySharedBrokerIdentity(user) {
+  updateHeaderUserDisplay(user);
   if (!user) return;
 
   writeSharedBrokerIdentity(user);
@@ -10003,6 +10047,9 @@ async function ensureSharedBrokerSession() {
   if (sharedBrokerSessionPromise) return sharedBrokerSessionPromise;
 
   sharedBrokerSessionPromise = (async () => {
+    const saved = readSharedBrokerIdentity();
+    if (saved) applySharedBrokerIdentity(saved);
+
     try {
       const me = await callTrpc('auth.me');
       if (me) {
@@ -10012,18 +10059,33 @@ async function ensureSharedBrokerSession() {
       }
     } catch {}
 
-    const saved = readSharedBrokerIdentity();
-    if (!saved || !saved.email || !saved.name) return null;
+    if (!saved || !saved.email) return null;
 
     try {
       const nameParts = splitBrokerName(saved.name);
-      const loginResult = await callTrpc('auth.login', {
-        firstName: nameParts.firstName,
-        lastName: nameParts.lastName,
-        email: saved.email,
-      });
+      const attempts = [
+        {
+          firstName: nameParts.firstName,
+          lastName: nameParts.lastName,
+          email: saved.email,
+        },
+        {
+          name: saved.name || saved.email.split('@')[0],
+          email: saved.email,
+        },
+      ];
 
-      if (!loginResult || !loginResult.success) return null;
+      let loginResult = null;
+      for (const payload of attempts) {
+        try {
+          loginResult = await callTrpc('auth.login', payload);
+          if (loginResult && loginResult.success) break;
+        } catch (error) {
+          loginResult = null;
+        }
+      }
+
+      if (!loginResult || !loginResult.success) return saved;
 
       const me = await callTrpc('auth.me');
       if (me) {
@@ -10041,7 +10103,7 @@ async function ensureSharedBrokerSession() {
       console.warn('Unable to restore broker session:', error && error.message ? error.message : error);
     }
 
-    return null;
+    return saved;
   })();
 
   try {
@@ -10049,6 +10111,11 @@ async function ensureSharedBrokerSession() {
   } finally {
     sharedBrokerSessionPromise = null;
   }
+}
+
+async function forceSharedBrokerSessionRestore() {
+  sharedBrokerSessionPromise = null;
+  return ensureSharedBrokerSession();
 }
 
 let compReportsInitialized = false;
@@ -10185,10 +10252,17 @@ function compReportResetFilters() {
   void compReportSearch();
 }
 
-async function compReportLoadLatest() {
+async function compReportLoadLatest(allowRetry = true) {
   try {
     compReportsLatest = await callTrpc('compData.latest');
   } catch (error) {
+    if (allowRetry && String(error && error.message ? error.message : error).includes('401')) {
+      const restoredUser = await forceSharedBrokerSessionRestore();
+      if (restoredUser) {
+        compReportsUser = restoredUser;
+        return compReportLoadLatest(false);
+      }
+    }
     compReportsLatest = null;
     compReportSetDatasetSummary('Unable to load the comp dataset right now. ' + dxEscHtml(error.message || 'Please try again.'), true);
   }
@@ -10224,7 +10298,7 @@ async function initCompReports(forceRefresh) {
   compReportsInitialized = true;
 }
 
-async function compReportSearch() {
+async function compReportSearch(allowRetry = true) {
   if (!compReportsUser) {
     await initCompReports(true);
     return;
@@ -10247,6 +10321,13 @@ async function compReportSearch() {
     }
     compReportRenderResults(data?.results || []);
   } catch (error) {
+    if (allowRetry && String(error && error.message ? error.message : error).includes('401')) {
+      const restoredUser = await forceSharedBrokerSessionRestore();
+      if (restoredUser) {
+        compReportsUser = restoredUser;
+        return compReportSearch(false);
+      }
+    }
     compReportSetResultsCount('Search unavailable.');
     compReportSetResultsHtml('Unable to load comp results right now. ' + dxEscHtml(error.message || 'Please try again.'), 'comp-report-message error');
   }
