@@ -1361,65 +1361,188 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   display: grid;
   gap: 14px;
 }
+.comp-report-template-head {
+  display: grid;
+  gap: 6px;
+  padding: 16px 18px;
+  border: 1px solid #e6e4dd;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fbfbf8 0%, #f4f2ec 100%);
+}
+.comp-report-template-kicker {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: #8a9198;
+}
+.comp-report-template-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -.03em;
+  color: var(--text);
+}
+.comp-report-template-copy {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text2);
+}
+.comp-report-template-fields {
+  display: grid;
+  gap: 8px;
+  margin-top: 6px;
+}
+.comp-report-template-field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.comp-report-template-field-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid #e4e1d9;
+  background: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #6b737c;
+}
 .comp-report-result {
   background: #fbfbf8;
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 18px;
 }
-.comp-report-result h4 {
-  font-size: 18px;
-  line-height: 1.25;
-  margin: 0 0 6px;
+.comp-report-result-shell {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 110px minmax(0, 1fr);
+}
+.comp-report-result-side {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+.comp-report-result-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: #20252a;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+}
+.comp-report-result-photo {
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 12px;
+  border: 1px dashed #d8d5cd;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #8a9198;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  font-weight: 700;
+}
+.comp-report-result-main {
+  display: grid;
+  gap: 12px;
+}
+.comp-report-result-head {
+  display: grid;
+  gap: 4px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e8e5dd;
+}
+.comp-report-result-title {
+  font-size: 22px;
+  line-height: 1.08;
+  letter-spacing: -.03em;
+  font-weight: 700;
   color: var(--text);
 }
-.comp-report-result .addr {
+.comp-report-result-address,
+.comp-report-result-city,
+.comp-report-result-market {
   font-size: 13px;
+  line-height: 1.7;
   color: var(--text2);
-  margin-bottom: 8px;
 }
-.comp-report-result .metric,
-.comp-report-result .meta {
-  font-size: 12px;
-  color: #4f5861;
-  margin-bottom: 6px;
+.comp-report-result-market {
+  font-weight: 600;
+  color: #525a62;
 }
-.comp-report-result .meta {
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: #7e8790;
-}
-.comp-report-fields {
+.comp-report-field-matrix {
   display: grid;
-  gap: 10px 12px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin-top: 12px;
+  gap: 10px;
 }
-.comp-report-fields div {
-  border-top: 1px solid #ecebe6;
-  padding-top: 10px;
+.comp-report-field-row {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
-.comp-report-fields span {
+.comp-report-field-cell {
+  min-height: 66px;
+  padding: 12px;
+  border: 1px solid #e7e4dc;
+  border-radius: 12px;
+  background: #fff;
+}
+.comp-report-field-cell span {
   display: block;
   font-size: 9px;
   font-weight: 800;
   letter-spacing: .16em;
   text-transform: uppercase;
   color: #8b9198;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
-.comp-report-fields strong {
+.comp-report-field-cell strong {
+  display: block;
   font-size: 13px;
+  line-height: 1.6;
   color: var(--text);
   font-weight: 600;
 }
+.comp-report-result-broker-line,
+.comp-report-result-source-line,
 .comp-report-comments {
-  margin-top: 12px;
-  border-top: 1px solid #ecebe6;
-  padding-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e7e4dc;
+  border-radius: 12px;
+  background: #fff;
+}
+.comp-report-result-broker-line,
+.comp-report-result-source-line {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #525a62;
+}
+.comp-report-comments {
   font-size: 13px;
   line-height: 1.7;
   color: var(--text2);
+}
+.comp-report-comments strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #8b9198;
 }
 .comp-report-empty,
 .comp-report-message,
@@ -1449,8 +1572,30 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   .comp-report-empty-grid {
     grid-template-columns: 1fr;
   }
-  .comp-report-fields,
+  .comp-report-field-row,
   .comp-report-meta-grid {
+    grid-template-columns: 1fr;
+  }
+  .comp-report-result-shell {
+    grid-template-columns: 1fr;
+  }
+  .comp-report-result-side {
+    grid-template-columns: 44px minmax(0, 1fr);
+    align-items: stretch;
+  }
+  .comp-report-template-field-row {
+    gap: 6px;
+  }
+  .comp-report-template-field-pill {
+    min-height: 28px;
+    font-size: 9px;
+  }
+  .comp-report-result-title {
+    font-size: 20px;
+  }
+  .comp-report-field-matrix,
+  .comp-report-field-row,
+  .comp-report-template-fields {
     grid-template-columns: 1fr;
   }
 }
@@ -10252,6 +10397,101 @@ function compReportVisibleFields(fields) {
   return Object.entries(fields || {}).filter(([, value]) => !!value).slice(0, 10);
 }
 
+const COMP_REPORT_FIELD_ROWS = {
+  lease: [
+    ['Space Leased', 'Office', 'Trans. Date', 'Prop. Type', 'On Mrkt', 'DH', 'Sprk', 'Lessee'],
+    ['Rent/SqFt', 'TI Allow', 'Expir. Date', 'Subtype', 'Amps', 'GL', 'Rail', 'Lessor'],
+    ['Eff. Rent', 'Free Rent', 'Term', 'Bldg. Class', 'Mul-Ten', 'POL', 'Yrd', 'Space Type'],
+    ['Bldg SqFt', 'NNN Chgs', 'Occ Date', 'Parking', 'Yr Built', 'HT', 'Land', 'Options/Rent Adj'],
+  ],
+  sale: [
+    ['Bldg. SqFt', 'Sale Price', 'Trans. Date', 'Prop. Type', 'Yr Built', 'DH', 'Sprk', 'Buyer'],
+    ['Office SqFt', 'Sale $/SF', 'On Market', 'Subtype', 'Mul-Tnt', 'GL', 'RR', 'Seller'],
+    ['Land Size', 'Trans. Type', 'Cap Rate', 'Bldg. Class', 'Amps', 'Clr', 'Yard', 'Buyer Previous Location'],
+  ],
+};
+
+function compReportGetFieldRows(compType) {
+  return COMP_REPORT_FIELD_ROWS[compType] || [];
+}
+
+function compReportGetFieldValue(result, label) {
+  return result?.reportCard?.fields?.[label] || '—';
+}
+
+function compReportGetMarketLine(result) {
+  const parts = [];
+  if (result.market) parts.push('Market: ' + result.market);
+  if (result.subMarket) parts.push('Submarket: ' + result.subMarket);
+  if (!parts.length && result.metaLine) return result.metaLine;
+  return parts.join(' / ');
+}
+
+function compReportGetBrokerLine(result) {
+  const parts = [];
+  if (result.reportCard?.procuringBrokerLine) parts.push(result.reportCard.procuringBrokerLine);
+  if (result.reportCard?.listingBrokerLine) parts.push(result.reportCard.listingBrokerLine);
+  return parts.filter(Boolean).join('  |  ');
+}
+
+function compReportRenderTemplateHead(compType) {
+  const title = compType === 'sale' ? 'Sale Comparables' : 'Lease Comparables';
+  const rows = compReportGetFieldRows(compType);
+  return (
+    '<div class="comp-report-template-head">' +
+      '<div class="comp-report-template-kicker">Metropolis Style Output</div>' +
+      '<div class="comp-report-template-title">' + title + '</div>' +
+      '<div class="comp-report-template-copy">Results are organized from the imported comp workbook into the same compact report rhythm as the example PDFs: numbered entries, property lines, dense field matrices, broker lines, source notes, and comments.</div>' +
+      '<div class="comp-report-template-fields">' +
+        rows.map(row =>
+          '<div class="comp-report-template-field-row">' +
+            row.map(label => '<div class="comp-report-template-field-pill">' + dxEscHtml(label) + '</div>').join('') +
+          '</div>'
+        ).join('') +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function compReportRenderResult(result, index) {
+  const fieldRows = compReportGetFieldRows(result.compType);
+  const brokerLine = compReportGetBrokerLine(result);
+  const sourceParts = [result.reportCard?.sourceLine, result.reportCard?.updatedLine].filter(Boolean);
+  return (
+    '<article class="comp-report-result">' +
+      '<div class="comp-report-result-shell">' +
+        '<div class="comp-report-result-side">' +
+          '<div class="comp-report-result-index">' + String(index + 1) + '</div>' +
+          '<div class="comp-report-result-photo">No Photo Available</div>' +
+        '</div>' +
+        '<div class="comp-report-result-main">' +
+          '<div class="comp-report-result-head">' +
+            '<div class="comp-report-result-title">' + dxEscHtml(result.reportCard?.heading || result.title || 'Comp Record') + '</div>' +
+            '<div class="comp-report-result-address">' + dxEscHtml(result.reportCard?.addressLine || result.address || '') + '</div>' +
+            '<div class="comp-report-result-city">' + dxEscHtml(result.reportCard?.cityLine || [result.city, result.state, result.zipCode].filter(Boolean).join(', ')) + '</div>' +
+            '<div class="comp-report-result-market">' + dxEscHtml(compReportGetMarketLine(result)) + '</div>' +
+          '</div>' +
+          '<div class="comp-report-field-matrix">' +
+            fieldRows.map(row =>
+              '<div class="comp-report-field-row">' +
+                row.map(label =>
+                  '<div class="comp-report-field-cell">' +
+                    '<span>' + dxEscHtml(label) + '</span>' +
+                    '<strong>' + dxEscHtml(compReportGetFieldValue(result, label)) + '</strong>' +
+                  '</div>'
+                ).join('') +
+              '</div>'
+            ).join('') +
+          '</div>' +
+          (brokerLine ? '<div class="comp-report-result-broker-line">' + dxEscHtml(brokerLine) + '</div>' : '') +
+          (sourceParts.length ? '<div class="comp-report-result-source-line">' + dxEscHtml(sourceParts.join('  |  ')) + '</div>' : '') +
+          (result.reportCard?.comments ? '<div class="comp-report-comments"><strong>Comments</strong>' + dxEscHtml(result.reportCard.comments) + '</div>' : '') +
+        '</div>' +
+      '</div>' +
+    '</article>'
+  );
+}
+
 function compReportSetUserStatus(label, tone) {
   const el = document.getElementById('cr-user-status');
   if (!el) return;
@@ -10369,24 +10609,10 @@ function compReportRenderResults(results) {
   }
 
   compReportSetResultsCount('Showing ' + results.length + ' result' + (results.length === 1 ? '' : 's'));
-  const html = results.map(result => {
-    const addressLine = [result.address, [result.city, result.state, result.zipCode].filter(Boolean).join(' ')].filter(Boolean).join(', ');
-    const fields = compReportVisibleFields(result.reportCard?.fields || {});
-    return (
-      '<article class="comp-report-result">' +
-        '<h4>' + dxEscHtml(result.title || 'Comp Record') + '</h4>' +
-        '<div class="addr">' + dxEscHtml(addressLine) + '</div>' +
-        (result.metricLine ? '<div class="metric">' + dxEscHtml(result.metricLine) + '</div>' : '') +
-        (result.metaLine ? '<div class="meta">' + dxEscHtml(result.metaLine) + '</div>' : '') +
-        '<div class="comp-report-fields">' +
-          fields.map(([label, value]) =>
-            '<div><span>' + dxEscHtml(label) + '</span><strong>' + dxEscHtml(String(value)) + '</strong></div>'
-          ).join('') +
-        '</div>' +
-        (result.reportCard?.comments ? '<div class="comp-report-comments">' + dxEscHtml(result.reportCard.comments) + '</div>' : '') +
-      '</article>'
-    );
-  }).join('');
+  const compType = results[0]?.compType === 'sale' ? 'sale' : 'lease';
+  const html =
+    compReportRenderTemplateHead(compType) +
+    results.map((result, index) => compReportRenderResult(result, index)).join('');
 
   compReportSetResultsHtml(html, 'comp-report-results');
 }

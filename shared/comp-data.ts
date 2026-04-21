@@ -244,10 +244,16 @@ function formatCurrencyPerSf(value: number | null, suffix = ""): string {
   return `${formatCurrency(value, decimals)}${suffix}`;
 }
 
-function buildUpdateLine(verifiedBy: string, lastUpdated: string, id: number | null): string {
+function formatReportDate(value: string): string {
+  if (!value) return "";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString("en-US");
+}
+
+function buildUpdateLine(_verifiedBy: string, lastUpdated: string, id: number | null): string {
   const parts = [];
-  if (verifiedBy) parts.push(`Source: ${verifiedBy}`);
-  if (lastUpdated) parts.push(`Updt: ${lastUpdated}`);
+  if (lastUpdated) parts.push(`Updated: ${formatReportDate(lastUpdated)}`);
   if (id !== null) parts.push(`#${id}`);
   return parts.join(" ");
 }
