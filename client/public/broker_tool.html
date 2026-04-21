@@ -10225,12 +10225,23 @@ function getCurrentFormState(tab) {
   return state;
 }
 
+const TRPC_QUERY_PROCEDURES = new Set([
+  'auth.me',
+  'submissions.adminList',
+  'compData.latest',
+  'compData.search',
+]);
+
 async function callTrpc(procedure, input) {
-  const res = await fetch('/api/trpc/' + procedure, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  const isQuery = TRPC_QUERY_PROCEDURES.has(procedure);
+  const requestUrl = isQuery
+    ? '/api/trpc/' + procedure + '?input=' + encodeURIComponent(JSON.stringify({ json: input ?? null }))
+    : '/api/trpc/' + procedure;
+  const res = await fetch(requestUrl, {
+    method: isQuery ? 'GET' : 'POST',
+    headers: isQuery ? undefined : { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ json: input }),
+    body: isQuery ? undefined : JSON.stringify({ json: input }),
   });
   if (!res.ok) throw new Error('API error ' + res.status);
   const data = await res.json();
@@ -10525,6 +10536,7 @@ function compReportRenderEmptyState() {
   const sideCopy = document.getElementById('cr-empty-side-copy');
   const badge = document.getElementById('cr-empty-badge');
   const emptyStatus = document.getElementById('cr-empty-status');
+  const hasUser = Boolean(compReportsUser && compReportsUser.email);
 
   if (badge) badge.textContent = 'Awaiting Dataset';
   if (copy) {
@@ -10532,8 +10544,9 @@ function compReportRenderEmptyState() {
       'Once the current comps are published internally, this page becomes the full search and report preview workspace.';
   }
   if (sideCopy) {
-    sideCopy.textContent =
-      'You are signed in correctly. The only blocker right now is that no active comp dataset has been published yet.';
+    sideCopy.textContent = hasUser
+      ? 'You are signed in correctly. The only blocker right now is that no active comp dataset has been published yet.'
+      : 'Sign in from the home page to unlock the protected comp dataset and broker-specific report access.';
   }
   if (emptyStatus && emptyStatus.style.display !== 'none') {
     emptyStatus.className = 'comp-report-message';
