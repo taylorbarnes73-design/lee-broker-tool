@@ -1306,34 +1306,12 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   font-size: 12px;
   color: var(--text2);
 }
-.comp-report-meta-grid {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.comp-report-meta-grid div,
 .comp-report-upload-row,
 .comp-report-empty,
 .comp-report-message {
   border: 1px solid #e8e7e1;
   background: #fff;
   border-radius: 12px;
-}
-.comp-report-meta-grid div {
-  padding: 12px 14px;
-}
-.comp-report-meta-grid span {
-  display: block;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: #8a9198;
-  margin-bottom: 6px;
-}
-.comp-report-meta-grid strong {
-  font-size: 15px;
-  color: var(--text);
 }
 .comp-report-form {
   display: grid;
@@ -1572,8 +1550,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   .comp-report-empty-grid {
     grid-template-columns: 1fr;
   }
-  .comp-report-field-row,
-  .comp-report-meta-grid {
+  .comp-report-field-row {
     grid-template-columns: 1fr;
   }
   .comp-report-result-shell {
@@ -3447,12 +3424,6 @@ body.admin-mode #admin-view {
 
     <div class="comp-report-layout" id="cr-layout">
       <div class="comp-report-stack">
-        <div class="comp-report-card">
-          <div class="comp-report-kicker">Active Dataset</div>
-          <h3>Dataset status</h3>
-          <div id="cr-dataset-summary" class="comp-report-empty">Checking for the active comp dataset.</div>
-        </div>
-
         <div class="comp-report-card" id="cr-search-card">
           <div class="comp-report-kicker">Search Filters</div>
           <h3>Refine comp results</h3>
@@ -10375,19 +10346,6 @@ let compReportsInitialized = false;
 let compReportsUser = null;
 let compReportsLatest = null;
 
-function compReportFormatDate(value) {
-  if (!value) return 'Not available';
-  try {
-    return new Date(value).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  } catch {
-    return String(value);
-  }
-}
-
 function compReportVisibleFields(fields) {
   return Object.entries(fields || {}).filter(([, value]) => !!value).slice(0, 10);
 }
@@ -10496,13 +10454,6 @@ function compReportSetUserStatus(label, tone) {
   el.style.color = tone === 'muted' ? 'var(--text2)' : '#9d1e2d';
 }
 
-function compReportSetDatasetSummary(html, isError) {
-  const el = document.getElementById('cr-dataset-summary');
-  if (!el) return;
-  el.className = isError ? 'comp-report-message error' : 'comp-report-empty';
-  el.innerHTML = html;
-}
-
 function compReportSetResultsCount(label) {
   const el = document.getElementById('cr-results-count');
   if (el) el.textContent = label;
@@ -10557,32 +10508,16 @@ function compReportRenderDatasetSummary() {
   if (!compReportsUser) {
     compReportSetWorkspaceMode(false);
     compReportRenderEmptyState();
-    compReportSetDatasetSummary('Sign in from the home screen to load the active comp dataset and broker-specific data access.', false);
     return;
   }
 
   if (!compReportsLatest) {
     compReportSetWorkspaceMode(false);
     compReportRenderEmptyState();
-    compReportSetDatasetSummary('No active comp dataset is loaded yet. Once the latest comps are published internally, report-ready lease and sale comps will appear here.', false);
     return;
   }
 
   compReportSetWorkspaceMode(true);
-
-  const leaseCount = Number(compReportsLatest.leaseCount || 0).toLocaleString('en-US');
-  const saleCount = Number(compReportsLatest.saleCount || 0).toLocaleString('en-US');
-  const sourceName = dxEscHtml(compReportsLatest.sourceFilename || compReportsLatest.workbookName || 'Workbook');
-
-  compReportSetDatasetSummary(
-    '<div class="comp-report-meta-grid">' +
-      '<div><span>Dataset</span><strong>' + sourceName + '</strong></div>' +
-      '<div><span>Updated</span><strong>' + dxEscHtml(compReportFormatDate(compReportsLatest.createdAt)) + '</strong></div>' +
-      '<div><span>Lease Comps</span><strong>' + leaseCount + '</strong></div>' +
-      '<div><span>Sale Comps</span><strong>' + saleCount + '</strong></div>' +
-    '</div>',
-    false
-  );
 }
 
 function compReportRenderResults(results) {
@@ -10642,7 +10577,6 @@ async function compReportLoadLatest(allowRetry = true) {
       }
     }
     compReportsLatest = null;
-    compReportSetDatasetSummary('Unable to load the comp dataset right now. ' + dxEscHtml(error.message || 'Please try again.'), true);
   }
   compReportRenderDatasetSummary();
 }
