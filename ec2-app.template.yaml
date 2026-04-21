@@ -160,6 +160,14 @@ Resources:
           ToPort: 443
           CidrIp: 0.0.0.0/0
 
+  ElasticIp:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub '${ServiceName}-eip'
+
   DatabaseIngressFromInstance:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -267,16 +275,22 @@ Resources:
           systemctl enable caddy
           systemctl restart caddy
 
+  ElasticIpAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      AllocationId: !GetAtt ElasticIp.AllocationId
+      InstanceId: !Ref Instance
+
 Outputs:
   AppUrl:
     Description: Public HTTPS URL for the Lee Broker Tool service
-    Value: !Sub 'https://${Instance.PublicIp}.sslip.io'
+    Value: !Sub 'https://${ElasticIp}.sslip.io'
   PublicDnsName:
     Description: EC2 public DNS name
     Value: !GetAtt Instance.PublicDnsName
   PublicIp:
     Description: EC2 public IP
-    Value: !GetAtt Instance.PublicIp
+    Value: !Ref ElasticIp
   InstanceId:
     Description: EC2 instance id
     Value: !Ref Instance

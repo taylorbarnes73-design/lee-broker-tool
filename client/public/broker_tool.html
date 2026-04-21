@@ -27,9 +27,9 @@
   --amber-light: #FFFBEB; --amber-border: #FDE68A;
   --locked-bg: #ECEBE6;
   /* Spacing */
-  --radius: 14px;
-  --shadow-sm: 0 10px 24px rgba(31, 35, 40, .05);
-  --shadow-card: 0 18px 36px rgba(31, 35, 40, .08);
+  --radius: 12px;
+  --shadow-sm: 0 6px 18px rgba(31, 35, 40, .04);
+  --shadow-card: 0 10px 26px rgba(31, 35, 40, .05);
   --shadow-focus: 0 0 0 4px rgba(195,32,51,.12);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -40,30 +40,25 @@ body {
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  background-image:
-    radial-gradient(circle at top left, rgba(195,32,51,.07), transparent 24%),
-    linear-gradient(180deg, rgba(31,35,40,.04), transparent 30%);
 }
 
 /* Header */
 .header {
-  background:
-    radial-gradient(circle at top right, rgba(195,32,51,.12), transparent 28%),
-    linear-gradient(180deg, #fafaf8 0%, #efefec 100%);
+  background: #f7f7f3;
   color: var(--text);
-  padding: 16px 24px;
+  padding: 14px 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 18px;
   flex-wrap: wrap;
-  box-shadow: 0 12px 28px rgba(31, 35, 40, .08);
+  box-shadow: 0 2px 10px rgba(31, 35, 40, .04);
   border-bottom: 1px solid var(--border);
 }
-.header-main { display: flex; align-items: center; gap: 18px; min-width: 0; }
+.header-main { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .header-logo {
-  width: min(94px, 18vw);
-  min-width: 68px;
+  width: min(74px, 16vw);
+  min-width: 56px;
   height: auto;
 }
 .header-copy { min-width: 0; }
@@ -76,25 +71,25 @@ body {
   margin-bottom: 5px;
 }
 .header h1 {
-  font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: clamp(24px, 2.6vw, 32px);
-  line-height: .98;
-  font-weight: 600;
-  letter-spacing: .01em;
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: clamp(22px, 2.2vw, 28px);
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: -.02em;
 }
 .header .sub {
-  font-size: 12px;
-  letter-spacing: .05em;
+  font-size: 11px;
+  letter-spacing: .08em;
   text-transform: uppercase;
   color: #6b7178;
-  margin-top: 7px;
+  margin-top: 5px;
 }
 .header-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 
 /* Tabs */
 .tab-bar {
   display: flex;
-  background: rgba(255,255,255,.97);
+  background: #fbfbf8;
   border-bottom: 1.5px solid var(--border);
   padding: 0 20px;
   position: sticky;
@@ -103,19 +98,11 @@ body {
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  box-shadow: 0 2px 8px rgba(7,29,41,.05), 0 10px 24px rgba(7,29,41,.04);
-  backdrop-filter: blur(14px);
+  box-shadow: 0 1px 6px rgba(7,29,41,.04);
 }
 .tab-bar::-webkit-scrollbar { display: none; }
 .tab-bar::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 1.5px;
-  width: 40px;
-  background: linear-gradient(to right, transparent, rgba(248,248,245,.98));
-  pointer-events: none;
+  display: none;
 }
 .tab {
   padding: 15px 20px;
@@ -139,17 +126,17 @@ body {
 .card {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: 14px;
   padding: 24px 28px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(31,35,40,.03), 0 10px 20px rgba(31,35,40,.05);
+  box-shadow: 0 2px 10px rgba(31,35,40,.03);
   transition: box-shadow .2s;
 }
-.card:focus-within { box-shadow: 0 4px 16px rgba(31,35,40,.06), 0 18px 34px rgba(31,35,40,.08); }
+.card:focus-within { box-shadow: 0 4px 14px rgba(31,35,40,.06); }
 /* Active card state */
 .card.card-active {
   border-left: 4px solid var(--red);
-  box-shadow: 0 4px 16px rgba(193,15,77,.08), 0 20px 44px rgba(7,29,41,.10);
+  box-shadow: 0 4px 16px rgba(195,32,51,.08);
 }
 /* Completed card state */
 .card.card-done {
@@ -246,7 +233,7 @@ body {
   gap: 7px;
   padding: 11px 22px;
   border: none;
-  border-radius: 999px;
+  border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
   font-family: 'Manrope', inherit;
@@ -255,8 +242,8 @@ body {
   letter-spacing: .01em;
   position: relative;
 }
-.btn-red { background: var(--red); color: #fff; box-shadow: 0 14px 28px rgba(193,15,77,.22); }
-.btn-red:hover { background: var(--red-dark); box-shadow: 0 20px 34px rgba(151,9,60,.28); }
+.btn-red { background: var(--red); color: #fff; box-shadow: 0 6px 16px rgba(195,32,51,.16); }
+.btn-red:hover { background: var(--red-dark); box-shadow: 0 8px 18px rgba(166,27,43,.18); }
 .btn-outline { background: #fff; color: var(--red); border: 1.5px solid var(--red); }
 .btn-outline:hover { background: var(--red-light); }
 .btn-gray { background: rgba(255,255,255,.96); color: var(--text); border: 1.5px solid rgba(31,35,40,.12); }
@@ -655,7 +642,7 @@ body.admin-mode .header .sub { display: none; }
   table.rent-table, table.broker-table { min-width: 540px; }
   /* Fade hint on right edge of scrollable tables */
   .rent-table-wrap { position: relative; }
-  .rent-table-wrap::after { content: ''; position: sticky; right: 0; top: 0; bottom: 0; width: 24px; background: linear-gradient(to right, transparent, rgba(255,255,255,.9)); pointer-events: none; }
+  .rent-table-wrap::after { content: ''; position: sticky; right: 0; top: 0; bottom: 0; width: 24px; background: rgba(255,255,255,.94); pointer-events: none; }
   /* Progress bar below sticky tab bar */
   .progress-bar-wrap { top: 48px; padding: 6px 16px; }
   /* Larger tap targets */
@@ -671,7 +658,7 @@ body.admin-mode .header .sub { display: none; }
 #dealius-tool .dx-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 20px 28px; margin-bottom: 28px;
-  background: linear-gradient(180deg, #fbfbf9 0%, #f0f0ec 100%);
+  background: #f7f7f3;
   border: 1px solid var(--border);
   border-radius: 14px;
   box-shadow: 0 10px 24px rgba(31,35,40,.05);
@@ -705,7 +692,7 @@ body.admin-mode .header .sub { display: none; }
   background: var(--red); border-radius: 2px;
 }
 #dealius-tool .dx-cors-note {
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  background: #fff6df;
   border: 1px solid #fbbf24; border-radius: 10px;
   padding: 16px 20px; font-size: 12.5px; color: #78350f;
   margin-bottom: 16px; line-height: 1.7;
@@ -785,7 +772,7 @@ body.admin-mode .header .sub { display: none; }
 #dealius-tool .broker-pill { display: inline-flex; align-items: center; gap: 6px; background: #f7f8fa; border: 1px solid #e2e5ec; border-radius: 20px; padding: 5px 14px; font-size: 12px; color: #475569; margin: 3px 4px 3px 0; font-weight: 500; }
 #dealius-tool .broker-pill.outside { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
 #dealius-tool .dx-outside-warn { font-size: 12px; color: #d97706; font-weight: 500; margin-top: 8px; display: none; }
-#dealius-tool .dx-divider { height: 1px; background: linear-gradient(90deg, transparent 0%, #e2e5ec 20%, #e2e5ec 80%, transparent 100%); margin: 22px 0; }
+#dealius-tool .dx-divider { height: 1px; background: #e2e5ec; margin: 22px 0; }
 #dealius-tool .dx-slabel { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #94a3b8; margin: 20px 0 12px; }
 #dealius-tool .dx-slabel:first-child { margin-top: 0; }
 #dealius-tool .dx-hint { font-size: 11px; color: #94a3b8; margin-top: 8px; line-height: 1.6; }
@@ -923,7 +910,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   border-radius: 18px;
   border: 1px solid var(--border);
   background:
-    linear-gradient(180deg, #fff, #f5f5f1);
+    #f7f7f3;
   position: relative;
   font-size: 0;
   color: transparent;
@@ -1114,7 +1101,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 .comp-photo-preview {
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: linear-gradient(180deg, #fdfdfb, #f3f3ef);
+  background: #f5f5f1;
   min-height: 168px;
   padding: 14px;
   display: flex;
@@ -1140,17 +1127,821 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   font-size: 12px;
   color: var(--text2);
 }
+.comp-report-shell {
+  display: grid;
+  gap: 18px;
+}
+.comp-report-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.comp-report-hero h2 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  margin: 0 0 6px;
+}
+.comp-report-hero p {
+  max-width: 760px;
+  color: var(--text2);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.comp-report-layout {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+}
+.comp-report-stack {
+  display: grid;
+  gap: 18px;
+}
+.comp-report-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #e5c7cd;
+  background: #fff5f6;
+  color: #9d1e2d;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.comp-report-kicker {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: #808891;
+  margin-bottom: 10px;
+}
+.comp-report-card {
+  background: #fbfbf8;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 2px 10px rgba(31,35,40,.03);
+}
+.comp-report-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 10px;
+}
+.comp-report-meta-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.comp-report-meta-grid div,
+.comp-report-upload-row,
+.comp-report-empty,
+.comp-report-message {
+  border: 1px solid #e8e7e1;
+  background: #fff;
+  border-radius: 12px;
+}
+.comp-report-meta-grid div {
+  padding: 12px 14px;
+}
+.comp-report-meta-grid span {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #8a9198;
+  margin-bottom: 6px;
+}
+.comp-report-meta-grid strong {
+  font-size: 15px;
+  color: var(--text);
+}
+.comp-report-form {
+  display: grid;
+  gap: 12px;
+}
+.comp-report-form .row {
+  margin-bottom: 0;
+}
+.comp-report-form .field input,
+.comp-report-form .field select {
+  background: #fff;
+}
+.comp-report-results-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.comp-report-results-head p {
+  font-size: 12px;
+  color: var(--text2);
+}
+.comp-report-results {
+  display: grid;
+  gap: 14px;
+}
+.comp-report-result {
+  background: #fbfbf8;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+}
+.comp-report-result h4 {
+  font-size: 18px;
+  line-height: 1.25;
+  margin: 0 0 6px;
+  color: var(--text);
+}
+.comp-report-result .addr {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 8px;
+}
+.comp-report-result .metric,
+.comp-report-result .meta {
+  font-size: 12px;
+  color: #4f5861;
+  margin-bottom: 6px;
+}
+.comp-report-result .meta {
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #7e8790;
+}
+.comp-report-fields {
+  display: grid;
+  gap: 10px 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 12px;
+}
+.comp-report-fields div {
+  border-top: 1px solid #ecebe6;
+  padding-top: 10px;
+}
+.comp-report-fields span {
+  display: block;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #8b9198;
+  margin-bottom: 4px;
+}
+.comp-report-fields strong {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 600;
+}
+.comp-report-comments {
+  margin-top: 12px;
+  border-top: 1px solid #ecebe6;
+  padding-top: 12px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text2);
+}
+.comp-report-empty,
+.comp-report-message,
+.comp-report-upload-row {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.7;
+}
+.comp-report-message.error {
+  border-color: #ebc7cc;
+  color: #8d2531;
+  background: #fff4f5;
+}
+.comp-report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.comp-report-hidden-input {
+  display: none;
+}
+@media (max-width: 960px) {
+  .comp-report-layout {
+    grid-template-columns: 1fr;
+  }
+  .comp-report-fields,
+  .comp-report-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Design reconstruction overrides */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 150;
+  padding: 16px 22px;
+  background: rgba(247, 247, 243, .96);
+  backdrop-filter: blur(10px);
+}
+.header-main {
+  flex: 1 1 auto;
+  gap: 16px;
+}
+.header-access {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-right: 16px;
+  margin-right: 2px;
+  border-right: 1px solid var(--border);
+  min-width: fit-content;
+}
+.top-access-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+.top-access-link::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--red);
+  flex-shrink: 0;
+}
+.top-access-link:hover {
+  color: var(--red);
+}
+.header-access-note {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.4;
+  max-width: 140px;
+}
+.header-logo {
+  width: 66px;
+  min-width: 52px;
+}
+.header-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.header h1 {
+  font-size: clamp(21px, 2vw, 27px);
+}
+.header .sub {
+  letter-spacing: .12em;
+}
+.header-actions {
+  justify-content: flex-end;
+}
+.admin-toggle {
+  margin-left: 0;
+  background: #fff;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  box-shadow: none;
+}
+.admin-toggle:hover {
+  background: #fff5f6;
+  border-color: #dfb8bf;
+  color: var(--red);
+}
+
+body.admin-mode #admin-view {
+  min-height: calc(100vh - 86px);
+}
+.tab-bar {
+  top: 86px;
+}
+.progress-bar-wrap {
+  top: 138px;
+}
+
+.admin-sidebar {
+  width: 284px;
+  background: #f7f7f3;
+  color: var(--text);
+  border-right: 1px solid var(--border);
+  padding: 24px 18px 18px;
+  gap: 18px;
+}
+.admin-sidebar .sidebar-brand {
+  padding: 0 2px 18px;
+  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+}
+.admin-sidebar .sidebar-logo {
+  width: 54px;
+  height: auto;
+  flex-shrink: 0;
+}
+.admin-sidebar .brand-sub {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .18em;
+  color: #7f8891;
+  opacity: 1;
+}
+.admin-sidebar .brand-name {
+  margin-top: 6px;
+  font-size: 22px;
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: -.03em;
+  color: var(--text);
+}
+.sidebar-meta {
+  display: grid;
+  gap: 10px;
+  padding: 0 2px;
+}
+.sidebar-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #e7c8ce;
+  background: #fff4f5;
+  color: #962233;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.sidebar-meta p {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text2);
+}
+.admin-sidebar nav {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+}
+.admin-sidebar .nav-item {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #4e555d;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  text-align: left;
+  margin-bottom: 0;
+}
+.admin-sidebar .nav-item:hover {
+  background: #efefea;
+  color: var(--text);
+}
+.admin-sidebar .nav-item.active {
+  background: #fff;
+  color: var(--text);
+  border-color: #e4d4d7;
+  box-shadow: 0 8px 20px rgba(31, 35, 40, .05);
+}
+.admin-sidebar .nav-item svg {
+  color: var(--red);
+}
+.admin-sidebar .sidebar-footer {
+  margin-top: auto;
+  padding: 16px 4px 0;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  opacity: 1;
+}
+.sidebar-footer-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: #8a9198;
+}
+.sidebar-footer-value {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.sidebar-footer-note {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text2);
+}
+
+.admin-main {
+  background: #efefeb;
+  padding: 24px;
+}
+.admin-page {
+  padding: 0;
+  max-width: none;
+}
+.admin-page-shell {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: grid;
+  gap: 18px;
+}
+.admin-page-header,
+.admin-section,
+.admin-table-wrap {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+}
+.admin-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 26px 28px;
+}
+.admin-page-eyebrow {
+  margin-bottom: 10px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: #8a9198;
+}
+.admin-page h1 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.02;
+  letter-spacing: -.04em;
+}
+.admin-page .page-desc {
+  margin: 12px 0 0;
+  max-width: 780px;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text2);
+}
+.admin-page-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.admin-page-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.admin-page-link:hover {
+  border-color: #dfb8bf;
+  color: var(--red);
+}
+.stat-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 0;
+}
+.stat-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px 20px;
+  box-shadow: none;
+}
+.stat-card .stat-header {
+  margin-bottom: 14px;
+}
+.stat-card .stat-label {
+  font-size: 10px;
+  letter-spacing: .18em;
+  color: #8a9198;
+}
+.stat-card .stat-icon {
+  width: 18px;
+  height: 18px;
+}
+.stat-card .stat-value {
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: -.04em;
+}
+.admin-section {
+  padding: 0;
+  overflow: hidden;
+}
+.admin-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px 16px;
+  border-bottom: 1px solid #ecebe6;
+}
+.admin-section-kicker {
+  margin-bottom: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: #8a9198;
+}
+.admin-section-head h2 {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -.03em;
+  color: var(--text);
+}
+.admin-section-copy,
+.admin-section-meta {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text2);
+}
+.admin-table-wrap {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+.admin-table {
+  font-size: 13px;
+}
+.admin-table th {
+  padding: 14px 18px;
+  font-size: 10px;
+  letter-spacing: .18em;
+  color: #8a9198;
+  background: #fbfbf8;
+}
+.admin-table td {
+  padding: 16px 18px;
+  border-bottom: 1px solid #efeee9;
+  color: var(--text);
+  vertical-align: middle;
+}
+.admin-table tbody tr:hover {
+  background: #faf9f6;
+}
+.filter-bar {
+  gap: 12px;
+  padding: 18px 20px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: none;
+}
+.filter-bar input,
+.filter-bar select {
+  min-height: 46px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  color: var(--text);
+  background: #fff;
+}
+.filter-bar select {
+  min-width: 168px;
+}
+.filter-bar input:focus,
+.filter-bar select:focus {
+  box-shadow: var(--shadow-focus);
+}
+.badge {
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.badge-review {
+  background: #f1f1ed;
+  color: #525962;
+}
+.admin-modal-overlay {
+  background: rgba(25, 28, 32, .38);
+}
+.admin-modal {
+  border-radius: 20px;
+  padding: 24px 24px 20px;
+  max-width: 760px;
+  box-shadow: 0 26px 60px rgba(17, 20, 24, .18);
+}
+.admin-modal-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.admin-modal-close {
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text2);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+.admin-modal-close:hover {
+  color: var(--red);
+  border-color: #dfb8bf;
+}
+.admin-modal .modal-title {
+  margin-bottom: 0;
+  font-size: 20px;
+  letter-spacing: -.03em;
+}
+.admin-modal .modal-subtitle {
+  margin-bottom: 18px;
+  line-height: 1.7;
+}
+.admin-modal .detail-grid {
+  gap: 14px;
+}
+.admin-modal .detail-grid .detail-item {
+  border: 1px solid #ecebe6;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #fbfbf8;
+}
+.admin-modal .notes-box {
+  border-radius: 14px;
+  background: #fbfbf8;
+  border: 1px solid #ecebe6;
+  padding: 14px 16px;
+}
+.admin-modal .action-bar {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+.btn-blue {
+  background: #2d3339;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+}
+.btn-blue:hover {
+  background: #20252a;
+}
+
+#dealius-tool {
+  max-width: none;
+}
+#dealius-tool .dx-header {
+  margin-bottom: 18px;
+  background: #fff;
+  box-shadow: none;
+}
+#dealius-tool .dx-header-tag,
+#dealius-tool .dx-field label,
+#dealius-tool .dx-drop p,
+#dealius-tool .dx-rtable th {
+  color: var(--text2);
+}
+#dealius-tool .dx-version-badge,
+#dealius-tool .dx-rep-select {
+  background: #f7f7f3;
+  color: var(--text);
+  border-color: var(--border);
+}
+#dealius-tool .dx-card,
+#dealius-tool .dx-rtable,
+#dealius-tool .dx-bar {
+  border-color: var(--border);
+  box-shadow: none;
+}
+#dealius-tool .dx-field input,
+#dealius-tool .dx-field select,
+#dealius-tool .dx-drop,
+#dealius-tool .dx-rtable td,
+#dealius-tool .dx-rtable th {
+  border-color: var(--border);
+}
+#dealius-tool .dx-drop h3,
+#dealius-tool .dx-rtable td,
+#dealius-tool .dx-field input,
+#dealius-tool .dx-field select {
+  color: var(--text);
+}
+#dealius-tool .dx-rtable th,
+#dealius-tool .dx-drop,
+#dealius-tool .dx-deal-name-row input {
+  background: #fbfbf8;
+}
+
+@media (max-width: 1100px) {
+  .admin-sidebar {
+    width: 250px;
+  }
+  .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 860px) {
+  .header {
+    padding: 14px 16px;
+  }
+  .tab-bar {
+    top: 82px;
+  }
+  .progress-bar-wrap {
+    top: 132px;
+  }
+  body.admin-mode #admin-view {
+    flex-direction: column;
+    min-height: auto;
+  }
+  .admin-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .admin-main {
+    padding: 16px;
+  }
+  .admin-page-header,
+  .admin-section-head {
+    padding: 20px 18px;
+  }
+  .filter-bar {
+    padding: 16px;
+  }
+}
+@media (max-width: 640px) {
+  .header-main {
+    align-items: flex-start;
+  }
+  .header-access {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding-right: 0;
+    padding-bottom: 12px;
+    margin-right: 0;
+  }
+  .header-copy {
+    width: 100%;
+  }
+  .admin-page h1 {
+    font-size: 24px;
+  }
+  .stat-grid,
+  .admin-modal .detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
 </head>
 <body>
 
 <div class="header">
   <div class="header-main">
+    <div class="header-access">
+      <a class="top-access-link" href="/">Home / Sign In</a>
+      <div class="header-access-note">Return to the broker workspace landing page at any time.</div>
+    </div>
     <img class="header-logo" src="lee-newport-beach-fullcolor.png" alt="Lee &amp; Associates Newport Beach">
     <div class="header-copy">
     <div class="header-kicker">Lee &amp; Associates Newport Beach</div>
     <h1>Broker Submission Tool</h1>
-    <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher &bull; Comp Input &bull; Documents &bull; Contracts</div>
+    <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher &bull; Comp Input &bull; Comp Reports &bull; Documents &bull; Contracts</div>
     </div>
   </div>
   <div class="header-actions">
@@ -1169,12 +1960,13 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 <div id="broker-view">
 
 <div class="tab-bar">
-  <div class="tab active" onclick="switchTab('listing')">Listing Entry</div>
-  <div class="tab" onclick="switchTab('sign')">Sign Request</div>
-  <div class="tab" onclick="switchTab('voucher')">Commission Voucher</div>
-  <div class="tab" onclick="switchTab('comp')">Comp Input</div>
-  <div class="tab" onclick="switchTab('docs')">Documents</div>
-  <div class="tab" onclick="switchTab('contracts')">Contracts</div>
+  <div class="tab active" data-tab="listing" onclick="switchTab('listing')">Listing Entry</div>
+  <div class="tab" data-tab="sign" onclick="switchTab('sign')">Sign Request</div>
+  <div class="tab" data-tab="voucher" onclick="switchTab('voucher')">Commission Voucher</div>
+  <div class="tab" data-tab="comp" onclick="switchTab('comp')">Comp Input</div>
+  <div class="tab" data-tab="comp-reports" onclick="switchTab('comp-reports')">Comp Reports</div>
+  <div class="tab" data-tab="docs" onclick="switchTab('docs')">Documents</div>
+  <div class="tab" data-tab="contracts" onclick="switchTab('contracts')">Contracts</div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
@@ -2345,12 +3137,96 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   <div class="btn-bar" style="margin-top:16px;">
     <button class="btn btn-gray" onclick="exportCompPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
     <button class="btn btn-red" onclick="openEmailModal('comp')">Submit Comp</button>
+    <button class="btn btn-outline" onclick="switchTab('comp-reports')">Open Comp Reports</button>
     <button class="btn btn-gray" onclick="clearComp()">Clear Form</button>
   </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<div id="tab-comp-reports" class="panel">
+  <div class="comp-report-shell">
+    <div class="comp-report-hero card">
+      <div>
+        <div class="comp-report-kicker">Comp Reporting</div>
+        <h2>Search the active comp workbook from inside the tool.</h2>
+        <p>Use the imported lease and sale dataset to find report-ready comparables, preview the exact fields being surfaced, and keep the comp workflow in the same workspace as the rest of the broker tool.</p>
+      </div>
+      <div class="comp-report-status" id="cr-user-status">Checking access</div>
+    </div>
+
+    <div class="comp-report-layout">
+      <div class="comp-report-stack">
+        <div class="comp-report-card">
+          <div class="comp-report-kicker">Active Dataset</div>
+          <h3>Workbook status</h3>
+          <div id="cr-dataset-summary" class="comp-report-empty">Checking for the active workbook.</div>
+        </div>
+
+        <div class="comp-report-card">
+          <div class="comp-report-kicker">Search Filters</div>
+          <h3>Refine comp results</h3>
+          <form class="comp-report-form" onsubmit="event.preventDefault(); compReportSearch();">
+            <div class="row c2">
+              <div class="field">
+                <label>Comp Type</label>
+                <select id="cr-comp-type">
+                  <option value="lease">Lease comps</option>
+                  <option value="sale">Sale comps</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Search</label>
+                <input id="cr-query" placeholder="Address, project, market">
+              </div>
+            </div>
+            <div class="row c2">
+              <div class="field"><label>City</label><input id="cr-city" placeholder="Irvine"></div>
+              <div class="field"><label>Market</label><input id="cr-market" placeholder="Orange"></div>
+            </div>
+            <div class="row c2">
+              <div class="field"><label>Submarket</label><input id="cr-submarket" placeholder="IBC"></div>
+              <div class="field"><label>Property Type</label><input id="cr-property-type" placeholder="Industrial"></div>
+            </div>
+            <div class="row c2">
+              <div class="field"><label>Date From</label><input id="cr-date-from" type="date"></div>
+              <div class="field"><label>Date To</label><input id="cr-date-to" type="date"></div>
+            </div>
+            <div class="comp-report-actions">
+              <button class="btn btn-red" type="submit">Search Comp Reports</button>
+              <button class="btn btn-gray" type="button" onclick="compReportResetFilters()">Clear Filters</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="comp-report-card" id="cr-admin-card" style="display:none;">
+          <div class="comp-report-kicker">Admin Import</div>
+          <h3>Replace the active workbook</h3>
+          <div class="comp-report-upload-row">
+            Upload the latest Excel workbook to storage, import the canonical sheets, and promote it to the active comp dataset.
+          </div>
+          <div class="comp-report-actions" style="margin-top:12px;">
+            <input class="comp-report-hidden-input" id="cr-workbook-input" type="file" accept=".xlsx,.xls,.xlsm" onchange="compReportHandleWorkbookSelection(this)">
+            <button class="btn btn-red" type="button" onclick="document.getElementById('cr-workbook-input').click()">Upload Workbook</button>
+          </div>
+          <div id="cr-import-status" class="comp-report-message" style="display:none;margin-top:12px;"></div>
+        </div>
+      </div>
+
+      <div class="comp-report-card">
+        <div class="comp-report-results-head">
+          <div>
+            <div class="comp-report-kicker">Report Preview</div>
+            <h3>Comp results</h3>
+          </div>
+          <p id="cr-results-count">No results loaded.</p>
+        </div>
+        <div id="cr-results" class="comp-report-empty">Run a search to preview report-ready comp records.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="tab-docs" class="panel">
 
   <div class="docs-hero">
@@ -2873,101 +3749,159 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 <div id="admin-view">
   <aside class="admin-sidebar">
     <div class="sidebar-brand">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <img class="sidebar-logo" src="lee-newport-beach-fullcolor.png" alt="Lee &amp; Associates Newport Beach">
       <div>
-        <div class="brand-name">Lee &amp; Associates</div>
-        <div class="brand-sub">Admin Portal</div>
+        <div class="brand-sub">Lee &amp; Associates Newport Beach</div>
+        <div class="brand-name">Admin Workspace</div>
       </div>
     </div>
+    <div class="sidebar-meta">
+      <span class="sidebar-badge">Operations</span>
+      <p>Review broker requests, open stored submission PDFs, and move approved work into deal entry without leaving this tool.</p>
+    </div>
     <nav>
-      <div class="nav-item active" onclick="switchAdminPage('dashboard')">
+      <button type="button" class="nav-item active" data-page="dashboard" onclick="switchAdminPage('dashboard')">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
         Dashboard
-      </div>
-      <div class="nav-item" onclick="switchAdminPage('submissions')">
+      </button>
+      <button type="button" class="nav-item" data-page="submissions" onclick="switchAdminPage('submissions')">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         Submissions
-      </div>
-      <div class="nav-item" onclick="switchAdminPage('dealentry')">
+      </button>
+      <button type="button" class="nav-item" data-page="dealentry" onclick="switchAdminPage('dealentry')">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         Deal Entry
-      </div>
-
+      </button>
     </nav>
-    <div class="sidebar-footer">v1.0 &middot; Broker Submission Tool</div>
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-label">Workspace</div>
+      <div class="sidebar-footer-value">Broker Submission Tool</div>
+      <div class="sidebar-footer-note">Listings, sign requests, vouchers, comp inputs, stored PDFs, and admin review stay in one operating system.</div>
+    </div>
   </aside>
 
   <div class="admin-main">
     <div id="admin-dashboard" class="admin-page active">
-      <h1>Dashboard</h1>
-      <p class="page-desc">Overview of broker submissions</p>
-      <div class="stat-grid">
-        <div class="stat-card">
-          <div class="stat-header"><span class="stat-label">Total</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#222" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-          <div class="stat-value" id="stat-total">8</div>
+      <div class="admin-page-shell">
+        <div class="admin-page-header">
+          <div>
+            <div class="admin-page-eyebrow">Admin Portal</div>
+            <h1>Submission Operations</h1>
+            <p class="page-desc">Review broker work, monitor request status, and open stored submission files from one clean operating surface.</p>
+          </div>
+          <div class="admin-page-actions">
+            <a class="admin-page-link" href="/">Home / Sign In</a>
+            <button type="button" class="btn btn-outline" onclick="switchAdminPage('submissions')">Open Submission Queue</button>
+          </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-header"><span class="stat-label">Pending</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#f9a825" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-          <div class="stat-value" id="stat-pending">3</div>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-header"><span class="stat-label">Total Requests</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2d3339" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div class="stat-value" id="stat-total">8</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><span class="stat-label">Pending</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#a56c0b" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="stat-value" id="stat-pending">3</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><span class="stat-label">In Review</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#5c636b" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+            <div class="stat-value" id="stat-review">1</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><span class="stat-label">Approved</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1e7e34" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+            <div class="stat-value" id="stat-approved">3</div>
+          </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-header"><span class="stat-label">In Review</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#646B74" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
-          <div class="stat-value" id="stat-review">1</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-header"><span class="stat-label">Approved</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1e7e34" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
-          <div class="stat-value" id="stat-approved">3</div>
-        </div>
-      </div>
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <h2 style="margin-bottom:0;padding-bottom:0;border-bottom:none;">Recent Submissions</h2>
-          <a href="#" onclick="switchAdminPage('submissions');return false;" style="font-size:12px;font-weight:600;color:var(--red);text-decoration:none;">View all &rarr;</a>
-        </div>
-        <table class="admin-table">
-          <thead><tr><th>ID</th><th>Type</th><th>Address</th><th>Broker</th><th>Status</th></tr></thead>
-          <tbody id="dashboard-recent"></tbody>
-        </table>
+
+        <section class="admin-section">
+          <div class="admin-section-head">
+            <div>
+              <div class="admin-section-kicker">Recent Activity</div>
+              <h2>Latest submissions</h2>
+              <div class="admin-section-copy">The newest broker requests appear here as they are received and archived.</div>
+              <div class="admin-section-meta" id="dashboard-meta"></div>
+            </div>
+            <a class="admin-page-link" href="#" onclick="switchAdminPage('submissions');return false;">View Full Queue</a>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>ID</th><th>Type</th><th>Address</th><th>Broker</th><th>Status</th></tr></thead>
+              <tbody id="dashboard-recent"></tbody>
+            </table>
+          </div>
+        </section>
       </div>
     </div>
 
     <div id="admin-submissions" class="admin-page">
-      <h1>Submissions</h1>
-      <p class="page-desc">Review and manage broker submissions</p>
-      <div class="filter-bar">
-        <input type="text" id="sub-search" placeholder="Search by ID, address, or broker..." oninput="filterSubmissions()">
-        <select id="sub-filter-type" onchange="filterSubmissions()">
-          <option value="all">All Types</option>
-          <option value="listing">Listing</option>
-          <option value="comp">Comp</option>
-          <option value="voucher">Voucher</option>
-          <option value="sign">Sign</option>
-        </select>
-        <select id="sub-filter-status" onchange="filterSubmissions()">
-          <option value="all">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="in_review">In Review</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
-      </div>
-      <div class="card" style="padding:0;">
-        <table class="admin-table">
-          <thead><tr><th>ID</th><th>Type</th><th>Address</th><th>Broker</th><th>Office</th><th>Status</th><th>Submitted</th></tr></thead>
-          <tbody id="submissions-tbody">
-            <tr><td colspan="7">
-              <div class="empty-state">
-                <div class="empty-icon"></div>
-                <h3>No submissions yet</h3>
-                <p>Broker submissions will appear here once brokers begin submitting listings, sign requests, vouchers, and comps.</p>
-              </div>
-            </td></tr>
-          </tbody>
-        </table>
+      <div class="admin-page-shell">
+        <div class="admin-page-header">
+          <div>
+            <div class="admin-page-eyebrow">Admin Portal</div>
+            <h1>Submission Queue</h1>
+            <p class="page-desc">Inspect every request record, open the stored submission PDF, and update status without leaving the queue.</p>
+          </div>
+          <div class="admin-page-actions">
+            <button type="button" class="btn btn-outline" onclick="refreshAdminWorkspace()">Refresh Queue</button>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <input type="text" id="sub-search" placeholder="Search by ID, address, or broker..." oninput="filterSubmissions()">
+          <select id="sub-filter-type" onchange="filterSubmissions()">
+            <option value="all">All Types</option>
+            <option value="listing">Listing</option>
+            <option value="comp">Comp</option>
+            <option value="voucher">Voucher</option>
+            <option value="sign">Sign</option>
+          </select>
+          <select id="sub-filter-status" onchange="filterSubmissions()">
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="in_review">In Review</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+
+        <section class="admin-section">
+          <div class="admin-section-head">
+            <div>
+              <div class="admin-section-kicker">Review Queue</div>
+              <h2>All submissions</h2>
+              <div class="admin-section-copy">Open any row to inspect structured form data, archived notes, and the stored submission PDF.</div>
+              <div class="admin-section-meta" id="submissions-meta"></div>
+            </div>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>ID</th><th>Type</th><th>Address</th><th>Broker</th><th>Office</th><th>Status</th><th>Submitted</th></tr></thead>
+              <tbody id="submissions-tbody">
+                <tr><td colspan="7">
+                  <div class="empty-state">
+                    <div class="empty-icon"></div>
+                    <h3>No submissions yet</h3>
+                    <p>Broker submissions will appear here once brokers begin submitting listings, sign requests, vouchers, and comps.</p>
+                  </div>
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
     </div>
 
     <div id="admin-dealentry" class="admin-page">
+      <div class="admin-page-shell">
+        <div class="admin-page-header">
+          <div>
+            <div class="admin-page-eyebrow">Admin Portal</div>
+            <h1>Deal Entry</h1>
+            <p class="page-desc">Use approved listing and voucher data to prefill Dealius entry and complete downstream deal setup inside the same admin workspace.</p>
+          </div>
+        </div>
+
       <div id="dealius-tool">
         <div class="dx-header">
           <div class="dx-header-left">
@@ -3146,7 +4080,10 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 
 <div class="admin-modal-overlay" id="admin-detail-modal">
   <div class="admin-modal">
-    <div class="modal-title"><span id="adm-detail-id"></span><span id="adm-detail-badge"></span></div>
+    <div class="admin-modal-top">
+      <div class="modal-title"><span id="adm-detail-id"></span><span id="adm-detail-badge"></span></div>
+      <button type="button" class="admin-modal-close" onclick="closeAdminModal()" aria-label="Close submission detail">&times;</button>
+    </div>
     <div class="modal-subtitle" id="adm-detail-subtitle"></div>
     <div class="detail-grid" id="adm-detail-grid"></div>
     <div class="notes-box" id="adm-detail-notes" style="display:none;"><div class="notes-label">Notes</div><div id="adm-detail-notes-text"></div></div>
@@ -3387,12 +4324,14 @@ function toggleOptional(toggleEl) {
 }
 
 function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t, i) => {
-    const tabs = ['listing', 'sign', 'voucher', 'comp', 'docs', 'contracts'];
-    t.classList.toggle('active', tabs[i] === name);
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === name);
   });
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'comp-reports') {
+    void initCompReports();
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -3966,7 +4905,7 @@ function addVoucherCollab() {
   const tr = document.createElement('tr');
   tr.innerHTML = '<td><input placeholder="Agent name" value="' + bpEscAttr(profile?.name || '') + '"></td>' +
     '<td><input placeholder="Role / Team" value="' + bpEscAttr(profile?.title || '') + '"></td>' +
-    '<td><button class="remove-row" onclick="this.closest(\\'tr\\').remove()">&times;</button></td>';
+    '<td><button class="remove-row" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
   body.appendChild(tr);
 }
 
@@ -6181,10 +7120,7 @@ async function toggleAdminMode() {
   const isAdmin = document.body.classList.toggle('admin-mode');
   document.getElementById('admin-toggle-label').textContent = isAdmin ? 'Broker Tool' : 'Admin Portal';
   if (isAdmin) {
-    await refreshAdminSubmissions();
-    renderDashboard();
-    renderSubmissions();
-
+    await refreshAdminWorkspace();
   }
 }
 
@@ -6198,10 +7134,15 @@ if (window.location.search.includes('embedded=1')) {
 function switchAdminPage(page) {
   document.querySelectorAll('.admin-page').forEach(p => p.classList.remove('active'));
   document.getElementById('admin-' + page).classList.add('active');
-  document.querySelectorAll('.admin-sidebar .nav-item').forEach((n, i) => {
-    const pages = ['dashboard', 'submissions', 'dealentry'];
-    n.classList.toggle('active', pages[i] === page);
+  document.querySelectorAll('.admin-sidebar .nav-item').forEach(n => {
+    n.classList.toggle('active', n.dataset.page === page);
   });
+}
+
+async function refreshAdminWorkspace() {
+  await refreshAdminSubmissions();
+  renderDashboard();
+  renderSubmissions();
 }
 
 // Render dashboard
@@ -6217,6 +7158,16 @@ function renderDashboard() {
 
   const recent = [...ADMIN_SUBMISSIONS].sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)).slice(0, 5);
   const tbody = document.getElementById('dashboard-recent');
+  const dashboardMeta = document.getElementById('dashboard-meta');
+  if (dashboardMeta) {
+    dashboardMeta.textContent = total
+      ? total + ' total request' + (total === 1 ? '' : 's') + ' in the system. Showing the latest ' + recent.length + '.'
+      : 'No broker requests have been submitted yet.';
+  }
+  if (recent.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon"></div><h3>No submissions yet</h3><p>New broker requests will appear here automatically once they are submitted.</p></div></td></tr>';
+    return;
+  }
   tbody.innerHTML = recent.map(s => 
     '<tr onclick="openSubmissionDetail(\'' + s.id + '\')"><td style="font-family:monospace;font-size:12px;">' + s.id + '</td><td style="text-transform:capitalize;">' + s.type + '</td><td>' + ([s.address, s.city].filter(Boolean).join(', ') || '-') + '</td><td>' + (s.brokerName || '-') + '</td><td>' + statusBadge(s.status) + '</td></tr>'
   ).join('');
@@ -6236,8 +7187,12 @@ function filterSubmissions() {
     return matchSearch && matchType && matchStatus;
   });
   const tbody = document.getElementById('submissions-tbody');
+  const submissionsMeta = document.getElementById('submissions-meta');
+  if (submissionsMeta) {
+    submissionsMeta.textContent = filtered.length + ' matching submission' + (filtered.length === 1 ? '' : 's') + ' shown from ' + ADMIN_SUBMISSIONS.length + ' total request' + (ADMIN_SUBMISSIONS.length === 1 ? '' : 's') + '.';
+  }
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><h3>No matching submissions</h3><p>Try adjusting your search or filter criteria.</p></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon"></div><h3>No matching submissions</h3><p>Try adjusting your search or filter criteria.</p></div></td></tr>';
     return;
   }
   tbody.innerHTML = filtered.map(s =>
@@ -7477,9 +8432,9 @@ function bpRenderList() {
         '<div style="font-size:12px;color:var(--text2);margin-top:4px;">' + bpEsc(profile.title || profile.email || 'Lee broker') + '</div>' +
       '</div>' +
       '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">' +
-        '<button class="btn btn-gray" type="button" onclick="bpEditProfile('' + bpEscAttr(profile.id) + '')">Edit</button>' +
-        '<button class="btn btn-outline" type="button" onclick="bpApplyProfile('' + bpEscAttr(profile.id) + '')">Apply</button>' +
-        '<button class="btn btn-gray" type="button" onclick="bpDeleteProfile('' + bpEscAttr(profile.id) + '')">Delete</button>' +
+        '<button class="btn btn-gray" type="button" onclick="bpEditProfile(\'' + bpEscAttr(profile.id) + '\')">Edit</button>' +
+        '<button class="btn btn-outline" type="button" onclick="bpApplyProfile(\'' + bpEscAttr(profile.id) + '\')">Apply</button>' +
+        '<button class="btn btn-gray" type="button" onclick="bpDeleteProfile(\'' + bpEscAttr(profile.id) + '\')">Delete</button>' +
       '</div>' +
     '</div>'
   ).join('');
@@ -8211,7 +9166,7 @@ async function scrapeVoucherBrochure() {
 .ci-hero {
   padding: 28px 32px 20px;
   border-bottom: 1px solid var(--border);
-  background: linear-gradient(135deg, #fff 0%, #f8f9ff 100%);
+  background: #f7f7f3;
 }
 .ci-hero h2 { font-size: 20px; font-weight: 700; color: var(--red); margin: 0 0 4px; }
 .ci-hero p  { font-size: 13px; color: var(--text2); margin: 0; }
@@ -8286,7 +9241,7 @@ async function scrapeVoucherBrochure() {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: linear-gradient(90deg, #fff5f6, #f6f4f1);
+  background: #fff5f6;
   border: 1px solid #ebc9cf;
   border-radius: 8px;
   padding: 12px 18px;
@@ -8364,7 +9319,7 @@ async function scrapeVoucherBrochure() {
 .docs-hero {
   padding: 28px 32px 20px;
   border-bottom: 1px solid var(--border);
-  background: linear-gradient(135deg, #fff 0%, #fafaf8 100%);
+  background: #f7f7f3;
 }
 .docs-hero h2 {
   font-size: 20px;
@@ -8956,6 +9911,277 @@ async function callTrpc(procedure, input) {
   const data = await res.json();
   if (data.error) throw new Error(data.error.message || 'AI error');
   return data.result?.data?.json ?? data.result?.data;
+}
+
+let compReportsInitialized = false;
+let compReportsUser = null;
+let compReportsLatest = null;
+
+function compReportFormatDate(value) {
+  if (!value) return 'Not available';
+  try {
+    return new Date(value).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  } catch {
+    return String(value);
+  }
+}
+
+function compReportVisibleFields(fields) {
+  return Object.entries(fields || {}).filter(([, value]) => !!value).slice(0, 10);
+}
+
+function compReportSetUserStatus(label, tone) {
+  const el = document.getElementById('cr-user-status');
+  if (!el) return;
+  el.textContent = label;
+  el.style.borderColor = tone === 'muted' ? 'var(--border)' : '#e5c7cd';
+  el.style.background = tone === 'muted' ? '#f3f3ef' : '#fff5f6';
+  el.style.color = tone === 'muted' ? 'var(--text2)' : '#9d1e2d';
+}
+
+function compReportSetDatasetSummary(html, isError) {
+  const el = document.getElementById('cr-dataset-summary');
+  if (!el) return;
+  el.className = isError ? 'comp-report-message error' : 'comp-report-empty';
+  el.innerHTML = html;
+}
+
+function compReportSetResultsCount(label) {
+  const el = document.getElementById('cr-results-count');
+  if (el) el.textContent = label;
+}
+
+function compReportSetResultsHtml(html, className) {
+  const el = document.getElementById('cr-results');
+  if (!el) return;
+  el.className = className;
+  el.innerHTML = html;
+}
+
+function compReportRenderDatasetSummary() {
+  if (!compReportsUser) {
+    compReportSetDatasetSummary('Sign in from the home screen to load the active comp workbook and broker-specific data access.', false);
+    return;
+  }
+
+  if (!compReportsLatest) {
+    compReportSetDatasetSummary('No active comp workbook is loaded yet. Once an admin imports the Excel source, report-ready lease and sale comps will appear here.', false);
+    return;
+  }
+
+  const leaseCount = Number(compReportsLatest.leaseCount || 0).toLocaleString('en-US');
+  const saleCount = Number(compReportsLatest.saleCount || 0).toLocaleString('en-US');
+  const sourceName = dxEscHtml(compReportsLatest.sourceFilename || compReportsLatest.workbookName || 'Workbook');
+
+  compReportSetDatasetSummary(
+    '<div class="comp-report-meta-grid">' +
+      '<div><span>Workbook</span><strong>' + sourceName + '</strong></div>' +
+      '<div><span>Updated</span><strong>' + dxEscHtml(compReportFormatDate(compReportsLatest.createdAt)) + '</strong></div>' +
+      '<div><span>Lease Comps</span><strong>' + leaseCount + '</strong></div>' +
+      '<div><span>Sale Comps</span><strong>' + saleCount + '</strong></div>' +
+    '</div>',
+    false
+  );
+}
+
+function compReportRenderResults(results) {
+  if (!results || !results.length) {
+    compReportSetResultsCount('No matching comps.');
+    compReportSetResultsHtml(
+      compReportsLatest
+        ? 'No comps matched the current filters. Try widening the city, market, or date range.'
+        : 'Run a search after the workbook is imported to preview report-ready comp records.',
+      'comp-report-empty'
+    );
+    return;
+  }
+
+  compReportSetResultsCount('Showing ' + results.length + ' result' + (results.length === 1 ? '' : 's'));
+  const html = results.map(result => {
+    const addressLine = [result.address, [result.city, result.state, result.zipCode].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+    const fields = compReportVisibleFields(result.reportCard?.fields || {});
+    return (
+      '<article class="comp-report-result">' +
+        '<h4>' + dxEscHtml(result.title || 'Comp Record') + '</h4>' +
+        '<div class="addr">' + dxEscHtml(addressLine) + '</div>' +
+        (result.metricLine ? '<div class="metric">' + dxEscHtml(result.metricLine) + '</div>' : '') +
+        (result.metaLine ? '<div class="meta">' + dxEscHtml(result.metaLine) + '</div>' : '') +
+        '<div class="comp-report-fields">' +
+          fields.map(([label, value]) =>
+            '<div><span>' + dxEscHtml(label) + '</span><strong>' + dxEscHtml(String(value)) + '</strong></div>'
+          ).join('') +
+        '</div>' +
+        (result.reportCard?.comments ? '<div class="comp-report-comments">' + dxEscHtml(result.reportCard.comments) + '</div>' : '') +
+      '</article>'
+    );
+  }).join('');
+
+  compReportSetResultsHtml(html, 'comp-report-results');
+}
+
+function compReportGetFilters() {
+  return {
+    compType: document.getElementById('cr-comp-type')?.value || 'lease',
+    query: document.getElementById('cr-query')?.value.trim() || undefined,
+    city: document.getElementById('cr-city')?.value.trim() || undefined,
+    market: document.getElementById('cr-market')?.value.trim() || undefined,
+    subMarket: document.getElementById('cr-submarket')?.value.trim() || undefined,
+    propertyType: document.getElementById('cr-property-type')?.value.trim() || undefined,
+    dateFrom: document.getElementById('cr-date-from')?.value || undefined,
+    dateTo: document.getElementById('cr-date-to')?.value || undefined,
+    limit: 12
+  };
+}
+
+function compReportResetFilters() {
+  ['cr-query', 'cr-city', 'cr-market', 'cr-submarket', 'cr-property-type', 'cr-date-from', 'cr-date-to'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const type = document.getElementById('cr-comp-type');
+  if (type) type.value = 'lease';
+  void compReportSearch();
+}
+
+async function compReportLoadLatest() {
+  try {
+    compReportsLatest = await callTrpc('compData.latest');
+  } catch (error) {
+    compReportsLatest = null;
+    compReportSetDatasetSummary('Unable to load the comp dataset right now. ' + dxEscHtml(error.message || 'Please try again.'), true);
+  }
+  compReportRenderDatasetSummary();
+}
+
+async function initCompReports(forceRefresh) {
+  if (compReportsInitialized && !forceRefresh) return;
+
+  try {
+    compReportsUser = await callTrpc('auth.me');
+  } catch {
+    compReportsUser = null;
+  }
+
+  if (!compReportsUser) {
+    compReportsInitialized = true;
+    compReportSetUserStatus('Sign in required', 'muted');
+    compReportRenderDatasetSummary();
+    compReportSetResultsCount('Sign in required.');
+    compReportSetResultsHtml('Sign in from the home page to search the protected comp dataset and view imported report previews.', 'comp-report-empty');
+    const adminCard = document.getElementById('cr-admin-card');
+    if (adminCard) adminCard.style.display = 'none';
+    return;
+  }
+
+  compReportSetUserStatus(
+    (compReportsUser.role === 'admin' ? 'Admin access' : 'Broker access') + ' · ' + (compReportsUser.email || 'Signed in'),
+    'default'
+  );
+
+  const adminCard = document.getElementById('cr-admin-card');
+  if (adminCard) adminCard.style.display = compReportsUser.role === 'admin' ? '' : 'none';
+
+  await compReportLoadLatest();
+  await compReportSearch();
+  compReportsInitialized = true;
+}
+
+async function compReportSearch() {
+  if (!compReportsUser) {
+    await initCompReports(true);
+    return;
+  }
+
+  if (!compReportsLatest) {
+    compReportSetResultsCount('No active workbook.');
+    compReportSetResultsHtml('No active comp workbook is available yet.', 'comp-report-empty');
+    return;
+  }
+
+  compReportSetResultsCount('Loading results...');
+  compReportSetResultsHtml('Searching the active workbook for matching comparables.', 'comp-report-empty');
+
+  try {
+    const data = await callTrpc('compData.search', compReportGetFilters());
+    if (data?.latestImport) {
+      compReportsLatest = data.latestImport;
+      compReportRenderDatasetSummary();
+    }
+    compReportRenderResults(data?.results || []);
+  } catch (error) {
+    compReportSetResultsCount('Search unavailable.');
+    compReportSetResultsHtml('Unable to load comp results right now. ' + dxEscHtml(error.message || 'Please try again.'), 'comp-report-message error');
+  }
+}
+
+async function compReportUploadWorkbook(file) {
+  const base64Data = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || '').split(',')[1] || '');
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  const res = await fetch('/api/trpc/files.upload', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      json: {
+        filename: file.name,
+        mimeType: file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        base64Data,
+        category: 'comp_workbook',
+        reference: 'comp-report-dataset',
+        uploaderName: compReportsUser?.name || compReportsUser?.email || 'Lee Admin'
+      }
+    })
+  });
+
+  if (!res.ok) throw new Error('Workbook upload failed with status ' + res.status);
+  const data = await res.json();
+  const result = data.result?.data?.json;
+  if (!result?.success) throw new Error('Workbook upload did not complete.');
+  return result;
+}
+
+async function compReportHandleWorkbookSelection(input) {
+  const file = input?.files?.[0];
+  const status = document.getElementById('cr-import-status');
+  if (!file || !status) return;
+
+  if (!compReportsUser || compReportsUser.role !== 'admin') {
+    status.style.display = '';
+    status.className = 'comp-report-message error';
+    status.textContent = 'Only admins can replace the active workbook.';
+    input.value = '';
+    return;
+  }
+
+  status.style.display = '';
+  status.className = 'comp-report-message';
+  status.textContent = 'Uploading workbook and importing the dataset. This can take a minute.';
+
+  try {
+    const uploaded = await compReportUploadWorkbook(file);
+    await callTrpc('compData.importWorkbook', {
+      fileKey: uploaded.fileKey,
+      filename: file.name
+    });
+    status.className = 'comp-report-message';
+    status.textContent = 'Workbook imported successfully. Refreshing the active dataset.';
+    compReportsInitialized = false;
+    await initCompReports(true);
+  } catch (error) {
+    status.className = 'comp-report-message error';
+    status.textContent = 'Workbook import failed. ' + (error.message || 'Please try again.');
+  } finally {
+    input.value = '';
+  }
 }
 
 async function aiParseDescription() {

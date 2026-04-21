@@ -17,6 +17,7 @@ build/
 # IDE and editor files
 .vscode/
 .idea/
+.claude/settings.local.json
 *.swp
 *.swo
 *~
@@ -100,6 +101,7 @@ jspm_packages/
 # Temporary folders
 tmp/
 temp/
+.deploy/
 
 # Database
 *.db
