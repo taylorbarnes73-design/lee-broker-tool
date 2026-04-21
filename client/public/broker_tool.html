@@ -1155,6 +1155,9 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   gap: 18px;
   grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
 }
+.comp-report-layout.dataset-missing {
+  grid-template-columns: 1fr;
+}
 .comp-report-stack {
   display: grid;
   gap: 18px;
@@ -1193,6 +1196,115 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   font-weight: 700;
   color: var(--text);
   margin: 0 0 10px;
+}
+.comp-report-card p {
+  margin: 0;
+}
+.comp-report-empty-state {
+  display: grid;
+  gap: 18px;
+  background: linear-gradient(180deg, #fbfbf8 0%, #f5f4ef 100%);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px;
+}
+.comp-report-empty-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.comp-report-empty-copy h3 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.05;
+  letter-spacing: -.03em;
+}
+.comp-report-empty-copy p {
+  margin-top: 10px;
+  max-width: 720px;
+  color: var(--text2);
+  font-size: 14px;
+  line-height: 1.8;
+}
+.comp-report-empty-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid #e3c6cb;
+  background: #fff5f6;
+  color: #9d1e2d;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.comp-report-empty-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, .9fr);
+}
+.comp-report-empty-panel {
+  border: 1px solid #e6e4dd;
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px;
+}
+.comp-report-empty-panel h4 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.comp-report-empty-panel p {
+  color: var(--text2);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.comp-report-empty-list {
+  display: grid;
+  gap: 10px;
+}
+.comp-report-empty-item {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid #ecebe6;
+  border-radius: 12px;
+  background: #fbfbf8;
+}
+.comp-report-empty-item strong {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #8a9198;
+}
+.comp-report-empty-item span {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text);
+}
+.comp-report-empty-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+.comp-report-hidden {
+  display: none !important;
+}
+.comp-report-form-disabled {
+  opacity: .55;
+  pointer-events: none;
+}
+.comp-report-form-note {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text2);
 }
 .comp-report-meta-grid {
   display: grid;
@@ -1332,6 +1444,9 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 }
 @media (max-width: 960px) {
   .comp-report-layout {
+    grid-template-columns: 1fr;
+  }
+  .comp-report-empty-grid {
     grid-template-columns: 1fr;
   }
   .comp-report-fields,
@@ -3185,7 +3300,7 @@ body.admin-mode #admin-view {
       <div class="comp-report-status" id="cr-user-status">Checking access</div>
     </div>
 
-    <div class="comp-report-layout">
+    <div class="comp-report-layout" id="cr-layout">
       <div class="comp-report-stack">
         <div class="comp-report-card">
           <div class="comp-report-kicker">Active Dataset</div>
@@ -3193,10 +3308,10 @@ body.admin-mode #admin-view {
           <div id="cr-dataset-summary" class="comp-report-empty">Checking for the active workbook.</div>
         </div>
 
-        <div class="comp-report-card">
+        <div class="comp-report-card" id="cr-search-card">
           <div class="comp-report-kicker">Search Filters</div>
           <h3>Refine comp results</h3>
-          <form class="comp-report-form" onsubmit="event.preventDefault(); compReportSearch();">
+          <form class="comp-report-form" id="cr-search-form" onsubmit="event.preventDefault(); compReportSearch();">
             <div class="row c2">
               <div class="field">
                 <label>Comp Type</label>
@@ -3227,6 +3342,7 @@ body.admin-mode #admin-view {
               <button class="btn btn-gray" type="button" onclick="compReportResetFilters()">Clear Filters</button>
             </div>
           </form>
+          <div class="comp-report-form-note" id="cr-search-note" style="display:none;">Upload an active workbook first, then search and filter report-ready comps here.</div>
         </div>
 
         <div class="comp-report-card" id="cr-admin-card" style="display:none;">
@@ -3243,7 +3359,48 @@ body.admin-mode #admin-view {
         </div>
       </div>
 
-      <div class="comp-report-card">
+      <div class="comp-report-empty-state comp-report-hidden" id="cr-empty-state">
+        <div class="comp-report-empty-head">
+          <div class="comp-report-empty-copy">
+            <div class="comp-report-kicker">Comp Reporting</div>
+            <h3>No active workbook is loaded yet.</h3>
+            <p id="cr-empty-copy">Upload the latest comp workbook to turn on search, report previews, and broker access to the active comp dataset.</p>
+          </div>
+          <div class="comp-report-empty-badge" id="cr-empty-badge">Workbook Required</div>
+        </div>
+
+        <div class="comp-report-empty-grid">
+          <div class="comp-report-empty-panel">
+            <h4>What happens after import</h4>
+            <div class="comp-report-empty-list">
+              <div class="comp-report-empty-item">
+                <strong>Search</strong>
+                <span>Brokers can filter lease and sale comps by address, market, submarket, dates, and property type.</span>
+              </div>
+              <div class="comp-report-empty-item">
+                <strong>Preview</strong>
+                <span>The page renders report-ready cards from the active workbook instead of leaving the screen blank.</span>
+              </div>
+              <div class="comp-report-empty-item">
+                <strong>Refresh</strong>
+                <span>Once the upload finishes, this page automatically switches back into the full search workspace.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="comp-report-empty-panel">
+            <h4>Next step</h4>
+            <p id="cr-empty-side-copy">An admin needs to load the current Excel workbook before comp reporting becomes searchable.</p>
+            <div class="comp-report-empty-cta" id="cr-empty-cta">
+              <button class="btn btn-red comp-report-hidden" type="button" id="cr-empty-upload-btn" onclick="document.getElementById('cr-workbook-input').click()">Upload Workbook</button>
+              <a class="btn btn-outline comp-report-hidden" id="cr-empty-home-link" href="/">Go To Home</a>
+            </div>
+            <div id="cr-empty-status" class="comp-report-message" style="display:none;margin-top:12px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="comp-report-card" id="cr-results-card">
         <div class="comp-report-results-head">
           <div>
             <div class="comp-report-kicker">Report Preview</div>
@@ -10123,16 +10280,66 @@ function compReportSetResultsHtml(html, className) {
   el.innerHTML = html;
 }
 
+function compReportSetWorkspaceMode(hasDataset) {
+  const layout = document.getElementById('cr-layout');
+  const emptyState = document.getElementById('cr-empty-state');
+  const resultsCard = document.getElementById('cr-results-card');
+  const searchCard = document.getElementById('cr-search-card');
+  const searchForm = document.getElementById('cr-search-form');
+  const searchNote = document.getElementById('cr-search-note');
+
+  if (layout) layout.classList.toggle('dataset-missing', !hasDataset);
+  if (emptyState) emptyState.classList.toggle('comp-report-hidden', hasDataset);
+  if (resultsCard) resultsCard.classList.toggle('comp-report-hidden', !hasDataset);
+  if (searchCard) searchCard.classList.toggle('comp-report-hidden', !hasDataset);
+  if (searchForm) searchForm.classList.toggle('comp-report-form-disabled', !hasDataset);
+  if (searchNote) searchNote.style.display = hasDataset ? 'none' : '';
+}
+
+function compReportRenderEmptyState() {
+  const copy = document.getElementById('cr-empty-copy');
+  const sideCopy = document.getElementById('cr-empty-side-copy');
+  const badge = document.getElementById('cr-empty-badge');
+  const uploadBtn = document.getElementById('cr-empty-upload-btn');
+  const homeLink = document.getElementById('cr-empty-home-link');
+  const emptyStatus = document.getElementById('cr-empty-status');
+  const isAdmin = Boolean(compReportsUser && compReportsUser.role === 'admin');
+
+  if (badge) badge.textContent = isAdmin ? 'Upload Required' : 'Awaiting Workbook';
+  if (copy) {
+    copy.textContent = isAdmin
+      ? 'Upload the latest comp workbook to turn on search, report previews, and broker access to the active comp dataset.'
+      : 'Comp search stays offline until an admin loads the current workbook. Once it is active, this page becomes the full search and report preview workspace.';
+  }
+  if (sideCopy) {
+    sideCopy.textContent = isAdmin
+      ? 'Use the upload action below to activate the latest dataset for everyone using the broker tool.'
+      : 'You are signed in correctly. The only blocker right now is that no active workbook has been imported yet.';
+  }
+  if (uploadBtn) uploadBtn.classList.toggle('comp-report-hidden', !isAdmin);
+  if (homeLink) homeLink.classList.toggle('comp-report-hidden', isAdmin);
+  if (emptyStatus && emptyStatus.style.display !== 'none') {
+    emptyStatus.className = document.getElementById('cr-import-status')?.className || 'comp-report-message';
+    emptyStatus.textContent = document.getElementById('cr-import-status')?.textContent || '';
+  }
+}
+
 function compReportRenderDatasetSummary() {
   if (!compReportsUser) {
+    compReportSetWorkspaceMode(false);
+    compReportRenderEmptyState();
     compReportSetDatasetSummary('Sign in from the home screen to load the active comp workbook and broker-specific data access.', false);
     return;
   }
 
   if (!compReportsLatest) {
+    compReportSetWorkspaceMode(false);
+    compReportRenderEmptyState();
     compReportSetDatasetSummary('No active comp workbook is loaded yet. Once an admin imports the Excel source, report-ready lease and sale comps will appear here.', false);
     return;
   }
+
+  compReportSetWorkspaceMode(true);
 
   const leaseCount = Number(compReportsLatest.leaseCount || 0).toLocaleString('en-US');
   const saleCount = Number(compReportsLatest.saleCount || 0).toLocaleString('en-US');
@@ -10229,9 +10436,11 @@ async function initCompReports(forceRefresh) {
   if (compReportsInitialized && !forceRefresh) return;
 
   compReportsUser = await ensureSharedBrokerSession();
+  compReportRenderEmptyState();
 
   if (!compReportsUser) {
     compReportsInitialized = true;
+    compReportSetWorkspaceMode(false);
     compReportSetUserStatus('Sign in required', 'muted');
     compReportRenderDatasetSummary();
     compReportSetResultsCount('Sign in required.');
@@ -10250,7 +10459,9 @@ async function initCompReports(forceRefresh) {
   if (adminCard) adminCard.style.display = compReportsUser.role === 'admin' ? '' : 'none';
 
   await compReportLoadLatest();
-  await compReportSearch();
+  if (compReportsLatest) {
+    await compReportSearch();
+  }
   compReportsInitialized = true;
 }
 
@@ -10261,6 +10472,8 @@ async function compReportSearch(allowRetry = true) {
   }
 
   if (!compReportsLatest) {
+    compReportSetWorkspaceMode(false);
+    compReportRenderEmptyState();
     compReportSetResultsCount('No active workbook.');
     compReportSetResultsHtml('No active comp workbook is available yet.', 'comp-report-empty');
     return;
@@ -10323,12 +10536,18 @@ async function compReportUploadWorkbook(file) {
 async function compReportHandleWorkbookSelection(input) {
   const file = input?.files?.[0];
   const status = document.getElementById('cr-import-status');
+  const emptyStatus = document.getElementById('cr-empty-status');
   if (!file || !status) return;
 
   if (!compReportsUser || compReportsUser.role !== 'admin') {
     status.style.display = '';
     status.className = 'comp-report-message error';
     status.textContent = 'Only admins can replace the active workbook.';
+    if (emptyStatus) {
+      emptyStatus.style.display = '';
+      emptyStatus.className = status.className;
+      emptyStatus.textContent = status.textContent;
+    }
     input.value = '';
     return;
   }
@@ -10336,6 +10555,11 @@ async function compReportHandleWorkbookSelection(input) {
   status.style.display = '';
   status.className = 'comp-report-message';
   status.textContent = 'Uploading workbook and importing the dataset. This can take a minute.';
+  if (emptyStatus) {
+    emptyStatus.style.display = '';
+    emptyStatus.className = status.className;
+    emptyStatus.textContent = status.textContent;
+  }
 
   try {
     const uploaded = await compReportUploadWorkbook(file);
@@ -10345,11 +10569,21 @@ async function compReportHandleWorkbookSelection(input) {
     });
     status.className = 'comp-report-message';
     status.textContent = 'Workbook imported successfully. Refreshing the active dataset.';
+    if (emptyStatus) {
+      emptyStatus.style.display = '';
+      emptyStatus.className = status.className;
+      emptyStatus.textContent = status.textContent;
+    }
     compReportsInitialized = false;
     await initCompReports(true);
   } catch (error) {
     status.className = 'comp-report-message error';
     status.textContent = 'Workbook import failed. ' + (error.message || 'Please try again.');
+    if (emptyStatus) {
+      emptyStatus.style.display = '';
+      emptyStatus.className = status.className;
+      emptyStatus.textContent = status.textContent;
+    }
   } finally {
     input.value = '';
   }
