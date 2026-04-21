@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 
 const workspaceCards = [
   {
@@ -17,7 +17,7 @@ const workspaceCards = [
   },
   {
     label: "Comp Reports",
-    title: "Search the active workbook",
+    title: "Search the active comp dataset",
     body: "Use the imported comp dataset to review report-ready lease and sale records in the same workspace.",
     href: "#comp-reports",
   },
@@ -69,19 +69,6 @@ function getInitials(name?: string | null) {
   if (!name) return "LA";
   const parts = name.trim().split(/\s+/).filter(Boolean);
   return parts.slice(0, 2).map(part => part[0]?.toUpperCase() ?? "").join("") || "LA";
-}
-
-function fileToBase64(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      const payload = result.includes(",") ? result.split(",")[1] : result;
-      resolve(payload);
-    };
-    reader.onerror = () => reject(reader.error ?? new Error("Failed to read file."));
-    reader.readAsDataURL(file);
-  });
 }
 
 function FormTypeChip({ type }: { type: string }) {
@@ -162,7 +149,6 @@ function CompReportCard({
 
 export default function Home() {
   const { user, loading, logout, refresh } = useAuth();
-  const utils = trpc.useUtils();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -174,21 +160,10 @@ export default function Home() {
   const [compPropertyType, setCompPropertyType] = useState("");
   const [compDateFrom, setCompDateFrom] = useState("");
   const [compDateTo, setCompDateTo] = useState("");
-  const [selectedWorkbookName, setSelectedWorkbookName] = useState("");
 
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: async result => {
       if (result.success) await refresh();
-    },
-  });
-  const uploadFileMutation = trpc.files.upload.useMutation();
-  const importWorkbookMutation = trpc.compData.importWorkbook.useMutation({
-    onSuccess: async () => {
-      await Promise.all([
-        utils.compData.latest.invalidate(),
-        utils.compData.search.invalidate(),
-        utils.compData.listImports.invalidate(),
-      ]);
     },
   });
 
@@ -213,37 +188,10 @@ export default function Home() {
     },
     { enabled: Boolean(user) }
   );
-  const compImportsQuery = trpc.compData.listImports.useQuery(
-    { limit: 6 },
-    { enabled: user?.role === "admin" }
-  );
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     await loginMutation.mutateAsync({ firstName, lastName, email });
-  };
-
-  const handleWorkbookUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !user || user.role !== "admin") return;
-
-    setSelectedWorkbookName(file.name);
-    const base64Data = await fileToBase64(file);
-    const uploadResult = await uploadFileMutation.mutateAsync({
-      filename: file.name,
-      mimeType: file.type || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      base64Data,
-      category: "comp_workbook",
-      reference: "comp-report-dataset",
-      uploaderName: user.name ?? user.email ?? "Lee Admin",
-    });
-
-    await importWorkbookMutation.mutateAsync({
-      fileKey: uploadResult.fileKey,
-      filename: file.name,
-    });
-
-    event.target.value = "";
   };
 
   const recentSubmissions = submissionsQuery.data ?? [];
@@ -557,7 +505,7 @@ export default function Home() {
                       Comp Reports
                     </h2>
                     <p className="mt-2 max-w-3xl text-sm leading-6 text-[#626a72]">
-                      Search the active workbook and preview report-ready records against the Lee
+                      Search the active comp dataset and preview report-ready records against the Lee
                       Irvine / Metropolis structure.
                     </p>
                   </div>
@@ -584,10 +532,10 @@ export default function Home() {
                           <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#7d8790]">
                             Active Dataset
                           </p>
-                          <h3 className="mt-2 text-lg font-semibold text-[#20242a]">Workbook status</h3>
+                          <h3 className="mt-2 text-lg font-semibold text-[#20242a]">Dataset status</h3>
                         </div>
                         <span className="rounded-full border border-[#e4d4d7] bg-[#fff4f5] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#a11e2f]">
-                          {latestCompImport ? "Ready" : "Awaiting import"}
+                          {latestCompImport ? "Ready" : "Awaiting data"}
                         </span>
                       </div>
 
@@ -595,7 +543,7 @@ export default function Home() {
                         <div className="mt-4 space-y-3 text-sm text-[#5c646d]">
                           <div className="rounded-[1rem] border border-[#ecebe6] bg-white px-4 py-3">
                             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#8a9198]">
-                              Source workbook
+                              Source dataset
                             </p>
                             <p className="mt-1 font-semibold text-[#20242a]">
                               {latestCompImport.sourceFilename || latestCompImport.workbookName}
@@ -622,8 +570,8 @@ export default function Home() {
                         </div>
                       ) : (
                         <div className="mt-4 rounded-[1rem] border border-dashed border-[#d8d7d2] bg-white px-4 py-6 text-sm leading-6 text-[#6a7179]">
-                          No active comp workbook yet. Once an admin imports the workbook, brokers
-                          can search and preview report-ready comps here.
+                          No active comp dataset is loaded yet. Once the latest comps are published
+                          internally, brokers can search and preview report-ready comps here.
                         </div>
                       )}
                     </div>
@@ -708,83 +656,6 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {user.role === "admin" ? (
-                      <div className="rounded-[1.25rem] border border-[#e2e1dc] bg-[#fbfbf8] p-5">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div>
-                            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#7d8790]">
-                              Admin Import
-                            </p>
-                            <h3 className="mt-2 text-lg font-semibold text-[#20242a]">
-                              Replace the active workbook
-                            </h3>
-                          </div>
-                          <span className="rounded-full border border-[#e4d4d7] bg-[#fff4f5] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#a11e2f]">
-                            Admin only
-                          </span>
-                        </div>
-
-                        <label className="mt-4 flex cursor-pointer flex-col rounded-[1rem] border border-dashed border-[#d4d2cc] bg-white px-4 py-5 text-sm text-[#5e6670] transition hover:border-[#c32033]">
-                          <span className="font-semibold text-[#20242a]">Upload Excel workbook</span>
-                          <span className="mt-1 text-xs leading-5">
-                            Store the workbook in tool storage, import both canonical sheets, and
-                            promote it to the active dataset.
-                          </span>
-                          <input
-                            type="file"
-                            accept=".xlsx,.xlsm,.xls"
-                            onChange={event => void handleWorkbookUpload(event)}
-                            className="sr-only"
-                          />
-                        </label>
-
-                        {selectedWorkbookName ? (
-                          <p className="mt-3 text-xs text-[#6d757d]">Selected workbook: {selectedWorkbookName}</p>
-                        ) : null}
-
-                        {uploadFileMutation.isPending || importWorkbookMutation.isPending ? (
-                          <div className="mt-4 rounded-[1rem] border border-[#ecd8db] bg-[#fff6f7] px-4 py-3 text-sm text-[#8d2531]">
-                            Importing workbook. This can take a minute because the full comp
-                            dataset is being stored and indexed.
-                          </div>
-                        ) : null}
-
-                        {importWorkbookMutation.isSuccess ? (
-                          <div className="mt-4 rounded-[1rem] border border-[#d8e8dc] bg-[#f4fbf5] px-4 py-3 text-sm text-[#245b31]">
-                            Workbook import completed successfully.
-                          </div>
-                        ) : null}
-
-                        {uploadFileMutation.error || importWorkbookMutation.error ? (
-                          <div className="mt-4 rounded-[1rem] border border-[#ecd8db] bg-[#fff6f7] px-4 py-3 text-sm text-[#8d2531]">
-                            {uploadFileMutation.error?.message || importWorkbookMutation.error?.message}
-                          </div>
-                        ) : null}
-
-                        {compImportsQuery.data?.length ? (
-                          <div className="mt-4 space-y-2">
-                            {compImportsQuery.data.map(item => (
-                              <div
-                                key={item.id}
-                                className="rounded-[1rem] border border-[#ecebe6] bg-white px-4 py-3 text-sm text-[#55606a]"
-                              >
-                                <div className="flex flex-wrap items-center justify-between gap-2">
-                                  <span className="font-semibold text-[#20242a]">{item.workbookName}</span>
-                                  <span className="text-[11px] uppercase tracking-[0.18em] text-[#8b9198]">
-                                    {item.status}
-                                  </span>
-                                </div>
-                                <div className="mt-1 text-xs">
-                                  {item.leaseCount.toLocaleString("en-US")} lease /{" "}
-                                  {item.saleCount.toLocaleString("en-US")} sale ·{" "}
-                                  {formatCompactDate(item.createdAt)}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : null}
                   </div>
 
                   <div className="space-y-4">
@@ -807,7 +678,7 @@ export default function Home() {
                       <div className="rounded-[1.25rem] border border-dashed border-[#d8d7d2] bg-[#f6f6f2] px-5 py-12 text-center text-sm leading-7 text-[#6b737c]">
                         {latestCompImport
                           ? "No comps matched the current filters. Try widening the city, market, or date range."
-                          : "Search results will appear here after the workbook is imported."}
+                          : "Search results will appear here after the active comp dataset is published."}
                       </div>
                     )}
                   </div>

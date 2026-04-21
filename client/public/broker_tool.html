@@ -3439,8 +3439,8 @@ body.admin-mode #admin-view {
     <div class="comp-report-hero card">
       <div>
         <div class="comp-report-kicker">Comp Reporting</div>
-        <h2>Search the active comp workbook from inside the tool.</h2>
-        <p>Use the imported lease and sale dataset to find report-ready comparables, preview the exact fields being surfaced, and keep the comp workflow in the same workspace as the rest of the broker tool.</p>
+        <h2>Search the active comp dataset from inside the tool.</h2>
+        <p>Use the published lease and sale dataset to find report-ready comparables, preview the exact fields being surfaced, and keep the comp workflow in the same workspace as the rest of the broker tool.</p>
       </div>
       <div class="comp-report-status" id="cr-user-status">Checking access</div>
     </div>
@@ -3449,8 +3449,8 @@ body.admin-mode #admin-view {
       <div class="comp-report-stack">
         <div class="comp-report-card">
           <div class="comp-report-kicker">Active Dataset</div>
-          <h3>Workbook status</h3>
-          <div id="cr-dataset-summary" class="comp-report-empty">Checking for the active workbook.</div>
+          <h3>Dataset status</h3>
+          <div id="cr-dataset-summary" class="comp-report-empty">Checking for the active comp dataset.</div>
         </div>
 
         <div class="comp-report-card" id="cr-search-card">
@@ -3487,20 +3487,7 @@ body.admin-mode #admin-view {
               <button class="btn btn-gray" type="button" onclick="compReportResetFilters()">Clear Filters</button>
             </div>
           </form>
-          <div class="comp-report-form-note" id="cr-search-note" style="display:none;">Upload an active workbook first, then search and filter report-ready comps here.</div>
-        </div>
-
-        <div class="comp-report-card" id="cr-admin-card" style="display:none;">
-          <div class="comp-report-kicker">Admin Import</div>
-          <h3>Replace the active workbook</h3>
-          <div class="comp-report-upload-row">
-            Upload the latest Excel workbook to storage, import the canonical sheets, and promote it to the active comp dataset.
-          </div>
-          <div class="comp-report-actions" style="margin-top:12px;">
-            <input class="comp-report-hidden-input" id="cr-workbook-input" type="file" accept=".xlsx,.xls,.xlsm" onchange="compReportHandleWorkbookSelection(this)">
-            <button class="btn btn-red" type="button" onclick="document.getElementById('cr-workbook-input').click()">Upload Workbook</button>
-          </div>
-          <div id="cr-import-status" class="comp-report-message" style="display:none;margin-top:12px;"></div>
+          <div class="comp-report-form-note" id="cr-search-note" style="display:none;">The active comp dataset has not been published yet, so search is temporarily unavailable.</div>
         </div>
       </div>
 
@@ -3508,10 +3495,10 @@ body.admin-mode #admin-view {
         <div class="comp-report-empty-head">
           <div class="comp-report-empty-copy">
             <div class="comp-report-kicker">Comp Reporting</div>
-            <h3>No active workbook is loaded yet.</h3>
-            <p id="cr-empty-copy">Upload the latest comp workbook to turn on search, report previews, and broker access to the active comp dataset.</p>
+            <h3>No active comp dataset is available yet.</h3>
+            <p id="cr-empty-copy">Once the current comps are published internally, this page will turn into the full search and report preview workspace.</p>
           </div>
-          <div class="comp-report-empty-badge" id="cr-empty-badge">Workbook Required</div>
+          <div class="comp-report-empty-badge" id="cr-empty-badge">Awaiting Dataset</div>
         </div>
 
         <div class="comp-report-empty-grid">
@@ -3524,22 +3511,19 @@ body.admin-mode #admin-view {
               </div>
               <div class="comp-report-empty-item">
                 <strong>Preview</strong>
-                <span>The page renders report-ready cards from the active workbook instead of leaving the screen blank.</span>
+                <span>The page renders report-ready cards from the active dataset instead of leaving the screen blank.</span>
               </div>
               <div class="comp-report-empty-item">
                 <strong>Refresh</strong>
-                <span>Once the upload finishes, this page automatically switches back into the full search workspace.</span>
+                <span>Once the dataset is published, this page automatically switches back into the full search workspace.</span>
               </div>
             </div>
           </div>
 
           <div class="comp-report-empty-panel">
             <h4>Next step</h4>
-            <p id="cr-empty-side-copy">An admin needs to load the current Excel workbook before comp reporting becomes searchable.</p>
-            <div class="comp-report-empty-cta" id="cr-empty-cta">
-              <button class="btn btn-red comp-report-hidden" type="button" id="cr-empty-upload-btn" onclick="document.getElementById('cr-workbook-input').click()">Upload Workbook</button>
-              <a class="btn btn-outline comp-report-hidden" id="cr-empty-home-link" href="/">Go To Home</a>
-            </div>
+            <p id="cr-empty-side-copy">The current comp dataset needs to be published internally before comp reporting becomes searchable.</p>
+            <div class="comp-report-empty-cta" id="cr-empty-cta"></div>
             <div id="cr-empty-status" class="comp-report-message" style="display:none;margin-top:12px;"></div>
           </div>
         </div>
@@ -10540,27 +10524,19 @@ function compReportRenderEmptyState() {
   const copy = document.getElementById('cr-empty-copy');
   const sideCopy = document.getElementById('cr-empty-side-copy');
   const badge = document.getElementById('cr-empty-badge');
-  const uploadBtn = document.getElementById('cr-empty-upload-btn');
-  const homeLink = document.getElementById('cr-empty-home-link');
   const emptyStatus = document.getElementById('cr-empty-status');
-  const isAdmin = Boolean(compReportsUser && compReportsUser.role === 'admin');
 
-  if (badge) badge.textContent = isAdmin ? 'Upload Required' : 'Awaiting Workbook';
+  if (badge) badge.textContent = 'Awaiting Dataset';
   if (copy) {
-    copy.textContent = isAdmin
-      ? 'Upload the latest comp workbook to turn on search, report previews, and broker access to the active comp dataset.'
-      : 'Comp search stays offline until an admin loads the current workbook. Once it is active, this page becomes the full search and report preview workspace.';
+    copy.textContent =
+      'Once the current comps are published internally, this page becomes the full search and report preview workspace.';
   }
   if (sideCopy) {
-    sideCopy.textContent = isAdmin
-      ? 'Use the upload action below to activate the latest dataset for everyone using the broker tool.'
-      : 'You are signed in correctly. The only blocker right now is that no active workbook has been imported yet.';
+    sideCopy.textContent =
+      'You are signed in correctly. The only blocker right now is that no active comp dataset has been published yet.';
   }
-  if (uploadBtn) uploadBtn.classList.toggle('comp-report-hidden', !isAdmin);
-  if (homeLink) homeLink.classList.toggle('comp-report-hidden', isAdmin);
   if (emptyStatus && emptyStatus.style.display !== 'none') {
-    emptyStatus.className = document.getElementById('cr-import-status')?.className || 'comp-report-message';
-    emptyStatus.textContent = document.getElementById('cr-import-status')?.textContent || '';
+    emptyStatus.className = 'comp-report-message';
   }
 }
 
@@ -10568,14 +10544,14 @@ function compReportRenderDatasetSummary() {
   if (!compReportsUser) {
     compReportSetWorkspaceMode(false);
     compReportRenderEmptyState();
-    compReportSetDatasetSummary('Sign in from the home screen to load the active comp workbook and broker-specific data access.', false);
+    compReportSetDatasetSummary('Sign in from the home screen to load the active comp dataset and broker-specific data access.', false);
     return;
   }
 
   if (!compReportsLatest) {
     compReportSetWorkspaceMode(false);
     compReportRenderEmptyState();
-    compReportSetDatasetSummary('No active comp workbook is loaded yet. Once an admin imports the Excel source, report-ready lease and sale comps will appear here.', false);
+    compReportSetDatasetSummary('No active comp dataset is loaded yet. Once the latest comps are published internally, report-ready lease and sale comps will appear here.', false);
     return;
   }
 
@@ -10587,7 +10563,7 @@ function compReportRenderDatasetSummary() {
 
   compReportSetDatasetSummary(
     '<div class="comp-report-meta-grid">' +
-      '<div><span>Workbook</span><strong>' + sourceName + '</strong></div>' +
+      '<div><span>Dataset</span><strong>' + sourceName + '</strong></div>' +
       '<div><span>Updated</span><strong>' + dxEscHtml(compReportFormatDate(compReportsLatest.createdAt)) + '</strong></div>' +
       '<div><span>Lease Comps</span><strong>' + leaseCount + '</strong></div>' +
       '<div><span>Sale Comps</span><strong>' + saleCount + '</strong></div>' +
@@ -10602,7 +10578,7 @@ function compReportRenderResults(results) {
     compReportSetResultsHtml(
       compReportsLatest
         ? 'No comps matched the current filters. Try widening the city, market, or date range.'
-        : 'Run a search after the workbook is imported to preview report-ready comp records.',
+        : 'Run a search after the active comp dataset is published to preview report-ready comp records.',
       'comp-report-empty'
     );
     return;
@@ -10671,8 +10647,6 @@ async function initCompReports(forceRefresh) {
     compReportRenderDatasetSummary();
     compReportSetResultsCount('Sign in required.');
     compReportSetResultsHtml('Sign in from the home page to search the protected comp dataset and view imported report previews.', 'comp-report-empty');
-    const adminCard = document.getElementById('cr-admin-card');
-    if (adminCard) adminCard.style.display = 'none';
     return;
   }
 
@@ -10680,9 +10654,6 @@ async function initCompReports(forceRefresh) {
     (compReportsUser.role === 'admin' ? 'Admin access' : 'Broker access') + ' · ' + (compReportsUser.email || 'Signed in'),
     'default'
   );
-
-  const adminCard = document.getElementById('cr-admin-card');
-  if (adminCard) adminCard.style.display = compReportsUser.role === 'admin' ? '' : 'none';
 
   await compReportLoadLatest();
   if (compReportsLatest) {
@@ -10700,13 +10671,13 @@ async function compReportSearch(allowRetry = true) {
   if (!compReportsLatest) {
     compReportSetWorkspaceMode(false);
     compReportRenderEmptyState();
-    compReportSetResultsCount('No active workbook.');
-    compReportSetResultsHtml('No active comp workbook is available yet.', 'comp-report-empty');
+    compReportSetResultsCount('No active dataset.');
+    compReportSetResultsHtml('No active comp dataset is available yet.', 'comp-report-empty');
     return;
   }
 
   compReportSetResultsCount('Loading results...');
-  compReportSetResultsHtml('Searching the active workbook for matching comparables.', 'comp-report-empty');
+  compReportSetResultsHtml('Searching the active comp dataset for matching comparables.', 'comp-report-empty');
 
   try {
     const data = await callTrpc('compData.search', compReportGetFilters());
