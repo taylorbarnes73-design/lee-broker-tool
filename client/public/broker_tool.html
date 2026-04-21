@@ -6948,6 +6948,12 @@ async function refreshAdminSubmissions() {
 
 async function syncSubmissionToServer(submission) {
   try {
+    await ensureSharedBrokerSession();
+    const authUser = getSignedInBrokerIdentity();
+    if (authUser) {
+      if (!submission.brokerName || submission.brokerName === 'Unknown') submission.brokerName = authUser.name || submission.brokerName;
+      if (!submission.brokerEmail) submission.brokerEmail = authUser.email || submission.brokerEmail;
+    }
     const result = await callTrpc('submissions.create', submission);
     if (result && result.success && result.submissionId) {
       submission.serverSubmissionId = result.submissionId;
@@ -6968,6 +6974,9 @@ function nextSubId() {
 // Collect form data and save as a submission
 function saveSubmission(type) {
   const now = new Date().toISOString();
+  const authUser = getSignedInBrokerIdentity();
+  const fallbackBrokerName = authUser?.name || '';
+  const fallbackBrokerEmail = authUser?.email || '';
   const base = { id: nextSubId(), type: type, status: 'pending', submittedAt: now, updatedAt: now, office: 'Newport Beach' };
 
   if (type === 'listing') {
@@ -6981,8 +6990,8 @@ function saveSubmission(type) {
       city: document.getElementById('l-city').value || '',
       state: document.getElementById('l-state').value || 'CA',
       zip: document.getElementById('l-zip').value || '',
-      brokerName: agents[0]?.name || 'Unknown',
-      brokerEmail: agents[0]?.email || '',
+      brokerName: agents[0]?.name || fallbackBrokerName || 'Unknown',
+      brokerEmail: agents[0]?.email || fallbackBrokerEmail || '',
       sizeSF: parseInt((document.getElementById('l-bldg-sf').value || '0').replace(/,/g,'')) || 0,
       leaseRate: document.getElementById('l-lease-sf').value ? document.getElementById('l-lease-sf').value + '/SF ' + (document.getElementById('l-lease-type').selectedOptions[0]?.text || '') : '',
       salePrice: document.getElementById('l-sale-price') ? document.getElementById('l-sale-price').value : '',
@@ -7005,8 +7014,8 @@ function saveSubmission(type) {
       city: document.getElementById('v-city').value || '',
       state: document.getElementById('v-state').value || 'CA',
       zip: document.getElementById('v-zip').value || '',
-      brokerName: laName || 'Unknown',
-      brokerEmail: '',
+      brokerName: laName || fallbackBrokerName || 'Unknown',
+      brokerEmail: fallbackBrokerEmail || '',
       suite: document.getElementById('v-suite').value || '',
       sizeSF: parseInt((document.getElementById('v-deal-sf').value || '0').replace(/,/g,'')) || 0,
       bldgSF: parseInt((document.getElementById('v-bldg-sf').value || '0').replace(/,/g,'')) || 0,
@@ -7035,8 +7044,8 @@ function saveSubmission(type) {
       city: document.getElementById('c-city').value || '',
       state: 'CA',
       zip: '',
-      brokerName: document.getElementById('c-source').value || 'Unknown',
-      brokerEmail: '',
+      brokerName: document.getElementById('c-source').value || fallbackBrokerName || 'Unknown',
+      brokerEmail: fallbackBrokerEmail || '',
       sizeSF: parseInt((document.getElementById('c-leased-sf')?.value || document.getElementById('cs-bldg-sf')?.value || '0').replace(/,/g,'')) || 0,
       leaseRate: compType !== 'sale' ? (document.getElementById('c-rent-sf').value || '') + '/SF' : '',
       salePrice: compType === 'sale' ? (document.getElementById('cs-sell-price')?.value || '') : ''
@@ -7049,8 +7058,8 @@ function saveSubmission(type) {
       city: document.getElementById('s-city').value || '',
       state: 'CA',
       zip: '',
-      brokerName: document.getElementById('s-requested-by').value || 'Unknown',
-      brokerEmail: '',
+      brokerName: document.getElementById('s-requested-by').value || fallbackBrokerName || 'Unknown',
+      brokerEmail: fallbackBrokerEmail || '',
       sizeSF: 0
     });
   }
@@ -9913,6 +9922,135 @@ async function callTrpc(procedure, input) {
   return data.result?.data?.json ?? data.result?.data;
 }
 
+const SHARED_AUTH_STORAGE_KEY = 'lee-broker-tool.auth';
+const LEGACY_AUTH_STORAGE_KEY = 'manus-runtime-user-info';
+let sharedBrokerSessionPromise = null;
+
+function readSharedBrokerIdentity() {
+  const keys = [SHARED_AUTH_STORAGE_KEY, LEGACY_AUTH_STORAGE_KEY];
+  for (const key of keys) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw || raw === 'undefined' || raw === 'null') continue;
+      const parsed = JSON.parse(raw);
+      if (!parsed || !parsed.email) continue;
+      return {
+        openId: parsed.openId || '',
+        name: String(parsed.name || '').trim(),
+        email: String(parsed.email || '').trim().toLowerCase(),
+        role: parsed.role || 'user',
+        office: parsed.office || '',
+      };
+    } catch {}
+  }
+  return null;
+}
+
+function writeSharedBrokerIdentity(user) {
+  if (!user || !user.email) return;
+  const payload = JSON.stringify({
+    openId: user.openId || '',
+    name: user.name || '',
+    email: String(user.email || '').trim().toLowerCase(),
+    role: user.role || 'user',
+    office: user.office || '',
+  });
+  localStorage.setItem(SHARED_AUTH_STORAGE_KEY, payload);
+  localStorage.setItem(LEGACY_AUTH_STORAGE_KEY, payload);
+}
+
+function fillFieldIfEmpty(id, value) {
+  if (!value) return;
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (typeof el.value === 'string' && el.value.trim()) return;
+  el.value = value;
+}
+
+function getSignedInBrokerIdentity() {
+  return compReportsUser || readSharedBrokerIdentity();
+}
+
+function applySharedBrokerIdentity(user) {
+  if (!user) return;
+
+  writeSharedBrokerIdentity(user);
+  fillFieldIfEmpty('sta-broker-name', user.name || '');
+  fillFieldIfEmpty('sta-sender-email', user.email || '');
+  fillFieldIfEmpty('s-requested-by', user.name || '');
+  fillFieldIfEmpty('c-source', user.name || '');
+  fillFieldIfEmpty('c-broker-name', user.name || '');
+  fillFieldIfEmpty('cs-broker-name', user.name || '');
+  fillFieldIfEmpty('v-la-name', user.name || '');
+
+  const listingBody = document.getElementById('listing-agent-body');
+  if (listingBody && !listingBody.children.length && typeof addListingAgent === 'function') {
+    addListingAgent();
+  }
+  fillFieldIfEmpty('la-name-1', user.name || '');
+  fillFieldIfEmpty('la-email-1', user.email || '');
+}
+
+function splitBrokerName(name) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  return {
+    firstName: parts[0] || '',
+    lastName: parts.slice(1).join(' ') || parts[0] || '',
+  };
+}
+
+async function ensureSharedBrokerSession() {
+  if (sharedBrokerSessionPromise) return sharedBrokerSessionPromise;
+
+  sharedBrokerSessionPromise = (async () => {
+    try {
+      const me = await callTrpc('auth.me');
+      if (me) {
+        compReportsUser = me;
+        applySharedBrokerIdentity(me);
+        return me;
+      }
+    } catch {}
+
+    const saved = readSharedBrokerIdentity();
+    if (!saved || !saved.email || !saved.name) return null;
+
+    try {
+      const nameParts = splitBrokerName(saved.name);
+      const loginResult = await callTrpc('auth.login', {
+        firstName: nameParts.firstName,
+        lastName: nameParts.lastName,
+        email: saved.email,
+      });
+
+      if (!loginResult || !loginResult.success) return null;
+
+      const me = await callTrpc('auth.me');
+      if (me) {
+        compReportsUser = me;
+        applySharedBrokerIdentity(me);
+        return me;
+      }
+
+      if (loginResult.user) {
+        compReportsUser = loginResult.user;
+        applySharedBrokerIdentity(loginResult.user);
+        return loginResult.user;
+      }
+    } catch (error) {
+      console.warn('Unable to restore broker session:', error && error.message ? error.message : error);
+    }
+
+    return null;
+  })();
+
+  try {
+    return await sharedBrokerSessionPromise;
+  } finally {
+    sharedBrokerSessionPromise = null;
+  }
+}
+
 let compReportsInitialized = false;
 let compReportsUser = null;
 let compReportsLatest = null;
@@ -10060,11 +10198,7 @@ async function compReportLoadLatest() {
 async function initCompReports(forceRefresh) {
   if (compReportsInitialized && !forceRefresh) return;
 
-  try {
-    compReportsUser = await callTrpc('auth.me');
-  } catch {
-    compReportsUser = null;
-  }
+  compReportsUser = await ensureSharedBrokerSession();
 
   if (!compReportsUser) {
     compReportsInitialized = true;
@@ -10257,6 +10391,8 @@ let _staFormType = 'listing';
 
 function openSendToAdminModal(formType) {
   _staFormType = formType;
+  applySharedBrokerIdentity(getSignedInBrokerIdentity());
+  void ensureSharedBrokerSession();
   const modal = document.getElementById('send-admin-modal');
   const title = document.getElementById('send-admin-modal-title');
   const desc = document.getElementById('send-admin-modal-desc');
@@ -10542,8 +10678,10 @@ async function buildSendToAdminPdfAttachment() {
 async function submitSendToAdmin() {
   const btn = document.getElementById('sta-send-btn');
   const status = document.getElementById('sta-status');
-  const brokerName = (document.getElementById('sta-broker-name')?.value || '').trim();
-  const senderEmail = (document.getElementById('sta-sender-email')?.value || '').trim();
+  await ensureSharedBrokerSession();
+  const authUser = getSignedInBrokerIdentity();
+  const brokerName = ((document.getElementById('sta-broker-name')?.value || '').trim() || authUser?.name || '').trim();
+  const senderEmail = ((document.getElementById('sta-sender-email')?.value || '').trim() || authUser?.email || '').trim();
   const notes = (document.getElementById('sta-notes')?.value || '').trim();
 
   btn.classList.add('loading');
@@ -10884,6 +11022,8 @@ function ciCollectData() {
 async function ciSubmitToAdmin() {
   const btn = document.getElementById('btn-ci-send');
   const statusEl = document.getElementById('ci-submit-status');
+  await ensureSharedBrokerSession();
+  const authUser = getSignedInBrokerIdentity();
 
   const contractData = ciCollectData();
   const propAddr = [contractData.propAddress, contractData.propCity].filter(Boolean).join(', ');
@@ -10902,7 +11042,15 @@ async function ciSubmitToAdmin() {
     const submitResp = await fetch('/api/trpc/contracts.submitContractToAdmin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ json: { contractData, brokerName: 'Taylor Barnes', senderEmail: 'tbarnes@lee-associates.com', notes: '' } })
+      credentials: 'include',
+      body: JSON.stringify({
+        json: {
+          contractData,
+          brokerName: authUser?.name || 'Broker',
+          senderEmail: authUser?.email || '',
+          notes: '',
+        }
+      })
     });
     const submitJson = await submitResp.json();
     const res = submitJson?.result?.data?.json;
@@ -11047,6 +11195,11 @@ function ciReset() {
   _ciCurrentPath = null;
   document.querySelectorAll('.ci-path-card').forEach(c => c.classList.remove('selected'));
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  applySharedBrokerIdentity(readSharedBrokerIdentity());
+  void ensureSharedBrokerSession();
+});
 </script>
 <script src="/broker_profiles.js"></script>
 </body>

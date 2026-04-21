@@ -163,7 +163,8 @@ function CompReportCard({
 export default function Home() {
   const { user, loading, logout, refresh } = useAuth();
   const utils = trpc.useUtils();
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [compType, setCompType] = useState<"lease" | "sale">("lease");
   const [compQuery, setCompQuery] = useState("");
@@ -219,7 +220,7 @@ export default function Home() {
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await loginMutation.mutateAsync({ name, email });
+    await loginMutation.mutateAsync({ firstName, lastName, email });
   };
 
   const handleWorkbookUpload = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -367,18 +368,33 @@ export default function Home() {
                 </p>
 
                 <form className="mt-6 flex flex-col gap-4" onSubmit={handleLogin}>
-                  <label className="block space-y-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#6e7881]">
-                      Your Name
-                    </span>
-                    <input
-                      value={name}
-                      onChange={e => setName(e.target.value)}
-                      placeholder="First Last"
-                      required
-                      className="h-12 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-[15px] text-[#1f2328] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
-                    />
-                  </label>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="block space-y-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#6e7881]">
+                        First Name
+                      </span>
+                      <input
+                        value={firstName}
+                        onChange={e => setFirstName(e.target.value)}
+                        placeholder="First"
+                        required
+                        className="h-12 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-[15px] text-[#1f2328] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
+                      />
+                    </label>
+
+                    <label className="block space-y-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#6e7881]">
+                        Last Name
+                      </span>
+                      <input
+                        value={lastName}
+                        onChange={e => setLastName(e.target.value)}
+                        placeholder="Last"
+                        required
+                        className="h-12 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-[15px] text-[#1f2328] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
+                      />
+                    </label>
+                  </div>
 
                   <label className="block space-y-1.5">
                     <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#6e7881]">

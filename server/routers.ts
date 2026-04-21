@@ -1,4 +1,8 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import {
+  findBrokerDirectoryEntry,
+  isBrokerDirectoryAdmin,
+} from "@shared/brokerDirectory";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
@@ -27,9 +31,17 @@ export const appRouter = router({
     login: publicProcedure
       .input(
         z.object({
-          name: z.string().trim().min(2).max(120),
+          firstName: z.string().trim().min(1).max(60).optional(),
+          lastName: z.string().trim().min(1).max(60).optional(),
+          name: z.string().trim().min(2).max(120).optional(),
           email: z.string().trim().email(),
-        })
+        }).refine(
+          value =>
+            Boolean(value.name) || Boolean(value.firstName && value.lastName),
+          {
+            message: "Provide first name, last name, and email.",
+          }
+        )
       )
       .mutation(async ({ ctx, input }) => {
         if (!localAuth.isEnabled()) {
@@ -37,6 +49,9 @@ export const appRouter = router({
         }
 
         const email = localAuth.normalizeEmail(input.email);
+        const enteredName =
+          input.name?.trim() ||
+          [input.firstName?.trim(), input.lastName?.trim()].filter(Boolean).join(" ");
         const allowedDomain = (process.env.LOCAL_AUTH_EMAIL_DOMAIN ?? "").trim().toLowerCase();
         if (allowedDomain && !email.endsWith(`@${allowedDomain}`)) {
           return {
@@ -45,26 +60,28 @@ export const appRouter = router({
           };
         }
 
+        const brokerEntry = findBrokerDirectoryEntry(email);
+        const resolvedName = brokerEntry?.name || enteredName;
         const openId = localAuth.toLocalOpenId(email);
+        const isAdminEmail =
+          (process.env.LOCAL_ADMIN_EMAILS ?? "")
+            .split(",")
+            .map(value => value.trim().toLowerCase())
+            .filter(Boolean)
+            .includes(email) || isBrokerDirectoryAdmin(brokerEntry);
+        const role = isAdminEmail ? "admin" : "user";
 
         await upsertUser({
           openId,
-          name: input.name.trim(),
+          name: resolvedName,
           email,
           loginMethod: "local",
-          role:
-            (process.env.LOCAL_ADMIN_EMAILS ?? "")
-              .split(",")
-              .map(value => value.trim().toLowerCase())
-              .filter(Boolean)
-              .includes(email)
-              ? "admin"
-              : undefined,
+          role,
           lastSignedIn: new Date(),
         });
 
         const sessionToken = await sdk.createSessionToken(openId, {
-          name: input.name.trim(),
+          name: resolvedName,
           email,
         });
 
@@ -74,7 +91,15 @@ export const appRouter = router({
           maxAge: ONE_YEAR_MS,
         });
 
-        return { success: true as const };
+        return {
+          success: true as const,
+          user: {
+            name: resolvedName,
+            email,
+            role,
+            office: brokerEntry?.office ?? null,
+          },
+        };
       }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);

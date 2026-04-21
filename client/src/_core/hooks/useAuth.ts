@@ -3,6 +3,9 @@ import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo } from "react";
 
+const SHARED_AUTH_STORAGE_KEY = "lee-broker-tool.auth";
+const LEGACY_AUTH_STORAGE_KEY = "manus-runtime-user-info";
+
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
   redirectPath?: string;
@@ -42,10 +45,6 @@ export function useAuth(options?: UseAuthOptions) {
   }, [logoutMutation, utils]);
 
   const state = useMemo(() => {
-    localStorage.setItem(
-      "manus-runtime-user-info",
-      JSON.stringify(meQuery.data)
-    );
     return {
       user: meQuery.data ?? null,
       loading: meQuery.isLoading || logoutMutation.isPending,
@@ -59,6 +58,26 @@ export function useAuth(options?: UseAuthOptions) {
     logoutMutation.error,
     logoutMutation.isPending,
   ]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if (!meQuery.data) {
+      window.localStorage.removeItem(SHARED_AUTH_STORAGE_KEY);
+      window.localStorage.removeItem(LEGACY_AUTH_STORAGE_KEY);
+      return;
+    }
+
+    const payload = JSON.stringify({
+      openId: meQuery.data.openId,
+      name: meQuery.data.name ?? "",
+      email: meQuery.data.email ?? "",
+      role: meQuery.data.role ?? "user",
+    });
+
+    window.localStorage.setItem(SHARED_AUTH_STORAGE_KEY, payload);
+    window.localStorage.setItem(LEGACY_AUTH_STORAGE_KEY, payload);
+  }, [meQuery.data]);
 
   useEffect(() => {
     if (!redirectOnUnauthenticated) return;
