@@ -504,10 +504,6 @@ export default function Home() {
                     <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-[#23272c]">
                       Comp Reports
                     </h2>
-                    <p className="mt-2 max-w-3xl text-sm leading-6 text-[#626a72]">
-                      Search the active comp dataset and preview report-ready records against the Lee
-                      Irvine / Metropolis structure.
-                    </p>
                   </div>
 
                   {latestCompImport ? (
@@ -524,164 +520,106 @@ export default function Home() {
               </div>
 
               <div className="px-6 py-6 sm:px-8">
-                <div className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-                  <div className="space-y-6">
-                    <div className="rounded-[1.25rem] border border-[#e2e1dc] bg-[#fbfbf8] p-5">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#7d8790]">
-                            Active Dataset
-                          </p>
-                          <h3 className="mt-2 text-lg font-semibold text-[#20242a]">Dataset status</h3>
-                        </div>
-                        <span className="rounded-full border border-[#e4d4d7] bg-[#fff4f5] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#a11e2f]">
-                          {latestCompImport ? "Ready" : "Awaiting data"}
-                        </span>
-                      </div>
+                <div className="space-y-5">
+                  {/* Report type selector */}
+                  <div className="inline-flex rounded-xl border border-[#e2e1dc] bg-[#f3f2ee] p-1">
+                    <button
+                      type="button"
+                      onClick={() => setCompType("lease")}
+                      className={`rounded-[0.6rem] px-5 py-2.5 text-sm font-semibold tracking-[-0.01em] transition-all ${
+                        compType === "lease"
+                          ? "bg-white text-[#20242a] shadow-sm border border-[#e2e1dc]"
+                          : "text-[#6b737c] hover:text-[#20242a]"
+                      }`}
+                    >
+                      Lease Comp Report
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCompType("sale")}
+                      className={`rounded-[0.6rem] px-5 py-2.5 text-sm font-semibold tracking-[-0.01em] transition-all ${
+                        compType === "sale"
+                          ? "bg-white text-[#20242a] shadow-sm border border-[#e2e1dc]"
+                          : "text-[#6b737c] hover:text-[#20242a]"
+                      }`}
+                    >
+                      Sale Comp Report
+                    </button>
+                  </div>
 
-                      {latestCompImport ? (
-                        <div className="mt-4 space-y-3 text-sm text-[#5c646d]">
-                          <div className="rounded-[1rem] border border-[#ecebe6] bg-white px-4 py-3">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#8a9198]">
-                              Source dataset
-                            </p>
-                            <p className="mt-1 font-semibold text-[#20242a]">
-                              {latestCompImport.sourceFilename || latestCompImport.workbookName}
-                            </p>
-                          </div>
-                          <div className="grid gap-3 sm:grid-cols-2">
-                            <div className="rounded-[1rem] border border-[#ecebe6] bg-white px-4 py-3">
-                              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#8a9198]">
-                                Lease comps
-                              </p>
-                              <p className="mt-1 text-lg font-semibold text-[#20242a]">
-                                {latestCompImport.leaseCount.toLocaleString("en-US")}
-                              </p>
-                            </div>
-                            <div className="rounded-[1rem] border border-[#ecebe6] bg-white px-4 py-3">
-                              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#8a9198]">
-                                Sale comps
-                              </p>
-                              <p className="mt-1 text-lg font-semibold text-[#20242a]">
-                                {latestCompImport.saleCount.toLocaleString("en-US")}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="mt-4 rounded-[1rem] border border-dashed border-[#d8d7d2] bg-white px-4 py-6 text-sm leading-6 text-[#6a7179]">
-                          No active comp dataset is loaded yet. Once the latest comps are published
-                          internally, brokers can search and preview report-ready comps here.
-                        </div>
-                      )}
+                  {/* Search filters */}
+                  <div className="rounded-[1.25rem] border border-[#e2e1dc] bg-[#fbfbf8] p-5">
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                      <input
+                        value={compQuery}
+                        onChange={e => setCompQuery(e.target.value)}
+                        placeholder="Address or project"
+                        className="h-11 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-sm text-[#20242a] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
+                      />
+                      <input
+                        value={compPropertyType}
+                        onChange={e => setCompPropertyType(e.target.value)}
+                        placeholder="Property type"
+                        className="h-11 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-sm text-[#20242a] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
+                      />
+                      <input
+                        value={compCity}
+                        onChange={e => setCompCity(e.target.value)}
+                        placeholder="City"
+                        className="h-11 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-sm text-[#20242a] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
+                      />
+                      <input
+                        value={compMarket}
+                        onChange={e => setCompMarket(e.target.value)}
+                        placeholder="Market"
+                        className="h-11 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-sm text-[#20242a] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
+                      />
+                      <input
+                        value={compSubMarket}
+                        onChange={e => setCompSubMarket(e.target.value)}
+                        placeholder="Submarket"
+                        className="h-11 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-sm text-[#20242a] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
+                      />
+                      <input
+                        value={compDateFrom}
+                        onChange={e => setCompDateFrom(e.target.value)}
+                        type="date"
+                        title="Date from"
+                        className="h-11 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-sm text-[#20242a] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
+                      />
+                      <input
+                        value={compDateTo}
+                        onChange={e => setCompDateTo(e.target.value)}
+                        type="date"
+                        title="Date to"
+                        className="h-11 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-sm text-[#20242a] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
+                      />
                     </div>
+                  </div>
 
-                    <div className="rounded-[1.25rem] border border-[#e2e1dc] bg-[#fbfbf8] p-5">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#7d8790]">
-                        Search Filters
+                  {/* Results */}
+                  {compSearchQuery.isLoading ? (
+                    <div className="rounded-[1.25rem] border border-dashed border-[#d8d7d2] bg-[#f6f6f2] px-5 py-12 text-center text-sm text-[#6b737c]">
+                      Loading comp results...
+                    </div>
+                  ) : compResults.length > 0 ? (
+                    <>
+                      <p className="text-sm text-[#626a72]">
+                        Showing {compResults.length} {compType} comp{compResults.length === 1 ? "" : "s"}
                       </p>
-                      <div className="mt-4 grid gap-3">
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <label className="space-y-1.5">
-                            <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#7c8792]">
-                              Comp type
-                            </span>
-                            <select
-                              value={compType}
-                              onChange={e => setCompType(e.target.value as "lease" | "sale")}
-                              className="h-11 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-sm text-[#20242a] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
-                            >
-                              <option value="lease">Lease comps</option>
-                              <option value="sale">Sale comps</option>
-                            </select>
-                          </label>
-
-                          <label className="space-y-1.5">
-                            <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#7c8792]">
-                              Search
-                            </span>
-                            <input
-                              value={compQuery}
-                              onChange={e => setCompQuery(e.target.value)}
-                              placeholder="Address, project, market"
-                              className="h-11 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-sm text-[#20242a] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
-                            />
-                          </label>
-                        </div>
-
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <input
-                            value={compCity}
-                            onChange={e => setCompCity(e.target.value)}
-                            placeholder="City"
-                            className="h-11 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-sm text-[#20242a] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
-                          />
-                          <input
-                            value={compMarket}
-                            onChange={e => setCompMarket(e.target.value)}
-                            placeholder="Market"
-                            className="h-11 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-sm text-[#20242a] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
-                          />
-                        </div>
-
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <input
-                            value={compSubMarket}
-                            onChange={e => setCompSubMarket(e.target.value)}
-                            placeholder="Submarket"
-                            className="h-11 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-sm text-[#20242a] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
-                          />
-                          <input
-                            value={compPropertyType}
-                            onChange={e => setCompPropertyType(e.target.value)}
-                            placeholder="Property type"
-                            className="h-11 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-sm text-[#20242a] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
-                          />
-                        </div>
-
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <input
-                            value={compDateFrom}
-                            onChange={e => setCompDateFrom(e.target.value)}
-                            type="date"
-                            className="h-11 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-sm text-[#20242a] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
-                          />
-                          <input
-                            value={compDateTo}
-                            onChange={e => setCompDateTo(e.target.value)}
-                            type="date"
-                            className="h-11 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-sm text-[#20242a] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
-                          />
-                        </div>
+                      <div className="grid gap-4 lg:grid-cols-2">
+                        {compResults.map(result => (
+                          <CompReportCard key={`${result.compType}-${result.id}`} result={result} />
+                        ))}
                       </div>
+                    </>
+                  ) : (
+                    <div className="rounded-[1.25rem] border border-dashed border-[#d8d7d2] bg-[#f6f6f2] px-5 py-12 text-center text-sm leading-7 text-[#6b737c]">
+                      {latestCompImport
+                        ? "No comps matched the current filters. Try widening the city, market, or date range."
+                        : "Search results will appear here after the active comp dataset is published."}
                     </div>
-
-                  </div>
-
-                  <div className="space-y-4">
-                    {compSearchQuery.isLoading ? (
-                      <div className="rounded-[1.25rem] border border-dashed border-[#d8d7d2] bg-[#f6f6f2] px-5 py-12 text-center text-sm text-[#6b737c]">
-                        Loading comp results...
-                      </div>
-                    ) : compResults.length > 0 ? (
-                      <>
-                        <p className="text-sm text-[#626a72]">
-                          Showing {compResults.length} {compType} comp{compResults.length === 1 ? "" : "s"}
-                        </p>
-                        <div className="grid gap-4">
-                          {compResults.map(result => (
-                            <CompReportCard key={`${result.compType}-${result.id}`} result={result} />
-                          ))}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="rounded-[1.25rem] border border-dashed border-[#d8d7d2] bg-[#f6f6f2] px-5 py-12 text-center text-sm leading-7 text-[#6b737c]">
-                        {latestCompImport
-                          ? "No comps matched the current filters. Try widening the city, market, or date range."
-                          : "Search results will appear here after the active comp dataset is published."}
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
             </section>
