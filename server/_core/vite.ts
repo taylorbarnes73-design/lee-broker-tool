@@ -28,15 +28,18 @@ export async function setupVite(app: Express, server: Server) {
     const url = req.originalUrl;
 
     try {
-      const clientTemplate = path.resolve(
-        __dirname,
-        "../..",
-        "client",
-        "index.html"
-      );
+      const clientRoot = path.resolve(__dirname, "../..", "client");
 
-      // always reload the index.html file from disk incase it changes
-      let template = await fs.promises.readFile(clientTemplate, "utf-8");
+      // Serve named HTML entry points (e.g. /broker_tool.html) directly
+      const htmlEntries = ["broker_tool.html"];
+      const requestedHtml = htmlEntries.find(f => url.startsWith(`/${f}`));
+      const templateFile = requestedHtml ?? "index.html";
+
+      // always reload the html file from disk in case it changes
+      let template = await fs.promises.readFile(
+        path.resolve(clientRoot, templateFile),
+        "utf-8"
+      );
       template = template.replace(
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`
