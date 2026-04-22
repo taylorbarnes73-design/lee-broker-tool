@@ -380,7 +380,7 @@
     </div>
   </div><!-- end listing-add-mode -->
 
-  <div id="listing-mod-mode" style="display:none;">
+  <div id="listing-mod-mode" class="is-hidden">
     <div class="tip">Enter the property address and describe the changes needed. Select which listing service(s) to notify.</div>
     <div class="card required-section">
       <h2>Listing Modification <span class="required-badge">Required</span></h2>
@@ -389,7 +389,7 @@
         <div class="field"><label class="req">Date of Modification</label><input id="lm-date" type="date"></div>
       </div>
       <div class="field"><label class="req">Notes / Changes</label><textarea id="lm-notes" rows="5" placeholder="Describe all changes to be made (price reduction, status change, term update, etc.)..."></textarea></div>
-      <h3 style="margin-top:16px;">Notify Which Listing Service(s)?</h3>
+      <h3 class="section-heading-top">Notify Which Listing Service(s)?</h3>
       <div class="check-group">
         <label><input type="checkbox" name="lm-services" value="mls" checked> MLS (CoStar / CARETS)</label>
         <label><input type="checkbox" name="lm-services" value="website"> Lee Associates Website</label>
@@ -408,7 +408,7 @@
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="tab-sign" class="panel">
-  <div class="tip">Required fields are marked with <span style="color:var(--red);font-weight:700;">*</span> — complete these first, then expand optional sections as needed.</div>
+  <div class="tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections as needed.</div>
 
   <!-- ═══ REQUIRED SECTION ═══ -->
   <div class="card required-section">
@@ -416,7 +416,7 @@
 
     <div class="row c3">
       <div class="field"><label>Date</label><input id="s-date" type="date"></div>
-      <div class="field" style="display:none;"><label>PO #</label><input id="s-po" placeholder="Auto" readonly style="background:#f8f8f8;font-weight:600;"></div>
+      <div class="field is-hidden"><label>PO #</label><input id="s-po" class="readonly-fill-strong" placeholder="Auto" readonly></div>
       <div class="field"><label>Order Type</label>
         <select id="s-order-type"><option value="installation">Installation</option><option value="removal">Removal</option><option value="maintenance">Maintenance</option></select>
       </div>
@@ -428,7 +428,7 @@
     </div>
     <div class="field"><label class="req">Cross Streets / Building Name</label><input id="s-cross" placeholder="Cross streets, building name, etc."></div>
 
-    <h3 style="margin-top:16px;">Configuration</h3>
+    <h3 class="section-heading-top">Configuration</h3>
     <div class="support-options">
       <div class="support-opt" onclick="selectSupport(this, 'sf')"><div class="icon">&#9632;&#9632;</div><div class="lbl">S/F</div></div>
       <div class="support-opt" onclick="selectSupport(this, 'df')"><div class="icon">&#9646;</div><div class="lbl">D/F</div></div>
@@ -436,8 +436,8 @@
     </div>
     <input type="hidden" id="s-support" value="">
 
-    <h3 style="margin-top:20px;">Sign Specifications</h3>
-    <p style="font-size:11px;color:var(--text3);margin-bottom:8px;">Use the +/- buttons to set quantity for each sign type needed.</p>
+    <h3 class="section-heading-top-lg">Sign Specifications</h3>
+    <p class="micro-copy micro-copy-bottom-sm">Use the +/- buttons to set quantity for each sign type needed.</p>
 
     <div class="sign-grid-new">
       <span class="label">4&prime; &times; 8&prime;</span>
@@ -459,7 +459,7 @@
 
     <div class="sign-grid-new">
       <span class="label">Other</span>
-      <input id="s-other-size" placeholder="Size (e.g. 3x4)" style="flex:1;">
+      <input id="s-other-size" class="input-flex" placeholder="Size (e.g. 3x4)">
       <div class="qty-stepper">
         <button type="button" class="qty-btn" onclick="stepQty('s-other-qty', -1)">&#8722;</button>
         <input id="s-other-qty" type="number" min="0" value="0" class="qty-input">
@@ -469,7 +469,7 @@
 
     <div class="sign-grid-new">
       <span class="label">Banner</span>
-      <input id="s-banner-size" placeholder="Size" style="flex:1;">
+      <input id="s-banner-size" class="input-flex" placeholder="Size">
       <div class="qty-stepper">
         <button type="button" class="qty-btn" onclick="stepQty('s-banner-qty', -1)">&#8722;</button>
         <input id="s-banner-qty" type="number" min="0" value="0" class="qty-input">
@@ -477,59 +477,59 @@
       </div>
     </div>
 
-    <div class="row c2" style="margin-top:12px;">
+    <div class="row c2 top-gap-md">
       <div class="field">
-        <label>Name Rider <span style="font-weight:400;font-size:10px;color:var(--text3);">(Optional)</span></label>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+        <label>Name Rider <span class="optional-note">(Optional)</span></label>
+        <div class="toggle-row">
           <label class="toggle-switch">
             <input type="checkbox" id="s-rider-toggle" onchange="toggleNameRider(this.checked)">
             <span class="toggle-slider"></span>
           </label>
-          <span id="s-rider-toggle-label" style="font-size:12px;color:var(--text3);">No Name Rider</span>
+          <span id="s-rider-toggle-label" class="toggle-caption">No Name Rider</span>
         </div>
       </div>
-      <div class="field" id="s-rider-field" style="display:none;"><label>Rider Text</label><input id="s-rider" placeholder="Agent name or custom text"></div>
+      <div class="field is-hidden" id="s-rider-field"><label>Rider Text</label><input id="s-rider" placeholder="Agent name or custom text"></div>
     </div>
 
-    <div style="margin-top:12px;">
-      <label style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);">Sign Placement <span style="font-weight:400;font-size:10px;text-transform:none;color:var(--text3);">(Optional)</span></label>
-      <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+    <div class="top-gap-md">
+      <label class="section-label">Sign Placement <span class="optional-note">(Optional)</span></label>
+      <div class="toggle-row">
         <label class="toggle-switch">
           <input type="checkbox" id="s-placement-toggle" onchange="togglePlacementUpload(this.checked)">
           <span class="toggle-slider"></span>
         </label>
-        <span id="s-placement-toggle-label" style="font-size:12px;color:var(--text3);">Standard placement</span>
+        <span id="s-placement-toggle-label" class="toggle-caption">Standard placement</span>
       </div>
-      <div id="s-placement-upload-area" style="display:none;margin-top:10px;">
-        <p style="font-size:12px;color:var(--text3);margin-bottom:10px;">Upload a photo, diagram, or PDF showing the desired sign placement.</p>
-        <div style="border:2px dashed var(--border);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:border-color .15s;" id="sign-upload-zone" onclick="document.getElementById('s-placement-file').click()">
-          <input type="file" id="s-placement-file" accept="image/*,.pdf" style="display:none;" onchange="handleSignUpload(this)">
+      <div id="s-placement-upload-area" class="sign-upload-area is-hidden">
+        <p class="sign-upload-help">Upload a photo, diagram, or PDF showing the desired sign placement.</p>
+        <div class="sign-upload-zone" id="sign-upload-zone" onclick="document.getElementById('s-placement-file').click()">
+          <input type="file" id="s-placement-file" class="hidden-file-input" accept="image/*,.pdf" onchange="handleSignUpload(this)">
           <div id="sign-upload-placeholder">
-            <div style="margin-bottom:10px;display:flex;justify-content:center;"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text3)"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8M12 8v8"/></svg></div>
-            <div style="font-size:13px;color:var(--text2);font-weight:600;">Click to upload or drag &amp; drop</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:4px;">JPG, PNG, or PDF &mdash; max 10MB</div>
+            <div class="sign-upload-placeholder-icon"><svg class="sign-upload-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8M12 8v8"/></svg></div>
+            <div class="sign-upload-title">Click to upload or drag &amp; drop</div>
+            <div class="sign-upload-subtitle">JPG, PNG, or PDF &mdash; max 10MB</div>
           </div>
-          <div id="sign-upload-preview" style="display:none;">
-            <img id="sign-preview-img" style="max-width:100%;max-height:300px;border-radius:4px;">
-            <div id="sign-preview-name" style="font-size:12px;color:var(--text2);margin-top:8px;"></div>
+          <div id="sign-upload-preview" class="is-hidden">
+            <img id="sign-preview-img" class="sign-preview-image is-hidden">
+            <div id="sign-preview-name" class="sign-preview-name"></div>
           </div>
         </div>
-        <button class="btn btn-gray" style="margin-top:8px;display:none;" id="sign-upload-clear" onclick="clearSignUpload()">Remove Upload</button>
+        <button class="btn btn-gray top-gap-sm is-hidden" id="sign-upload-clear" onclick="clearSignUpload()">Remove Upload</button>
       </div>
     </div>
 
-    <h3 style="margin-top:16px;">Requested By</h3>
-    <div class="field" style="margin-bottom:12px;"><label class="req">Requested By</label>
+    <h3 class="section-heading-top">Requested By</h3>
+    <div class="field field-stack-gap-sm"><label class="req">Requested By</label>
       <div class="agent-picker" id="picker-s-requested-by">
         <input id="s-requested-by" placeholder="Start typing agent name..." autocomplete="off">
         <div class="agent-dd" id="dd-s-requested-by"></div>
       </div>
     </div>
     <table class="broker-table" id="sign-agent-table">
-      <thead><tr><th style="width:40px;">#</th><th>Agent Name</th><th style="width:140px;">Shared Expense %</th><th style="width:40px;"></th></tr></thead>
+      <thead><tr><th class="table-col-narrow">#</th><th>Agent Name</th><th class="table-col-wide">Shared Expense %</th><th class="table-col-narrow"></th></tr></thead>
       <tbody id="sign-agent-body"></tbody>
     </table>
-    <button class="btn btn-gray" style="margin-top:8px;" onclick="addSignAgent()">+ Add Agent</button>
+    <button class="btn btn-gray top-gap-sm" onclick="addSignAgent()">+ Add Agent</button>
   </div><!-- end required-section -->
 
   <div class="card">
@@ -541,7 +541,7 @@
     <div class="field"><label>Comments</label><textarea id="s-comments" rows="3" placeholder="Additional comments or special instructions..."></textarea></div>
   </div>
 
-  <div class="btn-bar" style="margin-top:16px;">
+  <div class="btn-bar btn-bar-top-md">
     <button class="btn btn-gray" onclick="exportSignPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
     <button class="btn btn-red" onclick="openEmailModal('sign')">Submit Sign Request</button>
     <button class="btn btn-green" id="btn-sign-send-admin" onclick="openSendToAdminModal('sign')"><span class="btn-spinner"></span><span class="btn-label">Send to Admin</span></button>
@@ -551,7 +551,7 @@
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="tab-voucher" class="panel">
-  <div class="tip">Required fields are marked with <span style="color:var(--red);font-weight:700;">*</span> — complete all steps in order for fastest processing.</div>
+  <div class="tip">Required fields are marked with <span class="required-mark">*</span> — complete all steps in order for fastest processing.</div>
 
   <div class="card required-section card-active" id="vstep-1" data-vstep="1">
     <h2>Step 1 — Transaction Type <span class="required-badge">Required</span></h2>
@@ -581,14 +581,14 @@
           <option>New</option><option>Renewal</option><option>Expansion</option><option>Relocation</option><option>Blend &amp; Extend</option>
         </select>
       </div>
-      <div class="field" id="v-other-type-field" style="display:none;"><label>If Other, Explain</label><input id="v-other-type" placeholder="Describe property type"></div>
+      <div class="field is-hidden" id="v-other-type-field"><label>If Other, Explain</label><input id="v-other-type" placeholder="Describe property type"></div>
     </div>
-    <div class="row c2" style="margin-top:8px;">
+    <div class="row c2 top-gap-sm">
       <div class="field"><label class="req">Client Name</label><input id="v-on-behalf" placeholder="Client / Company name"></div>
       <div class="field"></div>
     </div>
-    <div style="margin-top:12px;padding-top:12px;border-top:1px solid #eee;">
-      <h3 style="margin-bottom:8px;">Property Address</h3>
+    <div class="section-divider top-gap-md">
+      <h3 class="section-heading-tight">Property Address</h3>
       <div class="row c23">
         <div class="field"><label class="req">Street Address</label><input id="v-address" placeholder="123 Main St"></div>
         <div class="field"><label>APN / Parcel</label><input id="v-apn" placeholder="Optional"></div>
@@ -604,11 +604,11 @@
 
   <div class="card" id="vstep-2" data-vstep="2">
     <h2>Step 2 — Broker Information</h2>
-    <div class="row c2" style="margin-bottom:8px;">
+    <div class="row c2 micro-copy-bottom-sm">
       <div class="field"><label>Same Listing &amp; Procuring Agent?</label>
         <select id="v-same-agent" onchange="onSameAgentChange()"><option value="no">No</option><option value="yes">Yes</option></select>
       </div>
-      <div style="font-size:11px;color:var(--text3);align-self:end;padding-bottom:10px;">House name, agent name &amp; city are usually sufficient</div>
+      <div class="align-end-copy">House name, agent name &amp; city are usually sufficient</div>
     </div>
     <div class="row c2">
       <div>
@@ -634,53 +634,53 @@
         <div class="field"><label>City</label><input id="v-pa-city"></div>
       </div>
     </div>
-    <div style="margin-top:12px;">
+    <div class="top-gap-md">
       <div class="sub-divider-label">Additional Internal Agents (Collaborators)</div>
-      <table class="broker-table" id="v-collab-table" style="margin-top:8px;">
-        <thead><tr><th>Agent Name</th><th style="width:120px;">Role / Team</th><th style="width:40px;"></th></tr></thead>
+      <table class="broker-table table-top-gap-sm" id="v-collab-table">
+        <thead><tr><th>Agent Name</th><th class="table-col-role">Role / Team</th><th class="table-col-narrow"></th></tr></thead>
         <tbody id="v-collab-body"></tbody>
       </table>
-      <button class="btn btn-gray" style="margin-top:8px;" onclick="addVoucherCollab()">+ Add Agent</button>
+      <button class="btn btn-gray top-gap-sm" onclick="addVoucherCollab()">+ Add Agent</button>
     </div>
-    <div style="margin-top:16px;padding-top:12px;border-top:1px solid #eee;">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);">Outside Agents?</label>
+    <div class="section-divider">
+      <div class="toggle-row">
+        <label class="section-label">Outside Agents?</label>
         <label class="toggle-switch">
           <input type="checkbox" id="v-outside-toggle" onchange="toggleOutsideAgents(this.checked)">
           <span class="toggle-slider"></span>
         </label>
-        <span id="v-outside-toggle-label" style="font-size:12px;color:var(--text3);">Off</span>
+        <span id="v-outside-toggle-label" class="toggle-caption">Off</span>
       </div>
-      <div id="v-outside-section" style="display:none;margin-top:12px;">
+      <div id="v-outside-section" class="is-hidden top-gap-md">
         <table class="broker-table" id="v-outside-table">
-          <thead><tr><th style="width:110px;">Side</th><th>Name</th><th>Address</th><th style="width:130px;">Amount to Pay</th><th style="width:36px;"></th></tr></thead>
+          <thead><tr><th class="table-col-side">Side</th><th>Name</th><th>Address</th><th class="table-col-amount">Amount to Pay</th><th class="table-col-compact"></th></tr></thead>
           <tbody id="v-outside-body"></tbody>
         </table>
-        <button class="btn btn-gray" style="margin-top:8px;" onclick="addOutsideAgent()">+ Add Outside Agent</button>
-        <div class="row c2" style="margin-top:12px;">
-          <div class="field"><label>Total to Outside Agents</label><input id="v-total-outside" placeholder="$0" readonly style="background:#f8f8f8;font-weight:600;"></div>
+        <button class="btn btn-gray top-gap-sm" onclick="addOutsideAgent()">+ Add Outside Agent</button>
+        <div class="row c2 top-gap-md">
+          <div class="field"><label>Total to Outside Agents</label><input id="v-total-outside" class="readonly-fill-strong" placeholder="$0" readonly></div>
           <div></div>
         </div>
-        <p style="font-size:11px;color:var(--text3);margin-top:4px;">Note: A completed W9 must be received on all new co-ops/referrals before commissions can be processed.</p>
+        <p class="micro-copy micro-copy-top-xs">Note: A completed W9 must be received on all new co-ops/referrals before commissions can be processed.</p>
       </div>
     </div>
   </div>
 
   <div class="card" id="vstep-3" data-vstep="3">
     <h2>Step 3 — Client &amp; Property Info</h2>
-    <div class="card" style="background:#f8f8f8;border-style:dashed;margin-bottom:0;" id="v-addr-ref">
-      <p style="font-size:12px;color:var(--text3);margin:0;">&#8593; Property address and Deal SF are entered in Step 1 above.</p>
+    <div class="card reference-card" id="v-addr-ref">
+      <p class="reference-copy">&#8593; Property address and Deal SF are entered in Step 1 above.</p>
     </div>
-    <div style="margin-top:16px;">
+    <div class="section-heading-top">
       <div class="row c2">
         <div>
           <div class="sub-divider-label" id="v-lbl-lessor">Lessor / Seller</div>
           <div class="field"><label class="req">Contact Name</label><input id="v-ls-contact" placeholder="Full name"></div>
           <div class="field"><label class="req">Company</label><input id="v-ls-company" placeholder="Company name"></div>
-          <div class="collapse-section" style="margin-top:4px;">
-            <div class="collapse-toggle" onclick="toggleCollapse(this)" style="padding:6px 0;">
-              <span style="font-size:11px;color:var(--text3);">Additional Info</span>
-              <span class="chevron" style="font-size:10px;">&#9662;</span>
+          <div class="collapse-section collapse-section-top-sm">
+            <div class="collapse-toggle collapse-toggle-compact" onclick="toggleCollapse(this)">
+              <span class="micro-copy">Additional Info</span>
+              <span class="chevron chevron-sm">&#9662;</span>
             </div>
             <div class="collapse-body" id="cb-lessor">
               <div class="field"><label>Invoice Lessor/Seller?</label><select id="v-ls-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
@@ -701,10 +701,10 @@
           <div class="sub-divider-label" id="v-lbl-lessee">Lessee / Buyer</div>
           <div class="field"><label class="req">Contact Name</label><input id="v-lb-contact" placeholder="Full name"></div>
           <div class="field"><label class="req">Company</label><input id="v-lb-company" placeholder="Company name"></div>
-          <div class="collapse-section" style="margin-top:4px;">
-            <div class="collapse-toggle" onclick="toggleCollapse(this)" style="padding:6px 0;">
-              <span style="font-size:11px;color:var(--text3);">Additional Info</span>
-              <span class="chevron" style="font-size:10px;">&#9662;</span>
+          <div class="collapse-section collapse-section-top-sm">
+            <div class="collapse-toggle collapse-toggle-compact" onclick="toggleCollapse(this)">
+              <span class="micro-copy">Additional Info</span>
+              <span class="chevron chevron-sm">&#9662;</span>
             </div>
             <div class="collapse-body" id="cb-lessee">
               <div class="field"><label>Invoice Lessee/Buyer?</label><select id="v-lb-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
@@ -738,15 +738,15 @@
         <div class="field"><label class="req">Rate per SF per Month</label><input id="v-l-rate" placeholder="$0.00" oninput="calcVoucherLease()"></div>
         <div class="field"><label>Rate Type</label><select id="v-l-rate-type"><option value="NNN">NNN</option><option value="FSG">FSG</option><option value="MG">MG</option><option value="G">Gross</option></select></div>
         <div class="field"><label>Term (months)</label><input id="v-l-term" placeholder="e.g. 60" oninput="calcVoucherLease()"></div>
-        <div class="field"><label>Total Consideration</label><input id="v-l-consideration" placeholder="$0" readonly style="background:#f8f8f8;font-weight:600;"></div>
+        <div class="field"><label>Total Consideration</label><input id="v-l-consideration" class="readonly-fill-strong" placeholder="$0" readonly></div>
       </div>
     </div>
-    <div id="v-req-sale" style="display:none;">
+    <div id="v-req-sale" class="is-hidden">
       <h3>Key Sale Terms</h3>
       <div class="row c3">
         <div class="field"><label class="req">Total Consideration / Sale Price</label><input id="v-s-price" placeholder="$0" oninput="calcVoucherSale()"></div>
-        <div class="field"><label>Price / SF</label><input id="v-s-price-sf" placeholder="$0.00" readonly style="background:#f8f8f8;"></div>
-        <div class="field"><label>Land Price / SF</label><input id="v-s-land-sf" placeholder="$0.00" readonly style="background:#f8f8f8;"></div>
+        <div class="field"><label>Price / SF</label><input id="v-s-price-sf" class="readonly-fill" placeholder="$0.00" readonly></div>
+        <div class="field"><label>Land Price / SF</label><input id="v-s-land-sf" class="readonly-fill" placeholder="$0.00" readonly></div>
       </div>
     </div>
   </div>
@@ -756,9 +756,9 @@
     <div id="v-req-comm-lease">
       <div class="row c4">
         <div class="field"><label class="req">Commission Rate %</label><input id="v-l-comm-rate" placeholder="e.g. 4" oninput="calcCommSummary()"></div>
-        <div class="field"><label>Lease Commission Due</label><input id="v-l-comm-due" placeholder="$0" readonly style="background:#f8f8f8;font-weight:600;"></div>
+        <div class="field"><label>Lease Commission Due</label><input id="v-l-comm-due" class="readonly-fill-strong" placeholder="$0" readonly></div>
         <div class="field"><label>Additional Bonus / (Adjustment)</label><input id="v-comm-bonus" placeholder="$0" oninput="calcCommSummary()"></div>
-        <div class="field"><label style="font-size:13px;color:var(--red);font-weight:700;">TOTAL INVOICE</label><input id="v-total-invoice" placeholder="$0" readonly style="background:#fdf5f6;font-weight:700;font-size:16px;border-color:var(--red);"></div>
+        <div class="field"><label class="invoice-highlight-label">TOTAL INVOICE</label><input id="v-total-invoice" class="invoice-highlight-input" placeholder="$0" readonly></div>
       </div>
       <div class="row c3">
         <div class="field"><label>Consulting/Referral / Flat Fee</label><input id="v-comm-consulting" placeholder="$0" oninput="calcCommSummary()"></div>
@@ -766,14 +766,14 @@
         <div class="field"></div>
       </div>
     </div>
-    <div id="v-req-comm-sale" style="display:none;">
+    <div id="v-req-comm-sale" class="is-hidden">
       <div class="row c3">
         <div class="field"><label class="req">Commission %</label><input id="v-s-comm-pct" placeholder="e.g. 3" oninput="calcVoucherSale()"></div>
-        <div class="field"><label>Commission Due $</label><input id="v-s-comm-due" placeholder="$0" readonly style="background:#f8f8f8;font-weight:600;"></div>
-        <div class="field"><label>SALE Commission (auto)</label><input id="v-comm-sale" placeholder="$0" readonly style="background:#f8f8f8;"></div>
+        <div class="field"><label>Commission Due $</label><input id="v-s-comm-due" class="readonly-fill-strong" placeholder="$0" readonly></div>
+        <div class="field"><label>SALE Commission (auto)</label><input id="v-comm-sale" class="readonly-fill" placeholder="$0" readonly></div>
       </div>
     </div>
-    <div style="margin-top:16px;padding-top:12px;border-top:1px solid #eee;">
+    <div class="section-divider">
       <h3>Invoice To</h3>
       <div class="row c3">
         <div class="field">
@@ -787,37 +787,37 @@
             <option value="third_party">Third Party (see below)</option>
           </select>
         </div>
-        <div class="field" id="v-third-party-section" style="display:none;">
+        <div class="field is-hidden" id="v-third-party-section">
           <label>Third-Party Company Name</label>
           <input id="v-inv-company" placeholder="Company name">
         </div>
-        <div class="field" id="v-third-party-addr" style="display:none;">
+        <div class="field is-hidden" id="v-third-party-addr">
           <label>Third-Party Address</label>
           <input id="v-inv-address" placeholder="Address">
         </div>
       </div>
       <div class="field"><label>Special Invoice Instructions</label><textarea id="v-inv-instructions" rows="2" placeholder="Payment schedule, split payments, etc."></textarea></div>
-      <h3 style="margin-top:12px;">Payment Schedule</h3>
+      <h3 class="top-gap-md">Payment Schedule</h3>
       <table class="broker-table" id="v-payment-table">
-        <thead><tr><th>Date Due</th><th>Amount Due</th><th>Date Due</th><th>Amount Due</th><th style="width:36px;"></th></tr></thead>
+        <thead><tr><th>Date Due</th><th>Amount Due</th><th>Date Due</th><th>Amount Due</th><th class="table-col-compact"></th></tr></thead>
         <tbody id="v-payment-body"></tbody>
       </table>
-      <button class="btn btn-gray" style="margin-top:8px;" onclick="addPaymentRow()">+ Add Payment</button>
+      <button class="btn btn-gray top-gap-sm" onclick="addPaymentRow()">+ Add Payment</button>
     </div>
   </div>
 
   <div id="vstep-6" class="card" data-vstep="6">
     <h2>Step 6 — Monthly &amp; Free Rent Schedule</h2>
-    <p style="font-size:12px;color:var(--text3);margin-bottom:10px;">Enter $0 for free rent months so effective rates calculate correctly.</p>
+    <p class="review-copy micro-copy-bottom-sm">Enter $0 for free rent months so effective rates calculate correctly.</p>
     <table class="rent-table" id="v-rent-table">
-      <thead><tr><th style="width:36px;">#</th><th>Monthly Rent $</th><th>Rate/SF/Mo</th><th>Comm %</th><th>Months</th><th>Consideration</th><th style="width:36px;"></th></tr></thead>
+      <thead><tr><th class="table-col-compact">#</th><th>Monthly Rent $</th><th>Rate/SF/Mo</th><th>Comm %</th><th>Months</th><th>Consideration</th><th class="table-col-compact"></th></tr></thead>
       <tbody id="v-rent-body"></tbody>
     </table>
-    <button class="btn btn-gray" style="margin-top:8px;" onclick="addRentRow()">+ Add Period</button>
-    <div style="margin-top:16px;padding-top:12px;border-top:1px solid #eee;">
+    <button class="btn btn-gray top-gap-sm" onclick="addRentRow()">+ Add Period</button>
+    <div class="section-divider">
       <div class="row c4">
-        <div class="field"><label>Average Rate/SF/Mo</label><input id="v-avg-rate-sf" placeholder="$0.00" readonly style="background:#f8f8f8;"></div>
-        <div class="field"><label>Average Monthly Rent</label><input id="v-avg-monthly" placeholder="$0" readonly style="background:#f8f8f8;"></div>
+        <div class="field"><label>Average Rate/SF/Mo</label><input id="v-avg-rate-sf" class="readonly-fill" placeholder="$0.00" readonly></div>
+        <div class="field"><label>Average Monthly Rent</label><input id="v-avg-monthly" class="readonly-fill" placeholder="$0" readonly></div>
         <div class="field"></div>
         <div class="field"></div>
       </div>
@@ -828,10 +828,10 @@
     <h2>Step 8 — Upload Documents &amp; Commission Distribution</h2>
     <h3>Upload Documents</h3>
 
-    <div class="field" style="margin-bottom:16px;">
-      <label style="display:flex;align-items:center;gap:6px;">Deal Brochure / Commission Agreement <span style="font-size:10px;color:#fff;font-weight:700;background:var(--red);border-radius:4px;padding:2px 7px;letter-spacing:.04em;">AI Scrape</span></label>
+    <div class="field field-stack-gap">
+      <label class="inline-flex-label">Deal Brochure / Commission Agreement <span class="inline-badge">AI Scrape</span></label>
       <div class="brochure-zone" id="v-brochure-zone" onclick="document.getElementById('v-brochure-file').click()">
-        <input type="file" id="v-brochure-file" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display:none;" onchange="onVoucherBrochureSelected(this)">
+        <input type="file" id="v-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" onchange="onVoucherBrochureSelected(this)">
         <div class="brochure-zone-inner">
           <span class="brochure-zone-icon">&#128196;</span>
           <div>
@@ -850,7 +850,7 @@
       <div class="field">
         <label>Agency Disclosure</label>
         <div class="upload-zone" id="uz-v-disclosure" data-category="agency_disclosure" data-field="v-doc-disclosure">
-          <input type="file" id="v-doc-disclosure" accept=".pdf,.doc,.docx" style="display:none;">
+          <input type="file" id="v-doc-disclosure" class="hidden-file-input" accept=".pdf,.doc,.docx">
           <div class="upload-zone-inner" onclick="document.getElementById('v-doc-disclosure').click()">
             <span class="upload-icon">&#128196;</span>
             <span class="upload-label">Click to upload PDF / DOC</span>
@@ -861,7 +861,7 @@
       <div class="field">
         <label>Exclusive Listing Agreement</label>
         <div class="upload-zone" id="uz-v-agreement" data-category="listing_agreement" data-field="v-doc-agreement">
-          <input type="file" id="v-doc-agreement" accept=".pdf,.doc,.docx" style="display:none;">
+          <input type="file" id="v-doc-agreement" class="hidden-file-input" accept=".pdf,.doc,.docx">
           <div class="upload-zone-inner" onclick="document.getElementById('v-doc-agreement').click()">
             <span class="upload-icon">&#128196;</span>
             <span class="upload-label">Click to upload PDF / DOC</span>
@@ -870,17 +870,17 @@
         </div>
       </div>
     </div>
-    <h3 style="margin-top:20px;padding-top:16px;border-top:1px solid #eee;">Commission Distribution</h3>
-    <div class="row c3" style="margin-bottom:12px;">
-      <div class="field"><label>Total Invoice</label><input id="v-dist-total-invoice" placeholder="$0" readonly style="background:#f8f8f8;font-weight:700;"></div>
-      <div class="field"><label>Total to Outside Agents</label><input id="v-dist-total-outside" placeholder="$0" readonly style="background:#f8f8f8;"></div>
-      <div class="field"><label>Gross $$ to Distribute</label><input id="v-gross-dist" placeholder="$0" readonly style="background:#fdf5f6;font-weight:700;border-color:var(--red);"></div>
+    <h3 class="section-divider section-heading-top-lg">Commission Distribution</h3>
+    <div class="row c3 field-stack-gap-sm">
+      <div class="field"><label>Total Invoice</label><input id="v-dist-total-invoice" class="readonly-fill-strong" placeholder="$0" readonly></div>
+      <div class="field"><label>Total to Outside Agents</label><input id="v-dist-total-outside" class="readonly-fill" placeholder="$0" readonly></div>
+      <div class="field"><label>Gross $$ to Distribute</label><input id="v-gross-dist" class="invoice-highlight-input" placeholder="$0" readonly></div>
     </div>
     <table class="broker-table" id="v-dist-table">
-      <thead><tr><th>Agent Name</th><th style="width:100px;">Side</th><th style="width:65px;">Gross %</th><th>Listing Gross</th><th>Procuring Gross</th><th>Both Gross</th><th>Other Gross</th><th>Referring Gross</th><th>NET (ck amt)</th><th style="width:36px;"></th></tr></thead>
+      <thead><tr><th>Agent Name</th><th class="table-col-100">Side</th><th class="table-col-65">Gross %</th><th>Listing Gross</th><th>Procuring Gross</th><th>Both Gross</th><th>Other Gross</th><th>Referring Gross</th><th>NET (ck amt)</th><th class="table-col-compact"></th></tr></thead>
       <tbody id="v-dist-body"></tbody>
     </table>
-    <button class="btn btn-gray" style="margin-top:8px;" onclick="addDistRow()">+ Add Agent</button>
+    <button class="btn btn-gray top-gap-sm" onclick="addDistRow()">+ Add Agent</button>
   </div>
 
   <div class="optional-wrapper">
@@ -913,7 +913,7 @@
     </div>
   </div>
 
-  <div id="v-sale-section" class="card" style="display:none;">
+  <div id="v-sale-section" class="card is-hidden">
     <h2>Sale Transaction Details (Extended)</h2>
     <div class="row c3">
       <div class="field"><label>User, Investor, or Developer</label><select id="v-s-buyer-type"><option value="">—</option><option>User</option><option>Investor</option><option>Developer</option></select></div>
@@ -979,7 +979,7 @@
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="tab-comp" class="panel">
-  <div class="tip">Required fields are marked with <span style="color:var(--red);font-weight:700;">*</span> — complete these first, then expand optional sections for additional detail.</div>
+  <div class="tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections for additional detail.</div>
 
   <!-- ═══ REQUIRED SECTION ═══ -->
   <div class="card required-section">
@@ -996,16 +996,16 @@
       <div class="field"><label>Date</label><input id="c-date" type="date"></div>
     </div>
 
-    <h3 style="margin-top:16px;">Location</h3>
+    <h3 class="section-heading-top">Location</h3>
     <div class="row c2">
       <div class="field"><label class="req">Address</label><input id="c-address" placeholder="16441 Scientific Way"></div>
       <div class="field"><label class="req">City</label><input id="c-city" placeholder="Irvine"></div>
     </div>
 
-    <h3 style="margin-top:16px;">Property Photo</h3>
+    <h3 class="section-heading-top">Property Photo</h3>
     <div class="comp-photo-grid">
       <div class="upload-zone" id="uz-c-photo" data-category="comp_photo" data-field="c-property-photo">
-        <input type="file" id="c-property-photo" accept="image/png,image/jpeg,image/webp" style="display:none;">
+        <input type="file" id="c-property-photo" class="hidden-file-input" accept="image/png,image/jpeg,image/webp">
         <div class="upload-zone-inner" onclick="document.getElementById('c-property-photo').click()">
           <span class="upload-icon"></span>
           <span class="upload-label">Upload property photo</span>
@@ -1018,7 +1018,7 @@
       </div>
     </div>
 
-    <h3 style="margin-top:16px;">Property</h3>
+    <h3 class="section-heading-top">Property</h3>
     <div class="row c3">
       <div class="field"><label class="req">Property Type</label>
         <select id="c-prop-type"><option value="">—</option><option>Industrial</option><option>Office</option><option>Retail</option><option>Multi-Family</option><option>Land</option></select>
@@ -1032,7 +1032,7 @@
     </div>
 
     <div class="comp-lease-only">
-      <h3 style="margin-top:16px;">Key Lease Terms</h3>
+      <h3 class="section-heading-top">Key Lease Terms</h3>
       <div class="row c3">
         <div class="field"><label class="req">Space Leased / Leased SF</label><input id="c-leased-sf" placeholder="0" type="text"></div>
         <div class="field"><label class="req">Rent/SqFt / Start Rate</label><input id="c-rent-sf" placeholder="$0.00"></div>
@@ -1053,7 +1053,7 @@
     </div>
 
     <div class="comp-sale-only">
-      <h3 style="margin-top:16px;">Key Sale Terms</h3>
+      <h3 class="section-heading-top">Key Sale Terms</h3>
       <div class="row c3">
         <div class="field"><label class="req">Building SF</label><input id="cs-bldg-sf" placeholder="0" type="text"></div>
         <div class="field"><label class="req">Selling Price</label><input id="cs-sell-price" placeholder="$0"></div>
@@ -1206,17 +1206,17 @@
     <div class="field comp-lease-only"><label>Opex cost estimated (Y/N)?</label>
       <select id="c-opex-est"><option value="">—</option><option>Yes</option><option>No</option></select>
     </div>
-    <div class="field comp-lease-only" style="margin-top:8px;"><label>Single or Multi-Tenant?</label><input id="c-comments-multi" placeholder=""></div>
-    <div class="field comp-lease-only" style="margin-top:8px;"><label>Part of Larger?</label><input id="c-comments-pol" placeholder=""></div>
+    <div class="field comp-lease-only top-gap-sm"><label>Single or Multi-Tenant?</label><input id="c-comments-multi" placeholder=""></div>
+    <div class="field comp-lease-only top-gap-sm"><label>Part of Larger?</label><input id="c-comments-pol" placeholder=""></div>
     <div class="field comp-sale-only"><label>Approximate Cap Rate?</label><input id="cs-cap-rate" placeholder=""></div>
-    <div class="field comp-sale-only" style="margin-top:8px;"><label>Investment Sale?</label><input id="cs-investment" placeholder=""></div>
-    <div class="field" style="margin-top:8px;"><textarea id="c-comments" rows="3" placeholder="Additional comments..."></textarea></div>
+    <div class="field comp-sale-only top-gap-sm"><label>Investment Sale?</label><input id="cs-investment" placeholder=""></div>
+    <div class="field top-gap-sm"><textarea id="c-comments" rows="3" placeholder="Additional comments..."></textarea></div>
   </div>
 
     </div><!-- end optional-body -->
   </div><!-- end optional-wrapper -->
 
-  <div class="btn-bar" style="margin-top:16px;">
+  <div class="btn-bar btn-bar-top-md">
     <button class="btn btn-gray" onclick="exportCompPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
     <button class="btn btn-red" onclick="openEmailModal('comp')">Submit Comp</button>
     <button class="btn btn-outline" onclick="switchTab('comp-reports')">Open Comp Reports</button>
@@ -1273,7 +1273,7 @@
               <button class="btn btn-gray" type="button" onclick="compReportResetFilters()">Clear Filters</button>
             </div>
           </form>
-          <div class="comp-report-form-note" id="cr-search-note" style="display:none;">The active comp dataset has not been published yet, so search is temporarily unavailable.</div>
+          <div class="comp-report-form-note is-hidden" id="cr-search-note">The active comp dataset has not been published yet, so search is temporarily unavailable.</div>
         </div>
       </div>
 
@@ -1310,7 +1310,7 @@
             <h4>Next step</h4>
             <p id="cr-empty-side-copy">The current comp dataset needs to be published internally before comp reporting becomes searchable.</p>
             <div class="comp-report-empty-cta" id="cr-empty-cta"></div>
-            <div id="cr-empty-status" class="comp-report-message" style="display:none;margin-top:12px;"></div>
+            <div id="cr-empty-status" class="comp-report-message is-hidden top-gap-md"></div>
           </div>
         </div>
       </div>
@@ -1660,7 +1660,7 @@
     </div>
   </div>
 
-  <div id="docs-no-results" style="display:none;padding:32px;text-align:center;color:var(--text2);font-size:14px;">
+  <div id="docs-no-results" class="empty-results-message is-hidden">
     No forms match your search. Try a different keyword.
   </div>
 
@@ -1686,7 +1686,7 @@
     </select>
   </div>
 
-  <div id="ci-path-chooser" style="display:none;">
+  <div id="ci-path-chooser" class="is-hidden">
     <div class="ci-path-cards">
       <div class="ci-path-card" id="ci-path-fill" onclick="ciSelectPath('fill')">
         <div class="ci-path-icon ci-path-icon-entry"></div>
@@ -1701,22 +1701,22 @@
     </div>
   </div>
 
-  <div id="ci-upload-path" style="display:none;">
+  <div id="ci-upload-path" class="is-hidden">
     <div class="ci-section">
       <h3>Upload Broker-Completed PDF</h3>
       <p class="ci-hint">Upload the PDF the broker filled out in Adobe. The AI will read all typed fields, checkboxes, and struck-through (redlined) text.</p>
       <div class="ci-upload-zone" id="ci-upload-zone" onclick="document.getElementById('ci-pdf-input').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="ciHandleDrop(event)">
-        <input type="file" id="ci-pdf-input" accept=".pdf" style="display:none;" onchange="ciHandleFileSelect(this)">
+        <input type="file" id="ci-pdf-input" class="hidden-file-input" accept=".pdf" onchange="ciHandleFileSelect(this)">
         <div class="ci-upload-icon"></div>
         <div class="ci-upload-text">Click to upload or drag &amp; drop</div>
         <div class="ci-upload-sub">PDF only &mdash; broker-completed Adobe form</div>
       </div>
-      <div id="ci-upload-status" style="display:none;margin-top:12px;"></div>
+      <div id="ci-upload-status" class="is-hidden top-gap-md"></div>
     </div>
   </div>
 
-  <div id="ci-form-area" style="display:none;">
-    <div id="ci-ai-banner" style="display:none;" class="ci-ai-banner">
+  <div id="ci-form-area" class="is-hidden">
+    <div id="ci-ai-banner" class="ci-ai-banner is-hidden">
       <span class="ci-ai-icon"></span>
       <span id="ci-ai-banner-text">AI extracted the fields below. Review and correct anything that looks wrong before submitting.</span>
     </div>
@@ -1730,11 +1730,11 @@
       <div class="ci-party-block">
         <h4 id="ci-party1-label">Sublessor / Owner / Client</h4>
         <div class="row">
-          <div class="field" style="flex:2"><label class="req">Party 1 Name</label><input id="ci-party1-name" placeholder="e.g. Sinclair Pharma US Inc., a California corporation"></div>
+          <div class="field flex-2"><label class="req">Party 1 Name</label><input id="ci-party1-name" placeholder="e.g. Sinclair Pharma US Inc., a California corporation"></div>
           <div class="field"><label>Entity Type</label><input id="ci-party1-entity" placeholder="e.g. a California corporation"></div>
         </div>
         <div class="row">
-          <div class="field" style="flex:2"><label>Address</label><input id="ci-party1-address" placeholder="Street address"></div>
+          <div class="field flex-2"><label>Address</label><input id="ci-party1-address" placeholder="Street address"></div>
           <div class="field"><label>Phone</label><input id="ci-party1-phone" placeholder="(949) 000-0000"></div>
           <div class="field"><label>Fax</label><input id="ci-party1-fax" placeholder="Fax No."></div>
         </div>
@@ -1742,7 +1742,7 @@
       <div class="ci-party-block">
         <h4>Agent / Broker</h4>
         <div class="row">
-          <div class="field" style="flex:2"><label>Agent Name</label><input id="ci-agent-name" value="Lee &amp; Associates&#174;-Newport Beach"></div>
+          <div class="field flex-2"><label>Agent Name</label><input id="ci-agent-name" value="Lee &amp; Associates&#174;-Newport Beach"></div>
           <div class="field"><label>Agent Address</label><input id="ci-agent-address" value="100 Bayview Circle, Suite 600, Newport Beach, CA 92660"></div>
         </div>
         <div class="row">
@@ -1762,24 +1762,24 @@
     <div class="ci-section">
       <h3>Property</h3>
       <div class="row">
-        <div class="field" style="flex:2"><label class="req">Property Address</label><input id="ci-prop-address" placeholder="18 Technology Drive, Suite 134"></div>
+        <div class="field flex-2"><label class="req">Property Address</label><input id="ci-prop-address" placeholder="18 Technology Drive, Suite 134"></div>
         <div class="field"><label class="req">City</label><input id="ci-prop-city" placeholder="Irvine"></div>
         <div class="field"><label>State</label><input id="ci-prop-state" value="CA"></div>
         <div class="field"><label>Zip</label><input id="ci-prop-zip"></div>
       </div>
       <div class="row">
         <div class="field"><label>County</label><input id="ci-prop-county" placeholder="Orange"></div>
-        <div class="field" style="flex:2"><label>Property Description</label><input id="ci-prop-desc" placeholder="e.g. An approximate 3,440 sq ft flex/industrial building"></div>
+        <div class="field flex-2"><label>Property Description</label><input id="ci-prop-desc" placeholder="e.g. An approximate 3,440 sq ft flex/industrial building"></div>
       </div>
-      <div id="ci-master-lease-block" style="display:none;">
+      <div id="ci-master-lease-block" class="is-hidden">
         <h4>Master Lease</h4>
         <div class="row">
           <div class="field"><label>Master Lease Date</label><input id="ci-ml-date" type="date"></div>
-          <div class="field" style="flex:2"><label>Amendment Dates</label><input id="ci-ml-amendments" placeholder="e.g. 11/18/2011, 01/17/2013..."></div>
+          <div class="field flex-2"><label>Amendment Dates</label><input id="ci-ml-amendments" placeholder="e.g. 11/18/2011, 01/17/2013..."></div>
         </div>
         <div class="row">
-          <div class="field" style="flex:2"><label>Master Lessor</label><input id="ci-ml-lessor" placeholder="e.g. Irvine Tech Link LLC"></div>
-          <div class="field" style="flex:2"><label>Master Lessee</label><input id="ci-ml-lessee" placeholder="e.g. Sinclair Pharma US Inc."></div>
+          <div class="field flex-2"><label>Master Lessor</label><input id="ci-ml-lessor" placeholder="e.g. Irvine Tech Link LLC"></div>
+          <div class="field flex-2"><label>Master Lessee</label><input id="ci-ml-lessee" placeholder="e.g. Sinclair Pharma US Inc."></div>
         </div>
       </div>
     </div>
@@ -1820,11 +1820,11 @@
         <div class="ci-redline-row" id="ci-redline-0">
           <input class="ci-redline-para" placeholder="Paragraph # (e.g. 4.1(b))">
           <select class="ci-redline-type"><option value="strikethrough">Strike Through</option><option value="added">Added Text</option><option value="modified">Modified</option></select>
-          <input class="ci-redline-note" placeholder="Brief description of the change" style="flex:3">
-          <button class="btn btn-gray" style="padding:4px 10px;font-size:12px;" onclick="ciRemoveRedline(this)">&#10005;</button>
+          <input class="ci-redline-note flex-3" placeholder="Brief description of the change">
+          <button class="btn btn-gray btn-compact" onclick="ciRemoveRedline(this)">&#10005;</button>
         </div>
       </div>
-      <button class="btn btn-outline" style="margin-top:8px;font-size:13px;" onclick="ciAddRedline()">+ Add Redline</button>
+      <button class="btn btn-outline top-gap-sm btn-sm-text" onclick="ciAddRedline()">+ Add Redline</button>
     </div>
 
     <div class="ci-section">
@@ -1835,12 +1835,12 @@
       </div>
     </div>
 
-    <div class="btn-bar" style="margin-top:24px;">
+    <div class="btn-bar btn-bar-top-lg">
       <button class="btn btn-green" id="btn-ci-send" onclick="ciSubmitToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Submit to Admin</span></button>
       <button class="btn btn-outline" onclick="ciDownloadDataSheet()" title="Download a formatted AIR CRE Data Sheet as a text file">Download Data Sheet</button>
       <button class="btn btn-gray" onclick="ciReset()">Clear Form</button>
     </div>
-    <div id="ci-submit-status" style="margin-top:10px;font-size:13px;"></div>
+    <div id="ci-submit-status" class="status-copy"></div>
   </div>
 </div><!-- /tab-contracts -->
 
@@ -2062,7 +2062,7 @@
               </select>
             </div>
 
-            <div id="dxListingModeFields" style="display:none;">
+            <div id="dxListingModeFields" class="is-hidden">
               <div class="dx-slabel">Listing Setup</div>
               <div class="dx-edit-grid dx-cols3">
                 <div class="dx-field"><label>Listing Transaction</label>
@@ -2117,7 +2117,7 @@
                 <div class="dx-field"><label>Landlord / Client Co.</label><input type="text" id="dx_clientCo"/></div>
                 <div class="dx-field"><label>Tenant / Opposite Co.</label><input type="text" id="dx_oppositeCo"/></div>
               </div>
-              <div class="dx-edit-grid dx-cols3" style="margin-top:4px;">
+              <div class="dx-edit-grid dx-cols3 dx-top-gap-sm">
                 <div class="dx-field"><label>Client Contact Name</label><input type="text" id="dx_clientContactName" placeholder="First Last"/></div>
                 <div class="dx-field"><label>Client Contact Email</label><input type="email" id="dx_clientContactEmail" placeholder="email@company.com"/></div>
                 <div class="dx-field"><label>Client Contact Phone</label><input type="text" id="dx_clientContactPhone" placeholder="(555) 555-5555"/></div>
@@ -2147,9 +2147,9 @@
                 <div class="dx-field"><label>Months on Market</label><input type="number" id="dx_monthsOnMkt"/></div>
               </div>
               <div id="dxRentScheduleBlock">
-                <div class="dx-slabel" style="display:flex;align-items:center;justify-content:space-between;">
+                <div class="dx-slabel dx-inline-between">
                   <span>Rent Schedule</span>
-                  <button class="dx-btn dx-ghost" style="font-size:11px;padding:4px 12px;" onclick="dxAddRentRow()">+ Add Row</button>
+                  <button class="dx-btn dx-ghost dx-btn-inline-sm" onclick="dxAddRentRow()">+ Add Row</button>
                 </div>
                 <table class="dx-rtable" id="dxRt">
                   <thead><tr><th>#</th><th>Months</th><th>Monthly Rent ($)</th><th>Free Rent</th><th>Monthly $/SF</th><th></th></tr></thead>
@@ -2159,13 +2159,13 @@
               </div>
             </div>
 
-            <div id="dx_sale_section" style="display:none;">
+            <div id="dx_sale_section" class="is-hidden">
               <div class="dx-slabel">Sale Parties</div>
               <div class="dx-edit-grid">
                 <div class="dx-field"><label>Seller / Client Co.</label><input type="text" id="dx_sellerCo"/></div>
                 <div class="dx-field"><label>Buyer / Opposite Co.</label><input type="text" id="dx_buyerCo"/></div>
               </div>
-              <div class="dx-edit-grid dx-cols3" style="margin-top:4px;">
+              <div class="dx-edit-grid dx-cols3 dx-top-gap-sm">
                 <div class="dx-field"><label>Seller Contact Name</label><input type="text" id="dx_sellerContactName" placeholder="First Last"/></div>
                 <div class="dx-field"><label>Seller Contact Email</label><input type="email" id="dx_sellerContactEmail" placeholder="email@company.com"/></div>
                 <div class="dx-field"><label>Seller Contact Phone</label><input type="text" id="dx_sellerContactPhone" placeholder="(555) 555-5555"/></div>
@@ -2187,17 +2187,17 @@
             <div class="dx-outside-warn" id="dxOw">&x26A0; Outside broker(s) must be added manually in Dealius.</div>
             <p class="dx-hint">Broker commission assignments are not submitted via API — add them in Dealius after the deal is created.</p>
 
-            <div id="dxAiPanel" style="display:none;margin-top:16px;"></div>
+            <div id="dxAiPanel" class="is-hidden section-heading-top"></div>
 
             <div class="dx-btns">
               <button class="dx-btn dx-primary btn" id="dxSb" onclick="dxSubmitDeal()"><span class="btn-spinner"></span><span class="btn-label">Submit to Dealius</span></button>
-              <button class="dx-btn dx-ghost" id="dxAib" onclick="dxRunAIReview()" style="display:none;">AI Review</button>
+              <button class="dx-btn dx-ghost is-hidden" id="dxAib" onclick="dxRunAIReview()">AI Review</button>
               <button class="dx-btn dx-ghost" onclick="dxResetTool()">Reset</button>
             </div>
           </div>
         </div>
 
-        <div id="dxStepBar" style="display:none;">
+        <div id="dxStepBar" class="is-hidden">
           <div class="dx-steps">
             <div class="dx-step" id="dxS1">1 &middot; Property</div>
             <div class="dx-step" id="dxS2">2 &middot; Space</div>
@@ -2232,33 +2232,33 @@
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="bp-modal">
-  <div class="modal" style="max-width:640px;">
-    <h2 style="display:flex;align-items:center;gap:8px;">Broker Profiles</h2>
-    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">Save agent details here. Select a profile from the header to pre-fill agent fields on any tab.</p>
+  <div class="modal modal-lg">
+    <h2 class="modal-heading-row">Broker Profiles</h2>
+    <p class="modal-copy">Save agent details here. Select a profile from the header to pre-fill agent fields on any tab.</p>
 
-    <div id="bp-list" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;margin-bottom:16px;"></div>
+    <div id="bp-list" class="profile-list"></div>
 
-    <div id="bp-form-wrap" style="border:1px solid var(--border);border-radius:8px;padding:16px;background:var(--bg2);">
-      <h3 id="bp-form-title" style="margin:0 0 12px;font-size:14px;font-weight:600;">Add New Profile</h3>
+    <div id="bp-form-wrap" class="profile-form-panel">
+      <h3 id="bp-form-title" class="profile-form-title">Add New Profile</h3>
       <input type="hidden" id="bp-edit-id">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="profile-form-grid">
         <div class="field"><label>Full Name *</label><input id="bp-f-name" placeholder="e.g. Nick Dumke"></div>
         <div class="field"><label>Title</label><input id="bp-f-title" placeholder="e.g. Associate"></div>
         <div class="field"><label>Direct Phone</label><input id="bp-f-phone" placeholder="e.g. (949) 724-4755" type="tel"></div>
         <div class="field"><label>Fax</label><input id="bp-f-fax" placeholder="e.g. (949) 724-4799" type="tel"></div>
-        <div class="field" style="grid-column:1/-1;"><label>Email *</label><input id="bp-f-email" placeholder="agent@lee-associates.com" type="email"></div>
+        <div class="field grid-span-full"><label>Email *</label><input id="bp-f-email" placeholder="agent@lee-associates.com" type="email"></div>
         <div class="field"><label>Agent DRE #</label><input id="bp-f-dre" placeholder="e.g. 02123456"></div>
         <div class="field"><label>Broker DRE # (firm)</label><input id="bp-f-broker-dre" placeholder="e.g. 01197433" value="01197433"></div>
-        <div class="field" style="grid-column:1/-1;"><label>Brokerage / Company</label><input id="bp-f-company" placeholder="Lee &amp; Associates&#174;-Newport Beach" value="Lee &amp; Associates&#174;-Newport Beach"></div>
-        <div class="field" style="grid-column:1/-1;"><label>Office Address</label><input id="bp-f-address" placeholder="100 Bayview Circle, Suite 600, Newport Beach, CA 92660" value="100 Bayview Circle, Suite 600, Newport Beach, CA 92660"></div>
+        <div class="field grid-span-full"><label>Brokerage / Company</label><input id="bp-f-company" placeholder="Lee &amp; Associates&#174;-Newport Beach" value="Lee &amp; Associates&#174;-Newport Beach"></div>
+        <div class="field grid-span-full"><label>Office Address</label><input id="bp-f-address" placeholder="100 Bayview Circle, Suite 600, Newport Beach, CA 92660" value="100 Bayview Circle, Suite 600, Newport Beach, CA 92660"></div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:14px;">
+      <div class="button-row top-gap-14">
         <button class="btn btn-primary" onclick="bpSaveProfile()"><span id="bp-save-label">Save Profile</span></button>
         <button class="btn btn-gray" onclick="bpCancelEdit()">Cancel</button>
       </div>
     </div>
 
-    <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+    <div class="button-row button-row-end section-heading-top">
       <button class="btn btn-gray" onclick="bpCloseModal()">Close</button>
     </div>
   </div>
@@ -2267,9 +2267,9 @@
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="send-admin-modal">
-  <div class="modal" style="max-width:520px;">
-    <h2 id="send-admin-modal-title" style="display:flex;align-items:center;gap:8px;">Send to Admin</h2>
-    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;" id="send-admin-modal-desc">This will email all filled form fields to the office admin. Taylor will be CC&rsquo;d automatically.</p>
+  <div class="modal modal-sm">
+    <h2 id="send-admin-modal-title" class="modal-heading-row">Send to Admin</h2>
+    <p class="modal-copy" id="send-admin-modal-desc">This will email all filled form fields to the office admin. Taylor will be CC&rsquo;d automatically.</p>
     <div class="field">
       <label>Your Name (Broker)</label>
       <input id="sta-broker-name" placeholder="e.g. Taylor Barnes" value="Taylor Barnes">
@@ -2279,10 +2279,10 @@
       <input id="sta-sender-email" placeholder="e.g. tbarnes@lee-associates.com" value="tbarnes@lee-associates.com">
     </div>
     <div class="field">
-      <label>Notes to Admin <span style="font-weight:400;color:var(--text3);">(optional)</span></label>
+      <label>Notes to Admin <span class="optional-note">(optional)</span></label>
       <textarea id="sta-notes" rows="3" placeholder="Any additional context for the admin..."></textarea>
     </div>
-    <div id="sta-status" style="font-size:13px;min-height:20px;margin-bottom:8px;"></div>
+    <div id="sta-status" class="status-copy micro-copy-bottom-sm"></div>
     <div class="btn-bar">
       <button class="btn btn-gray" onclick="closeSendToAdminModal()">Cancel</button>
       <button class="btn btn-green" id="sta-send-btn" onclick="submitSendToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Send Email</span></button>
@@ -2620,8 +2620,8 @@ function getListingAgents() {
 
 // ── Listing Mode Switch (Add vs Modification) ──
 function switchListingMode(mode) {
-  document.getElementById('listing-add-mode').style.display = mode === 'add' ? '' : 'none';
-  document.getElementById('listing-mod-mode').style.display = mode === 'mod' ? '' : 'none';
+  document.getElementById('listing-add-mode').classList.toggle('is-hidden', mode !== 'add');
+  document.getElementById('listing-mod-mode').classList.toggle('is-hidden', mode !== 'mod');
   document.getElementById('subtab-add').classList.toggle('active', mode === 'add');
   document.getElementById('subtab-mod').classList.toggle('active', mode === 'mod');
 }
@@ -2792,11 +2792,16 @@ function stepQty(id, delta) {
   el.value = Math.max(0, val + delta);
 }
 
+function setHiddenState(el, hidden) {
+  if (!el) return;
+  el.classList.toggle('is-hidden', hidden);
+}
+
 // ── Name Rider Toggle ──
 function toggleNameRider(checked) {
   const field = document.getElementById('s-rider-field');
   const label = document.getElementById('s-rider-toggle-label');
-  if (field) field.style.display = checked ? '' : 'none';
+  setHiddenState(field, !checked);
   if (label) label.textContent = checked ? 'Name Rider included' : 'No Name Rider';
 }
 
@@ -2804,7 +2809,7 @@ function toggleNameRider(checked) {
 function togglePlacementUpload(checked) {
   const area = document.getElementById('s-placement-upload-area');
   const label = document.getElementById('s-placement-toggle-label');
-  if (area) area.style.display = checked ? '' : 'none';
+  setHiddenState(area, !checked);
   if (label) label.textContent = checked ? 'Custom placement (upload below)' : 'Standard placement';
 }
 
@@ -2852,7 +2857,7 @@ function addSignAgent() {
   const tr = document.createElement('tr');
   tr.innerHTML = '<td>' + signAgentCount + '</td>' +
     '<td><input placeholder="Agent name"></td>' +
-    '<td><input placeholder="e.g. 50%" style="width:100px;"></td>' +
+    '<td><input class="table-col-wide" placeholder="e.g. 50%"></td>' +
     '<td><button class="remove-row" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
   body.appendChild(tr);
 }
@@ -2870,39 +2875,53 @@ function handleSignUpload(input) {
   if (!file) return;
   if (file.size > 10 * 1024 * 1024) { alert('File too large. Max 10MB.'); return; }
   signUploadData = file;
-  document.getElementById('sign-upload-placeholder').style.display = 'none';
+  const placeholder = document.getElementById('sign-upload-placeholder');
   const preview = document.getElementById('sign-upload-preview');
-  preview.style.display = 'block';
-  document.getElementById('sign-preview-name').textContent = file.name + ' (' + (file.size / 1024).toFixed(0) + ' KB)';
-  document.getElementById('sign-upload-clear').style.display = '';
+  const previewImg = document.getElementById('sign-preview-img');
+  const previewName = document.getElementById('sign-preview-name');
+  const clearButton = document.getElementById('sign-upload-clear');
+
+  setHiddenState(placeholder, true);
+  setHiddenState(preview, false);
+  if (previewName) previewName.textContent = file.name + ' (' + (file.size / 1024).toFixed(0) + ' KB)';
+  setHiddenState(clearButton, false);
+
   if (file.type.startsWith('image/')) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      document.getElementById('sign-preview-img').src = e.target.result;
-      document.getElementById('sign-preview-img').style.display = '';
+      if (previewImg) {
+        previewImg.src = e.target.result;
+        setHiddenState(previewImg, false);
+      }
     };
     reader.readAsDataURL(file);
   } else {
-    document.getElementById('sign-preview-img').style.display = 'none';
-    document.getElementById('sign-preview-name').textContent = file.name + ' (' + (file.size / 1024).toFixed(0) + ' KB)';
+    setHiddenState(previewImg, true);
   }
 }
 function clearSignUpload() {
   signUploadData = null;
   document.getElementById('s-placement-file').value = '';
-  document.getElementById('sign-upload-placeholder').style.display = '';
-  document.getElementById('sign-upload-preview').style.display = 'none';
-  document.getElementById('sign-preview-img').src = '';
-  document.getElementById('sign-upload-clear').style.display = 'none';
+  const placeholder = document.getElementById('sign-upload-placeholder');
+  const preview = document.getElementById('sign-upload-preview');
+  const previewImg = document.getElementById('sign-preview-img');
+  const clearButton = document.getElementById('sign-upload-clear');
+  setHiddenState(placeholder, false);
+  setHiddenState(preview, true);
+  if (previewImg) {
+    previewImg.src = '';
+    setHiddenState(previewImg, true);
+  }
+  setHiddenState(clearButton, true);
 }
 // Drag & drop support
 document.addEventListener('DOMContentLoaded', () => {
   const zone = document.getElementById('sign-upload-zone');
   if (zone) {
-    zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.style.borderColor = 'var(--red)'; });
-    zone.addEventListener('dragleave', () => { zone.style.borderColor = 'var(--border)'; });
+    zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('is-dragover'); });
+    zone.addEventListener('dragleave', () => { zone.classList.remove('is-dragover'); });
     zone.addEventListener('drop', (e) => {
-      e.preventDefault(); zone.style.borderColor = 'var(--border)';
+      e.preventDefault(); zone.classList.remove('is-dragover');
       const file = e.dataTransfer.files[0];
       if (file) { const input = document.getElementById('s-placement-file'); const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files; handleSignUpload(input); }
     });
@@ -3204,25 +3223,37 @@ function addDistRow() {
 // ═══════════════════════════════════════════════════════════════════════════════
 function onVoucherTxnChange() {
   const txn = document.getElementById('v-txn-type').value;
-  document.getElementById('v-lease-section').style.display = txn === 'lease' ? '' : 'none';
-  document.getElementById('v-sale-section').style.display = txn === 'sale' ? '' : 'none';
-  document.getElementById('v-rent-section').style.display = txn === 'lease' ? '' : 'none';
+  setHiddenState(document.getElementById('v-lease-section'), txn !== 'lease');
+  setHiddenState(document.getElementById('v-sale-section'), txn !== 'sale');
+  setHiddenState(document.getElementById('v-rent-section'), txn !== 'lease');
   // Toggle required sections
   const reqLease = document.getElementById('v-req-lease');
   const reqSale = document.getElementById('v-req-sale');
   const reqCommLease = document.getElementById('v-req-comm-lease');
   const reqCommSale = document.getElementById('v-req-comm-sale');
-  if (reqLease) reqLease.style.display = txn === 'lease' ? '' : 'none';
-  if (reqSale) reqSale.style.display = txn === 'sale' ? '' : 'none';
-  if (reqCommLease) reqCommLease.style.display = txn === 'lease' ? '' : 'none';
-  if (reqCommSale) reqCommSale.style.display = txn === 'sale' ? '' : 'none';
+  setHiddenState(reqLease, txn !== 'lease');
+  setHiddenState(reqSale, txn !== 'sale');
+  setHiddenState(reqCommLease, txn !== 'lease');
+  setHiddenState(reqCommSale, txn !== 'sale');
   document.getElementById('v-lbl-lessor').textContent = txn === 'sale' ? 'Seller' : 'Lessor / Seller';
   document.getElementById('v-lbl-lessee').textContent = txn === 'sale' ? 'Buyer' : 'Lessee / Buyer';
 }
 
 // Show/hide "Other" type explanation
 document.getElementById('v-prop-type')?.addEventListener('change', function() {
-  document.getElementById('v-other-type-field').style.display = this.value === 'other' ? '' : 'none';
+  setHiddenState(document.getElementById('v-other-type-field'), this.value !== 'other');
+});
+
+function toggleOutsideAgents(checked) {
+  setHiddenState(document.getElementById('v-outside-section'), !checked);
+  const label = document.getElementById('v-outside-toggle-label');
+  if (label) label.textContent = checked ? 'On' : 'Off';
+}
+
+document.getElementById('v-invoice-to')?.addEventListener('change', function() {
+  const isThirdParty = this.value === 'third_party';
+  setHiddenState(document.getElementById('v-third-party-section'), !isThirdParty);
+  setHiddenState(document.getElementById('v-third-party-addr'), !isThirdParty);
 });
 
 // Same agent toggle
@@ -5948,10 +5979,10 @@ function dxApplyEntryModeUI() {
       ? 'Create a listing-side Dealius record with pricing, parties, timeline fields, and broker assignments from manual entry or an approved listing submission.'
       : 'Build a Dealius deal from a voucher or manual entry, including deal facts, rent schedule, and broker assignments.';
   }
-  if (listingFields) listingFields.style.display = isListing ? '' : 'none';
-  if (drop) drop.style.display = isListing ? 'none' : '';
+  setHiddenState(listingFields, !isListing);
+  setHiddenState(drop, isListing);
   if (title) title.textContent = isListing ? 'Listing Entry' : 'Deal Entry';
-  if (aiButton) aiButton.style.display = !isListing && DX_P ? '' : 'none';
+  setHiddenState(aiButton, isListing || !DX_P);
 
   document.querySelectorAll('#dxRb option').forEach(option => {
     option.disabled = isListing && (option.value === '1' || option.value === '3');
@@ -6276,7 +6307,7 @@ function dxRenderPreview(d) {
   document.getElementById('dxBd').innerHTML =
     d.brokers.map(b => '<span class="broker-pill">\uD83D\uDC64 ' + b.name + ' · ' + b.side + ' · ' + (b.pct * 100).toFixed(0) + '%</span>').join('') +
     d.outsideBrokers.map(b => '<span class="broker-pill outside">\uD83E\uDD1D ' + b.name + ' · $' + b.amt.toLocaleString('en', { minimumFractionDigits: 2 }) + '</span>').join('');
-  document.getElementById('dxOw').style.display = d.outsideBrokers.length ? 'block' : 'none';
+  setHiddenState(document.getElementById('dxOw'), d.outsideBrokers.length === 0);
 
   dxRenderBrokerEditor(entry.brokers || []);
   dxRenderOutsideBrokerMeta(entry.outsideBrokers || []);
@@ -6288,10 +6319,10 @@ function dxRenderPreview(d) {
 function dxOnRepTypeChange() {
   const repID = parseInt(document.getElementById('dxRb').value);
   const isSale = (repID === 1 || repID === 2);
-  document.getElementById('dx_lease_section').style.display = isSale ? 'none' : '';
-  document.getElementById('dx_sale_section').style.display  = isSale ? '' : 'none';
-  document.getElementById('dxLeaseCloseoutFields').style.display = (!isSale && DX_ENTRY_MODE !== 'listing') ? '' : 'none';
-  document.getElementById('dxRentScheduleBlock').style.display = (!isSale && DX_ENTRY_MODE !== 'listing') ? '' : 'none';
+  setHiddenState(document.getElementById('dx_lease_section'), isSale);
+  setHiddenState(document.getElementById('dx_sale_section'), !isSale);
+  setHiddenState(document.getElementById('dxLeaseCloseoutFields'), isSale || DX_ENTRY_MODE === 'listing');
+  setHiddenState(document.getElementById('dxRentScheduleBlock'), isSale || DX_ENTRY_MODE === 'listing');
   if (DX_ENTRY_MODE === 'listing') {
     document.getElementById('dxListingTransaction').value = isSale ? 'sale' : 'lease';
   }
@@ -9501,10 +9532,10 @@ let _ciRedlineCount = 0;
 function ciOnContractTypeChange() {
   const type = document.getElementById('ci-contract-type').value;
   const chooser = document.getElementById('ci-path-chooser');
-  chooser.style.display = type ? '' : 'none';
+  setHiddenState(chooser, !type);
   // Show/hide master lease block for sublease contracts
   const mlBlock = document.getElementById('ci-master-lease-block');
-  if (mlBlock) mlBlock.style.display = (type === 'excl-sublease') ? '' : 'none';
+  setHiddenState(mlBlock, type !== 'excl-sublease');
   // Update party 1 label based on contract type
   const party1Label = document.getElementById('ci-party1-label');
   if (party1Label) {
@@ -9520,8 +9551,8 @@ function ciOnContractTypeChange() {
   }
   // Reset path selection
   _ciCurrentPath = null;
-  document.getElementById('ci-upload-path').style.display = 'none';
-  document.getElementById('ci-form-area').style.display = 'none';
+  setHiddenState(document.getElementById('ci-upload-path'), true);
+  setHiddenState(document.getElementById('ci-form-area'), true);
   document.querySelectorAll('.ci-path-card').forEach(c => c.classList.remove('selected'));
 }
 
@@ -9530,12 +9561,12 @@ function ciSelectPath(path) {
   document.querySelectorAll('.ci-path-card').forEach(c => c.classList.remove('selected'));
   document.getElementById('ci-path-' + path).classList.add('selected');
   if (path === 'fill') {
-    document.getElementById('ci-upload-path').style.display = 'none';
-    document.getElementById('ci-form-area').style.display = '';
-    document.getElementById('ci-ai-banner').style.display = 'none';
+    setHiddenState(document.getElementById('ci-upload-path'), true);
+    setHiddenState(document.getElementById('ci-form-area'), false);
+    setHiddenState(document.getElementById('ci-ai-banner'), true);
   } else {
-    document.getElementById('ci-upload-path').style.display = '';
-    document.getElementById('ci-form-area').style.display = 'none';
+    setHiddenState(document.getElementById('ci-upload-path'), false);
+    setHiddenState(document.getElementById('ci-form-area'), true);
   }
 }
 
@@ -9601,13 +9632,13 @@ async function ciProcessPdf(file) {
     ciPopulateFromExtraction(extractRes.data);
 
     // 5. Show form with AI banner
-    document.getElementById('ci-form-area').style.display = '';
+    setHiddenState(document.getElementById('ci-form-area'), false);
     const banner = document.getElementById('ci-ai-banner');
-    banner.style.display = 'flex';
+    setHiddenState(banner, false);
     document.getElementById('ci-ai-banner-text').textContent =
       '\u2728 AI extracted the fields below from "' + file.name + '". Review and correct anything that looks wrong before submitting.';
 
-    statusEl.innerHTML = '<span style="color:#16a34a;font-weight:600;">\u2713 Extraction complete — review the fields below</span>';
+    statusEl.innerHTML = '<span class="status-success">\u2713 Extraction complete — review the fields below</span>';
     zone.style.borderColor = '#16a34a';
 
   } catch(err) {
@@ -9915,10 +9946,10 @@ function ciReset() {
   // Reset contract type
   document.getElementById('ci-contract-type').value = '';
   // Hide sections
-  document.getElementById('ci-path-chooser').style.display = 'none';
-  document.getElementById('ci-upload-path').style.display = 'none';
-  document.getElementById('ci-form-area').style.display = 'none';
-  document.getElementById('ci-ai-banner').style.display = 'none';
+  setHiddenState(document.getElementById('ci-path-chooser'), true);
+  setHiddenState(document.getElementById('ci-upload-path'), true);
+  setHiddenState(document.getElementById('ci-form-area'), true);
+  setHiddenState(document.getElementById('ci-ai-banner'), true);
   // Clear all inputs
   document.querySelectorAll('#tab-contracts input, #tab-contracts textarea').forEach(el => el.value = '');
   document.querySelectorAll('#tab-contracts select').forEach(el => el.selectedIndex = 0);
@@ -9933,7 +9964,7 @@ function ciReset() {
   const zone = document.getElementById('ci-upload-zone');
   if (zone) zone.style.borderColor = '';
   const uploadStatus = document.getElementById('ci-upload-status');
-  if (uploadStatus) { uploadStatus.style.display = 'none'; uploadStatus.innerHTML = ''; }
+  if (uploadStatus) { setHiddenState(uploadStatus, true); uploadStatus.innerHTML = ''; }
   document.getElementById('ci-submit-status').textContent = '';
   _ciCurrentPath = null;
   document.querySelectorAll('.ci-path-card').forEach(c => c.classList.remove('selected'));
