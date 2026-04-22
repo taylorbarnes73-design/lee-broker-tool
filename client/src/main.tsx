@@ -10,6 +10,23 @@ import "./index.css";
 
 const queryClient = new QueryClient();
 
+const mountAnalytics = () => {
+  if (typeof document === "undefined") return;
+
+  const endpoint = import.meta.env.VITE_ANALYTICS_ENDPOINT?.trim();
+  const websiteId = import.meta.env.VITE_ANALYTICS_WEBSITE_ID?.trim();
+
+  if (!endpoint || !websiteId) return;
+  if (document.querySelector("script[data-lee-analytics='umami']")) return;
+
+  const script = document.createElement("script");
+  script.defer = true;
+  script.src = `${endpoint.replace(/\/+$/, "")}/umami`;
+  script.dataset.websiteId = websiteId;
+  script.dataset.leeAnalytics = "umami";
+  document.body.appendChild(script);
+};
+
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;
@@ -29,7 +46,9 @@ queryClient.getQueryCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     const error = event.query.state.error;
     redirectToLoginIfUnauthorized(error);
-    console.error("[API Query Error]", error);
+    if (error instanceof Error) {
+      console.error("[API Query Error]", error.message);
+    }
   }
 });
 
@@ -37,7 +56,9 @@ queryClient.getMutationCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     const error = event.mutation.state.error;
     redirectToLoginIfUnauthorized(error);
-    console.error("[API Mutation Error]", error);
+    if (error instanceof Error) {
+      console.error("[API Mutation Error]", error.message);
+    }
   }
 });
 
@@ -55,6 +76,8 @@ const trpcClient = trpc.createClient({
     }),
   ],
 });
+
+mountAnalytics();
 
 createRoot(document.getElementById("root")!).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>

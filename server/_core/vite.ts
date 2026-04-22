@@ -8,6 +8,21 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const CLIENT_INDEX_TEMPLATE = fileURLToPath(new URL("../../client/index.html", import.meta.url));
+const BROKER_TOOL_TEMPLATE = fileURLToPath(new URL("../../client/public/broker_tool.html", import.meta.url));
+const DEV_DIST_PUBLIC_ROOT = fileURLToPath(new URL("../../dist/public/", import.meta.url));
+const PROD_PUBLIC_ROOT = fileURLToPath(new URL("../public/", import.meta.url));
+
+const HTML_ENTRY_TEMPLATES: Record<string, string> = {
+  "/": CLIENT_INDEX_TEMPLATE,
+  "/broker_tool.html": BROKER_TOOL_TEMPLATE,
+};
+
+const resolveHtmlTemplate = (requestUrl: string) => {
+  const pathname = new URL(requestUrl, "http://localhost").pathname;
+  return HTML_ENTRY_TEMPLATES[pathname] ?? CLIENT_INDEX_TEMPLATE;
+};
+
 export async function setupVite(app: Express, server: Server) {
   const { createServer: createViteServer } = await import("vite");
 
@@ -28,16 +43,9 @@ export async function setupVite(app: Express, server: Server) {
     const url = req.originalUrl;
 
     try {
-      const clientRoot = path.resolve(__dirname, "../..", "client");
-
-      // Serve named HTML entry points (e.g. /broker_tool.html) directly
-      const htmlEntries = ["broker_tool.html"];
-      const requestedHtml = htmlEntries.find(f => url.startsWith(`/${f}`));
-      const templateFile = requestedHtml ?? "index.html";
-
       // always reload the html file from disk in case it changes
       let template = await fs.promises.readFile(
-        path.resolve(clientRoot, templateFile),
+        resolveHtmlTemplate(url),
         "utf-8"
       );
       template = template.replace(
@@ -56,8 +64,8 @@ export async function setupVite(app: Express, server: Server) {
 export function serveStatic(app: Express) {
   const distPath =
     process.env.NODE_ENV === "development"
-      ? path.resolve(__dirname, "../..", "dist", "public")
-      : path.resolve(__dirname, "public");
+      ? DEV_DIST_PUBLIC_ROOT
+      : PROD_PUBLIC_ROOT;
   if (!fs.existsSync(distPath)) {
     console.error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`
@@ -68,6 +76,6 @@ export function serveStatic(app: Express) {
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+    res.sendFile("index.html", { root: distPath });
   });
 }
