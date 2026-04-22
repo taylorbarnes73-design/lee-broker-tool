@@ -58,13 +58,19 @@ Resources:
       DBInstanceClass: !Ref DbInstanceClass
       AllocatedStorage: !Ref AllocatedStorage
       StorageEncrypted: true
-      PubliclyAccessible: true
+      PubliclyAccessible: false
       MultiAZ: false
-      BackupRetentionPeriod: 1
+      BackupRetentionPeriod: 7
+      AutoMinorVersionUpgrade: true
+      EnableIAMDatabaseAuthentication: true
+      EnableCloudwatchLogsExports:
+        - error
+        - general
+        - slowquery
       DBSubnetGroupName: !Ref DbSubnetGroup
       VPCSecurityGroups:
         - !GetAtt DbSecurityGroup.GroupId
-      DeletionProtection: false
+      DeletionProtection: true
 
 Outputs:
   DbEndpoint:

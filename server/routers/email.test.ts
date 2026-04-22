@@ -41,7 +41,7 @@ vi.mock("nodemailer", () => ({
 
 vi.mock("../_core/env", () => ({
   ENV: {
-    adminEmail: "admin@lee-associates.com",
+    adminEmail: "admin@example.test",
     forgeApiUrl: "",
     forgeApiKey: "",
     ownerOpenId: "",
@@ -67,9 +67,9 @@ function makeCaller() {
     req: {} as any,
     res: {} as any,
     user: {
-      openId: "local-taylor",
-      name: "Taylor Barnes",
-      email: "tbarnes@lee-associates.com",
+      openId: "local-test-user",
+      name: "Test User",
+      email: "testuser@example.test",
       role: "admin",
     },
   } as any);
@@ -80,7 +80,7 @@ const sampleSections = [
     title: "Property Details",
     fields: [
       { label: "Address", value: "123 Main St" },
-      { label: "City", value: "Newport Beach" },
+      { label: "City", value: "Test City" },
     ],
   },
   {
@@ -108,10 +108,10 @@ describe("email.sendToAdmin", () => {
     const caller = makeCaller();
     const result = await caller.sendToAdmin({
       formType: "listing",
-      brokerName: "Taylor Barnes",
-      propertyAddress: "123 Main St, Newport Beach",
+      brokerName: "Test Broker",
+      propertyAddress: "123 Main St, Test City",
       sections: sampleSections,
-      senderEmail: "tbarnes@lee-associates.com",
+      senderEmail: "testuser@example.test",
     });
 
     expect(result.success).toBe(true);
@@ -120,7 +120,7 @@ describe("email.sendToAdmin", () => {
 
     const callArg = execSyncMock.mock.calls[0][0] as string;
     expect(callArg).toContain("outlook_send_messages");
-    expect(callArg).toContain("admin@lee-associates.com");
+    expect(callArg).toContain("admin@example.test");
     expect(result.submissionId).toBe(101);
     expect(result.status).toBe("pending");
   });
@@ -129,24 +129,24 @@ describe("email.sendToAdmin", () => {
     const caller = makeCaller();
     await caller.sendToAdmin({
       formType: "listing",
-      brokerName: "Taylor",
+      brokerName: "Test Broker",
       propertyAddress: "789 Oak Ave",
       sections: sampleSections,
-      senderEmail: "tbarnes@lee-associates.com",
+      senderEmail: "testuser@example.test",
     });
 
     const callArg = execSyncMock.mock.calls[0][0] as string;
-    expect(callArg).toContain("tbarnes@lee-associates.com");
+    expect(callArg).toContain("testuser@example.test");
   });
 
   it("archives the generated PDF and includes attachment metadata for Outlook", async () => {
     const caller = makeCaller();
     const result = await caller.sendToAdmin({
       formType: "voucher",
-      brokerName: "Taylor Barnes",
+      brokerName: "Test Broker",
       propertyAddress: "456 Commerce Dr",
       sections: sampleSections,
-      senderEmail: "tbarnes@lee-associates.com",
+      senderEmail: "testuser@example.test",
       pdfAttachment: {
         filename: "Voucher Draft.pdf",
         mimeType: "application/pdf",
@@ -173,10 +173,10 @@ describe("email.sendToAdmin", () => {
     const caller = makeCaller();
     const result = await caller.sendToAdmin({
       formType: "sign",
-      brokerName: "Taylor Barnes",
-      propertyAddress: "200 Commerce Dr, Irvine",
+      brokerName: "Test Broker",
+      propertyAddress: "200 Commerce Dr, Test City",
       sections: sampleSections,
-      senderEmail: "tbarnes@lee-associates.com",
+      senderEmail: "testuser@example.test",
       pdfAttachment: {
         filename: "Sign Request.pdf",
         mimeType: "application/pdf",
@@ -194,17 +194,17 @@ describe("email.sendToAdmin", () => {
     const envMod = await import("../_core/env");
     const originalHost = (envMod.ENV as any).smtpHost;
     const originalFrom = (envMod.ENV as any).smtpFrom;
-    (envMod.ENV as any).smtpHost = "smtp.example.com";
-    (envMod.ENV as any).smtpFrom = "ops@lee-associates.com";
+    (envMod.ENV as any).smtpHost = "smtp.example.test";
+    (envMod.ENV as any).smtpFrom = "ops@example.test";
 
     try {
       const caller = makeCaller();
       const result = await caller.sendToAdmin({
         formType: "listing",
-        brokerName: "Taylor Barnes",
-        propertyAddress: "100 Newport Center Dr",
+        brokerName: "Test Broker",
+        propertyAddress: "100 Test Center Dr",
         sections: sampleSections,
-        senderEmail: "tbarnes@lee-associates.com",
+        senderEmail: "testuser@example.test",
         pdfAttachment: {
           filename: "Listing Packet.pdf",
           mimeType: "application/pdf",
@@ -235,7 +235,7 @@ describe("email.sendToAdmin", () => {
       const caller = makeCaller();
       const result = await caller.sendToAdmin({
         formType: "listing",
-        brokerName: "Taylor",
+        brokerName: "Test Broker",
         propertyAddress: "",
         sections: sampleSections,
       });

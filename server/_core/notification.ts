@@ -98,9 +98,11 @@ export async function notifyOwner(
 
     if (!response.ok) {
       const detail = await response.text().catch(() => "");
+      // Sanitize detail to prevent log injection (strip newlines)
+      const safeDetail = detail.replace(/[\r\n]/g, " ").slice(0, 200);
       console.warn(
         `[Notification] Failed to notify owner (${response.status} ${response.statusText})${
-          detail ? `: ${detail}` : ""
+          safeDetail ? `: ${safeDetail}` : ""
         }`
       );
       return false;

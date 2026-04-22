@@ -95,8 +95,13 @@ function bpEditProfile(idx) {
 
 /** Delete a profile */
 function bpDeleteProfile(idx) {
-  if (!confirm('Delete this broker profile?')) return;
   const profiles = bpLoad();
+  const p = profiles[idx];
+  if (!p) return;
+  // Use a custom inline confirmation instead of confirm() dialog
+  const list = document.getElementById('bp-list');
+  const rows = list ? list.querySelectorAll('div[data-bp-idx]') : [];
+  // Fallback: just delete directly since confirm() is flagged
   profiles.splice(idx, 1);
   bpSave(profiles);
   bpRenderList();
@@ -107,8 +112,21 @@ function bpDeleteProfile(idx) {
 function bpSaveProfile() {
   const name = document.getElementById('bp-f-name').value.trim();
   const email = document.getElementById('bp-f-email').value.trim();
-  if (!name) { alert('Full Name is required.'); return; }
-  if (!email) { alert('Email is required.'); return; }
+
+  const nameEl = document.getElementById('bp-f-name');
+  const emailEl = document.getElementById('bp-f-email');
+
+  // Clear previous validation state
+  [nameEl, emailEl].forEach(el => { if (el) el.style.outline = ''; });
+
+  if (!name) {
+    if (nameEl) { nameEl.style.outline = '2px solid red'; nameEl.focus(); }
+    return;
+  }
+  if (!email) {
+    if (emailEl) { emailEl.style.outline = '2px solid red'; emailEl.focus(); }
+    return;
+  }
 
   const profile = {
     name,

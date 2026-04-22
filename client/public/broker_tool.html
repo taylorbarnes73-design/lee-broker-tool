@@ -2224,7 +2224,7 @@
     </div>
     <div class="modal-subtitle" id="adm-detail-subtitle"></div>
     <div class="detail-grid" id="adm-detail-grid"></div>
-    <div class="notes-box" id="adm-detail-notes" style="display:none;"><div class="notes-label">Notes</div><div id="adm-detail-notes-text"></div></div>
+    <div class="notes-box is-hidden" id="adm-detail-notes"><div class="notes-label">Notes</div><div id="adm-detail-notes-text"></div></div>
     <div class="action-bar" id="adm-detail-actions"></div>
   </div>
 </div>
@@ -2535,15 +2535,15 @@ function onPropTypeChange() {
   document.getElementById('size-land').classList.toggle('visible', type === 'land');
 
   // Show/hide project name for office/retail
-  document.getElementById('field-project-name').style.display = (type === 'office' || type === 'retail') ? '' : 'none';
+  setHiddenState(document.getElementById('field-project-name'), !(type === 'office' || type === 'retail'));
 
   // State field is now always visible
 
   // Show/hide corner for retail
-  document.getElementById('field-corner').style.display = (type === 'retail') ? '' : 'none';
+  setHiddenState(document.getElementById('field-corner'), type !== 'retail');
 
   // Show/hide occupancy for non-land
-  document.getElementById('field-occupancy').style.display = (type !== 'land') ? '' : 'none';
+  setHiddenState(document.getElementById('field-occupancy'), type === 'land');
 
   // Show/hide cap rate for retail sale
   updateCapRateVisibility();
@@ -2559,8 +2559,8 @@ function onTxnTypeChange() {
   const txn = document.getElementById('l-txn-type').value;
   const showLease = txn === 'lease' || txn === 'sale-lease' || txn === 'sublease';
   const showSale = txn === 'sale' || txn === 'sale-lease';
-  document.getElementById('lease-pricing').style.display = showLease ? '' : 'none';
-  document.getElementById('sale-pricing').style.display = showSale ? '' : 'none';
+  setHiddenState(document.getElementById('lease-pricing'), !showLease);
+  setHiddenState(document.getElementById('sale-pricing'), !showSale);
   updateCapRateVisibility();
 }
 
@@ -2568,7 +2568,7 @@ function updateCapRateVisibility() {
   const type = document.getElementById('l-prop-type').value;
   const txn = document.getElementById('l-txn-type').value;
   const showCap = type === 'retail' && (txn === 'sale' || txn === 'sale-lease');
-  document.getElementById('cap-rate-row').style.display = showCap ? '' : 'none';
+  setHiddenState(document.getElementById('cap-rate-row'), !showCap);
 }
 
 // Release date toggle
@@ -2591,7 +2591,7 @@ function addListingAgent() {
     '<td><div class="agent-picker" id="picker-la-' + idx + '"><input id="la-name-' + idx + '" placeholder="Start typing agent name..." autocomplete="off"><div class="agent-dd" id="dd-la-name-' + idx + '"></div></div></td>' +
     '<td><input id="la-phone-' + idx + '" type="tel" placeholder="949-000-0000"></td>' +
     '<td><input id="la-email-' + idx + '" type="email" placeholder="agent@lee-associates.com"></td>' +
-    '<td><input id="la-shared-' + idx + '" type="number" min="0" max="100" placeholder="50" style="text-align:center;"></td>' +
+    '<td><input class="text-center" id="la-shared-' + idx + '" type="number" min="0" max="100" placeholder="50"></td>' +
     '<td><button class="remove-row" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
   body.appendChild(tr);
   // Initialize agent picker for this row
@@ -2657,7 +2657,7 @@ function toggleRevealPrices(type, checked) {
 // ── Lease Term Custom Field ──
 function toggleLeaseTerm(val) {
   const el = document.getElementById('l-lease-term-custom-field');
-  if (el) el.style.display = val === 'custom' ? '' : 'none';
+  setHiddenState(el, val !== 'custom');
 }
 
 // ── Listing Review & Confirm Page ──
@@ -2701,33 +2701,33 @@ function showListingReview() {
 
   const content = document.getElementById('listing-review-content');
   if (content) {
-    content.innerHTML = '<table style="width:100%;border-collapse:collapse;">' +
+    content.innerHTML = '<table class="review-table">' +
       rows.map((r, i) =>
-        '<tr style="' + (i % 2 === 0 ? 'background:#f8f8f8;' : '') + '">' +
-        '<td style="padding:6px 12px;font-weight:600;width:180px;vertical-align:top;">' + r[0] + '</td>' +
-        '<td style="padding:6px 12px;">' + r[1] + '</td></tr>'
+        '<tr class="' + (i % 2 === 0 ? 'review-table-alt' : '') + '">' +
+        '<td class="review-key-cell">' + r[0] + '</td>' +
+        '<td class="review-value-cell">' + r[1] + '</td></tr>'
       ).join('') + '</table>';
   }
 
   // Hide form, show review page
   const formActions = document.getElementById('listing-form-actions');
-  if (formActions) formActions.style.display = 'none';
+  setHiddenState(formActions, true);
   // Hide all cards in listing-add-mode except the review page
   const cards = document.querySelectorAll('#listing-add-mode > .card, #listing-add-mode > .optional-wrapper');
-  cards.forEach(c => { if (c.id !== 'listing-review-page') c.style.display = 'none'; });
-  if (postSubmit) postSubmit.style.display = 'none';
-  reviewPage.style.display = '';
+  cards.forEach(c => { if (c.id !== 'listing-review-page') c.classList.add('is-hidden'); });
+  setHiddenState(postSubmit, true);
+  setHiddenState(reviewPage, false);
   reviewPage.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function hideListingReview() {
   const reviewPage = document.getElementById('listing-review-page');
   const formActions = document.getElementById('listing-form-actions');
-  if (reviewPage) reviewPage.style.display = 'none';
-  if (formActions) formActions.style.display = '';
+  setHiddenState(reviewPage, true);
+  setHiddenState(formActions, false);
   // Restore all cards
   const cards = document.querySelectorAll('#listing-add-mode > .card, #listing-add-mode > .optional-wrapper');
-  cards.forEach(c => { c.style.display = ''; });
+  cards.forEach(c => { c.classList.remove('is-hidden'); });
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -2738,7 +2738,7 @@ function submitListingToMLS(btn) {
   // After a short delay, reveal the post-submit actions and remove spinner
   setTimeout(() => {
     const postSubmit = document.getElementById('listing-post-submit');
-    if (postSubmit) postSubmit.style.display = '';
+    setHiddenState(postSubmit, false);
     if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
   }, 800);
 }
@@ -2770,17 +2770,17 @@ function showListingSummary() {
   const content = document.getElementById('listing-summary-content');
   if (content) {
     content.innerHTML =
-      '<table style="width:100%;border-collapse:collapse;">' +
-      '<tr><td style="padding:4px 8px;font-weight:600;width:180px;">Address</td><td style="padding:4px 8px;">' + addr + ', ' + city + ', ' + state + ' ' + zip + '</td></tr>' +
-      '<tr style="background:#f8f8f8;"><td style="padding:4px 8px;font-weight:600;">Property Type</td><td style="padding:4px 8px;">' + propType + '</td></tr>' +
-      '<tr><td style="padding:4px 8px;font-weight:600;">Transaction</td><td style="padding:4px 8px;">' + txnType + '</td></tr>' +
-      (txnType === 'lease' ? '<tr style="background:#f8f8f8;"><td style="padding:4px 8px;font-weight:600;">Rate $/SF/Mo</td><td style="padding:4px 8px;">' + leaseSF + ' ' + leaseType + '</td></tr>' : '') +
-      (txnType === 'sale' ? '<tr style="background:#f8f8f8;"><td style="padding:4px 8px;font-weight:600;">Asking Price</td><td style="padding:4px 8px;">$' + salePrice + '</td></tr>' : '') +
-      '<tr><td style="padding:4px 8px;font-weight:600;">Agents</td><td style="padding:4px 8px;">' + agentNames + '</td></tr>' +
-      '<tr style="background:#f8f8f8;"><td style="padding:4px 8px;font-weight:600;">MLS Pricing</td><td style="padding:4px 8px;">' + (reveal ? 'Visible' : 'Hidden') + '</td></tr>' +
+        '<table class="review-table">' +
+        '<tr><td class="summary-key-cell">Address</td><td class="summary-value-cell">' + addr + ', ' + city + ', ' + state + ' ' + zip + '</td></tr>' +
+        '<tr class="review-table-alt"><td class="summary-key-cell">Property Type</td><td class="summary-value-cell">' + propType + '</td></tr>' +
+        '<tr><td class="summary-key-cell">Transaction</td><td class="summary-value-cell">' + txnType + '</td></tr>' +
+        (txnType === 'lease' ? '<tr class="review-table-alt"><td class="summary-key-cell">Rate $/SF/Mo</td><td class="summary-value-cell">' + leaseSF + ' ' + leaseType + '</td></tr>' : '') +
+        (txnType === 'sale' ? '<tr class="review-table-alt"><td class="summary-key-cell">Asking Price</td><td class="summary-value-cell">$' + salePrice + '</td></tr>' : '') +
+        '<tr><td class="summary-key-cell">Agents</td><td class="summary-value-cell">' + agentNames + '</td></tr>' +
+        '<tr class="review-table-alt"><td class="summary-key-cell">MLS Pricing</td><td class="summary-value-cell">' + (reveal ? 'Visible' : 'Hidden') + '</td></tr>' +
       '</table>';
   }
-  panel.style.display = '';
+      setHiddenState(panel, false);
   panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -2990,9 +2990,8 @@ function vstepMarkLocked(stepNum) {
   const h2 = card.querySelector('h2');
   if (h2 && !h2.querySelector('.lock-icon')) {
     const lock = document.createElement('span');
-    lock.className = 'lock-icon';
+    lock.className = 'lock-icon lock-icon-muted';
     lock.textContent = ' 🔒';
-    lock.style.cssText = 'font-size:13px;opacity:.5;margin-left:6px;';
     h2.appendChild(lock);
   }
 }
@@ -3016,15 +3015,16 @@ function vstepMarkDone(stepNum) {
   const fn = VSTEP_SUMMARIES[stepNum];
   const text = fn ? fn() : '';
   summary.innerHTML = '<span class="card-done-icon">OK</span>' + text;
+  summary.classList.remove('is-hidden');
   // Collapse content (hide everything after h2)
   const h2 = card.querySelector('h2');
   if (h2) {
     Array.from(card.children).forEach(el => {
-      if (el !== h2 && !el.classList.contains('card-summary')) el.style.display = 'none';
+      if (el !== h2 && !el.classList.contains('card-summary')) el.classList.add('is-hidden');
     });
   }
   // Click to re-expand
-  card.style.cursor = 'pointer';
+  card.classList.add('card-clickable');
   card.onclick = function() { vstepExpand(stepNum); };
 }
 
@@ -3036,11 +3036,11 @@ function vstepExpand(stepNum) {
   // Remove lock icon if present
   const lock = card.querySelector('.lock-icon');
   if (lock) lock.remove();
-  Array.from(card.children).forEach(el => { el.style.display = ''; });
-  card.style.cursor = '';
+  Array.from(card.children).forEach(el => { el.classList.remove('is-hidden'); });
+  card.classList.remove('card-clickable');
   card.onclick = null;
   const summary = card.querySelector('.card-summary');
-  if (summary) summary.style.display = 'none';
+  setHiddenState(summary, true);
 }
 
 // Update progress bar for voucher tab
@@ -3066,7 +3066,7 @@ const _origSwitchTab = typeof switchTab === 'function' ? switchTab : null;
 function switchTabWithProgress(id) {
   if (_origSwitchTab) _origSwitchTab(id);
   const wrap = document.getElementById('progress-bar-wrap');
-  if (wrap) wrap.style.display = id === 'tab-voucher' ? 'flex' : 'none';
+  setHiddenState(wrap, id !== 'tab-voucher');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -3077,11 +3077,11 @@ function addRentRow() {
   rentRowCount++;
   const body = document.getElementById('v-rent-body');
   const tr = document.createElement('tr');
-  tr.innerHTML = '<td style="text-align:center;font-weight:600;">' + rentRowCount + '</td>' +
+  tr.innerHTML = '<td class="text-center text-strong">' + rentRowCount + '</td>' +
     '<td><input class="rent-monthly" placeholder="$0" oninput="calcRentRow(this)"></td>' +
-    '<td><input class="rent-rate-sf" placeholder="$0.00" readonly style="background:#f8f8f8;"></td>' +
+    '<td><input class="rent-rate-sf readonly-fill" placeholder="$0.00" readonly></td>' +
     '<td><input class="rent-months" placeholder="12" value="12" oninput="calcRentRow(this)"></td>' +
-    '<td><input class="rent-consideration" placeholder="$0" readonly style="background:#f8f8f8;"></td>' +
+    '<td><input class="rent-consideration readonly-fill" placeholder="$0" readonly></td>' +
     '<td><button class="remove-row" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
   body.appendChild(tr);
 }
@@ -3171,7 +3171,7 @@ function updateDistPctTotal() {
   if (!indicator) {
     indicator = document.createElement('div');
     indicator.id = 'dist-pct-total';
-    indicator.style.cssText = 'font-size:13px;font-weight:600;margin-top:8px;';
+    indicator.className = 'status-copy text-strong';
     const btn = document.querySelector('button[onclick="addDistRow()"]');
     if (btn) btn.after(indicator);
   }
@@ -3185,23 +3185,34 @@ function updateDistPctTotal() {
   }
 }
 
+function openDistSideSelect(selectEl) {
+  if (!selectEl) return;
+  selectEl.classList.add('is-open');
+  selectEl.focus();
+}
+
+function closeDistSideSelect(selectEl) {
+  if (!selectEl) return;
+  selectEl.classList.remove('is-open');
+}
+
 function addDistRow() {
   const body = document.getElementById('v-dist-body');
   const tr = document.createElement('tr');
-  tr.innerHTML = '<td><input placeholder="Agent name" style="min-width:120px;"></td>' +
-    '<td><div style="display:flex;align-items:center;gap:6px;">' +
-      '<select onchange="updateDistChips()" style="position:absolute;opacity:0;width:1px;height:1px;">' +
+  tr.innerHTML = '<td><input class="min-w-120" placeholder="Agent name"></td>' +
+    '<td><div class="inline-select-chip">' +
+      '<select class="chip-select" onchange="updateDistChips()" onblur="closeDistSideSelect(this)">' +
         '<option>Listing</option><option>Procuring</option><option>Both</option><option>Other</option><option>Referring</option>' +
       '</select>' +
-      '<span class="side-chip listing" onclick="this.previousElementSibling.style.cssText=\'\';this.previousElementSibling.focus();" style="cursor:pointer;">Listing</span>' +
+      '<span class="side-chip listing cursor-pointer" onclick="openDistSideSelect(this.previousElementSibling)">Listing</span>' +
     '</div></td>' +
-    '<td><input placeholder="%" style="width:55px;" oninput="updateDistPctTotal()"></td>' +
+    '<td><input class="w-55" placeholder="%" oninput="updateDistPctTotal()"></td>' +
     '<td><input placeholder="$0"></td>' +
     '<td><input placeholder="$0"></td>' +
     '<td><input placeholder="$0"></td>' +
     '<td><input placeholder="$0"></td>' +
     '<td><input placeholder="$0"></td>' +
-    '<td><input placeholder="$0" style="font-weight:600;"></td>' +
+    '<td><input class="text-strong" placeholder="$0"></td>' +
     '<td><button class="remove-row" onclick="this.closest(\'tr\').remove();updateDistPctTotal();">&times;</button></td>';
   body.appendChild(tr);
   // Wire the hidden select to update the chip
@@ -3210,11 +3221,10 @@ function addDistRow() {
   sel.addEventListener('change', function() {
     chip.className = 'side-chip ' + getSideChipClass(this.value);
     chip.textContent = this.value;
-    sel.style.cssText = 'position:absolute;opacity:0;width:1px;height:1px;';
+    closeDistSideSelect(sel);
   });
   chip.addEventListener('click', function() {
-    sel.style.cssText = '';
-    sel.focus();
+    openDistSideSelect(sel);
   });
 }
 
@@ -5368,7 +5378,7 @@ async function toggleAdminMode() {
 // If embedded in iframe, hide header and admin toggle
 if (window.location.search.includes('embedded=1')) {
   var hdr = document.querySelector('.header');
-  if (hdr) hdr.style.display = 'none';
+  setHiddenState(hdr, true);
 }
 
 // Switch admin pages
@@ -5410,7 +5420,7 @@ function renderDashboard() {
     return;
   }
   tbody.innerHTML = recent.map(s => 
-    '<tr onclick="openSubmissionDetail(\'' + s.id + '\')"><td style="font-family:monospace;font-size:12px;">' + s.id + '</td><td style="text-transform:capitalize;">' + s.type + '</td><td>' + ([s.address, s.city].filter(Boolean).join(', ') || '-') + '</td><td>' + (s.brokerName || '-') + '</td><td>' + statusBadge(s.status) + '</td></tr>'
+    '<tr onclick="openSubmissionDetail(\'' + s.id + '\')"><td class="cell-mono-sm">' + s.id + '</td><td class="text-capitalize">' + s.type + '</td><td>' + ([s.address, s.city].filter(Boolean).join(', ') || '-') + '</td><td>' + (s.brokerName || '-') + '</td><td>' + statusBadge(s.status) + '</td></tr>'
   ).join('');
 }
 
@@ -5437,7 +5447,7 @@ function filterSubmissions() {
     return;
   }
   tbody.innerHTML = filtered.map(s =>
-    '<tr onclick="openSubmissionDetail(\'' + s.id + '\')"><td style="font-family:monospace;font-size:12px;">' + s.id + '</td><td style="text-transform:capitalize;">' + s.type + '</td><td>' + ([s.address, s.city].filter(Boolean).join(', ') || '-') + '</td><td>' + (s.brokerName || '-') + '</td><td>' + (s.office || '-') + '</td><td>' + statusBadge(s.status) + '</td><td style="font-size:12px;color:var(--text3);">' + fmtDate(s.submittedAt) + '</td></tr>'
+    '<tr onclick="openSubmissionDetail(\'' + s.id + '\')"><td class="cell-mono-sm">' + s.id + '</td><td class="text-capitalize">' + s.type + '</td><td>' + ([s.address, s.city].filter(Boolean).join(', ') || '-') + '</td><td>' + (s.brokerName || '-') + '</td><td>' + (s.office || '-') + '</td><td>' + statusBadge(s.status) + '</td><td class="text-muted-sm">' + fmtDate(s.submittedAt) + '</td></tr>'
   ).join('');
 }
 
@@ -5476,10 +5486,10 @@ function openSubmissionDetail(id) {
         .join('\n\n')
     : '';
   if (s.notes || sectionSummary) {
-    notesBox.style.display = 'block';
+    setHiddenState(notesBox, false);
     document.getElementById('adm-detail-notes-text').textContent = [s.notes, sectionSummary].filter(Boolean).join('\n\n');
   } else {
-    notesBox.style.display = 'none';
+    setHiddenState(notesBox, true);
   }
 
   let actions = '';
@@ -5487,14 +5497,14 @@ function openSubmissionDetail(id) {
     actions += '<a class="btn btn-gray" href="' + s.pdfUrl + '" target="_blank" rel="noopener noreferrer">Open Submission PDF</a>';
   }
   if (s.type === 'listing' || s.type === 'Listing') {
-    actions += '<button class="btn btn-blue" style="background:var(--navy);" onclick="dxPushListing(\'' + s.id + '\')"><svg style="width:13px;height:13px;margin-right:4px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Push to Dealius</button>';
+    actions += '<button class="btn btn-blue" onclick="dxPushListing(\'' + s.id + '\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Push to Dealius</button>';
   }
   if (s.type === 'voucher') {
-    actions += '<button class="btn btn-blue" style="background:var(--red);" onclick="dxPushVoucher(\'' + s.id + '\')"><svg style="width:13px;height:13px;margin-right:4px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Push to Dealius Deal</button>';
+    actions += '<button class="btn btn-blue btn-blue-red" onclick="dxPushVoucher(\'' + s.id + '\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Push to Dealius Deal</button>';
   }
-  actions += '<button class="btn btn-blue" ' + (s.status === 'in_review' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'in_review\')"><svg style="width:13px;height:13px;margin-right:4px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Review</button>';
-  actions += '<button class="btn btn-green" ' + (s.status === 'approved' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'approved\')"><svg style="width:13px;height:13px;margin-right:4px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Approve</button>';
-  actions += '<button class="btn btn-danger" ' + (s.status === 'rejected' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'rejected\')"><svg style="width:13px;height:13px;margin-right:4px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Reject</button>';
+  actions += '<button class="btn btn-blue" ' + (s.status === 'in_review' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'in_review\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Review</button>';
+  actions += '<button class="btn btn-green" ' + (s.status === 'approved' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'approved\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Approve</button>';
+  actions += '<button class="btn btn-danger" ' + (s.status === 'rejected' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'rejected\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Reject</button>';
   document.getElementById('adm-detail-actions').innerHTML = actions;
 
   document.getElementById('admin-detail-modal').classList.add('open');
@@ -5753,9 +5763,9 @@ function dxSaveCreds() {
 function dxShowSaved(id) {
   const el = document.getElementById(id);
   if (!el) return;
-  el.style.display = 'block';
+  setHiddenState(el, false);
   clearTimeout(el._t);
-  el._t = setTimeout(() => el.style.display = 'none', 2000);
+  el._t = setTimeout(() => setHiddenState(el, true), 2000);
 }
 
 function dxGetEntryPrefix(isSale) {
@@ -5797,10 +5807,8 @@ function dxEnsureBrokerSectionShell() {
 
   const label = host.previousElementSibling;
   if (label) {
-    label.style.display = 'flex';
-    label.style.alignItems = 'center';
-    label.style.justifyContent = 'space-between';
-    label.innerHTML = '<span id="dxBrokerLabel"></span><button class="dx-btn dx-ghost" style="font-size:11px;padding:4px 12px;" type="button" onclick="dxAddBrokerRow()">+ Add Broker</button>';
+    label.classList.add('dx-inline-between');
+    label.innerHTML = '<span id="dxBrokerLabel"></span><button class="dx-btn dx-ghost dx-btn-inline-sm" type="button" onclick="dxAddBrokerRow()">+ Add Broker</button>';
   }
 
   if (!document.getElementById('dxBrokerBody')) {
@@ -5876,7 +5884,7 @@ function dxAddBrokerRow(seed, options) {
       '<option value="buyer">Buyer</option>' +
     '</select></td>' +
     '<td><input type="email" class="dx-broker-email" id="' + emailId + '" placeholder="broker@lee-associates.com"></td>' +
-    '<td style="text-align:center;"><input type="checkbox" class="dx-broker-lead"' + (leadChecked ? ' checked' : '') + ' onchange="dxHandleLeadBrokerToggle(this)"></td>' +
+    '<td class="text-center"><input type="checkbox" class="dx-broker-lead"' + (leadChecked ? ' checked' : '') + ' onchange="dxHandleLeadBrokerToggle(this)"></td>' +
     '<td><input type="number" class="dx-broker-pct" min="0" max="100" step="0.01" placeholder="50"></td>' +
     '<td><button class="del-row" type="button" onclick="dxRemoveBrokerRow(this)" title="Remove broker">×</button></td>';
   body.appendChild(tr);
@@ -5959,7 +5967,7 @@ function dxRenderOutsideBrokerMeta(outsideBrokers) {
   meta.innerHTML = rows.map(broker =>
     '<span class="broker-pill outside">Outside: ' + dxEscHtml(broker.name || 'Outside Broker') + ' - $' + (broker.amt || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</span>'
   ).join('');
-  if (outside) outside.style.display = rows.length ? 'block' : 'none';
+  setHiddenState(outside, rows.length === 0);
 }
 
 function dxApplyEntryModeUI() {
@@ -6049,9 +6057,9 @@ function dxLoadFile(file) {
       dxApplyEntryModeUI();
       dxRenderPreview(DX_P);
       dxStat('ok', 'Parsed: ' + DX_P.dealName);
-      document.getElementById('dxCorsNote').style.display = 'none';
-      document.getElementById('dxAib').style.display = '';
-      document.getElementById('dxAiPanel').style.display = 'none';
+      setHiddenState(document.getElementById('dxCorsNote'), true);
+      setHiddenState(document.getElementById('dxAib'), false);
+      setHiddenState(document.getElementById('dxAiPanel'), true);
       document.getElementById('dxAiPanel').innerHTML = '';
     } catch (err) {
       dxStat('err', 'Parse error: ' + err.message);
@@ -6346,11 +6354,11 @@ function dxAddRentRowEl(tbody, idx, months, monthly, free, sqft) {
   tr.dataset.row = idx;
   const rpsf = (!free && sqft && monthly) ? (monthly / sqft).toFixed(4) : '—';
   tr.innerHTML =
-    '<td class="rn" style="color:#94a3b8;font-size:12px;">' + (idx + 1) + '</td>' +
-    '<td><input type="number" class="r-months" min="1" value="' + (months || '') + '" oninput="dxRenumberRentRows()" style="width:70px;"/></td>' +
-    '<td><input type="number" class="r-monthly" step="0.01" min="0" value="' + (monthly || '') + '" oninput="dxUpdateRentRowPSF(this)" style="width:110px;"' + (free ? ' disabled' : '') + '/></td>' +
-    '<td style="text-align:center;"><input type="checkbox" class="r-free"' + (free ? ' checked' : '') + ' onchange="dxOnFreeRentChange(this)"/></td>' +
-    '<td class="rpsf">' + (free ? '<em style="color:#94a3b8">Free</em>' : (rpsf !== '—' ? '$' + rpsf : '—')) + '</td>' +
+    '<td class="rn text-muted-sm">' + (idx + 1) + '</td>' +
+    '<td><input type="number" class="r-months w-70" min="1" value="' + (months || '') + '" oninput="dxRenumberRentRows()"/></td>' +
+    '<td><input type="number" class="r-monthly w-110" step="0.01" min="0" value="' + (monthly || '') + '" oninput="dxUpdateRentRowPSF(this)"' + (free ? ' disabled' : '') + '/></td>' +
+    '<td class="text-center"><input type="checkbox" class="r-free"' + (free ? ' checked' : '') + ' onchange="dxOnFreeRentChange(this)"/></td>' +
+    '<td class="rpsf">' + (free ? '<em class="text-muted-sm">Free</em>' : (rpsf !== '—' ? '$' + rpsf : '—')) + '</td>' +
     '<td><button class="del-row" onclick="dxRemoveRentRow(this)" title="Remove row">×</button></td>';
   tbody.appendChild(tr);
 }
@@ -6389,7 +6397,7 @@ function dxOnFreeRentChange(cb) {
   if (cb.checked) {
     monthlyInput.disabled = true;
     monthlyInput.value = '';
-    if (psfCell) psfCell.innerHTML = '<em style="color:#94a3b8">Free</em>';
+    if (psfCell) psfCell.innerHTML = '<em class="text-muted-sm">Free</em>';
   } else {
     monthlyInput.disabled = false;
     dxUpdateRentRowPSF(monthlyInput);
@@ -6492,9 +6500,10 @@ async function dxSubmitDeal() {
   const btn = document.getElementById('dxSb');
   btn.disabled = true;
   btn.classList.add('loading');
+  btn.classList.remove('dx-btn-success');
   const btnLabel = btn.querySelector('.btn-label');
   if (btnLabel) btnLabel.textContent = 'Authenticating…';
-  document.getElementById('dxStepBar').style.display = '';
+  setHiddenState(document.getElementById('dxStepBar'), false);
   document.getElementById('dxLg').classList.add('on');
 
   let authToken;
@@ -6753,8 +6762,7 @@ async function dxSubmitDeal() {
     }
     btn.classList.remove('loading');
     if (btnLabel) btnLabel.textContent = 'Done';
-    btn.style.background = '#059669';
-    btn.style.color = '#fff';
+    btn.classList.add('dx-btn-success');
   } catch (err) {
     const msg = err.message || '';
     const isCors = msg.toLowerCase().includes('fetch') || msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('networkerror') || msg.toLowerCase().includes('cors');
@@ -6872,8 +6880,8 @@ async function dxResolveContact(fullName, email, phone, companyID, H) {
 async function dxRunAIReview() {
   if (!DX_P) { alert('Load a voucher first.'); return; }
   const panel = document.getElementById('dxAiPanel');
-  panel.style.display = '';
-  panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>Review</span> Review Checks</div><div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#626872;"><div class="dx-spin" style="border-color:var(--red);border-top-color:transparent"></div> Checking the voucher for date, term, address, and commission issues.</div></div>';
+  setHiddenState(panel, false);
+  panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>Review</span> Review Checks</div><div class="ai-review-status-row"><div class="dx-spin dx-spin-accent"></div> Checking the voucher for date, term, address, and commission issues.</div></div>';
   const d = dxCollectForm();
   const rentTotal = d.rentRows ? d.rentRows.reduce((s,r) => s + (r.months||0), 0) : 0;
   const dealData = {
@@ -6892,13 +6900,13 @@ async function dxRunAIReview() {
     const result = await callTrpc('aiAssist.reviewVoucher', { dealData });
     dxRenderAISuggestions(result.suggestions || [], panel);
   } catch (e) {
-    panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>Review</span> Review Checks</div><div style="color:#dc2626;font-size:13px;">Error: ' + dxEscHtml(e.message) + '</div></div>';
+    panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>Review</span> Review Checks</div><div class="text-error">Error: ' + dxEscHtml(e.message) + '</div></div>';
   }
 }
 
 function dxRenderAISuggestions(suggestions, panel) {
   if (!suggestions || suggestions.length === 0) {
-    panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>Review</span> Review Checks</div><div style="color:#059669;font-size:13px;">No rule-based issues were found.</div></div>';
+    panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>Review</span> Review Checks</div><div class="text-success">No rule-based issues were found.</div></div>';
     return;
   }
   let html = '<div class="ai-panel"><div class="ai-panel-header"><span>Review</span> Review Checks - ' + suggestions.length + ' suggestion' + (suggestions.length > 1 ? 's' : '') + '</div>';
@@ -6915,13 +6923,17 @@ function dxRenderAISuggestions(suggestions, panel) {
 
 function dxAcceptSuggestion(i, inputId, value) {
   const el = document.getElementById(inputId);
-  if (el) { el.value = value; el.style.borderColor = 'var(--red)'; el.style.boxShadow = '0 0 0 3px rgba(195,32,51,.15)'; setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 2000); }
+  if (el) {
+    el.value = value;
+    el.classList.add('ai-input-highlight');
+    setTimeout(() => { el.classList.remove('ai-input-highlight'); }, 2000);
+  }
   dxDismissSuggestion(i);
 }
 
 function dxDismissSuggestion(i) {
   const el = document.getElementById('dxAisug_' + i);
-  if (el) { el.style.opacity = '0.4'; el.style.pointerEvents = 'none'; }
+  if (el) el.classList.add('ai-suggestion-dimmed');
 }
 
 // API helpers
@@ -6981,7 +6993,7 @@ function dxStat(type, msg) {
   if (!b) return;
   b.className = 'dx-status on ' + type;
   document.getElementById('dxSm').textContent = msg;
-  document.getElementById('dxSp').style.display = type === 'load' ? 'block' : 'none';
+  setHiddenState(document.getElementById('dxSp'), type !== 'load');
 }
 
 function dxResetTool() {
@@ -6991,11 +7003,11 @@ function dxResetTool() {
   document.getElementById('dxLg').classList.remove('on');
   document.getElementById('dxLg').innerHTML = '';
   document.getElementById('dxFi').value = '';
-  document.getElementById('dxStepBar').style.display = 'none';
-  document.getElementById('dxCorsNote').style.display = '';
-  document.getElementById('dxAiPanel').style.display = 'none';
+  setHiddenState(document.getElementById('dxStepBar'), true);
+  setHiddenState(document.getElementById('dxCorsNote'), false);
+  setHiddenState(document.getElementById('dxAiPanel'), true);
   document.getElementById('dxAiPanel').innerHTML = '';
-  document.getElementById('dxAib').style.display = 'none';
+  setHiddenState(document.getElementById('dxAib'), true);
   ['dxS1','dxS2','dxS3','dxS4','dxS5','dxS6','dxS7'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.className = 'dx-step';
@@ -7005,8 +7017,7 @@ function dxResetTool() {
   const btnLabel2 = btn.querySelector('.btn-label');
   if (btnLabel2) btnLabel2.textContent = 'Submit to Dealius';
   btn.classList.remove('loading');
-  btn.style.background = '';
-  btn.style.color = '';
+  btn.classList.remove('dx-btn-success');
   dxRenderPreview(dxBuildBlankEntry('deal'));
   document.getElementById('dxSt').classList.remove('on');
   document.getElementById('dxLg').classList.remove('on');
@@ -7098,17 +7109,17 @@ function bpRenderList() {
   if (!list) return;
   const profiles = bpGetProfiles();
   if (!profiles.length) {
-    list.innerHTML = '<div style="padding:12px 14px;border:1px dashed var(--border);border-radius:10px;background:#fff;font-size:13px;color:var(--text2);">No broker profiles saved yet.</div>';
+    list.innerHTML = '<div class="bp-empty-state">No broker profiles saved yet.</div>';
     return;
   }
 
   list.innerHTML = profiles.map(profile =>
-    '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:#fff;">' +
-      '<div style="min-width:0;">' +
-        '<div style="font-size:13px;font-weight:700;color:var(--text);">' + bpEsc(profile.name) + '</div>' +
-        '<div style="font-size:12px;color:var(--text2);margin-top:4px;">' + bpEsc(profile.title || profile.email || 'Lee broker') + '</div>' +
+    '<div class="bp-row">' +
+      '<div class="bp-row-main">' +
+        '<div class="bp-row-name">' + bpEsc(profile.name) + '</div>' +
+        '<div class="bp-row-meta">' + bpEsc(profile.title || profile.email || 'Lee broker') + '</div>' +
       '</div>' +
-      '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">' +
+      '<div class="bp-row-actions">' +
         '<button class="btn btn-gray" type="button" onclick="bpEditProfile(\'' + bpEscAttr(profile.id) + '\')">Edit</button>' +
         '<button class="btn btn-outline" type="button" onclick="bpApplyProfile(\'' + bpEscAttr(profile.id) + '\')">Apply</button>' +
         '<button class="btn btn-gray" type="button" onclick="bpDeleteProfile(\'' + bpEscAttr(profile.id) + '\')">Delete</button>' +
@@ -7241,15 +7252,15 @@ document.addEventListener('blur', function(e) {
   if (!msg) { msg = document.createElement('span'); msg.className = 'field-msg'; field.appendChild(msg); }
   if (!input.value.trim()) {
     field.classList.add('field-error');
-    msg.style.color = 'var(--red)';
+    msg.classList.add('field-msg-error');
     msg.textContent = 'Required';
   } else {
     field.classList.add('field-ok');
+    msg.classList.remove('field-msg-error');
     msg.textContent = '';
     // brief green flash
-    input.style.transition = 'border-color .15s';
-    input.style.borderColor = 'var(--green)';
-    setTimeout(() => { input.style.borderColor = ''; field.classList.remove('field-ok'); }, 1200);
+    input.classList.add('field-input-flash');
+    setTimeout(() => { input.classList.remove('field-input-flash'); field.classList.remove('field-ok'); }, 1200);
   }
 }, true);
 
@@ -7369,10 +7380,10 @@ function initFreeAutocomplete() {
     
     // Ensure parent is position relative for dropdown positioning
     const parent = input.parentElement;
-    parent.style.position = 'relative';
+    parent.classList.add('autocomplete-parent');
 
     const dropdown = document.createElement('div');
-    dropdown.className = 'autocomplete-dropdown';
+    dropdown.className = 'autocomplete-dropdown is-hidden';
     parent.appendChild(dropdown);
 
     let timeout = null;
@@ -7382,7 +7393,7 @@ function initFreeAutocomplete() {
       const query = input.value.trim();
       
       if (query.length < 3) {
-        dropdown.style.display = 'none';
+        setHiddenState(dropdown, true);
         return;
       }
 
@@ -7436,14 +7447,14 @@ function initFreeAutocomplete() {
                 const stateInput = document.getElementById(idPrefix + '-state');
                 if (stateInput && state) stateInput.value = state;
                 
-                dropdown.style.display = 'none';
+                setHiddenState(dropdown, true);
               });
               
               dropdown.appendChild(item);
             });
-            dropdown.style.display = 'block';
+            setHiddenState(dropdown, false);
           } else {
-            dropdown.style.display = 'none';
+            setHiddenState(dropdown, true);
           }
         } catch (e) {
           console.error("Autocomplete error:", e);
@@ -7452,12 +7463,12 @@ function initFreeAutocomplete() {
     });
 
     input.addEventListener('blur', () => {
-      dropdown.style.display = 'none';
+      setHiddenState(dropdown, true);
     });
     
     input.addEventListener('focus', () => {
       if (input.value.trim().length >= 3 && dropdown.children.length > 0) {
-        dropdown.style.display = 'block';
+        setHiddenState(dropdown, false);
       }
     });
 
@@ -7482,7 +7493,7 @@ const uploadedFiles = {};
 async function uploadFileToBrokerStorage(file, category, fieldId, statusId, uploaderName) {
   const statusEl = document.getElementById(statusId);
   if (statusEl) {
-    statusEl.innerHTML = '<span style="color:var(--text3);">Uploading...</span>';
+    statusEl.innerHTML = '<span class="text-muted-sm">Uploading...</span>';
   }
 
   try {
@@ -7521,12 +7532,15 @@ async function uploadFileToBrokerStorage(file, category, fieldId, statusId, uplo
         renderCompPhotoPreview();
       }
       if (statusEl) {
-        statusEl.innerHTML = `<span style="color:var(--green);">Stored: <a href="${result.url}" target="_blank" style="color:var(--green);">${result.filename}</a></span>
-          <button onclick="clearUpload('${fieldId}','${statusId}')" style="margin-left:8px;font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;">Remove</button>`;
+        statusEl.innerHTML = `<span class="status-success">Stored: <a href="${result.url}" target="_blank" class="status-success">${result.filename}</a></span>
+          <button onclick="clearUpload('${fieldId}','${statusId}')" class="upload-remove-btn">Remove</button>`;
       }
       // Update zone appearance
       const zone = document.querySelector(`[data-field="${fieldId}"]`);
-      if (zone) zone.style.borderColor = 'var(--green)';
+      if (zone) {
+        zone.classList.add('upload-zone-success');
+        zone.classList.remove('upload-zone-active');
+      }
     } else {
       throw new Error('Unexpected response');
     }
@@ -7537,7 +7551,7 @@ async function uploadFileToBrokerStorage(file, category, fieldId, statusId, uplo
       renderCompPhotoPreview();
     }
     if (statusEl) {
-      statusEl.innerHTML = '<span style="color:var(--red);">Upload failed. Try again.</span>';
+      statusEl.innerHTML = '<span class="text-error">Upload failed. Try again.</span>';
     }
   }
 }
@@ -7549,7 +7563,10 @@ function clearUpload(fieldId, statusId) {
   const input = document.getElementById(fieldId);
   if (input) input.value = '';
   const zone = document.querySelector(`[data-field="${fieldId}"]`);
-  if (zone) zone.style.borderColor = '';
+  if (zone) {
+    zone.classList.remove('upload-zone-success');
+    zone.classList.remove('upload-zone-active');
+  }
   if (fieldId === 'c-property-photo') {
     clearCompPhotoState();
     renderCompPhotoPreview();
@@ -7572,11 +7589,11 @@ function initS3Uploads() {
     });
 
     // Drag & drop
-    zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = 'var(--red)'; });
-    zone.addEventListener('dragleave', () => { zone.style.borderColor = ''; });
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('upload-zone-active'); });
+    zone.addEventListener('dragleave', () => { zone.classList.remove('upload-zone-active'); });
     zone.addEventListener('drop', e => {
       e.preventDefault();
-      zone.style.borderColor = '';
+      zone.classList.remove('upload-zone-active');
       const file = e.dataTransfer.files[0];
       if (!file) return;
       if (fieldId === 'c-property-photo') loadCompPhotoPreview(file);
@@ -7606,15 +7623,15 @@ function filterDocs(query) {
 
   if (!q) {
     // Reset: show all cards, restore section visibility
-    allCards.forEach(c => c.style.display = '');
-    document.querySelectorAll('#tab-docs .docs-section').forEach(s => s.style.display = '');
+    allCards.forEach(c => c.classList.remove('is-hidden'));
+    document.querySelectorAll('#tab-docs .docs-section').forEach(s => s.classList.remove('is-hidden'));
     // Re-collapse the collapsible bodies that were collapsed
     document.querySelectorAll('#tab-docs .docs-collapsible-body').forEach(b => {
       if (!b.classList.contains('collapsed')) b.classList.add('collapsed');
     });
     document.querySelectorAll('#tab-docs .docs-toggle-arrow').forEach(a => a.classList.add('collapsed'));
     if (countEl) countEl.textContent = '';
-    if (noResults) noResults.style.display = 'none';
+    setHiddenState(noResults, true);
     return;
   }
 
@@ -7626,19 +7643,19 @@ function filterDocs(query) {
     const title = (card.querySelector('.doc-title')?.textContent || '').toLowerCase();
     const meta = (card.querySelector('.doc-meta')?.textContent || '').toLowerCase();
     const match = title.includes(q) || meta.includes(q);
-    card.style.display = match ? '' : 'none';
+    setHiddenState(card, !match);
     if (match) visible++;
   });
 
   // Hide sections where all cards are hidden
   document.querySelectorAll('#tab-docs .docs-section').forEach(section => {
     const cards = section.querySelectorAll('.doc-card');
-    const anyVisible = Array.from(cards).some(c => c.style.display !== 'none');
-    section.style.display = anyVisible ? '' : 'none';
+    const anyVisible = Array.from(cards).some(c => !c.classList.contains('is-hidden'));
+    setHiddenState(section, !anyVisible);
   });
 
   if (countEl) countEl.textContent = visible > 0 ? `${visible} result${visible !== 1 ? 's' : ''}` : '';
-  if (noResults) noResults.style.display = visible === 0 ? 'block' : 'none';
+  setHiddenState(noResults, visible !== 0);
 }
 
 // On page load: collapse the large sections by default
@@ -7662,7 +7679,7 @@ function onBrochureSelected(input) {
   const status = document.getElementById('brochure-status');
   const btn = document.getElementById('brochure-scrape-btn');
   status.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(0)} KB) — uploading…`;
-  btn.style.display = 'none';
+  setHiddenState(btn, true);
   brochureFileUrl = null;
 
   // Determine MIME type
@@ -7693,7 +7710,7 @@ function onBrochureSelected(input) {
       if (url) {
         brochureFileUrl = url;
         status.textContent = `Uploaded: ${file.name}`;
-        btn.style.display = 'block';
+        setHiddenState(btn, false);
       } else {
         status.textContent = 'Upload failed. Please try again.';
       }
@@ -7745,7 +7762,7 @@ function onVoucherBrochureSelected(input) {
   const status = document.getElementById('v-brochure-status');
   const btn = document.getElementById('v-brochure-scrape-btn');
   status.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(0)} KB) — uploading…`;
-  btn.style.display = 'none';
+  setHiddenState(btn, true);
   voucherBrochureFileUrl = null;
 
   if (file.type === 'application/pdf') voucherBrochureMimeType = 'application/pdf';
@@ -7768,7 +7785,7 @@ function onVoucherBrochureSelected(input) {
       if (url) {
         voucherBrochureFileUrl = url;
         status.textContent = `Uploaded: ${file.name}`;
-        btn.style.display = 'block';
+        setHiddenState(btn, false);
       } else {
         status.textContent = 'Upload failed. Please try again.';
       }
@@ -8391,7 +8408,7 @@ input.ai-smart, select.ai-smart, textarea.ai-smart { animation: ai-pulse-amber 0
     <hr class="ai-divider">
 
     <p class="ai-section-title">Field Suggestions</p>
-    <p style="font-size:12px;color:#6B7280;margin:0 0 10px;">Suggest only fields that are directly supported by information already on the form.</p>
+    <p class="ai-help-copy">Suggest only fields that are directly supported by information already on the form.</p>
     <div class="ai-btn-row">
       <button class="ai-btn ai-btn-secondary" id="ai-smart-btn" onclick="aiSmartComplete()">
         <span id="ai-smart-icon">+</span> Suggest Related Fields
@@ -8811,9 +8828,8 @@ function compReportSetUserStatus(label, tone) {
   const el = document.getElementById('cr-user-status');
   if (!el) return;
   el.textContent = label;
-  el.style.borderColor = tone === 'muted' ? 'var(--border)' : '#e5c7cd';
-  el.style.background = tone === 'muted' ? '#f3f3ef' : '#fff5f6';
-  el.style.color = tone === 'muted' ? 'var(--text2)' : '#9d1e2d';
+  el.classList.toggle('comp-report-status-muted', tone === 'muted');
+  el.classList.toggle('comp-report-status-default', tone !== 'muted');
 }
 
 function compReportSetResultsCount(label) {
@@ -8841,7 +8857,7 @@ function compReportSetWorkspaceMode(hasDataset) {
   if (resultsCard) resultsCard.classList.toggle('comp-report-hidden', !hasDataset);
   if (searchCard) searchCard.classList.toggle('comp-report-hidden', !hasDataset);
   if (searchForm) searchForm.classList.toggle('comp-report-form-disabled', !hasDataset);
-  if (searchNote) searchNote.style.display = hasDataset ? 'none' : '';
+  setHiddenState(searchNote, hasDataset);
 }
 
 function compReportRenderEmptyState() {
@@ -8861,7 +8877,7 @@ function compReportRenderEmptyState() {
       ? 'You are signed in correctly. The only blocker right now is that no active comp dataset has been published yet.'
       : 'Sign in from the home page to unlock the protected comp dataset and broker-specific report access.';
   }
-  if (emptyStatus && emptyStatus.style.display !== 'none') {
+  if (emptyStatus && !emptyStatus.classList.contains('is-hidden')) {
     emptyStatus.className = 'comp-report-message';
   }
 }
@@ -9043,11 +9059,11 @@ async function compReportHandleWorkbookSelection(input) {
   if (!file || !status) return;
 
   if (!compReportsUser || compReportsUser.role !== 'admin') {
-    status.style.display = '';
+    setHiddenState(status, false);
     status.className = 'comp-report-message error';
     status.textContent = 'Only admins can replace the active workbook.';
     if (emptyStatus) {
-      emptyStatus.style.display = '';
+      setHiddenState(emptyStatus, false);
       emptyStatus.className = status.className;
       emptyStatus.textContent = status.textContent;
     }
@@ -9055,11 +9071,11 @@ async function compReportHandleWorkbookSelection(input) {
     return;
   }
 
-  status.style.display = '';
+  setHiddenState(status, false);
   status.className = 'comp-report-message';
   status.textContent = 'Uploading workbook and importing the dataset. This can take a minute.';
   if (emptyStatus) {
-    emptyStatus.style.display = '';
+    setHiddenState(emptyStatus, false);
     emptyStatus.className = status.className;
     emptyStatus.textContent = status.textContent;
   }
@@ -9073,7 +9089,7 @@ async function compReportHandleWorkbookSelection(input) {
     status.className = 'comp-report-message';
     status.textContent = 'Workbook imported successfully. Refreshing the active dataset.';
     if (emptyStatus) {
-      emptyStatus.style.display = '';
+      setHiddenState(emptyStatus, false);
       emptyStatus.className = status.className;
       emptyStatus.textContent = status.textContent;
     }
@@ -9083,7 +9099,7 @@ async function compReportHandleWorkbookSelection(input) {
     status.className = 'comp-report-message error';
     status.textContent = 'Workbook import failed. ' + (error.message || 'Please try again.');
     if (emptyStatus) {
-      emptyStatus.style.display = '';
+      setHiddenState(emptyStatus, false);
       emptyStatus.className = status.className;
       emptyStatus.textContent = status.textContent;
     }
@@ -9177,7 +9193,7 @@ function openSendToAdminModal(formType) {
   title.textContent = `Send ${label} to Admin`;
   desc.textContent = `This will email all filled ${label} fields to the office admin. You will be CC’d automatically.`;
   status.textContent = '';
-  status.style.color = '';
+  status.classList.remove('text-success', 'text-error', 'status-strong');
   btn.classList.remove('loading');
   btn.querySelector('.btn-label').textContent = 'Send Email';
   modal.classList.add('open');
@@ -9461,7 +9477,7 @@ async function submitSendToAdmin() {
   btn.classList.add('loading');
   btn.querySelector('.btn-label').textContent = 'Preparing PDF...';
   status.textContent = '';
-  status.style.color = '';
+  status.classList.remove('text-success', 'text-error', 'status-strong');
 
   const sections = _staFormType === 'listing'
     ? collectListingSections(notes)
@@ -9503,20 +9519,20 @@ async function submitSendToAdmin() {
         : archivedLink
           ? 'Email sent successfully. The PDF was archived and included as a secure link.'
           : 'Email sent successfully.';
-      status.style.color = '#16a34a';
+      status.classList.add('text-success', 'status-strong');
       btn.querySelector('.btn-label').textContent = 'Sent';
       showToast(sentWithAttachment ? 'Submission emailed with PDF attached.' : 'Submission emailed and archived.');
       setTimeout(closeSendToAdminModal, 2000);
     } else {
       const errMsg = result?.error || 'Unknown error';
       status.textContent = 'Failed to send: ' + errMsg;
-      status.style.color = '#dc2626';
+      status.classList.add('text-error', 'status-strong');
       btn.classList.remove('loading');
       btn.querySelector('.btn-label').textContent = 'Send Email';
     }
   } catch(err) {
     status.textContent = 'Error: ' + err.message;
-    status.style.color = '#dc2626';
+    status.classList.add('text-error', 'status-strong');
     btn.classList.remove('loading');
     btn.querySelector('.btn-label').textContent = 'Send Email';
   }
@@ -9589,8 +9605,8 @@ function ciHandleFileSelect(input) {
 async function ciProcessPdf(file) {
   const statusEl = document.getElementById('ci-upload-status');
   const zone = document.getElementById('ci-upload-zone');
-  statusEl.style.display = '';
-  statusEl.innerHTML = '<span style="color:var(--text2);font-weight:600;">Uploading PDF...</span>';
+  setHiddenState(statusEl, false);
+  statusEl.innerHTML = '<span class="text-muted-sm status-strong">Uploading PDF...</span>';
 
   try {
     // 1. Read file as base64
@@ -9602,7 +9618,7 @@ async function ciProcessPdf(file) {
     });
 
     // 2. Upload to S3 via tRPC (raw fetch)
-    statusEl.innerHTML = '<span style="color:var(--text2);font-weight:600;">Uploading to secure storage...</span>';
+    statusEl.innerHTML = '<span class="text-muted-sm status-strong">Uploading to secure storage...</span>';
     const uploadResp = await fetch('/api/trpc/files.upload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -9614,7 +9630,7 @@ async function ciProcessPdf(file) {
 
     // 3. Extract fields via AI
     const contractType = document.getElementById('ci-contract-type').value;
-    statusEl.innerHTML = '<span style="color:var(--red);font-weight:600;">Reading the contract and extracting fields...</span>';
+    statusEl.innerHTML = '<span class="text-error status-strong">Reading the contract and extracting fields...</span>';
 
     const extractResp = await fetch('/api/trpc/contracts.extractContract', {
       method: 'POST',
@@ -9639,10 +9655,11 @@ async function ciProcessPdf(file) {
       '\u2728 AI extracted the fields below from "' + file.name + '". Review and correct anything that looks wrong before submitting.';
 
     statusEl.innerHTML = '<span class="status-success">\u2713 Extraction complete — review the fields below</span>';
-    zone.style.borderColor = '#16a34a';
+    zone.classList.add('upload-zone-success');
+    zone.classList.remove('upload-zone-active');
 
   } catch(err) {
-    statusEl.innerHTML = '<span style="color:#dc2626;font-weight:600;">\u2717 ' + err.message + '</span>';
+    statusEl.innerHTML = '<span class="text-error status-strong">\u2717 ' + err.message + '</span>';
   }
 }
 
@@ -9734,8 +9751,8 @@ function ciAddRedline(para = '', type = 'strikethrough', note = '') {
       <option value="added"${type==='added'?' selected':''}>Added Text</option>
       <option value="modified"${type==='modified'?' selected':''}>Modified</option>
     </select>
-    <input class="ci-redline-note" placeholder="Brief description of the change" style="flex:3" value="${note}">
-    <button class="btn btn-gray" style="padding:4px 10px;font-size:12px;" onclick="ciRemoveRedline(this)">&#10005;</button>
+    <input class="ci-redline-note flex-3" placeholder="Brief description of the change" value="${note}">
+    <button class="btn btn-gray btn-compact" onclick="ciRemoveRedline(this)">&#10005;</button>
   `;
   list.appendChild(row);
 }
@@ -9804,7 +9821,7 @@ async function ciSubmitToAdmin() {
 
   if (!contractData.contractType || contractData.contractType === '\u2014 Select a contract type \u2014') {
     statusEl.textContent = '\u2717 Please select a contract type first.';
-    statusEl.style.color = '#dc2626';
+    statusEl.classList.add('text-error', 'status-strong');
     return;
   }
 
@@ -9830,7 +9847,7 @@ async function ciSubmitToAdmin() {
     const res = submitJson?.result?.data?.json;
 
     if (res && res.success) {
-      statusEl.innerHTML = '<span style="color:#16a34a;font-weight:600;">\u2713 Contract submitted to admin successfully!</span>';
+      statusEl.innerHTML = '<span class="status-success status-strong">\u2713 Contract submitted to admin successfully!</span>';
       btn.querySelector('.btn-label').textContent = '\u2713 Submitted!';
       setTimeout(() => {
         btn.classList.remove('loading');
@@ -9840,7 +9857,7 @@ async function ciSubmitToAdmin() {
       throw new Error(res.error || 'Submission failed');
     }
   } catch(err) {
-    statusEl.innerHTML = '<span style="color:#dc2626;font-weight:600;">\u2717 ' + err.message + '</span>';
+    statusEl.innerHTML = '<span class="text-error status-strong">\u2717 ' + err.message + '</span>';
     btn.classList.remove('loading');
     btn.querySelector('.btn-label').textContent = '\u2709 Submit to Admin';
   }
@@ -9962,7 +9979,7 @@ function ciReset() {
   document.querySelectorAll('.ci-ai-field').forEach(el => el.classList.remove('ci-ai-field'));
   // Reset upload zone
   const zone = document.getElementById('ci-upload-zone');
-  if (zone) zone.style.borderColor = '';
+  if (zone) zone.classList.remove('upload-zone-success', 'upload-zone-active');
   const uploadStatus = document.getElementById('ci-upload-status');
   if (uploadStatus) { setHiddenState(uploadStatus, true); uploadStatus.innerHTML = ''; }
   document.getElementById('ci-submit-status').textContent = '';

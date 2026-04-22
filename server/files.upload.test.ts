@@ -31,7 +31,7 @@ vi.mock("./db", () => ({
               fileSize: 11,
               category: "listing_agreement",
               reference: "123 Main St",
-              uploaderName: "Taylor",
+              uploaderName: "Test User",
               createdAt: new Date("2026-01-01T00:00:00Z"),
             },
           ]),
@@ -61,7 +61,7 @@ describe("files.upload", () => {
       base64Data: Buffer.from("Hello World").toString("base64"),
       category: "listing_agreement",
       reference: "123 Main St",
-      uploaderName: "Taylor",
+      uploaderName: "Test User",
     });
 
     expect(result.success).toBe(true);

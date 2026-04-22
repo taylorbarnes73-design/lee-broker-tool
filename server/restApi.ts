@@ -55,6 +55,17 @@ restApiRouter.use((req: Request, res: Response, next) => {
     return;
   }
 
+  // CSRF protection: reject browser-originated cross-site requests on mutating methods.
+  // The connector uses x-api-key which browsers cannot set via simple requests,
+  // so this is an extra defence-in-depth check.
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) {
+    const contentType = req.headers["content-type"] ?? "";
+    if (!contentType.includes("application/json")) {
+      err(res, 415, "Content-Type must be application/json");
+      return;
+    }
+  }
+
   next();
 });
 

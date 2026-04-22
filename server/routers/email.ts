@@ -130,6 +130,7 @@ async function sendViaSmtp(params: {
       host: ENV.smtpHost,
       port: ENV.smtpPort,
       secure: ENV.smtpSecure,
+      requireTLS: !ENV.smtpSecure, // enforce STARTTLS on port 587 when not using implicit TLS
       auth: ENV.smtpUser ? { user: ENV.smtpUser, pass: ENV.smtpPass } : undefined,
     });
 
