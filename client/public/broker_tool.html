@@ -704,12 +704,13 @@ body.admin-mode .header .sub { display: none; }
 #dealius-tool .dx-saved-badge { font-size: 10px; color: #059669; font-weight: 600; margin-top: 4px; display: none; }
 #dealius-tool .dx-field { display: flex; flex-direction: column; gap: 6px; }
 #dealius-tool .dx-field label { font-size: 11px; font-weight: 600; color: #475569; letter-spacing: .2px; }
-#dealius-tool .dx-field input, #dealius-tool .dx-field select {
+#dealius-tool .dx-field input, #dealius-tool .dx-field select, #dealius-tool .dx-field textarea {
   background: #fff; border: 1.5px solid #e2e5ec; border-radius: 8px; color: #0f172a;
   font-family: 'Inter', sans-serif; font-size: 13px; padding: 9px 12px; outline: none;
   transition: border-color .2s, box-shadow .2s; width: 100%;
 }
-#dealius-tool .dx-field input:focus, #dealius-tool .dx-field select:focus {
+#dealius-tool .dx-field textarea { resize: vertical; min-height: 92px; }
+#dealius-tool .dx-field input:focus, #dealius-tool .dx-field select:focus, #dealius-tool .dx-field textarea:focus {
   border-color: var(--red); box-shadow: var(--shadow-focus);
 }
 #dealius-tool .dx-field input.mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
@@ -738,6 +739,46 @@ body.admin-mode .header .sub { display: none; }
 @keyframes dxSp { to { transform: rotate(360deg); } }
 #dealius-tool .dx-preview { display: none; }
 #dealius-tool .dx-preview.on { display: block; }
+#dealius-tool .dx-mode-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0 12px;
+}
+#dealius-tool .dx-mode-btn {
+  appearance: none;
+  border: 1.5px solid #d9dbe2;
+  background: #fff;
+  color: #475569;
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+#dealius-tool .dx-mode-btn:hover {
+  border-color: var(--navy);
+  color: var(--navy);
+}
+#dealius-tool .dx-mode-btn.active {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(195,32,51,.14);
+}
+#dealius-tool .dx-mode-copy {
+  border: 1px solid #ece8df;
+  background: #fbfaf6;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #5f6771;
+  margin-bottom: 14px;
+}
 #dealius-tool .dx-deal-name-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
 #dealius-tool .dx-deal-name-row input {
   background: #f7f8fa; border: 2px solid var(--navy); border-radius: 10px; color: #0f172a;
@@ -764,14 +805,34 @@ body.admin-mode .header .sub { display: none; }
   width: 100%; border: 1.5px solid #e2e5ec; border-radius: 6px;
   padding: 6px 8px; font-size: 12px; color: #0f172a; background: #fff; outline: none;
 }
+#dealius-tool .dx-rtable input[type=email], #dealius-tool .dx-rtable select {
+  width: 100%; border: 1.5px solid #e2e5ec; border-radius: 6px;
+  padding: 6px 8px; font-size: 12px; color: #0f172a; background: #fff; outline: none;
+  font-family: 'Inter', sans-serif;
+}
 #dealius-tool .dx-rtable input:focus { border-color: var(--red); box-shadow: 0 0 0 2px rgba(193,15,77,.15); }
+#dealius-tool .dx-rtable select:focus { border-color: var(--red); box-shadow: 0 0 0 2px rgba(193,15,77,.15); }
 #dealius-tool .dx-rtable input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--red); }
 #dealius-tool .dx-rtable .rpsf { font-size: 12px; color: #94a3b8; font-family: 'JetBrains Mono', monospace; }
 #dealius-tool .dx-rtable .del-row { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 14px; padding: 4px 8px; border-radius: 6px; }
 #dealius-tool .dx-rtable .del-row:hover { color: #dc2626; background: #fef2f2; }
+#dealius-tool .dx-broker-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
 #dealius-tool .broker-pill { display: inline-flex; align-items: center; gap: 6px; background: #f7f8fa; border: 1px solid #e2e5ec; border-radius: 20px; padding: 5px 14px; font-size: 12px; color: #475569; margin: 3px 4px 3px 0; font-weight: 500; }
 #dealius-tool .broker-pill.outside { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
 #dealius-tool .dx-outside-warn { font-size: 12px; color: #d97706; font-weight: 500; margin-top: 8px; display: none; }
+#dealius-tool .dx-subtle-note {
+  margin-top: 10px;
+  border-left: 3px solid #d7c2c6;
+  padding-left: 12px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #6b7280;
+}
 #dealius-tool .dx-divider { height: 1px; background: #e2e5ec; margin: 22px 0; }
 #dealius-tool .dx-slabel { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #94a3b8; margin: 20px 0 12px; }
 #dealius-tool .dx-slabel:first-child { margin-top: 0; }
@@ -4126,8 +4187,8 @@ body.admin-mode #admin-view {
         <div class="admin-page-header">
           <div>
             <div class="admin-page-eyebrow">Admin Portal</div>
-            <h1>Deal Entry</h1>
-            <p class="page-desc">Use approved listing and voucher data to prefill Dealius entry and complete downstream deal setup inside the same admin workspace.</p>
+            <h1>Dealius Entry</h1>
+            <p class="page-desc">Use approved listing and voucher data to prefill Dealius, build listing-side records, complete downstream deal setup, and assign brokers without leaving this workspace.</p>
           </div>
         </div>
 
@@ -4136,11 +4197,11 @@ body.admin-mode #admin-view {
           <div class="dx-header-left">
             <img class="dx-header-logo" src="lee-newport-beach-fullcolor.png" alt="Lee &amp; Associates Newport Beach">
             <div class="dx-header-titles">
-              <h1>Dealius Deal Entry</h1>
-              <span class="dx-header-tag">Lee &amp; Associates &middot; Voucher to Deal</span>
+              <h1>Dealius Entry Workspace</h1>
+              <span class="dx-header-tag">Lee &amp; Associates &middot; Listings and Deals</span>
             </div>
           </div>
-          <span class="dx-version-badge">v15</span>
+          <span class="dx-version-badge">v16</span>
         </div>
 
         <div class="dx-cors-note" id="dxCorsNote">
@@ -4170,9 +4231,15 @@ body.admin-mode #admin-view {
 
         <div class="dx-status" id="dxSt"><div class="dx-spin" id="dxSp"></div><span id="dxSm"></span></div>
 
+        <div class="dx-mode-bar">
+          <button type="button" class="dx-mode-btn active" id="dxModeDeal" onclick="dxSetEntryMode('deal')">Deal Entry</button>
+          <button type="button" class="dx-mode-btn" id="dxModeListing" onclick="dxSetEntryMode('listing')">Listing Entry</button>
+        </div>
+        <div class="dx-mode-copy" id="dxModeCopy">Build a Dealius deal from a voucher or manual entry, including deal facts, rent schedule, and broker assignments.</div>
+
         <div class="dx-preview" id="dxPv">
           <div class="dx-card">
-            <div class="dx-card-title">Deal</div>
+            <div class="dx-card-title" id="dxEntryTitle">Deal Entry</div>
             <div class="dx-deal-name-row">
               <input type="text" id="dxDn" placeholder="Deal name"/>
               <select id="dxRb" class="dx-rep-select" onchange="dxOnRepTypeChange()">
@@ -4181,6 +4248,32 @@ body.admin-mode #admin-view {
                 <option value="2">Seller Rep</option>
                 <option value="1">Buyer Rep</option>
               </select>
+            </div>
+
+            <div id="dxListingModeFields" style="display:none;">
+              <div class="dx-slabel">Listing Setup</div>
+              <div class="dx-edit-grid dx-cols3">
+                <div class="dx-field"><label>Listing Transaction</label>
+                  <select id="dxListingTransaction" onchange="dxOnListingTransactionChange()">
+                    <option value="lease">Lease listing</option>
+                    <option value="sale">Sale listing</option>
+                  </select>
+                </div>
+                <div class="dx-field"><label>Listing Start</label><input type="date" id="dx_listingStartDate"/></div>
+                <div class="dx-field"><label>Listing Expiration</label><input type="date" id="dx_listingExpiryDate"/></div>
+                <div class="dx-field"><label>Available Date</label><input type="date" id="dx_listingAvailableDate"/></div>
+                <div class="dx-field"><label>Listing Status</label>
+                  <select id="dx_listingStatus">
+                    <option value="active">Active</option>
+                    <option value="draft">Draft</option>
+                    <option value="coming_soon">Coming Soon</option>
+                    <option value="off_market">Off Market</option>
+                  </select>
+                </div>
+                <div class="dx-field"><label>Source</label><input type="text" id="dx_listingSource" placeholder="Broker submission or manual entry"/></div>
+              </div>
+              <div class="dx-field"><label>Listing Notes</label><textarea id="dx_listingNotes" rows="3" placeholder="Internal notes for this listing-side Dealius entry"></textarea></div>
+              <div class="dx-subtle-note">Listing entry creates a listing-side Dealius record shell using the property, client, pricing, and broker information entered here.</div>
             </div>
 
             <div class="dx-slabel">Property</div>
@@ -4220,12 +4313,14 @@ body.admin-mode #admin-view {
                 <div class="dx-field"><label>Opposite Contact Email</label><input type="email" id="dx_oppositeContactEmail" placeholder="email@company.com"/></div>
                 <div class="dx-field"><label>Opposite Contact Phone</label><input type="text" id="dx_oppositeContactPhone" placeholder="(555) 555-5555"/></div>
               </div>
-              <div class="dx-slabel">Lease Dates</div>
-              <div class="dx-edit-grid">
-                <div class="dx-field"><label>Lease Start (Commencement)</label><input type="date" id="dx_startDate"/></div>
-                <div class="dx-field"><label>Lease End (Term Date)</label><input type="date" id="dx_endDate"/></div>
-                <div class="dx-field"><label>Term (months)</label><input type="number" id="dx_term"/></div>
-                <div class="dx-field"><label>Occupancy Date</label><input type="date" id="dx_occupancyDate"/></div>
+              <div id="dxLeaseCloseoutFields">
+                <div class="dx-slabel">Lease Dates</div>
+                <div class="dx-edit-grid">
+                  <div class="dx-field"><label>Lease Start (Commencement)</label><input type="date" id="dx_startDate"/></div>
+                  <div class="dx-field"><label>Lease End (Term Date)</label><input type="date" id="dx_endDate"/></div>
+                  <div class="dx-field"><label>Term (months)</label><input type="number" id="dx_term"/></div>
+                  <div class="dx-field"><label>Occupancy Date</label><input type="date" id="dx_occupancyDate"/></div>
+                </div>
               </div>
               <div class="dx-slabel">Additional Transaction Info</div>
               <div class="dx-edit-grid dx-cols3">
@@ -4239,15 +4334,17 @@ body.admin-mode #admin-view {
                 <div class="dx-field"><label>CAMs ($/SF/yr)</label><input type="number" step="0.01" id="dx_cams"/></div>
                 <div class="dx-field"><label>Months on Market</label><input type="number" id="dx_monthsOnMkt"/></div>
               </div>
-              <div class="dx-slabel" style="display:flex;align-items:center;justify-content:space-between;">
-                <span>Rent Schedule</span>
-                <button class="dx-btn dx-ghost" style="font-size:11px;padding:4px 12px;" onclick="dxAddRentRow()">+ Add Row</button>
+              <div id="dxRentScheduleBlock">
+                <div class="dx-slabel" style="display:flex;align-items:center;justify-content:space-between;">
+                  <span>Rent Schedule</span>
+                  <button class="dx-btn dx-ghost" style="font-size:11px;padding:4px 12px;" onclick="dxAddRentRow()">+ Add Row</button>
+                </div>
+                <table class="dx-rtable" id="dxRt">
+                  <thead><tr><th>#</th><th>Months</th><th>Monthly Rent ($)</th><th>Free Rent</th><th>Monthly $/SF</th><th></th></tr></thead>
+                  <tbody id="dxRb2"></tbody>
+                </table>
+                <p class="dx-hint">All fields are editable. Monthly $/SF auto-calculates from Monthly Rent &divide; Deal SF.</p>
               </div>
-              <table class="dx-rtable" id="dxRt">
-                <thead><tr><th>#</th><th>Months</th><th>Monthly Rent ($)</th><th>Free Rent</th><th>Monthly $/SF</th><th></th></tr></thead>
-                <tbody id="dxRb2"></tbody>
-              </table>
-              <p class="dx-hint">All fields are editable. Monthly $/SF auto-calculates from Monthly Rent &divide; Deal SF.</p>
             </div>
 
             <div id="dx_sale_section" style="display:none;">
@@ -7302,6 +7399,15 @@ function saveSubmission(type) {
 // Collect full voucher form data for Dealius push
 function collectVoucherData() {
   const gv = id => { const el = document.getElementById(id); if (!el) return ''; return el.tagName === 'SELECT' ? (el.selectedOptions[0]?.text || '') : el.value; };
+  const rentRows = Array.from(document.querySelectorAll('#v-rent-body tr')).map(tr => {
+    const monthly = dxParseNumberish(tr.querySelector('.rent-monthly')?.value);
+    const months = dxParseNumberish(tr.querySelector('.rent-months')?.value);
+    return {
+      monthly: monthly || 0,
+      months: months || 0,
+      free: !monthly || monthly === 0,
+    };
+  }).filter(row => row.months > 0);
   return {
     txnType: gv('v-txn-type'), propType: gv('v-prop-type'),
     activeListing: gv('v-active-listing'), closeListing: gv('v-close-listing'),
@@ -7331,13 +7437,20 @@ function collectVoucherData() {
     // Sale transaction
     sPrice: gv('v-s-price'), sPriceSF: gv('v-s-price-sf'), sCapRate: gv('v-s-cap-rate'),
     sNoi: gv('v-s-noi'), sClose: gv('v-s-close'), sMktMonths: gv('v-s-mkt-months'),
+    sCommPct: gv('v-s-comm-pct'),
     // Commission
     lCommRate: gv('v-l-comm-rate'), lCommDue: gv('v-l-comm-due'),
     commBonus: gv('v-comm-bonus'), commConsulting: gv('v-comm-consulting'),
     commSale: gv('v-comm-sale'), totalInvoice: gv('v-total-invoice'),
+    // Parties
+    lsContact: gv('v-ls-contact'), lsCompany: gv('v-ls-company'),
+    lsEmail: gv('v-ls-email'), lsPhone: gv('v-ls-phone'),
+    lbContact: gv('v-lb-contact'), lbCompany: gv('v-lb-company'),
+    lbEmail: gv('v-lb-email'), lbPhone: gv('v-lb-phone'),
     // Agents
     laName: gv('v-la-name'), laHouse: gv('v-la-house'),
-    paName: gv('v-pa-name'), paHouse: gv('v-pa-house')
+    paName: gv('v-pa-name'), paHouse: gv('v-pa-house'),
+    rentRows: rentRows,
   };
 }
 
@@ -7529,91 +7642,196 @@ function updateSubStatus(id, status) {
     });
 }
 
+function dxParseNumberish(value) {
+  if (value == null || value === '') return null;
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  const parsed = parseFloat(String(value).replace(/[^0-9.\-]/g, ''));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function dxNormalizeDateField(value) {
+  if (!value) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return String(value);
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString().slice(0, 10);
+}
+
+function dxNormalizePropTypeLabel(value) {
+  const raw = String(value || '').toLowerCase();
+  if (raw.includes('office')) return 'Office';
+  if (raw.includes('retail')) return 'Retail';
+  if (raw.includes('land')) return 'Land';
+  return 'Industrial';
+}
+
+function dxInferTxnType(value) {
+  return String(value || '').toLowerCase().includes('sale') ? 'sale' : 'lease';
+}
+
+function dxInferVoucherRepType(vd, txnType) {
+  const ourKeywords = ['lee & associates', 'lee and associates', 'newport beach', 'lee'];
+  const listingHouse = String(vd.laHouse || '').toLowerCase();
+  const procuringHouse = String(vd.paHouse || '').toLowerCase();
+  const listingIsOurs = ourKeywords.some(keyword => listingHouse.includes(keyword));
+  const procuringIsOurs = ourKeywords.some(keyword => procuringHouse.includes(keyword));
+  const onListingSide = listingIsOurs || !procuringIsOurs;
+  if (txnType === 'sale') return onListingSide ? 2 : 1;
+  return onListingSide ? 4 : 3;
+}
+
+function dxNormalizeBrokerSeedPercent(value, fallbackPercent) {
+  const parsed = dxParseNumberish(value);
+  if (parsed == null) return fallbackPercent != null ? fallbackPercent : null;
+  if (parsed <= 1) return parsed * 100;
+  return parsed;
+}
+
+function dxBuildBrokerSeedsFromAgents(agents, fallbackSide) {
+  const list = Array.isArray(agents) ? agents.filter(agent => agent && agent.name) : [];
+  if (!list.length) return [];
+  const explicitPercents = list
+    .map(agent => dxNormalizeBrokerSeedPercent(agent.shared, null))
+    .filter(value => value != null);
+  const equalPercent = 100 / list.length;
+  const fallbackPercent = explicitPercents.length === list.length ? null : equalPercent;
+  return list.map((agent, index) => ({
+    name: agent.name || '',
+    email: agent.email || '',
+    side: fallbackSide,
+    lead: index === 0,
+    pct: dxNormalizeBrokerSeedPercent(agent.shared, fallbackPercent) / 100,
+  }));
+}
+
+function dxOpenDealiusPrefill(prefill, notice) {
+  DX_P = prefill;
+  closeAdminModal();
+  switchAdminPage('dealentry');
+  setTimeout(function() {
+    dxRenderPreview(prefill);
+    dxStat('ok', notice);
+  }, 120);
+}
+
+function dxBuildListingPrefill(sub) {
+  const txnType = dxInferTxnType(sub.transactionType);
+  const isSale = txnType === 'sale';
+  const primarySide = isSale ? 'seller' : 'landlord';
+  const brokerSeeds = dxBuildBrokerSeedsFromAgents(sub.agents || [], primarySide);
+  const notes = [
+    sub.notes || '',
+    sub.crossStreet ? 'Cross street: ' + sub.crossStreet : '',
+    sub.leaseTerm ? 'Lease term: ' + sub.leaseTerm : '',
+    sub.leaseMo ? 'Lease months: ' + sub.leaseMo : '',
+  ].filter(Boolean).join('\n');
+
+  return {
+    entryMode: 'listing',
+    dealName: (isSale ? 'For Sale: ' : 'For Lease: ') + (sub.address || 'New Listing'),
+    repTypeID: isSale ? 2 : 4,
+    isLease: !isSale,
+    isSale: isSale,
+    listingTransaction: txnType,
+    address: sub.address || '',
+    city: sub.city || '',
+    zip: sub.zip || '',
+    suite: sub.suite || '',
+    subType: dxNormalizePropTypeLabel(sub.propertyType),
+    sqft: dxParseNumberish(sub.sizeSF),
+    totalBldgSF: dxParseNumberish(sub.sizeSF),
+    yearBuilt: dxParseNumberish(sub.yearBuilt),
+    clientCo: '',
+    oppositeCo: '',
+    askingRate: isSale ? null : dxParseNumberish(sub.leaseRate),
+    totalConsideration: isSale ? dxParseNumberish(sub.salePrice) : null,
+    saleCommPct: null,
+    listingStartDate: dxNormalizeDateField(sub.submittedAt),
+    listingExpiryDate: '',
+    listingAvailableDate: '',
+    listingStatus: 'active',
+    listingSource: sub.id ? 'Listing submission ' + sub.id : 'Listing submission',
+    listingNotes: notes,
+    brokers: brokerSeeds,
+    outsideBrokers: [],
+    rentRows: [],
+  };
+}
+
+function dxBuildVoucherPrefill(sub) {
+  const vd = sub.voucherData || {};
+  const txnType = dxInferTxnType(vd.txnType || sub.transactionType);
+  const isSale = txnType === 'sale';
+  const repTypeID = dxInferVoucherRepType(vd, txnType);
+  const sideForListingBroker = repTypeID === 1 ? 'buyer' : repTypeID === 2 ? 'seller' : repTypeID === 3 ? 'tenant' : 'landlord';
+  const sideForOppositeBroker = repTypeID === 1 ? 'seller' : repTypeID === 2 ? 'buyer' : repTypeID === 3 ? 'landlord' : 'tenant';
+  const brokers = [];
+  if (vd.laName) brokers.push({ name: vd.laName, side: sideForListingBroker, lead: true, pct: 0.5 });
+  if (vd.paName) brokers.push({ name: vd.paName, side: sideForOppositeBroker, lead: !vd.laName, pct: vd.laName ? 0.5 : 1 });
+
+  return {
+    entryMode: 'deal',
+    dealName: (isSale ? 'Sold: ' : 'Leased: ') + (vd.address || sub.address || 'New Deal'),
+    repTypeID: repTypeID,
+    isLease: !isSale,
+    isSale: isSale,
+    address: vd.address || sub.address || '',
+    city: vd.city || sub.city || '',
+    zip: vd.zip || sub.zip || '',
+    suite: vd.suite || sub.suite || '',
+    subType: dxNormalizePropTypeLabel(vd.propType || sub.propertyType),
+    sqft: dxParseNumberish(vd.dealSF || vd.lDealSF || sub.sizeSF),
+    totalBldgSF: dxParseNumberish(vd.bldgSF || sub.bldgSF),
+    yearBuilt: dxParseNumberish(vd.yearBuilt),
+    clearHeight: dxParseNumberish(vd.clearance),
+    dhDoors: dxParseNumberish(vd.dh),
+    glDoors: dxParseNumberish(vd.gl),
+    numParkingSpaces: dxParseNumberish(vd.parkingSpaces),
+    clientCo: vd.lsCompany || '',
+    oppositeCo: vd.lbCompany || '',
+    clientContact: vd.lsContact || '',
+    oppositeContact: vd.lbContact || '',
+    clientEmail: vd.lsEmail || '',
+    oppositeEmail: vd.lbEmail || '',
+    clientPhone: vd.lsPhone || '',
+    oppositePhone: vd.lbPhone || '',
+    startDate: dxNormalizeDateField(vd.lStart),
+    endDate: dxNormalizeDateField(vd.lEnd),
+    term: dxParseNumberish(vd.lTerm),
+    occupancyDate: dxNormalizeDateField(vd.lOcc),
+    askingRate: dxParseNumberish(vd.lAskingRate || vd.lRate),
+    escalation: dxParseNumberish(vd.lEscalations),
+    totalNNN: dxParseNumberish(vd.lNnnTotal),
+    opex: dxParseNumberish(vd.opex),
+    tiPerSF: dxParseNumberish(vd.lTiSF),
+    monthsOnMkt: dxParseNumberish(vd.lMktMonths || vd.sMktMonths),
+    totalConsideration: dxParseNumberish(vd.sPrice || vd.lConsideration || sub.salePrice),
+    saleCommPct: dxParseNumberish(vd.lCommRate || vd.sCommPct),
+    brokers: brokers,
+    outsideBrokers: [],
+    rentRows: Array.isArray(vd.rentRows) ? vd.rentRows : [],
+    indSF: dxParseNumberish(vd.indSF),
+    officeSF: dxParseNumberish(vd.officeSF),
+    landSF: dxParseNumberish(vd.landSF),
+    submarket: vd.submarket || '',
+    bldgClass: vd.bldgClass || '',
+    numFloors: dxParseNumberish(vd.floors),
+    parkRatio: vd.parkRatio || '',
+    rail: vd.rail || '',
+    bldgCond: vd.bldgCond || '',
+  };
+}
+
 function dxPushListing(id) {
   const sub = ADMIN_SUBMISSIONS.find(s => s.id === id);
   if (!sub) return;
-  // Switch to Deal Entry page and pre-fill the Dealius form with listing data
-  closeAdminModal();
-  switchAdminPage('dealentry');
-  // Pre-fill the Dealius form fields from the listing submission
-  setTimeout(function() {
-    const setVal = function(elId, val) { const el = document.getElementById(elId); if (el && val) el.value = val; };
-    setVal('dx_address', sub.address || '');
-    setVal('dx_city', sub.city || '');
-    setVal('dx_state', sub.state || 'CA');
-    setVal('dx_zip', sub.zip || '');
-    // Map property type to Dealius space type
-    const spSel = document.getElementById('dx_space_type');
-    if (spSel && sub.propertyType) {
-      const ptMap = { industrial: '3', office: '2', retail: '1', land: '5' };
-      const val = ptMap[sub.propertyType.toLowerCase()];
-      if (val) { for (let i = 0; i < spSel.options.length; i++) { if (spSel.options[i].value === val) { spSel.selectedIndex = i; break; } } }
-    }
-    setVal('dx_deal_sf', sub.sizeSF ? String(sub.sizeSF) : '');
-    setVal('dx_year_built', sub.yearBuilt || '');
-    // Set deal type to listing (Landlord Rep = 2)
-    const dtSel = document.getElementById('dx_deal_type');
-    if (dtSel) { for (let i = 0; i < dtSel.options.length; i++) { if (dtSel.options[i].value === '2') { dtSel.selectedIndex = i; break; } } }
-    alert('Listing data for "' + sub.address + '" has been pre-filled in the Dealius Deal Entry form.\n\nReview the fields and click Submit to push to Dealius.');
-  }, 300);
+  dxOpenDealiusPrefill(dxBuildListingPrefill(sub), 'Listing submission loaded into Dealius entry.');
   updateSubStatus(id, 'in_review');
 }
 
 function dxPushVoucher(id) {
   const sub = ADMIN_SUBMISSIONS.find(s => s.id === id);
   if (!sub) return;
-  // Switch to Deal Entry page and pre-fill the Dealius form with voucher data
-  closeAdminModal();
-  switchAdminPage('dealentry');
-  setTimeout(function() {
-    const setVal = function(elId, val) { const el = document.getElementById(elId); if (el && val) el.value = val; };
-    const vd = sub.voucherData || {};
-    setVal('dx_address', vd.address || sub.address || '');
-    setVal('dx_city', vd.city || sub.city || '');
-    setVal('dx_state', vd.state || sub.state || 'CA');
-    setVal('dx_zip', vd.zip || sub.zip || '');
-    setVal('dx_suite', vd.suite || sub.suite || '');
-    // Map property type
-    const spSel = document.getElementById('dx_space_type');
-    if (spSel) {
-      const pt = (vd.propType || sub.propertyType || '').toLowerCase();
-      const ptMap = { industrial: '3', office: '2', retail: '1', land: '5' };
-      const val = ptMap[pt];
-      if (val) { for (let i = 0; i < spSel.options.length; i++) { if (spSel.options[i].value === val) { spSel.selectedIndex = i; break; } } }
-    }
-    setVal('dx_deal_sf', vd.dealSF || (sub.sizeSF ? String(sub.sizeSF) : ''));
-    setVal('dx_bldg_sf', vd.bldgSF || '');
-    setVal('dx_year_built', vd.yearBuilt || '');
-    setVal('dx_submarket', vd.submarket || '');
-    // Lease details
-    setVal('dx_lease_start', vd.lStart || '');
-    setVal('dx_lease_end', vd.lEnd || '');
-    setVal('dx_term_months', vd.lTerm || '');
-    setVal('dx_rate', vd.lRate || '');
-    setVal('dx_consideration', vd.lConsideration || '');
-    setVal('dx_ti', vd.lTiSF || '');
-    setVal('dx_escalations', vd.lEscalations || '');
-    // Sale details
-    setVal('dx_sale_price', vd.sPrice || sub.salePrice || '');
-    // Commission
-    setVal('dx_comm_rate', vd.lCommRate || '');
-    setVal('dx_comm_amount', vd.lCommDue || '');
-    // Agents
-    setVal('dx_la_name', vd.laName || sub.brokerName || '');
-    setVal('dx_la_house', vd.laHouse || '');
-    setVal('dx_pa_name', vd.paName || '');
-    setVal('dx_pa_house', vd.paHouse || '');
-    // Set deal type based on transaction type
-    const dtSel = document.getElementById('dx_deal_type');
-    if (dtSel) {
-      const txn = (vd.txnType || sub.transactionType || '').toLowerCase();
-      // 1=Tenant Rep, 2=Landlord Rep, 3=Buyer Rep, 4=Seller Rep
-      const txnMap = { lease: '1', sale: '3' };
-      const val = txnMap[txn] || '1';
-      for (let i = 0; i < dtSel.options.length; i++) { if (dtSel.options[i].value === val) { dtSel.selectedIndex = i; break; } }
-    }
-    alert('Commission voucher data for "' + (sub.address || 'this deal') + '" has been pre-filled in the Dealius Deal Entry form.\n\nReview the fields and click Submit to push to Dealius.');
-  }, 300);
+  dxOpenDealiusPrefill(dxBuildVoucherPrefill(sub), 'Voucher submission loaded into Dealius entry.');
   updateSubStatus(id, 'in_review');
 }
 
@@ -7624,6 +7842,8 @@ const DX_RATE_PER_YEAR = 2;
 const DX_AMT_PCT = 2;
 const DX_LEASE_TYPE_NEW = 1003;
 let DX_P = null;
+let DX_ENTRY_MODE = 'deal';
+let DX_BROKER_ROW_COUNTER = 0;
 
 // Credential persistence
 (function dxLoadCreds() {
@@ -7648,6 +7868,273 @@ function dxShowSaved(id) {
   el._t = setTimeout(() => el.style.display = 'none', 2000);
 }
 
+function dxGetEntryPrefix(isSale) {
+  return DX_ENTRY_MODE === 'listing' ? (isSale ? 'For Sale: ' : 'For Lease: ') : (isSale ? 'Sold: ' : 'Leased: ');
+}
+
+function dxEnsurePreviewVisible() {
+  const preview = document.getElementById('dxPv');
+  if (preview) preview.classList.add('on');
+}
+
+function dxCurrentPrimaryBrokerSide() {
+  const repTypeID = parseInt(document.getElementById('dxRb')?.value || '4', 10);
+  if (repTypeID === 1) return 'buyer';
+  if (repTypeID === 2) return 'seller';
+  if (repTypeID === 3) return 'tenant';
+  return 'landlord';
+}
+
+function dxNormalizeBrokerSide(value) {
+  const raw = String(value || '').toLowerCase();
+  if (raw.includes('procur')) return 'procuring';
+  if (raw.includes('listing')) return 'listing';
+  if (raw.includes('buyer')) return 'buyer';
+  if (raw.includes('seller')) return 'seller';
+  if (raw.includes('tenant')) return 'tenant';
+  if (raw.includes('landlord')) return 'landlord';
+  return dxCurrentPrimaryBrokerSide();
+}
+
+function dxFormatPercentValue(value) {
+  if (value == null || !Number.isFinite(value)) return '';
+  return String(Math.round(value * 100) / 100);
+}
+
+function dxEnsureBrokerSectionShell() {
+  const host = document.getElementById('dxBd');
+  if (!host) return;
+
+  const label = host.previousElementSibling;
+  if (label) {
+    label.style.display = 'flex';
+    label.style.alignItems = 'center';
+    label.style.justifyContent = 'space-between';
+    label.innerHTML = '<span id="dxBrokerLabel"></span><button class="dx-btn dx-ghost" style="font-size:11px;padding:4px 12px;" type="button" onclick="dxAddBrokerRow()">+ Add Broker</button>';
+  }
+
+  if (!document.getElementById('dxBrokerBody')) {
+    host.innerHTML = '' +
+      '<table class="dx-rtable" id="dxBrokerTable">' +
+        '<thead><tr><th>Broker</th><th>Side</th><th>Email</th><th>Lead</th><th>Commission %</th><th></th></tr></thead>' +
+        '<tbody id="dxBrokerBody"></tbody>' +
+      '</table>' +
+      '<div class="dx-broker-meta" id="dxBrokerMeta"></div>';
+  }
+
+  const outside = document.getElementById('dxOw');
+  const hint = outside ? outside.nextElementSibling : null;
+  if (hint && hint.classList.contains('dx-hint')) hint.id = 'dxBrokerHint';
+}
+
+function dxUpdateBrokerSectionCopy() {
+  dxEnsureBrokerSectionShell();
+  const label = document.getElementById('dxBrokerLabel');
+  const hint = document.getElementById('dxBrokerHint');
+  const outside = document.getElementById('dxOw');
+  const isListing = DX_ENTRY_MODE === 'listing';
+
+  if (label) label.textContent = isListing ? 'Listing Brokers' : 'Deal Brokers';
+  if (hint) {
+    hint.textContent = isListing
+      ? 'Add the listing-side brokers, choose the lead broker, and set the commission split that should follow this record into Dealius.'
+      : 'Assign the Dealius brokers, choose the lead broker, and set the commission split that should be submitted with this entry.';
+  }
+  if (outside) {
+    outside.textContent = 'Outside broker(s) still need to be added manually in Dealius after the entry is created.';
+  }
+}
+
+function dxEnsureLeadBroker() {
+  const checks = Array.from(document.querySelectorAll('#dxBrokerBody .dx-broker-lead'));
+  if (!checks.length) return;
+  if (!checks.some(check => check.checked)) checks[0].checked = true;
+  checks.forEach(check => {
+    check.disabled = checks.length === 1;
+  });
+}
+
+function dxHandleLeadBrokerToggle(checkbox) {
+  if (checkbox.checked) {
+    document.querySelectorAll('#dxBrokerBody .dx-broker-lead').forEach(other => {
+      if (other !== checkbox) other.checked = false;
+    });
+  }
+  dxEnsureLeadBroker();
+}
+
+function dxAddBrokerRow(seed, options) {
+  dxEnsureBrokerSectionShell();
+  const body = document.getElementById('dxBrokerBody');
+  if (!body) return null;
+
+  DX_BROKER_ROW_COUNTER += 1;
+  const idx = DX_BROKER_ROW_COUNTER;
+  const nameId = 'dxBrokerName_' + idx;
+  const emailId = 'dxBrokerEmail_' + idx;
+  const leadChecked = seed && seed.lead === true;
+  const percentValue = dxNormalizeBrokerSeedPercent(seed && seed.pct, seed && seed.commissionPct);
+  const tr = document.createElement('tr');
+  tr.innerHTML = '' +
+    '<td><div class="agent-picker" id="picker-' + nameId + '"><input type="text" class="dx-broker-name" id="' + nameId + '" placeholder="Start typing broker name..." autocomplete="off"><div class="agent-dd" id="dd-' + nameId + '"></div></div></td>' +
+    '<td><select class="dx-broker-side">' +
+      '<option value="listing">Listing</option>' +
+      '<option value="procuring">Procuring</option>' +
+      '<option value="landlord">Landlord</option>' +
+      '<option value="tenant">Tenant</option>' +
+      '<option value="seller">Seller</option>' +
+      '<option value="buyer">Buyer</option>' +
+    '</select></td>' +
+    '<td><input type="email" class="dx-broker-email" id="' + emailId + '" placeholder="broker@lee-associates.com"></td>' +
+    '<td style="text-align:center;"><input type="checkbox" class="dx-broker-lead"' + (leadChecked ? ' checked' : '') + ' onchange="dxHandleLeadBrokerToggle(this)"></td>' +
+    '<td><input type="number" class="dx-broker-pct" min="0" max="100" step="0.01" placeholder="50"></td>' +
+    '<td><button class="del-row" type="button" onclick="dxRemoveBrokerRow(this)" title="Remove broker">×</button></td>';
+  body.appendChild(tr);
+
+  initAgentPicker(nameId, {
+    onSelect: function(user) {
+      const emailInput = document.getElementById(emailId);
+      if (emailInput) emailInput.value = user.email || '';
+    }
+  });
+
+  const nameInput = document.getElementById(nameId);
+  const sideSelect = tr.querySelector('.dx-broker-side');
+  const emailInput = document.getElementById(emailId);
+  const pctInput = tr.querySelector('.dx-broker-pct');
+
+  if (nameInput) nameInput.value = seed && seed.name ? seed.name : '';
+  if (sideSelect) sideSelect.value = dxNormalizeBrokerSide(seed && seed.side);
+  if (emailInput) emailInput.value = seed && seed.email ? seed.email : '';
+  if (pctInput && percentValue != null) pctInput.value = dxFormatPercentValue(percentValue);
+
+  if (!options || !options.skipLeadNormalize) dxEnsureLeadBroker();
+  return tr;
+}
+
+function dxRemoveBrokerRow(button) {
+  const row = button.closest('tr');
+  if (row) row.remove();
+  if (!document.querySelector('#dxBrokerBody tr')) {
+    dxAddBrokerRow({ side: dxCurrentPrimaryBrokerSide(), lead: true }, { skipLeadNormalize: true });
+  }
+  dxEnsureLeadBroker();
+}
+
+function dxRenderBrokerEditor(brokers) {
+  dxEnsureBrokerSectionShell();
+  const body = document.getElementById('dxBrokerBody');
+  if (!body) return;
+  body.innerHTML = '';
+  DX_BROKER_ROW_COUNTER = 0;
+
+  const seeds = Array.isArray(brokers) && brokers.length
+    ? brokers
+    : [{ side: dxCurrentPrimaryBrokerSide(), lead: true }];
+  seeds.forEach((broker, index) => {
+    dxAddBrokerRow(Object.assign({ lead: index === 0 }, broker), { skipLeadNormalize: true });
+  });
+  dxEnsureLeadBroker();
+}
+
+function dxCollectDealBrokers() {
+  const rows = Array.from(document.querySelectorAll('#dxBrokerBody tr'));
+  const brokers = rows.map(tr => {
+    const name = tr.querySelector('.dx-broker-name')?.value.trim() || '';
+    const email = tr.querySelector('.dx-broker-email')?.value.trim() || '';
+    const side = tr.querySelector('.dx-broker-side')?.value || dxCurrentPrimaryBrokerSide();
+    const lead = tr.querySelector('.dx-broker-lead')?.checked || false;
+    const pctRaw = dxParseNumberish(tr.querySelector('.dx-broker-pct')?.value);
+    if (!name) return null;
+    return {
+      name: name,
+      email: email,
+      side: side,
+      lead: lead,
+      pct: pctRaw != null ? pctRaw / 100 : null,
+    };
+  }).filter(Boolean);
+
+  if (brokers.length && !brokers.some(broker => broker.lead)) brokers[0].lead = true;
+  return brokers;
+}
+
+function dxRenderOutsideBrokerMeta(outsideBrokers) {
+  dxEnsureBrokerSectionShell();
+  const meta = document.getElementById('dxBrokerMeta');
+  const outside = document.getElementById('dxOw');
+  if (!meta) return;
+
+  const rows = Array.isArray(outsideBrokers) ? outsideBrokers.filter(Boolean) : [];
+  meta.innerHTML = rows.map(broker =>
+    '<span class="broker-pill outside">Outside: ' + dxEscHtml(broker.name || 'Outside Broker') + ' - $' + (broker.amt || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</span>'
+  ).join('');
+  if (outside) outside.style.display = rows.length ? 'block' : 'none';
+}
+
+function dxApplyEntryModeUI() {
+  const isListing = DX_ENTRY_MODE === 'listing';
+  const dealBtn = document.getElementById('dxModeDeal');
+  const listingBtn = document.getElementById('dxModeListing');
+  const modeCopy = document.getElementById('dxModeCopy');
+  const listingFields = document.getElementById('dxListingModeFields');
+  const drop = document.getElementById('dxDz');
+  const title = document.getElementById('dxEntryTitle');
+  const aiButton = document.getElementById('dxAib');
+
+  if (dealBtn) dealBtn.classList.toggle('active', !isListing);
+  if (listingBtn) listingBtn.classList.toggle('active', isListing);
+  if (modeCopy) {
+    modeCopy.textContent = isListing
+      ? 'Create a listing-side Dealius record with pricing, parties, timeline fields, and broker assignments from manual entry or an approved listing submission.'
+      : 'Build a Dealius deal from a voucher or manual entry, including deal facts, rent schedule, and broker assignments.';
+  }
+  if (listingFields) listingFields.style.display = isListing ? '' : 'none';
+  if (drop) drop.style.display = isListing ? 'none' : '';
+  if (title) title.textContent = isListing ? 'Listing Entry' : 'Deal Entry';
+  if (aiButton) aiButton.style.display = !isListing && DX_P ? '' : 'none';
+
+  document.querySelectorAll('#dxRb option').forEach(option => {
+    option.disabled = isListing && (option.value === '1' || option.value === '3');
+  });
+
+  dxUpdateBrokerSectionCopy();
+}
+
+function dxSetEntryMode(mode) {
+  DX_ENTRY_MODE = mode === 'listing' ? 'listing' : 'deal';
+  dxApplyEntryModeUI();
+  if (DX_ENTRY_MODE === 'listing') dxOnListingTransactionChange();
+  else dxOnRepTypeChange();
+  dxEnsurePreviewVisible();
+}
+
+function dxOnListingTransactionChange() {
+  if (DX_ENTRY_MODE !== 'listing') return;
+  const listingTxn = document.getElementById('dxListingTransaction')?.value || 'lease';
+  const repSelect = document.getElementById('dxRb');
+  if (repSelect) repSelect.value = listingTxn === 'sale' ? '2' : '4';
+  dxOnRepTypeChange();
+}
+
+function dxBuildBlankEntry(mode) {
+  const entryMode = mode === 'listing' ? 'listing' : 'deal';
+  const listingTxn = document.getElementById('dxListingTransaction')?.value || 'lease';
+  const isSale = entryMode === 'listing' ? listingTxn === 'sale' : false;
+  return {
+    entryMode: entryMode,
+    dealName: dxGetEntryPrefix(isSale),
+    repTypeID: isSale ? 2 : 4,
+    isLease: !isSale,
+    isSale: isSale,
+    listingTransaction: isSale ? 'sale' : 'lease',
+    listingStatus: 'active',
+    brokers: [],
+    outsideBrokers: [],
+    rentRows: [],
+  };
+}
+
 // File drop / select
 (function dxInitDrop() {
   const dz = document.getElementById('dxDz');
@@ -7668,6 +8155,8 @@ function dxLoadFile(file) {
       const ws   = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: false });
       DX_P = dxParseVoucher(rows);
+      DX_ENTRY_MODE = 'deal';
+      dxApplyEntryModeUI();
       dxRenderPreview(DX_P);
       dxStat('ok', 'Parsed: ' + DX_P.dealName);
       document.getElementById('dxCorsNote').style.display = 'none';
@@ -7828,82 +8317,111 @@ function dxParseVoucher(rows) {
 
 // Render preview
 function dxRenderPreview(d) {
-  document.getElementById('dxDn').value = d.dealName;
-  const rb = document.getElementById('dxRb');
-  rb.value = String(d.repTypeID || 4);
+  const entry = Object.assign({}, dxBuildBlankEntry(d && d.entryMode ? d.entryMode : DX_ENTRY_MODE), d || {});
+  DX_ENTRY_MODE = entry.entryMode === 'listing' ? 'listing' : 'deal';
+  entry.repTypeID = parseInt(entry.repTypeID || (entry.isSale ? 2 : 4), 10) || 4;
+  entry.isSale = [1, 2].includes(entry.repTypeID);
+  entry.isLease = !entry.isSale;
+  entry.listingTransaction = entry.listingTransaction || (entry.isSale ? 'sale' : 'lease');
 
-  if (d._debug) {
+  dxApplyEntryModeUI();
+  dxEnsurePreviewVisible();
+
+  document.getElementById('dxDn').value = entry.dealName || dxGetEntryPrefix(entry.isSale);
+  const rb = document.getElementById('dxRb');
+  rb.value = String(entry.repTypeID);
+
+  if (entry._debug) {
     const repLabels = { 4: 'Landlord Rep', 3: 'Tenant Rep', 2: 'Seller Rep', 1: 'Buyer Rep' };
-    const dbg = d._debug;
+    const dbg = entry._debug;
     dxAddLog('info', 'Rep side: listing house="' + dbg.listingHouse + '" procuring house="' + dbg.procuringHouse + '"');
-    dxAddLog('info', 'isListing=' + dbg.isListing + ' isProcuring=' + dbg.isProcuring + ' fallback="' + dbg.fallbackSide + '" → onListingSide=' + dbg.onListingSide + ' → ' + repLabels[d.repTypeID]);
-    dxAddLog('info', 'txRaw="' + dbg.txRaw + '" → isLease=' + d.isLease + ' isSale=' + d.isSale);
+    dxAddLog('info', 'isListing=' + dbg.isListing + ' isProcuring=' + dbg.isProcuring + ' fallback="' + dbg.fallbackSide + '" → onListingSide=' + dbg.onListingSide + ' → ' + repLabels[entry.repTypeID]);
+    dxAddLog('info', 'txRaw="' + dbg.txRaw + '" → isLease=' + entry.isLease + ' isSale=' + entry.isSale);
   }
 
-  dxSetVal('dx_address', d.address);
-  dxSetVal('dx_city', d.city);
-  dxSetVal('dx_zip', d.zip);
-  dxSetVal('dx_suite', d.suite);
-  dxSetVal('dx_sqft', d.sqft);
-  dxSetVal('dx_totalBldgSF', d.totalBldgSF);
-  dxSetVal('dx_yearBuilt', d.yearBuilt);
-  dxSetVal('dx_clearHeight', d.clearHeight);
-  dxSetVal('dx_dhDoors', d.dhDoors);
-  dxSetVal('dx_glDoors', d.glDoors);
-  dxSetVal('dx_numParkingSpaces', d.numParkingSpaces);
+  [
+    'dx_address', 'dx_city', 'dx_zip', 'dx_suite', 'dx_sqft', 'dx_totalBldgSF', 'dx_yearBuilt',
+    'dx_clearHeight', 'dx_dhDoors', 'dx_glDoors', 'dx_numParkingSpaces',
+    'dx_clientCo', 'dx_oppositeCo', 'dx_clientContactName', 'dx_clientContactEmail', 'dx_clientContactPhone',
+    'dx_oppositeContactName', 'dx_oppositeContactEmail', 'dx_oppositeContactPhone',
+    'dx_startDate', 'dx_endDate', 'dx_term', 'dx_occupancyDate', 'dx_askingRate', 'dx_escalation',
+    'dx_totalNNN', 'dx_propTaxes', 'dx_insurance', 'dx_opex', 'dx_tiPerSF', 'dx_cams', 'dx_monthsOnMkt',
+    'dx_sellerCo', 'dx_buyerCo', 'dx_sellerContactName', 'dx_sellerContactEmail', 'dx_sellerContactPhone',
+    'dx_buyerContactName', 'dx_buyerContactEmail', 'dx_buyerContactPhone',
+    'dx_totalConsideration', 'dx_saleCommPct',
+    'dx_listingStartDate', 'dx_listingExpiryDate', 'dx_listingAvailableDate', 'dx_listingSource', 'dx_listingNotes'
+  ].forEach(id => dxSetVal(id, ''));
+
+  dxSetVal('dx_address', entry.address);
+  dxSetVal('dx_city', entry.city);
+  dxSetVal('dx_zip', entry.zip);
+  dxSetVal('dx_suite', entry.suite);
+  dxSetVal('dx_sqft', entry.sqft);
+  dxSetVal('dx_totalBldgSF', entry.totalBldgSF);
+  dxSetVal('dx_yearBuilt', entry.yearBuilt);
+  dxSetVal('dx_clearHeight', entry.clearHeight);
+  dxSetVal('dx_dhDoors', entry.dhDoors);
+  dxSetVal('dx_glDoors', entry.glDoors);
+  dxSetVal('dx_numParkingSpaces', entry.numParkingSpaces);
+  dxSetVal('dxListingTransaction', entry.listingTransaction);
+  dxSetVal('dx_listingStartDate', entry.listingStartDate);
+  dxSetVal('dx_listingExpiryDate', entry.listingExpiryDate);
+  dxSetVal('dx_listingAvailableDate', entry.listingAvailableDate);
+  dxSetVal('dx_listingStatus', entry.listingStatus || 'active');
+  dxSetVal('dx_listingSource', entry.listingSource);
+  dxSetVal('dx_listingNotes', entry.listingNotes);
 
   const ptSel = document.getElementById('dx_propType');
-  const ptLow = (d.subType || 'industrial').toLowerCase();
-  for (const opt of ptSel.options) {
-    if (opt.value.toLowerCase() === ptLow || ptLow.includes(opt.value.toLowerCase())) {
-      opt.selected = true; break;
-    }
+  if (ptSel) ptSel.value = dxNormalizePropTypeLabel(entry.subType || entry.propType);
+
+  if (entry.isLease) {
+    dxSetVal('dx_clientCo', entry.clientCo);
+    dxSetVal('dx_oppositeCo', entry.oppositeCo);
+    dxSetVal('dx_clientContactName', entry.clientContact);
+    dxSetVal('dx_clientContactEmail', entry.clientEmail);
+    dxSetVal('dx_clientContactPhone', entry.clientPhone);
+    dxSetVal('dx_oppositeContactName', entry.oppositeContact);
+    dxSetVal('dx_oppositeContactEmail', entry.oppositeEmail);
+    dxSetVal('dx_oppositeContactPhone', entry.oppositePhone);
+    dxSetVal('dx_startDate', entry.startDate);
+    dxSetVal('dx_endDate', entry.endDate);
+    dxSetVal('dx_term', entry.term);
+    dxSetVal('dx_occupancyDate', entry.occupancyDate);
+    dxSetVal('dx_askingRate', entry.askingRate);
+    dxSetVal('dx_escalation', entry.escalation);
+    dxSetVal('dx_totalNNN', entry.totalNNN);
+    dxSetVal('dx_propTaxes', entry.propTaxes);
+    dxSetVal('dx_insurance', entry.insurance);
+    dxSetVal('dx_opex', entry.opex);
+    dxSetVal('dx_tiPerSF', entry.tiPerSF);
+    dxSetVal('dx_cams', entry.cams);
+    dxSetVal('dx_monthsOnMkt', entry.monthsOnMkt);
+    dxRenderRentTable(DX_ENTRY_MODE === 'listing' ? [] : (entry.rentRows || []), entry.sqft);
+  } else {
+    dxSetVal('dx_sellerCo', entry.clientCo);
+    dxSetVal('dx_buyerCo', entry.oppositeCo);
+    dxSetVal('dx_sellerContactName', entry.clientContact);
+    dxSetVal('dx_sellerContactEmail', entry.clientEmail);
+    dxSetVal('dx_sellerContactPhone', entry.clientPhone);
+    dxSetVal('dx_buyerContactName', entry.oppositeContact);
+    dxSetVal('dx_buyerContactEmail', entry.oppositeEmail);
+    dxSetVal('dx_buyerContactPhone', entry.oppositePhone);
+    dxSetVal('dx_totalConsideration', entry.totalConsideration);
+    dxSetVal('dx_saleCommPct', entry.saleCommPct);
+    dxRenderRentTable([], entry.sqft);
   }
 
-  if (d.isLease) {
-    document.getElementById('dx_lease_section').style.display = '';
-    document.getElementById('dx_sale_section').style.display  = 'none';
-    dxSetVal('dx_clientCo', d.clientCo);
-    dxSetVal('dx_oppositeCo', d.oppositeCo);
-    dxSetVal('dx_clientContactName', d.clientContact);
-    dxSetVal('dx_clientContactEmail', d.clientEmail);
-    dxSetVal('dx_clientContactPhone', d.clientPhone);
-    dxSetVal('dx_oppositeContactName', d.oppositeContact);
-    dxSetVal('dx_oppositeContactEmail', d.oppositeEmail);
-    dxSetVal('dx_oppositeContactPhone', d.oppositePhone);
-    dxSetVal('dx_startDate', d.startDate);
-    dxSetVal('dx_endDate', d.endDate);
-    dxSetVal('dx_term', d.term);
-    dxSetVal('dx_occupancyDate', d.occupancyDate);
-    dxSetVal('dx_askingRate', d.askingRate);
-    dxSetVal('dx_escalation', d.escalation);
-    dxSetVal('dx_totalNNN', d.totalNNN);
-    dxSetVal('dx_propTaxes', d.propTaxes);
-    dxSetVal('dx_insurance', d.insurance);
-    dxSetVal('dx_opex', d.opex);
-    dxSetVal('dx_tiPerSF', d.tiPerSF);
-    dxSetVal('dx_monthsOnMkt', d.monthsOnMkt);
-    dxRenderRentTable(d.rentRows, d.sqft);
-  } else {
-    document.getElementById('dx_lease_section').style.display = 'none';
-    document.getElementById('dx_sale_section').style.display  = '';
-    dxSetVal('dx_sellerCo', d.clientCo);
-    dxSetVal('dx_buyerCo', d.oppositeCo);
-    dxSetVal('dx_sellerContactName', d.clientContact);
-    dxSetVal('dx_sellerContactEmail', d.clientEmail);
-    dxSetVal('dx_sellerContactPhone', d.clientPhone);
-    dxSetVal('dx_buyerContactName', d.oppositeContact);
-    dxSetVal('dx_buyerContactEmail', d.oppositeEmail);
-    dxSetVal('dx_buyerContactPhone', d.oppositePhone);
-    dxSetVal('dx_totalConsideration', d.totalConsideration);
-    dxSetVal('dx_saleCommPct', d.saleCommPct);
-  }
+  d.brokers = entry.brokers || [];
+  d.outsideBrokers = entry.outsideBrokers || [];
 
   document.getElementById('dxBd').innerHTML =
     d.brokers.map(b => '<span class="broker-pill">\uD83D\uDC64 ' + b.name + ' · ' + b.side + ' · ' + (b.pct * 100).toFixed(0) + '%</span>').join('') +
     d.outsideBrokers.map(b => '<span class="broker-pill outside">\uD83E\uDD1D ' + b.name + ' · $' + b.amt.toLocaleString('en', { minimumFractionDigits: 2 }) + '</span>').join('');
   document.getElementById('dxOw').style.display = d.outsideBrokers.length ? 'block' : 'none';
 
+  dxRenderBrokerEditor(entry.brokers || []);
+  dxRenderOutsideBrokerMeta(entry.outsideBrokers || []);
+  dxOnRepTypeChange();
   document.getElementById('dxPv').classList.add('on');
   document.getElementById('dxLg').classList.add('on');
 }
@@ -7913,9 +8431,15 @@ function dxOnRepTypeChange() {
   const isSale = (repID === 1 || repID === 2);
   document.getElementById('dx_lease_section').style.display = isSale ? 'none' : '';
   document.getElementById('dx_sale_section').style.display  = isSale ? '' : 'none';
+  document.getElementById('dxLeaseCloseoutFields').style.display = (!isSale && DX_ENTRY_MODE !== 'listing') ? '' : 'none';
+  document.getElementById('dxRentScheduleBlock').style.display = (!isSale && DX_ENTRY_MODE !== 'listing') ? '' : 'none';
+  if (DX_ENTRY_MODE === 'listing') {
+    document.getElementById('dxListingTransaction').value = isSale ? 'sale' : 'lease';
+  }
   const dn = document.getElementById('dxDn');
-  const name = dn.value.replace(/^(Leased|Sold|Leased:|Sold:)\s*/i, '').trim();
-  dn.value = (isSale ? 'Sold: ' : 'Leased: ') + name;
+  const name = dn.value.replace(/^(Leased|Sold|Leased:|Sold:|For Lease:|For Sale:)\s*/i, '').trim();
+  dn.value = dxGetEntryPrefix(isSale) + name;
+  dxUpdateBrokerSectionCopy();
 }
 
 function dxRenderRentTable(rentRows, sqft) {
@@ -7992,8 +8516,12 @@ function dxCollectForm() {
   const gv = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
   const gn = id => { const v = gv(id); return v !== '' ? (parseFloat(v) || null) : null; };
   const gd = id => gv(id) || null;
+  const repTypeID = parseInt(document.getElementById('dxRb').value, 10) || (DX_P ? DX_P.repTypeID : 4);
+  const isLease = [3,4].includes(repTypeID);
+  const isSale = !isLease;
 
   return {
+    entryMode: DX_ENTRY_MODE,
     dealName:   document.getElementById('dxDn').value.trim(),
     address:    gv('dx_address'),
     city:       gv('dx_city'),
@@ -8007,14 +8535,14 @@ function dxCollectForm() {
     dhDoors:          gn('dx_dhDoors'),
     glDoors:          gn('dx_glDoors'),
     numParkingSpaces: gn('dx_numParkingSpaces'),
-    clientCo:   DX_P && DX_P.isLease ? gv('dx_clientCo')   : gv('dx_sellerCo'),
-    oppositeCo: DX_P && DX_P.isLease ? gv('dx_oppositeCo') : gv('dx_buyerCo'),
-    clientContactName:    DX_P && DX_P.isLease ? gv('dx_clientContactName')    : gv('dx_sellerContactName'),
-    clientContactEmail:   DX_P && DX_P.isLease ? gv('dx_clientContactEmail')   : gv('dx_sellerContactEmail'),
-    clientContactPhone:   DX_P && DX_P.isLease ? gv('dx_clientContactPhone')   : gv('dx_sellerContactPhone'),
-    oppositeContactName:  DX_P && DX_P.isLease ? gv('dx_oppositeContactName')  : gv('dx_buyerContactName'),
-    oppositeContactEmail: DX_P && DX_P.isLease ? gv('dx_oppositeContactEmail') : gv('dx_buyerContactEmail'),
-    oppositeContactPhone: DX_P && DX_P.isLease ? gv('dx_oppositeContactPhone') : gv('dx_buyerContactPhone'),
+    clientCo:   isLease ? gv('dx_clientCo')   : gv('dx_sellerCo'),
+    oppositeCo: isLease ? gv('dx_oppositeCo') : gv('dx_buyerCo'),
+    clientContactName:    isLease ? gv('dx_clientContactName')    : gv('dx_sellerContactName'),
+    clientContactEmail:   isLease ? gv('dx_clientContactEmail')   : gv('dx_sellerContactEmail'),
+    clientContactPhone:   isLease ? gv('dx_clientContactPhone')   : gv('dx_sellerContactPhone'),
+    oppositeContactName:  isLease ? gv('dx_oppositeContactName')  : gv('dx_buyerContactName'),
+    oppositeContactEmail: isLease ? gv('dx_oppositeContactEmail') : gv('dx_buyerContactEmail'),
+    oppositeContactPhone: isLease ? gv('dx_oppositeContactPhone') : gv('dx_buyerContactPhone'),
     startDate:     gd('dx_startDate'),
     endDate:       gd('dx_endDate'),
     term:          gn('dx_term'),
@@ -8029,21 +8557,28 @@ function dxCollectForm() {
     cams:        gn('dx_cams'),
     totalConsideration: gn('dx_totalConsideration'),
     saleCommPct:        gn('dx_saleCommPct'),
-    repTypeID:  parseInt(document.getElementById('dxRb').value) || (DX_P ? DX_P.repTypeID : 4),
-    isLease:    [3,4].includes(parseInt(document.getElementById('dxRb').value)),
-    isSale:     [1,2].includes(parseInt(document.getElementById('dxRb').value)),
+    listingTransaction: gv('dxListingTransaction') || (isSale ? 'sale' : 'lease'),
+    listingStartDate: gd('dx_listingStartDate'),
+    listingExpiryDate: gd('dx_listingExpiryDate'),
+    listingAvailableDate: gd('dx_listingAvailableDate'),
+    listingStatus: gv('dx_listingStatus') || 'active',
+    listingSource: gv('dx_listingSource'),
+    listingNotes: gv('dx_listingNotes'),
+    repTypeID:  repTypeID,
+    isLease:    isLease,
+    isSale:     isSale,
     rentRows: Array.from(document.querySelectorAll('#dxRb2 tr')).map(tr => {
       const months  = parseFloat(tr.querySelector('.r-months')?.value) || 0;
       const free    = tr.querySelector('.r-free')?.checked || false;
       const monthly = free ? 0 : (parseFloat(tr.querySelector('.r-monthly')?.value) || 0);
       return { months, monthly, free };
     }).filter(r => r.months > 0),
-    outsideBrokers: DX_P ? DX_P.outsideBrokers : [],
-    brokers:        DX_P ? DX_P.brokers : [],
+    outsideBrokers: DX_P && Array.isArray(DX_P.outsideBrokers) ? DX_P.outsideBrokers : [],
+    brokers:        dxCollectDealBrokers(),
     indSF:          DX_P ? DX_P.indSF : null,
     officeSF:       DX_P ? DX_P.officeSF : null,
     landSF:         DX_P ? DX_P.landSF : null,
-    subType:        DX_P ? DX_P.subType : null,
+    subType:        gv('dx_propType'),
     sprinklers:     DX_P ? DX_P.sprinklers : null,
     ampsRaw:        DX_P ? DX_P.ampsRaw : null,
     rail:           DX_P ? DX_P.rail : null,
@@ -8304,13 +8839,14 @@ async function dxSubmitDeal() {
           });
           if (match) {
             const brokerContactID = match.ContactID || match.BrokerID || match.ID;
-            dealBrokers.push({ ContactID: brokerContactID, IsLead: dealBrokers.length === 0, Commission: b.pct ? b.pct * 100 : 0 });
+            dealBrokers.push({ ContactID: brokerContactID, IsLead: !!b.lead, Commission: b.pct ? b.pct * 100 : 0 });
             dxAddLog('ok', 'Broker "' + b.name + '" resolved — ContactID: ' + brokerContactID);
           } else {
             dxAddLog('warn', 'Broker "' + b.name + '" not found in Dealius — add manually');
           }
         }
         if (dealBrokers.length > 0) {
+          if (!dealBrokers.some(broker => broker.IsLead)) dealBrokers[0].IsLead = true;
           const brokersRaw = await dxCallAPIRaw('POST', '/deals/brokers', H, { DealID: dealID, DealBrokers: dealBrokers });
           if (brokersRaw.status >= 200 && brokersRaw.status < 300) dxAddLog('ok', dealBrokers.length + ' broker(s) assigned to deal');
           else dxAddLog('warn', 'Broker assignment returned HTTP ' + brokersRaw.status);
@@ -8560,13 +9096,16 @@ function dxStat(type, msg) {
 
 function dxResetTool() {
   DX_P = null;
-  document.getElementById('dxPv').classList.remove('on');
+  DX_ENTRY_MODE = 'deal';
   document.getElementById('dxSt').classList.remove('on');
   document.getElementById('dxLg').classList.remove('on');
   document.getElementById('dxLg').innerHTML = '';
   document.getElementById('dxFi').value = '';
   document.getElementById('dxStepBar').style.display = 'none';
   document.getElementById('dxCorsNote').style.display = '';
+  document.getElementById('dxAiPanel').style.display = 'none';
+  document.getElementById('dxAiPanel').innerHTML = '';
+  document.getElementById('dxAib').style.display = 'none';
   ['dxS1','dxS2','dxS3','dxS4','dxS5','dxS6','dxS7'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.className = 'dx-step';
@@ -8578,7 +9117,17 @@ function dxResetTool() {
   btn.classList.remove('loading');
   btn.style.background = '';
   btn.style.color = '';
+  dxRenderPreview(dxBuildBlankEntry('deal'));
+  document.getElementById('dxSt').classList.remove('on');
+  document.getElementById('dxLg').classList.remove('on');
 }
+
+(function dxInitWorkspace() {
+  dxEnsureBrokerSectionShell();
+  dxRenderPreview(dxBuildBlankEntry('deal'));
+  document.getElementById('dxSt').classList.remove('on');
+  document.getElementById('dxLg').classList.remove('on');
+})();
 
 // ── Toast notification helper ──
 function showToast(msg, type = 'success', duration = 4000) {
