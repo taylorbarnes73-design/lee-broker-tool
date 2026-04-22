@@ -1339,56 +1339,6 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   display: grid;
   gap: 14px;
 }
-.comp-report-template-head {
-  display: grid;
-  gap: 6px;
-  padding: 16px 18px;
-  border: 1px solid #e6e4dd;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #fbfbf8 0%, #f4f2ec 100%);
-}
-.comp-report-template-kicker {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: .2em;
-  text-transform: uppercase;
-  color: #8a9198;
-}
-.comp-report-template-title {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -.03em;
-  color: var(--text);
-}
-.comp-report-template-copy {
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--text2);
-}
-.comp-report-template-fields {
-  display: grid;
-  gap: 8px;
-  margin-top: 6px;
-}
-.comp-report-template-field-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.comp-report-template-field-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 30px;
-  padding: 0 10px;
-  border-radius: 999px;
-  border: 1px solid #e4e1d9;
-  background: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: #6b737c;
-}
 .comp-report-result {
   background: #fbfbf8;
   border: 1px solid var(--border);
@@ -1560,19 +1510,11 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
     grid-template-columns: 44px minmax(0, 1fr);
     align-items: stretch;
   }
-  .comp-report-template-field-row {
-    gap: 6px;
-  }
-  .comp-report-template-field-pill {
-    min-height: 28px;
-    font-size: 9px;
-  }
   .comp-report-result-title {
     font-size: 20px;
   }
   .comp-report-field-matrix,
-  .comp-report-field-row,
-  .comp-report-template-fields {
+  .comp-report-field-row {
     grid-template-columns: 1fr;
   }
 }
@@ -3426,19 +3368,19 @@ body.admin-mode #admin-view {
       <div class="comp-report-stack">
         <div class="comp-report-card" id="cr-search-card">
           <div class="comp-report-kicker">Search Filters</div>
-          <h3>Refine comp results</h3>
+          <h3>Find report comps</h3>
           <form class="comp-report-form" id="cr-search-form" onsubmit="event.preventDefault(); compReportSearch();">
             <div class="row c2">
               <div class="field">
-                <label>Comp Type</label>
+                <label>Report Type</label>
                 <select id="cr-comp-type">
-                  <option value="lease">Lease comps</option>
-                  <option value="sale">Sale comps</option>
+                  <option value="lease">Lease comp report</option>
+                  <option value="sale">Sale comp report</option>
                 </select>
               </div>
               <div class="field">
                 <label>Search</label>
-                <input id="cr-query" placeholder="Address, project, market">
+                <input id="cr-query" placeholder="Address, property type, market">
               </div>
             </div>
             <div class="row c2">
@@ -3454,7 +3396,7 @@ body.admin-mode #admin-view {
               <div class="field"><label>Date To</label><input id="cr-date-to" type="date"></div>
             </div>
             <div class="comp-report-actions">
-              <button class="btn btn-red" type="submit">Search Comp Reports</button>
+              <button class="btn btn-red" type="submit">Search Reports</button>
               <button class="btn btn-gray" type="button" onclick="compReportResetFilters()">Clear Filters</button>
             </div>
           </form>
@@ -3504,7 +3446,7 @@ body.admin-mode #admin-view {
         <div class="comp-report-results-head">
           <div>
             <div class="comp-report-kicker">Report Preview</div>
-            <h3>Comp results</h3>
+            <h3>Report results</h3>
           </div>
           <p id="cr-results-count">No results loaded.</p>
         </div>
@@ -10387,25 +10329,6 @@ function compReportGetBrokerLine(result) {
   return parts.filter(Boolean).join('  |  ');
 }
 
-function compReportRenderTemplateHead(compType) {
-  const title = compType === 'sale' ? 'Sale Comparables' : 'Lease Comparables';
-  const rows = compReportGetFieldRows(compType);
-  return (
-    '<div class="comp-report-template-head">' +
-      '<div class="comp-report-template-kicker">Metropolis Style Output</div>' +
-      '<div class="comp-report-template-title">' + title + '</div>' +
-      '<div class="comp-report-template-copy">Results are organized from the imported comp workbook into the same compact report rhythm as the example PDFs: numbered entries, property lines, dense field matrices, broker lines, source notes, and comments.</div>' +
-      '<div class="comp-report-template-fields">' +
-        rows.map(row =>
-          '<div class="comp-report-template-field-row">' +
-            row.map(label => '<div class="comp-report-template-field-pill">' + dxEscHtml(label) + '</div>').join('') +
-          '</div>'
-        ).join('') +
-      '</div>' +
-    '</div>'
-  );
-}
-
 function compReportRenderResult(result, index) {
   const fieldRows = compReportGetFieldRows(result.compType);
   const brokerLine = compReportGetBrokerLine(result);
@@ -10533,10 +10456,7 @@ function compReportRenderResults(results) {
   }
 
   compReportSetResultsCount('Showing ' + results.length + ' result' + (results.length === 1 ? '' : 's'));
-  const compType = results[0]?.compType === 'sale' ? 'sale' : 'lease';
-  const html =
-    compReportRenderTemplateHead(compType) +
-    results.map((result, index) => compReportRenderResult(result, index)).join('');
+  const html = results.map((result, index) => compReportRenderResult(result, index)).join('');
 
   compReportSetResultsHtml(html, 'comp-report-results');
 }
