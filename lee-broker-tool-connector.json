@@ -8,7 +8,7 @@
       "name": "Lee & Associates Newport Beach"
     }
   },
-  "host": "leebrokertool.manus.space",
+  "host": "lee-broker-tool.vercel.app",
   "basePath": "/api/v1",
   "schemes": ["https"],
   "consumes": ["application/json"],

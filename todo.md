@@ -2,7 +2,7 @@
 
 - [x] Initial broker_tool.html with 4 tabs (Listing Entry, Sign Request, Commission Voucher, Comp Input)
 - [x] PDF export for all 4 tabs
-- [x] Upgrade to full-stack (web-db-user: Express + tRPC + MySQL + Manus Auth)
+- [x] Upgrade to full-stack (web-db-user: Express + tRPC + MySQL + OAuth Auth)
 - [x] Add uploads table to database schema (drizzle/schema.ts)
 - [x] Add files.upload tRPC procedure (server/routers.ts) — base64 → S3 → DB metadata
 - [x] Add files.list tRPC procedure — list recent uploads with optional category/reference filter

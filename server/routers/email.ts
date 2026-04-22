@@ -194,7 +194,7 @@ function sendViaOutlookMcp(params: {
 
     const input = JSON.stringify({ messages: [message] });
     const escaped = input.replace(/'/g, "'\\''");
-    execSync(`manus-mcp-cli tool call outlook_send_messages --server outlook-mail --input '${escaped}'`, {
+    execSync(`mcp-cli tool call outlook_send_messages --server outlook-mail --input '${escaped}'`, {
       timeout: 30_000,
       stdio: "pipe",
     });

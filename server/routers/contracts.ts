@@ -321,7 +321,7 @@ Return JSON with these fields (omit any that are blank):
           cc_recipients: cc,
         });
         execSync(
-          `manus-mcp-cli tool call outlook_send_messages --server outlook-mail --input '${mcpInput.replace(/'/g, "'\\''")}'`,
+          `mcp-cli tool call outlook_send_messages --server outlook-mail --input '${mcpInput.replace(/'/g, "'\\''")}'`,
           { timeout: 30000 }
         );
         return { success: true, error: null };

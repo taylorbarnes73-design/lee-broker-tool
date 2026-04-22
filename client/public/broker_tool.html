@@ -4495,6 +4495,53 @@ body.admin-mode #admin-view {
 </div>
 
 <script>
+const LEE_API_BASE_STORAGE_KEY = 'lee_api_base_url';
+
+function leeNormalizeApiBase(raw) {
+  if (!raw) return '';
+  let base = String(raw).trim().replace(/\/+$/, '');
+  if (base.endsWith('/api')) base = base.slice(0, -4);
+  return base;
+}
+
+function leeResolveApiBase() {
+  const params = new URLSearchParams(window.location.search);
+  const queryBase = params.get('apiBase') || '';
+  const globalBase = window.__LEE_API_BASE_URL__ || '';
+  const storedBase = localStorage.getItem(LEE_API_BASE_STORAGE_KEY) || '';
+  const selected = queryBase || globalBase || storedBase;
+  if (!selected) return '';
+
+  const normalized = leeNormalizeApiBase(selected);
+  if (!normalized) return '';
+
+  if (queryBase) {
+    localStorage.setItem(LEE_API_BASE_STORAGE_KEY, normalized);
+  }
+
+  return normalized;
+}
+
+const LEE_API_BASE = leeResolveApiBase();
+
+(function leePatchApiFetch() {
+  if (!LEE_API_BASE || typeof window.fetch !== 'function') return;
+
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = function(input, init) {
+    if (typeof input === 'string' && input.startsWith('/api/')) {
+      return originalFetch(`${LEE_API_BASE}${input}`, init);
+    }
+
+    if (input instanceof URL && input.pathname.startsWith('/api/')) {
+      const next = `${LEE_API_BASE}${input.pathname}${input.search}`;
+      return originalFetch(next, init);
+    }
+
+    return originalFetch(input, init);
+  };
+})();
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // DEALIUS USER ROSTER
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -10712,7 +10759,7 @@ async function callTrpc(procedure, input) {
 }
 
 const SHARED_AUTH_STORAGE_KEY = 'lee-broker-tool.auth';
-const LEGACY_AUTH_STORAGE_KEY = 'manus-runtime-user-info';
+const LEGACY_AUTH_STORAGE_KEY = 'legacy-runtime-user-info';
 let sharedBrokerSessionPromise = null;
 
 function readSharedBrokerIdentity() {

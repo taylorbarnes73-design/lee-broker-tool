@@ -4,7 +4,7 @@ import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo } from "react";
 
 const SHARED_AUTH_STORAGE_KEY = "lee-broker-tool.auth";
-const LEGACY_AUTH_STORAGE_KEY = "manus-runtime-user-info";
+const LEGACY_AUTH_STORAGE_KEY = "legacy-runtime-user-info";
 
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
