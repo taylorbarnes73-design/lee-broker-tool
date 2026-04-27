@@ -1,35 +1,73 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/Home";
+import { useState } from "react";
 
-function Router() {
-  // make sure to consider if you need authentication for certain routes
+// Import the new design components
+import { 
+  AppShell, 
+  ListingEntryScreen, 
+  SignRequestScreen, 
+  VoucherScreen, 
+  CompScreen, 
+  AdminScreen, 
+  ContractScreen, 
+  DocsScreen, 
+  AiPanel, 
+  ProfileModal 
+} from "./design/index.jsx";
+
+function AppLayout({ children }: { children: React.ReactNode }) {
+  const [location, setLocation] = useLocation();
+  const [aiOpen, setAiOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  // Map route to activeTab
+  const activeTab = location === "/" ? "listing" : location.substring(1);
+
   return (
-    <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      <Route component={NotFound} />
-    </Switch>
+    <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
+      <AppShell
+        activeTab={activeTab}
+        onTab={(tab: string) => setLocation(tab === 'listing' ? '/' : `/${tab}`)}
+        onAiClick={() => setAiOpen(true)}
+        onProfileClick={() => setProfileOpen(true)}
+        viewportW="100%"
+        viewportH="100%"
+      >
+        {children}
+      </AppShell>
+      {aiOpen && <AiPanel open={aiOpen} onClose={() => setAiOpen(false)} />}
+      {profileOpen && <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />}
+    </div>
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
+function Router() {
+  return (
+    <AppLayout>
+      <Switch>
+        <Route path={"/"} component={ListingEntryScreen} />
+        <Route path={"/sign"} component={SignRequestScreen} />
+        <Route path={"/voucher"} component={VoucherScreen} />
+        <Route path={"/comp"} component={CompScreen} />
+        <Route path={"/admin"} component={AdminScreen} />
+        <Route path={"/contract"} component={ContractScreen} />
+        <Route path={"/docs"} component={DocsScreen} />
+        <Route path={"/404"} component={NotFound} />
+        <Route component={NotFound} />
+      </Switch>
+    </AppLayout>
+  );
+}
 
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
           <Router />

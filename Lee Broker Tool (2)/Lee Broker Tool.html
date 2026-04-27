@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Lee Broker Tool — Redesign</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+<link rel="stylesheet" href="tokens.css"/>
+<style>
+  html, body { margin: 0; padding: 0; background: #f0eee9; font-family: 'Manrope', system-ui, sans-serif; }
+  #root { width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="shell.jsx"></script>
+<script type="text/babel" src="screens-listing.jsx"></script>
+<script type="text/babel" src="screens-sign.jsx"></script>
+<script type="text/babel" src="screens-voucher.jsx"></script>
+<script type="text/babel" src="screens-more.jsx"></script>
+
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accentColor": "#9B0D2A",
+  "showAiPanel": false,
+  "profileOpen": false,
+  "aiProminence": "Prominent"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [tab, setTab] = React.useState('listing');
+  const [tweaks, setTweaks] = React.useState(TWEAK_DEFAULTS);
+  const [editMode, setEditMode] = React.useState(false);
+  const [aiOpen, setAiOpen] = React.useState(false);
+  const [profileOpen, setProfileOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const h = (e) => {
+      const d = e.data || {};
+      if (d.type === '__activate_edit_mode') setEditMode(true);
+      if (d.type === '__deactivate_edit_mode') setEditMode(false);
+    };
+    window.addEventListener('message', h);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', h);
+  }, []);
+
+  React.useEffect(() => {
+    document.documentElement.style.setProperty('--lee-crimson', tweaks.accentColor);
+  }, [tweaks.accentColor]);
+
+  const setTweak = (k, v) => {
+    const next = { ...tweaks, [k]: v };
+    setTweaks(next);
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [k]: v } }, '*');
+  };
+
+  // Embedded app — used inside every artboard
+  const ProductApp = ({ activeTab = 'listing', w = 1440, h = 900 }) => {
+    const screens = {
+      listing: <ListingEntryScreen/>,
+      sign: <SignRequestScreen/>,
+      voucher: <VoucherScreen/>,
+      comp: <CompScreen/>,
+      admin: <AdminScreen/>,
+      contract: <ContractScreen/>,
+      docs: <DocsScreen/>,
+    };
+    return (
+      <div style={{ position: 'relative', width: w, height: h }}>
+        <AppShell
+          activeTab={activeTab}
+          onTab={()=>{}}
+          onAiClick={()=>{}}
+          onProfileClick={()=>{}}
+          viewportW={w} viewportH={h}
+        >
+          {screens[activeTab]}
+        </AppShell>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <DesignCanvas>
+        <DCSection id="overview" title="Lee & Associates · Broker Desk" subtitle="Redesigned broker submission tool — modern corporate, prominent AI. Each artboard can be opened fullscreen.">
+          <DCArtboard id="listing-hero" label="01 · Listings — primary flow" width={1440} height={900}>
+            <ProductApp activeTab="listing" w={1440} h={900}/>
+          </DCArtboard>
+          <DCArtboard id="voucher-hero" label="02 · Commission Voucher" width={1440} height={900}>
+            <ProductApp activeTab="voucher" w={1440} h={900}/>
+          </DCArtboard>
+          <DCArtboard id="sign-hero" label="03 · Sign Order" width={1440} height={900}>
+            <ProductApp activeTab="sign" w={1440} h={900}/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="intelligence" title="Market Intelligence & Admin" subtitle="Comp reports and admin portal — flagged as messy in the current build.">
+          <DCArtboard id="comp-hero" label="04 · Comp Reports — new workflow" width={1440} height={900}>
+            <ProductApp activeTab="comp" w={1440} h={900}/>
+          </DCArtboard>
+          <DCArtboard id="admin-hero" label="05 · Admin Portal — inbox" width={1440} height={900}>
+            <ProductApp activeTab="admin" w={1440} h={900}/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="tools" title="Contracts & Documents">
+          <DCArtboard id="contract-hero" label="06 · Contract Intake" width={1440} height={900}>
+            <ProductApp activeTab="contract" w={1440} h={900}/>
+          </DCArtboard>
+          <DCArtboard id="docs-hero" label="07 · Document Library" width={1440} height={900}>
+            <ProductApp activeTab="docs" w={1440} h={900}/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="overlays" title="Overlays & Details" subtitle="Deal Assist AI panel, Broker Profiles modal, and style system at a glance.">
+          <DCArtboard id="ai-panel" label="AI — Deal Assist panel" width={1440} height={900}>
+            <div style={{ position:'relative', width: 1440, height: 900 }}>
+              <ProductApp activeTab="listing" w={1440} h={900}/>
+              <AiPanel open={true} onClose={()=>{}}/>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="profile-modal" label="Broker Profiles modal" width={1440} height={900}>
+            <div style={{ position:'relative', width: 1440, height: 900 }}>
+              <ProductApp activeTab="listing" w={1440} h={900}/>
+              <ProfileModal open={true} onClose={()=>{}}/>
+            </div>
+          </DCArtboard>
+          <DCArtboard id="style-system" label="Design system · tokens" width={1440} height={900}>
+            <StyleSystem/>
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+
+      {/* Tweaks panel */}
+      {editMode && (
+        <div style={{
+          position: 'fixed', bottom: 20, right: 20, width: 280,
+          background: '#fff', borderRadius: 12,
+          boxShadow: '0 20px 50px rgba(0,0,0,.2)',
+          padding: 16, zIndex: 9999, fontFamily: 'Manrope, sans-serif',
+        }}>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#575A74', marginBottom: 10 }}>Tweaks</div>
+          <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 6 }}>Accent color</label>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+            {['#9B0D2A','#0A0A0B','#1F4BA6','#0F7A3F','#8B5FF0'].map(c => (
+              <button key={c} onClick={() => setTweak('accentColor', c)} style={{
+                width: 28, height: 28, borderRadius: 6, background: c, border: tweaks.accentColor === c ? '2px solid #0A0A0B' : '1px solid #E4E5E9', cursor: 'pointer',
+              }}/>
+            ))}
+          </div>
+          <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 6 }}>AI prominence</label>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {['Prominent','Ambient','Hidden'].map(v => (
+              <button key={v} onClick={() => setTweak('aiProminence', v)} style={{
+                flex: 1, padding: '6px 8px', fontSize: 11, fontWeight: 600,
+                background: tweaks.aiProminence === v ? '#0A0A0B' : '#F5F5F7',
+                color: tweaks.aiProminence === v ? '#fff' : '#4A4C54',
+                border: 'none', borderRadius: 4, cursor: 'pointer',
+              }}>{v}</button>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function StyleSystem() {
+  return (
+    <div className="lee-app" style={{ width: 1440, height: 900, padding: 48, overflow: 'auto', background: '#FAFAF7' }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform:'uppercase', color: '#575A74' }}>
+        Local Expertise. International Reach. World Class.
+      </div>
+      <h1 style={{ fontSize: 40, fontWeight: 700, letterSpacing: '-0.02em', margin: '8px 0 32px' }}>
+        Design system
+      </h1>
+
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
+        {[
+          {name:'Crimson', hex:'#9B0D2A', role:'Primary accent'},
+          {name:'Ink', hex:'#0A0A0B', role:'Text, headers'},
+          {name:'Slate', hex:'#575A74', role:'Secondary'},
+          {name:'Paper', hex:'#FAFAF7', role:'App background'},
+          {name:'AI Violet', hex:'#8B5FF0', role:'AI features'},
+          {name:'Success', hex:'#14924D', role:'Complete states'},
+          {name:'Warn', hex:'#D48806', role:'Free rent, alerts'},
+          {name:'Danger', hex:'#B42318', role:'Errors'},
+        ].map(c => (
+          <Card key={c.name} padding={16}>
+            <div style={{ height: 64, background: c.hex, borderRadius: 6, marginBottom: 10 }}/>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>{c.name}</div>
+            <div className="lee-mono" style={{ fontSize: 11, color: '#6B6D78' }}>{c.hex}</div>
+            <div style={{ fontSize: 11, color: '#6B6D78', marginTop: 4 }}>{c.role}</div>
+          </Card>
+        ))}
+      </div>
+
+      <Card padding={32}>
+        <div className="lee-eyebrow">Type scale</div>
+        <div style={{ fontSize: 56, fontWeight: 700, letterSpacing: '-0.03em', marginTop: 8 }}>Display / Manrope 800</div>
+        <div style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-0.02em', marginTop: 12 }}>Heading / Manrope 600</div>
+        <div style={{ fontSize: 16, marginTop: 12, maxWidth: 680 }}>Body — Manrope 400. Fields, forms, table content. Paired with JetBrains Mono for monetary and numeric data so columns align: <span className="lee-mono" style={{ fontWeight: 600 }}>$2,132,250.00</span></div>
+        <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#575A74', marginTop: 16 }}>Eyebrow / Manrope 600 · Uppercase · 0.12em tracking</div>
+      </Card>
+
+      <div style={{ marginTop: 32, display:'grid', gridTemplateColumns:'1fr 1fr', gap: 16 }}>
+        <Card padding={24}>
+          <div className="lee-eyebrow" style={{ marginBottom: 14 }}>Buttons</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <Button variant="primary">Primary</Button>
+            <Button variant="secondary">Secondary</Button>
+            <Button variant="ghost">Ghost</Button>
+            <Button variant="dark">Dark</Button>
+            <Button variant="ai" icon={<Icons.Sparkles size={13}/>}>AI action</Button>
+          </div>
+        </Card>
+        <Card padding={24}>
+          <div className="lee-eyebrow" style={{ marginBottom: 14 }}>Badges</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <Badge>Neutral</Badge>
+            <Badge tone="crimson">Crimson</Badge>
+            <Badge tone="slate">Slate</Badge>
+            <Badge tone="success" icon={<Icons.Check size={10} strokeWidth={3}/>}>Complete</Badge>
+            <Badge tone="warn">Free rent</Badge>
+            <Badge tone="danger">Error</Badge>
+            <Badge tone="ai" icon={<Icons.Sparkles size={10}/>}>AI</Badge>
+            <Badge tone="dark">Active</Badge>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
