@@ -82,6 +82,10 @@ const DOC_CATEGORIES = [
   { name: 'Commission Agreements', category: 'commission_agreement', tone: 'neutral' },
   { name: 'Disclosures', category: 'disclosure', tone: 'warn' },
   { name: 'Sign Orders', category: 'sign_order', tone: 'neutral' },
+  { name: 'Voucher Forms', category: 'voucher_doc', tone: 'neutral' },
+  { name: 'Office Forms', category: 'office_form', tone: 'slate' },
+  { name: 'Marketing & PR', category: 'marketing_pr', tone: 'neutral' },
+  { name: 'Comp Workbooks', category: 'comp_workbook', tone: 'neutral' },
 ] as const;
 
 function readFileAsBase64(file: File) {
@@ -1629,12 +1633,17 @@ function FunctionalDocsScreen() {
     }
   };
 
-  const openDoc = (doc: UploadedFileRecord) => {
-    if (!doc.url) {
-      toast.error("No download URL is available for this file.");
-      return;
+  const openDoc = async (doc: UploadedFileRecord) => {
+    try {
+      const freshUrl = await utils.client.files.getUrl.query({ fileKey: doc.fileKey });
+      window.open(freshUrl.url, "_blank", "noopener");
+    } catch (error) {
+      if (doc.url) {
+        window.open(doc.url, "_blank", "noopener");
+        return;
+      }
+      toast.error(error instanceof Error ? error.message : "No download URL is available for this file.");
     }
-    window.open(doc.url, "_blank", "noopener");
   };
 
   return (
@@ -1719,8 +1728,8 @@ function FunctionalDocsScreen() {
                 <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>{formatFileSize(doc.fileSize)}</div>
                 <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>{formatShortDate(doc.createdAt ?? doc.uploadedAt)}</div>
                 <div style={{ display:'flex', gap: 4, justifyContent:'flex-end' }}>
-                  <button onClick={() => openDoc(doc)} title="Download" style={{ padding: 6, background:'transparent', border:'none', color:'var(--ink-600)', cursor:'pointer' }}><Icons.Download size={14}/></button>
-                  <button onClick={() => openDoc(doc)} title="Open" style={{ padding: 6, background:'transparent', border:'none', color:'var(--ink-600)', cursor:'pointer' }}><Icons.External size={14}/></button>
+                  <button onClick={() => void openDoc(doc)} title="Download" style={{ padding: 6, background:'transparent', border:'none', color:'var(--ink-600)', cursor:'pointer' }}><Icons.Download size={14}/></button>
+                  <button onClick={() => void openDoc(doc)} title="Open" style={{ padding: 6, background:'transparent', border:'none', color:'var(--ink-600)', cursor:'pointer' }}><Icons.External size={14}/></button>
                 </div>
               </div>
             );

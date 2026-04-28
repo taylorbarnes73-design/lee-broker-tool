@@ -14,7 +14,8 @@
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
     "comp:analyze": "tsx scripts/analyze-comp-workbook.ts",
     "comp:export": "tsx scripts/export-comp-workbook.ts",
-    "comp:import": "tsx scripts/import-comp-workbook.ts"
+    "comp:import": "tsx scripts/import-comp-workbook.ts",
+    "assets:embed": "tsx scripts/embed-tool-assets.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",
