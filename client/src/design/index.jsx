@@ -237,12 +237,16 @@ function Select({ value, onChange, options, placeholder, style, ...rest }) {
 }
 
 // Ã¢â€â‚¬Ã¢â€â‚¬ Toggle Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-function Toggle({ on, onClick, size = 'md' }) {
+function Toggle({ on, onClick, onChange, size = 'md' }) {
   const w = size === 'sm' ? 32 : 40;
   const h = size === 'sm' ? 18 : 22;
   const k = h - 4;
+  const handleClick = (event) => {
+    onClick?.(event);
+    onChange?.(!on);
+  };
   return (
-    <button onClick={onClick} style={{
+    <button onClick={handleClick} style={{
       width: w, height: h, padding: 2,
       background: on ? 'var(--lee-crimson)' : 'var(--ink-300)',
       border: 'none', borderRadius: 999,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, type ReactNode } from 'react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { useAuth } from '@/_core/hooks/useAuth';
@@ -7,8 +7,15 @@ import {
   Input, Select, StepCard, Field, Toggle, Metric, SummaryRow, FormSection, FormRow 
 } from '../design/index.jsx';
 
+type SectionHeaderProps = {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  right?: ReactNode;
+};
+
 // Missing primitives
-function SectionHeader({ eyebrow, title, description, right }) {
+function SectionHeader({ eyebrow, title, description, right }: SectionHeaderProps) {
   return (
     <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
       <div>
@@ -34,18 +41,28 @@ export default function VoucherScreen() {
   const [totalCommission, setTotalCommission] = useState("127,935.00");
   const [dueToLee, setDueToLee] = useState("63,967.50");
 
-  const submitMutation = trpc.submissions.submit.useMutation({
+  const submitMutation = trpc.submissions.create.useMutation({
     onSuccess: () => toast.success("Voucher submitted successfully!"),
     onError: (err) => toast.error("Error: " + err.message),
   });
 
   const handleSubmit = async () => {
     await submitMutation.mutateAsync({
-      formType: 'voucher',
-      payload: {
-        dateOfLease, lessor, lessee, totalConsideration, totalCommission, dueToLee,
-        address: "2847 Newport Blvd, Costa Mesa CA 92627"
-      }
+      type: 'voucher',
+      status: 'pending',
+      address: "2847 Newport Blvd",
+      city: "Costa Mesa",
+      state: "CA",
+      zip: "92627",
+      brokerName: user?.name ?? "",
+      brokerEmail: user?.email ?? "",
+      office: user?.office ?? "",
+      dateOfLease,
+      lessor,
+      lessee,
+      totalConsideration,
+      totalCommission,
+      dueToLee,
     });
   };
 
@@ -57,7 +74,9 @@ export default function VoucherScreen() {
         description="Submit a completed deal for commission processing and Dealius submission."
         right={<>
           <Badge tone="slate" size="md">Draft · Last saved 2 min ago</Badge>
-          <Button variant="ghost" size="sm" icon={<Icons.Send size={14}/>}>Send to admin</Button>
+          <Button variant="ghost" size="sm" icon={<Icons.Send size={14}/>} onClick={handleSubmit} disabled={submitMutation.isPending}>
+            {submitMutation.isPending ? "Sending..." : "Send to admin"}
+          </Button>
         </>}
       >
         <StepProgress step={5} total={8} percent={62}/>
@@ -102,7 +121,9 @@ export default function VoucherScreen() {
             <Button variant="ghost" icon={<Icons.Chevron size={14} style={{transform:'rotate(180deg)'}}/>}>Back</Button>
             <div style={{ display: 'flex', gap: 8 }}>
               <Button variant="secondary">Save draft</Button>
-              <Button variant="primary" iconRight={<Icons.Arrow size={14}/>}>Continue to invoicing</Button>
+              <Button variant="primary" iconRight={<Icons.Arrow size={14}/>} onClick={handleSubmit} disabled={submitMutation.isPending}>
+                {submitMutation.isPending ? "Submitting..." : "Continue to invoicing"}
+              </Button>
             </div>
           </div>
         </div>
@@ -173,7 +194,6 @@ function RentTable() {
     {mo:'Mo 37-48', months:'Apr 2029 – Mar 2030', baseRate: 1.60, sf: 24500, monthly: 39200},
     {mo:'Mo 49-60', months:'Apr 2030 – Mar 2031', baseRate: 1.66, sf: 24500, monthly: 40670},
   ];
-  const total = rows.reduce((s,r)=>s+r.monthly*parseInt(r.mo.match(/-(\d+)/)?.[1]||1) - (r.monthly * parseInt(r.mo.match(/Mo (\d+)/)?.[1]||1) - r.monthly), 2132250);
   return (
     <div style={{ border: '1px solid var(--ink-200)', borderRadius: 10, overflow: 'hidden' }}>
       <div style={{ display:'grid', gridTemplateColumns: '1fr 1.6fr 1fr 1fr 1fr', padding: '10px 16px', background: 'var(--ink-50)', fontSize: 11, fontWeight: 600, color: 'var(--ink-500)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
@@ -244,7 +264,7 @@ function VoucherRail() {
   );
 }
 
-function RowKV({ k, v, sub, big }) {
+function RowKV({ k, v, sub, big }: { k: string; v: string; sub?: boolean; big?: boolean }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
       <span style={{ fontSize: sub ? 11 : 12, color: sub ? 'var(--ink-500)' : 'var(--ink-600)' }}>{sub && '  â†³ '}{k}</span>
@@ -252,7 +272,7 @@ function RowKV({ k, v, sub, big }) {
     </div>
   );
 }
-function TodoRow({ icon, label }) {
+function TodoRow({ icon, label }: { icon: ReactNode; label: string }) {
   return (
     <div style={{ display:'flex', alignItems:'center', gap: 10, padding: '8px 10px', background: 'rgba(255,255,255,.04)', borderRadius: 6, fontSize: 12 }}>
       <span style={{ color: 'var(--ink-300)' }}>{icon}</span>

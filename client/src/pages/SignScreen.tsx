@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, type ChangeEvent, type CSSProperties, type ReactNode } from 'react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { useAuth } from '@/_core/hooks/useAuth';
@@ -7,8 +7,19 @@ import {
   Input, Select, StepCard, Field, Toggle, Metric, SummaryRow, FormSection, FormRow 
 } from '../design/index.jsx';
 
+type SectionHeaderProps = {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  right?: ReactNode;
+};
+
+type SignQtyKey = '4x8' | '6x8' | 'other' | 'banner';
+type SignQty = Record<SignQtyKey, number>;
+type SignShape = 'sf' | 'df' | 'vshape';
+
 // Missing primitives that were not exported
-function SectionHeader({ eyebrow, title, description, right }) {
+function SectionHeader({ eyebrow, title, description, right }: SectionHeaderProps) {
   return (
     <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
       <div>
@@ -29,8 +40,8 @@ export default function SignRequestScreen() {
   const [dealType, setDealType] = useState("Lease . Industrial");
   const [suite, setSuite] = useState("Entire building");
   
-  const [shape, setShape] = useState('sf');
-  const [qty, setQty] = useState({ '4x8': 2, '6x8': 0, 'other': 0, 'banner': 1 });
+  const [shape, setShape] = useState<SignShape>('sf');
+  const [qty, setQty] = useState<SignQty>({ '4x8': 2, '6x8': 0, 'other': 0, 'banner': 1 });
   const [otherSize, setOtherSize] = useState('');
   const [bannerSize, setBannerSize] = useState('');
   const [nameRider, setNameRider] = useState(true);
@@ -50,16 +61,29 @@ export default function SignRequestScreen() {
 
   const handleSubmit = async () => {
     await submitMutation.mutateAsync({
-      formType: 'sign-request',
-      payload: {
-        shape, qty, otherSize, bannerSize, nameRider, riderText, customGraphic,
-        agent, sharedExpense, installBy, access, comments,
-        listing, dealType, suite
-      }
+      type: 'sign-request',
+      status: 'pending',
+      address: listing,
+      transactionType: dealType,
+      brokerName: agent || user?.name || "",
+      brokerEmail: user?.email ?? "",
+      office: user?.office ?? "",
+      suite,
+      signShape: shape,
+      signQuantities: qty,
+      otherSize,
+      bannerSize,
+      nameRider,
+      riderText,
+      customGraphic,
+      sharedExpense,
+      installBy,
+      access,
+      comments,
     });
   };
 
-  const step = (k, d) => setQty(q => ({ ...q, [k]: Math.max(0, q[k] + d) }));
+  const step = (k: SignQtyKey, d: number) => setQty(q => ({ ...q, [k]: Math.max(0, q[k] + d) }));
 
   return (
     <div>
@@ -80,11 +104,11 @@ export default function SignRequestScreen() {
             <SectionHeader eyebrow="Step 1" title="Which listing?"/>
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 16 }}>
               <Field label="Listing" required>
-                <Input prefix={<Icons.Building size={14}/>} value={listing} onChange={e => setListing(e.target.value)}/>
+                <Input prefix={<Icons.Building size={14}/>} value={listing} onChange={(e: ChangeEvent<HTMLInputElement>) => setListing(e.target.value)}/>
               </Field>
-              <Field label="Deal type"><Input auto value={dealType} onChange={e => setDealType(e.target.value)}/></Field>
+              <Field label="Deal type"><Input auto value={dealType} onChange={(e: ChangeEvent<HTMLInputElement>) => setDealType(e.target.value)}/></Field>
               <Field label="Suite">
-                <Input value={suite} onChange={e => setSuite(e.target.value)}/>
+                <Input value={suite} onChange={(e: ChangeEvent<HTMLInputElement>) => setSuite(e.target.value)}/>
               </Field>
             </div>
           </Card>
@@ -100,7 +124,7 @@ export default function SignRequestScreen() {
               ].map(opt => {
                 const active = shape === opt.id;
                 return (
-                  <button key={opt.id} onClick={() => setShape(opt.id)} style={{
+                  <button key={opt.id} onClick={() => setShape(opt.id as SignShape)} style={{
                     padding: '18px 14px',
                     background: active ? 'var(--lee-crimson-wash)' : 'var(--ink-0)',
                     border: `1.5px solid ${active ? 'var(--lee-crimson)' : 'var(--ink-200)'}`,
@@ -130,7 +154,8 @@ export default function SignRequestScreen() {
                 {k:'other',  label:'Other',     desc:'Custom size', sizeInput: true, sizeValue: otherSize,  setSize: setOtherSize,  placeholder: 'e.g. 3×4'},
                 {k:'banner', label:'Banner',    desc:'Vinyl banner', sizeInput: true, sizeValue: bannerSize, setSize: setBannerSize, placeholder: 'Size'},
               ].map(row => {
-                const n = qty[row.k];
+                const key = row.k as SignQtyKey;
+                const n = qty[key];
                 const active = n > 0;
                 return (
                   <div key={row.k} style={{
@@ -147,7 +172,7 @@ export default function SignRequestScreen() {
                     {row.sizeInput ? (
                       <input
                         value={row.sizeValue}
-                        onChange={e => row.setSize(e.target.value)}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => row.setSize(e.target.value)}
                         placeholder={row.placeholder}
                         style={{ flex: 1, height: 36, padding: '0 12px', fontSize: 13, border: '1px solid var(--ink-200)', borderRadius: 6, background: 'var(--ink-0)', outline: 'none' }}
                       />
@@ -155,9 +180,9 @@ export default function SignRequestScreen() {
                       <div style={{ flex: 1 }}/>
                     )}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: 2, border: '1px solid var(--ink-200)', borderRadius: 8, background: 'var(--ink-0)' }}>
-                      <button onClick={() => step(row.k, -1)} style={stepBtn}><Icons.Minus size={14}/></button>
+                      <button onClick={() => step(key, -1)} style={stepBtn}><Icons.Minus size={14}/></button>
                       <div style={{ width: 40, textAlign: 'center', fontWeight: 700, fontSize: 15, color: active ? 'var(--lee-crimson-ink)' : 'var(--ink-500)' }}>{n}</div>
-                      <button onClick={() => step(row.k, 1)} style={stepBtn}><Icons.Plus size={14}/></button>
+                      <button onClick={() => step(key, 1)} style={stepBtn}><Icons.Plus size={14}/></button>
                     </div>
                   </div>
                 );
@@ -174,7 +199,7 @@ export default function SignRequestScreen() {
               </div>
               {nameRider && (
                 <div style={{ marginTop: 12 }}>
-                  <Input value={riderText} onChange={e => setRiderText(e.target.value)}/>
+                  <Input value={riderText} onChange={(e: ChangeEvent<HTMLInputElement>) => setRiderText(e.target.value)}/>
                 </div>
               )}
             </div>
@@ -183,14 +208,14 @@ export default function SignRequestScreen() {
           <Card>
             <SectionHeader eyebrow="Step 4" title="Requested by &amp; access" description="Who's the point of contact; how do installers get on site?"/>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-              <Field label="Agent" required><Input value={agent} onChange={e => setAgent(e.target.value)}/></Field>
-              <Field label="Shared Expense %"><Input suffix="%" value={sharedExpense} onChange={e => setSharedExpense(e.target.value)}/></Field>
-              <Field label="Install by"><Input prefix={<Icons.Calendar size={14}/>} value={installBy} onChange={e => setInstallBy(e.target.value)}/></Field>
+              <Field label="Agent" required><Input value={agent} onChange={(e: ChangeEvent<HTMLInputElement>) => setAgent(e.target.value)}/></Field>
+              <Field label="Shared Expense %"><Input suffix="%" value={sharedExpense} onChange={(e: ChangeEvent<HTMLInputElement>) => setSharedExpense(e.target.value)}/></Field>
+              <Field label="Install by"><Input prefix={<Icons.Calendar size={14}/>} value={installBy} onChange={(e: ChangeEvent<HTMLInputElement>) => setInstallBy(e.target.value)}/></Field>
               <Field label="Access" span={3}>
-                <Input value={access} onChange={e => setAccess(e.target.value)}/>
+                <Input value={access} onChange={(e: ChangeEvent<HTMLInputElement>) => setAccess(e.target.value)}/>
               </Field>
               <Field label="Comments / placement notes" span={3} optional>
-                <textarea value={comments} onChange={e => setComments(e.target.value)} style={textareaStyle}/>
+                <textarea value={comments} onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setComments(e.target.value)} style={textareaStyle}/>
               </Field>
             </div>
           </Card>
@@ -207,7 +232,7 @@ export default function SignRequestScreen() {
   );
 }
 
-function SignIcon({ type }) {
+function SignIcon({ type }: { type: SignShape }) {
   // S/F = Single-face post sign - one panel on a post, front view
   if (type === 'sf') return (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -253,23 +278,24 @@ function SignIcon({ type }) {
   return null;
 }
 
-const stepBtn = {
+const stepBtn: CSSProperties = {
   width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
   background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 6,
   color: 'var(--ink-700)',
 };
 
-const textareaStyle = {
+const textareaStyle: CSSProperties = {
   minHeight: 80, padding: 12, fontSize: 14, lineHeight: 1.5,
   background: 'var(--ink-0)', border: '1px solid var(--ink-200)', borderRadius: 6,
   fontFamily: 'var(--font-sans)', color: 'var(--ink-900)', outline: 'none', resize: 'vertical',
 };
 
-function OrderSummaryRail({ qty, shape }) {
-  const prices = { '4x8': 285, '6x8': 420, 'other': 175, 'banner': 95 };
+function OrderSummaryRail({ qty, shape }: { qty: SignQty; shape: SignShape }) {
+  const prices: Record<SignQtyKey, number> = { '4x8': 285, '6x8': 420, 'other': 175, 'banner': 95 };
   const labels = { '4x8': "4' × 8'", '6x8': "6' × 8'", 'other': 'Other', 'banner': 'Banner' };
-  const shapeLabel = { sf: 'S/F', df: 'D/F', vshape: 'V-Shape' }[shape] || shape;
-  const total = Object.entries(qty).reduce((sum, [k, n]) => sum + (prices[k] || 0) * n, 0);
+  const shapeLabel = { sf: 'S/F', df: 'D/F', vshape: 'V-Shape' }[shape];
+  const qtyEntries = Object.entries(qty) as [SignQtyKey, number][];
+  const total = qtyEntries.reduce((sum, [k, n]) => sum + prices[k] * n, 0);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, position: 'sticky', top: 24 }}>
       <Card padding={20}>
@@ -278,7 +304,7 @@ function OrderSummaryRail({ qty, shape }) {
         <div style={{ fontSize: 12, color:'var(--ink-500)', marginTop: 2 }}>PO-2026-0418 . {shapeLabel}</div>
 
         <div style={{ marginTop: 16, borderTop: '1px solid var(--ink-150)', paddingTop: 12, display:'flex', flexDirection:'column', gap: 6 }}>
-          {Object.entries(qty).filter(([,n])=>n>0).map(([k,n]) => (
+          {qtyEntries.filter(([,n])=>n>0).map(([k,n]) => (
             <div key={k} style={{ display:'flex', justifyContent:'space-between', fontSize: 13 }}>
               <span style={{ color: 'var(--ink-600)' }}>{labels[k]}  . × {n}</span>
               <span className="lee-mono" style={{ color: 'var(--ink-900)', fontWeight: 600 }}>

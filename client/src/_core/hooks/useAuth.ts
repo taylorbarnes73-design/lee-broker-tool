@@ -73,6 +73,7 @@ export function useAuth(options?: UseAuthOptions) {
       name: meQuery.data.name ?? "",
       email: meQuery.data.email ?? "",
       role: meQuery.data.role ?? "user",
+      office: meQuery.data.office ?? "",
     });
 
     window.localStorage.setItem(SHARED_AUTH_STORAGE_KEY, payload);

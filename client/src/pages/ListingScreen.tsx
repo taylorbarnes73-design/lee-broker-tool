@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, type ChangeEvent } from 'react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { 
   Icons, PageHeader, StepProgress, Segmented, Button, Card, Badge, 
-  Input, Select, StepCard, Field, Toggle, Metric, SummaryRow 
+  Input, Select, StepCard, Field, Toggle
 } from '../design/index.jsx';
 /* Lee Broker Tool - Listing Entry screen */
 
@@ -23,19 +23,30 @@ export default function ListingEntryScreen() {
   const [revealToMls, setRevealToMls] = useState(true);
 
 
-  const submitMutation = trpc.submissions.submit.useMutation({
+  const submitMutation = trpc.submissions.create.useMutation({
     onSuccess: () => toast.success("Listing submitted successfully!"),
     onError: (err) => toast.error("Error: " + err.message),
   });
 
   const handleSubmit = async () => {
     await submitMutation.mutateAsync({
-      formType: 'listing',
-      payload: {
-        propType, dealType, subTab,
-        address: "2847 Newport Blvd, Costa Mesa CA 92627",
-        askingRate, term, expenseType, available, commListing, commProcuring, totalConsideration, revealToMls
-      }
+      type: 'listing',
+      status: 'pending',
+      propertyType: propType,
+      transactionType: dealType,
+      address: "2847 Newport Blvd",
+      city: "Costa Mesa",
+      state: "CA",
+      zip: "92627",
+      listingAction: subTab,
+      askingRate,
+      term,
+      expenseType,
+      available,
+      commListing,
+      commProcuring,
+      totalConsideration,
+      revealToMls,
     });
   };
 
@@ -114,10 +125,10 @@ export default function ListingEntryScreen() {
           >
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
               <Field label="Asking rate" required aiFilled>
-                <Input prefix="$" suffix="/ SF / Mo" value={askingRate} onChange={e => setAskingRate(e.target.value)}/>
+                <Input prefix="$" suffix="/ SF / Mo" value={askingRate} onChange={(e: ChangeEvent<HTMLInputElement>) => setAskingRate(e.target.value)}/>
               </Field>
               <Field label="Term">
-                <Select value={term} onChange={e => setTerm(e.target.value)} options={[
+                <Select value={term} onChange={(e: ChangeEvent<HTMLSelectElement>) => setTerm(e.target.value)} options={[
                   {value:'neg', label:'Negotiable'},
                   {value:'3', label:'3 years'},
                   {value:'5', label:'5 years'},
@@ -126,20 +137,20 @@ export default function ListingEntryScreen() {
                 ]}/>
               </Field>
               <Field label="NNN / Expense type" required>
-                <Select value={expenseType} onChange={e => setExpenseType(e.target.value)} options={['NNN','Gross','Modified Gross','Industrial Gross']}/>
+                <Select value={expenseType} onChange={(e: ChangeEvent<HTMLSelectElement>) => setExpenseType(e.target.value)} options={['NNN','Gross','Modified Gross','Industrial Gross']}/>
               </Field>
               <Field label="Available">
-                <Input prefix={<Icons.Calendar size={14}/>} value={available} onChange={e => setAvailable(e.target.value)}/>
+                <Input prefix={<Icons.Calendar size={14}/>} value={available} onChange={(e: ChangeEvent<HTMLInputElement>) => setAvailable(e.target.value)}/>
               </Field>
 
               <Field label="Commission - listing side" required span={1}>
-                <Input suffix="%" value={commListing} onChange={e => setCommListing(e.target.value)}/>
+                <Input suffix="%" value={commListing} onChange={(e: ChangeEvent<HTMLInputElement>) => setCommListing(e.target.value)}/>
               </Field>
               <Field label="Commission - procuring" required span={1}>
-                <Input suffix="%" value={commProcuring} onChange={e => setCommProcuring(e.target.value)}/>
+                <Input suffix="%" value={commProcuring} onChange={(e: ChangeEvent<HTMLInputElement>) => setCommProcuring(e.target.value)}/>
               </Field>
               <Field label="Total consideration" span={2}>
-                <Input value={totalConsideration} onChange={e => setTotalConsideration(e.target.value)} prefix="$" style={{fontFamily:'var(--font-mono)'}}/>
+                <Input value={totalConsideration} onChange={(e: ChangeEvent<HTMLInputElement>) => setTotalConsideration(e.target.value)} prefix="$" style={{fontFamily:'var(--font-mono)'}}/>
               </Field>
             </div>
 
@@ -239,7 +250,7 @@ function ListingSidebar() {
   );
 }
 
-function Metric({ label, value, unit }) {
+function Metric({ label, value, unit }: { label: string; value: string; unit?: string }) {
   return (
     <div>
       <div style={{ fontSize: 10, color: 'var(--ink-500)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{label}</div>
@@ -251,7 +262,7 @@ function Metric({ label, value, unit }) {
   );
 }
 
-function SummaryRow({ ok, current, label }) {
+function SummaryRow({ ok, current, label }: { ok?: boolean; current?: boolean; label: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
       <div style={{

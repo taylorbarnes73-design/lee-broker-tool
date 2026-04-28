@@ -1,14 +1,102 @@
-import React, { useState } from 'react';
+import React, { useState, type ReactNode } from 'react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { 
   Icons, PageHeader, StepProgress, Segmented, Button, Card, Badge, 
   Input, Select, StepCard, Field, Toggle, Metric, SummaryRow, FormSection, FormRow 
 } from '../design/index.jsx';
+
+type SectionHeaderProps = {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  right?: ReactNode;
+};
+
+type CompType = 'lease' | 'sale';
+type CompSearchResult = {
+  id: number;
+  importId: number;
+  compType: CompType;
+  title: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  market: string;
+  subMarket: string;
+  propertyType: string;
+  propertySubType: string;
+  transactionDate: string;
+  source: string;
+  metricLine: string;
+  metaLine: string;
+  sfLeased?: string | number;
+  sfSold?: string | number;
+  rate?: string | number;
+  salePrice?: string | number;
+  leaseTerm?: string | number;
+  leaseDate?: string;
+  saleDate?: string;
+  reportCard: {
+    fields: Record<string, string>;
+  };
+};
+
+function SectionHeader({ eyebrow, title, description, right }: SectionHeaderProps) {
+  return (
+    <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <div>
+        {eyebrow && <div className="lee-eyebrow" style={{ marginBottom: 4 }}>{eyebrow}</div>}
+        <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink-900)' }}>{title}</div>
+        {description && <div style={{ fontSize: 13, color: 'var(--ink-500)', marginTop: 2 }}>{description}</div>}
+      </div>
+      {right}
+    </div>
+  );
+}
+
+function compField(comp: CompSearchResult, field: string) {
+  return comp.reportCard?.fields?.[field] || "";
+}
+
+function compParty(comp: CompSearchResult) {
+  return comp.compType === 'lease'
+    ? compField(comp, "Lessee") || "Confidential"
+    : compField(comp, "Buyer") || "Confidential";
+}
+
+function compSize(comp: CompSearchResult) {
+  return comp.compType === 'lease'
+    ? compField(comp, "Space Leased") || compField(comp, "Bldg SqFt") || "-"
+    : compField(comp, "Bldg. SqFt") || "-";
+}
+
+function compRate(comp: CompSearchResult) {
+  return comp.compType === 'lease'
+    ? compField(comp, "Rent/SqFt") || "-"
+    : compField(comp, "Sale Price") || compField(comp, "Sale $/SF") || "-";
+}
+
+function compTerm(comp: CompSearchResult) {
+  return comp.compType === 'lease'
+    ? compField(comp, "Term") || "-"
+    : compField(comp, "Trans. Type") || "-";
+}
 /* Lee Broker Tool — Comps, Admin, Contracts, Documents, AI panel */
 
 // â”€â”€ Comp Reports (the user said this is a mess — redesign as a clear workflow) â”€â”€
 export default function CompScreen() {
+  const [compType, setCompType] = useState<CompType>('lease');
+  const compsQuery = trpc.compData.search.useQuery({
+    compType,
+    city: "Costa Mesa",
+    propertyType: "Industrial",
+    limit: 24,
+  });
+  const comps = (compsQuery.data?.results ?? []) as CompSearchResult[];
+  const latestImport = compsQuery.data?.latestImport;
+
   return (
     <div>
       <PageHeader
@@ -42,9 +130,9 @@ export default function CompScreen() {
           <Card padding={20}>
             <div style={{ display:'flex', justifyContent:'space-between', marginBottom: 12 }}>
               <div className="lee-eyebrow">Filters</div>
-              <button style={{ fontSize: 11, color: 'var(--lee-crimson)', background:'none', border:'none', cursor:'pointer', fontWeight: 600 }}>Reset</button>
+              <button onClick={() => setCompType('lease')} style={{ fontSize: 11, color: 'var(--lee-crimson)', background:'none', border:'none', cursor:'pointer', fontWeight: 600 }}>Reset</button>
             </div>
-            <Field label="Comp type"><Segmented size="sm" value={compType} onChange={setCompType} options={[{value:'lease',label:'Lease'},{value:'sale',label:'Sale'},{value:'both',label:'Both'}]}/></Field>
+            <Field label="Comp type"><Segmented size="sm" value={compType} onChange={setCompType} options={[{value:'lease',label:'Lease'},{value:'sale',label:'Sale'}]}/></Field>
             <div style={{ marginTop: 12 }}><Field label="Radius"><Select value="3" onChange={()=>{}} options={['1 mile','3 miles','5 miles','10 miles']}/></Field></div>
             <div style={{ marginTop: 12 }}><Field label="Size range"><Input suffix="SF" defaultValue="15,000 – 40,000"/></Field></div>
             <div style={{ marginTop: 12 }}><Field label="Closed within"><Select value="12mo" onChange={()=>{}} options={['3 months','6 months','12 months','24 months']}/></Field></div>
@@ -68,7 +156,9 @@ export default function CompScreen() {
           {/* Map + list combo */}
           <Card padding={0} style={{ overflow: 'hidden' }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding: '12px 20px', borderBottom: '1px solid var(--ink-150)' }}>
-              <div style={{ fontSize: 14, fontWeight: 600 }}>12 comps · sorted by relevance</div>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>
+                {comps.length} comps {latestImport ? `from ${latestImport.workbookName}` : "available"} · sorted by relevance
+              </div>
               <div style={{ display:'flex', gap: 6 }}>
                 <Segmented size="sm" options={[{value:'list',label:<Icons.List size={12}/>},{value:'grid',label:<Icons.Grid size={12}/>},{value:'map',label:<Icons.Pin size={12}/>}]} value="list" onChange={()=>{}}/>
                 <Button variant="ghost" size="sm" icon={<Icons.Sort size={12}/>}>Sort</Button>
@@ -80,18 +170,18 @@ export default function CompScreen() {
               <div/><div>Property</div><div>Tenant</div><div>SF</div><div>Rate</div><div>Term</div><div>Closed</div><div/>
             </div>
             {compsQuery.isLoading && <div style={{ padding: 20 }}>Loading comps...</div>}
-            {comps.map((r,i) => (
-              <div key={i} style={{ display:'grid', gridTemplateColumns: '32px 2fr 1fr .8fr 1fr .8fr .8fr 32px', padding: '12px 20px', alignItems:'center', borderTop: '1px solid var(--ink-150)', fontSize: 13 }}>
+            {comps.map((r) => (
+              <div key={`${r.compType}-${r.id}`} style={{ display:'grid', gridTemplateColumns: '32px 2fr 1fr .8fr 1fr .8fr .8fr 32px', padding: '12px 20px', alignItems:'center', borderTop: '1px solid var(--ink-150)', fontSize: 13 }}>
                 <input type="checkbox" defaultChecked style={{ accentColor: 'var(--lee-crimson)' }}/>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.address}</div>
+                  <div style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title || r.address}</div>
                   <div style={{ fontSize: 11, color: 'var(--ink-500)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.city} · {r.propertyType}</div>
                 </div>
-                <div style={{ color: 'var(--ink-600)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.tenantName || r.buyerName || 'Confidential'}</div>
-                <div className="lee-mono" style={{ color: 'var(--ink-700)' }}>{r.sfLeased || r.sfSold || '—'}</div>
-                <div className="lee-mono" style={{ fontWeight: 600 }}>{r.rate || r.salePrice || '—'}</div>
-                <div className="lee-mono" style={{ color: 'var(--ink-600)' }}>{r.leaseTerm || '—'}</div>
-                <div style={{ color: 'var(--ink-600)' }}>{r.leaseDate || r.saleDate || '—'}</div>
+                <div style={{ color: 'var(--ink-600)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{compParty(r)}</div>
+                <div className="lee-mono" style={{ color: 'var(--ink-700)' }}>{compSize(r)}</div>
+                <div className="lee-mono" style={{ fontWeight: 600 }}>{compRate(r)}</div>
+                <div className="lee-mono" style={{ color: 'var(--ink-600)' }}>{compTerm(r)}</div>
+                <div style={{ color: 'var(--ink-600)' }}>{r.transactionDate || "-"}</div>
                 <div><Badge tone="success" size="sm">A</Badge></div>
               </div>
             ))}
@@ -109,7 +199,7 @@ export default function CompScreen() {
   );
 }
 
-function Pill({label, value}) {
+function Pill({label, value}: { label: string; value: string }) {
   return (
     <div style={{ background: 'var(--ink-50)', border: '1px solid var(--ink-200)', borderRadius: 6, padding: '6px 10px' }}>
       <div style={{ fontSize: 10, color: 'var(--ink-500)', fontWeight: 600, letterSpacing:'0.06em', textTransform:'uppercase' }}>{label}</div>
@@ -117,7 +207,7 @@ function Pill({label, value}) {
     </div>
   );
 }
-function StatCard({label,value,unit,trend}) {
+function StatCard({label,value,unit,trend}: { label: string; value: ReactNode; unit?: string; trend?: string }) {
   return (
     <Card padding={16}>
       <div className="lee-eyebrow">{label}</div>
@@ -843,7 +933,7 @@ export function DocsScreen() {
 }
 
 // â”€â”€ AI assist panel (slide-over) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function AiPanel({ open, onClose }) {
+function AiPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <>
       {open && <div onClick={onClose} style={{ position:'absolute', inset: 0, background:'rgba(10,10,11,.4)', zIndex: 20 }}/>}
@@ -923,7 +1013,7 @@ function AiPanel({ open, onClose }) {
 }
 
 // â”€â”€ My Profile modal — single user only; brokers cannot view each other â”€â”€â”€â”€
-function ProfileModal({ open, onClose }) {
+function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   if (!open) return null;
   return (
     <>

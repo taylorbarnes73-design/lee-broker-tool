@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
-import { useState, type FormEvent } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useLocation } from "wouter";
 
 // We import design primitives to build a nice looking login
@@ -60,17 +60,17 @@ export default function Login() {
             <div style={{ display: 'flex', gap: 12 }}>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>First Name</label>
-                <Input value={firstName} onChange={e => setFirstName(e.target.value)} required placeholder="Taylor" />
+                <Input value={firstName} onChange={(e: ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)} required placeholder="Taylor" />
               </div>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>Last Name</label>
-                <Input value={lastName} onChange={e => setLastName(e.target.value)} required placeholder="Barnes" />
+                <Input value={lastName} onChange={(e: ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)} required placeholder="Barnes" />
               </div>
             </div>
 
             <div>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>Lee Email</label>
-              <Input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="tbarnes@lee-associates.com" />
+              <Input type="email" value={email} onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)} required placeholder="tbarnes@lee-associates.com" />
             </div>
 
             <Button type="submit" variant="primary" size="lg" disabled={loginMutation.isPending || loading} style={{ marginTop: 8 }}>

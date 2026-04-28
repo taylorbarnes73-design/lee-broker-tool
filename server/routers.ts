@@ -27,7 +27,19 @@ export const appRouter = router({
   contracts: contractsRouter,
   submissions: submissionsRouter,
   auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
+    me: publicProcedure.query(opts => {
+      const user = opts.ctx.user;
+      if (!user) return null;
+
+      const brokerEntry = user.email
+        ? findBrokerDirectoryEntry(user.email)
+        : null;
+
+      return {
+        ...user,
+        office: brokerEntry?.office ?? null,
+      };
+    }),
     login: publicProcedure
       .input(
         z.object({
