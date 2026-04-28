@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useRef, useState, type ChangeEvent, type Rea
 import { useAuth } from '@/_core/hooks/useAuth';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
-import { 
-  Icons, PageHeader, StepProgress, Segmented, Button, Card, Badge, 
-  Input, Select, StepCard, Field, Toggle, Metric, SummaryRow, FormSection, FormRow 
+import {
+  Icons, PageHeader, Segmented, Button, Card, Badge,
+  Input, Select, Field
 } from '../design/index.jsx';
 
 type SectionHeaderProps = {
@@ -396,13 +396,10 @@ function FunctionalCompScreen() {
   const utils = trpc.useUtils();
   const [compType, setCompType] = useState<CompType>('lease');
   const [query, setQuery] = useState("");
-  const [subjectAddress, setSubjectAddress] = useState("2847 Newport Blvd");
-  const [subjectCity, setSubjectCity] = useState("Costa Mesa");
-  const [propertyType, setPropertyType] = useState("Industrial");
-  const [radius, setRadius] = useState("3 miles");
+  const [city, setCity] = useState("");
+  const [propertyType, setPropertyType] = useState("");
   const [closedWithin, setClosedWithin] = useState("12 months");
   const [selectedCompKeys, setSelectedCompKeys] = useState<Set<string>>(new Set());
-  const [view, setView] = useState("list");
   const compImportInputRef = useRef<HTMLInputElement | null>(null);
 
   const dateFrom = useMemo(() => {
@@ -415,7 +412,7 @@ function FunctionalCompScreen() {
   const compsQuery = trpc.compData.search.useQuery({
     compType,
     query: query.trim() || undefined,
-    city: subjectCity.trim() || undefined,
+    city: city.trim() || undefined,
     propertyType: propertyType.trim() || undefined,
     dateFrom,
     limit: 24,
@@ -474,6 +471,17 @@ function FunctionalCompScreen() {
     });
   };
 
+  const allChecked = comps.length > 0 && comps.every((c) => selectedCompKeys.has(`${c.compType}-${c.id}`));
+  const someChecked = comps.some((c) => selectedCompKeys.has(`${c.compType}-${c.id}`));
+
+  const handleSelectAll = () => {
+    if (allChecked) {
+      setSelectedCompKeys(new Set());
+    } else {
+      setSelectedCompKeys(new Set(comps.map((c) => `${c.compType}-${c.id}`)));
+    }
+  };
+
   const handleExportCsv = () => {
     const rows = selectedComps.length ? selectedComps : comps;
     if (!rows.length) {
@@ -506,29 +514,20 @@ function FunctionalCompScreen() {
   const handleBuildPacket = () => {
     const rows = selectedComps.length ? selectedComps : comps;
     if (!rows.length) {
-      toast.error("Select at least one comp first.");
+      toast.error("No comps selected.");
       return;
     }
 
     const html = buildMetropolisCompPacketHtml({
       compType,
       rows,
-      subjectAddress,
-      subjectCity,
+      subjectAddress: "",
+      subjectCity: city,
       propertyType,
     });
 
     downloadTextFile(`lee-${compType}-comps-packet.html`, "text/html;charset=utf-8", html);
-    toast.success("Packet built. Open the HTML file and print to PDF.");
-  };
-
-  const resetFilters = () => {
-    setQuery("");
-    setCompType("lease");
-    setSubjectCity("Costa Mesa");
-    setPropertyType("Industrial");
-    setRadius("3 miles");
-    setClosedWithin("12 months");
+    toast.success("Packet downloaded. Open the file and print to PDF.");
   };
 
   const selectedCount = selectedComps.length;
@@ -545,116 +544,189 @@ function FunctionalCompScreen() {
       <PageHeader
         eyebrow="Market Intelligence"
         title="Comparable Reports"
-        description="Pull sale and lease comps for a subject property. Export as a branded PDF packet."
-        right={<>
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={<Icons.Upload size={14}/>}
+        description="Filter comps, select the ones you want, then build a branded PDF packet."
+      />
+
+      <div style={{ padding: '0 32px 32px', display: 'grid', gridTemplateColumns: '240px 1fr', gap: 20, alignItems: 'start' }}>
+        {/* Sidebar: filters */}
+        <div style={{ position: 'sticky', top: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <Card padding={16}>
+            <Field label="Comp type">
+              <Segmented
+                size="sm"
+                value={compType}
+                onChange={(value: CompType) => setCompType(value)}
+                options={[{ value: 'lease', label: 'Lease' }, { value: 'sale', label: 'Sale' }]}
+              />
+            </Field>
+            <div style={{ marginTop: 12 }}>
+              <Field label="Keyword">
+                <Input
+                  value={query}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
+                  placeholder="Tenant, buyer, address..."
+                />
+              </Field>
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <Field label="City">
+                <Input
+                  value={city}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => setCity(event.target.value)}
+                  placeholder="e.g. Costa Mesa"
+                />
+              </Field>
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <Field label="Property type">
+                <Input
+                  value={propertyType}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => setPropertyType(event.target.value)}
+                  placeholder="e.g. Industrial"
+                />
+              </Field>
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <Field label="Closed within">
+                <Select
+                  value={closedWithin}
+                  onChange={(event: ChangeEvent<HTMLSelectElement>) => setClosedWithin(event.target.value)}
+                  options={['3 months', '6 months', '12 months', '24 months']}
+                />
+              </Field>
+            </div>
+          </Card>
+
+          <button
             onClick={() => compImportInputRef.current?.click()}
             disabled={isImporting}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 7, padding: '8px 12px',
+              background: 'none', border: '1px solid var(--ink-200)', borderRadius: 7,
+              cursor: isImporting ? 'default' : 'pointer', fontSize: 12, color: 'var(--ink-600)',
+              fontWeight: 500,
+            }}
           >
+            <Icons.Upload size={13}/>
             {isImporting ? "Importing..." : "Import workbook"}
-          </Button>
-          <Button variant="primary" size="sm" icon={<Icons.Docs size={14}/>} onClick={handleBuildPacket}>Build packet</Button>
-        </>}
-      />
-      <div style={{ padding: 32, display: 'grid', gridTemplateColumns: '320px 1fr', gap: 24, alignItems:'start' }}>
-        <div style={{ display:'flex', flexDirection:'column', gap: 16, position:'sticky', top: 24 }}>
-          <Card padding={20}>
-            <div className="lee-eyebrow" style={{ marginBottom: 12 }}>Subject property</div>
-            <div style={{ width: '100%', height: 120, background: 'linear-gradient(135deg, var(--ink-100), var(--ink-200))', borderRadius: 8, position:'relative', overflow:'hidden', marginBottom: 12 }}>
-              <div style={{ position:'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(45deg, transparent 0 10px, rgba(0,0,0,.03) 10px 11px)' }}/>
-              <div style={{ position:'absolute', bottom: 8, left: 10, fontSize: 10, color: 'var(--ink-500)', letterSpacing: '0.08em', textTransform:'uppercase' }}>Map preview</div>
-            </div>
-            <Field label="Address"><Input value={subjectAddress} onChange={(event: ChangeEvent<HTMLInputElement>) => setSubjectAddress(event.target.value)}/></Field>
-            <div style={{ marginTop: 10 }}><Field label="City"><Input value={subjectCity} onChange={(event: ChangeEvent<HTMLInputElement>) => setSubjectCity(event.target.value)}/></Field></div>
-            <div style={{ marginTop: 12, display:'grid', gridTemplateColumns:'1fr 1fr', gap: 8 }}>
-              <Pill label="Type" value={propertyType || "-"}/>
-              <Pill label="Size" value="24,500 SF"/>
-              <Pill label="Radius" value={radius}/>
-              <Pill label="Closed" value={closedWithin}/>
-            </div>
-          </Card>
+          </button>
 
-          <Card padding={20}>
-            <div style={{ display:'flex', justifyContent:'space-between', marginBottom: 12 }}>
-              <div className="lee-eyebrow">Filters</div>
-              <button onClick={resetFilters} style={{ fontSize: 11, color: 'var(--lee-crimson)', background:'none', border:'none', cursor:'pointer', fontWeight: 600 }}>Reset</button>
+          {latestImport && (
+            <div style={{ fontSize: 11, color: 'var(--ink-400)', lineHeight: 1.4, padding: '2px 2px' }}>
+              Source: {latestImport.workbookName}
             </div>
-            <Field label="Comp type"><Segmented size="sm" value={compType} onChange={(value: CompType) => setCompType(value)} options={[{value:'lease',label:'Lease'},{value:'sale',label:'Sale'}]}/></Field>
-            <div style={{ marginTop: 12 }}><Field label="Keyword"><Input value={query} onChange={(event: ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)} placeholder="Tenant, buyer, address..."/></Field></div>
-            <div style={{ marginTop: 12 }}><Field label="Radius"><Select value={radius} onChange={(event: ChangeEvent<HTMLSelectElement>) => setRadius(event.target.value)} options={['1 mile','3 miles','5 miles','10 miles']}/></Field></div>
-            <div style={{ marginTop: 12 }}><Field label="Property type"><Input value={propertyType} onChange={(event: ChangeEvent<HTMLInputElement>) => setPropertyType(event.target.value)}/></Field></div>
-            <div style={{ marginTop: 12 }}><Field label="Closed within"><Select value={closedWithin} onChange={(event: ChangeEvent<HTMLSelectElement>) => setClosedWithin(event.target.value)} options={['3 months','6 months','12 months','24 months']}/></Field></div>
-            <div style={{ marginTop: 16, display:'flex', alignItems:'center', gap:10, padding: '10px 12px', background:'var(--ai-100)', borderRadius: 8, border:'1px solid rgba(110,63,217,.2)' }}>
-              <Icons.Sparkles size={14} style={{ color:'var(--ai-500)' }}/>
-              <div style={{ flex: 1, fontSize: 12, color: 'var(--ink-700)' }}><b>Deal Assist</b> keeps the report synced with these filters.</div>
-            </div>
-          </Card>
+          )}
         </div>
 
-        <div style={{ display:'flex', flexDirection:'column', gap: 16 }}>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap: 12 }}>
-            <StatCard label="Comps found" value={compsQuery.isLoading ? "Loading" : comps.length} unit=""/>
-            <StatCard label="Selected" value={selectedCount} unit=""/>
-            <StatCard label="Source" value={latestImport ? "Live" : "None"} unit={latestImport?.workbookName || ""}/>
-            <StatCard label="Window" value={closedWithin.split(" ")[0]} unit="months"/>
+        {/* Main: results table */}
+        <Card padding={0} style={{ overflow: 'hidden' }}>
+          {/* Column header */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '36px 2.2fr 1.1fr .9fr 1fr .9fr .9fr',
+            padding: '10px 20px',
+            background: 'var(--ink-50)',
+            borderBottom: '1px solid var(--ink-150)',
+            fontSize: 10, fontWeight: 700, color: 'var(--ink-500)',
+            letterSpacing: '0.08em', textTransform: 'uppercase',
+            alignItems: 'center',
+          }}>
+            <input
+              type="checkbox"
+              checked={allChecked}
+              ref={(el) => { if (el) el.indeterminate = someChecked && !allChecked; }}
+              onChange={handleSelectAll}
+              style={{ accentColor: 'var(--lee-crimson)', cursor: 'pointer' }}
+            />
+            <div>Property</div>
+            <div>{compType === 'lease' ? 'Tenant' : 'Buyer'}</div>
+            <div>SF</div>
+            <div>{compType === 'lease' ? 'Rate' : 'Price'}</div>
+            <div>{compType === 'lease' ? 'Term' : 'Type'}</div>
+            <div>Closed</div>
           </div>
 
-          <Card padding={0} style={{ overflow: 'hidden' }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding: '12px 20px', borderBottom: '1px solid var(--ink-150)' }}>
-              <div style={{ fontSize: 14, fontWeight: 600 }}>
-                {comps.length} comps {latestImport ? `from ${latestImport.workbookName}` : "available"} - sorted by relevance
-              </div>
-              <div style={{ display:'flex', gap: 6 }}>
-                <Segmented size="sm" options={[{value:'list',label:<Icons.List size={12}/>},{value:'grid',label:<Icons.Grid size={12}/>},{value:'map',label:<Icons.Pin size={12}/>}]} value={view} onChange={setView}/>
-                <Button variant="ghost" size="sm" icon={<Icons.Download size={12}/>} onClick={handleExportCsv}>CSV</Button>
-              </div>
+          {compsQuery.isLoading && (
+            <div style={{ padding: '28px 20px', color: 'var(--ink-400)', fontSize: 13 }}>Loading...</div>
+          )}
+          {compsQuery.isError && (
+            <div style={{ padding: '20px', color: 'var(--err-600)', fontSize: 13 }}>{compsQuery.error.message}</div>
+          )}
+          {!compsQuery.isLoading && !compsQuery.isError && !comps.length && (
+            <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--ink-400)', fontSize: 13 }}>
+              No comps match the current filters.
             </div>
+          )}
 
-            <div style={{ display:'grid', gridTemplateColumns: '32px 2fr 1fr .8fr 1fr .8fr .8fr 32px', padding: '10px 20px', background: 'var(--ink-50)', fontSize: 10, fontWeight: 600, color: 'var(--ink-500)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              <div/><div>Property</div><div>Party</div><div>SF</div><div>Rate</div><div>Term</div><div>Closed</div><div/>
-            </div>
-            {compsQuery.isLoading && <div style={{ padding: 20 }}>Loading comps...</div>}
-            {compsQuery.isError && <div style={{ padding: 20, color: 'var(--err-600)' }}>{compsQuery.error.message}</div>}
-            {!compsQuery.isLoading && !comps.length && (
-              <div style={{ padding: 28, textAlign: 'center', color: 'var(--ink-500)' }}>
-                No comps match the current filters.
-              </div>
-            )}
-            {comps.map((r) => {
-              const key = `${r.compType}-${r.id}`;
-              return (
-                <div key={key} style={{ display:'grid', gridTemplateColumns: '32px 2fr 1fr .8fr 1fr .8fr .8fr 32px', padding: '12px 20px', alignItems:'center', borderTop: '1px solid var(--ink-150)', fontSize: 13 }}>
-                  <input
-                    type="checkbox"
-                    checked={selectedCompKeys.has(key)}
-                    onChange={() => toggleComp(key)}
-                    style={{ accentColor: 'var(--lee-crimson)' }}
-                  />
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title || r.address}</div>
-                    <div style={{ fontSize: 11, color: 'var(--ink-500)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.city} - {r.propertyType}</div>
+          {comps.map((r) => {
+            const key = `${r.compType}-${r.id}`;
+            const checked = selectedCompKeys.has(key);
+            return (
+              <label
+                key={key}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '36px 2.2fr 1.1fr .9fr 1fr .9fr .9fr',
+                  padding: '11px 20px',
+                  alignItems: 'center',
+                  borderTop: '1px solid var(--ink-150)',
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  background: checked ? 'var(--ink-0)' : 'transparent',
+                  transition: 'background 0.1s',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleComp(key)}
+                  style={{ accentColor: 'var(--lee-crimson)', cursor: 'pointer' }}
+                />
+                <div style={{ minWidth: 0, paddingRight: 12 }}>
+                  <div style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {r.title || r.address}
                   </div>
-                  <div style={{ color: 'var(--ink-600)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{compParty(r)}</div>
-                  <div className="lee-mono" style={{ color: 'var(--ink-700)' }}>{compSize(r)}</div>
-                  <div className="lee-mono" style={{ fontWeight: 600 }}>{compRate(r)}</div>
-                  <div className="lee-mono" style={{ color: 'var(--ink-600)' }}>{compTerm(r)}</div>
-                  <div style={{ color: 'var(--ink-600)' }}>{r.transactionDate || "-"}</div>
-                  <div><Badge tone="success" size="sm">A</Badge></div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-400)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>
+                    {[r.city, r.propertyType].filter(Boolean).join(' · ')}
+                  </div>
                 </div>
-              );
-            })}
-            <div style={{ padding: '14px 20px', display:'flex', justifyContent:'space-between', alignItems:'center', borderTop: '1px solid var(--ink-150)', background: 'var(--ink-50)' }}>
-              <div style={{ fontSize: 12, color: 'var(--ink-600)' }}>{selectedCount} selected</div>
-              <div style={{ display:'flex', gap: 8 }}>
-                <Button variant="secondary" size="sm" icon={<Icons.Download size={14}/>} onClick={handleExportCsv}>Export CSV</Button>
-                <Button variant="primary" size="sm" icon={<Icons.Docs size={14}/>} onClick={handleBuildPacket}>Build PDF packet</Button>
-              </div>
+                <div style={{ color: 'var(--ink-600)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: 8, fontSize: 12 }}>
+                  {compParty(r)}
+                </div>
+                <div className="lee-mono" style={{ color: 'var(--ink-700)', fontSize: 12 }}>{compSize(r)}</div>
+                <div className="lee-mono" style={{ fontWeight: 600, fontSize: 13 }}>{compRate(r)}</div>
+                <div className="lee-mono" style={{ color: 'var(--ink-600)', fontSize: 12 }}>{compTerm(r)}</div>
+                <div style={{ color: 'var(--ink-500)', fontSize: 12 }}>{r.transactionDate || "—"}</div>
+              </label>
+            );
+          })}
+
+          {/* Action footer */}
+          <div style={{
+            padding: '12px 20px',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            borderTop: '1px solid var(--ink-150)',
+            background: 'var(--ink-50)',
+          }}>
+            <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>
+              {selectedCount} of {comps.length} selected
             </div>
-          </Card>
-        </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <Button variant="secondary" size="sm" icon={<Icons.Download size={13}/>} onClick={handleExportCsv}>
+                Export CSV
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<Icons.Docs size={13}/>}
+                onClick={handleBuildPacket}
+                disabled={selectedCount === 0}
+              >
+                Build packet ({selectedCount})
+              </Button>
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   );
@@ -664,127 +736,7 @@ export default function CompScreen() {
   return <FunctionalCompScreen />;
 }
 
-function LegacyCompScreen() {
-  const [compType, setCompType] = useState<CompType>('lease');
-  const compsQuery = trpc.compData.search.useQuery({
-    compType,
-    city: "Costa Mesa",
-    propertyType: "Industrial",
-    limit: 24,
-  });
-  const comps = (compsQuery.data?.results ?? []) as CompSearchResult[];
-  const latestImport = compsQuery.data?.latestImport;
 
-  return (
-    <div>
-      <PageHeader
-        eyebrow="Market Intelligence"
-        title="Comparable Reports"
-        description="Pull sale and lease comps for a subject property. Export as a branded PDF packet."
-        right={<>
-          <Button variant="secondary" size="sm" icon={<Icons.Upload size={14}/>}>Import CSV</Button>
-          <Button variant="primary" size="sm" icon={<Icons.Plus size={14}/>}>New comp report</Button>
-        </>}
-      />
-      <div style={{ padding: 32, display: 'grid', gridTemplateColumns: '320px 1fr', gap: 24, alignItems:'start' }}>
-        {/* Left: subject + filters */}
-        <div style={{ display:'flex', flexDirection:'column', gap: 16, position:'sticky', top: 24 }}>
-          <Card padding={20}>
-            <div className="lee-eyebrow" style={{ marginBottom: 12 }}>Subject property</div>
-            <div style={{ width: '100%', height: 120, background: 'linear-gradient(135deg, var(--ink-100), var(--ink-200))', borderRadius: 8, position:'relative', overflow:'hidden', marginBottom: 12 }}>
-              <div style={{ position:'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(45deg, transparent 0 10px, rgba(0,0,0,.03) 10px 11px)' }}/>
-              <div style={{ position:'absolute', bottom: 8, left: 10, fontSize: 10, color: 'var(--ink-500)', letterSpacing: '0.08em', textTransform:'uppercase' }}>Satellite preview</div>
-            </div>
-            <div style={{ fontSize: 15, fontWeight: 600 }}>2847 Newport Blvd</div>
-            <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>Costa Mesa, CA 92627</div>
-            <div style={{ marginTop: 12, display:'grid', gridTemplateColumns:'1fr 1fr', gap: 8 }}>
-              <Pill label="Type" value="Industrial"/>
-              <Pill label="Size" value="24,500 SF"/>
-              <Pill label="Built" value="2005"/>
-              <Pill label="Clear" value="28'"/>
-            </div>
-          </Card>
-
-          <Card padding={20}>
-            <div style={{ display:'flex', justifyContent:'space-between', marginBottom: 12 }}>
-              <div className="lee-eyebrow">Filters</div>
-              <button onClick={() => setCompType('lease')} style={{ fontSize: 11, color: 'var(--lee-crimson)', background:'none', border:'none', cursor:'pointer', fontWeight: 600 }}>Reset</button>
-            </div>
-            <Field label="Comp type"><Segmented size="sm" value={compType} onChange={setCompType} options={[{value:'lease',label:'Lease'},{value:'sale',label:'Sale'}]}/></Field>
-            <div style={{ marginTop: 12 }}><Field label="Radius"><Select value="3" onChange={()=>{}} options={['1 mile','3 miles','5 miles','10 miles']}/></Field></div>
-            <div style={{ marginTop: 12 }}><Field label="Size range"><Input suffix="SF" defaultValue="15,000 – 40,000"/></Field></div>
-            <div style={{ marginTop: 12 }}><Field label="Closed within"><Select value="12mo" onChange={()=>{}} options={['3 months','6 months','12 months','24 months']}/></Field></div>
-            <div style={{ marginTop: 16, display:'flex', alignItems:'center', gap:10, padding: '10px 12px', background:'var(--ai-100)', borderRadius: 8, border:'1px solid rgba(110,63,217,.2)' }}>
-              <Icons.Sparkles size={14} style={{ color:'var(--ai-500)' }}/>
-              <div style={{ flex: 1, fontSize: 12, color: 'var(--ink-700)' }}><b>Deal Assist</b> picked these filters from your subject</div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Right: results */}
-        <div style={{ display:'flex', flexDirection:'column', gap: 16 }}>
-          {/* Stats strip */}
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap: 12 }}>
-            <StatCard label="Comps found" value={comps.length} unit=""/>
-            <StatCard label="Median rate" value="$1.37" unit="/SF/Mo NNN" trend="+4.2% YoY"/>
-            <StatCard label="Avg term" value="5.4" unit="yrs"/>
-            <StatCard label="Avg TI" value="$12" unit="/SF" trend="-8%"/>
-          </div>
-
-          {/* Map + list combo */}
-          <Card padding={0} style={{ overflow: 'hidden' }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding: '12px 20px', borderBottom: '1px solid var(--ink-150)' }}>
-              <div style={{ fontSize: 14, fontWeight: 600 }}>
-                {comps.length} comps {latestImport ? `from ${latestImport.workbookName}` : "available"} · sorted by relevance
-              </div>
-              <div style={{ display:'flex', gap: 6 }}>
-                <Segmented size="sm" options={[{value:'list',label:<Icons.List size={12}/>},{value:'grid',label:<Icons.Grid size={12}/>},{value:'map',label:<Icons.Pin size={12}/>}]} value="list" onChange={()=>{}}/>
-                <Button variant="ghost" size="sm" icon={<Icons.Sort size={12}/>}>Sort</Button>
-                <Button variant="ghost" size="sm" icon={<Icons.Filter size={12}/>}>Columns</Button>
-              </div>
-            </div>
-
-            <div style={{ display:'grid', gridTemplateColumns: '32px 2fr 1fr .8fr 1fr .8fr .8fr 32px', padding: '10px 20px', background: 'var(--ink-50)', fontSize: 10, fontWeight: 600, color: 'var(--ink-500)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              <div/><div>Property</div><div>Tenant</div><div>SF</div><div>Rate</div><div>Term</div><div>Closed</div><div/>
-            </div>
-            {compsQuery.isLoading && <div style={{ padding: 20 }}>Loading comps...</div>}
-            {comps.map((r) => (
-              <div key={`${r.compType}-${r.id}`} style={{ display:'grid', gridTemplateColumns: '32px 2fr 1fr .8fr 1fr .8fr .8fr 32px', padding: '12px 20px', alignItems:'center', borderTop: '1px solid var(--ink-150)', fontSize: 13 }}>
-                <input type="checkbox" defaultChecked style={{ accentColor: 'var(--lee-crimson)' }}/>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title || r.address}</div>
-                  <div style={{ fontSize: 11, color: 'var(--ink-500)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.city} · {r.propertyType}</div>
-                </div>
-                <div style={{ color: 'var(--ink-600)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{compParty(r)}</div>
-                <div className="lee-mono" style={{ color: 'var(--ink-700)' }}>{compSize(r)}</div>
-                <div className="lee-mono" style={{ fontWeight: 600 }}>{compRate(r)}</div>
-                <div className="lee-mono" style={{ color: 'var(--ink-600)' }}>{compTerm(r)}</div>
-                <div style={{ color: 'var(--ink-600)' }}>{r.transactionDate || "-"}</div>
-                <div><Badge tone="success" size="sm">A</Badge></div>
-              </div>
-            ))}
-            <div style={{ padding: '14px 20px', display:'flex', justifyContent:'space-between', alignItems:'center', borderTop: '1px solid var(--ink-150)', background: 'var(--ink-50)' }}>
-              <div style={{ fontSize: 12, color: 'var(--ink-600)' }}>{comps.length} selected</div>
-              <div style={{ display:'flex', gap: 8 }}>
-                <Button variant="secondary" size="sm" icon={<Icons.Download size={14}/>}>Export CSV</Button>
-                <Button variant="primary" size="sm" icon={<Icons.Docs size={14}/>}>Build PDF packet</Button>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Pill({label, value}: { label: string; value: string }) {
-  return (
-    <div style={{ background: 'var(--ink-50)', border: '1px solid var(--ink-200)', borderRadius: 6, padding: '6px 10px' }}>
-      <div style={{ fontSize: 10, color: 'var(--ink-500)', fontWeight: 600, letterSpacing:'0.06em', textTransform:'uppercase' }}>{label}</div>
-      <div style={{ fontSize: 12, fontWeight: 600, color:'var(--ink-900)', marginTop:1 }}>{value}</div>
-    </div>
-  );
-}
 function StatCard({label,value,unit,trend}: { label: string; value: ReactNode; unit?: string; trend?: string }) {
   return (
     <Card padding={16}>
@@ -1620,140 +1572,6 @@ export function ContractScreen() {
   return <FunctionalContractScreen />;
 }
 
-function LegacyContractScreen() {
-  const [mode, setMode] = React.useState('upload');
-  const groups = [
-    { name: 'Listing Agreements', items: [
-      'Exclusive Right to Sell',
-      'Exclusive Right to Lease',
-      'Exclusive Right · Sublease',
-      'Limited Listing Agreement',
-      'Open Listing Agreement',
-      'Listing Modification / Extension',
-    ]},
-    { name: 'Representation', items: [
-      'Exclusive Right · Buyer/Lessee',
-      'Exclusive Right · Owner Sale',
-      'Exclusive Right · Owner Lease',
-      'Non-Exclusive Buyer Rep',
-    ]},
-    { name: 'Commission Agreements', items: [
-      'Commission Agreement · Lease',
-      'Commission Agreement · Sale',
-      'Co-Broker Commission Agreement',
-      'Referral Agreement',
-    ]},
-    { name: 'Lease Documents', items: [
-      'AIR CRE Standard Industrial / Commercial',
-      'AIR CRE Multi-Tenant Industrial',
-      'AIR CRE Office Lease',
-      'AIR CRE Retail Lease',
-      'Lease Addendum',
-      'Sublease Agreement',
-      'Consent to Sublease',
-      'Amendment to Lease',
-      'Estoppel Certificate',
-      'SNDA',
-      'Notice to Vacate',
-      'Early Termination',
-    ]},
-    { name: 'Purchase & Sale', items: [
-      'AIR CRE Standard Purchase Agreement',
-      'Letter of Intent · Purchase',
-      'Counter Offer',
-      'PSA Addendum',
-      'Assignment of Purchase Agreement',
-    ]},
-    { name: 'Disclosures', items: [
-      'Agency Disclosure (CAR)',
-      'Agency Confirmation',
-      'Natural Hazard Disclosure',
-      'Commercial Property Disclosure',
-      'Lead-Based Paint Disclosure',
-      'Environmental / CERCLA',
-      'SB-800 Disclosure',
-      'Wire Fraud Advisory',
-      'Arbitration Advisory',
-    ]},
-  ];
-  const [sel, setSel] = React.useState('Exclusive Right · Owner Lease');
-  return (
-    <div>
-      <PageHeader
-        eyebrow="AIR CRE"
-        title="Contract Intake"
-        description="Prepare exclusive listings, right-to-represent, lease, purchase and commission agreements. Upload an Adobe draft and Deal Assist pulls redlines."
-      />
-      <div style={{ padding: 32, display:'grid', gridTemplateColumns: '300px 1fr', gap: 24, alignItems:'start' }}>
-        <Card padding={16} style={{ maxHeight: 780, overflow: 'auto' }}>
-          <div style={{ display:'flex', alignItems:'center', gap: 8, marginBottom: 12, padding: '6px 10px', background: 'var(--ink-50)', border: '1px solid var(--ink-200)', borderRadius: 6 }}>
-            <Icons.Search size={13} style={{ color: 'var(--ink-400)' }}/>
-            <input placeholder="Search agreementsâ€¦" style={{ flex: 1, border: 'none', outline: 'none', fontSize: 12, background: 'transparent' }}/>
-          </div>
-          {groups.map((g, gi) => (
-            <div key={gi} style={{ marginBottom: 14 }}>
-              <div className="lee-eyebrow" style={{ marginBottom: 4, padding: '0 8px', display:'flex', justifyContent:'space-between', alignItems: 'center' }}>
-                <span>{g.name}</span>
-                <span style={{ color: 'var(--ink-400)', fontWeight: 500 }}>{g.items.length}</span>
-              </div>
-              {g.items.map((l, i) => {
-                const active = l === sel;
-                return (
-                  <button key={i} onClick={() => setSel(l)} style={{
-                    display:'block', width: '100%', textAlign:'left',
-                    padding: '8px 10px', marginBottom: 2,
-                    background: active ? 'var(--lee-crimson-wash)' : 'transparent',
-                    border: 'none', borderRadius: 6,
-                    fontSize: 12.5, fontWeight: active ? 600 : 500,
-                    color: active ? 'var(--lee-crimson-ink)' : 'var(--ink-700)',
-                    cursor: 'pointer', lineHeight: 1.35,
-                  }}>{l}</button>
-                );
-              })}
-            </div>
-          ))}
-        </Card>
-
-        <div style={{ display:'flex', flexDirection:'column', gap: 16 }}>
-          <Card>
-            <SectionHeader eyebrow="Selected" title={sel} description="AIR CRE form. Fill fields below, or upload a signed Adobe draft and let AI extract."/>
-            <div style={{ display:'flex', gap: 8, marginBottom: 20 }}>
-              <Segmented options={[{value:'upload',label:'Upload signed PDF'},{value:'fill',label:'Fill out here'}]} value={mode} onChange={setMode}/>
-            </div>
-
-            {mode === 'upload' ? (
-              <div style={{
-                border: '2px dashed var(--ink-300)', borderRadius: 12,
-                padding: 40, textAlign:'center',
-                background: 'linear-gradient(180deg, #FBF8FE 0%, var(--ink-0) 100%)',
-              }}>
-                <div style={{ width: 56, height: 56, margin: '0 auto 14px', borderRadius: 14, background: 'var(--ai-gradient)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', boxShadow: '0 8px 22px rgba(139,95,240,.35)' }}>
-                  <Icons.Upload size={26}/>
-                </div>
-                <div style={{ fontSize: 16, fontWeight: 600 }}>Drop signed contract PDF</div>
-                <div style={{ fontSize: 13, color: 'var(--ink-500)', marginTop: 4, maxWidth: 420, margin:'4px auto 16px' }}>
-                  Deal Assist will extract parties, dates, commission, and flag redlines vs. the standard AIR CRE form.
-                </div>
-                <Button variant="ai" icon={<Icons.Upload size={14}/>}>Choose file</Button>
-              </div>
-            ) : (
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 16 }}>
-                <Field label="Owner name" required><Input defaultValue="Pacific Holdings LLC"/></Field>
-                <Field label="Broker of record" required><Input defaultValue="Lee & Associates Newport Beach"/></Field>
-                <Field label="Property address" required span={2}><Input defaultValue="2847 Newport Blvd, Costa Mesa, CA 92627"/></Field>
-                <Field label="Listing start"><Input prefix={<Icons.Calendar size={14}/>} defaultValue="Apr 22, 2026"/></Field>
-                <Field label="Listing end"><Input prefix={<Icons.Calendar size={14}/>} defaultValue="Oct 22, 2026"/></Field>
-                <Field label="Commission %"><Input suffix="%" defaultValue="6.00"/></Field>
-                <Field label="Arbitration"><Select value="AAA" onChange={()=>{}} options={['AAA','JAMS','Judicial reference','None']}/></Field>
-              </div>
-            )}
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // â”€â”€ Documents â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function FunctionalDocsScreen() {
   const { user } = useAuth();
@@ -1931,224 +1749,4 @@ function FunctionalDocsScreen() {
 export function DocsScreen() {
   return <FunctionalDocsScreen />;
 }
-
-function LegacyDocsScreen() {
-  const folders = [
-    {name:'Listing Agreements', count: 6, tone:'crimson'},
-    {name:'Lease Documents', count: 12, tone:'slate'},
-    {name:'Purchase & Sale', count: 8, tone:'neutral'},
-    {name:'Commission Agreements', count: 4, tone:'neutral'},
-    {name:'Disclosures', count: 9, tone:'warn'},
-    {name:'Sign Orders', count: 3, tone:'neutral'},
-  ];
-  return (
-    <div>
-      <PageHeader
-        eyebrow="Resources"
-        title="Document Library"
-        description="Downloadable AIR CRE forms, Lee & Associates templates, and office standards."
-        right={<>
-          <div style={{ display:'flex', alignItems:'center', gap:8, width: 280, height: 36, padding:'0 12px', background:'var(--ink-0)', border:'1px solid var(--ink-200)', borderRadius: 6 }}>
-            <Icons.Search size={14} style={{ color: 'var(--ink-400)' }}/>
-            <input placeholder="Search 42 documentsâ€¦" style={{ flex:1, border:'none', outline:'none', fontSize: 13, background:'transparent' }}/>
-          </div>
-          <Button variant="secondary" size="sm" icon={<Icons.Upload size={14}/>}>Upload</Button>
-        </>}
-      />
-      <div style={{ padding: 32, display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap: 16 }}>
-        {folders.map((f,i) => (
-          <Card key={i} hoverable padding={20} style={{ cursor:'pointer' }}>
-            <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between' }}>
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--ink-100)', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--ink-600)' }}>
-                <Icons.Docs size={20}/>
-              </div>
-              <Badge tone={f.tone} size="sm">{f.count} files</Badge>
-            </div>
-            <div style={{ marginTop: 16, fontSize: 15, fontWeight: 600 }}>{f.name}</div>
-            <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 4 }}>Updated 3 days ago</div>
-          </Card>
-        ))}
-      </div>
-      <div style={{ padding: '0 32px 32px' }}>
-        <Card padding={0}>
-          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--ink-150)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>Recently used</div>
-            <Button variant="ghost" size="sm">See all</Button>
-          </div>
-          {[
-            {name:'AIR CRE Standard Industrial Multi-Tenant Lease', type:'Lease', mod:'Apr 18'},
-            {name:'Exclusive Right to Sell — AIR CRE Form', type:'Listing', mod:'Apr 17'},
-            {name:'Commission Distribution Voucher — Lee NB', type:'Voucher', mod:'Apr 12'},
-            {name:'Agency Disclosure & Confirmation — CAR', type:'Disclosure', mod:'Apr 11'},
-          ].map((d,i) => (
-            <div key={i} style={{ display:'grid', gridTemplateColumns:'24px 1fr 120px 100px 80px', padding: '12px 20px', alignItems:'center', gap: 12, borderTop: i>0 ? '1px solid var(--ink-150)':'none' }}>
-              <Icons.Docs size={16} style={{color:'var(--ink-500)'}}/>
-              <div style={{ fontSize: 13, fontWeight: 500 }}>{d.name}</div>
-              <Badge size="sm">{d.type}</Badge>
-              <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>{d.mod}</div>
-              <div style={{ display:'flex', gap: 4, justifyContent:'flex-end' }}>
-                <button style={{ padding: 6, background:'transparent', border:'none', color:'var(--ink-600)', cursor:'pointer' }}><Icons.Download size={14}/></button>
-                <button style={{ padding: 6, background:'transparent', border:'none', color:'var(--ink-600)', cursor:'pointer' }}><Icons.External size={14}/></button>
-              </div>
-            </div>
-          ))}
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-// â”€â”€ AI assist panel (slide-over) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function AiPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
-  return (
-    <>
-      {open && <div onClick={onClose} style={{ position:'absolute', inset: 0, background:'rgba(10,10,11,.4)', zIndex: 20 }}/>}
-      <aside style={{
-        position:'absolute', top: 0, right: 0, height: '100%', width: 440,
-        background: 'var(--ink-0)', borderLeft: '1px solid var(--ink-200)',
-        transform: open ? 'translateX(0)' : 'translateX(100%)',
-        transition: 'transform .3s var(--ease-out)',
-        zIndex: 21, display:'flex', flexDirection:'column',
-        boxShadow: open ? 'var(--shadow-xl)' : 'none',
-      }}>
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--ink-150)', display:'flex', alignItems:'center', gap: 12 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--ai-gradient)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff' }}>
-            <Icons.Sparkles size={16}/>
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 15, fontWeight: 600 }}>Deal Assist</div>
-            <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Claude · fills fields &amp; extracts from docs</div>
-          </div>
-          <button onClick={onClose} style={{ background:'transparent', border:'none', cursor:'pointer', color:'var(--ink-500)' }}><Icons.X size={18}/></button>
-        </div>
-
-        <div style={{ flex: 1, overflow: 'auto', padding: 24, display:'flex', flexDirection:'column', gap: 16 }}>
-          {/* Natural language input */}
-          <div>
-            <div className="lee-eyebrow" style={{ marginBottom: 8 }}>Describe the deal</div>
-            <div style={{ border: '1px solid var(--ai-400)', borderRadius: 10, padding: 14, background: '#FBF8FE', boxShadow: 'var(--ring-ai)' }}>
-              <div style={{ fontSize: 13, color: 'var(--ink-800)', lineHeight: 1.5 }}>
-                5 year industrial lease on 24,500 SF at 2847 Newport Blvd. Tenant is <b>Relay Robotics</b>. Start June 1, 2026, $1.45/SF NNN, 3% annual steps, 2 months free rent, 6% total commission split 50/50 between me and Marcus.
-              </div>
-              <div style={{ marginTop: 14, display:'flex', gap: 8, justifyContent:'flex-end' }}>
-                <Button variant="ghost" size="sm">Clear</Button>
-                <Button variant="ai" size="sm" icon={<Icons.Wand size={13}/>}>Populate form</Button>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display:'flex', alignItems:'center', gap: 10 }}>
-            <div style={{ flex: 1, height: 1, background: 'var(--ink-200)' }}/>
-            <span style={{ fontSize: 10, color: 'var(--ink-400)', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>or</span>
-            <div style={{ flex: 1, height: 1, background: 'var(--ink-200)' }}/>
-          </div>
-
-          <Button variant="secondary" style={{ width: '100%', justifyContent:'flex-start' }} icon={<Icons.Upload size={14}/>}>
-            Upload brochure, LOI or contract
-          </Button>
-          <Button variant="secondary" style={{ width: '100%', justifyContent:'flex-start' }} icon={<Icons.Sparkles size={14}/>}>
-            Smart-complete empty fields
-          </Button>
-
-          {/* Suggested actions */}
-          <div>
-            <div className="lee-eyebrow" style={{ marginBottom: 8 }}>Suggestions</div>
-            <div style={{ display:'flex', flexDirection:'column', gap: 6 }}>
-              {[
-                'Pull comparable industrial leases within 3mi',
-                'Draft the MLS description from property details',
-                'Check commission math',
-              ].map((s,i) => (
-                <button key={i} style={{
-                  display:'flex', alignItems:'center', gap: 10,
-                  padding: '10px 12px', textAlign:'left',
-                  background: 'var(--ink-50)', border: '1px solid var(--ink-200)',
-                  borderRadius: 8, cursor:'pointer', fontSize: 13, color: 'var(--ink-700)',
-                }}>
-                  <Icons.Sparkles size={12} style={{ color: 'var(--ai-500)' }}/>
-                  <span style={{ flex: 1 }}>{s}</span>
-                  <Icons.Arrow size={12} style={{ color: 'var(--ink-400)' }}/>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </aside>
-    </>
-  );
-}
-
-// â”€â”€ My Profile modal — single user only; brokers cannot view each other â”€â”€â”€â”€
-function ProfileModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  if (!open) return null;
-  return (
-    <>
-      <div onClick={onClose} style={{ position:'absolute', inset: 0, background:'rgba(10,10,11,.4)', zIndex: 30 }}/>
-      <div style={{
-        position:'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-        width: 520, maxHeight: '85vh', background:'var(--ink-0)',
-        borderRadius: 14, boxShadow: 'var(--shadow-xl)', zIndex: 31,
-        display: 'flex', flexDirection: 'column', overflow: 'hidden',
-      }}>
-        {/* Header banner with avatar */}
-        <div style={{ position: 'relative', height: 100, background: 'linear-gradient(120deg, var(--ink-900) 0%, var(--lee-crimson-ink) 100%)' }}>
-          <button onClick={onClose} style={{ position:'absolute', top: 14, right: 14, background:'rgba(255,255,255,.12)', border:'none', cursor:'pointer', color:'#fff', width: 28, height: 28, borderRadius: 6, display:'flex', alignItems:'center', justifyContent:'center' }}><Icons.X size={16}/></button>
-          <div style={{ position: 'absolute', top: 16, left: 24, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.7)' }}>My Profile</div>
-        </div>
-
-        <div style={{ padding: '0 24px', marginTop: -40, display: 'flex', alignItems:'flex-end', gap: 16 }}>
-          <div style={{ width: 80, height: 80, borderRadius: 16, background: 'var(--lee-crimson)', color: '#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize: 26, fontWeight: 800, border: '4px solid var(--ink-0)', boxShadow: 'var(--shadow-md)' }}>TB</div>
-          <div style={{ flex: 1, paddingBottom: 6 }}>
-            <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em' }}>Taylor Barnes</div>
-            <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>Senior Broker · Industrial · DRE #02135478</div>
-          </div>
-          <Badge tone="success" size="sm" icon={<Icons.Check size={10} strokeWidth={3}/>}>Signed in</Badge>
-        </div>
-
-        <div style={{ flex: 1, overflow: 'auto', padding: '24px', display:'flex', flexDirection:'column', gap: 16 }}>
-          <div>
-            <div className="lee-eyebrow" style={{ marginBottom: 10 }}>Account</div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 12 }}>
-              <Field label="First name" required><Input defaultValue="Taylor"/></Field>
-              <Field label="Last name" required><Input defaultValue="Barnes"/></Field>
-              <Field label="Email" required span={2}><Input prefix="@" defaultValue="taylor.barnes@lee-associates.com" auto/></Field>
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--ink-500)', marginTop: 6, display:'flex', alignItems:'center', gap: 4 }}>
-              <Icons.Info size={11}/> Email is tied to your sign-in and can't be changed here. Contact Admin to update.
-            </div>
-          </div>
-
-          <div>
-            <div className="lee-eyebrow" style={{ marginBottom: 10 }}>Broker details <span style={{ color: 'var(--ink-400)', fontWeight: 500, textTransform:'none', letterSpacing: 0 }}>— used to pre-fill forms</span></div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 12 }}>
-              <Field label="Title"><Input defaultValue="Senior Broker"/></Field>
-              <Field label="DRE license #" required><Input defaultValue="02135478"/></Field>
-              <Field label="Direct phone"><Input defaultValue="714.555.0142"/></Field>
-              <Field label="Fax"><Input defaultValue="714.555.0143"/></Field>
-            </div>
-          </div>
-
-          <div style={{ padding: 14, background: 'var(--ink-50)', border: '1px solid var(--ink-200)', borderRadius: 10, display:'flex', alignItems:'center', gap: 12 }}>
-            <Icons.Lock size={18} style={{ color: 'var(--ink-500)' }}/>
-            <div style={{ flex: 1, fontSize: 12, color: 'var(--ink-600)' }}>
-              Your profile is private. Other brokers can't see it — only Admin can view it for deal processing.
-            </div>
-          </div>
-
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems: 'center', paddingTop: 8 }}>
-            <Button variant="ghost" size="sm">Sign out</Button>
-            <div style={{ display:'flex', gap: 8 }}>
-              <Button variant="secondary" size="sm" onClick={onClose}>Cancel</Button>
-              <Button variant="primary" size="sm">Save changes</Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
-
-
-
 
