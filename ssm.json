@@ -1,0 +1,1 @@
+﻿{ "InstanceIds": ["i-076e7ee8a82cc8850"], "DocumentName": "AWS-RunShellScript", "Parameters": { "commands": ["cat <<EOF > /etc/caddy/Caddyfile\n3.139.128.30.sslip.io, leebrokertool.space {\n    reverse_proxy 127.0.0.1:3000\n}\nEOF\n", "systemctl restart caddy"] } }

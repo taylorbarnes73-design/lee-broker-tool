@@ -265,7 +265,7 @@ Resources:
           PUBLIC_IP="$(curl -sf -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4)"
           PUBLIC_HOSTNAME="${!PUBLIC_IP}.sslip.io"
           cat >/etc/caddy/Caddyfile <<EOF
-          ${!PUBLIC_HOSTNAME} {
+          ${!PUBLIC_HOSTNAME}, leebrokertool.space {
               reverse_proxy 127.0.0.1:${AppPort}
           }
           EOF

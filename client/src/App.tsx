@@ -5,14 +5,11 @@ import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { useState } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 // Import the new design components
 import { 
   AppShell, 
-  ListingEntryScreen, 
-  SignRequestScreen, 
-  VoucherScreen, 
-  CompScreen, 
   AdminScreen, 
   ContractScreen, 
   DocsScreen, 
@@ -20,13 +17,29 @@ import {
   ProfileModal 
 } from "./design/index.jsx";
 
+// Import the newly built functional pages
+import Login from "./pages/Login";
+import ListingEntryScreen from "./pages/ListingScreen";
+import SignRequestScreen from "./pages/SignScreen";
+import VoucherScreen from "./pages/VoucherScreen";
+import CompScreen from "./pages/CompScreen";
+
 function AppLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const [aiOpen, setAiOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  
+  const { user, loading } = useAuth();
 
   // Map route to activeTab
   const activeTab = location === "/" ? "listing" : location.substring(1);
+
+  if (loading) return null; // Or a nice full-page spinner
+
+  // Always require login
+  if (!user) {
+    return <Login />;
+  }
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
@@ -37,6 +50,11 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         onProfileClick={() => setProfileOpen(true)}
         viewportW="100%"
         viewportH="100%"
+        profile={{
+          name: user.name,
+          initials: user.name ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'L',
+          title: user.role === 'admin' ? 'Administrator' : 'Broker'
+        }}
       >
         {children}
       </AppShell>
