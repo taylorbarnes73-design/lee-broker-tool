@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { 
@@ -8,7 +8,7 @@ import {
 /* Lee Broker Tool â€” Comps, Admin, Contracts, Documents, AI panel */
 
 // â”€â”€ Comp Reports (the user said this is a mess â€” redesign as a clear workflow) â”€â”€
-function CompScreen() {
+export function CompScreen() {
   return (
     <div>
       <PageHeader
@@ -44,7 +44,7 @@ function CompScreen() {
               <div className="lee-eyebrow">Filters</div>
               <button style={{ fontSize: 11, color: 'var(--lee-crimson)', background:'none', border:'none', cursor:'pointer', fontWeight: 600 }}>Reset</button>
             </div>
-            <Field label="Comp type"><Segmented size="sm" value="lease" onChange={()=>{}} options={[{value:'lease',label:'Lease'},{value:'sale',label:'Sale'},{value:'both',label:'Both'}]}/></Field>
+            <Field label="Comp type"><Segmented size="sm" value={compType} onChange={setCompType} options={[{value:'lease',label:'Lease'},{value:'sale',label:'Sale'},{value:'both',label:'Both'}]}/></Field>
             <div style={{ marginTop: 12 }}><Field label="Radius"><Select value="3" onChange={()=>{}} options={['1 mile','3 miles','5 miles','10 miles']}/></Field></div>
             <div style={{ marginTop: 12 }}><Field label="Size range"><Input suffix="SF" defaultValue="15,000 â€“ 40,000"/></Field></div>
             <div style={{ marginTop: 12 }}><Field label="Closed within"><Select value="12mo" onChange={()=>{}} options={['3 months','6 months','12 months','24 months']}/></Field></div>
@@ -59,7 +59,7 @@ function CompScreen() {
         <div style={{ display:'flex', flexDirection:'column', gap: 16 }}>
           {/* Stats strip */}
           <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap: 12 }}>
-            <StatCard label="Comps found" value="12" unit=""/>
+            <StatCard label="Comps found" value={comps.length} unit=""/>
             <StatCard label="Median rate" value="$1.37" unit="/SF/Mo NNN" trend="+4.2% YoY"/>
             <StatCard label="Avg term" value="5.4" unit="yrs"/>
             <StatCard label="Avg TI" value="$12" unit="/SF" trend="-8%"/>
@@ -79,30 +79,24 @@ function CompScreen() {
             <div style={{ display:'grid', gridTemplateColumns: '32px 2fr 1fr .8fr 1fr .8fr .8fr 32px', padding: '10px 20px', background: 'var(--ink-50)', fontSize: 10, fontWeight: 600, color: 'var(--ink-500)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               <div/><div>Property</div><div>Tenant</div><div>SF</div><div>Rate</div><div>Term</div><div>Closed</div><div/>
             </div>
-            {[
-              {addr:'1810 W MacArthur Blvd', tenant:'Arrowhead Logistics', sf:'22,400', rate:'$1.41', term:'7 yr', closed:'Feb 2026', score:'A'},
-              {addr:'3200 Airway Ave', tenant:'Confidential', sf:'31,200', rate:'$1.38', term:'5 yr', closed:'Jan 2026', score:'A'},
-              {addr:'2212 S Hathaway St', tenant:'Pacific Foods', sf:'18,900', rate:'$1.32', term:'10 yr', closed:'Dec 2025', score:'B'},
-              {addr:'650 E Dyer Rd', tenant:'Relay Robotics', sf:'26,700', rate:'$1.44', term:'5 yr', closed:'Nov 2025', score:'A'},
-              {addr:'440 Fischer Ave', tenant:'Harbor Paints', sf:'19,800', rate:'$1.29', term:'3 yr', closed:'Oct 2025', score:'B'},
-              {addr:'1125 Victoria St', tenant:'Vantage 3PL', sf:'35,100', rate:'$1.33', term:'7 yr', closed:'Sep 2025', score:'B'},
-            ].map((r,i) => (
+            {compsQuery.isLoading && <div style={{ padding: 20 }}>Loading comps...</div>}
+            {comps.map((r,i) => (
               <div key={i} style={{ display:'grid', gridTemplateColumns: '32px 2fr 1fr .8fr 1fr .8fr .8fr 32px', padding: '12px 20px', alignItems:'center', borderTop: '1px solid var(--ink-150)', fontSize: 13 }}>
                 <input type="checkbox" defaultChecked style={{ accentColor: 'var(--lee-crimson)' }}/>
-                <div>
-                  <div style={{ fontWeight: 600 }}>{r.addr}</div>
-                  <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Costa Mesa Â· Industrial</div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.address}</div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-500)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.city} · {r.propertyType}</div>
                 </div>
-                <div style={{ color: 'var(--ink-600)' }}>{r.tenant}</div>
-                <div className="lee-mono" style={{ color: 'var(--ink-700)' }}>{r.sf}</div>
-                <div className="lee-mono" style={{ fontWeight: 600 }}>{r.rate}</div>
-                <div className="lee-mono" style={{ color: 'var(--ink-600)' }}>{r.term}</div>
-                <div style={{ color: 'var(--ink-600)' }}>{r.closed}</div>
-                <div><Badge tone={r.score==='A' ? 'success' : 'neutral'} size="sm">{r.score}</Badge></div>
+                <div style={{ color: 'var(--ink-600)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.tenantName || r.buyerName || 'Confidential'}</div>
+                <div className="lee-mono" style={{ color: 'var(--ink-700)' }}>{r.sfLeased || r.sfSold || '—'}</div>
+                <div className="lee-mono" style={{ fontWeight: 600 }}>{r.rate || r.salePrice || '—'}</div>
+                <div className="lee-mono" style={{ color: 'var(--ink-600)' }}>{r.leaseTerm || '—'}</div>
+                <div style={{ color: 'var(--ink-600)' }}>{r.leaseDate || r.saleDate || '—'}</div>
+                <div><Badge tone="success" size="sm">A</Badge></div>
               </div>
             ))}
             <div style={{ padding: '14px 20px', display:'flex', justifyContent:'space-between', alignItems:'center', borderTop: '1px solid var(--ink-150)', background: 'var(--ink-50)' }}>
-              <div style={{ fontSize: 12, color: 'var(--ink-600)' }}>6 of 12 selected</div>
+              <div style={{ fontSize: 12, color: 'var(--ink-600)' }}>{comps.length} selected</div>
               <div style={{ display:'flex', gap: 8 }}>
                 <Button variant="secondary" size="sm" icon={<Icons.Download size={14}/>}>Export CSV</Button>
                 <Button variant="primary" size="sm" icon={<Icons.Docs size={14}/>}>Build PDF packet</Button>
@@ -137,7 +131,7 @@ function StatCard({label,value,unit,trend}) {
 }
 
 // â”€â”€ Admin Portal â€” inbox, Dealius push, agent roster â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function AdminScreen() {
+export function AdminScreen() {
   const [view, setView] = React.useState('inbox');
   return (
     <div>
@@ -647,7 +641,7 @@ function AdminOps() {
 }
 
 // â”€â”€ Contract intake â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function ContractScreen() {
+export function ContractScreen() {
   const [mode, setMode] = React.useState('upload');
   const groups = [
     { name: 'Listing Agreements', items: [
@@ -782,7 +776,7 @@ function ContractScreen() {
 }
 
 // â”€â”€ Documents â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function DocsScreen() {
+export function DocsScreen() {
   const folders = [
     {name:'Listing Agreements', count: 6, tone:'crimson'},
     {name:'Lease Documents', count: 12, tone:'slate'},
@@ -998,7 +992,7 @@ function ProfileModal({ open, onClose }) {
   );
 }
 
-export default CompScreen;
+
 
 
 

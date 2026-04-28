@@ -1,0 +1,1 @@
+﻿{"commands":["cd /opt/lee-broker-tool","/opt/awscli-venv/bin/aws s3 cp s3://lee-broker-tool-artifacts-867958226961-us-east-2/deploy/lee-broker-tool.zip /tmp/lee-broker-tool.zip","unzip -o /tmp/lee-broker-tool.zip -d /opt/lee-broker-tool","systemctl restart lee-broker-tool.service"]}

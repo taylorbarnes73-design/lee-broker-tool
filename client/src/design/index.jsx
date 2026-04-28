@@ -410,7 +410,7 @@ function AppShell({ activeTab, onTab, profile, onProfileClick, onAiClick, childr
           <div style={{ lineHeight: 1 }}>
             <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.04em' }}>LEE &amp; ASSOCIATES</div>
             <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--ink-400)', marginTop: 3, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              Newport Beach Ã‚Â· Broker Desk
+              Newport Beach · Broker Desk
             </div>
           </div>
         </div>
@@ -426,9 +426,9 @@ function AppShell({ activeTab, onTab, profile, onProfileClick, onAiClick, childr
           fontSize: 13,
         }}>
           <Icons.Search size={14}/>
-          <span>Search deals, properties, brokersÃ¢â‚¬Â¦</span>
+          <span>Search deals, properties, brokers…</span>
           <div style={{ flex: 1 }}/>
-          <span style={{ fontSize: 10, padding: '2px 5px', border: '1px solid rgba(255,255,255,.15)', borderRadius: 3, fontFamily: 'var(--font-mono)' }}>Ã¢Å’ËœK</span>
+          <span style={{ fontSize: 10, padding: '2px 5px', border: '1px solid rgba(255,255,255,.15)', borderRadius: 3, fontFamily: 'var(--font-mono)' }}>⌘K</span>
         </div>
 
         {/* AI button */}
@@ -467,7 +467,7 @@ function AppShell({ activeTab, onTab, profile, onProfileClick, onAiClick, childr
           }}>{profile?.initials || 'TB'}</div>
           <div style={{ textAlign: 'left', lineHeight: 1.15 }}>
             <div style={{ fontSize: 12, fontWeight: 600 }}>{profile?.name || 'Taylor Barnes'}</div>
-            <div style={{ fontSize: 10, color: 'var(--ink-400)' }}>{profile?.title || 'Broker Ã‚Â· DRE #02135478'}</div>
+            <div style={{ fontSize: 10, color: 'var(--ink-400)' }}>{profile?.title || 'Broker · DRE #02135478'}</div>
           </div>
           <Icons.ChevronDown size={14} style={{ color: 'var(--ink-400)' }}/>
         </button>
@@ -536,7 +536,7 @@ function StepProgress({ step, total, percent }) {
         }}/>
       </div>
       <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', whiteSpace: 'nowrap' }}>
-        Step {step} of {total} <span style={{ color: 'var(--ink-400)' }}>Ã‚Â· {pct}%</span>
+        Step {step} of {total} <span style={{ color: 'var(--ink-400)' }}>· {pct}%</span>
       </div>
     </div>
   );
@@ -598,10 +598,10 @@ function Segmented({ options, value, onChange, size = 'md' }) {
 function RequestTracker() {
   const [open, setOpen] = React.useState(false);
   const requests = [
-    { id:'V-2026-0418', type:'Voucher', label:'2847 Newport Blvd Ã‚Â· $127,935', stage:'admin-review', pos: 2, eta:'~1h' },
+    { id:'V-2026-0418', type:'Voucher', label:'2847 Newport Blvd · $127,935', stage:'admin-review', pos: 2, eta:'~1h' },
     { id:'L-2026-0412', type:'Listing', label:'1250 E Alton Ave', stage:'mls-push', pos: 1, eta:'~15m' },
-    { id:'S-2026-0410', type:'Sign Order', label:'3400 Bristol St Ã‚Â· 3 signs', stage:'vendor', pos: 5, eta:'3 days' },
-    { id:'V-2026-0405', type:'Voucher', label:'875 W 17th St Ã‚Â· $58,200', stage:'complete' },
+    { id:'S-2026-0410', type:'Sign Order', label:'3400 Bristol St · 3 signs', stage:'vendor', pos: 5, eta:'3 days' },
+    { id:'V-2026-0405', type:'Voucher', label:'875 W 17th St · $58,200', stage:'complete' },
   ];
   const inQueue = requests.filter(r => r.stage !== 'complete').length;
   const stages = [
@@ -647,9 +647,9 @@ function RequestTracker() {
             <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--ink-150)', display:'flex', alignItems:'center', gap: 10 }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em' }}>My requests</div>
-                <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>{inQueue} in progress Ã‚Â· {requests.length - inQueue} complete this week</div>
+                <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>{inQueue} in progress · {requests.length - inQueue} complete this week</div>
               </div>
-              <button style={{ fontSize: 11, fontWeight: 600, color: 'var(--lee-crimson)', background: 'none', border: 'none', cursor: 'pointer' }}>View all Ã¢â€ â€™</button>
+              <button style={{ fontSize: 11, fontWeight: 600, color: 'var(--lee-crimson)', background: 'none', border: 'none', cursor: 'pointer' }}>View all →</button>
             </div>
 
             {/* Request list */}
@@ -717,18 +717,18 @@ function RequestTracker() {
                         <span style={{ fontSize: 11.5, color: 'var(--ink-700)' }}>
                           <b>#{r.pos}</b> in {stages[si]?.label.toLowerCase()} queue
                         </span>
-                        <span style={{ color: 'var(--ink-300)' }}>Ã‚Â·</span>
+                        <span style={{ color: 'var(--ink-300)' }}>·</span>
                         <span style={{ fontSize: 11.5, color: 'var(--ink-500)' }}>Est. {r.eta}</span>
                         <div style={{ flex: 1 }}/>
-                        <button style={{ fontSize: 11, fontWeight: 600, color: 'var(--lee-crimson)', background: 'none', border: 'none', cursor: 'pointer' }}>Details Ã¢â€ â€™</button>
+                        <button style={{ fontSize: 11, fontWeight: 600, color: 'var(--lee-crimson)', background: 'none', border: 'none', cursor: 'pointer' }}>Details →</button>
                       </div>
                     )}
                     {done && (
                       <div style={{ marginTop: 10, display:'flex', alignItems:'center', gap: 8, padding: '8px 10px', background: 'var(--ok-100)', borderRadius: 6 }}>
                         <Icons.CheckCircle size={12} style={{ color: 'var(--ok-600)' }}/>
-                        <span style={{ fontSize: 11.5, color: 'var(--ok-600)', fontWeight: 600 }}>Processed Ã‚Â· Dealius confirmed</span>
+                        <span style={{ fontSize: 11.5, color: 'var(--ok-600)', fontWeight: 600 }}>Processed · Dealius confirmed</span>
                         <div style={{ flex: 1 }}/>
-                        <button style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-600)', background: 'none', border: 'none', cursor: 'pointer' }}>View receipt Ã¢â€ â€™</button>
+                        <button style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-600)', background: 'none', border: 'none', cursor: 'pointer' }}>View receipt →</button>
                       </div>
                     )}
                   </div>
@@ -810,14 +810,14 @@ function ListingEntryScreen() {
           <StepCard
             step={1} total={7} status="complete"
             title="Transaction type"
-            summary="Lease Ã‚Â· Industrial Ã‚Â· 2,847 Newport Blvd, Costa Mesa CA 92627"
+            summary="Lease · Industrial · 2,847 Newport Blvd, Costa Mesa CA 92627"
           />
 
           {/* Step 2 Ã¢â‚¬â€œ complete */}
           <StepCard
             step={2} total={7} status="complete"
             title="Property details"
-            summary="24,500 SF Ã‚Â· Clear height 28' Ã‚Â· 4 DH doors Ã‚Â· Built 2005"
+            summary="24,500 SF · Clear height 28' · 4 DH doors · Built 2005"
           />
 
           {/* Step 3 Ã¢â‚¬â€œ active */}
@@ -946,7 +946,7 @@ function ListingSidebar() {
           Your asking rate is <b>6% above</b> the median for industrial space in Costa Mesa (last 90 days: $1.37/SF/Mo NNN).
         </div>
         <button style={{ marginTop: 10, fontSize: 12, fontWeight: 600, color: 'var(--ai-500)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-          See 12 comparable deals Ã¢â€ â€™
+          See 12 comparable deals →
         </button>
       </Card>
     </div>
@@ -1019,7 +1019,7 @@ function SignRequestScreen() {
               <Field label="Listing" required>
                 <Input prefix={<Icons.Building size={14}/>} defaultValue="2847 Newport Blvd, Costa Mesa"/>
               </Field>
-              <Field label="Deal type"><Input auto value="Lease Ã‚Â· Industrial"/></Field>
+              <Field label="Deal type"><Input auto value="Lease · Industrial"/></Field>
               <Field label="Suite">
                 <Input defaultValue="Entire building"/>
               </Field>
@@ -1062,9 +1062,9 @@ function SignRequestScreen() {
             <SectionHeader eyebrow="Step 3" title="Sign specifications" right={<Badge tone="crimson" size="sm">{Object.values(qty).reduce((a,b)=>a+b,0)} signs total</Badge>}/>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {[
-                {k:'4x8',    label:"4' Ãƒâ€” 8'",  desc:'Standard roadside panel'},
-                {k:'6x8',    label:"6' Ãƒâ€” 8'",  desc:'Large frontage panel'},
-                {k:'other',  label:'Other',     desc:'Custom size', sizeInput: true, sizeValue: otherSize,  setSize: setOtherSize,  placeholder: 'e.g. 3Ãƒâ€”4'},
+                {k:'4x8',    label:"4' × 8'",  desc:'Standard roadside panel'},
+                {k:'6x8',    label:"6' × 8'",  desc:'Large frontage panel'},
+                {k:'other',  label:'Other',     desc:'Custom size', sizeInput: true, sizeValue: otherSize,  setSize: setOtherSize,  placeholder: 'e.g. 3×4'},
                 {k:'banner', label:'Banner',    desc:'Vinyl banner', sizeInput: true, sizeValue: bannerSize, setSize: setBannerSize, placeholder: 'Size'},
               ].map(row => {
                 const n = qty[row.k];
@@ -1105,10 +1105,10 @@ function SignRequestScreen() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Toggle on={nameRider} onClick={() => setNameRider(!nameRider)}/>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>Name rider <span style={{ fontWeight: 500, color: 'var(--ink-500)' }}>Ã‚Â· Optional</span></div>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>Name rider <span style={{ fontWeight: 500, color: 'var(--ink-500)' }}>· Optional</span></div>
                   <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Add broker name to rider panel</div>
                 </div>
-                {nameRider && <Input defaultValue="Taylor Barnes Ã‚Â· 714.555.0142" style={{ width: 280 }}/>}
+                {nameRider && <Input defaultValue="Taylor Barnes · 714.555.0142" style={{ width: 280 }}/>}
               </div>
             </div>
           </Card>
@@ -1200,7 +1200,7 @@ const textareaStyle = {
 
 function OrderSummaryRail({ qty, shape }) {
   const prices = { '4x8': 285, '6x8': 420, 'other': 175, 'banner': 95 };
-  const labels = { '4x8': "4' Ãƒâ€” 8'", '6x8': "6' Ãƒâ€” 8'", 'other': 'Other', 'banner': 'Banner' };
+  const labels = { '4x8': "4' × 8'", '6x8': "6' × 8'", 'other': 'Other', 'banner': 'Banner' };
   const shapeLabel = { sf: 'S/F', df: 'D/F', vshape: 'V-Shape' }[shape] || shape;
   const total = Object.entries(qty).reduce((sum, [k, n]) => sum + (prices[k] || 0) * n, 0);
   return (
@@ -1208,12 +1208,12 @@ function OrderSummaryRail({ qty, shape }) {
       <Card padding={20}>
         <div className="lee-eyebrow" style={{ marginBottom: 12 }}>Order summary</div>
         <div style={{ fontSize: 15, fontWeight: 600 }}>2847 Newport Blvd</div>
-        <div style={{ fontSize: 12, color:'var(--ink-500)', marginTop: 2 }}>PO-2026-0418 Ã‚Â· {shapeLabel}</div>
+        <div style={{ fontSize: 12, color:'var(--ink-500)', marginTop: 2 }}>PO-2026-0418 · {shapeLabel}</div>
 
         <div style={{ marginTop: 16, borderTop: '1px solid var(--ink-150)', paddingTop: 12, display:'flex', flexDirection:'column', gap: 6 }}>
           {Object.entries(qty).filter(([,n])=>n>0).map(([k,n]) => (
             <div key={k} style={{ display:'flex', justifyContent:'space-between', fontSize: 13 }}>
-              <span style={{ color: 'var(--ink-600)' }}>{labels[k]}  Ã‚Â· Ãƒâ€” {n}</span>
+              <span style={{ color: 'var(--ink-600)' }}>{labels[k]}  · × {n}</span>
               <span className="lee-mono" style={{ color: 'var(--ink-900)', fontWeight: 600 }}>
                 ${(prices[k]*n).toLocaleString()}
               </span>
@@ -1224,7 +1224,7 @@ function OrderSummaryRail({ qty, shape }) {
           <span style={{ fontSize: 12, color: 'var(--ink-500)' }}>Estimated total</span>
           <span className="lee-mono" style={{ fontSize: 20, fontWeight: 700 }}>${total.toLocaleString()}</span>
         </div>
-        <div style={{ fontSize: 11, color: 'var(--ink-400)', marginTop: 4 }}>Split 50% with landlord Ã‚Â· your share ${(total/2).toLocaleString()}</div>
+        <div style={{ fontSize: 11, color: 'var(--ink-400)', marginTop: 4 }}>Split 50% with landlord · your share ${(total/2).toLocaleString()}</div>
       </Card>
 
       <Card padding={18} style={{ background: 'var(--ink-50)' }}>
@@ -1247,7 +1247,7 @@ function VoucherScreen() {
         title="Commission Voucher"
         description="Submit a completed deal for commission processing and Dealius submission."
         right={<>
-          <Badge tone="slate" size="md">Draft Ã‚Â· Last saved 2 min ago</Badge>
+          <Badge tone="slate" size="md">Draft · Last saved 2 min ago</Badge>
           <Button variant="ghost" size="sm" icon={<Icons.Send size={14}/>}>Send to admin</Button>
         </>}
       >
@@ -1262,7 +1262,7 @@ function VoucherScreen() {
             {['Property','Parties','Financials','Commission','Rent schedule'].map(l => (
               <Badge key={l} tone="success" size="md" icon={<Icons.Check size={11} strokeWidth={3}/>}>{l}</Badge>
             ))}
-            <Badge tone="crimson" size="md">Rent schedule Ã‚Â· in progress</Badge>
+            <Badge tone="crimson" size="md">Rent schedule · in progress</Badge>
             <Badge size="md">Invoicing</Badge>
             <Badge size="md">Documents</Badge>
           </div>
@@ -1281,7 +1281,7 @@ function VoucherScreen() {
           {/* Rent schedule */}
           <Card>
             <SectionHeader
-              eyebrow="Step 5 Ã‚Â· Active"
+              eyebrow="Step 5 · Active"
               title="Monthly rent schedule"
               description="Step-ups, free rent and base rent across the term."
               right={<Segmented size="sm" options={['Monthly','Annual']} value="Monthly" onChange={()=>{}}/>}
@@ -1402,7 +1402,7 @@ function VoucherRail() {
       <Card padding={20}>
         <div className="lee-eyebrow" style={{ marginBottom: 10 }}>Invoice</div>
         <div style={{ fontSize: 15, fontWeight: 600 }}>Invoice to: Landlord</div>
-        <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 2 }}>Pacific Holdings LLC Ã‚Â· Ref LD-4491</div>
+        <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 2 }}>Pacific Holdings LLC · Ref LD-4491</div>
 
         <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <RowKV k="Gross commission" v="$127,935.00"/>
@@ -1516,7 +1516,7 @@ function CompScreen() {
           {/* Map + list combo */}
           <Card padding={0} style={{ overflow: 'hidden' }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding: '12px 20px', borderBottom: '1px solid var(--ink-150)' }}>
-              <div style={{ fontSize: 14, fontWeight: 600 }}>12 comps Ã‚Â· sorted by relevance</div>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>12 comps · sorted by relevance</div>
               <div style={{ display:'flex', gap: 6 }}>
                 <Segmented size="sm" options={[{value:'list',label:<Icons.List size={12}/>},{value:'grid',label:<Icons.Grid size={12}/>},{value:'map',label:<Icons.Pin size={12}/>}]} value="list" onChange={()=>{}}/>
                 <Button variant="ghost" size="sm" icon={<Icons.Sort size={12}/>}>Sort</Button>
@@ -1539,7 +1539,7 @@ function CompScreen() {
                 <input type="checkbox" defaultChecked style={{ accentColor: 'var(--lee-crimson)' }}/>
                 <div>
                   <div style={{ fontWeight: 600 }}>{r.addr}</div>
-                  <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Costa Mesa Ã‚Â· Industrial</div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Costa Mesa · Industrial</div>
                 </div>
                 <div style={{ color: 'var(--ink-600)' }}>{r.tenant}</div>
                 <div className="lee-mono" style={{ color: 'var(--ink-700)' }}>{r.sf}</div>
@@ -1642,20 +1642,20 @@ function AdminScreen() {
 // Ã¢â€â‚¬Ã¢â€â‚¬ Inbox: submissions with submitter info + queue context Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function AdminInbox() {
   const rows = [
-    {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'2847 Newport Blvd Ã‚Â· Costa Mesa', agent:'Taylor Barnes', agentTitle:'Senior Associate', avatar:'TB', amt:'$127,935', age:'2h 14m', tone:'crimson', id:'V-2026-0418', flag:'Co-broker split'},
-    {type:'Listing', icon:<Icons.Listing size={14}/>, prop:'1250 E Alton Ave Ã‚Â· Santa Ana', agent:'Marcus Reeves', agentTitle:'Principal', avatar:'MR', amt:'Ã¢â‚¬â€', age:'4h 02m', tone:'slate', id:'L-2026-0412', flag:null},
-    {type:'Sign', icon:<Icons.Sign size={14}/>, prop:'3400 Bristol St Ã‚Â· Costa Mesa', agent:'Taylor Barnes', agentTitle:'Senior Associate', avatar:'TB', amt:'$705', age:'6h 38m', tone:'neutral', id:'S-2026-0410', flag:null},
-    {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'875 W 17th St Ã‚Â· Costa Mesa', agent:'Sam Park', agentTitle:'Associate', avatar:'SP', amt:'$58,200', age:'1d', tone:'crimson', id:'V-2026-0404', flag:'Missing W-9'},
-    {type:'Contract', icon:<Icons.Contract size={14}/>, prop:'512 Superior Ave Ã‚Â· Newport', agent:'Marcus Reeves', agentTitle:'Principal', avatar:'MR', amt:'Ã¢â‚¬â€', age:'1d 2h', tone:'ai', id:'C-2026-0401', flag:'4 redlines'},
-    {type:'Listing Mod', icon:<Icons.Listing size={14}/>, prop:'2100 Placentia Ave Ã‚Â· Costa Mesa', agent:'Kai Nguyen', agentTitle:'Associate', avatar:'KN', amt:'Ã¢â‚¬â€', age:'2d', tone:'slate', id:'L-2026-0395', flag:null},
-    {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'6400 W Coast Hwy Ã‚Â· Newport', agent:'Taylor Barnes', agentTitle:'Senior Associate', avatar:'TB', amt:'$41,300', age:'3d', tone:'crimson', id:'V-2026-0388', flag:null},
+    {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'2847 Newport Blvd · Costa Mesa', agent:'Taylor Barnes', agentTitle:'Senior Associate', avatar:'TB', amt:'$127,935', age:'2h 14m', tone:'crimson', id:'V-2026-0418', flag:'Co-broker split'},
+    {type:'Listing', icon:<Icons.Listing size={14}/>, prop:'1250 E Alton Ave · Santa Ana', agent:'Marcus Reeves', agentTitle:'Principal', avatar:'MR', amt:'Ã¢â‚¬â€', age:'4h 02m', tone:'slate', id:'L-2026-0412', flag:null},
+    {type:'Sign', icon:<Icons.Sign size={14}/>, prop:'3400 Bristol St · Costa Mesa', agent:'Taylor Barnes', agentTitle:'Senior Associate', avatar:'TB', amt:'$705', age:'6h 38m', tone:'neutral', id:'S-2026-0410', flag:null},
+    {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'875 W 17th St · Costa Mesa', agent:'Sam Park', agentTitle:'Associate', avatar:'SP', amt:'$58,200', age:'1d', tone:'crimson', id:'V-2026-0404', flag:'Missing W-9'},
+    {type:'Contract', icon:<Icons.Contract size={14}/>, prop:'512 Superior Ave · Newport', agent:'Marcus Reeves', agentTitle:'Principal', avatar:'MR', amt:'Ã¢â‚¬â€', age:'1d 2h', tone:'ai', id:'C-2026-0401', flag:'4 redlines'},
+    {type:'Listing Mod', icon:<Icons.Listing size={14}/>, prop:'2100 Placentia Ave · Costa Mesa', agent:'Kai Nguyen', agentTitle:'Associate', avatar:'KN', amt:'Ã¢â‚¬â€', age:'2d', tone:'slate', id:'L-2026-0395', flag:null},
+    {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'6400 W Coast Hwy · Newport', agent:'Taylor Barnes', agentTitle:'Senior Associate', avatar:'TB', amt:'$41,300', age:'3d', tone:'crimson', id:'V-2026-0388', flag:null},
   ];
   return (
     <div style={{ padding: 32, display:'grid', gridTemplateColumns: '1fr 320px', gap: 24, alignItems:'start' }}>
       <div style={{ display:'flex', flexDirection:'column', gap: 16 }}>
         {/* Sub-tabs */}
         <div style={{ display:'flex', gap: 4, borderBottom: '1px solid var(--ink-200)', padding: '0 4px' }}>
-          {['Pending Ã‚Â· 7','In review Ã‚Â· 2','Approved Ã‚Â· 142','Rejected Ã‚Â· 3','All'].map((t,i) => (
+          {['Pending · 7','In review · 2','Approved · 142','Rejected · 3','All'].map((t,i) => (
             <button key={i} style={{
               padding: '9px 14px', background:'transparent', border:'none', cursor:'pointer',
               fontSize: 12.5, fontWeight: i===0 ? 700 : 500,
@@ -1668,7 +1668,7 @@ function AdminInbox() {
           <div style={{ display:'flex', alignItems:'center', gap:8, padding: '0 4px' }}>
             <div style={{ display:'flex', alignItems:'center', gap:6, width: 220, height: 32, padding:'0 10px', background:'var(--ink-0)', border:'1px solid var(--ink-200)', borderRadius: 6 }}>
               <Icons.Search size={13} style={{ color: 'var(--ink-400)' }}/>
-              <input placeholder="Search submitter, propertyÃ¢â‚¬Â¦" style={{ flex:1, border:'none', outline:'none', fontSize: 12, background:'transparent' }}/>
+              <input placeholder="Search submitter, property…" style={{ flex:1, border:'none', outline:'none', fontSize: 12, background:'transparent' }}/>
             </div>
             <Button variant="secondary" size="sm" icon={<Icons.Filter size={13}/>}>Filter</Button>
           </div>
@@ -1729,7 +1729,7 @@ function AdminInbox() {
 
           {/* Bulk actions bar */}
           <div style={{ padding: '10px 20px', borderTop: '1px solid var(--ink-200)', background: 'var(--ink-50)', display:'flex', alignItems:'center', gap: 10, fontSize: 12 }}>
-            <span style={{ color: 'var(--ink-500)' }}>7 items Ã‚Â· bulk actions:</span>
+            <span style={{ color: 'var(--ink-500)' }}>7 items · bulk actions:</span>
             <Button variant="ghost" size="sm" icon={<Icons.Check size={12}/>}>Approve all</Button>
             <Button variant="ghost" size="sm" icon={<Icons.Send size={12}/>}>Push to Dealius</Button>
             <Button variant="ghost" size="sm" icon={<Icons.Download size={12}/>}>Export CSV</Button>
@@ -1740,7 +1740,7 @@ function AdminInbox() {
       {/* Right rail */}
       <div style={{ display:'flex', flexDirection:'column', gap: 16, position:'sticky', top: 24 }}>
         <Card padding={20}>
-          <div className="lee-eyebrow" style={{ marginBottom: 10 }}>This week Ã‚Â· Newport Beach office</div>
+          <div className="lee-eyebrow" style={{ marginBottom: 10 }}>This week · Newport Beach office</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 12 }}>
             <div>
               <div className="lee-mono" style={{ fontSize: 22, fontWeight: 700 }}>14</div>
@@ -1841,7 +1841,7 @@ function AdminDealius() {
               <Field label="Commission %"><Input suffix="%" defaultValue="6.00"/></Field>
               <Field label="MLS"><Select value="AIR CRE" onChange={()=>{}} options={['AIR CRE','CoStar','LoopNet','CREXi']}/></Field>
               <Field label="Dealius pipeline stage" span={2}>
-                <Select value="Prospect Ã¢â€ â€™ Active" onChange={()=>{}} options={['Prospect','Active','Under contract','Closed']}/>
+                <Select value="Prospect → Active" onChange={()=>{}} options={['Prospect','Active','Under contract','Closed']}/>
               </Field>
             </div>
           ) : (
@@ -1880,13 +1880,13 @@ function AdminDealius() {
         <Card padding={20}>
           <div style={{ display:'flex', alignItems:'center', gap: 8, marginBottom: 10 }}>
             <span style={{ width: 8, height: 8, borderRadius: 999, background:'var(--ok-500)' }}/>
-            <div className="lee-eyebrow" style={{ margin: 0 }}>Dealius Ã‚Â· Connected</div>
+            <div className="lee-eyebrow" style={{ margin: 0 }}>Dealius · Connected</div>
           </div>
           <div style={{ fontSize: 12, color: 'var(--ink-500)', lineHeight: 1.5 }}>
-            Last sync 3 min ago Ã‚Â· OAuth valid through Jul 2026
+            Last sync 3 min ago · OAuth valid through Jul 2026
           </div>
           <div style={{ marginTop: 12, display:'flex', gap: 8 }}>
-            <Button variant="ghost" size="sm">Open Dealius Ã¢â€ â€™</Button>
+            <Button variant="ghost" size="sm">Open Dealius →</Button>
             <Button variant="ghost" size="sm">Re-auth</Button>
           </div>
         </Card>
@@ -1895,15 +1895,15 @@ function AdminDealius() {
           <div className="lee-eyebrow" style={{ marginBottom: 12 }}>Recent pushes</div>
           {[
             {id:'L-2026-0412', label:'1250 E Alton Ave', when:'12m ago', ok:true},
-            {id:'D-2026-01868', label:'Deal Ã‚Â· 875 W 17th St', when:'1h ago', ok:true},
+            {id:'D-2026-01868', label:'Deal · 875 W 17th St', when:'1h ago', ok:true},
             {id:'L-2026-0409', label:'512 Superior Ave', when:'3h ago', ok:false, err:'Missing SF'},
-            {id:'D-2026-01864', label:'Deal Ã‚Â· 6400 W Coast Hwy', when:'yesterday', ok:true},
+            {id:'D-2026-01864', label:'Deal · 6400 W Coast Hwy', when:'yesterday', ok:true},
           ].map((p,i) => (
             <div key={i} style={{ display:'flex', alignItems:'center', gap: 10, padding: '10px 0', borderTop: i>0 ? '1px solid var(--ink-150)' : 'none' }}>
               <span style={{ width: 6, height: 6, borderRadius: 999, background: p.ok ? 'var(--ok-500)' : 'var(--err-600)' }}/>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12.5, fontWeight: 600, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{p.label}</div>
-                <div style={{ fontSize: 10.5, color: 'var(--ink-500)' }} className="lee-mono">{p.id}{p.err ? ` Ã‚Â· ${p.err}` : ''}</div>
+                <div style={{ fontSize: 10.5, color: 'var(--ink-500)' }} className="lee-mono">{p.id}{p.err ? ` · ${p.err}` : ''}</div>
               </div>
               <div style={{ fontSize: 10.5, color: 'var(--ink-500)' }}>{p.when}</div>
             </div>
@@ -1917,9 +1917,9 @@ function AdminDealius() {
           </div>
           <div style={{ marginTop: 10, display:'flex', flexDirection:'column', gap: 6, fontSize: 11.5 }}>
             {[
-              ['Voucher Ã¢â€ â€™ Commission record', 12],
-              ['Listing Ã¢â€ â€™ Property + Listing', 18],
-              ['Contract Ã¢â€ â€™ Document', 6],
+              ['Voucher → Commission record', 12],
+              ['Listing → Property + Listing', 18],
+              ['Contract → Document', 6],
             ].map(([k,n],i) => (
               <div key={i} style={{ display:'flex', justifyContent:'space-between', padding: '4px 0' }}>
                 <span style={{ color:'var(--ink-700)' }}>{k}</span>
@@ -1927,7 +1927,7 @@ function AdminDealius() {
               </div>
             ))}
           </div>
-          <Button variant="ghost" size="sm" style={{ marginTop: 10 }}>Edit mapping Ã¢â€ â€™</Button>
+          <Button variant="ghost" size="sm" style={{ marginTop: 10 }}>Edit mapping →</Button>
         </Card>
       </div>
     </div>
@@ -1960,11 +1960,11 @@ function AdminRoster() {
       <Card padding={0}>
         <div style={{ padding: '14px 20px', display:'flex', alignItems:'center', gap: 12, borderBottom: '1px solid var(--ink-150)' }}>
           <div style={{ fontSize: 14, fontWeight: 700 }}>Roster</div>
-          <Badge size="sm">{roster.length} shown Ã‚Â· 24 total</Badge>
+          <Badge size="sm">{roster.length} shown · 24 total</Badge>
           <div style={{ flex: 1 }}/>
           <div style={{ display:'flex', alignItems:'center', gap:6, width: 260, height: 32, padding:'0 10px', background:'var(--ink-0)', border:'1px solid var(--ink-200)', borderRadius: 6 }}>
             <Icons.Search size={13} style={{ color: 'var(--ink-400)' }}/>
-            <input placeholder="Search name, license, teamÃ¢â‚¬Â¦" style={{ flex:1, border:'none', outline:'none', fontSize: 12, background:'transparent' }}/>
+            <input placeholder="Search name, license, team…" style={{ flex:1, border:'none', outline:'none', fontSize: 12, background:'transparent' }}/>
           </div>
           <Select value="All teams" onChange={()=>{}} options={['All teams','Industrial','Office','Retail','Capital Markets']}/>
           <Button variant="secondary" size="sm" icon={<Icons.Download size={13}/>}>Export</Button>
@@ -2024,7 +2024,7 @@ function AdminOps() {
   return (
     <div style={{ padding: 32, display:'grid', gridTemplateColumns:'1fr 1fr', gap: 16 }}>
       <Card padding={20}>
-        <div className="lee-eyebrow" style={{ marginBottom: 14 }}>Commission payouts Ã‚Â· this week</div>
+        <div className="lee-eyebrow" style={{ marginBottom: 14 }}>Commission payouts · this week</div>
         {[
           {agent:'Taylor Barnes', amt:'$63,968', status:'Scheduled Fri'},
           {agent:'Marcus Reeves', amt:'$98,441', status:'Awaiting wire'},
@@ -2045,7 +2045,7 @@ function AdminOps() {
           {who:'Joel Martinez', what:'DRE license expires', when:'34 days', tone:'warn'},
           {who:'Priya Shah', what:'E&O insurance renewal', when:'62 days', tone:'neutral'},
           {who:'Reggie Alvarez', what:'Continuing ed hours', when:'2 of 45h done', tone:'warn'},
-          {who:'Office', what:'MLS dues Ã‚Â· AIR CRE', when:'Paid Apr 10', tone:'success'},
+          {who:'Office', what:'MLS dues · AIR CRE', when:'Paid Apr 10', tone:'success'},
         ].map((r,i) => (
           <div key={i} style={{ display:'flex', alignItems:'center', gap: 10, padding: '10px 0', borderTop: i>0 ? '1px solid var(--ink-150)' : 'none' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -2060,10 +2060,10 @@ function AdminOps() {
       <Card padding={20}>
         <div className="lee-eyebrow" style={{ marginBottom: 14 }}>MLS & data feeds</div>
         {[
-          {label:'AIR CRE Ã‚Â· listings feed', status:'Syncing', tone:'success', sub:'Last: 3 min ago'},
-          {label:'CoStar Ã‚Â· comps pull', status:'Syncing', tone:'success', sub:'Last: 12 min ago'},
-          {label:'Dealius Ã‚Â· deals', status:'Connected', tone:'success', sub:'OAuth valid'},
-          {label:'CREXi Ã‚Â· listings', status:'Error', tone:'danger', sub:'Reauth required'},
+          {label:'AIR CRE · listings feed', status:'Syncing', tone:'success', sub:'Last: 3 min ago'},
+          {label:'CoStar · comps pull', status:'Syncing', tone:'success', sub:'Last: 12 min ago'},
+          {label:'Dealius · deals', status:'Connected', tone:'success', sub:'OAuth valid'},
+          {label:'CREXi · listings', status:'Error', tone:'danger', sub:'Reauth required'},
         ].map((f,i) => (
           <div key={i} style={{ display:'flex', alignItems:'center', gap: 10, padding: '10px 0', borderTop: i>0 ? '1px solid var(--ink-150)' : 'none' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -2078,11 +2078,11 @@ function AdminOps() {
       <Card padding={20}>
         <div className="lee-eyebrow" style={{ marginBottom: 14 }}>Open tasks</div>
         {[
-          'Review voucher V-2026-0404 Ã‚Â· missing W-9',
+          'Review voucher V-2026-0404 · missing W-9',
           'Push 3 approved listings to Dealius',
           'Confirm Joel Martinez DRE renewal',
           'Reconcile April commission ledger',
-          'Approve sign vendor invoice Ã‚Â· $2,140',
+          'Approve sign vendor invoice · $2,140',
         ].map((t,i) => (
           <label key={i} style={{ display:'flex', alignItems:'center', gap: 10, padding: '8px 0', borderTop: i>0 ? '1px solid var(--ink-150)' : 'none', cursor: 'pointer' }}>
             <input type="checkbox" style={{ accentColor:'var(--lee-crimson)' }}/>
@@ -2101,20 +2101,20 @@ function ContractScreen() {
     { name: 'Listing Agreements', items: [
       'Exclusive Right to Sell',
       'Exclusive Right to Lease',
-      'Exclusive Right Ã‚Â· Sublease',
+      'Exclusive Right · Sublease',
       'Limited Listing Agreement',
       'Open Listing Agreement',
       'Listing Modification / Extension',
     ]},
     { name: 'Representation', items: [
-      'Exclusive Right Ã‚Â· Buyer/Lessee',
-      'Exclusive Right Ã‚Â· Owner Sale',
-      'Exclusive Right Ã‚Â· Owner Lease',
+      'Exclusive Right · Buyer/Lessee',
+      'Exclusive Right · Owner Sale',
+      'Exclusive Right · Owner Lease',
       'Non-Exclusive Buyer Rep',
     ]},
     { name: 'Commission Agreements', items: [
-      'Commission Agreement Ã‚Â· Lease',
-      'Commission Agreement Ã‚Â· Sale',
+      'Commission Agreement · Lease',
+      'Commission Agreement · Sale',
       'Co-Broker Commission Agreement',
       'Referral Agreement',
     ]},
@@ -2134,7 +2134,7 @@ function ContractScreen() {
     ]},
     { name: 'Purchase & Sale', items: [
       'AIR CRE Standard Purchase Agreement',
-      'Letter of Intent Ã‚Â· Purchase',
+      'Letter of Intent · Purchase',
       'Counter Offer',
       'PSA Addendum',
       'Assignment of Purchase Agreement',
@@ -2151,7 +2151,7 @@ function ContractScreen() {
       'Arbitration Advisory',
     ]},
   ];
-  const [sel, setSel] = React.useState('Exclusive Right Ã‚Â· Owner Lease');
+  const [sel, setSel] = React.useState('Exclusive Right · Owner Lease');
   return (
     <div>
       <PageHeader
@@ -2163,7 +2163,7 @@ function ContractScreen() {
         <Card padding={16} style={{ maxHeight: 780, overflow: 'auto' }}>
           <div style={{ display:'flex', alignItems:'center', gap: 8, marginBottom: 12, padding: '6px 10px', background: 'var(--ink-50)', border: '1px solid var(--ink-200)', borderRadius: 6 }}>
             <Icons.Search size={13} style={{ color: 'var(--ink-400)' }}/>
-            <input placeholder="Search agreementsÃ¢â‚¬Â¦" style={{ flex: 1, border: 'none', outline: 'none', fontSize: 12, background: 'transparent' }}/>
+            <input placeholder="Search agreements…" style={{ flex: 1, border: 'none', outline: 'none', fontSize: 12, background: 'transparent' }}/>
           </div>
           {groups.map((g, gi) => (
             <div key={gi} style={{ marginBottom: 14 }}>
@@ -2248,7 +2248,7 @@ function DocsScreen() {
         right={<>
           <div style={{ display:'flex', alignItems:'center', gap:8, width: 280, height: 36, padding:'0 12px', background:'var(--ink-0)', border:'1px solid var(--ink-200)', borderRadius: 6 }}>
             <Icons.Search size={14} style={{ color: 'var(--ink-400)' }}/>
-            <input placeholder="Search 42 documentsÃ¢â‚¬Â¦" style={{ flex:1, border:'none', outline:'none', fontSize: 13, background:'transparent' }}/>
+            <input placeholder="Search 42 documents…" style={{ flex:1, border:'none', outline:'none', fontSize: 13, background:'transparent' }}/>
           </div>
           <Button variant="secondary" size="sm" icon={<Icons.Upload size={14}/>}>Upload</Button>
         </>}
@@ -2315,7 +2315,7 @@ function AiPanel({ open, onClose }) {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 15, fontWeight: 600 }}>Deal Assist</div>
-            <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Claude Ã‚Â· fills fields &amp; extracts from docs</div>
+            <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Claude · fills fields &amp; extracts from docs</div>
           </div>
           <button onClick={onClose} style={{ background:'transparent', border:'none', cursor:'pointer', color:'var(--ink-500)' }}><Icons.X size={18}/></button>
         </div>
@@ -2398,7 +2398,7 @@ function ProfileModal({ open, onClose }) {
           <div style={{ width: 80, height: 80, borderRadius: 16, background: 'var(--lee-crimson)', color: '#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize: 26, fontWeight: 800, border: '4px solid var(--ink-0)', boxShadow: 'var(--shadow-md)' }}>TB</div>
           <div style={{ flex: 1, paddingBottom: 6 }}>
             <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em' }}>Taylor Barnes</div>
-            <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>Senior Broker Ã‚Â· Industrial Ã‚Â· DRE #02135478</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>Senior Broker · Industrial · DRE #02135478</div>
           </div>
           <Badge tone="success" size="sm" icon={<Icons.Check size={10} strokeWidth={3}/>}>Signed in</Badge>
         </div>

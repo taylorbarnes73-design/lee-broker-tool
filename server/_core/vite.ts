@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 const CLIENT_INDEX_TEMPLATE = fileURLToPath(new URL("../../client/index.html", import.meta.url));
 const BROKER_TOOL_TEMPLATE = fileURLToPath(new URL("../../client/public/broker_tool.html", import.meta.url));
 const DEV_DIST_PUBLIC_ROOT = fileURLToPath(new URL("../../dist/public/", import.meta.url));
-const PROD_PUBLIC_ROOT = fileURLToPath(new URL("../public/", import.meta.url));
+const PROD_PUBLIC_ROOT = path.resolve(process.cwd(), "dist/public");
 
 const HTML_ENTRY_TEMPLATES: Record<string, string> = {
   "/": CLIENT_INDEX_TEMPLATE,

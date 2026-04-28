@@ -194,3 +194,31 @@ Invoke-Aws cloudformation describe-stacks `
     --stack-name $StackName `
     --query "Stacks[0].Outputs" `
     --output table
+
+$outputs = Invoke-Aws cloudformation describe-stacks --region $Region --stack-name $StackName --query "Stacks[0].Outputs" --output json | ConvertFrom-Json
+$instanceId = ($outputs | Where-Object { $_.OutputKey -eq "InstanceId" }).OutputValue
+
+if ($instanceId) {
+    Write-Host "Updating code on EC2 instance $instanceId via SSM..." -ForegroundColor Yellow
+    $ssmParams = @{
+        commands = @(
+            "cd /opt/$ServiceName",
+            "/opt/awscli-venv/bin/aws s3 cp s3://$ArtifactBucket/$ArtifactKey /tmp/${ServiceName}.zip",
+            "unzip -o /tmp/${ServiceName}.zip -d /opt/$ServiceName",
+            "pnpm install --prod --frozen-lockfile",
+            "systemctl restart ${ServiceName}.service"
+        )
+    }
+    $ssmFinal = @{ Parameters = $ssmParams }
+    $ssmJsonFinal = $ssmFinal | ConvertTo-Json -Depth 5 -Compress
+    Set-Content -Path ".deploy\ssm-update.json" -Value $ssmJsonFinal -Encoding ascii
+    
+    Invoke-Aws ssm send-command `
+        --instance-ids $instanceId `
+        --document-name "AWS-RunShellScript" `
+        --cli-input-json "file://.deploy/ssm-update.json" `
+        --region $Region `
+        --output text
+        
+    Write-Host "EC2 update command sent successfully." -ForegroundColor Green
+}

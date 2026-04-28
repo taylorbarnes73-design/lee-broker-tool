@@ -1,6 +1,7 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
+import { useAuth } from '@/_core/hooks/useAuth';
 import { 
   Icons, PageHeader, StepProgress, Segmented, Button, Card, Badge, 
   Input, Select, StepCard, Field, Toggle, Metric, SummaryRow, FormSection, FormRow 
@@ -19,23 +20,30 @@ function SectionHeader({ eyebrow, title, description, right }) {
     </div>
   );
 }
-/* Lee Broker Tool Ã¢â‚¬â€ Sign Request + Voucher screens */
+/* Lee Broker Tool — Sign Request + Voucher screens */
 
 export default function SignRequestScreen() {
+  const { user } = useAuth();
+  
+  const [listing, setListing] = useState("2847 Newport Blvd, Costa Mesa");
+  const [dealType, setDealType] = useState("Lease · Industrial");
+  const [suite, setSuite] = useState("Entire building");
+  
   const [shape, setShape] = useState('sf');
   const [qty, setQty] = useState({ '4x8': 2, '6x8': 0, 'other': 0, 'banner': 1 });
   const [otherSize, setOtherSize] = useState('');
   const [bannerSize, setBannerSize] = useState('');
   const [nameRider, setNameRider] = useState(true);
+  const [riderText, setRiderText] = useState(`${user?.name || 'Broker'} · ${user?.office || '714.555.0142'}`);
+  const [customGraphic, setCustomGraphic] = useState(false);
 
-
-  const [agent, setAgent] = useState("Taylor Barnes");
+  const [agent, setAgent] = useState(user?.name || "");
   const [sharedExpense, setSharedExpense] = useState("50");
   const [installBy, setInstallBy] = useState("Apr 28, 2026");
   const [access, setAccess] = useState("Gate code 4421#");
   const [comments, setComments] = useState("");
 
-  const submitMutation = trpc.submissions.submit.useMutation({
+  const submitMutation = trpc.submissions.create.useMutation({
     onSuccess: () => toast.success("Sign order submitted successfully!"),
     onError: (err) => toast.error("Error: " + err.message),
   });
@@ -44,9 +52,9 @@ export default function SignRequestScreen() {
     await submitMutation.mutateAsync({
       formType: 'sign-request',
       payload: {
-        shape, qty, otherSize, bannerSize, nameRider,
+        shape, qty, otherSize, bannerSize, nameRider, riderText, customGraphic,
         agent, sharedExpense, installBy, access, comments,
-        listing: "2847 Newport Blvd, Costa Mesa"
+        listing, dealType, suite
       }
     });
   };
@@ -72,11 +80,11 @@ export default function SignRequestScreen() {
             <SectionHeader eyebrow="Step 1" title="Which listing?"/>
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 16 }}>
               <Field label="Listing" required>
-                <Input prefix={<Icons.Building size={14}/>} defaultValue="2847 Newport Blvd, Costa Mesa"/>
+                <Input prefix={<Icons.Building size={14}/>} value={listing} onChange={e => setListing(e.target.value)}/>
               </Field>
-              <Field label="Deal type"><Input auto value="Lease Ã‚Â· Industrial"/></Field>
+              <Field label="Deal type"><Input auto value={dealType} onChange={e => setDealType(e.target.value)}/></Field>
               <Field label="Suite">
-                <Input defaultValue="Entire building"/>
+                <Input value={suite} onChange={e => setSuite(e.target.value)}/>
               </Field>
             </div>
           </Card>
@@ -117,9 +125,9 @@ export default function SignRequestScreen() {
             <SectionHeader eyebrow="Step 3" title="Sign specifications" right={<Badge tone="crimson" size="sm">{Object.values(qty).reduce((a,b)=>a+b,0)} signs total</Badge>}/>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {[
-                {k:'4x8',    label:"4' Ãƒâ€” 8'",  desc:'Standard roadside panel'},
-                {k:'6x8',    label:"6' Ãƒâ€” 8'",  desc:'Large frontage panel'},
-                {k:'other',  label:'Other',     desc:'Custom size', sizeInput: true, sizeValue: otherSize,  setSize: setOtherSize,  placeholder: 'e.g. 3Ãƒâ€”4'},
+                {k:'4x8',    label:"4' × 8'",  desc:'Standard roadside panel'},
+                {k:'6x8',    label:"6' × 8'",  desc:'Large frontage panel'},
+                {k:'other',  label:'Other',     desc:'Custom size', sizeInput: true, sizeValue: otherSize,  setSize: setOtherSize,  placeholder: 'e.g. 3×4'},
                 {k:'banner', label:'Banner',    desc:'Vinyl banner', sizeInput: true, sizeValue: bannerSize, setSize: setBannerSize, placeholder: 'Size'},
               ].map(row => {
                 const n = qty[row.k];
@@ -158,27 +166,31 @@ export default function SignRequestScreen() {
 
             <div style={{ marginTop: 16, padding: 12, background: 'var(--ink-50)', borderRadius: 8, border: '1px solid var(--ink-200)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Toggle on={nameRider} onClick={() => setNameRider(!nameRider)}/>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>Name rider <span style={{ fontWeight: 500, color: 'var(--ink-500)' }}>Ã‚Â· Optional</span></div>
-                  <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Add broker name to rider panel</div>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>Name rider <span style={{ fontWeight: 500, color: 'var(--ink-500)' }}>· Optional</span></div>
+                  <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 2 }}>Attach a rider with your contact info.</div>
                 </div>
-                {nameRider && <Input defaultValue="Taylor Barnes Ã‚Â· 714.555.0142" style={{ width: 280 }}/>}
+                <Toggle on={nameRider} onChange={setNameRider}/>
               </div>
+              {nameRider && (
+                <div style={{ marginTop: 12 }}>
+                  <Input value={riderText} onChange={e => setRiderText(e.target.value)}/>
+                </div>
+              )}
             </div>
           </Card>
 
           <Card>
             <SectionHeader eyebrow="Step 4" title="Requested by &amp; access" description="Who's the point of contact; how do installers get on site?"/>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-              <Field label="Agent" required><Input defaultValue="Taylor Barnes"/></Field>
-              <Field label="Shared Expense %"><Input suffix="%" defaultValue="50"/></Field>
-              <Field label="Install by"><Input prefix={<Icons.Calendar size={14}/>} defaultValue="Apr 28, 2026"/></Field>
+              <Field label="Agent" required><Input value={agent} onChange={e => setAgent(e.target.value)}/></Field>
+              <Field label="Shared Expense %"><Input suffix="%" value={sharedExpense} onChange={e => setSharedExpense(e.target.value)}/></Field>
+              <Field label="Install by"><Input prefix={<Icons.Calendar size={14}/>} value={installBy} onChange={e => setInstallBy(e.target.value)}/></Field>
               <Field label="Access" span={3}>
-                <Input defaultValue="Gate code 4421#. Contact property manager at 949-555-0100 if locked."/>
+                <Input value={access} onChange={e => setAccess(e.target.value)}/>
               </Field>
               <Field label="Comments / placement notes" span={3} optional>
-                <textarea defaultValue="Install on Newport Blvd frontage, right of the driveway. Avoid blocking tenant signage on the north elevation." style={textareaStyle}/>
+                <textarea value={comments} onChange={e => setComments(e.target.value)} style={textareaStyle}/>
               </Field>
             </div>
           </Card>
@@ -255,7 +267,7 @@ const textareaStyle = {
 
 function OrderSummaryRail({ qty, shape }) {
   const prices = { '4x8': 285, '6x8': 420, 'other': 175, 'banner': 95 };
-  const labels = { '4x8': "4' Ãƒâ€” 8'", '6x8': "6' Ãƒâ€” 8'", 'other': 'Other', 'banner': 'Banner' };
+  const labels = { '4x8': "4' × 8'", '6x8': "6' × 8'", 'other': 'Other', 'banner': 'Banner' };
   const shapeLabel = { sf: 'S/F', df: 'D/F', vshape: 'V-Shape' }[shape] || shape;
   const total = Object.entries(qty).reduce((sum, [k, n]) => sum + (prices[k] || 0) * n, 0);
   return (
@@ -263,12 +275,12 @@ function OrderSummaryRail({ qty, shape }) {
       <Card padding={20}>
         <div className="lee-eyebrow" style={{ marginBottom: 12 }}>Order summary</div>
         <div style={{ fontSize: 15, fontWeight: 600 }}>2847 Newport Blvd</div>
-        <div style={{ fontSize: 12, color:'var(--ink-500)', marginTop: 2 }}>PO-2026-0418 Ã‚Â· {shapeLabel}</div>
+        <div style={{ fontSize: 12, color:'var(--ink-500)', marginTop: 2 }}>PO-2026-0418 · {shapeLabel}</div>
 
         <div style={{ marginTop: 16, borderTop: '1px solid var(--ink-150)', paddingTop: 12, display:'flex', flexDirection:'column', gap: 6 }}>
           {Object.entries(qty).filter(([,n])=>n>0).map(([k,n]) => (
             <div key={k} style={{ display:'flex', justifyContent:'space-between', fontSize: 13 }}>
-              <span style={{ color: 'var(--ink-600)' }}>{labels[k]}  Ã‚Â· Ãƒâ€” {n}</span>
+              <span style={{ color: 'var(--ink-600)' }}>{labels[k]}  · × {n}</span>
               <span className="lee-mono" style={{ color: 'var(--ink-900)', fontWeight: 600 }}>
                 ${(prices[k]*n).toLocaleString()}
               </span>
@@ -279,7 +291,7 @@ function OrderSummaryRail({ qty, shape }) {
           <span style={{ fontSize: 12, color: 'var(--ink-500)' }}>Estimated total</span>
           <span className="lee-mono" style={{ fontSize: 20, fontWeight: 700 }}>${total.toLocaleString()}</span>
         </div>
-        <div style={{ fontSize: 11, color: 'var(--ink-400)', marginTop: 4 }}>Split 50% with landlord Ã‚Â· your share ${(total/2).toLocaleString()}</div>
+        <div style={{ fontSize: 11, color: 'var(--ink-400)', marginTop: 4 }}>Split 50% with landlord · your share ${(total/2).toLocaleString()}</div>
       </Card>
 
       <Card padding={18} style={{ background: 'var(--ink-50)' }}>

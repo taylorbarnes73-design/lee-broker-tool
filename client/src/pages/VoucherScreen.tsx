@@ -1,6 +1,7 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
+import { useAuth } from '@/_core/hooks/useAuth';
 import { 
   Icons, PageHeader, StepProgress, Segmented, Button, Card, Badge, 
   Input, Select, StepCard, Field, Toggle, Metric, SummaryRow, FormSection, FormRow 
@@ -22,6 +23,7 @@ function SectionHeader({ eyebrow, title, description, right }) {
 /* Lee Broker Tool â€” Commission Voucher screen */
 
 export default function VoucherScreen() {
+  const { user } = useAuth();
   const [subTab, setSubTab] = useState('add');
 
 
@@ -112,8 +114,9 @@ export default function VoucherScreen() {
 }
 
 function CommissionTable() {
+  const { user } = useAuth();
   const rows = [
-    {name:'Taylor Barnes', side:'Procuring', pct: 40, chipTone:'success', split:'Internal'},
+    {name: user?.name || 'Broker', side:'Procuring', pct: 40, chipTone:'success', split:'Internal'},
     {name:'Marcus Reeves', side:'Listing', pct: 35, chipTone:'crimson', split:'Internal'},
     {name:'Janice Lee (CBRE)', side:'Referral', pct: 15, chipTone:'warn', split:'Outside'},
     {name:'House override', side:'Both', pct: 10, chipTone:'ai', split:'House'},

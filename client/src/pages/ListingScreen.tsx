@@ -13,6 +13,15 @@ export default function ListingEntryScreen() {
   const [dealType, setDealType] = useState('Lease');
   const [showAiFill, setShowAiFill] = useState(false);
 
+  const [askingRate, setAskingRate] = useState('1.45');
+  const [term, setTerm] = useState('5');
+  const [expenseType, setExpenseType] = useState('NNN');
+  const [available, setAvailable] = useState('June 1, 2026');
+  const [commListing, setCommListing] = useState('3.00');
+  const [commProcuring, setCommProcuring] = useState('3.00');
+  const [totalConsideration, setTotalConsideration] = useState('$2,132,250.00');
+  const [revealToMls, setRevealToMls] = useState(true);
+
 
   const submitMutation = trpc.submissions.submit.useMutation({
     onSuccess: () => toast.success("Listing submitted successfully!"),
@@ -24,7 +33,8 @@ export default function ListingEntryScreen() {
       formType: 'listing',
       payload: {
         propType, dealType, subTab,
-        address: "2847 Newport Blvd, Costa Mesa CA 92627"
+        address: "2847 Newport Blvd, Costa Mesa CA 92627",
+        askingRate, term, expenseType, available, commListing, commProcuring, totalConsideration, revealToMls
       }
     });
   };
@@ -86,14 +96,14 @@ export default function ListingEntryScreen() {
           <StepCard
             step={1} total={7} status="complete"
             title="Transaction type"
-            summary="Lease Ãƒâ€šÃ‚Â· Industrial Ãƒâ€šÃ‚Â· 2,847 Newport Blvd, Costa Mesa CA 92627"
+            summary="Lease Ãƒâ€š· Industrial Ãƒâ€š· 2,847 Newport Blvd, Costa Mesa CA 92627"
           />
 
           {/* Step 2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ complete */}
           <StepCard
             step={2} total={7} status="complete"
             title="Property details"
-            summary="24,500 SF Ãƒâ€šÃ‚Â· Clear height 28' Ãƒâ€šÃ‚Â· 4 DH doors Ãƒâ€šÃ‚Â· Built 2005"
+            summary="24,500 SF Ãƒâ€š· Clear height 28' Ãƒâ€š· 4 DH doors Ãƒâ€š· Built 2005"
           />
 
           {/* Step 3 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ active */}
@@ -104,10 +114,10 @@ export default function ListingEntryScreen() {
           >
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
               <Field label="Asking rate" required aiFilled>
-                <Input prefix="$" suffix="/ SF / Mo" defaultValue="1.45"/>
+                <Input prefix="$" suffix="/ SF / Mo" value={askingRate} onChange={e => setAskingRate(e.target.value)}/>
               </Field>
               <Field label="Term">
-                <Select value="5" onChange={()=>{}} options={[
+                <Select value={term} onChange={e => setTerm(e.target.value)} options={[
                   {value:'neg', label:'Negotiable'},
                   {value:'3', label:'3 years'},
                   {value:'5', label:'5 years'},
@@ -116,20 +126,20 @@ export default function ListingEntryScreen() {
                 ]}/>
               </Field>
               <Field label="NNN / Expense type" required>
-                <Select value="NNN" onChange={()=>{}} options={['NNN','Gross','Modified Gross','Industrial Gross']}/>
+                <Select value={expenseType} onChange={e => setExpenseType(e.target.value)} options={['NNN','Gross','Modified Gross','Industrial Gross']}/>
               </Field>
               <Field label="Available">
-                <Input prefix={<Icons.Calendar size={14}/>} defaultValue="June 1, 2026"/>
+                <Input prefix={<Icons.Calendar size={14}/>} value={available} onChange={e => setAvailable(e.target.value)}/>
               </Field>
 
-              <Field label="Commission ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â listing side" required span={1}>
-                <Input suffix="%" defaultValue="3.00"/>
+              <Field label="Commission — listing side" required span={1}>
+                <Input suffix="%" value={commListing} onChange={e => setCommListing(e.target.value)}/>
               </Field>
-              <Field label="Commission ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â procuring" required span={1}>
-                <Input suffix="%" defaultValue="3.00"/>
+              <Field label="Commission — procuring" required span={1}>
+                <Input suffix="%" value={commProcuring} onChange={e => setCommProcuring(e.target.value)}/>
               </Field>
               <Field label="Total consideration" span={2}>
-                <Input auto value="$2,132,250.00" prefix="$" style={{fontFamily:'var(--font-mono)'}}/>
+                <Input value={totalConsideration} onChange={e => setTotalConsideration(e.target.value)} prefix="$" style={{fontFamily:'var(--font-mono)'}}/>
               </Field>
             </div>
 
@@ -146,7 +156,7 @@ export default function ListingEntryScreen() {
                 <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-900)' }}>Reveal prices to MLS</div>
                 <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 1 }}>Off hides asking rate on CoStar &amp; AIR feeds; agents will "Call for info".</div>
               </div>
-              <Toggle on={true}/>
+              <Toggle on={revealToMls} onChange={setRevealToMls}/>
             </div>
 
             {/* Footer actions */}

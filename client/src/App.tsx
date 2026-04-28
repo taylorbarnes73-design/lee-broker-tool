@@ -10,9 +10,6 @@ import { useAuth } from "@/_core/hooks/useAuth";
 // Import the new design components
 import { 
   AppShell, 
-  AdminScreen, 
-  ContractScreen, 
-  DocsScreen, 
   AiPanel, 
   ProfileModal 
 } from "./design/index.jsx";
@@ -22,7 +19,7 @@ import Login from "./pages/Login";
 import ListingEntryScreen from "./pages/ListingScreen";
 import SignRequestScreen from "./pages/SignScreen";
 import VoucherScreen from "./pages/VoucherScreen";
-import CompScreen from "./pages/CompScreen";
+import CompScreen, { AdminScreen, ContractScreen, DocsScreen } from "./pages/CompScreen";
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
