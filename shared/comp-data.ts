@@ -63,6 +63,7 @@ export type LeaseCompRecord = {
   buildingSqFt: number | null;
   officeSqFt: number | null;
   nnnCharges: number | null;
+  landSqFt: number | null;
   cam: string;
   confidential: string;
   expenseStop: string;
@@ -325,6 +326,7 @@ export function normalizeLeaseCompRecord(row: CompRow, sourceSheet: string): Lea
     buildingSqFt: cleanNumber(getRowValue(row, "buildingSqFt")),
     officeSqFt: cleanNumber(getRowValue(row, "officeSqFt")),
     nnnCharges: cleanNumber(getRowValue(row, "NNNCharges")),
+    landSqFt: cleanNumber(getRowValue(row, "landSqFt")),
     cam: cleanText(getRowValue(row, "CAM")),
     confidential: cleanFlag(getRowValue(row, "confidential")),
     expenseStop: cleanText(getRowValue(row, "expenseStop")),
@@ -494,7 +496,7 @@ export function buildLeaseReportCard(record: LeaseCompRecord): LeaseReportCard {
       Parking: record.parkingRatio,
       "Yr Built": formatNumber(record.yearBuilt),
       HT: formatNumber(record.clearHeight),
-      Land: "",
+      Land: formatNumber(record.landSqFt),
       "Options/Rent Adj": [record.options, record.rentAdjustments].filter(Boolean).join(" / "),
     },
   };

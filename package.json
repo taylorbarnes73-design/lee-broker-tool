@@ -15,6 +15,7 @@
     "comp:analyze": "tsx scripts/analyze-comp-workbook.ts",
     "comp:export": "tsx scripts/export-comp-workbook.ts",
     "comp:import": "tsx scripts/import-comp-workbook.ts",
+    "comp:seed": "tsx scripts/seed-comp-report-pdfs.ts",
     "assets:embed": "tsx scripts/embed-tool-assets.ts"
   },
   "dependencies": {

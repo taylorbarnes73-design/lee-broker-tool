@@ -221,6 +221,110 @@ async function insertSaleBatches(
   }
 }
 
+export async function seedDirectRecords(params: {
+  db: NonNullable<Awaited<ReturnType<typeof import("../db").getDb>>>;
+  workbookName: string;
+  sourceFilename?: string | null;
+  canonicalLeaseSheet?: string;
+  canonicalSaleSheet?: string;
+  leaseRecords: LeaseCompRecord[];
+  saleRecords: SaleCompRecord[];
+}) {
+  const {
+    db,
+    workbookName,
+    sourceFilename,
+    canonicalLeaseSheet = "Seeded-Lease",
+    canonicalSaleSheet = "Seeded-Sale",
+    leaseRecords,
+    saleRecords,
+  } = params;
+
+  const [inserted] = await db.insert(compImports).values({
+    sourceFileKey: null,
+    sourceUrl: null,
+    sourceFilename: sourceFilename ?? null,
+    workbookName,
+    canonicalLeaseSheet,
+    canonicalSaleSheet,
+    leaseCount: leaseRecords.length,
+    saleCount: saleRecords.length,
+    status: "failed",
+    importedByOpenId: null,
+    importedByEmail: null,
+  });
+
+  const importId = (inserted as { insertId?: number }).insertId;
+  if (!importId) throw new Error("Failed to create comp import record.");
+
+  try {
+    await insertLeaseBatches(db, buildLeaseInsertRows(leaseRecords, importId));
+    await insertSaleBatches(db, buildSaleInsertRows(saleRecords, importId));
+
+    await db
+      .update(compImports)
+      .set({ status: "archived", updatedAt: new Date() })
+      .where(and(eq(compImports.status, "active"), ne(compImports.id, importId)));
+
+    await db
+      .update(compImports)
+      .set({ status: "active", updatedAt: new Date() })
+      .where(eq(compImports.id, importId));
+
+    return {
+      importId,
+      workbookName,
+      canonicalLeaseSheet,
+      canonicalSaleSheet,
+      leaseCount: leaseRecords.length,
+      saleCount: saleRecords.length,
+    };
+  } catch (error) {
+    await db.delete(leaseComps).where(eq(leaseComps.importId, importId));
+    await db.delete(saleComps).where(eq(saleComps.importId, importId));
+    await db
+      .update(compImports)
+      .set({ status: "failed", updatedAt: new Date() })
+      .where(eq(compImports.id, importId));
+    throw error;
+  }
+}
+
+export async function addSingleComp(params: {
+  db: NonNullable<Awaited<ReturnType<typeof import("../db").getDb>>>;
+  compType: CompType;
+  record: LeaseCompRecord | SaleCompRecord;
+}) {
+  const { db, compType, record } = params;
+
+  let activeImport = await getLatestCompImport(db);
+  if (!activeImport) {
+    const [inserted] = await db.insert(compImports).values({
+      workbookName: "Manual Entries",
+      canonicalLeaseSheet: "Manual-Lease",
+      canonicalSaleSheet: "Manual-Sale",
+      leaseCount: 0,
+      saleCount: 0,
+      status: "active",
+    });
+    const importId = (inserted as { insertId?: number }).insertId;
+    if (!importId) throw new Error("Failed to create import record.");
+    const rows = await db.select().from(compImports).where(eq(compImports.id, importId)).limit(1);
+    activeImport = rows[0] ?? null;
+  }
+  if (!activeImport) throw new Error("No active import.");
+
+  if (compType === "lease") {
+    const rows = buildLeaseInsertRows([record as LeaseCompRecord], activeImport.id);
+    await db.insert(leaseComps).values(rows);
+    await db.update(compImports).set({ leaseCount: activeImport.leaseCount + 1, updatedAt: new Date() }).where(eq(compImports.id, activeImport.id));
+  } else {
+    const rows = buildSaleInsertRows([record as SaleCompRecord], activeImport.id);
+    await db.insert(saleComps).values(rows);
+    await db.update(compImports).set({ saleCount: activeImport.saleCount + 1, updatedAt: new Date() }).where(eq(compImports.id, activeImport.id));
+  }
+}
+
 export async function fetchWorkbookBufferFromStorage(fileKey: string) {
   const stored = await storageGet(fileKey);
   const response = await fetch(stored.url);

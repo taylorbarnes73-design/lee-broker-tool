@@ -40,6 +40,15 @@ type CompSearchResult = {
   leaseDate?: string;
   saleDate?: string;
   reportCard: {
+    heading?: string;
+    addressLine?: string;
+    cityLine?: string;
+    submarketLine?: string;
+    listingBrokerLine?: string;
+    procuringBrokerLine?: string;
+    sourceLine?: string;
+    updatedLine?: string;
+    comments?: string;
     fields: Record<string, string>;
   };
 };
@@ -176,6 +185,213 @@ function compTerm(comp: CompSearchResult) {
 /* Lee Broker Tool — Comps, Admin, Contracts, Documents, AI panel */
 
 // â”€â”€ Comp Reports (the user said this is a mess — redesign as a clear workflow) â”€â”€
+const LEASE_REPORT_FIELD_ORDER = [
+  "Space Leased",
+  "Office",
+  "Trans. Date",
+  "Prop. Type",
+  "On Mrkt",
+  "DH",
+  "Sprk",
+  "Lessee",
+  "Rent/SqFt",
+  "TI Allow",
+  "Expir. Date",
+  "Subtype",
+  "Amps",
+  "GL",
+  "Rail",
+  "Lessor",
+  "Eff. Rent",
+  "Free Rent",
+  "Term",
+  "Bldg. Class",
+  "Mul-Ten",
+  "POL",
+  "Yrd",
+  "Space Type",
+  "Bldg SqFt",
+  "NNN Chgs",
+  "Occ Date",
+  "Parking",
+  "Yr Built",
+  "HT",
+  "Land",
+  "Options/Rent Adj",
+] as const;
+
+const SALE_REPORT_FIELD_ORDER = [
+  "Bldg. SqFt",
+  "Sale Price",
+  "Trans. Date",
+  "Prop. Type",
+  "Yr Built",
+  "DH",
+  "Sprk",
+  "Buyer",
+  "Office SqFt",
+  "Sale $/SF",
+  "On Market",
+  "Subtype",
+  "Mul-Tnt",
+  "GL",
+  "RR",
+  "Seller",
+  "Land Size",
+  "Trans. Type",
+  "Cap Rate",
+  "Bldg. Class",
+  "Amps",
+  "Clr",
+  "Yard",
+  "Buyer Previous Location",
+] as const;
+
+function buildMetropolisCompPacketHtml({
+  compType,
+  rows,
+  subjectAddress,
+  subjectCity,
+  propertyType,
+}: {
+  compType: CompType;
+  rows: CompSearchResult[];
+  subjectAddress: string;
+  subjectCity: string;
+  propertyType: string;
+}) {
+  const title = compType === "lease" ? "LEASE COMPARABLES" : "SALE COMPARABLES";
+  const fieldOrder = compType === "lease" ? LEASE_REPORT_FIELD_ORDER : SALE_REPORT_FIELD_ORDER;
+  const generated = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+  const subjectLine = [subjectAddress, subjectCity, propertyType].filter(Boolean).join(" | ");
+  const cards = rows.map((comp, index) => {
+    const card = comp.reportCard;
+    const fields = fieldOrder.map((field) => `
+      <div class="field">
+        <div class="label">${htmlEscape(field)}</div>
+        <div class="value">${htmlEscape(card.fields[field] || "")}</div>
+      </div>
+    `).join("");
+    const brokerLines = [
+      card.procuringBrokerLine,
+      card.listingBrokerLine,
+      card.sourceLine,
+    ].filter(Boolean).map((line) => `<div>${htmlEscape(line)}</div>`).join("");
+    const locationLines = [
+      card.addressLine,
+      card.cityLine,
+      card.submarketLine,
+    ].filter(Boolean).map((line) => `<div>${htmlEscape(line)}</div>`).join("");
+
+    return `
+      <section class="comp-card">
+        <div class="comp-number">${index + 1}.</div>
+        <div class="photo">No Photo Available</div>
+        <div class="comp-body">
+          <div class="comp-title">${htmlEscape(card.heading || comp.title || comp.address)}</div>
+          <div class="location">${locationLines}</div>
+          <div class="field-grid">${fields}</div>
+          <div class="broker-lines">${brokerLines}</div>
+          ${card.comments ? `<div class="comments"><b>Comments:</b> ${htmlEscape(card.comments)}</div>` : ""}
+          <div class="updated">${htmlEscape(card.updatedLine)}</div>
+        </div>
+      </section>
+    `;
+  }).join("");
+
+  return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${htmlEscape(title)} - Metropolis</title>
+  <style>
+    @page { size: letter landscape; margin: 0.32in; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #111;
+      font-size: 8.5pt;
+      line-height: 1.25;
+      background: #fff;
+    }
+    .report-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #111;
+      margin-bottom: 6px;
+    }
+    .title { font-size: 14pt; font-weight: 700; letter-spacing: 0; }
+    .subtitle, .date, .subject { font-size: 8.5pt; }
+    .disclaimer { font-size: 7pt; color: #333; margin-bottom: 6px; }
+    .comp-card {
+      display: grid;
+      grid-template-columns: 24px 104px 1fr;
+      gap: 8px;
+      padding: 6px 0;
+      border-top: 1px solid #999;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      min-height: 112px;
+    }
+    .comp-number { font-weight: 700; font-size: 10pt; }
+    .photo {
+      border: 1px solid #bbb;
+      background: #f2f2f2;
+      color: #555;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8px;
+      font-size: 7pt;
+      min-height: 76px;
+    }
+    .comp-title { font-size: 10pt; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
+    .location { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 4px; text-transform: uppercase; }
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      border-top: 1px solid #cfcfcf;
+      border-left: 1px solid #cfcfcf;
+    }
+    .field {
+      min-height: 24px;
+      padding: 2px 4px;
+      border-right: 1px solid #cfcfcf;
+      border-bottom: 1px solid #cfcfcf;
+      overflow-wrap: anywhere;
+    }
+    .label { font-size: 6.5pt; color: #555; font-weight: 700; }
+    .value { font-size: 8pt; font-weight: 600; }
+    .broker-lines { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; margin-top: 4px; }
+    .comments { margin-top: 3px; }
+    .updated { margin-top: 2px; font-size: 7pt; color: #333; text-align: right; }
+  </style>
+</head>
+<body>
+  <header class="report-header">
+    <div>
+      <div class="title">${htmlEscape(title)}</div>
+      <div class="subtitle">Metropolis</div>
+      <div class="subtitle">Industrial with Small Pictures</div>
+      <div class="subject">${htmlEscape(subjectLine)}</div>
+    </div>
+    <div class="date">${htmlEscape(generated)}</div>
+  </header>
+  <div class="disclaimer">This information is compiled from data we believe to be correct but no liability is assumed by the company as to the accuracy of such data.</div>
+  ${cards}
+</body>
+</html>`;
+}
+
 function FunctionalCompScreen() {
   const utils = trpc.useUtils();
   const [compType, setCompType] = useState<CompType>('lease');
@@ -294,41 +510,13 @@ function FunctionalCompScreen() {
       return;
     }
 
-    const tableRows = rows.map((comp) => `
-      <tr>
-        <td><strong>${htmlEscape(comp.title || comp.address)}</strong><br><span>${htmlEscape([comp.address, comp.city, comp.state].filter(Boolean).join(", "))}</span></td>
-        <td>${htmlEscape(compParty(comp))}</td>
-        <td>${htmlEscape(compSize(comp))}</td>
-        <td>${htmlEscape(compRate(comp))}</td>
-        <td>${htmlEscape(compTerm(comp))}</td>
-        <td>${htmlEscape(comp.transactionDate || "-")}</td>
-      </tr>
-    `).join("");
-
-    const html = `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Lee & Associates Comparable Packet</title>
-  <style>
-    body { font-family: Arial, sans-serif; color: #18181b; margin: 36px; }
-    h1 { margin: 0 0 6px; font-size: 28px; }
-    .meta { color: #6b7280; margin-bottom: 24px; }
-    table { border-collapse: collapse; width: 100%; font-size: 12px; }
-    th { text-align: left; background: #f4f4f5; color: #52525b; text-transform: uppercase; font-size: 10px; letter-spacing: .06em; }
-    th, td { border-bottom: 1px solid #e4e4e7; padding: 10px; vertical-align: top; }
-    span { color: #71717a; font-size: 11px; }
-  </style>
-</head>
-<body>
-  <h1>${htmlEscape(compType === "lease" ? "Lease" : "Sale")} Comparable Packet</h1>
-  <div class="meta">Subject: ${htmlEscape(subjectAddress)}, ${htmlEscape(subjectCity)} | ${htmlEscape(propertyType)} | ${rows.length} comps | Generated ${htmlEscape(new Date().toLocaleDateString())}</div>
-  <table>
-    <thead><tr><th>Property</th><th>Party</th><th>Size</th><th>Rate/Price</th><th>Term</th><th>Closed</th></tr></thead>
-    <tbody>${tableRows}</tbody>
-  </table>
-</body>
-</html>`;
+    const html = buildMetropolisCompPacketHtml({
+      compType,
+      rows,
+      subjectAddress,
+      subjectCity,
+      propertyType,
+    });
 
     downloadTextFile(`lee-${compType}-comps-packet.html`, "text/html;charset=utf-8", html);
     toast.success("Packet built. Open the HTML file and print to PDF.");

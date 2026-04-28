@@ -59,6 +59,7 @@ describe("comp data normalization", () => {
         buildingSqFt: 100784,
         officeSqFt: 4000,
         NNNCharges: 0.4,
+        landSqFt: 238709,
       },
       "LeeIrvine_LeaseComps"
     );
@@ -70,6 +71,7 @@ describe("comp data normalization", () => {
 
     const card = buildLeaseReportCard(record);
     expect(card.fields["Rent/SqFt"]).toContain("NNN");
+    expect(card.fields["Land"]).toBe("238,709");
     expect(card.fields["Options/Rent Adj"]).toContain("WND");
   });
 
