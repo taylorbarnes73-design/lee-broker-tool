@@ -20,13 +20,13 @@ function SectionHeader({ eyebrow, title, description, right }) {
     </div>
   );
 }
-/* Lee Broker Tool — Sign Request + Voucher screens */
+/* Lee Broker Tool - Sign Request + Voucher screens */
 
 export default function SignRequestScreen() {
   const { user } = useAuth();
   
   const [listing, setListing] = useState("2847 Newport Blvd, Costa Mesa");
-  const [dealType, setDealType] = useState("Lease · Industrial");
+  const [dealType, setDealType] = useState("Lease . Industrial");
   const [suite, setSuite] = useState("Entire building");
   
   const [shape, setShape] = useState('sf');
@@ -34,7 +34,7 @@ export default function SignRequestScreen() {
   const [otherSize, setOtherSize] = useState('');
   const [bannerSize, setBannerSize] = useState('');
   const [nameRider, setNameRider] = useState(true);
-  const [riderText, setRiderText] = useState(`${user?.name || 'Broker'} · ${user?.office || '714.555.0142'}`);
+  const [riderText, setRiderText] = useState(`${user?.name || 'Broker'} . ${user?.office || '714.555.0142'}`);
   const [customGraphic, setCustomGraphic] = useState(false);
 
   const [agent, setAgent] = useState(user?.name || "");
@@ -167,7 +167,7 @@ export default function SignRequestScreen() {
             <div style={{ marginTop: 16, padding: 12, background: 'var(--ink-50)', borderRadius: 8, border: '1px solid var(--ink-200)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>Name rider <span style={{ fontWeight: 500, color: 'var(--ink-500)' }}>· Optional</span></div>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>Name rider <span style={{ fontWeight: 500, color: 'var(--ink-500)' }}>. Optional</span></div>
                   <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 2 }}>Attach a rider with your contact info.</div>
                 </div>
                 <Toggle on={nameRider} onChange={setNameRider}/>
@@ -208,7 +208,7 @@ export default function SignRequestScreen() {
 }
 
 function SignIcon({ type }) {
-  // S/F = Single-face post sign Ã¢â‚¬â€ one panel on a post, front view
+  // S/F = Single-face post sign - one panel on a post, front view
   if (type === 'sf') return (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       {/* panel */}
@@ -221,7 +221,7 @@ function SignIcon({ type }) {
       <path d="M22 52h20"/>
     </svg>
   );
-  // D/F = Double-face Ã¢â‚¬â€ panels back-to-back, shown in a slight 3/4 view
+  // D/F = Double-face - panels back-to-back, shown in a slight 3/4 view
   if (type === 'df') return (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       {/* front panel */}
@@ -275,12 +275,12 @@ function OrderSummaryRail({ qty, shape }) {
       <Card padding={20}>
         <div className="lee-eyebrow" style={{ marginBottom: 12 }}>Order summary</div>
         <div style={{ fontSize: 15, fontWeight: 600 }}>2847 Newport Blvd</div>
-        <div style={{ fontSize: 12, color:'var(--ink-500)', marginTop: 2 }}>PO-2026-0418 · {shapeLabel}</div>
+        <div style={{ fontSize: 12, color:'var(--ink-500)', marginTop: 2 }}>PO-2026-0418 . {shapeLabel}</div>
 
         <div style={{ marginTop: 16, borderTop: '1px solid var(--ink-150)', paddingTop: 12, display:'flex', flexDirection:'column', gap: 6 }}>
           {Object.entries(qty).filter(([,n])=>n>0).map(([k,n]) => (
             <div key={k} style={{ display:'flex', justifyContent:'space-between', fontSize: 13 }}>
-              <span style={{ color: 'var(--ink-600)' }}>{labels[k]}  · × {n}</span>
+              <span style={{ color: 'var(--ink-600)' }}>{labels[k]}  . × {n}</span>
               <span className="lee-mono" style={{ color: 'var(--ink-900)', fontWeight: 600 }}>
                 ${(prices[k]*n).toLocaleString()}
               </span>
@@ -291,7 +291,7 @@ function OrderSummaryRail({ qty, shape }) {
           <span style={{ fontSize: 12, color: 'var(--ink-500)' }}>Estimated total</span>
           <span className="lee-mono" style={{ fontSize: 20, fontWeight: 700 }}>${total.toLocaleString()}</span>
         </div>
-        <div style={{ fontSize: 11, color: 'var(--ink-400)', marginTop: 4 }}>Split 50% with landlord · your share ${(total/2).toLocaleString()}</div>
+        <div style={{ fontSize: 11, color: 'var(--ink-400)', marginTop: 4 }}>Split 50% with landlord . your share ${(total/2).toLocaleString()}</div>
       </Card>
 
       <Card padding={18} style={{ background: 'var(--ink-50)' }}>

@@ -5,7 +5,7 @@ import {
   Icons, PageHeader, StepProgress, Segmented, Button, Card, Badge, 
   Input, Select, StepCard, Field, Toggle, Metric, SummaryRow 
 } from '../design/index.jsx';
-/* Lee Broker Tool ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Listing Entry screen */
+/* Lee Broker Tool - Listing Entry screen */
 
 export default function ListingEntryScreen() {
   const [subTab, setSubTab] = useState('add');
@@ -60,7 +60,7 @@ export default function ListingEntryScreen() {
         {/* Main column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* AI brochure upload ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â ambient but prominent */}
+          {/* AI brochure upload - ambient but prominent */}
           <Card padding={0} style={{
             background: 'linear-gradient(120deg, #FBF8FE 0%, #FEF4F6 100%)',
             border: '1px solid rgba(139,95,240,.2)',
@@ -78,7 +78,7 @@ export default function ListingEntryScreen() {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-900)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  Skip the typing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â drop a brochure
+                  Skip the typing - drop a brochure
                   <Badge tone="ai" size="sm" icon={<Icons.Sparkles size={10}/>}>AI</Badge>
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--ink-600)', marginTop: 2 }}>
@@ -92,21 +92,21 @@ export default function ListingEntryScreen() {
             </div>
           </Card>
 
-          {/* Step 1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ complete */}
+          {/* Step 1 - complete */}
           <StepCard
             step={1} total={7} status="complete"
             title="Transaction type"
-            summary="Lease Ãƒâ€š· Industrial Ãƒâ€š· 2,847 Newport Blvd, Costa Mesa CA 92627"
+            summary="Lease . Industrial . 2,847 Newport Blvd, Costa Mesa CA 92627"
           />
 
-          {/* Step 2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ complete */}
+          {/* Step 2 - complete */}
           <StepCard
             step={2} total={7} status="complete"
             title="Property details"
-            summary="24,500 SF Ãƒâ€š· Clear height 28' Ãƒâ€š· 4 DH doors Ãƒâ€š· Built 2005"
+            summary="24,500 SF . Clear height 28' . 4 DH doors . Built 2005"
           />
 
-          {/* Step 3 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ active */}
+          {/* Step 3 - active */}
           <StepCard
             step={3} total={7} status="active"
             title="Listing terms"
@@ -132,10 +132,10 @@ export default function ListingEntryScreen() {
                 <Input prefix={<Icons.Calendar size={14}/>} value={available} onChange={e => setAvailable(e.target.value)}/>
               </Field>
 
-              <Field label="Commission — listing side" required span={1}>
+              <Field label="Commission - listing side" required span={1}>
                 <Input suffix="%" value={commListing} onChange={e => setCommListing(e.target.value)}/>
               </Field>
-              <Field label="Commission — procuring" required span={1}>
+              <Field label="Commission - procuring" required span={1}>
                 <Input suffix="%" value={commProcuring} onChange={e => setCommProcuring(e.target.value)}/>
               </Field>
               <Field label="Total consideration" span={2}>
@@ -232,7 +232,7 @@ function ListingSidebar() {
           Your asking rate is <b>6% above</b> the median for industrial space in Costa Mesa (last 90 days: $1.37/SF/Mo NNN).
         </div>
         <button style={{ marginTop: 10, fontSize: 12, fontWeight: 600, color: 'var(--ai-500)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-          See 12 comparable deals ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢
+          See 12 comparable deals →
         </button>
       </Card>
     </div>
