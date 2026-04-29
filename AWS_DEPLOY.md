@@ -4,9 +4,9 @@ This repo is set up to deploy to AWS App Runner from a Docker image in ECR.
 
 ## Current recommendation
 
-If you are choosing between Azure Database for MySQL and AWS RDS for MySQL for this project, AWS RDS is the better long-term fit because the rest of the stack is already AWS-oriented.
+This repo uses AWS RDS for MySQL for persistence.
 
-One important date: AWS now says App Runner will stop accepting new customers on April 30, 2026, and recommends ECS Express Mode for new container deployments instead. If you already have App Runner access, this scaffold still works. If you do not, plan on AWS database plus a different AWS compute target.
+One important date: AWS now says App Runner will stop accepting new customers on April 30, 2026, and recommends ECS Express Mode for new container deployments instead. If you already have App Runner access, this scaffold still works. If you do not, plan on ECS Express Mode or the EC2 path documented in `AWS_EC2_SETUP.md`.
 
 See [DATABASE_SETUP.md](./DATABASE_SETUP.md) for the database-specific setup notes.
 See [AWS_RDS_SETUP.md](./AWS_RDS_SETUP.md) for a quick AWS RDS MySQL path.
