@@ -5541,7 +5541,9 @@ function _leeLoadHeaderLogo() {
 async function _leeLoadRowPhotos(rows) {
   const results = new Array(rows.length).fill(null);
   await Promise.all(rows.map((row, i) => new Promise((resolve) => {
-    const url = row?.photoUrl || row?.reportCard?.photoUrl || '';
+    var urlRaw = row?.photoUrl || row?.reportCard?.photoUrl || row?.photo || row?.reportCard?.photo || '';
+    urlRaw = String(urlRaw).trim();
+    var url = /^(https?:\/\/|data:|\/)/i.test(urlRaw) ? urlRaw : '';
     if (!url) { resolve(null); return; }
     try {
       const img = new Image();
@@ -9718,7 +9720,10 @@ function compReportGetSubmarketText(result) {
 }
 
 function compReportRenderPhotoBox(result) {
-  const url = result?.photoUrl || result?.reportCard?.photoUrl || '';
+  var raw = result?.photoUrl || result?.reportCard?.photoUrl || result?.photo || result?.reportCard?.photo || '';
+  raw = String(raw).trim();
+  /* Treat legacy boolean/flag values ('1', 'Y') as no-photo since they are not URLs. */
+  var url = /^(https?:\/\/|data:|\/)/i.test(raw) ? raw : '';
   if (url) {
     return '<div class="cr-photo-box"><img src="' + dxEscHtml(url) + '" alt="Property photo"></div>';
   }

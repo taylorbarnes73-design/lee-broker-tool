@@ -67,6 +67,14 @@ export type LeaseCompRecord = {
   confidential: string;
   expenseStop: string;
   rentUse: string;
+  photo: string;
+  listAgent1: string;
+  listAgent2: string;
+  procAgent1: string;
+  procAgent2: string;
+  verified: string;
+  updatedBy: string;
+  apn: string;
 };
 
 export type SaleCompRecord = {
@@ -122,6 +130,14 @@ export type SaleCompRecord = {
   sellerPhone: string;
   comments: string;
   askingPrice: number | null;
+  photo: string;
+  listAgent1: string;
+  listAgent2: string;
+  procAgent1: string;
+  procAgent2: string;
+  verified: string;
+  updatedBy: string;
+  apn: string;
 };
 
 export type LeaseReportCard = {
@@ -134,6 +150,7 @@ export type LeaseReportCard = {
   sourceLine: string;
   updatedLine: string;
   comments: string;
+  photo: string;
   fields: Record<string, string>;
 };
 
@@ -147,6 +164,7 @@ export type SaleReportCard = {
   sourceLine: string;
   updatedLine: string;
   comments: string;
+  photo: string;
   fields: Record<string, string>;
 };
 
@@ -251,6 +269,16 @@ function formatReportDate(value: string): string {
   return parsed.toLocaleDateString("en-US");
 }
 
+function buildBrokerLine(kind: "List" | "Proc", brokerage: string, agents: string[]): string {
+  const namedAgents = agents.map(a => a.trim()).filter(Boolean);
+  if (!brokerage && namedAgents.length === 0) return "";
+  const label = kind === "List" ? "List. Brkr" : "Proc. Brkr";
+  const agentText = namedAgents.length ? namedAgents.join(" & ") : "";
+  if (brokerage && agentText) return `${label}: ${agentText} (${brokerage})`;
+  if (brokerage) return `${label}: ${brokerage}`;
+  return `${label}: ${agentText}`;
+}
+
 function buildUpdateLine(_verifiedBy: string, lastUpdated: string, id: number | null): string {
   const parts: string[] = [];
   if (lastUpdated) parts.push(`Updated: ${formatReportDate(lastUpdated)}`);
@@ -329,6 +357,14 @@ export function normalizeLeaseCompRecord(row: CompRow, sourceSheet: string): Lea
     confidential: cleanFlag(getRowValue(row, "confidential")),
     expenseStop: cleanText(getRowValue(row, "expenseStop")),
     rentUse: cleanText(getRowValue(row, "rentUse")),
+    photo: cleanText(getRowValue(row, "photo")),
+    listAgent1: [cleanText(getRowValue(row, "listAgent1First")), cleanText(getRowValue(row, "listAgent1Last"))].filter(Boolean).join(" "),
+    listAgent2: [cleanText(getRowValue(row, "listAgent2First")), cleanText(getRowValue(row, "listAgent2Last"))].filter(Boolean).join(" "),
+    procAgent1: [cleanText(getRowValue(row, "procAgent1First")), cleanText(getRowValue(row, "procAgent1Last"))].filter(Boolean).join(" "),
+    procAgent2: [cleanText(getRowValue(row, "procAgent2First")), cleanText(getRowValue(row, "procAgent2Last"))].filter(Boolean).join(" "),
+    verified: cleanFlag(getRowValue(row, "verified")),
+    updatedBy: cleanText(getRowValue(row, "updatedBy")),
+    apn: cleanText(getRowValue(row, "APN")),
   };
 }
 
@@ -393,6 +429,14 @@ export function normalizeSaleCompRecord(row: CompRow, sourceSheet: string): Sale
     sellerPhone: cleanText(getRowValue(row, "sellerPhone")),
     comments: cleanText(getRowValue(row, "comments")),
     askingPrice: cleanNumber(getRowValue(row, "askingPrice")),
+    photo: cleanText(getRowValue(row, "photo")),
+    listAgent1: [cleanText(getRowValue(row, "listAgent1First")), cleanText(getRowValue(row, "listAgent1Last"))].filter(Boolean).join(" "),
+    listAgent2: [cleanText(getRowValue(row, "listAgent2First")), cleanText(getRowValue(row, "listAgent2Last"))].filter(Boolean).join(" "),
+    procAgent1: [cleanText(getRowValue(row, "procAgent1First")), cleanText(getRowValue(row, "procAgent1Last"))].filter(Boolean).join(" "),
+    procAgent2: [cleanText(getRowValue(row, "procAgent2First")), cleanText(getRowValue(row, "procAgent2Last"))].filter(Boolean).join(" "),
+    verified: cleanFlag(getRowValue(row, "verified")),
+    updatedBy: cleanText(getRowValue(row, "updatedBy")),
+    apn: cleanText(getRowValue(row, "APN")),
   };
 }
 
@@ -458,11 +502,12 @@ export function buildLeaseReportCard(record: LeaseCompRecord): LeaseReportCard {
     addressLine: record.address,
     cityLine: [record.city, record.state, record.zipCode].filter(Boolean).join(", "),
     submarketLine: [record.market, record.subMarket].filter(Boolean).join(" / "),
-    listingBrokerLine: record.listBroker ? `List. Brkr: ${record.listBroker}` : "",
-    procuringBrokerLine: record.procBroker ? `Proc. Brkr: ${record.procBroker}` : "",
+    listingBrokerLine: buildBrokerLine("List", record.listBroker, [record.listAgent1, record.listAgent2]),
+    procuringBrokerLine: buildBrokerLine("Proc", record.procBroker, [record.procAgent1, record.procAgent2]),
     sourceLine: record.source ? `Source: ${record.source}` : "",
     updatedLine: buildUpdateLine(record.verifiedBy, record.lastUpdated, record.id),
     comments: record.comments,
+    photo: record.photo,
     fields: {
       "Space Leased": formatNumber(record.leasedSqFt),
       Office: formatNumber(record.officeSqFt),
@@ -506,11 +551,12 @@ export function buildSaleReportCard(record: SaleCompRecord): SaleReportCard {
     addressLine: record.address,
     cityLine: [record.city, record.state, record.zipCode].filter(Boolean).join(", "),
     submarketLine: [record.market, record.subMarket].filter(Boolean).join(" / "),
-    listingBrokerLine: record.listBroker ? `List. Brkr: ${record.listBroker}` : "",
-    procuringBrokerLine: record.procBroker ? `Proc. Brkr: ${record.procBroker}` : "",
+    listingBrokerLine: buildBrokerLine("List", record.listBroker, [record.listAgent1, record.listAgent2]),
+    procuringBrokerLine: buildBrokerLine("Proc", record.procBroker, [record.procAgent1, record.procAgent2]),
     sourceLine: record.source ? `Source: ${record.source}` : "",
     updatedLine: buildUpdateLine(record.verifiedBy, record.lastUpdated, record.id),
     comments: record.comments,
+    photo: record.photo,
     fields: {
       "Bldg. SqFt": formatNumber(record.buildingSqFt),
       "Sale Price": formatCurrency(record.salePrice),
