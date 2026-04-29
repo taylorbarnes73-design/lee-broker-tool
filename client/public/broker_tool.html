@@ -20,9 +20,6 @@
 
 <div class="header">
   <div class="header-main">
-    <div class="header-access">
-      <a class="top-access-link" href="/">Home / Sign In</a>
-    </div>
     <img class="header-logo" src="lee-newport-beach-fullcolor.png" alt="Lee &amp; Associates Newport Beach">
     <div class="header-copy">
     <div class="header-kicker">Lee &amp; Associates Newport Beach</div>
@@ -143,7 +140,7 @@
               <option value="custom">Custom</option>
             </select>
           </div>
-          <div class="field is-hidden" id="l-lease-term-custom-field"><label>Term (months)</label><input id="l-lease-term" placeholder="e.g. 36"></div>
+          <div class="field is-hidden" id="l-lease-term-custom-field"><label>Term (months)</label><input id="l-lease-term"><div class="field-hint">Example: 36</div></div>
         </div>
         <div class="row c3">
           <div class="field"><label>Lease Type</label>
@@ -186,23 +183,23 @@
           </div>
         </div>
         <div class="row c2">
-          <div class="field"><label>Sale Terms</label><input id="l-sale-terms" placeholder="e.g. All Cash"></div>
-          <div class="field is-hidden" id="cap-rate-row"><label>CAP Rate</label><input id="l-cap-rate" placeholder="e.g. 5.5%"></div>
+          <div class="field"><label>Sale Terms</label><input id="l-sale-terms"><div class="field-hint">Example: All Cash</div></div>
+          <div class="field is-hidden" id="cap-rate-row"><label>CAP Rate</label><input id="l-cap-rate"><div class="field-hint">Example: 5.5%</div></div>
         </div>
       </div>
 
       <h3 class="section-heading-top-lg">Property Address</h3>
       <div class="row c2">
-        <div class="field"><label id="lbl-name" class="req">Address</label><input id="l-address" placeholder="123 Main St"></div>
+        <div class="field"><label id="lbl-name" class="req">Address</label><input id="l-address"><div class="field-hint">123 Main St</div></div>
         <div class="field is-hidden" id="field-project-name"><label>Project / Property Name</label><input id="l-project-name" placeholder="Optional"></div>
       </div>
       <div class="row c3">
-        <div class="field"><label class="req">City</label><input id="l-city" placeholder="Irvine"></div>
+        <div class="field"><label class="req">City</label><input id="l-city"><div class="field-hint">Irvine</div></div>
         <div class="field"><label class="req">State</label><input id="l-state" value="CA"></div>
         <div class="field"><label class="req">Zip</label><input id="l-zip" placeholder="92618"></div>
       </div>
       <div class="row c2">
-        <div class="field"><label>Cross Street(s)</label><input id="l-cross" placeholder="Main St &amp; 1st Ave"></div>
+        <div class="field"><label>Cross Street(s)</label><input id="l-cross"><div class="field-hint">Main St &amp; 1st Ave</div></div>
         <div class="field is-hidden" id="field-corner"><label>Corner</label>
           <select id="l-corner"><option value="">N/A</option><option value="NE">NE</option><option value="NW">NW</option><option value="SE">SE</option><option value="SW">SW</option></select>
         </div>
@@ -210,9 +207,9 @@
 
       <div id="size-building" class="type-section visible">
         <div class="row c3">
-          <div class="field"><label id="lbl-sf" class="req">Building / GLA SF</label><input id="l-bldg-sf" placeholder="e.g. 50,000" oninput="calcSaleSF()"></div>
-          <div class="field"><label>Year Built</label><input id="l-year-built" placeholder="e.g. 1995"></div>
-          <div class="field"><label>Parking Ratio</label><input id="l-parking-ratio" placeholder="e.g. 4/1,000"></div>
+          <div class="field"><label id="lbl-sf" class="req">Building / GLA SF</label><input id="l-bldg-sf" oninput="calcSaleSF()"><div class="field-hint">Example: 50,000</div></div>
+          <div class="field"><label>Year Built</label><input id="l-year-built"><div class="field-hint">Example: 1995</div></div>
+          <div class="field"><label>Parking Ratio</label><input id="l-parking-ratio"><div class="field-hint">Example: 4/1,000</div></div>
         </div>
       </div>
 
@@ -258,21 +255,21 @@
 
       <div id="sec-industrial" class="type-section visible">
         <div class="row c4">
-          <div class="field"><label>Size (SF)</label><input id="l-ind-size" placeholder="Total SF"></div>
-          <div class="field"><label>Office (SF)</label><input id="l-ind-office" placeholder="Office SF"></div>
-          <div class="field"><label>Parking</label><input id="l-ind-parking" placeholder="# spaces"></div>
+          <div class="field"><label>Size (SF)</label><input id="l-ind-size"><div class="field-hint">Total SF</div></div>
+          <div class="field"><label>Office (SF)</label><input id="l-ind-office"><div class="field-hint">Office SF</div></div>
+          <div class="field"><label>Parking</label><input id="l-ind-parking"><div class="field-hint"># spaces</div></div>
           <div class="field"><label>Yard</label><select id="l-ind-yard"><option value="">&#8212;</option><option value="yes">Yes</option><option value="no">No</option></select></div>
         </div>
         <div class="row c4">
-          <div class="field"><label>GL Doors</label><input id="l-ind-gl" placeholder="# or desc"></div>
-          <div class="field"><label>DH Doors</label><input id="l-ind-dh" placeholder="# or desc"></div>
-          <div class="field"><label>Sprinklers</label><input id="l-ind-sprinklers" placeholder="Type"></div>
-          <div class="field"><label>Clearance</label><input id="l-ind-clearance" placeholder="e.g. 24'"></div>
+          <div class="field"><label>GL Doors</label><input id="l-ind-gl"><div class="field-hint"># or desc</div></div>
+          <div class="field"><label>DH Doors</label><input id="l-ind-dh"><div class="field-hint"># or desc</div></div>
+          <div class="field"><label>Sprinklers</label><input id="l-ind-sprinklers"><div class="field-hint">Type</div></div>
+          <div class="field"><label>Clearance</label><input id="l-ind-clearance"><div class="field-hint">Example: 24'</div></div>
         </div>
         <div class="row c3">
-          <div class="field"><label>Amps / Power</label><input id="l-ind-amps" placeholder="e.g. 400A, 3-phase"></div>
-          <div class="field"><label>Zoning</label><input id="l-ind-zoning" placeholder="e.g. M-1"></div>
-          <div class="field"><label>Construction Type</label><input id="l-ind-construction" placeholder="e.g. Tilt-up"></div>
+          <div class="field"><label>Amps / Power</label><input id="l-ind-amps"><div class="field-hint">Example: 400A, 3-phase</div></div>
+          <div class="field"><label>Zoning</label><input id="l-ind-zoning"><div class="field-hint">Example: M-1</div></div>
+          <div class="field"><label>Construction Type</label><input id="l-ind-construction"><div class="field-hint">Example: Tilt-up</div></div>
         </div>
         <h3>Building Type</h3>
         <div class="check-group">
@@ -293,13 +290,13 @@
         <div class="row c4">
           <div class="field"><label>Rentable SF</label><input id="l-off-rsf" placeholder="0"></div>
           <div class="field"><label>Usable SF</label><input id="l-off-usf" placeholder="0"></div>
-          <div class="field"><label>Floor</label><input id="l-off-floor" placeholder="e.g. 3rd"></div>
-          <div class="field"><label>Parking Ratio</label><input id="l-off-parking" placeholder="e.g. 4/1,000"></div>
+          <div class="field"><label>Floor</label><input id="l-off-floor"><div class="field-hint">Example: 3rd</div></div>
+          <div class="field"><label>Parking Ratio</label><input id="l-off-parking"><div class="field-hint">Example: 4/1,000</div></div>
         </div>
         <div class="row c3">
           <div class="field"><label>Building Class</label><select id="l-off-class"><option value="">—</option><option>A</option><option>B</option><option>C</option></select></div>
-          <div class="field"><label>Zoning</label><input id="l-off-zoning" placeholder="e.g. C-2"></div>
-          <div class="field"><label>HVAC</label><input id="l-off-hvac" placeholder="e.g. Central, VAV"></div>
+          <div class="field"><label>Zoning</label><input id="l-off-zoning"><div class="field-hint">Example: C-2</div></div>
+          <div class="field"><label>HVAC</label><input id="l-off-hvac"><div class="field-hint">Example: Central, VAV</div></div>
         </div>
         <h3>Office Type</h3>
         <div class="check-group">
@@ -314,12 +311,12 @@
         <div class="row c4">
           <div class="field"><label>GLA (SF)</label><input id="l-ret-gla" placeholder="0"></div>
           <div class="field"><label>Frontage (ft)</label><input id="l-ret-frontage" placeholder="0"></div>
-          <div class="field"><label>Parking</label><input id="l-ret-parking" placeholder="# spaces or ratio"></div>
-          <div class="field"><label>Traffic Count</label><input id="l-ret-traffic" placeholder="e.g. 35,000 ADT"></div>
+          <div class="field"><label>Parking</label><input id="l-ret-parking"><div class="field-hint"># spaces or ratio</div></div>
+          <div class="field"><label>Traffic Count</label><input id="l-ret-traffic"><div class="field-hint">Example: 35,000 ADT</div></div>
         </div>
         <div class="row c3">
-          <div class="field"><label>Zoning</label><input id="l-ret-zoning" placeholder="e.g. C-1"></div>
-          <div class="field"><label>Anchor Tenant</label><input id="l-ret-anchor" placeholder="e.g. Target"></div>
+          <div class="field"><label>Zoning</label><input id="l-ret-zoning"><div class="field-hint">Example: C-1</div></div>
+          <div class="field"><label>Anchor Tenant</label><input id="l-ret-anchor"><div class="field-hint">Example: Target</div></div>
           <div class="field"><label>Center Type</label><select id="l-ret-center-type"><option value="">—</option><option>Strip</option><option>Power Center</option><option>Regional Mall</option><option>Neighborhood</option><option>Freestanding</option></select></div>
         </div>
         <h3>Retail Use</h3>
@@ -333,19 +330,19 @@
 
       <div id="sec-land" class="type-section">
         <div class="row c3">
-          <div class="field"><label>Zoning</label><input id="l-land-zoning" placeholder="e.g. M-1, R-2"></div>
-          <div class="field"><label>Utilities</label><input id="l-land-utilities" placeholder="e.g. All at site"></div>
+          <div class="field"><label>Zoning</label><input id="l-land-zoning"><div class="field-hint">Example: M-1, R-2</div></div>
+          <div class="field"><label>Utilities</label><input id="l-land-utilities"><div class="field-hint">Example: All at site</div></div>
           <div class="field"><label>Topography</label><select id="l-land-topo"><option value="">—</option><option>Flat</option><option>Sloped</option><option>Irregular</option></select></div>
         </div>
         <div class="row c3">
-          <div class="field"><label>Entitlements</label><input id="l-land-entitle" placeholder="e.g. Approved for industrial"></div>
-          <div class="field"><label>APN</label><input id="l-land-apn" placeholder="Parcel number"></div>
+          <div class="field"><label>Entitlements</label><input id="l-land-entitle"><div class="field-hint">Example: Approved for industrial</div></div>
+          <div class="field"><label>APN</label><input id="l-land-apn"><div class="field-hint">Parcel number</div></div>
           <div class="field"><label>Flood Zone</label><select id="l-land-flood"><option value="">—</option><option>Zone A</option><option>Zone X</option><option>Zone AE</option></select></div>
         </div>
       </div>
 
       <div class="section-divider">
-        <div class="field"><label>Comments / Special Instructions</label><textarea id="l-comments" rows="4" placeholder="Any additional comments or special instructions..."></textarea></div>
+        <div class="field"><label>Comments / Special Instructions</label><textarea id="l-comments" rows="4"></textarea><div class="field-hint">Any additional comments or special instructions...</div></div>
       </div>
     </div>
 
@@ -388,10 +385,10 @@
     <div class="card required-section">
       <h2>Listing Modification <span class="required-badge">Required</span></h2>
       <div class="row c2">
-        <div class="field"><label class="req">Property Address</label><input id="lm-address" placeholder="123 Main St, Irvine, CA"></div>
+        <div class="field"><label class="req">Property Address</label><input id="lm-address"><div class="field-hint">123 Main St, Irvine, CA</div></div>
         <div class="field"><label class="req">Date of Modification</label><input id="lm-date" type="date"></div>
       </div>
-      <div class="field"><label class="req">Notes / Changes</label><textarea id="lm-notes" rows="5" placeholder="Describe all changes to be made (price reduction, status change, term update, etc.)..."></textarea></div>
+      <div class="field"><label class="req">Notes / Changes</label><textarea id="lm-notes" rows="5"></textarea><div class="field-hint">Describe all changes to be made (price reduction, status change, term update, etc.)...</div></div>
       <h3 class="section-heading-top">Notify Which Listing Service(s)?</h3>
       <div class="check-group">
         <label><input type="checkbox" name="lm-services" value="mls" checked> MLS (CoStar / CARETS)</label>
@@ -419,17 +416,17 @@
 
     <div class="row c3">
       <div class="field"><label>Date</label><input id="s-date" type="date"></div>
-      <div class="field is-hidden"><label>PO #</label><input id="s-po" class="readonly-fill-strong" placeholder="Auto" readonly></div>
+      <div class="field is-hidden"><label>PO #</label><input id="s-po" class="readonly-fill-strong" readonly><div class="field-hint">Auto</div></div>
       <div class="field"><label>Order Type</label>
         <select id="s-order-type"><option value="installation">Installation</option><option value="removal">Removal</option><option value="maintenance">Maintenance</option></select>
       </div>
     </div>
 
     <div class="row c2">
-      <div class="field"><label class="req">Property Address</label><input id="s-address" placeholder="16441 Scientific Way"></div>
-      <div class="field"><label class="req">City</label><input id="s-city" placeholder="Irvine"></div>
+      <div class="field"><label class="req">Property Address</label><input id="s-address"><div class="field-hint">16441 Scientific Way</div></div>
+      <div class="field"><label class="req">City</label><input id="s-city"><div class="field-hint">Irvine</div></div>
     </div>
-    <div class="field"><label class="req">Cross Streets / Building Name</label><input id="s-cross" placeholder="Cross streets, building name, etc."></div>
+    <div class="field"><label class="req">Cross Streets / Building Name</label><input id="s-cross"><div class="field-hint">Cross streets, building name, etc.</div></div>
 
     <h3 class="section-heading-top">Configuration</h3>
     <div class="support-options">
@@ -462,7 +459,7 @@
 
     <div class="sign-grid-new">
       <span class="label">Other</span>
-      <input id="s-other-size" class="input-flex" placeholder="Size (e.g. 3x4)">
+      <input id="s-other-size" class="input-flex"><div class="field-hint">Size (e.g. 3x4)</div>
       <div class="qty-stepper">
         <button type="button" class="qty-btn" onclick="stepQty('s-other-qty', -1)">&#8722;</button>
         <input id="s-other-qty" type="number" min="0" value="0" class="qty-input">
@@ -472,7 +469,7 @@
 
     <div class="sign-grid-new">
       <span class="label">Banner</span>
-      <input id="s-banner-size" class="input-flex" placeholder="Size">
+      <input id="s-banner-size" class="input-flex"><div class="field-hint">Size</div>
       <div class="qty-stepper">
         <button type="button" class="qty-btn" onclick="stepQty('s-banner-qty', -1)">&#8722;</button>
         <input id="s-banner-qty" type="number" min="0" value="0" class="qty-input">
@@ -491,7 +488,7 @@
           <span id="s-rider-toggle-label" class="toggle-caption">No Name Rider</span>
         </div>
       </div>
-      <div class="field is-hidden" id="s-rider-field"><label>Rider Text</label><input id="s-rider" placeholder="Agent name or custom text"></div>
+      <div class="field is-hidden" id="s-rider-field"><label>Rider Text</label><input id="s-rider"><div class="field-hint">Agent name or custom text</div></div>
     </div>
 
     <div class="top-gap-md">
@@ -524,7 +521,7 @@
     <h3 class="section-heading-top">Requested By</h3>
     <div class="field field-stack-gap-sm"><label class="req">Requested By</label>
       <div class="agent-picker" id="picker-s-requested-by">
-        <input id="s-requested-by" placeholder="Start typing agent name..." autocomplete="off">
+        <input id="s-requested-by" autocomplete="off"><div class="field-hint">Start typing agent name...</div>
         <div class="agent-dd" id="dd-s-requested-by"></div>
       </div>
     </div>
@@ -539,9 +536,9 @@
     <h2>Access &amp; Comments</h2>
     <div class="row c2">
       <div class="field"><label>Access Necessary?</label><select id="s-access"><option value="no">No</option><option value="yes">Yes</option></select></div>
-      <div class="field"><label>Access Contact</label><input id="s-access-contact" placeholder="Contact name / phone"></div>
+      <div class="field"><label>Access Contact</label><input id="s-access-contact"><div class="field-hint">Contact name / phone</div></div>
     </div>
-    <div class="field"><label>Comments</label><textarea id="s-comments" rows="3" placeholder="Additional comments or special instructions..."></textarea></div>
+    <div class="field"><label>Comments</label><textarea id="s-comments" rows="3"></textarea><div class="field-hint">Additional comments or special instructions...</div></div>
   </div>
 
   <div class="btn-bar btn-bar-top-md">
@@ -584,20 +581,20 @@
           <option>New</option><option>Renewal</option><option>Expansion</option><option>Relocation</option><option>Blend &amp; Extend</option>
         </select>
       </div>
-      <div class="field is-hidden" id="v-other-type-field"><label>If Other, Explain</label><input id="v-other-type" placeholder="Describe property type"></div>
+      <div class="field is-hidden" id="v-other-type-field"><label>If Other, Explain</label><input id="v-other-type"><div class="field-hint">Describe property type</div></div>
     </div>
     <div class="row c2 top-gap-sm">
-      <div class="field"><label class="req">Client Name</label><input id="v-on-behalf" placeholder="Client / Company name"></div>
+      <div class="field"><label class="req">Client Name</label><input id="v-on-behalf"><div class="field-hint">Client / Company name</div></div>
       <div class="field"></div>
     </div>
     <div class="section-divider top-gap-md">
       <h3 class="section-heading-tight">Property Address</h3>
       <div class="row c23">
-        <div class="field"><label class="req">Street Address</label><input id="v-address" placeholder="123 Main St"></div>
+        <div class="field"><label class="req">Street Address</label><input id="v-address"><div class="field-hint">123 Main St</div></div>
         <div class="field"><label>APN / Parcel</label><input id="v-apn" placeholder="Optional"></div>
       </div>
       <div class="row c4">
-        <div class="field"><label class="req">City</label><input id="v-city" placeholder="Irvine"></div>
+        <div class="field"><label class="req">City</label><input id="v-city"><div class="field-hint">Irvine</div></div>
         <div class="field"><label class="req">State</label><input id="v-state" value="CA"></div>
         <div class="field"><label class="req">Zip</label><input id="v-zip" placeholder="92618" onblur="voucherZipAutofill(this.value)"></div>
         <div class="field"><label class="req">Deal SF</label><input id="v-l-dealsf" placeholder="0" oninput="calcVoucherLease()"></div>
@@ -618,22 +615,22 @@
         <div class="sub-divider-label">Listing Agent</div>
         <div class="field"><label class="req">Agent Name</label>
           <div class="agent-picker" id="picker-v-la-name">
-            <input id="v-la-name" placeholder="Start typing agent name..." autocomplete="off">
+            <input id="v-la-name" autocomplete="off"><div class="field-hint">Start typing agent name...</div>
             <div class="agent-dd" id="dd-v-la-name"></div>
           </div>
         </div>
-        <div class="field"><label>House</label><input id="v-la-house" placeholder="Lee &amp; Associates - Newport Beach"></div>
+        <div class="field"><label>House</label><input id="v-la-house"><div class="field-hint">Lee &amp; Associates - Newport Beach</div></div>
         <div class="field"><label>City</label><input id="v-la-city"></div>
       </div>
       <div id="procuring-section">
         <div class="sub-divider-label">Procuring Agent</div>
         <div class="field"><label class="req">Agent Name</label>
           <div class="agent-picker" id="picker-v-pa-name">
-            <input id="v-pa-name" placeholder="Start typing agent name..." autocomplete="off">
+            <input id="v-pa-name" autocomplete="off"><div class="field-hint">Start typing agent name...</div>
             <div class="agent-dd" id="dd-v-pa-name"></div>
           </div>
         </div>
-        <div class="field"><label>House</label><input id="v-pa-house" placeholder="Brokerage name"></div>
+        <div class="field"><label>House</label><input id="v-pa-house"><div class="field-hint">Brokerage name</div></div>
         <div class="field"><label>City</label><input id="v-pa-city"></div>
       </div>
     </div>
@@ -678,8 +675,8 @@
       <div class="row c2">
         <div>
           <div class="sub-divider-label" id="v-lbl-lessor">Lessor / Seller</div>
-          <div class="field"><label class="req">Contact Name</label><input id="v-ls-contact" placeholder="Full name"></div>
-          <div class="field"><label class="req">Company</label><input id="v-ls-company" placeholder="Company name"></div>
+          <div class="field"><label class="req">Contact Name</label><input id="v-ls-contact"><div class="field-hint">Full name</div></div>
+          <div class="field"><label class="req">Company</label><input id="v-ls-company"><div class="field-hint">Company name</div></div>
           <div class="collapse-section collapse-section-top-sm">
             <div class="collapse-toggle collapse-toggle-compact" onclick="toggleCollapse(this)">
               <span class="micro-copy">Additional Info</span>
@@ -688,10 +685,10 @@
             <div class="collapse-body" id="cb-lessor">
               <div class="field"><label>Invoice Lessor/Seller?</label><select id="v-ls-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
               <div class="row c2">
-                <div class="field"><label>Email</label><input id="v-ls-email" type="email" placeholder="email@company.com"></div>
+                <div class="field"><label>Email</label><input id="v-ls-email" type="email"><div class="field-hint">email@company.com</div></div>
                 <div class="field"><label>Phone</label><input id="v-ls-phone" type="tel"></div>
               </div>
-              <div class="field"><label>Address</label><input id="v-ls-address" placeholder="Street address"></div>
+              <div class="field"><label>Address</label><input id="v-ls-address"><div class="field-hint">Street address</div></div>
               <div class="row c3">
                 <div class="field"><label>City</label><input id="v-ls-city"></div>
                 <div class="field"><label>State</label><input id="v-ls-state" value="CA"></div>
@@ -702,8 +699,8 @@
         </div>
         <div>
           <div class="sub-divider-label" id="v-lbl-lessee">Lessee / Buyer</div>
-          <div class="field"><label class="req">Contact Name</label><input id="v-lb-contact" placeholder="Full name"></div>
-          <div class="field"><label class="req">Company</label><input id="v-lb-company" placeholder="Company name"></div>
+          <div class="field"><label class="req">Contact Name</label><input id="v-lb-contact"><div class="field-hint">Full name</div></div>
+          <div class="field"><label class="req">Company</label><input id="v-lb-company"><div class="field-hint">Company name</div></div>
           <div class="collapse-section collapse-section-top-sm">
             <div class="collapse-toggle collapse-toggle-compact" onclick="toggleCollapse(this)">
               <span class="micro-copy">Additional Info</span>
@@ -712,10 +709,10 @@
             <div class="collapse-body" id="cb-lessee">
               <div class="field"><label>Invoice Lessee/Buyer?</label><select id="v-lb-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
               <div class="row c2">
-                <div class="field"><label>Email</label><input id="v-lb-email" type="email" placeholder="email@company.com"></div>
+                <div class="field"><label>Email</label><input id="v-lb-email" type="email"><div class="field-hint">email@company.com</div></div>
                 <div class="field"><label>Phone</label><input id="v-lb-phone" type="tel"></div>
               </div>
-              <div class="field"><label>Address</label><input id="v-lb-address" placeholder="Street address"></div>
+              <div class="field"><label>Address</label><input id="v-lb-address"><div class="field-hint">Street address</div></div>
               <div class="row c3">
                 <div class="field"><label>City</label><input id="v-lb-city"></div>
                 <div class="field"><label>State</label><input id="v-lb-state" value="CA"></div>
@@ -740,7 +737,7 @@
       <div class="row c4">
         <div class="field"><label class="req">Rate per SF per Month</label><input id="v-l-rate" placeholder="$0.00" oninput="calcVoucherLease()"></div>
         <div class="field"><label>Rate Type</label><select id="v-l-rate-type"><option value="NNN">NNN</option><option value="FSG">FSG</option><option value="MG">MG</option><option value="G">Gross</option></select></div>
-        <div class="field"><label>Term (months)</label><input id="v-l-term" placeholder="e.g. 60" oninput="calcVoucherLease()"></div>
+        <div class="field"><label>Term (months)</label><input id="v-l-term" oninput="calcVoucherLease()"><div class="field-hint">Example: 60</div></div>
         <div class="field"><label>Total Consideration</label><input id="v-l-consideration" class="readonly-fill-strong" placeholder="$0" readonly></div>
       </div>
     </div>
@@ -758,7 +755,7 @@
     <h2>Step 5 — Commission &amp; Invoice</h2>
     <div id="v-req-comm-lease">
       <div class="row c4">
-        <div class="field"><label class="req">Commission Rate %</label><input id="v-l-comm-rate" placeholder="e.g. 4" oninput="calcCommSummary()"></div>
+        <div class="field"><label class="req">Commission Rate %</label><input id="v-l-comm-rate" oninput="calcCommSummary()"><div class="field-hint">Example: 4</div></div>
         <div class="field"><label>Lease Commission Due</label><input id="v-l-comm-due" class="readonly-fill-strong" placeholder="$0" readonly></div>
         <div class="field"><label>Additional Bonus / (Adjustment)</label><input id="v-comm-bonus" placeholder="$0" oninput="calcCommSummary()"></div>
         <div class="field"><label class="invoice-highlight-label">TOTAL INVOICE</label><input id="v-total-invoice" class="invoice-highlight-input" placeholder="$0" readonly></div>
@@ -771,7 +768,7 @@
     </div>
     <div id="v-req-comm-sale" class="is-hidden">
       <div class="row c3">
-        <div class="field"><label class="req">Commission %</label><input id="v-s-comm-pct" placeholder="e.g. 3" oninput="calcVoucherSale()"></div>
+        <div class="field"><label class="req">Commission %</label><input id="v-s-comm-pct" oninput="calcVoucherSale()"><div class="field-hint">Example: 3</div></div>
         <div class="field"><label>Commission Due $</label><input id="v-s-comm-due" class="readonly-fill-strong" placeholder="$0" readonly></div>
         <div class="field"><label>SALE Commission (auto)</label><input id="v-comm-sale" class="readonly-fill" placeholder="$0" readonly></div>
       </div>
@@ -792,14 +789,14 @@
         </div>
         <div class="field is-hidden" id="v-third-party-section">
           <label>Third-Party Company Name</label>
-          <input id="v-inv-company" placeholder="Company name">
+          <input id="v-inv-company"><div class="field-hint">Company name</div>
         </div>
         <div class="field is-hidden" id="v-third-party-addr">
           <label>Third-Party Address</label>
-          <input id="v-inv-address" placeholder="Address">
+          <input id="v-inv-address"><div class="field-hint">Address</div>
         </div>
       </div>
-      <div class="field"><label>Special Invoice Instructions</label><textarea id="v-inv-instructions" rows="2" placeholder="Payment schedule, split payments, etc."></textarea></div>
+      <div class="field"><label>Special Invoice Instructions</label><textarea id="v-inv-instructions" rows="2"></textarea><div class="field-hint">Payment schedule, split payments, etc.</div></div>
       <h3 class="top-gap-md">Payment Schedule</h3>
       <table class="broker-table" id="v-payment-table">
         <thead><tr><th>Date Due</th><th>Amount Due</th><th>Date Due</th><th>Amount Due</th><th class="table-col-compact"></th></tr></thead>
@@ -906,8 +903,8 @@
     <h2>Property Information (Comp Data)</h2>
     <div class="row c3 compact">
       <div class="field"><label>Occ. Type</label><select id="v-occ-type"><option value="">—</option><option>Direct</option><option>Sublease</option><option>Renewal</option><option>Expansion</option></select></div>
-      <div class="field"><label>Sub-Market</label><input id="v-submarket" placeholder="Airport Area"></div>
-      <div class="field"><label>Prior Tenant Location</label><input id="v-prior-loc" placeholder="City or address"></div>
+      <div class="field"><label>Sub-Market</label><input id="v-submarket"><div class="field-hint">Airport Area</div></div>
+      <div class="field"><label>Prior Tenant Location</label><input id="v-prior-loc"><div class="field-hint">City or address</div></div>
     </div>
     <div class="row c3 compact">
       <div class="field"><label>Total Bldg SF</label><input id="v-bldg-sf" placeholder="0"></div>
@@ -921,9 +918,9 @@
     <div class="row c3">
       <div class="field"><label>User, Investor, or Developer</label><select id="v-s-buyer-type"><option value="">—</option><option>User</option><option>Investor</option><option>Developer</option></select></div>
       <div class="field"><label>Asking Price</label><input id="v-s-asking" placeholder="$0"></div>
-      <div class="field"><label>CAP Rate %</label><input id="v-s-cap" placeholder="e.g. 5.5"></div>
+      <div class="field"><label>CAP Rate %</label><input id="v-s-cap"><div class="field-hint">Example: 5.5</div></div>
     </div>
-    <div class="field"><label>Escrow Company</label><input id="v-s-escrow" placeholder="Company name"></div>
+    <div class="field"><label>Escrow Company</label><input id="v-s-escrow"><div class="field-hint">Company name</div></div>
     <div class="field"><label>Check/Wire from Escrow?</label><select id="v-s-escrow-check"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
   </div>
 
@@ -995,14 +992,14 @@
           <option value="sale">Sale Comp</option>
         </select>
       </div>
-      <div class="field"><label class="req">LANB Source</label><input id="c-source" placeholder="Broker Name"></div>
+      <div class="field"><label class="req">LANB Source</label><input id="c-source"><div class="field-hint">Broker Name</div></div>
       <div class="field"><label>Date</label><input id="c-date" type="date"></div>
     </div>
 
     <h3 class="section-heading-top">Location</h3>
     <div class="row c2">
-      <div class="field"><label class="req">Address</label><input id="c-address" placeholder="16441 Scientific Way"></div>
-      <div class="field"><label class="req">City</label><input id="c-city" placeholder="Irvine"></div>
+      <div class="field"><label class="req">Address</label><input id="c-address"><div class="field-hint">16441 Scientific Way</div></div>
+      <div class="field"><label class="req">City</label><input id="c-city"><div class="field-hint">Irvine</div></div>
     </div>
 
     <h3 class="section-heading-top">Property Photo</h3>
@@ -1049,9 +1046,9 @@
         <div class="field"><label>Expire Date</label><input id="c-expire-date" type="date"></div>
       </div>
       <div class="row c3">
-        <div class="field"><label>Term (Months)</label><input id="c-term" placeholder="e.g. 60"></div>
-        <div class="field"><label>Lessee / Tenant</label><input id="c-lessee" placeholder="Tenant name"></div>
-        <div class="field"><label>Lessor / Landlord</label><input id="c-lessor" placeholder="Landlord name"></div>
+        <div class="field"><label>Term (Months)</label><input id="c-term"><div class="field-hint">Example: 60</div></div>
+        <div class="field"><label>Lessee / Tenant</label><input id="c-lessee"><div class="field-hint">Tenant name</div></div>
+        <div class="field"><label>Lessor / Landlord</label><input id="c-lessor"><div class="field-hint">Landlord name</div></div>
       </div>
     </div>
 
@@ -1063,8 +1060,8 @@
         <div class="field"><label class="req">Transaction Date</label><input id="cs-txn-date" type="date"></div>
       </div>
       <div class="row c3">
-        <div class="field"><label>Seller</label><input id="cs-seller" placeholder="Seller name"></div>
-        <div class="field"><label>Buyer</label><input id="cs-buyer" placeholder="Buyer name"></div>
+        <div class="field"><label>Seller</label><input id="cs-seller"><div class="field-hint">Seller name</div></div>
+        <div class="field"><label>Buyer</label><input id="cs-buyer"><div class="field-hint">Buyer name</div></div>
         <div class="field"><label>Year Built</label><input id="cs-year-built" placeholder="1995"></div>
       </div>
     </div>
@@ -1087,10 +1084,10 @@
       <div class="field"><label>Submarket</label>
         <select id="c-submarket"><option value="">—</option><option>SCM</option><option>IBC</option><option>SAE</option><option>WC</option><option>NM</option><option>SOC</option><option>NOC</option><option>Mid Cities</option></select>
       </div>
-      <div class="field"><label>Project Name</label><input id="c-project" placeholder="Project or building name"></div>
+      <div class="field"><label>Project Name</label><input id="c-project"><div class="field-hint">Project or building name</div></div>
     </div>
     <div class="row c2">
-      <div class="field comp-lease-only"><label>Space Type / Lease Type</label><input id="c-space-type" placeholder="e.g. Industrial/NNN"></div>
+      <div class="field comp-lease-only"><label>Space Type / Lease Type</label><input id="c-space-type"><div class="field-hint">Example: Industrial/NNN</div></div>
       <div class="field comp-sale-only"><label>Construction Type</label>
         <select id="c-const-type"><option value="">—</option><option>CTU</option><option>Block</option><option>Metal</option><option>Concrete</option><option>Steel</option></select>
       </div>
@@ -1102,13 +1099,13 @@
     <div class="row c3">
       <div class="field"><label>Effective Rent</label><input id="c-eff-rent" placeholder="$0.00"></div>
       <div class="field"><label>Mos on Mrkt</label><input id="c-mkt-months" placeholder="0"></div>
-      <div class="field"><label>Free Rent</label><input id="c-free-rent" placeholder="e.g. 2 months"></div>
+      <div class="field"><label>Free Rent</label><input id="c-free-rent"><div class="field-hint">Example: 2 months</div></div>
     </div>
     <div class="row c3">
       <div class="field"><label>TI Allowance</label>
         <select id="c-ti"><option value="">—</option><option>As-Is</option><option>Paint &amp; Carpet</option><option>Standard</option><option>Not Disclosed</option><option>See comments</option></select>
       </div>
-      <div class="field"><label>NNN Charges</label><input id="c-nnn" placeholder="$0.00/SF"></div>
+      <div class="field"><label>NNN Charges</label><input id="c-nnn"><div class="field-hint">$0.00/SF</div></div>
       <div class="field"><label>Rent Adj / Escalations</label><input id="c-escalations" placeholder=""></div>
     </div>
     <div class="row c2">
@@ -1123,7 +1120,7 @@
     <div class="row c3">
       <div class="field"><label>Office SF</label><input id="cs-office-sf" placeholder="0" type="text"></div>
       <div class="field"><label>Land / Lot Size (SF)</label><input id="cs-land-sf" placeholder="0" type="text"></div>
-      <div class="field"><label>Transaction Type (User, Investor)</label><input id="cs-txn-type" placeholder="e.g. User, Investor"></div>
+      <div class="field"><label>Transaction Type (User, Investor)</label><input id="cs-txn-type"><div class="field-hint">Example: User, Investor</div></div>
     </div>
     <div class="row c3">
       <div class="field"><label>Parking Ratio</label><input id="cs-parking" placeholder="4/1,000"></div>
@@ -1149,7 +1146,7 @@
     </div>
     <div class="row c3">
       <div class="field comp-lease-only"><label>Parking Ratio</label><input id="c-parking" placeholder="4/1,000"></div>
-      <div class="field"><label>Amps / Power</label><input id="c-amps" placeholder="e.g. 400, 1200"></div>
+      <div class="field"><label>Amps / Power</label><input id="c-amps"><div class="field-hint">Example: 400, 1200</div></div>
       <div class="field"><label>Sprinklers</label>
         <select id="c-sprinklers"><option value="">—</option><option>Yes</option><option>No</option></select>
       </div>
@@ -1175,32 +1172,32 @@
   <div class="card comp-lease-only">
     <h2>Brokerage Info</h2>
     <div class="row c2">
-      <div class="field"><label>Listing Brokerage</label><input id="c-list-brokerage" placeholder="e.g. Lee & Associates"></div>
-      <div class="field"><label>Procuring Brokerage</label><input id="c-proc-brokerage" placeholder="e.g. CBRE"></div>
+      <div class="field"><label>Listing Brokerage</label><input id="c-list-brokerage"><div class="field-hint">Example: Lee & Associates</div></div>
+      <div class="field"><label>Procuring Brokerage</label><input id="c-proc-brokerage"><div class="field-hint">Example: CBRE</div></div>
     </div>
     <div class="row c2">
-      <div class="field"><label>Listing Agent 1</label><input id="c-list-agent1" placeholder="Agent name"></div>
-      <div class="field"><label>Procuring Agent 1</label><input id="c-proc-agent1" placeholder="Agent name"></div>
+      <div class="field"><label>Listing Agent 1</label><input id="c-list-agent1"><div class="field-hint">Agent name</div></div>
+      <div class="field"><label>Procuring Agent 1</label><input id="c-proc-agent1"><div class="field-hint">Agent name</div></div>
     </div>
     <div class="row c2">
-      <div class="field"><label>Listing Agent 2</label><input id="c-list-agent2" placeholder="Agent name"></div>
-      <div class="field"><label>Procuring Agent 2</label><input id="c-proc-agent2" placeholder="Agent name"></div>
+      <div class="field"><label>Listing Agent 2</label><input id="c-list-agent2"><div class="field-hint">Agent name</div></div>
+      <div class="field"><label>Procuring Agent 2</label><input id="c-proc-agent2"><div class="field-hint">Agent name</div></div>
     </div>
   </div>
 
   <div class="card comp-sale-only">
     <h2>Brokerage Info</h2>
     <div class="row c2">
-      <div class="field"><label>Listing Brokerage</label><input id="cs-list-brokerage" placeholder="e.g. Lee & Associates"></div>
-      <div class="field"><label>Procuring Brokerage</label><input id="cs-proc-brokerage" placeholder="e.g. CBRE"></div>
+      <div class="field"><label>Listing Brokerage</label><input id="cs-list-brokerage"><div class="field-hint">Example: Lee & Associates</div></div>
+      <div class="field"><label>Procuring Brokerage</label><input id="cs-proc-brokerage"><div class="field-hint">Example: CBRE</div></div>
     </div>
     <div class="row c2">
-      <div class="field"><label>Listing Agent 1</label><input id="cs-list-agent1" placeholder="Agent name"></div>
-      <div class="field"><label>Procuring Agent 1</label><input id="cs-proc-agent1" placeholder="Agent name"></div>
+      <div class="field"><label>Listing Agent 1</label><input id="cs-list-agent1"><div class="field-hint">Agent name</div></div>
+      <div class="field"><label>Procuring Agent 1</label><input id="cs-proc-agent1"><div class="field-hint">Agent name</div></div>
     </div>
     <div class="row c2">
-      <div class="field"><label>Listing Agent 2</label><input id="cs-list-agent2" placeholder="Agent name"></div>
-      <div class="field"><label>Procuring Agent 2</label><input id="cs-proc-agent2" placeholder="Agent name"></div>
+      <div class="field"><label>Listing Agent 2</label><input id="cs-list-agent2"><div class="field-hint">Agent name</div></div>
+      <div class="field"><label>Procuring Agent 2</label><input id="cs-proc-agent2"><div class="field-hint">Agent name</div></div>
     </div>
   </div>
 
@@ -1213,7 +1210,7 @@
     <div class="field comp-lease-only top-gap-sm"><label>Part of Larger?</label><input id="c-comments-pol" placeholder=""></div>
     <div class="field comp-sale-only"><label>Approximate Cap Rate?</label><input id="cs-cap-rate" placeholder=""></div>
     <div class="field comp-sale-only top-gap-sm"><label>Investment Sale?</label><input id="cs-investment" placeholder=""></div>
-    <div class="field top-gap-sm"><textarea id="c-comments" rows="3" placeholder="Additional comments..."></textarea></div>
+    <div class="field top-gap-sm"><textarea id="c-comments" rows="3"></textarea><div class="field-hint">Additional comments...</div></div>
   </div>
 
     </div><!-- end optional-body -->
@@ -1254,10 +1251,10 @@
             <label>Search</label>
             <input id="cr-query" placeholder="Address, project, tenant">
           </div>
-          <div class="field"><label>City</label><input id="cr-city" placeholder="Irvine"></div>
-          <div class="field"><label>Market</label><input id="cr-market" placeholder="Orange"></div>
-          <div class="field"><label>Submarket</label><input id="cr-submarket" placeholder="IBC"></div>
-          <div class="field"><label>Property Type</label><input id="cr-property-type" placeholder="Industrial"></div>
+          <div class="field"><label>City</label><input id="cr-city"><div class="field-hint">Irvine</div></div>
+          <div class="field"><label>Market</label><input id="cr-market"><div class="field-hint">Orange</div></div>
+          <div class="field"><label>Submarket</label><input id="cr-submarket"><div class="field-hint">IBC</div></div>
+          <div class="field"><label>Property Type</label><input id="cr-property-type"><div class="field-hint">Industrial</div></div>
           <div class="field">
             <label>Date</label>
             <div style="display:flex; gap:6px;">
@@ -1313,7 +1310,7 @@
     <p>Download, print, or fill these forms manually. All documents are the official Lee &amp; Associates Newport Beach versions.</p>
     <div class="docs-search-wrap">
       <span class="docs-search-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-      <input type="text" id="docs-search" class="docs-search-input" placeholder="Search forms&hellip; e.g. &ldquo;industrial lease&rdquo; or &ldquo;W-9&rdquo;" oninput="filterDocs(this.value)">
+      <input type="text" id="docs-search" class="docs-search-input" oninput="filterDocs(this.value)"><div class="field-hint">Search forms&hellip; e.g. &ldquo;industrial lease&rdquo; or &ldquo;W-9&rdquo;</div>
       <span class="docs-count" id="docs-count"></span>
     </div>
   </div>
@@ -1707,13 +1704,13 @@
       <div class="ci-party-block">
         <h4 id="ci-party1-label">Sublessor / Owner / Client</h4>
         <div class="row">
-          <div class="field flex-2"><label class="req">Party 1 Name</label><input id="ci-party1-name" placeholder="e.g. Sinclair Pharma US Inc., a California corporation"></div>
-          <div class="field"><label>Entity Type</label><input id="ci-party1-entity" placeholder="e.g. a California corporation"></div>
+          <div class="field flex-2"><label class="req">Party 1 Name</label><input id="ci-party1-name"><div class="field-hint">Example: Sinclair Pharma US Inc., a California corporation</div></div>
+          <div class="field"><label>Entity Type</label><input id="ci-party1-entity"><div class="field-hint">Example: a California corporation</div></div>
         </div>
         <div class="row">
-          <div class="field flex-2"><label>Address</label><input id="ci-party1-address" placeholder="Street address"></div>
+          <div class="field flex-2"><label>Address</label><input id="ci-party1-address"><div class="field-hint">Street address</div></div>
           <div class="field"><label>Phone</label><input id="ci-party1-phone" placeholder="(949) 000-0000"></div>
-          <div class="field"><label>Fax</label><input id="ci-party1-fax" placeholder="Fax No."></div>
+          <div class="field"><label>Fax</label><input id="ci-party1-fax"><div class="field-hint">Fax No.</div></div>
         </div>
       </div>
       <div class="ci-party-block">
@@ -1728,10 +1725,10 @@
           <div class="field"><label>Broker DRE #</label><input id="ci-broker-dre" value="01197433"></div>
         </div>
         <div class="row">
-          <div class="field"><label>Agent (Individual) Name</label><input id="ci-agent-individual" placeholder="e.g. Nick Dumke"></div>
-          <div class="field"><label>Agent Title</label><input id="ci-agent-title" placeholder="e.g. Associate"></div>
+          <div class="field"><label>Agent (Individual) Name</label><input id="ci-agent-individual"><div class="field-hint">Example: Nick Dumke</div></div>
+          <div class="field"><label>Agent Title</label><input id="ci-agent-title"><div class="field-hint">Example: Associate</div></div>
           <div class="field"><label>Agent DRE #</label><input id="ci-agent-dre"></div>
-          <div class="field"><label>Agent Email</label><input id="ci-agent-email" placeholder="agent@lee-associates.com"></div>
+          <div class="field"><label>Agent Email</label><input id="ci-agent-email"><div class="field-hint">agent@lee-associates.com</div></div>
         </div>
       </div>
     </div>
@@ -1739,24 +1736,24 @@
     <div class="ci-section">
       <h3>Property</h3>
       <div class="row">
-        <div class="field flex-2"><label class="req">Property Address</label><input id="ci-prop-address" placeholder="18 Technology Drive, Suite 134"></div>
-        <div class="field"><label class="req">City</label><input id="ci-prop-city" placeholder="Irvine"></div>
+        <div class="field flex-2"><label class="req">Property Address</label><input id="ci-prop-address"><div class="field-hint">18 Technology Drive, Suite 134</div></div>
+        <div class="field"><label class="req">City</label><input id="ci-prop-city"><div class="field-hint">Irvine</div></div>
         <div class="field"><label>State</label><input id="ci-prop-state" value="CA"></div>
         <div class="field"><label>Zip</label><input id="ci-prop-zip"></div>
       </div>
       <div class="row">
-        <div class="field"><label>County</label><input id="ci-prop-county" placeholder="Orange"></div>
-        <div class="field flex-2"><label>Property Description</label><input id="ci-prop-desc" placeholder="e.g. An approximate 3,440 sq ft flex/industrial building"></div>
+        <div class="field"><label>County</label><input id="ci-prop-county"><div class="field-hint">Orange</div></div>
+        <div class="field flex-2"><label>Property Description</label><input id="ci-prop-desc"><div class="field-hint">Example: An approximate 3,440 sq ft flex/industrial building</div></div>
       </div>
       <div id="ci-master-lease-block" class="is-hidden">
         <h4>Master Lease</h4>
         <div class="row">
           <div class="field"><label>Master Lease Date</label><input id="ci-ml-date" type="date"></div>
-          <div class="field flex-2"><label>Amendment Dates</label><input id="ci-ml-amendments" placeholder="e.g. 11/18/2011, 01/17/2013..."></div>
+          <div class="field flex-2"><label>Amendment Dates</label><input id="ci-ml-amendments"><div class="field-hint">Example: 11/18/2011, 01/17/2013</div></div>
         </div>
         <div class="row">
-          <div class="field flex-2"><label>Master Lessor</label><input id="ci-ml-lessor" placeholder="e.g. Irvine Tech Link LLC"></div>
-          <div class="field flex-2"><label>Master Lessee</label><input id="ci-ml-lessee" placeholder="e.g. Sinclair Pharma US Inc."></div>
+          <div class="field flex-2"><label>Master Lessor</label><input id="ci-ml-lessor"><div class="field-hint">Example: Irvine Tech Link LLC</div></div>
+          <div class="field flex-2"><label>Master Lessee</label><input id="ci-ml-lessee"><div class="field-hint">Example: Sinclair Pharma US Inc</div></div>
         </div>
       </div>
     </div>
@@ -1767,14 +1764,14 @@
         <div class="field"><label class="req">Commencement Date</label><input id="ci-term-start" type="date"></div>
         <div class="field"><label class="req">Expiration Date</label><input id="ci-term-end" type="date"></div>
       </div>
-      <div class="field"><label>Sublease / Lease Terms</label><input id="ci-sublease-terms" placeholder="e.g. in accordance with the Master Lease"></div>
+      <div class="field"><label>Sublease / Lease Terms</label><input id="ci-sublease-terms"><div class="field-hint">Example: in accordance with the Master Lease</div></div>
     </div>
 
     <div class="ci-section">
       <h3>Commission</h3>
       <div class="row">
         <div class="field"><label>Commission Type</label><select id="ci-comm-type"><option value="percent">Percentage of total consideration</option><option value="schedule">Per attached commission schedule</option><option value="flat">Flat fee</option></select></div>
-        <div class="field"><label>Commission Amount / Rate</label><input id="ci-comm-amount" placeholder="e.g. 6% or $25,000"></div>
+        <div class="field"><label>Commission Amount / Rate</label><input id="ci-comm-amount"><div class="field-hint">Example: 6% or $25,000</div></div>
       </div>
     </div>
 
@@ -1787,7 +1784,7 @@
 
     <div class="ci-section">
       <h3>Additional Provisions</h3>
-      <div class="field"><label>Additional Provisions (Paragraph 11)</label><textarea id="ci-add-provisions" rows="3" placeholder="Write NONE if no additional provisions"></textarea></div>
+      <div class="field"><label>Additional Provisions (Paragraph 11)</label><textarea id="ci-add-provisions" rows="3"></textarea><div class="field-hint">Write NONE if no additional provisions</div></div>
     </div>
 
     <div class="ci-section">
@@ -1795,9 +1792,9 @@
       <p class="ci-hint">List any struck-through clauses or added text from the broker's draft. These will be noted in the AIR CRE Data Sheet for the admin to apply.</p>
       <div id="ci-redlines-list">
         <div class="ci-redline-row" id="ci-redline-0">
-          <input class="ci-redline-para" placeholder="Paragraph # (e.g. 4.1(b))">
+          <input class="ci-redline-para"><div class="field-hint">Paragraph # (e.g. 4.1(b))</div>
           <select class="ci-redline-type"><option value="strikethrough">Strike Through</option><option value="added">Added Text</option><option value="modified">Modified</option></select>
-          <input class="ci-redline-note flex-3" placeholder="Brief description of the change">
+          <input class="ci-redline-note flex-3"><div class="field-hint">Brief description of the change</div>
           <button class="btn btn-gray btn-compact" onclick="ciRemoveRedline(this)">&#10005;</button>
         </div>
       </div>
@@ -1807,8 +1804,8 @@
     <div class="ci-section">
       <h3>Signatories</h3>
       <div class="row">
-        <div class="field"><label>Party 1 Signatory Name</label><input id="ci-sig1-name" placeholder="e.g. Yuan Yuan"></div>
-        <div class="field"><label>Party 1 Title</label><input id="ci-sig1-title" placeholder="e.g. Director"></div>
+        <div class="field"><label>Party 1 Signatory Name</label><input id="ci-sig1-name"><div class="field-hint">Example: Yuan Yuan</div></div>
+        <div class="field"><label>Party 1 Title</label><input id="ci-sig1-title"><div class="field-hint">Example: Director</div></div>
       </div>
     </div>
 
@@ -1927,7 +1924,7 @@
         </div>
 
         <div class="filter-bar">
-          <input type="text" id="sub-search" placeholder="Search by ID, address, or broker..." oninput="filterSubmissions()">
+          <input type="text" id="sub-search" oninput="filterSubmissions()"><div class="field-hint">Search by ID, address, or broker...</div>
           <select id="sub-filter-type" onchange="filterSubmissions()">
             <option value="all">All Types</option>
             <option value="listing">Listing</option>
@@ -2006,7 +2003,7 @@
         <div class="dx-card">
           <div class="dx-card-title">Dealius Credentials</div>
           <div class="dx-cred-grid">
-            <div class="dx-field"><label>Dealius Email</label><input type="email" id="demail" class="mono" placeholder="you@lee-associates.com" autocomplete="off" oninput="dxSaveCreds()"/><span class="dx-saved-badge" id="demailSaved">&check; Saved</span></div>
+            <div class="dx-field"><label>Dealius Email</label><input type="email" id="demail" class="mono" autocomplete="off" oninput="dxSaveCreds()"/><div class="field-hint">you@lee-associates.com</div><span class="dx-saved-badge" id="demailSaved">&check; Saved</span></div>
             <div class="dx-field"><label>Dealius Password</label><input type="password" id="dpass" class="mono" placeholder="••••••••" autocomplete="off" oninput="dxSaveCreds()"/><span class="dx-saved-badge" id="dpassSaved">&check; Saved</span></div>
           </div>
         </div>
@@ -2030,7 +2027,7 @@
           <div class="dx-card">
             <div class="dx-card-title" id="dxEntryTitle">Deal Entry</div>
             <div class="dx-deal-name-row">
-              <input type="text" id="dxDn" placeholder="Deal name"/>
+              <input type="text" id="dxDn"/><div class="field-hint">Deal name</div>
               <select id="dxRb" class="dx-rep-select" onchange="dxOnRepTypeChange()">
                 <option value="4">Landlord Rep</option>
                 <option value="3">Tenant Rep</option>
@@ -2059,9 +2056,9 @@
                     <option value="off_market">Off Market</option>
                   </select>
                 </div>
-                <div class="dx-field"><label>Source</label><input type="text" id="dx_listingSource" placeholder="Broker submission or manual entry"/></div>
+                <div class="dx-field"><label>Source</label><input type="text" id="dx_listingSource"/><div class="field-hint">Broker submission or manual entry</div></div>
               </div>
-              <div class="dx-field"><label>Listing Notes</label><textarea id="dx_listingNotes" rows="3" placeholder="Internal notes for this listing-side Dealius entry"></textarea></div>
+              <div class="dx-field"><label>Listing Notes</label><textarea id="dx_listingNotes" rows="3"></textarea><div class="field-hint">Internal notes for this listing-side Dealius entry</div></div>
               <div class="dx-subtle-note">Listing entry creates a listing-side Dealius record shell using the property, client, pricing, and broker information entered here.</div>
             </div>
 
@@ -2095,11 +2092,11 @@
                 <div class="dx-field"><label>Tenant / Opposite Co.</label><input type="text" id="dx_oppositeCo"/></div>
               </div>
               <div class="dx-edit-grid dx-cols3 dx-top-gap-sm">
-                <div class="dx-field"><label>Client Contact Name</label><input type="text" id="dx_clientContactName" placeholder="First Last"/></div>
-                <div class="dx-field"><label>Client Contact Email</label><input type="email" id="dx_clientContactEmail" placeholder="email@company.com"/></div>
+                <div class="dx-field"><label>Client Contact Name</label><input type="text" id="dx_clientContactName"/><div class="field-hint">First Last</div></div>
+                <div class="dx-field"><label>Client Contact Email</label><input type="email" id="dx_clientContactEmail"/><div class="field-hint">email@company.com</div></div>
                 <div class="dx-field"><label>Client Contact Phone</label><input type="text" id="dx_clientContactPhone" placeholder="(555) 555-5555"/></div>
-                <div class="dx-field"><label>Opposite Contact Name</label><input type="text" id="dx_oppositeContactName" placeholder="First Last"/></div>
-                <div class="dx-field"><label>Opposite Contact Email</label><input type="email" id="dx_oppositeContactEmail" placeholder="email@company.com"/></div>
+                <div class="dx-field"><label>Opposite Contact Name</label><input type="text" id="dx_oppositeContactName"/><div class="field-hint">First Last</div></div>
+                <div class="dx-field"><label>Opposite Contact Email</label><input type="email" id="dx_oppositeContactEmail"/><div class="field-hint">email@company.com</div></div>
                 <div class="dx-field"><label>Opposite Contact Phone</label><input type="text" id="dx_oppositeContactPhone" placeholder="(555) 555-5555"/></div>
               </div>
               <div id="dxLeaseCloseoutFields">
@@ -2143,11 +2140,11 @@
                 <div class="dx-field"><label>Buyer / Opposite Co.</label><input type="text" id="dx_buyerCo"/></div>
               </div>
               <div class="dx-edit-grid dx-cols3 dx-top-gap-sm">
-                <div class="dx-field"><label>Seller Contact Name</label><input type="text" id="dx_sellerContactName" placeholder="First Last"/></div>
-                <div class="dx-field"><label>Seller Contact Email</label><input type="email" id="dx_sellerContactEmail" placeholder="email@company.com"/></div>
+                <div class="dx-field"><label>Seller Contact Name</label><input type="text" id="dx_sellerContactName"/><div class="field-hint">First Last</div></div>
+                <div class="dx-field"><label>Seller Contact Email</label><input type="email" id="dx_sellerContactEmail"/><div class="field-hint">email@company.com</div></div>
                 <div class="dx-field"><label>Seller Contact Phone</label><input type="text" id="dx_sellerContactPhone" placeholder="(555) 555-5555"/></div>
-                <div class="dx-field"><label>Buyer Contact Name</label><input type="text" id="dx_buyerContactName" placeholder="First Last"/></div>
-                <div class="dx-field"><label>Buyer Contact Email</label><input type="email" id="dx_buyerContactEmail" placeholder="email@company.com"/></div>
+                <div class="dx-field"><label>Buyer Contact Name</label><input type="text" id="dx_buyerContactName"/><div class="field-hint">First Last</div></div>
+                <div class="dx-field"><label>Buyer Contact Email</label><input type="email" id="dx_buyerContactEmail"/><div class="field-hint">email@company.com</div></div>
                 <div class="dx-field"><label>Buyer Contact Phone</label><input type="text" id="dx_buyerContactPhone" placeholder="(555) 555-5555"/></div>
               </div>
               <div class="dx-slabel">Sale Financials</div>
@@ -2219,15 +2216,15 @@
       <h3 id="bp-form-title" class="profile-form-title">Add New Profile</h3>
       <input type="hidden" id="bp-edit-id">
       <div class="profile-form-grid">
-        <div class="field"><label>Full Name *</label><input id="bp-f-name" placeholder="e.g. Nick Dumke"></div>
-        <div class="field"><label>Title</label><input id="bp-f-title" placeholder="e.g. Associate"></div>
-        <div class="field"><label>Direct Phone</label><input id="bp-f-phone" placeholder="e.g. (949) 724-4755" type="tel"></div>
-        <div class="field"><label>Fax</label><input id="bp-f-fax" placeholder="e.g. (949) 724-4799" type="tel"></div>
-        <div class="field grid-span-full"><label>Email *</label><input id="bp-f-email" placeholder="agent@lee-associates.com" type="email"></div>
-        <div class="field"><label>Agent DRE #</label><input id="bp-f-dre" placeholder="e.g. 02123456"></div>
-        <div class="field"><label>Broker DRE # (firm)</label><input id="bp-f-broker-dre" placeholder="e.g. 01197433" value="01197433"></div>
-        <div class="field grid-span-full"><label>Brokerage / Company</label><input id="bp-f-company" placeholder="Lee &amp; Associates&#174;-Newport Beach" value="Lee &amp; Associates&#174;-Newport Beach"></div>
-        <div class="field grid-span-full"><label>Office Address</label><input id="bp-f-address" placeholder="100 Bayview Circle, Suite 600, Newport Beach, CA 92660" value="100 Bayview Circle, Suite 600, Newport Beach, CA 92660"></div>
+        <div class="field"><label>Full Name *</label><input id="bp-f-name"><div class="field-hint">Example: Nick Dumke</div></div>
+        <div class="field"><label>Title</label><input id="bp-f-title"><div class="field-hint">Example: Associate</div></div>
+        <div class="field"><label>Direct Phone</label><input id="bp-f-phone" type="tel"><div class="field-hint">Example: (949) 724-4755</div></div>
+        <div class="field"><label>Fax</label><input id="bp-f-fax" type="tel"><div class="field-hint">Example: (949) 724-4799</div></div>
+        <div class="field grid-span-full"><label>Email *</label><input id="bp-f-email" type="email"><div class="field-hint">agent@lee-associates.com</div></div>
+        <div class="field"><label>Agent DRE #</label><input id="bp-f-dre"><div class="field-hint">Example: 02123456</div></div>
+        <div class="field"><label>Broker DRE # (firm)</label><input id="bp-f-broker-dre" value="01197433"><div class="field-hint">Example: 01197433</div></div>
+        <div class="field grid-span-full"><label>Brokerage / Company</label><input id="bp-f-company" value="Lee &amp; Associates&#174;-Newport Beach"><div class="field-hint">Lee &amp; Associates&#174;-Newport Beach</div></div>
+        <div class="field grid-span-full"><label>Office Address</label><input id="bp-f-address" value="100 Bayview Circle, Suite 600, Newport Beach, CA 92660"><div class="field-hint">100 Bayview Circle, Suite 600, Newport Beach, CA 92660</div></div>
       </div>
       <div class="button-row top-gap-14">
         <button class="btn btn-primary" onclick="bpSaveProfile()"><span id="bp-save-label">Save Profile</span></button>
@@ -2249,15 +2246,15 @@
     <p class="modal-copy" id="send-admin-modal-desc">This will email all filled form fields to the office admin. Taylor will be CC&rsquo;d automatically.</p>
     <div class="field">
       <label>Your Name (Broker)</label>
-      <input id="sta-broker-name" placeholder="e.g. Taylor Barnes" value="Taylor Barnes">
+      <input id="sta-broker-name" value="Taylor Barnes"><div class="field-hint">Example: Taylor Barnes</div>
     </div>
     <div class="field">
       <label>Your Email (for CC)</label>
-      <input id="sta-sender-email" placeholder="e.g. tbarnes@lee-associates.com" value="tbarnes@lee-associates.com">
+      <input id="sta-sender-email" value="tbarnes@lee-associates.com"><div class="field-hint">Example: tbarnes@lee-associates.com</div>
     </div>
     <div class="field">
       <label>Notes to Admin <span class="optional-note">(optional)</span></label>
-      <textarea id="sta-notes" rows="3" placeholder="Any additional context for the admin..."></textarea>
+      <textarea id="sta-notes" rows="3"></textarea><div class="field-hint">Any additional context for the admin...</div>
     </div>
     <div id="sta-status" class="status-copy micro-copy-bottom-sm"></div>
     <div class="btn-bar">
@@ -2565,7 +2562,7 @@ function addListingAgent() {
   const tr = document.createElement('tr');
   const idx = listingAgentCount;
   tr.innerHTML =
-    '<td><div class="agent-picker" id="picker-la-' + idx + '"><input id="la-name-' + idx + '" placeholder="Start typing agent name..." autocomplete="off"><div class="agent-dd" id="dd-la-name-' + idx + '"></div></div></td>' +
+    '<td><div class="agent-picker" id="picker-la-' + idx + '"><input id="la-name-' + idx + '" autocomplete="off" placeholder="Start typing agent name..."><div class="agent-dd" id="dd-la-name-' + idx + '"></div></div></td>' +
     '<td><input id="la-phone-' + idx + '" type="tel" placeholder="949-000-0000"></td>' +
     '<td><input id="la-email-' + idx + '" type="email" placeholder="agent@lee-associates.com"></td>' +
     '<td><input class="text-center" id="la-shared-' + idx + '" type="number" min="0" max="100" placeholder="50"></td>' +
@@ -2834,7 +2831,7 @@ function addSignAgent() {
   const tr = document.createElement('tr');
   tr.innerHTML = '<td>' + signAgentCount + '</td>' +
     '<td><input placeholder="Agent name"></td>' +
-    '<td><input class="table-col-wide" placeholder="e.g. 50%"></td>' +
+    '<td><input class="table-col-wide" placeholder="Example: 50%"></td>' +
     '<td><button class="remove-row" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
   body.appendChild(tr);
 }
@@ -3084,8 +3081,8 @@ function addVoucherCollab() {
   const activeProfileId = document.getElementById('bp-active-select')?.value || '';
   const profile = bpGetProfiles().find(item => item.id === activeProfileId);
   const tr = document.createElement('tr');
-  tr.innerHTML = '<td><input placeholder="Agent name" value="' + bpEscAttr(profile?.name || '') + '"></td>' +
-    '<td><input placeholder="Role / Team" value="' + bpEscAttr(profile?.title || '') + '"></td>' +
+  tr.innerHTML = '<td><input value="' + bpEscAttr(profile?.name || '') + '" placeholder="Agent name"></td>' +
+    '<td><input value="' + bpEscAttr(profile?.title || '') + '" placeholder="Role / Team"></td>' +
     '<td><button class="remove-row" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
   body.appendChild(tr);
 }
@@ -6197,7 +6194,7 @@ function dxAddBrokerRow(seed, options) {
   const percentValue = dxNormalizeBrokerSeedPercent(seed && seed.pct, seed && seed.commissionPct);
   const tr = document.createElement('tr');
   tr.innerHTML = '' +
-    '<td><div class="agent-picker" id="picker-' + nameId + '"><input type="text" class="dx-broker-name" id="' + nameId + '" placeholder="Start typing broker name..." autocomplete="off"><div class="agent-dd" id="dd-' + nameId + '"></div></div></td>' +
+    '<td><div class="agent-picker" id="picker-' + nameId + '"><input type="text" class="dx-broker-name" id="' + nameId + '" autocomplete="off" placeholder="Start typing broker name..."><div class="agent-dd" id="dd-' + nameId + '"></div></div></td>' +
     '<td><select class="dx-broker-side">' +
       '<option value="listing">Listing</option>' +
       '<option value="procuring">Procuring</option>' +
@@ -10232,13 +10229,13 @@ function ciAddRedline(para = '', type = 'strikethrough', note = '') {
   row.className = 'ci-redline-row';
   row.id = id;
   row.innerHTML = `
-    <input class="ci-redline-para" placeholder="Paragraph # (e.g. 4.1(b))" value="${para}">
+    <input class="ci-redline-para" value="${para}" placeholder="Paragraph # (e.g. 4.1(b))">
     <select class="ci-redline-type">
       <option value="strikethrough"${type==='strikethrough'?' selected':''}>Strike Through</option>
       <option value="added"${type==='added'?' selected':''}>Added Text</option>
       <option value="modified"${type==='modified'?' selected':''}>Modified</option>
     </select>
-    <input class="ci-redline-note flex-3" placeholder="Brief description of the change" value="${note}">
+    <input class="ci-redline-note flex-3" value="${note}" placeholder="Brief description of the change">
     <button class="btn btn-gray btn-compact" onclick="ciRemoveRedline(this)">&#10005;</button>
   `;
   list.appendChild(row);

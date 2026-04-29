@@ -3494,3 +3494,19 @@ body {
 /* Hide the legacy Comp Reports hero/card layout when the new layout is present */
 .cr-shell + .comp-report-hero,
 .cr-shell + .comp-report-layout { display: none; }
+
+
+/* ──────────────────────────────────────────────────────────────────
+   Field hint (example text below inputs)
+   ──────────────────────────────────────────────────────────────── */
+.field .field-hint,
+.field-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--text3, #8B9198);
+  letter-spacing: 0.01em;
+  font-style: normal;
+}
+.row.compact .field-hint { font-size: 11px; }
