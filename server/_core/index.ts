@@ -40,18 +40,9 @@ async function startServer() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-  app.use(async (req, res, next) => {
-    const requestPath = req.path || req.originalUrl || "";
-    if (requestPath !== "/broker_tool.html") {
-      return next();
-    }
-
-    try {
-      await sdk.authenticateRequest(req);
-      return next();
-    } catch {
-      return res.redirect("/");
-    }
+  // Redirect legacy URL to canonical clean URL
+  app.get("/broker_tool.html", (_req, res) => {
+    res.redirect(301, "/tool");
   });
 
   // OAuth callback under /api/oauth/callback

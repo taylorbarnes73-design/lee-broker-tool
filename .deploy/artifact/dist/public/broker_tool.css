@@ -3391,6 +3391,61 @@ body {
   color: var(--ink-400);
   flex-shrink: 0;
 }
+/* ── Sign-In Gate ── */
+.tool-sign-in {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 72px);
+  background: var(--bg);
+  padding: 48px 20px;
+}
+.tool-sign-in-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 44px 40px 40px;
+  text-align: center;
+  box-shadow: var(--shadow-card);
+}
+.tool-sign-in-logo {
+  height: 56px;
+  width: auto;
+  margin-bottom: 20px;
+}
+.tool-sign-in-title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.tool-sign-in-sub {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 28px;
+}
+.tool-sign-in-card .field {
+  text-align: left;
+  margin-bottom: 14px;
+}
+.tool-sign-in-error {
+  font-size: 12px;
+  color: var(--red);
+  min-height: 18px;
+  margin-bottom: 10px;
+  text-align: left;
+}
+.tool-sign-in-btn {
+  width: 100%;
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
 .comp-submit-badge {
   font-size: 12px;
   min-height: 20px;

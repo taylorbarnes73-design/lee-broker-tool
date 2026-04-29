@@ -15,6 +15,7 @@ const PROD_PUBLIC_ROOT = path.resolve(process.cwd(), "dist/public");
 
 const HTML_ENTRY_TEMPLATES: Record<string, string> = {
   "/": CLIENT_INDEX_TEMPLATE,
+  "/tool": BROKER_TOOL_TEMPLATE,
   "/broker_tool.html": BROKER_TOOL_TEMPLATE,
 };
 
@@ -71,6 +72,16 @@ export function serveStatic(app: Express) {
       `Could not find the build directory: ${distPath}, make sure to build the client first`
     );
   }
+
+  // Redirect legacy URL to canonical clean URL
+  app.get("/broker_tool.html", (_req, res) => {
+    res.redirect(301, "/tool");
+  });
+
+  // Serve the broker tool at the clean /tool path
+  app.get("/tool", (_req, res) => {
+    res.sendFile("broker_tool.html", { root: distPath });
+  });
 
   app.use(express.static(distPath));
 

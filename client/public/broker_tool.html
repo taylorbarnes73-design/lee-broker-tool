@@ -30,8 +30,8 @@
   <div class="header-actions">
     <div class="header-user" id="header-user">
       <div class="header-user-label">Signed In</div>
-      <div class="header-user-name" id="header-user-name">Broker session</div>
-      <div class="header-user-email" id="header-user-email">Sign in on the home page</div>
+      <div class="header-user-name" id="header-user-name">Not signed in</div>
+      <div class="header-user-email" id="header-user-email"></div>
     </div>
     <button class="admin-toggle" onclick="toggleAdminMode()">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -39,7 +39,25 @@
     </button>
   </div><!-- /header-right -->
 </div><!-- /header -->
-<div id="broker-view">
+
+<!-- ═══ SIGN-IN GATE ═══ -->
+<div id="tool-sign-in" class="tool-sign-in">
+  <div class="tool-sign-in-card">
+    <img src="lee-newport-beach-fullcolor.png" alt="Lee &amp; Associates Newport Beach" class="tool-sign-in-logo">
+    <h1 class="tool-sign-in-title">Broker Workspace</h1>
+    <p class="tool-sign-in-sub">Enter your Lee email to sign in.</p>
+    <form id="tool-sign-in-form" onsubmit="handleToolSignIn(event)" autocomplete="on">
+      <div class="field">
+        <label for="tool-sign-in-email">Lee Email</label>
+        <input id="tool-sign-in-email" type="email" name="email" placeholder="jdoe@lee-associates.com" required autocomplete="email">
+      </div>
+      <div id="tool-sign-in-error" class="tool-sign-in-error"></div>
+      <button type="submit" class="btn btn-red tool-sign-in-btn" id="tool-sign-in-btn">Sign In</button>
+    </form>
+  </div>
+</div>
+
+<div id="broker-view" style="display:none">
 
 <div class="tab-bar">
   <div class="tab active" data-tab="listing" onclick="switchTab('listing')">Listing Entry</div>
@@ -6083,6 +6101,105 @@ async function submitCompDirect() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// BROKER TOOL AUTH GATE
+// ═══════════════════════════════════════════════════════════════════════════════
+const BROKER_EMAIL_MAP = {
+  'fadler@lee-associates.com': 'Frank Adler',
+  'sahern@lee-associates.com': 'Sean Ahern',
+  'targuello@lee-associates.com': 'Tim Arguello',
+  'cbarnett@lee-associates.com': 'Chris Barnett',
+  'bgarbutt@lee-associates.com': 'Brian Garbutt',
+  'kgould@lee-associates.com': 'Ken Gould',
+  'bgriffin@lee-associates.com': 'Bob Griffin',
+  'jhirsch@lee-associates.com': 'Jeff Hirsch',
+  'jhogan@lee-associates.com': 'Jack Hogan',
+  'mlong@lee-associates.com': 'Mike Long',
+  'twest@lee-associates.com': 'Tom West',
+  'gmcardell@lee-associates.com': 'Gary McArdell',
+  'mdurkin@lee-associates.com': 'Matt Durkin',
+  'jhietbrink@lee-associates.com': 'Judd Hietbrink',
+  'dbolt@lee-associates.com': 'David Bolt',
+  'bbarson@lee-associates.com': 'Brian Barson',
+  'timwalker@lee-associates.com': 'Tim Walker',
+  'bschneider@lee-associates.com': 'Brad Schneider',
+  'rturner@lee-associates.com': 'Rick Turner',
+  'jmejia@lee-associates.com': 'Jonathan Mejia',
+  'mchristensen@lee-associates.com': 'Matt Christensen',
+  'dkluver@lee-associates.com': 'David Kluver',
+  'charrington@lee-associates.com': 'Carter Harrington',
+  'temporary@lee-associates.com': 'Alejandro Sherratt',
+  'cwinn@lee-associates.com': 'Charlie Winn',
+  'eabrego@lee-associates.com': 'Eva Abrego',
+  'kmorris@lee-associates.com': 'Kelsey Morris',
+  'htoland@lee-associates.com': 'Hayden Toland',
+  'mtoland@lee-associates.com': 'Miles Toland',
+  'mbiggs@lee-associates.com': 'Matt Biggs',
+  'mlawer@lee-associates.com': 'Matt Lawer',
+  'bsmith@lee-associates.com': 'Brendan Smith',
+  'ndumke@lee-associates.com': 'Nick Dumke',
+  'jgessford@lee-associates.com': 'John Gessford',
+  'smadigan@lee-associates.com': 'Stephen Madigan',
+  'jobrien@lee-associates.com': "Jessica O'Brien",
+  'ekat@lee-associates.com': 'Erissa Kat',
+  'pgills@lee-associates.com': 'Pitzer Gills',
+  'tbarnes@lee-associates.com': 'Taylor Barnes',
+  'lgessford@lee-associates.com': 'Libby Gessford',
+};
+
+function showBrokerTool(user) {
+  document.getElementById('tool-sign-in').style.display = 'none';
+  document.getElementById('broker-view').style.display = '';
+  if (user) {
+    applySharedBrokerIdentity(user);
+    compReportsUser = user;
+    updateHeaderUserDisplay(user);
+  }
+}
+
+async function handleToolSignIn(event) {
+  event.preventDefault();
+  const email = document.getElementById('tool-sign-in-email').value.trim().toLowerCase();
+  const errorEl = document.getElementById('tool-sign-in-error');
+  const btn = document.getElementById('tool-sign-in-btn');
+  errorEl.textContent = '';
+
+  const brokerName = BROKER_EMAIL_MAP[email];
+  if (!brokerName) {
+    errorEl.textContent = 'Email not recognized. Use your @lee-associates.com email.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+  try {
+    const result = await callTrpc('auth.login', { name: brokerName, email });
+    if (result?.success) {
+      showBrokerTool(result.user);
+    } else {
+      errorEl.textContent = result?.error || 'Sign in failed. Please try again.';
+    }
+  } catch (e) {
+    errorEl.textContent = (e && e.message) ? e.message : 'Sign in failed. Please try again.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+}
+
+async function initBrokerToolAuth() {
+  try {
+    const me = await callTrpc('auth.me');
+    if (me) {
+      showBrokerTool(me);
+      return;
+    }
+  } catch (e) {
+    console.warn('Auth check on load:', e && e.message ? e.message : e);
+  }
+  // Not signed in — keep sign-in screen visible
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // COMP REPORTS CUSTOM DROPDOWNS
 // ═══════════════════════════════════════════════════════════════════════════════
 let _crOpenPanel = null;
@@ -6185,6 +6302,9 @@ document.getElementById('c-date').value = new Date().toISOString().split('T')[0]
 onPropTypeChange();
 onTxnTypeChange();
 onVoucherTxnChange();
+
+// Check auth and show sign-in gate or tool
+void initBrokerToolAuth();
 
 // Populate comp form dropdowns
 initCompFormSelects();
