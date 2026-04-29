@@ -3775,3 +3775,99 @@ body {
 .step-flow .card[data-sstep].step--current > .is-hidden { display: none; }
 /* Cards inside a step-flow get a more generous inner spacing */
 .step-flow .card.step--current { padding: 26px 24px; }
+
+
+/* ============================================================================
+ * DENSITY PASS — tightens layout globally so every tab feels compact
+ * ============================================================================ */
+
+/* Narrower default panel so forms don't stretch across wide monitors.
+   Voucher + Listing stay wider because they host a sidebar. */
+.panel { max-width: 960px; padding: 22px 20px 72px; }
+#tab-voucher.panel { max-width: 1320px; }
+#tab-listing.panel { max-width: 1320px; }
+#tab-comp-reports.panel { max-width: 1320px; }
+
+/* Tighter cards */
+.card {
+  padding: 20px 22px !important;
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+.step-flow .card.step--current { padding: 22px 22px !important; }
+.card h2 { font-size: 17px; margin: 0 0 14px; padding-bottom: 10px; }
+.card h3 { font-size: 13px; margin: 14px 0 8px; }
+
+/* Tighter rows + fields */
+.row { gap: 12px; margin-bottom: 12px; }
+.field { gap: 2px; }
+.field label { font-size: 11.5px; margin-bottom: 4px; letter-spacing: .01em; }
+.field input, .field select, .field textarea {
+  padding: 8px 10px;
+  font-size: 13.5px;
+  border-radius: 8px;
+}
+.field textarea { min-height: 60px; }
+.field .field-hint, .field-hint { font-size: 11px; margin-top: 3px; }
+
+/* Section headings inside cards */
+.section-heading-top, .section-heading-top-lg { margin-top: 14px !important; margin-bottom: 8px !important; font-size: 13px; }
+.micro-copy, .micro-copy-bottom-sm { margin: 0 0 8px; font-size: 11.5px; }
+.tip { padding: 10px 14px; font-size: 12.5px; margin-bottom: 14px; border-radius: 8px; }
+
+/* Compact sign-grid row: single-line label + stepper */
+.sign-grid-new {
+  display: grid;
+  grid-template-columns: 110px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--bg3, #e5e5e2);
+}
+.sign-grid-new:last-child { border-bottom: 0; }
+.sign-grid-new .label { width: auto; }
+.sign-grid-new .input-flex { min-width: 0; padding: 6px 8px; font-size: 13px; }
+.sign-grid-new .field-hint { display: none; }
+.qty-stepper { display: inline-flex; align-items: center; gap: 2px; }
+.qty-btn { width: 26px; height: 26px; font-size: 14px; }
+.qty-input { width: 44px; height: 26px; padding: 0 4px; text-align: center; font-size: 13px; }
+
+/* Optional wrapper header gets less chrome */
+.optional-toggle { padding: 10px 16px; }
+.optional-toggle h2 { margin: 0; font-size: 15px; }
+
+/* Btn bar spacing */
+.btn-bar { gap: 8px; padding-top: 6px; }
+.btn-bar-top-md { margin-top: 14px; }
+
+/* Step nav tighter */
+.step-nav { margin-top: 14px; padding-top: 14px; }
+.step-summary { padding: 10px 12px; margin: 8px 0; }
+.step-summary .s-title { font-size: 12.5px; }
+.step-summary .s-preview { font-size: 12px; }
+
+/* Support options row (S/F, D/F, V-Shape) — tighter */
+.support-options { gap: 8px; margin: 4px 0 8px; }
+.support-opt { padding: 10px 12px; font-size: 12.5px; }
+.support-opt .icon { font-size: 14px; }
+.support-opt .lbl { font-size: 12.5px; }
+
+/* Toggle rows */
+.toggle-row { gap: 10px; padding: 4px 0; }
+.toggle-caption { font-size: 12.5px; }
+
+/* Upload zone — less tall */
+.sign-upload-area { margin-top: 10px; }
+.sign-upload-zone { padding: 20px 16px; }
+.sign-upload-title { font-size: 13px; }
+.sign-upload-subtitle { font-size: 11px; }
+
+/* Broker / agent tables */
+.broker-table { font-size: 12.5px; margin-top: 8px; }
+.broker-table th, .broker-table td { padding: 6px 8px; }
+
+/* Smaller progress sidebar caps on narrower screens */
+@media (max-width: 1180px) {
+  .panel { padding: 18px 16px 64px; }
+  .card { padding: 16px 18px !important; }
+}

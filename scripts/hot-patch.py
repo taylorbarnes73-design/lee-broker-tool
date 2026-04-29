@@ -18,6 +18,9 @@ def presign(key: str) -> str:
 
 
 def main():
+    # Always refresh S3 objects with the latest local content
+    run(["aws", "s3", "cp", "client/public/broker_tool.html", f"s3://{BUCKET}/{KEY_PREFIX}/broker_tool.html", "--region", REGION])
+    run(["aws", "s3", "cp", "client/public/broker_tool.css",  f"s3://{BUCKET}/{KEY_PREFIX}/broker_tool.css",  "--region", REGION])
     html_url = presign(f"{KEY_PREFIX}/broker_tool.html")
     css_url = presign(f"{KEY_PREFIX}/broker_tool.css")
     cmds = [

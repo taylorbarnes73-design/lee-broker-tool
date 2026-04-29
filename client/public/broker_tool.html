@@ -454,27 +454,31 @@
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="tab-sign" class="panel">
-  <div class="tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections as needed.</div>
+  <div class="tip">Complete each step. Fields marked <span class="required-mark">*</span> are required.</div>
 
-  <div id="sign-main">
-  <!-- ═══ REQUIRED SECTION ═══ -->
+  <div class="deal-shell" id="s-deal-shell">
+  <div class="deal-main" id="sign-main">
+
+  <!-- STEP 1: Order Basics -->
   <div class="card required-section" data-sstep="1">
-    <h2>Required Information <span class="required-badge">Required</span></h2>
-
-    <div class="row c3">
+    <h2>Step 1 — Order Basics <span class="required-badge">Required</span></h2>
+    <div class="row c2">
       <div class="field"><label>Date</label><input id="s-date" type="date"></div>
-      <div class="field is-hidden"><label>PO #</label><input id="s-po" class="readonly-fill-strong" readonly><div class="field-hint">Auto</div></div>
       <div class="field"><label>Order Type</label>
         <select id="s-order-type"><option value="installation">Installation</option><option value="removal">Removal</option><option value="maintenance">Maintenance</option></select>
       </div>
     </div>
-
+    <div class="field is-hidden"><label>PO #</label><input id="s-po" class="readonly-fill-strong" readonly></div>
     <div class="row c2">
       <div class="field"><label class="req">Property Address</label><input id="s-address"><div class="field-hint">16441 Scientific Way</div></div>
       <div class="field"><label class="req">City</label><input id="s-city"><div class="field-hint">Irvine</div></div>
     </div>
     <div class="field"><label class="req">Cross Streets / Building Name</label><input id="s-cross"><div class="field-hint">Cross streets, building name, etc.</div></div>
+  </div>
 
+  <!-- STEP 2: Sign Specifications -->
+  <div class="card" data-sstep="2">
+    <h2>Step 2 — Sign Specifications</h2>
     <h3 class="section-heading-top">Configuration</h3>
     <div class="support-options">
       <div class="support-opt" onclick="selectSupport(this, 'sf')"><div class="icon">&#9632;&#9632;</div><div class="lbl">S/F</div></div>
@@ -524,7 +528,12 @@
       </div>
     </div>
 
-    <div class="row c2 top-gap-md">
+  </div>
+
+  <!-- STEP 3: Details & Placement -->
+  <div class="card" data-sstep="3">
+    <h2>Step 3 — Details</h2>
+    <div class="row c2">
       <div class="field">
         <label>Name Rider <span class="optional-note">(Optional)</span></label>
         <div class="toggle-row">
@@ -564,8 +573,11 @@
         <button class="btn btn-gray top-gap-sm is-hidden" id="sign-upload-clear" onclick="clearSignUpload()">Remove Upload</button>
       </div>
     </div>
+  </div>
 
-    <h3 class="section-heading-top">Requested By</h3>
+  <!-- STEP 4: Requested By + Access -->
+  <div class="card" data-sstep="4">
+    <h2>Step 4 — Requested By &amp; Access</h2>
     <div class="field field-stack-gap-sm"><label class="req">Requested By</label>
       <div class="agent-picker" id="picker-s-requested-by">
         <input id="s-requested-by" autocomplete="off"><div class="field-hint">Start typing agent name...</div>
@@ -577,10 +589,8 @@
       <tbody id="sign-agent-body"></tbody>
     </table>
     <button class="btn btn-gray top-gap-sm" onclick="addSignAgent()">+ Add Agent</button>
-  </div><!-- end required-section -->
 
-  <div class="card" data-sstep="2">
-    <h2>Access &amp; Comments</h2>
+    <h3 class="section-heading-top">Access &amp; Comments</h3>
     <div class="row c2">
       <div class="field"><label>Access Necessary?</label><select id="s-access"><option value="no">No</option><option value="yes">Yes</option></select></div>
       <div class="field"><label>Access Contact</label><input id="s-access-contact"><div class="field-hint">Contact name / phone</div></div>
@@ -589,6 +599,47 @@
   </div>
 
   </div><!-- /sign-main -->
+
+  <aside class="deal-aside" id="s-deal-aside" aria-label="Sign request at a glance">
+    <div class="deal-card deal-card-primary">
+      <div class="deal-eyebrow">Sign Request</div>
+      <div class="deal-title" id="sg-title">New order</div>
+      <div class="deal-subtitle" id="sg-subtitle">Fill Step 1 to begin</div>
+      <div class="deal-chips" id="sg-chips"></div>
+      <dl class="deal-kv">
+        <div><dt>Property</dt><dd id="sg-address">—</dd></div>
+        <div><dt>City</dt><dd id="sg-city">—</dd></div>
+        <div><dt>Order</dt><dd id="sg-order">—</dd></div>
+        <div><dt>Requested By</dt><dd id="sg-by">—</dd></div>
+      </dl>
+    </div>
+    <div class="deal-card">
+      <div class="deal-eyebrow">Signs</div>
+      <dl class="deal-kv deal-kv-mono">
+        <div><dt>Configuration</dt><dd id="sg-config">—</dd></div>
+        <div><dt>4′ × 8′</dt><dd id="sg-4x8" class="mono">0</dd></div>
+        <div><dt>6′ × 8′</dt><dd id="sg-6x8" class="mono">0</dd></div>
+        <div><dt>Other</dt><dd id="sg-other" class="mono">0</dd></div>
+        <div><dt>Banner</dt><dd id="sg-banner" class="mono">0</dd></div>
+        <div class="deal-kv-strong"><dt>Total Signs</dt><dd id="sg-total" class="mono">0</dd></div>
+      </dl>
+    </div>
+    <div class="deal-card">
+      <div class="deal-eyebrow">Progress</div>
+      <ol class="deal-steps" id="sg-steps">
+        <li data-step="1"><span class="deal-step-dot"></span><span class="deal-step-label">Order Basics</span></li>
+        <li data-step="2"><span class="deal-step-dot"></span><span class="deal-step-label">Sign Specs</span></li>
+        <li data-step="3"><span class="deal-step-dot"></span><span class="deal-step-label">Details</span></li>
+        <li data-step="4"><span class="deal-step-dot"></span><span class="deal-step-label">Requested By &amp; Access</span></li>
+      </ol>
+    </div>
+    <div class="deal-actions">
+      <button class="btn btn-gray" onclick="exportSignPdf()">Review (PDF)</button>
+      <button class="btn btn-red" onclick="openEmailModal('sign')">Submit Sign Request</button>
+      <button class="btn btn-green" onclick="openSendToAdminModal('sign')">Send to Admin</button>
+    </div>
+  </aside>
+  </div><!-- /deal-shell -->
   <div class="btn-bar btn-bar-top-md">
     <button class="btn btn-gray" onclick="exportSignPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
     <button class="btn btn-red" onclick="openEmailModal('sign')">Submit Sign Request</button>
@@ -2620,10 +2671,85 @@ function bootstrapStepFlowFor(name) {
   if (name === 'sign' && !window.__stepFlows['sign-main']) {
     initStepFlow({
       mainId: 'sign-main',
-      stepAttr: 'data-sstep'
+      stepAttr: 'data-sstep',
+      previewFor: signStepPreview,
+      onStep: () => { try { syncSignGlance(); } catch(e) {} }
     });
   }
 }
+
+// Sign Request previews for the step summary strips
+function signStepPreview(card, n) {
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  if (n === '1') return [v('s-address'), v('s-city')].filter(Boolean).join(', ') || 'Order basics';
+  if (n === '2') {
+    const total = ['s-4x8-qty','s-6x8-qty','s-other-qty','s-banner-qty'].reduce((a,id)=>a + (parseInt(v(id),10)||0), 0);
+    const sup = document.getElementById('s-support')?.value;
+    const supLabel = sup ? ({sf:'S/F', df:'D/F', vshape:'V-Shape'}[sup] || sup) : '';
+    return (total ? (total + ' sign' + (total>1?'s':'')) : 'No signs set') + (supLabel ? ' · ' + supLabel : '');
+  }
+  if (n === '3') {
+    const rider = document.getElementById('s-rider-toggle')?.checked ? ('Rider: ' + (v('s-rider') || 'yes')) : 'No rider';
+    const upload = document.getElementById('s-placement-toggle')?.checked ? 'Custom placement' : 'Standard placement';
+    return rider + ' · ' + upload;
+  }
+  if (n === '4') return v('s-requested-by') || 'Requested by';
+  return '';
+}
+
+// Sign Glance — sidebar sync
+function syncSignGlance() {
+  const shell = document.getElementById('s-deal-shell');
+  if (!shell) return;
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text || '—'; };
+  const addr = v('s-address');
+  const city = v('s-city');
+  set('sg-title', addr || 'New order');
+  set('sg-subtitle', city || 'Fill Step 1 to begin');
+  set('sg-address', addr || '—');
+  set('sg-city', city || '—');
+  const order = document.getElementById('s-order-type');
+  set('sg-order', order ? order.options[order.selectedIndex].text : '—');
+  set('sg-by', v('s-requested-by') || '—');
+  const sup = document.getElementById('s-support')?.value;
+  set('sg-config', sup ? ({sf:'S/F', df:'D/F', vshape:'V-Shape'}[sup] || sup) : '—');
+  const n = id => (parseInt(v(id), 10) || 0);
+  const c4 = n('s-4x8-qty'), c6 = n('s-6x8-qty'), co = n('s-other-qty'), cb = n('s-banner-qty');
+  set('sg-4x8', String(c4));
+  set('sg-6x8', String(c6));
+  set('sg-other', String(co));
+  set('sg-banner', String(cb));
+  set('sg-total', String(c4 + c6 + co + cb));
+
+  const chips = document.getElementById('sg-chips');
+  if (chips) {
+    chips.innerHTML = '';
+    const add = (t, c) => { if (!t) return; const s = document.createElement('span'); s.className = 'deal-chip ' + (c||''); s.textContent = t; chips.appendChild(s); };
+    add(order && order.value ? order.options[order.selectedIndex].text : '', 'is-crimson');
+    if (c4 + c6 + co + cb) add((c4 + c6 + co + cb) + ' sign' + ((c4 + c6 + co + cb) > 1 ? 's' : ''), 'is-ink');
+  }
+
+  // Progress + step summaries
+  const flow = window.__stepFlows && window.__stepFlows['sign-main'];
+  const steps = document.getElementById('sg-steps');
+  if (flow && steps) {
+    steps.querySelectorAll('li').forEach((li, idx) => {
+      li.classList.toggle('is-done', idx < flow.current);
+      li.classList.toggle('is-active', idx === flow.current);
+    });
+  }
+  if (flow && typeof flow.renderSummaries === 'function') flow.renderSummaries();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  const panel = document.getElementById('tab-sign');
+  if (!panel) return;
+  const h = () => { try { syncSignGlance(); } catch(e) {} };
+  panel.addEventListener('input', h, { passive: true });
+  panel.addEventListener('change', h, { passive: true });
+  panel.addEventListener('click', h, { passive: true });
+});
 
 // Step previews used by the step-summary strip
 function voucherStepPreview(card, n) {
