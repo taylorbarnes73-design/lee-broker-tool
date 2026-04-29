@@ -17,6 +17,7 @@ import { compDataRouter } from "./routers/compData";
 import { emailRouter } from "./routers/email";
 import { contractsRouter } from "./routers/contracts";
 import { submissionsRouter } from "./routers/submissions";
+import { brokersRouter } from "./routers/brokers";
 import { localAuth, sdk } from "./_core/sdk";
 
 export const appRouter = router({
@@ -26,6 +27,7 @@ export const appRouter = router({
   email: emailRouter,
   contracts: contractsRouter,
   submissions: submissionsRouter,
+  brokers: brokersRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     login: publicProcedure

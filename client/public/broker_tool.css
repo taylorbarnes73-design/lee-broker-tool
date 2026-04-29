@@ -2888,3 +2888,29 @@ body.admin-mode #admin-view {
   background: #fff5f6;
   color: #9d1e2d;
 }
+/* ────────────────────────────────────────────────────────────────
+   .ui-icon — inline SVG replacements for legacy emoji glyphs.
+   These are drop-ins for elements that previously contained a single
+   emoji (document, chart, clipboard, search, check, lock).
+   SVGs use stroke=currentColor so color is inherited from the parent.
+   ──────────────────────────────────────────────────────────────── */
+.ui-icon {
+  display: inline-block;
+  vertical-align: -2px;
+  flex-shrink: 0;
+  width: 1em;
+  height: 1em;
+}
+.doc-icon .ui-icon,
+.upload-icon .ui-icon,
+.brochure-zone-icon .ui-icon,
+.docs-search-icon .ui-icon {
+  width: 1.25em;
+  height: 1.25em;
+}
+.doc-icon::before,
+.upload-icon::before,
+.brochure-zone-icon::before,
+.docs-search-icon::before {
+  content: none;
+}

@@ -120,7 +120,7 @@ export default function VoucherScreen() {
 function CommissionTable() {
   const rows = [
     {name:'Taylor Barnes', side:'Procuring', pct: 40, chipTone:'success', split:'Internal'},
-    {name:'Marcus Reeves', side:'Listing', pct: 35, chipTone:'crimson', split:'Internal'},
+    {name:'Rick Turner', side:'Listing', pct: 35, chipTone:'crimson', split:'Internal'},
     {name:'Janice Lee (CBRE)', side:'Referral', pct: 15, chipTone:'warn', split:'Outside'},
     {name:'House override', side:'Both', pct: 10, chipTone:'ai', split:'House'},
   ];

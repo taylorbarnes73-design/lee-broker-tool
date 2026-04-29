@@ -31,9 +31,6 @@ declare module "../design/index.jsx" {
   export const FormRow: AnyComponent;
   export const SectionHeader: AnyComponent;
   export const AppShell: AnyComponent;
-  export const AdminScreen: AnyComponent;
-  export const ContractScreen: AnyComponent;
-  export const DocsScreen: AnyComponent;
   export const AiPanel: AnyComponent;
   export const ProfileModal: AnyComponent;
   // catch-all

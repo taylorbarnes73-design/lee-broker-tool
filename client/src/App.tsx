@@ -7,22 +7,14 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { useAuth } from "@/_core/hooks/useAuth";
 
-// Import the new design shell (kept available under /beta for continued iteration)
-import {
-  AppShell,
-  AdminScreen,
-  ContractScreen,
-  DocsScreen,
-  AiPanel,
-  ProfileModal,
-} from "./design/index.jsx";
-
-// Functional pages
+// Design shell primitives (AppShell + modal components live in the design system)
+import { AppShell, AiPanel, ProfileModal } from "./design/index.jsx";
+// Functional pages — real data, not scratch
 import Login from "./pages/Login";
 import ListingEntryScreen from "./pages/ListingScreen";
 import SignRequestScreen from "./pages/SignScreen";
 import VoucherScreen from "./pages/VoucherScreen";
-import CompScreen from "./pages/CompScreen";
+import CompScreen, { AdminScreen, ContractScreen, DocsScreen } from "./pages/CompScreen";
 
 /**
  * Full-screen redirect to the production broker tool HTML app.

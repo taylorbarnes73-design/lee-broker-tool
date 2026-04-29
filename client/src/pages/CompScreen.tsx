@@ -195,11 +195,11 @@ function AdminScreen() {
 function AdminInbox() {
   const rows = [
     {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'2847 Newport Blvd · Costa Mesa', agent:'Taylor Barnes', agentTitle:'Senior Associate', avatar:'TB', amt:'$127,935', age:'2h 14m', tone:'crimson', id:'V-2026-0418', flag:'Co-broker split'},
-    {type:'Listing', icon:<Icons.Listing size={14}/>, prop:'1250 E Alton Ave · Santa Ana', agent:'Marcus Reeves', agentTitle:'Principal', avatar:'MR', amt:'—', age:'4h 02m', tone:'slate', id:'L-2026-0412', flag:null},
+    {type:'Listing', icon:<Icons.Listing size={14}/>, prop:'1250 E Alton Ave · Santa Ana', agent:'Rick Turner', agentTitle:'Principal', avatar:'RT', amt:'—', age:'4h 02m', tone:'slate', id:'L-2026-0412', flag:null},
     {type:'Sign', icon:<Icons.Sign size={14}/>, prop:'3400 Bristol St · Costa Mesa', agent:'Taylor Barnes', agentTitle:'Senior Associate', avatar:'TB', amt:'$705', age:'6h 38m', tone:'neutral', id:'S-2026-0410', flag:null},
-    {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'875 W 17th St · Costa Mesa', agent:'Sam Park', agentTitle:'Associate', avatar:'SP', amt:'$58,200', age:'1d', tone:'crimson', id:'V-2026-0404', flag:'Missing W-9'},
-    {type:'Contract', icon:<Icons.Contract size={14}/>, prop:'512 Superior Ave · Newport', agent:'Marcus Reeves', agentTitle:'Principal', avatar:'MR', amt:'—', age:'1d 2h', tone:'ai', id:'C-2026-0401', flag:'4 redlines'},
-    {type:'Listing Mod', icon:<Icons.Listing size={14}/>, prop:'2100 Placentia Ave · Costa Mesa', agent:'Kai Nguyen', agentTitle:'Associate', avatar:'KN', amt:'—', age:'2d', tone:'slate', id:'L-2026-0395', flag:null},
+    {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'875 W 17th St · Costa Mesa', agent:'Matt Durkin', agentTitle:'Associate', avatar:'MD', amt:'$58,200', age:'1d', tone:'crimson', id:'V-2026-0404', flag:'Missing W-9'},
+    {type:'Contract', icon:<Icons.Contract size={14}/>, prop:'512 Superior Ave · Newport', agent:'Rick Turner', agentTitle:'Principal', avatar:'RT', amt:'—', age:'1d 2h', tone:'ai', id:'C-2026-0401', flag:'4 redlines'},
+    {type:'Listing Mod', icon:<Icons.Listing size={14}/>, prop:'2100 Placentia Ave · Costa Mesa', agent:'Carter Harrington', agentTitle:'Associate', avatar:'CH', amt:'—', age:'2d', tone:'slate', id:'L-2026-0395', flag:null},
     {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'6400 W Coast Hwy · Newport', agent:'Taylor Barnes', agentTitle:'Senior Associate', avatar:'TB', amt:'$41,300', age:'3d', tone:'crimson', id:'V-2026-0388', flag:null},
   ];
   return (
@@ -359,6 +359,9 @@ function AdminInbox() {
 // ── Dealius push: quick-input for listings and deals ──
 function AdminDealius() {
   const [mode, setMode] = React.useState('listing');
+  const brokersQuery = trpc.brokers.list.useQuery();
+  const brokerNames = (brokersQuery.data ?? []).map(b => b.name);
+  const defaultLeadBroker = brokerNames[0] ?? 'Taylor Barnes';
   return (
     <div style={{ padding: 32, display:'grid', gridTemplateColumns:'1fr 360px', gap: 24, alignItems:'start' }}>
       <div style={{ display:'flex', flexDirection:'column', gap: 16 }}>
@@ -388,12 +391,12 @@ function AdminDealius() {
               <Field label="Asking rate"><Input prefix="$" suffix="/SF/YR NNN" defaultValue="1.95"/></Field>
               <Field label="Listing start"><Input prefix={<Icons.Calendar size={14}/>} defaultValue="Apr 22, 2026"/></Field>
               <Field label="Listing end"><Input prefix={<Icons.Calendar size={14}/>} defaultValue="Oct 22, 2026"/></Field>
-              <Field label="Lead broker"><Select value="Taylor Barnes" onChange={()=>{}} options={['Taylor Barnes','Marcus Reeves','Sam Park','Kai Nguyen']}/></Field>
+              <Field label="Lead broker"><Select value={defaultLeadBroker} onChange={()=>{}} options={brokerNames}/></Field>
               <Field label="Co-broker"><Input placeholder="Optional"/></Field>
               <Field label="Commission %"><Input suffix="%" defaultValue="6.00"/></Field>
               <Field label="MLS"><Select value="AIR CRE" onChange={()=>{}} options={['AIR CRE','CoStar','LoopNet','CREXi']}/></Field>
               <Field label="Dealius pipeline stage" span={2}>
-                <Select value="Prospect â†’ Active" onChange={()=>{}} options={['Prospect','Active','Under contract','Closed']}/>
+                <Select value="Active" onChange={()=>{}} options={['Prospect','Active','Under contract','Closed']}/>
               </Field>
             </div>
           ) : (
@@ -407,7 +410,7 @@ function AdminDealius() {
               <Field label="Consideration"><Input prefix="$" defaultValue="4,312,500"/></Field>
               <Field label="Gross commission"><Input prefix="$" defaultValue="258,750"/></Field>
               <Field label="Lee side share"><Input suffix="%" defaultValue="50"/></Field>
-              <Field label="Lead broker"><Select value="Taylor Barnes" onChange={()=>{}} options={['Taylor Barnes','Marcus Reeves','Sam Park','Kai Nguyen']}/></Field>
+              <Field label="Lead broker"><Select value={defaultLeadBroker} onChange={()=>{}} options={brokerNames}/></Field>
               <Field label="Dealius deal ID"><Input className="lee-mono" defaultValue="D-2026-01872"/></Field>
             </div>
           )}
@@ -486,84 +489,78 @@ function AdminDealius() {
   );
 }
 
-// ── Agent roster ──
+// ── Agent roster (live from shared/brokerDirectory.ts via trpc.brokers.list) ──
 function AdminRoster() {
-  const roster = [
-    {name:'Taylor Barnes', avatar:'TB', title:'Senior Associate', email:'tbarnes@lee-nb.com', phone:'(949) 556-0118', license:'DRE #01984412', team:'Industrial', ytd:'$287K', deals:9, status:'Active', joined:'Feb 2021'},
-    {name:'Marcus Reeves', avatar:'MR', title:'Principal', email:'mreeves@lee-nb.com', phone:'(949) 556-0102', license:'DRE #01456780', team:'Office', ytd:'$412K', deals:6, status:'Active', joined:'May 2015'},
-    {name:'Sam Park', avatar:'SP', title:'Associate', email:'spark@lee-nb.com', phone:'(949) 556-0124', license:'DRE #02123498', team:'Retail', ytd:'$128K', deals:4, status:'Active', joined:'Aug 2023'},
-    {name:'Kai Nguyen', avatar:'KN', title:'Associate', email:'knguyen@lee-nb.com', phone:'(949) 556-0131', license:'DRE #02201765', team:'Industrial', ytd:'$64K', deals:3, status:'Active', joined:'Jan 2024'},
-    {name:'Diana Cho', avatar:'DC', title:'Principal', email:'dcho@lee-nb.com', phone:'(949) 556-0109', license:'DRE #01312558', team:'Capital Markets', ytd:'$598K', deals:4, status:'Active', joined:'Oct 2012'},
-    {name:'Reggie Alvarez', avatar:'RA', title:'Senior Associate', email:'ralvarez@lee-nb.com', phone:'(949) 556-0115', license:'DRE #01876321', team:'Office', ytd:'$201K', deals:7, status:'Active', joined:'Jun 2018'},
-    {name:'Priya Shah', avatar:'PS', title:'Associate', email:'pshah@lee-nb.com', phone:'(949) 556-0128', license:'DRE #02098412', team:'Retail', ytd:'$92K', deals:5, status:'Active', joined:'Mar 2022'},
-    {name:'Joel Martinez', avatar:'JM', title:'Associate', email:'jmartinez@lee-nb.com', phone:'(949) 556-0133', license:'DRE #02245009', team:'Industrial', ytd:'$45K', deals:2, status:'Onboarding', joined:'Mar 2026'},
-  ];
+  const brokersQuery = trpc.brokers.list.useQuery();
+  const roster = (brokersQuery.data ?? []).map(b => ({
+    name: b.name,
+    avatar: b.initials,
+    title: /manager/i.test(b.role)
+      ? 'Principal'
+      : /broker/i.test(b.role)
+      ? 'Broker'
+      : b.role,
+    email: b.email,
+    role: b.role,
+    id: b.id,
+  }));
+  const totalAgents = roster.length;
+  const activeCount = roster.length;
   return (
     <div style={{ padding: 32, display:'flex', flexDirection:'column', gap: 16 }}>
       {/* Roster stats */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(5, 1fr)', gap: 12 }}>
-        <StatCard label="Total agents" value="24" unit=""/>
-        <StatCard label="Active" value="22" unit=""/>
-        <StatCard label="Onboarding" value="2" unit=""/>
-        <StatCard label="YTD production" value="$4.2M" unit=""/>
-        <StatCard label="Avg deals / agent" value="8.4" unit=""/>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap: 12 }}>
+        <StatCard label="Agents in directory" value={String(totalAgents)} unit=""/>
+        <StatCard label="Active" value={String(activeCount)} unit=""/>
+        <StatCard label="Office" value="Newport Beach" unit=""/>
       </div>
 
       <Card padding={0}>
         <div style={{ padding: '14px 20px', display:'flex', alignItems:'center', gap: 12, borderBottom: '1px solid var(--ink-150)' }}>
           <div style={{ fontSize: 14, fontWeight: 700 }}>Roster</div>
-          <Badge size="sm">{roster.length} shown · 24 total</Badge>
+          <Badge size="sm">{roster.length} agents</Badge>
           <div style={{ flex: 1 }}/>
           <div style={{ display:'flex', alignItems:'center', gap:6, width: 260, height: 32, padding:'0 10px', background:'var(--ink-0)', border:'1px solid var(--ink-200)', borderRadius: 6 }}>
             <Icons.Search size={13} style={{ color: 'var(--ink-400)' }}/>
-            <input placeholder="Search name, license, team…" style={{ flex:1, border:'none', outline:'none', fontSize: 12, background:'transparent' }}/>
+            <input placeholder="Search name or email…" style={{ flex:1, border:'none', outline:'none', fontSize: 12, background:'transparent' }}/>
           </div>
-          <Select value="All teams" onChange={()=>{}} options={['All teams','Industrial','Office','Retail','Capital Markets']}/>
           <Button variant="secondary" size="sm" icon={<Icons.Download size={13}/>}>Export</Button>
-          <Button variant="primary" size="sm" icon={<Icons.Plus size={13}/>}>Add agent</Button>
         </div>
 
         {/* Column header */}
         <div style={{
-          display:'grid', gridTemplateColumns: '2fr 1.1fr 1.4fr 1fr 0.9fr 0.9fr 0.9fr 120px',
+          display:'grid', gridTemplateColumns: '2.2fr 1.3fr 2fr 0.8fr',
           padding: '10px 20px', gap: 12, alignItems:'center',
           background: 'var(--ink-50)', borderBottom: '1px solid var(--ink-200)',
           fontSize: 10, fontWeight: 700, color: 'var(--ink-500)', letterSpacing: '0.08em', textTransform: 'uppercase',
         }}>
           <div>Agent</div>
-          <div>Title</div>
-          <div>Contact</div>
-          <div>License</div>
-          <div>Team</div>
-          <div style={{ textAlign:'right' }}>YTD GCI</div>
-          <div style={{ textAlign:'right' }}>Deals</div>
-          <div style={{ textAlign:'right' }}>Status</div>
+          <div>Role</div>
+          <div>Email</div>
+          <div style={{ textAlign:'right' }}>ID</div>
         </div>
 
+        {brokersQuery.isLoading && (
+          <div style={{ padding: '24px 20px', fontSize: 13, color: 'var(--ink-500)' }}>
+            Loading roster…
+          </div>
+        )}
+
         {roster.map((a,i) => (
-          <div key={i} style={{
-            display:'grid', gridTemplateColumns: '2fr 1.1fr 1.4fr 1fr 0.9fr 0.9fr 0.9fr 120px',
+          <div key={a.id} style={{
+            display:'grid', gridTemplateColumns: '2.2fr 1.3fr 2fr 0.8fr',
             padding: '14px 20px', alignItems:'center', gap: 12,
             borderTop: i>0 ? '1px solid var(--ink-150)' : 'none',
-            cursor: 'pointer',
           }}>
             <div style={{ display:'flex', alignItems:'center', gap: 10, minWidth: 0 }}>
               <div style={{ width: 32, height: 32, borderRadius: 999, background: 'var(--ink-900)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{a.avatar}</div>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{a.name}</div>
-                <div style={{ fontSize: 10.5, color: 'var(--ink-500)' }}>Joined {a.joined}</div>
               </div>
             </div>
-            <div style={{ fontSize: 12.5, color: 'var(--ink-700)' }}>{a.title}</div>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 11.5, color: 'var(--ink-700)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{a.email}</div>
-              <div className="lee-mono" style={{ fontSize: 11, color: 'var(--ink-500)' }}>{a.phone}</div>
-            </div>
-            <div className="lee-mono" style={{ fontSize: 11.5, color: 'var(--ink-600)' }}>{a.license}</div>
-            <div><Badge size="sm" tone={a.team === 'Industrial' ? 'slate' : a.team === 'Office' ? 'neutral' : a.team === 'Retail' ? 'warn' : 'ai'}>{a.team}</Badge></div>
-            <div className="lee-mono" style={{ fontSize: 13, fontWeight: 600, textAlign:'right' }}>{a.ytd}</div>
-            <div className="lee-mono" style={{ fontSize: 13, fontWeight: 600, textAlign:'right' }}>{a.deals}</div>
-            <div style={{ textAlign:'right' }}><Badge size="sm" tone={a.status === 'Active' ? 'success' : 'warn'}>{a.status}</Badge></div>
+            <div style={{ fontSize: 12.5, color: 'var(--ink-700)' }}>{a.role}</div>
+            <div style={{ minWidth: 0, fontSize: 12, color: 'var(--ink-700)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{a.email}</div>
+            <div className="lee-mono" style={{ fontSize: 11.5, color: 'var(--ink-500)', textAlign:'right' }}>{a.id}</div>
           </div>
         ))}
       </Card>
@@ -579,9 +576,9 @@ function AdminOps() {
         <div className="lee-eyebrow" style={{ marginBottom: 14 }}>Commission payouts · this week</div>
         {[
           {agent:'Taylor Barnes', amt:'$63,968', status:'Scheduled Fri'},
-          {agent:'Marcus Reeves', amt:'$98,441', status:'Awaiting wire'},
-          {agent:'Sam Park', amt:'$29,100', status:'Paid'},
-          {agent:'Diana Cho', amt:'$152,890', status:'Paid'},
+          {agent:'Rick Turner', amt:'$98,441', status:'Awaiting wire'},
+          {agent:'Matt Durkin', amt:'$29,100', status:'Paid'},
+          {agent:'Libby Gessford', amt:'$152,890', status:'Paid'},
         ].map((p,i) => (
           <div key={i} style={{ display:'flex', alignItems:'center', gap: 10, padding: '10px 0', borderTop: i>0 ? '1px solid var(--ink-150)' : 'none' }}>
             <div style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{p.agent}</div>
@@ -1004,6 +1001,7 @@ function ProfileModal({ open, onClose }: any) {
   );
 }
 
+export { AdminScreen, ContractScreen, DocsScreen };
 export default CompScreen;
 
 
