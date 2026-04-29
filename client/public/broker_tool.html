@@ -1190,8 +1190,8 @@
     <div class="comp-lease-only">
       <h3 class="section-heading-top">Key Lease Terms</h3>
       <div class="row c3">
-        <div class="field"><label class="req">Space Leased / Leased SF</label><select id="c-leased-sf"></select></div>
-        <div class="field"><label class="req">Rent/SqFt / Start Rate</label><select id="c-rent-sf"></select></div>
+        <div class="field"><label class="req">Space Leased / Leased SF</label><input id="c-leased-sf" type="text" placeholder="e.g. 25,000"></div>
+        <div class="field"><label class="req">Rent/SqFt / Start Rate</label><input id="c-rent-sf" type="text" placeholder="e.g. $1.25"></div>
         <div class="field"><label>Rent Type</label>
           <select id="c-rent-type"><option value="">—</option><option>NNN</option><option>G</option></select>
         </div>
@@ -1202,7 +1202,7 @@
         <div class="field"><label>Expire Date</label><input id="c-expire-date" type="date"></div>
       </div>
       <div class="row c3">
-        <div class="field"><label>Term (Months)</label><select id="c-term"></select></div>
+        <div class="field"><label>Term (Months)</label><input id="c-term" type="text" placeholder="e.g. 60"></div>
         <div class="field"><label>Lessee / Tenant</label><input id="c-lessee" list="comp-party-options"><div class="field-hint">Tenant name</div></div>
         <div class="field"><label>Lessor / Landlord</label><input id="c-lessor" list="comp-party-options"><div class="field-hint">Landlord name</div></div>
       </div>
@@ -1211,14 +1211,14 @@
     <div class="comp-sale-only">
       <h3 class="section-heading-top">Key Sale Terms</h3>
       <div class="row c3">
-        <div class="field"><label class="req">Building SF</label><select id="cs-bldg-sf"></select></div>
-        <div class="field"><label class="req">Selling Price</label><select id="cs-sell-price"></select></div>
+        <div class="field"><label class="req">Building SF</label><input id="cs-bldg-sf" type="text" placeholder="e.g. 50,000"></div>
+        <div class="field"><label class="req">Selling Price</label><input id="cs-sell-price" type="text" placeholder="e.g. $5,000,000"></div>
         <div class="field"><label class="req">Transaction Date</label><input id="cs-txn-date" type="date"></div>
       </div>
       <div class="row c3">
         <div class="field"><label>Seller</label><input id="cs-seller" list="comp-party-options"><div class="field-hint">Seller name</div></div>
         <div class="field"><label>Buyer</label><input id="cs-buyer" list="comp-party-options"><div class="field-hint">Buyer name</div></div>
-        <div class="field"><label>Year Built</label><select id="cs-year-built"></select></div>
+        <div class="field"><label>Year Built</label><input id="cs-year-built" type="text" placeholder="e.g. 1998"></div>
       </div>
     </div>
   </div><!-- end required-section -->
@@ -1240,7 +1240,7 @@
       <div class="field"><label>Submarket</label>
         <select id="c-submarket"><option value="">—</option><option>SCM</option><option>IBC</option><option>SAE</option><option>WC</option><option>NM</option><option>SOC</option><option>NOC</option><option>Mid Cities</option></select>
       </div>
-      <div class="field"><label>Project Name</label><select id="c-project"></select></div>
+      <div class="field"><label>Project Name</label><input id="c-project" type="text"></div>
     </div>
     <div class="row c2">
       <div class="field comp-lease-only"><label>Space Type / Lease Type</label><select id="c-space-type"></select></div>
@@ -1253,16 +1253,16 @@
   <div class="card comp-lease-only" id="comp-lease-section">
     <h2>Lease Details (Extended)</h2>
     <div class="row c3">
-      <div class="field"><label>Effective Rent</label><select id="c-eff-rent"></select></div>
-      <div class="field"><label>Mos on Mrkt</label><select id="c-mkt-months"></select></div>
-      <div class="field"><label>Free Rent</label><select id="c-free-rent"></select></div>
+      <div class="field"><label>Effective Rent</label><input id="c-eff-rent" type="text" placeholder="e.g. $1.10"></div>
+      <div class="field"><label>Mos on Mrkt</label><input id="c-mkt-months" type="text" placeholder="e.g. 6"></div>
+      <div class="field"><label>Free Rent</label><input id="c-free-rent" type="text" placeholder="e.g. 3"></div>
     </div>
     <div class="row c3">
       <div class="field"><label>TI Allowance</label>
         <select id="c-ti"><option value="">—</option><option>As-Is</option><option>Paint &amp; Carpet</option><option>Standard</option><option>Not Disclosed</option><option>See comments</option></select>
       </div>
-      <div class="field"><label>NNN Charges</label><select id="c-nnn"></select></div>
-      <div class="field"><label>Rent Adj / Escalations</label><select id="c-escalations"></select></div>
+      <div class="field"><label>NNN Charges</label><input id="c-nnn" type="text" placeholder="e.g. $0.45"></div>
+      <div class="field"><label>Rent Adj / Escalations</label><input id="c-escalations" type="text" placeholder="e.g. 3% annually"></div>
     </div>
     <div class="row c2">
       <div class="field"><label>Options</label>
@@ -1274,13 +1274,13 @@
   <div class="card comp-sale-only" id="comp-sale-section">
     <h2>Sale Details (Extended)</h2>
     <div class="row c3">
-      <div class="field"><label>Office SF</label><select id="cs-office-sf"></select></div>
-      <div class="field"><label>Land / Lot Size (SF)</label><select id="cs-land-sf"></select></div>
-      <div class="field"><label>Transaction Type</label><select id="cs-txn-type"></select></div>
+      <div class="field"><label>Office SF</label><input id="cs-office-sf" type="text" placeholder="e.g. 2,500"></div>
+      <div class="field"><label>Land / Lot Size (SF)</label><input id="cs-land-sf" type="text" placeholder="e.g. 40,000"></div>
+      <div class="field"><label>Transaction Type</label><input id="cs-txn-type" type="text"></div>
     </div>
     <div class="row c3">
-      <div class="field"><label>Parking Ratio</label><select id="cs-parking"></select></div>
-      <div class="field"><label>Mos on Mrkt</label><select id="cs-mkt-months"></select></div>
+      <div class="field"><label>Parking Ratio</label><input id="cs-parking" type="text" placeholder="e.g. 2/1000"></div>
+      <div class="field"><label>Mos on Mrkt</label><input id="cs-mkt-months" type="text" placeholder="e.g. 6"></div>
       <div class="field"><label>Multi-Ten / Space Type (Y/N)</label>
         <select id="cs-multi-ten"><option value=""></option><option>Yes</option><option>No</option><option>Single Tenant</option><option>Multi-Tenant</option></select>
       </div>
@@ -1290,21 +1290,21 @@
   <div class="card">
     <h2 id="comp-features-title">Property Features</h2>
     <div class="row c3 comp-lease-only">
-      <div class="field"><label>Building SF</label><select id="c-bldg-sf"></select></div>
-      <div class="field"><label>Land / Lot Size (SF)</label><select id="c-land-sf"></select></div>
-      <div class="field"><label>Yr Built / Year Built</label><select id="c-year-built"></select></div>
+      <div class="field"><label>Building SF</label><input id="c-bldg-sf" type="text" placeholder="e.g. 100,000"></div>
+      <div class="field"><label>Land / Lot Size (SF)</label><input id="c-land-sf" type="text" placeholder="e.g. 200,000"></div>
+      <div class="field"><label>Yr Built / Year Built</label><input id="c-year-built" type="text" placeholder="e.g. 1998"></div>
     </div>
     <div class="row c3 comp-lease-only">
-      <div class="field"><label>Office SF</label><select id="c-office-sf"></select></div>
+      <div class="field"><label>Office SF</label><input id="c-office-sf" type="text" placeholder="e.g. 3,000"></div>
     </div>
     <div class="row c3">
-      <div class="field"><label>DH (Dock-High Doors)</label><select id="c-dh"></select></div>
-      <div class="field"><label>GL (Grade Level Doors)</label><select id="c-gl"></select></div>
-      <div class="field"><label>Clear Height</label><select id="c-clearance"></select></div>
+      <div class="field"><label>DH (Dock-High Doors)</label><input id="c-dh" type="text" placeholder="e.g. 4"></div>
+      <div class="field"><label>GL (Grade Level Doors)</label><input id="c-gl" type="text" placeholder="e.g. 2"></div>
+      <div class="field"><label>Clear Height</label><input id="c-clearance" type="text" placeholder="e.g. 28'"></div>
     </div>
     <div class="row c3">
-      <div class="field comp-lease-only"><label>Parking Ratio</label><select id="c-parking"></select></div>
-      <div class="field"><label>Amps / Power</label><select id="c-amps"></select></div>
+      <div class="field comp-lease-only"><label>Parking Ratio</label><input id="c-parking" type="text" placeholder="e.g. 2/1000"></div>
+      <div class="field"><label>Amps / Power</label><input id="c-amps" type="text" placeholder="e.g. 400"></div>
       <div class="field"><label>Sprinklers</label>
         <select id="c-sprinklers"><option value="">—</option><option>Yes</option><option>No</option></select>
       </div>
@@ -1330,49 +1330,49 @@
   <div class="card comp-lease-only">
     <h2>Brokerage Info</h2>
     <div class="row c2">
-      <div class="field"><label>Listing Brokerage</label><select id="c-list-brokerage"></select></div>
-      <div class="field"><label>Procuring Brokerage</label><select id="c-proc-brokerage"></select></div>
+      <div class="field"><label>Listing Brokerage</label><input id="c-list-brokerage" type="text"></div>
+      <div class="field"><label>Procuring Brokerage</label><input id="c-proc-brokerage" type="text"></div>
     </div>
     <div class="row c2">
-      <div class="field"><label>Listing Agent 1</label><select id="c-list-agent1"></select></div>
-      <div class="field"><label>Procuring Agent 1</label><select id="c-proc-agent1"></select></div>
+      <div class="field"><label>Listing Agent 1</label><input id="c-list-agent1" type="text"></div>
+      <div class="field"><label>Procuring Agent 1</label><input id="c-proc-agent1" type="text"></div>
     </div>
     <div class="row c2">
-      <div class="field"><label>Listing Agent 2</label><select id="c-list-agent2"></select></div>
-      <div class="field"><label>Procuring Agent 2</label><select id="c-proc-agent2"></select></div>
+      <div class="field"><label>Listing Agent 2</label><input id="c-list-agent2" type="text"></div>
+      <div class="field"><label>Procuring Agent 2</label><input id="c-proc-agent2" type="text"></div>
     </div>
   </div>
 
   <div class="card comp-sale-only">
     <h2>Brokerage Info</h2>
     <div class="row c2">
-      <div class="field"><label>Listing Brokerage</label><select id="cs-list-brokerage"></select></div>
-      <div class="field"><label>Procuring Brokerage</label><select id="cs-proc-brokerage"></select></div>
+      <div class="field"><label>Listing Brokerage</label><input id="cs-list-brokerage" type="text"></div>
+      <div class="field"><label>Procuring Brokerage</label><input id="cs-proc-brokerage" type="text"></div>
     </div>
     <div class="row c2">
-      <div class="field"><label>Listing Agent 1</label><select id="cs-list-agent1"></select></div>
-      <div class="field"><label>Procuring Agent 1</label><select id="cs-proc-agent1"></select></div>
+      <div class="field"><label>Listing Agent 1</label><input id="cs-list-agent1" type="text"></div>
+      <div class="field"><label>Procuring Agent 1</label><input id="cs-proc-agent1" type="text"></div>
     </div>
     <div class="row c2">
-      <div class="field"><label>Listing Agent 2</label><select id="cs-list-agent2"></select></div>
-      <div class="field"><label>Procuring Agent 2</label><select id="cs-proc-agent2"></select></div>
+      <div class="field"><label>Listing Agent 2</label><input id="cs-list-agent2" type="text"></div>
+      <div class="field"><label>Procuring Agent 2</label><input id="cs-proc-agent2" type="text"></div>
     </div>
   </div>
 
   <div class="card">
     <h2>Comments</h2>
     <div class="field comp-lease-only"><label>Opex cost estimated (Y/N)?</label>
-      <select id="c-opex-est"><option value="">—</option><option>Yes</option><option>No</option></select>
+      <input id="c-opex-est" type="text" placeholder="Yes / No">
     </div>
     <div class="field comp-lease-only top-gap-sm"><label>Single or Multi-Tenant?</label>
-      <select id="c-comments-multi"><option value=""></option><option>Single Tenant</option><option>Multi-Tenant</option><option>Yes</option><option>No</option></select>
+      <input id="c-comments-multi" type="text" placeholder="Single Tenant / Multi-Tenant">
     </div>
     <div class="field comp-lease-only top-gap-sm"><label>Part of Larger?</label>
-      <select id="c-comments-pol"><option value=""></option><option>Yes</option><option>No</option></select>
+      <input id="c-comments-pol" type="text" placeholder="Yes / No">
     </div>
-    <div class="field comp-sale-only"><label>Approximate Cap Rate?</label><select id="cs-cap-rate"></select></div>
+    <div class="field comp-sale-only"><label>Approximate Cap Rate?</label><input id="cs-cap-rate" type="text" placeholder="e.g. 5.5%"></div>
     <div class="field comp-sale-only top-gap-sm"><label>Investment Sale?</label>
-      <select id="cs-investment"><option value=""></option><option>Yes</option><option>No</option></select>
+      <input id="cs-investment" type="text" placeholder="Yes / No">
     </div>
     <div class="field top-gap-sm"><textarea id="c-comments" rows="3"></textarea><div class="field-hint">Additional comments...</div></div>
   </div>
