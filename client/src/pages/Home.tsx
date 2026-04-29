@@ -184,7 +184,7 @@ export default function Home() {
       propertyType: compPropertyType || undefined,
       dateFrom: compDateFrom || undefined,
       dateTo: compDateTo || undefined,
-      limit: 12,
+      limit: 20,
     },
     { enabled: Boolean(user) }
   );

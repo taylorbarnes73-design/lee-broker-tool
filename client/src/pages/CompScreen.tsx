@@ -415,7 +415,7 @@ function FunctionalCompScreen() {
     city: city.trim() || undefined,
     propertyType: propertyType.trim() || undefined,
     dateFrom,
-    limit: 24,
+    limit: 20,
   });
   const comps = useMemo(() => (compsQuery.data?.results ?? []) as CompSearchResult[], [compsQuery.data?.results]);
   const latestImport = compsQuery.data?.latestImport;

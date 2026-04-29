@@ -223,24 +223,24 @@ function getRowValue(row: CompRow, key: string): unknown {
   return row[key];
 }
 
-function formatNumber(value: number | null, decimals = 0): string {
-  if (value === null) return "";
+function formatNumber(value: number | null | undefined, decimals = 0): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return "";
   return value.toLocaleString("en-US", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
 }
 
-function formatCurrency(value: number | null, decimals = 0): string {
-  if (value === null) return "";
+function formatCurrency(value: number | null | undefined, decimals = 0): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return "";
   return `$${value.toLocaleString("en-US", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   })}`;
 }
 
-function formatCurrencyPerSf(value: number | null, suffix = ""): string {
-  if (value === null) return "";
+function formatCurrencyPerSf(value: number | null | undefined, suffix = ""): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return "";
   const decimals = value % 1 === 0 ? 2 : 3;
   return `${formatCurrency(value, decimals)}${suffix}`;
 }

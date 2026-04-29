@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, like, lte, ne, or } from "drizzle-orm";
+import { and, desc, eq, gte, like, lte, ne, or, sql } from "drizzle-orm";
 import {
   compImports,
   leaseComps,
@@ -40,6 +40,7 @@ export type CompSearchFilters = {
   dateFrom?: string;
   dateTo?: string;
   limit: number;
+  offset?: number;
 };
 
 export type CompSearchResult = {
@@ -68,6 +69,11 @@ function chunkArray<T>(items: T[], size: number): T[][] {
     chunks.push(items.slice(index, index + size));
   }
   return chunks;
+}
+
+function numberFromCount(value: unknown) {
+  const count = Number(value ?? 0);
+  return Number.isFinite(count) ? count : 0;
 }
 
 function stringifyRecord(value: LeaseCompRecord | SaleCompRecord) {
@@ -316,12 +322,26 @@ export async function addSingleComp(params: {
 
   if (compType === "lease") {
     const rows = buildLeaseInsertRows([record as LeaseCompRecord], activeImport.id);
-    await db.insert(leaseComps).values(rows);
-    await db.update(compImports).set({ leaseCount: activeImport.leaseCount + 1, updatedAt: new Date() }).where(eq(compImports.id, activeImport.id));
+    const [inserted] = await db.insert(leaseComps).values(rows);
+    await db
+      .update(compImports)
+      .set({ leaseCount: sql`${compImports.leaseCount} + 1`, updatedAt: new Date() })
+      .where(eq(compImports.id, activeImport.id));
+    return {
+      importId: activeImport.id,
+      compId: (inserted as { insertId?: number }).insertId ?? null,
+    };
   } else {
     const rows = buildSaleInsertRows([record as SaleCompRecord], activeImport.id);
-    await db.insert(saleComps).values(rows);
-    await db.update(compImports).set({ saleCount: activeImport.saleCount + 1, updatedAt: new Date() }).where(eq(compImports.id, activeImport.id));
+    const [inserted] = await db.insert(saleComps).values(rows);
+    await db
+      .update(compImports)
+      .set({ saleCount: sql`${compImports.saleCount} + 1`, updatedAt: new Date() })
+      .where(eq(compImports.id, activeImport.id));
+    return {
+      importId: activeImport.id,
+      compId: (inserted as { insertId?: number }).insertId ?? null,
+    };
   }
 }
 
@@ -440,6 +460,8 @@ export async function searchCompRows(params: {
   filters: CompSearchFilters;
 }) {
   const { db, compType, importId, filters } = params;
+  const limit = Math.max(1, filters.limit);
+  const offset = Math.max(0, filters.offset ?? 0);
   const queryText = normalizeFilterText(filters.query);
   const city = normalizeFilterText(filters.city);
   const market = normalizeFilterText(filters.market);
@@ -469,22 +491,30 @@ export async function searchCompRows(params: {
     if (dateFrom) conditions.push(gte(leaseComps.transactionDate, dateFrom));
     if (dateTo) conditions.push(lte(leaseComps.transactionDate, dateTo));
 
+    const whereClause = and(...conditions);
+    const countRows = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(leaseComps)
+      .where(whereClause);
+
+    const total = numberFromCount(countRows[0]?.count);
     const rows = await db
       .select()
       .from(leaseComps)
-      .where(and(...conditions))
+      .where(whereClause)
       .orderBy(desc(leaseComps.transactionDate), desc(leaseComps.id))
-      .limit(filters.limit);
+      .limit(limit)
+      .offset(offset);
 
-    const mapped = rows.map(mapLeaseSearchResult);
-    if (!queryText) return mapped;
-    const lowered = queryText.toLowerCase();
-    return mapped.filter(result =>
-      [result.title, result.address, result.city, result.market, result.subMarket, result.metaLine]
-        .join(" ")
-        .toLowerCase()
-        .includes(lowered)
-    );
+    const results = rows.map(mapLeaseSearchResult);
+    return {
+      results,
+      total,
+      offset,
+      limit,
+      hasNext: offset + results.length < total,
+      hasPrevious: offset > 0,
+    };
   }
 
   const conditions = [eq(saleComps.importId, importId)];
@@ -507,20 +537,28 @@ export async function searchCompRows(params: {
   if (dateFrom) conditions.push(gte(saleComps.transactionDate, dateFrom));
   if (dateTo) conditions.push(lte(saleComps.transactionDate, dateTo));
 
+  const whereClause = and(...conditions);
+  const countRows = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(saleComps)
+    .where(whereClause);
+
+  const total = numberFromCount(countRows[0]?.count);
   const rows = await db
     .select()
     .from(saleComps)
-    .where(and(...conditions))
+    .where(whereClause)
     .orderBy(desc(saleComps.transactionDate), desc(saleComps.id))
-    .limit(filters.limit);
+    .limit(limit)
+    .offset(offset);
 
-  const mapped = rows.map(mapSaleSearchResult);
-  if (!queryText) return mapped;
-  const lowered = queryText.toLowerCase();
-  return mapped.filter(result =>
-    [result.title, result.address, result.city, result.market, result.subMarket, result.metaLine]
-      .join(" ")
-      .toLowerCase()
-      .includes(lowered)
-  );
+  const results = rows.map(mapSaleSearchResult);
+  return {
+    results,
+    total,
+    offset,
+    limit,
+    hasNext: offset + results.length < total,
+    hasPrevious: offset > 0,
+  };
 }

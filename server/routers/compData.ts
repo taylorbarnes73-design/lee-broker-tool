@@ -24,7 +24,8 @@ const searchInputSchema = z.object({
   propertyType: z.string().trim().max(120).optional(),
   dateFrom: z.string().trim().max(32).optional(),
   dateTo: z.string().trim().max(32).optional(),
-  limit: z.number().min(1).max(100).default(24),
+  limit: z.number().min(1).max(100).default(20),
+  offset: z.number().min(0).default(0),
 });
 
 const manualRecordSchema = z.object({}).catchall(z.unknown());
@@ -46,8 +47,13 @@ function numberValue(input: ManualRecordInput, key: string) {
   const value = input[key];
   if (value === null || value === undefined || value === "") return null;
   if (typeof value === "number" && Number.isFinite(value)) return value;
-  const parsed = Number(String(value).replace(/[$,%]/g, "").replace(/,/g, "").trim());
-  return Number.isFinite(parsed) ? parsed : null;
+  const normalized = String(value).replace(/,/g, "").trim();
+  const parsed = Number(normalized.replace(/[$,%]/g, ""));
+  if (Number.isFinite(parsed)) return parsed;
+  const firstNumber = normalized.match(/-?\d+(?:\.\d+)?/);
+  if (!firstNumber) return null;
+  const extracted = Number(firstNumber[0]);
+  return Number.isFinite(extracted) ? extracted : null;
 }
 
 function dateValue(input: ManualRecordInput, key: string) {
@@ -56,6 +62,16 @@ function dateValue(input: ManualRecordInput, key: string) {
   const parsed = new Date(raw);
   if (Number.isNaN(parsed.getTime())) return raw;
   return parsed.toISOString().slice(0, 10);
+}
+
+function brokerSubmittedRecord(input: ManualRecordInput, user: { name: string | null; email: string | null }) {
+  const submitter = user.name || user.email || "Broker Submission";
+  return {
+    ...input,
+    source: textValue(input, "source") || submitter,
+    verifiedBy: textValue(input, "verifiedBy") || submitter,
+    lastUpdated: textValue(input, "lastUpdated") || new Date().toISOString().slice(0, 10),
+  };
 }
 
 function manualLeaseRecord(input: ManualRecordInput): LeaseCompRecord {
@@ -260,13 +276,33 @@ export const compDataRouter = router({
       ? manualLeaseRecord(input.record)
       : manualSaleRecord(input.record);
 
-    await addSingleComp({
+    const stored = await addSingleComp({
       db,
       compType: input.compType,
       record,
     });
 
-    return { success: true as const };
+    return { success: true as const, ...stored };
+  }),
+
+  submitComp: protectedProcedure.input(addCompInputSchema).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) {
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    }
+
+    const recordInput = brokerSubmittedRecord(input.record, ctx.user);
+    const record = input.compType === "lease"
+      ? manualLeaseRecord(recordInput)
+      : manualSaleRecord(recordInput);
+
+    const stored = await addSingleComp({
+      db,
+      compType: input.compType,
+      record,
+    });
+
+    return { success: true as const, ...stored };
   }),
 
   search: protectedProcedure.input(searchInputSchema).query(async ({ input }) => {
@@ -286,7 +322,7 @@ export const compDataRouter = router({
       };
     }
 
-    const results = await searchCompRows({
+    const page = await searchCompRows({
       db,
       compType: input.compType,
       importId: latestImport.id,
@@ -299,6 +335,7 @@ export const compDataRouter = router({
         dateFrom: input.dateFrom,
         dateTo: input.dateTo,
         limit: input.limit,
+        offset: input.offset,
       },
     });
 
@@ -313,7 +350,17 @@ export const compDataRouter = router({
         sourceFilename: latestImport.sourceFilename,
         createdAt: latestImport.createdAt,
       },
-      results,
+      results: page.results,
+      pageInfo: {
+        total: page.total,
+        offset: page.offset,
+        limit: page.limit,
+        returned: page.results.length,
+        hasNext: page.hasNext,
+        hasPrevious: page.hasPrevious,
+        nextOffset: page.hasNext ? page.offset + page.limit : null,
+        previousOffset: page.hasPrevious ? Math.max(0, page.offset - page.limit) : null,
+      },
     };
   }),
 });
