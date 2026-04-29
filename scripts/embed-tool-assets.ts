@@ -165,7 +165,7 @@ async function main() {
   console.log(`Comp workbook: ${compWorkbookPath}`);
 
   if (!compOnly) {
-    const results = [];
+    const results: Awaited<ReturnType<typeof embedDocument>>[] = [];
     for (const doc of documents) {
       const result = await embedDocument(db, doc);
       results.push(result);

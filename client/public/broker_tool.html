@@ -6279,9 +6279,9 @@ function buildCrDropdown(containerId, options) {
 
 function initCompReportDropdowns() {
   const CITIES = ['Anaheim','Buena Park','Brea','Carson','Cerritos','Chino','Chino Hills','Corona','Costa Mesa','Cypress','El Segundo','Fontana','Fullerton','Garden Grove','Huntington Beach','Industry','Irvine','La Mirada','Lake Forest','Laguna Hills','Laguna Niguel','Long Beach','Los Angeles','National City','Newport Beach','Ontario','Orange','Perris','Placentia','Rancho Dominguez','Riverside','Santa Ana','Torrance','Tustin','Vernon','Westminster'];
-  const MARKETS = ['Los Angeles','Orange County','Inland Empire','San Diego'];
-  const SUBMARKETS = ['Airport Area','Anaheim','Brea/Fullerton','Cerritos','Chino/Chino Hills','Corona','Costa Mesa/Newport','Cypress','Fontana/Rialto','Huntington Beach','Industry','Irvine','La Mirada/Norwalk','Long Beach','Mira Loma','National City','Ontario','Orange/Tustin','Perris','Rancho Dominguez','Riverside','Santa Ana','South Bay','Torrance','Vernon/Commerce'];
-  const PROP_TYPES = ['Indust','Office','Retail','R&D/Flex','Land'];
+  const MARKETS = ['Orange County','Orange','Los Angeles','Inland Empire','Riverside','San Bernardino','San Diego'];
+  const SUBMARKETS = ['IBC','NOC','SOC','SAE','SCM','WC','NM','Mid Cities','Airport Area','Anaheim','Brea/Fullerton','Cerritos','Chino/Chino Hills','Corona','Costa Mesa/Newport','Cypress','Fontana/Rialto','Huntington Beach','Industry','Irvine','La Mirada/Norwalk','Long Beach','Mira Loma','National City','Ontario','Orange/Tustin','Perris','Rancho Dominguez','Riverside','Santa Ana','South Bay','Torrance','Vernon/Commerce'];
+  const PROP_TYPES = ['IND','OFF','RET','LND','Indust','Industrial','Office','Retail','R&D/Flex','Flex','Land'];
 
   buildCrDropdown('cr-city', CITIES);
   buildCrDropdown('cr-market', MARKETS);

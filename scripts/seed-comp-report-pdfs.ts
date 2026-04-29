@@ -197,6 +197,14 @@ function baseLeaseRecord(id: number): LeaseCompRecord {
     confidential: "",
     expenseStop: "",
     rentUse: "",
+    photo: "",
+    listAgent1: "",
+    listAgent2: "",
+    procAgent1: "",
+    procAgent2: "",
+    verified: "",
+    updatedBy: "",
+    apn: "",
   };
 }
 
@@ -254,6 +262,14 @@ function baseSaleRecord(id: number): SaleCompRecord {
     sellerPhone: "",
     comments: "",
     askingPrice: null,
+    photo: "",
+    listAgent1: "",
+    listAgent2: "",
+    procAgent1: "",
+    procAgent2: "",
+    verified: "",
+    updatedBy: "",
+    apn: "",
   };
 }
 

@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, like, lte, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, like, lte, ne, or, sql } from "drizzle-orm";
 import {
   compImports,
   leaseComps,
@@ -93,6 +93,60 @@ function parseSalePayload(value: string): SaleCompRecord {
 
 function normalizeFilterText(value: string | undefined) {
   return value?.trim() ?? "";
+}
+
+const FILTER_ALIASES: Record<string, string[]> = {
+  "airport area": ["Airport Area", "IBC"],
+  "brea/fullerton": ["Brea/Fullerton", "Brea", "Fullerton", "NOC"],
+  "chino/chino hills": ["Chino/Chino Hills", "Chino", "Chino Hills"],
+  "costa mesa/newport": ["Costa Mesa/Newport", "Costa Mesa", "Newport Beach", "Newport", "SCM"],
+  "fontana/rialto": ["Fontana/Rialto", "Fontana", "Rialto"],
+  "la mirada/norwalk": ["La Mirada/Norwalk", "La Mirada", "Norwalk", "Mid Cities"],
+  "orange/tustin": ["Orange/Tustin", "Orange", "Tustin", "NOC", "WC"],
+  "santa ana": ["Santa Ana", "SAE", "SCM"],
+  "vernon/commerce": ["Vernon/Commerce", "Vernon", "Commerce"],
+  "orange county": ["Orange County", "Orange"],
+  "inland empire": ["Inland Empire", "Riverside", "San Bernardino"],
+  ind: ["IND", "Indust", "Industrial"],
+  indust: ["Indust", "Industrial", "IND"],
+  industrial: ["Industrial", "Indust", "IND"],
+  off: ["OFF", "Office"],
+  office: ["Office", "OFF"],
+  ret: ["RET", "Retail"],
+  retail: ["Retail", "RET"],
+  lnd: ["LND", "Land"],
+  land: ["Land", "LND"],
+  flex: ["Flex", "FLEX", "FLX", "R&D/Flex"],
+  "r&d/flex": ["R&D/Flex", "R&D", "Flex", "FLEX", "FLX"],
+};
+
+function expandFilterValues(values: string[] | undefined) {
+  const expanded = new Set<string>();
+  for (const rawValue of values ?? []) {
+    const value = rawValue.trim();
+    if (!value) continue;
+    expanded.add(value);
+
+    const aliasValues = FILTER_ALIASES[value.toLowerCase()] ?? [];
+    for (const alias of aliasValues) expanded.add(alias);
+
+    for (const part of value.split("/")) {
+      const trimmed = part.trim();
+      if (trimmed) expanded.add(trimmed);
+    }
+  }
+  return Array.from(expanded);
+}
+
+function buildFlexibleTextFilter(column: unknown, values: string[] | undefined) {
+  const terms = expandFilterValues(values);
+  if (!terms.length) return null;
+  return or(
+    ...terms.flatMap(term => [
+      eq(column as never, term),
+      like(column as never, `%${term}%`),
+    ])
+  );
 }
 
 function buildLeaseMetricLine(record: LeaseCompRecord) {
@@ -490,10 +544,14 @@ export async function searchCompRows(params: {
         )!
       );
     }
-    if (cities.length) conditions.push(inArray(leaseComps.city, cities));
-    if (markets.length) conditions.push(inArray(leaseComps.market, markets));
-    if (subMarkets.length) conditions.push(inArray(leaseComps.subMarket, subMarkets));
-    if (propertyTypes.length) conditions.push(inArray(leaseComps.propertyType, propertyTypes));
+    const cityFilter = buildFlexibleTextFilter(leaseComps.city, cities);
+    const marketFilter = buildFlexibleTextFilter(leaseComps.market, markets);
+    const subMarketFilter = buildFlexibleTextFilter(leaseComps.subMarket, subMarkets);
+    const propertyTypeFilter = buildFlexibleTextFilter(leaseComps.propertyType, propertyTypes);
+    if (cityFilter) conditions.push(cityFilter);
+    if (marketFilter) conditions.push(marketFilter);
+    if (subMarketFilter) conditions.push(subMarketFilter);
+    if (propertyTypeFilter) conditions.push(propertyTypeFilter);
     if (sfMin !== undefined) conditions.push(sql`CAST(JSON_UNQUOTE(JSON_EXTRACT(${leaseComps.rawPayload}, '$.leasedSqFt')) AS SIGNED) >= ${sfMin}`);
     if (sfMax !== undefined) conditions.push(sql`CAST(JSON_UNQUOTE(JSON_EXTRACT(${leaseComps.rawPayload}, '$.leasedSqFt')) AS SIGNED) <= ${sfMax}`);
     if (dateFrom) conditions.push(gte(leaseComps.transactionDate, dateFrom));
@@ -538,10 +596,14 @@ export async function searchCompRows(params: {
       )!
     );
   }
-  if (cities.length) conditions.push(inArray(saleComps.city, cities));
-  if (markets.length) conditions.push(inArray(saleComps.market, markets));
-  if (subMarkets.length) conditions.push(inArray(saleComps.subMarket, subMarkets));
-  if (propertyTypes.length) conditions.push(inArray(saleComps.propertyType, propertyTypes));
+  const cityFilter = buildFlexibleTextFilter(saleComps.city, cities);
+  const marketFilter = buildFlexibleTextFilter(saleComps.market, markets);
+  const subMarketFilter = buildFlexibleTextFilter(saleComps.subMarket, subMarkets);
+  const propertyTypeFilter = buildFlexibleTextFilter(saleComps.propertyType, propertyTypes);
+  if (cityFilter) conditions.push(cityFilter);
+  if (marketFilter) conditions.push(marketFilter);
+  if (subMarketFilter) conditions.push(subMarketFilter);
+  if (propertyTypeFilter) conditions.push(propertyTypeFilter);
   if (sfMin !== undefined) conditions.push(sql`CAST(JSON_UNQUOTE(JSON_EXTRACT(${saleComps.rawPayload}, '$.buildingSqFt')) AS SIGNED) >= ${sfMin}`);
   if (sfMax !== undefined) conditions.push(sql`CAST(JSON_UNQUOTE(JSON_EXTRACT(${saleComps.rawPayload}, '$.buildingSqFt')) AS SIGNED) <= ${sfMax}`);
   if (dateFrom) conditions.push(gte(saleComps.transactionDate, dateFrom));

@@ -143,6 +143,14 @@ function manualLeaseRecord(input: ManualRecordInput): LeaseCompRecord {
     confidential: textValue(input, "confidential"),
     expenseStop: textValue(input, "expenseStop"),
     rentUse: textValue(input, "rentUse"),
+    photo: textValue(input, "photo"),
+    listAgent1: textValue(input, "listAgent1"),
+    listAgent2: textValue(input, "listAgent2"),
+    procAgent1: textValue(input, "procAgent1"),
+    procAgent2: textValue(input, "procAgent2"),
+    verified: textValue(input, "verified"),
+    updatedBy: textValue(input, "updatedBy"),
+    apn: textValue(input, "apn"),
   };
 }
 
@@ -200,6 +208,14 @@ function manualSaleRecord(input: ManualRecordInput): SaleCompRecord {
     sellerPhone: textValue(input, "sellerPhone"),
     comments: textValue(input, "comments"),
     askingPrice: numberValue(input, "askingPrice"),
+    photo: textValue(input, "photo"),
+    listAgent1: textValue(input, "listAgent1"),
+    listAgent2: textValue(input, "listAgent2"),
+    procAgent1: textValue(input, "procAgent1"),
+    procAgent2: textValue(input, "procAgent2"),
+    verified: textValue(input, "verified"),
+    updatedBy: textValue(input, "updatedBy"),
+    apn: textValue(input, "apn"),
   };
 }
 
