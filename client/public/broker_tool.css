@@ -3871,3 +3871,17 @@ body {
   .panel { padding: 18px 16px 64px; }
   .card { padding: 16px 18px !important; }
 }
+
+
+/* AI Auto-fill shortcut card — placed above Step 1 on voucher */
+.ai-shortcut-card {
+  border: 1px dashed rgba(139, 95, 240, .35) !important;
+  background: linear-gradient(180deg, rgba(139, 95, 240, .04), #fff) !important;
+}
+.ai-shortcut-card h2 { color: var(--ink-900, #0A0A0B); }
+.ai-shortcut-card .inline-badge {
+  background: rgba(139, 95, 240, .12);
+  color: #5b3fb7;
+  border: 1px solid rgba(139, 95, 240, .25);
+}
+.ai-shortcut-card .micro-copy { color: var(--text2, #575A74); margin-bottom: 10px; }
