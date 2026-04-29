@@ -1857,7 +1857,7 @@ function formatReportDate(value) {
   return parsed.toLocaleDateString("en-US");
 }
 function buildBrokerLine(kind, brokerage, agents) {
-  const namedAgents = agents.map((a) => a.trim()).filter(Boolean);
+  const namedAgents = agents.map((a) => (a ?? "").trim()).filter(Boolean);
   if (!brokerage && namedAgents.length === 0) return "";
   const label = kind === "List" ? "List. Brkr" : "Proc. Brkr";
   const agentText = namedAgents.length ? namedAgents.join(" & ") : "";
