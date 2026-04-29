@@ -15,13 +15,17 @@ import type { LeaseCompRecord, SaleCompRecord } from "../../shared/comp-data";
 
 const compTypeSchema = z.enum(["lease", "sale"]);
 
+const filterArr = z.array(z.string().trim().max(120)).optional();
+
 const searchInputSchema = z.object({
   compType: compTypeSchema,
   query: z.string().trim().max(200).optional(),
-  city: z.string().trim().max(120).optional(),
-  market: z.string().trim().max(120).optional(),
-  subMarket: z.string().trim().max(120).optional(),
-  propertyType: z.string().trim().max(120).optional(),
+  cities: filterArr,
+  markets: filterArr,
+  subMarkets: filterArr,
+  propertyTypes: filterArr,
+  sfMin: z.number().min(0).optional(),
+  sfMax: z.number().min(0).optional(),
   dateFrom: z.string().trim().max(32).optional(),
   dateTo: z.string().trim().max(32).optional(),
   limit: z.number().min(1).max(100).default(20),
@@ -328,10 +332,12 @@ export const compDataRouter = router({
       importId: latestImport.id,
       filters: {
         query: input.query,
-        city: input.city,
-        market: input.market,
-        subMarket: input.subMarket,
-        propertyType: input.propertyType,
+        cities: input.cities,
+        markets: input.markets,
+        subMarkets: input.subMarkets,
+        propertyTypes: input.propertyTypes,
+        sfMin: input.sfMin,
+        sfMax: input.sfMax,
         dateFrom: input.dateFrom,
         dateTo: input.dateTo,
         limit: input.limit,

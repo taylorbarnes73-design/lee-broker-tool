@@ -3259,7 +3259,7 @@ body {
 }
 .cr-filters-grid {
   display: grid;
-  grid-template-columns: 160px 1fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 140px 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
   gap: 10px;
 }
 .cr-filters .field { display: flex; flex-direction: column; min-width: 0; }
@@ -3276,6 +3276,50 @@ body {
   padding: 8px 12px;
   font-size: 13px;
 }
+.cr-multi-hint {
+  font-size: 9px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-400);
+  font-weight: 400;
+}
+.cr-multi-sel {
+  min-height: 80px !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  resize: vertical;
+  border-radius: var(--r-6);
+}
+.cr-multi-sel option {
+  padding: 3px 4px;
+  border-radius: 2px;
+}
+.cr-multi-sel option:checked {
+  background: var(--lee-crimson, #9B0D2A);
+  color: #fff;
+}
+.cr-range-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.cr-range-row input {
+  flex: 1;
+  min-width: 0;
+}
+.cr-range-sep {
+  font-size: 13px;
+  color: var(--ink-400);
+  flex-shrink: 0;
+}
+.comp-submit-badge {
+  font-size: 12px;
+  min-height: 20px;
+  margin-top: 8px;
+  font-weight: 500;
+}
+.comp-submit-badge.saved { color: #16a34a; }
+.comp-submit-badge.error { color: var(--ink-500); }
 .cr-filters-actions {
   display: flex;
   gap: 10px;
@@ -3495,7 +3539,7 @@ body {
 
 @media (max-width: 1100px) {
   .cr-filters-grid {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
   }
   .cr-drawer {
     grid-template-columns: 1fr 1fr;

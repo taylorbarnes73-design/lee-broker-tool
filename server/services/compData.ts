@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, like, lte, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, like, lte, ne, or, sql } from "drizzle-orm";
 import {
   compImports,
   leaseComps,
@@ -33,10 +33,12 @@ export type CompImportSummary = {
 
 export type CompSearchFilters = {
   query?: string;
-  city?: string;
-  market?: string;
-  subMarket?: string;
-  propertyType?: string;
+  cities?: string[];
+  markets?: string[];
+  subMarkets?: string[];
+  propertyTypes?: string[];
+  sfMin?: number;
+  sfMax?: number;
   dateFrom?: string;
   dateTo?: string;
   limit: number;
@@ -463,10 +465,11 @@ export async function searchCompRows(params: {
   const limit = Math.max(1, filters.limit);
   const offset = Math.max(0, filters.offset ?? 0);
   const queryText = normalizeFilterText(filters.query);
-  const city = normalizeFilterText(filters.city);
-  const market = normalizeFilterText(filters.market);
-  const subMarket = normalizeFilterText(filters.subMarket);
-  const propertyType = normalizeFilterText(filters.propertyType);
+  const cities = filters.cities?.filter(Boolean) ?? [];
+  const markets = filters.markets?.filter(Boolean) ?? [];
+  const subMarkets = filters.subMarkets?.filter(Boolean) ?? [];
+  const propertyTypes = filters.propertyTypes?.filter(Boolean) ?? [];
+  const { sfMin, sfMax } = filters;
   const dateFrom = normalizeFilterText(filters.dateFrom);
   const dateTo = normalizeFilterText(filters.dateTo);
 
@@ -484,10 +487,12 @@ export async function searchCompRows(params: {
         )!
       );
     }
-    if (city) conditions.push(eq(leaseComps.city, city));
-    if (market) conditions.push(eq(leaseComps.market, market));
-    if (subMarket) conditions.push(eq(leaseComps.subMarket, subMarket));
-    if (propertyType) conditions.push(eq(leaseComps.propertyType, propertyType));
+    if (cities.length) conditions.push(inArray(leaseComps.city, cities));
+    if (markets.length) conditions.push(inArray(leaseComps.market, markets));
+    if (subMarkets.length) conditions.push(inArray(leaseComps.subMarket, subMarkets));
+    if (propertyTypes.length) conditions.push(inArray(leaseComps.propertyType, propertyTypes));
+    if (sfMin !== undefined) conditions.push(sql`CAST(JSON_UNQUOTE(JSON_EXTRACT(${leaseComps.rawPayload}, '$.leasedSqFt')) AS SIGNED) >= ${sfMin}`);
+    if (sfMax !== undefined) conditions.push(sql`CAST(JSON_UNQUOTE(JSON_EXTRACT(${leaseComps.rawPayload}, '$.leasedSqFt')) AS SIGNED) <= ${sfMax}`);
     if (dateFrom) conditions.push(gte(leaseComps.transactionDate, dateFrom));
     if (dateTo) conditions.push(lte(leaseComps.transactionDate, dateTo));
 
@@ -530,10 +535,12 @@ export async function searchCompRows(params: {
       )!
     );
   }
-  if (city) conditions.push(eq(saleComps.city, city));
-  if (market) conditions.push(eq(saleComps.market, market));
-  if (subMarket) conditions.push(eq(saleComps.subMarket, subMarket));
-  if (propertyType) conditions.push(eq(saleComps.propertyType, propertyType));
+  if (cities.length) conditions.push(inArray(saleComps.city, cities));
+  if (markets.length) conditions.push(inArray(saleComps.market, markets));
+  if (subMarkets.length) conditions.push(inArray(saleComps.subMarket, subMarkets));
+  if (propertyTypes.length) conditions.push(inArray(saleComps.propertyType, propertyTypes));
+  if (sfMin !== undefined) conditions.push(sql`CAST(JSON_UNQUOTE(JSON_EXTRACT(${saleComps.rawPayload}, '$.buildingSqFt')) AS SIGNED) >= ${sfMin}`);
+  if (sfMax !== undefined) conditions.push(sql`CAST(JSON_UNQUOTE(JSON_EXTRACT(${saleComps.rawPayload}, '$.buildingSqFt')) AS SIGNED) <= ${sfMax}`);
   if (dateFrom) conditions.push(gte(saleComps.transactionDate, dateFrom));
   if (dateTo) conditions.push(lte(saleComps.transactionDate, dateTo));
 
