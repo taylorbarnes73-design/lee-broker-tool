@@ -9651,6 +9651,7 @@ let compReportsUser = null;
 let compReportsLatest = null;
 let compReportsResultsCache = [];
 let compReportsTypeCache = 'lease';
+let compReportsDeselected = new Set();
 
 function compReportVisibleFields(fields) {
   return Object.entries(fields || {}).filter(([, value]) => !!value).slice(0, 10);
@@ -9727,6 +9728,7 @@ function compReportRenderPhotoBox(result) {
 function compReportRenderTableHeader(compType) {
   const cols = COMP_REPORT_TABLE_COLUMNS[compType] || COMP_REPORT_TABLE_COLUMNS.lease;
   let html = '<tr>';
+  html += '<th class="cr-sel-col"><label class="cr-sel-wrap" title="Select all"><input type="checkbox" id="cr-select-all" onchange="compReportToggleSelectAll(this.checked)"><span class="cr-sel-box"></span></label></th>';
   html += '<th>#</th>';
   html += '<th>Photo</th>';
   html += '<th>Address</th>';
@@ -9745,7 +9747,9 @@ function compReportRenderRow(result, index, compType) {
   const cityLine = result?.reportCard?.cityLine || [result?.city, result?.state, result?.zipCode].filter(Boolean).join(', ');
   const submarket = compReportGetSubmarketText(result);
 
+  const isSelected = !compReportsDeselected.has(index);
   let cells = '';
+  cells += '<td class="cr-sel-col"><label class="cr-sel-wrap"><input type="checkbox" class="cr-row-check" data-idx="' + index + '" ' + (isSelected ? 'checked' : '') + ' onchange="compReportToggleRowSelection(' + index + ', this.checked)"><span class="cr-sel-box"></span></label></td>';
   cells += '<td class="cr-idx">' + (index + 1) + '</td>';
   cells += '<td class="cr-photo">' + compReportRenderPhotoBox(result) + '</td>';
   cells += '<td>' +
@@ -9774,7 +9778,7 @@ function compReportRenderDrawer(result, index, compType) {
   const comments = result?.reportCard?.comments || '';
   const updated = result?.reportCard?.updatedLine || '';
   const sourceLine = result?.reportCard?.sourceLine || (result?.source ? 'Source: ' + result.source : '');
-  const colspanTotal = 3 /* idx, photo, address */ + (COMP_REPORT_TABLE_COLUMNS[compType] || COMP_REPORT_TABLE_COLUMNS.lease).length + 1 /* chev */;
+  const colspanTotal = 1 /* select */ + 3 /* idx, photo, address */ + (COMP_REPORT_TABLE_COLUMNS[compType] || COMP_REPORT_TABLE_COLUMNS.lease).length + 1 /* chev */;
 
   let body = '<div class="cr-drawer">';
   for (const label of labels) {
@@ -9911,9 +9915,11 @@ function compReportRenderResults(results) {
   if (thead) thead.innerHTML = compReportRenderTableHeader(compType);
 
   if (!compReportsResultsCache.length) {
+    compReportsDeselected = new Set();
     compReportSetResultsCount('No matching comps.');
+    compReportUpdateSelectAllState();
     if (tbody) {
-      const totalCols = 3 + (COMP_REPORT_TABLE_COLUMNS[compType] || COMP_REPORT_TABLE_COLUMNS.lease).length + 1;
+      const totalCols = 1 + 3 + (COMP_REPORT_TABLE_COLUMNS[compType] || COMP_REPORT_TABLE_COLUMNS.lease).length + 1;
       const msg = compReportsLatest
         ? 'No comps match the current filters. Try widening the city, market, or date range.'
         : 'Run a search after the active comp dataset is published to preview report-ready comps.';
@@ -9922,18 +9928,81 @@ function compReportRenderResults(results) {
     return;
   }
 
-  compReportSetResultsCount('Showing ' + compReportsResultsCache.length + ' comp' + (compReportsResultsCache.length === 1 ? '' : 's'));
+  compReportsDeselected = new Set();
   if (tbody) {
     tbody.innerHTML = compReportsResultsCache
       .map((result, index) => compReportRenderRow(result, index, compType) + compReportRenderDrawer(result, index, compType))
       .join('');
   }
+  compReportUpdateSelectionCount();
+  compReportUpdateSelectAllState();
+}
+
+function compReportSelectedRows() {
+  const rows = compReportsResultsCache || [];
+  return rows.filter((_, i) => !compReportsDeselected.has(i));
+}
+
+function compReportUpdateSelectionCount() {
+  const total = (compReportsResultsCache || []).length;
+  const selected = total - compReportsDeselected.size;
+  if (!total) { compReportSetResultsCount('No matching comps.'); return; }
+  const label = selected === total
+    ? 'Showing ' + total + ' comp' + (total === 1 ? '' : 's') + ' (all selected)'
+    : selected + ' of ' + total + ' selected';
+  compReportSetResultsCount(label);
+  compReportUpdateExportButtons(selected);
+}
+
+function compReportUpdateExportButtons(selected) {
+  const actions = document.querySelectorAll('.cr-filters-actions-right .btn');
+  actions.forEach(btn => {
+    const isExport = /Download/i.test(btn.textContent || '');
+    if (!isExport) return;
+    btn.disabled = !selected;
+    btn.classList.toggle('is-disabled', !selected);
+  });
+}
+
+function compReportUpdateSelectAllState() {
+  const master = document.getElementById('cr-select-all');
+  if (!master) return;
+  const total = (compReportsResultsCache || []).length;
+  const deselected = compReportsDeselected.size;
+  if (!total || deselected === total) {
+    master.checked = false;
+    master.indeterminate = false;
+  } else if (deselected === 0) {
+    master.checked = true;
+    master.indeterminate = false;
+  } else {
+    master.checked = false;
+    master.indeterminate = true;
+  }
+}
+
+function compReportToggleRowSelection(index, isChecked) {
+  if (isChecked) compReportsDeselected.delete(index);
+  else compReportsDeselected.add(index);
+  compReportUpdateSelectionCount();
+  compReportUpdateSelectAllState();
+}
+
+function compReportToggleSelectAll(isChecked) {
+  const total = (compReportsResultsCache || []).length;
+  compReportsDeselected = new Set();
+  if (!isChecked) {
+    for (let i = 0; i < total; i++) compReportsDeselected.add(i);
+  }
+  document.querySelectorAll('#cr-tbody .cr-row-check').forEach(cb => { cb.checked = isChecked; });
+  compReportUpdateSelectionCount();
+  compReportUpdateSelectAllState();
 }
 
 function compReportExportCsv() {
-  const rows = compReportsResultsCache || [];
+  const rows = compReportSelectedRows();
   if (!rows.length) {
-    alert('Run a search first so there is something to export.');
+    alert((compReportsResultsCache || []).length ? 'Select at least one comp to export.' : 'Run a search first so there is something to export.');
     return;
   }
   const compType = compReportsTypeCache || 'lease';
@@ -9973,9 +10042,9 @@ function compReportExportCsv() {
 }
 
 function compReportExportPdf() {
-  const rows = compReportsResultsCache || [];
+  const rows = compReportSelectedRows();
   if (!rows.length) {
-    alert('Run a search first so there is something to export.');
+    alert((compReportsResultsCache || []).length ? 'Select at least one comp to export.' : 'Run a search first so there is something to export.');
     return;
   }
   const compType = compReportsTypeCache || 'lease';

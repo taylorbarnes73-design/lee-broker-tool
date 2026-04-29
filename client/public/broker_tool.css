@@ -3885,3 +3885,44 @@ body {
   border: 1px solid rgba(139, 95, 240, .25);
 }
 .ai-shortcut-card .micro-copy { color: var(--text2, #575A74); margin-bottom: 10px; }
+
+
+/* Comp Reports — row selection column */
+.cr-table .cr-sel-col { width: 40px; padding-left: 12px; padding-right: 0; text-align: center; }
+.cr-table th.cr-sel-col { text-align: center; }
+.cr-sel-wrap { display: inline-flex; align-items: center; justify-content: center; position: relative; cursor: pointer; width: 16px; height: 16px; }
+.cr-sel-wrap input[type="checkbox"] { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.cr-sel-box {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 1.5px solid rgba(10, 10, 11, .35);
+  border-radius: 3px;
+  background: #fff;
+  transition: all .12s ease;
+}
+.cr-sel-wrap input:hover + .cr-sel-box { border-color: var(--lee-crimson, #9B0D2A); }
+.cr-sel-wrap input:checked + .cr-sel-box {
+  background: var(--lee-crimson, #9B0D2A);
+  border-color: var(--lee-crimson, #9B0D2A);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3 8.5l3 3 7-7'/></svg>");
+  background-size: 12px 12px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.cr-sel-wrap input:indeterminate + .cr-sel-box {
+  background: var(--lee-crimson, #9B0D2A);
+  border-color: var(--lee-crimson, #9B0D2A);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><line x1='3.5' y1='8' x2='12.5' y2='8' stroke='white' stroke-width='2.4' stroke-linecap='round'/></svg>");
+  background-size: 12px 12px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.cr-filters-actions-right .btn.is-disabled,
+.cr-filters-actions-right .btn:disabled {
+  opacity: .45;
+  pointer-events: none;
+}
+/* Dim deselected rows for at-a-glance clarity */
+.cr-table tbody tr.cr-row:has(.cr-row-check:not(:checked)) {
+  opacity: .55;
+}
