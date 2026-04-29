@@ -129,7 +129,7 @@ function StatCard({label,value,unit,trend}) {
   );
 }
 
-// ── Admin Portal — inbox, Dealius push, agent roster ────────────
+// ── Admin Portal — inbox, Dealius push, agent roster ──
 function AdminScreen() {
   const [view, setView] = React.useState('inbox');
   return (
@@ -184,7 +184,7 @@ function AdminScreen() {
   );
 }
 
-// ── Inbox: submissions with submitter info + queue context ─────
+// ── Inbox: submissions with submitter info + queue context ──
 function AdminInbox() {
   const rows = [
     {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'2847 Newport Blvd · Costa Mesa', agent:'Taylor Barnes', agentTitle:'Senior Associate', avatar:'TB', amt:'$127,935', age:'2h 14m', tone:'crimson', id:'V-2026-0418', flag:'Co-broker split'},
@@ -349,7 +349,7 @@ function AdminInbox() {
   );
 }
 
-// ── Dealius push: quick-input for listings and deals ─────────────
+// ── Dealius push: quick-input for listings and deals ──
 function AdminDealius() {
   const [mode, setMode] = React.useState('listing');
   return (
@@ -479,7 +479,7 @@ function AdminDealius() {
   );
 }
 
-// ── Agent roster ────────────────────────────────────────────────
+// ── Agent roster ──
 function AdminRoster() {
   const roster = [
     {name:'Taylor Barnes', avatar:'TB', title:'Senior Associate', email:'tbarnes@lee-nb.com', phone:'(949) 556-0118', license:'DRE #01984412', team:'Industrial', ytd:'$287K', deals:9, status:'Active', joined:'Feb 2021'},
@@ -564,7 +564,7 @@ function AdminRoster() {
   );
 }
 
-// ── Office ops ──────────────────────────────────────────────────
+// ── Office ops ──
 function AdminOps() {
   return (
     <div style={{ padding: 32, display:'grid', gridTemplateColumns:'1fr 1fr', gap: 16 }}>
@@ -639,7 +639,7 @@ function AdminOps() {
   );
 }
 
-// ── Contract intake ─────────────────────────────────────────────
+// ── Contract intake ──
 function ContractScreen() {
   const [mode, setMode] = React.useState('upload');
   const groups = [
@@ -774,7 +774,7 @@ function ContractScreen() {
   );
 }
 
-// ── Documents ────────────────────────────────────────────────────
+// ── Documents ──
 function DocsScreen() {
   const folders = [
     {name:'Listing Agreements', count: 6, tone:'crimson'},
@@ -841,7 +841,7 @@ function DocsScreen() {
   );
 }
 
-// ── AI assist panel (slide-over) ───────────────────────────────
+// ── AI assist panel (slide-over) ──
 function AiPanel({ open, onClose }) {
   return (
     <>
@@ -921,7 +921,7 @@ function AiPanel({ open, onClose }) {
   );
 }
 
-// ── My Profile modal — single user only; brokers cannot view each other ────
+// ── My Profile modal — single user only; brokers cannot view each other ──
 function ProfileModal({ open, onClose }) {
   if (!open) return null;
   return (

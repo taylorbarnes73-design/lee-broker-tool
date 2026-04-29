@@ -1,6 +1,6 @@
 /* Lee Broker Tool — Primitives: Button, Input, Select, Badge, Card, Chip */
 
-// ── Button ──────────────────────────────────────────────────────
+// ── Button ──
 function Button({ variant = 'primary', size = 'md', icon, iconRight, children, style, disabled, ...rest }) {
   const sizes = {
     sm: { h: 32, px: 12, fs: 13, gap: 6 },
@@ -45,7 +45,7 @@ function Button({ variant = 'primary', size = 'md', icon, iconRight, children, s
   );
 }
 
-// ── Field wrapper (label + input + help/error) ─────────────────
+// ── Field wrapper (label + input + help/error) ──
 function Field({ label, required, optional, help, error, aiFilled, children, span = 1, style }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, gridColumn: `span ${span}`, ...style }}>
@@ -79,7 +79,7 @@ function Field({ label, required, optional, help, error, aiFilled, children, spa
   );
 }
 
-// ── Input (text) ───────────────────────────────────────────────
+// ── Input (text) ──
 function Input({ prefix, suffix, auto, aiFilled, error, style, inputStyle, ...rest }) {
   const [focus, setFocus] = React.useState(false);
   const borderColor = error ? 'var(--err-600)'
@@ -119,7 +119,7 @@ function Input({ prefix, suffix, auto, aiFilled, error, style, inputStyle, ...re
   );
 }
 
-// ── Select ────────────────────────────────────────────────────
+// ── Select ──
 function Select({ value, onChange, options, placeholder, style, ...rest }) {
   const [focus, setFocus] = React.useState(false);
   return (
@@ -155,7 +155,7 @@ function Select({ value, onChange, options, placeholder, style, ...rest }) {
   );
 }
 
-// ── Toggle ────────────────────────────────────────────────────
+// ── Toggle ──
 function Toggle({ on, onClick, size = 'md' }) {
   const w = size === 'sm' ? 32 : 40;
   const h = size === 'sm' ? 18 : 22;
@@ -178,7 +178,7 @@ function Toggle({ on, onClick, size = 'md' }) {
   );
 }
 
-// ── Badge / chip ──────────────────────────────────────────────
+// ── Badge / chip ──
 function Badge({ tone = 'neutral', children, icon, size = 'md', style }) {
   const tones = {
     neutral:  { bg: 'var(--ink-100)', color: 'var(--ink-700)', border: 'var(--ink-200)' },
@@ -205,7 +205,7 @@ function Badge({ tone = 'neutral', children, icon, size = 'md', style }) {
   );
 }
 
-// ── Card ──────────────────────────────────────────────────────
+// ── Card ──
 function Card({ children, padding = 24, style, hoverable }) {
   const [hover, setHover] = React.useState(false);
   return (
@@ -225,7 +225,7 @@ function Card({ children, padding = 24, style, hoverable }) {
   );
 }
 
-// ── Step card (progressive disclosure) ────────────────────────
+// ── Step card (progressive disclosure) ──
 function StepCard({ step, total, title, subtitle, status = 'active', summary, children, onClick }) {
   // status: 'locked' | 'active' | 'complete'
   const isActive = status === 'active';
@@ -278,7 +278,7 @@ function StepCard({ step, total, title, subtitle, status = 'active', summary, ch
   );
 }
 
-// ── Section header (inside cards) ─────────────────────────────
+// ── Section header (inside cards) ──
 function SectionHeader({ eyebrow, title, description, right }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 20 }}>

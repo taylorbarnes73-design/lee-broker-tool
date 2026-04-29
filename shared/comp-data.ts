@@ -252,7 +252,7 @@ function formatReportDate(value: string): string {
 }
 
 function buildUpdateLine(_verifiedBy: string, lastUpdated: string, id: number | null): string {
-  const parts = [];
+  const parts: string[] = [];
   if (lastUpdated) parts.push(`Updated: ${formatReportDate(lastUpdated)}`);
   if (id !== null) parts.push(`#${id}`);
   return parts.join(" ");

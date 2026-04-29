@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// ─── Mock dependencies ────────────────────────────────────────────────────────
+// ── Mock dependencies ──
 
 vi.mock("../_core/llm", () => ({
   invokeLLM: vi.fn(),
@@ -20,7 +20,7 @@ import { invokeLLM } from "../_core/llm";
 import { execSync } from "child_process";
 import { contractsRouter } from "./contracts";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ──
 
 /** Call a tRPC mutation directly (no HTTP) */
 async function callMutation(procedure: string, input: unknown) {
@@ -35,7 +35,7 @@ async function callMutation(procedure: string, input: unknown) {
   return resolver({ input, ctx: {} });
 }
 
-// ─── extractContract tests ────────────────────────────────────────────────────
+// ── extractContract tests ──
 
 describe("contracts.extractContract", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -120,7 +120,7 @@ describe("contracts.extractContract", () => {
   });
 });
 
-// ─── submitContractToAdmin tests ──────────────────────────────────────────────
+// ── submitContractToAdmin tests ──
 
 describe("contracts.submitContractToAdmin", () => {
   beforeEach(() => vi.clearAllMocks());

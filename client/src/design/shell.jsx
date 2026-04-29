@@ -218,7 +218,7 @@ function Segmented({ options, value, onChange, size = 'md' }) {
   );
 }
 
-// ── Request Tracker popover — shows my submissions & queue position ────
+// ── Request Tracker popover — shows my submissions & queue position ──
 function RequestTracker() {
   const [open, setOpen] = React.useState(false);
   const requests = [

@@ -56,7 +56,7 @@ if (typeof document !== 'undefined' && !document.getElementById('dc-styles')) {
 
 const DCCtx = React.createContext(null);
 
-// ─────────────────────────────────────────────────────────────
+// ──
 // DesignCanvas — stateful wrapper around the pan/zoom viewport.
 // Owns runtime state (per-section order, renamed titles/labels, focused
 // artboard). Order/titles/labels persist to a .design-canvas.state.json
@@ -65,7 +65,7 @@ const DCCtx = React.createContext(null);
 // (omelette preview, direct link, downloaded zip). Writes go through the
 // host's window.omelette bridge — editing requires the omelette runtime.
 // Focus is ephemeral.
-// ─────────────────────────────────────────────────────────────
+// ──
 const DC_STATE_FILE = '.design-canvas.state.json';
 
 function DesignCanvas({ children, minScale, maxScale, style }) {
@@ -166,7 +166,7 @@ function DesignCanvas({ children, minScale, maxScale, style }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
+// ──
 // DCViewport — transform-based pan/zoom (internal)
 //
 // Input mapping (Figma-style):
@@ -178,7 +178,7 @@ function DesignCanvas({ children, minScale, maxScale, style }) {
 // Transform state lives in a ref and is written straight to the DOM
 // (translate3d + will-change) so wheel ticks don't go through React —
 // keeps pans at 60fps on dense canvases.
-// ─────────────────────────────────────────────────────────────
+// ──
 function DCViewport({ children, minScale = 0.1, maxScale = 8, style = {} }) {
   const vpRef = React.useRef(null);
   const worldRef = React.useRef(null);
@@ -327,9 +327,9 @@ function DCViewport({ children, minScale = 0.1, maxScale = 8, style = {} }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
+// ──
 // DCSection — editable title + h-row of artboards in persisted order
-// ─────────────────────────────────────────────────────────────
+// ──
 function DCSection({ id, title, subtitle, children, gap = 48 }) {
   const ctx = React.useContext(DCCtx);
   const sid = id ?? title;
@@ -473,10 +473,10 @@ function DCEditable({ value, onChange, style, tag = 'span', onClick }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
+// ──
 // Focus mode — overlay one artboard; ←/→ within section, ↑/↓ across
 // sections, Esc or backdrop click to exit.
-// ─────────────────────────────────────────────────────────────
+// ──
 function DCFocusOverlay({ entry, sectionMeta, sectionOrder }) {
   const ctx = React.useContext(DCCtx);
   const { sectionId, artboard } = entry;
@@ -601,9 +601,9 @@ function DCFocusOverlay({ entry, sectionMeta, sectionOrder }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
+// ──
 // Post-it — absolute-positioned sticky note
-// ─────────────────────────────────────────────────────────────
+// ──
 function DCPostIt({ children, top, left, right, bottom, rotate = -2, width = 180 }) {
   return (
     <div style={{

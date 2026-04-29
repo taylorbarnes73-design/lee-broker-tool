@@ -1,13 +1,13 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { 
   Icons, PageHeader, StepProgress, Segmented, Button, Card, Badge, 
-  Input, Select, StepCard, Field, Toggle, Metric, SummaryRow, FormSection, FormRow 
+  Input, Select, StepCard, Field, Toggle, Metric, SummaryRow, FormSection, FormRow, SectionHeader 
 } from '../design/index.jsx';
-/* Lee Broker Tool â€” Comps, Admin, Contracts, Documents, AI panel */
+/* Lee Broker Tool — Comps, Admin, Contracts, Documents, AI panel */
 
-// â”€â”€ Comp Reports (the user said this is a mess â€” redesign as a clear workflow) â”€â”€
+// ── Comp Reports (the user said this is a mess — redesign as a clear workflow) ──
 function CompScreen() {
   return (
     <div>
@@ -46,7 +46,7 @@ function CompScreen() {
             </div>
             <Field label="Comp type"><Segmented size="sm" value="lease" onChange={()=>{}} options={[{value:'lease',label:'Lease'},{value:'sale',label:'Sale'},{value:'both',label:'Both'}]}/></Field>
             <div style={{ marginTop: 12 }}><Field label="Radius"><Select value="3" onChange={()=>{}} options={['1 mile','3 miles','5 miles','10 miles']}/></Field></div>
-            <div style={{ marginTop: 12 }}><Field label="Size range"><Input suffix="SF" defaultValue="15,000 â€“ 40,000"/></Field></div>
+            <div style={{ marginTop: 12 }}><Field label="Size range"><Input suffix="SF" defaultValue="15,000 – 40,000"/></Field></div>
             <div style={{ marginTop: 12 }}><Field label="Closed within"><Select value="12mo" onChange={()=>{}} options={['3 months','6 months','12 months','24 months']}/></Field></div>
             <div style={{ marginTop: 16, display:'flex', alignItems:'center', gap:10, padding: '10px 12px', background:'var(--ai-100)', borderRadius: 8, border:'1px solid rgba(110,63,217,.2)' }}>
               <Icons.Sparkles size={14} style={{ color:'var(--ai-500)' }}/>
@@ -68,7 +68,7 @@ function CompScreen() {
           {/* Map + list combo */}
           <Card padding={0} style={{ overflow: 'hidden' }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding: '12px 20px', borderBottom: '1px solid var(--ink-150)' }}>
-              <div style={{ fontSize: 14, fontWeight: 600 }}>12 comps Â· sorted by relevance</div>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>12 comps · sorted by relevance</div>
               <div style={{ display:'flex', gap: 6 }}>
                 <Segmented size="sm" options={[{value:'list',label:<Icons.List size={12}/>},{value:'grid',label:<Icons.Grid size={12}/>},{value:'map',label:<Icons.Pin size={12}/>}]} value="list" onChange={()=>{}}/>
                 <Button variant="ghost" size="sm" icon={<Icons.Sort size={12}/>}>Sort</Button>
@@ -91,7 +91,7 @@ function CompScreen() {
                 <input type="checkbox" defaultChecked style={{ accentColor: 'var(--lee-crimson)' }}/>
                 <div>
                   <div style={{ fontWeight: 600 }}>{r.addr}</div>
-                  <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Costa Mesa Â· Industrial</div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Costa Mesa · Industrial</div>
                 </div>
                 <div style={{ color: 'var(--ink-600)' }}>{r.tenant}</div>
                 <div className="lee-mono" style={{ color: 'var(--ink-700)' }}>{r.sf}</div>
@@ -115,7 +115,7 @@ function CompScreen() {
   );
 }
 
-function Pill({label, value}) {
+function Pill({label, value}: any) {
   return (
     <div style={{ background: 'var(--ink-50)', border: '1px solid var(--ink-200)', borderRadius: 6, padding: '6px 10px' }}>
       <div style={{ fontSize: 10, color: 'var(--ink-500)', fontWeight: 600, letterSpacing:'0.06em', textTransform:'uppercase' }}>{label}</div>
@@ -123,7 +123,7 @@ function Pill({label, value}) {
     </div>
   );
 }
-function StatCard({label,value,unit,trend}) {
+function StatCard({label,value,unit,trend}: any) {
   return (
     <Card padding={16}>
       <div className="lee-eyebrow">{label}</div>
@@ -136,7 +136,7 @@ function StatCard({label,value,unit,trend}) {
   );
 }
 
-// â”€â”€ Admin Portal â€” inbox, Dealius push, agent roster â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Admin Portal — inbox, Dealius push, agent roster ──
 function AdminScreen() {
   const [view, setView] = React.useState('inbox');
   return (
@@ -191,23 +191,23 @@ function AdminScreen() {
   );
 }
 
-// â”€â”€ Inbox: submissions with submitter info + queue context â”€â”€â”€â”€â”€
+// ── Inbox: submissions with submitter info + queue context ──
 function AdminInbox() {
   const rows = [
-    {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'2847 Newport Blvd Â· Costa Mesa', agent:'Taylor Barnes', agentTitle:'Senior Associate', avatar:'TB', amt:'$127,935', age:'2h 14m', tone:'crimson', id:'V-2026-0418', flag:'Co-broker split'},
-    {type:'Listing', icon:<Icons.Listing size={14}/>, prop:'1250 E Alton Ave Â· Santa Ana', agent:'Marcus Reeves', agentTitle:'Principal', avatar:'MR', amt:'â€”', age:'4h 02m', tone:'slate', id:'L-2026-0412', flag:null},
-    {type:'Sign', icon:<Icons.Sign size={14}/>, prop:'3400 Bristol St Â· Costa Mesa', agent:'Taylor Barnes', agentTitle:'Senior Associate', avatar:'TB', amt:'$705', age:'6h 38m', tone:'neutral', id:'S-2026-0410', flag:null},
-    {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'875 W 17th St Â· Costa Mesa', agent:'Sam Park', agentTitle:'Associate', avatar:'SP', amt:'$58,200', age:'1d', tone:'crimson', id:'V-2026-0404', flag:'Missing W-9'},
-    {type:'Contract', icon:<Icons.Contract size={14}/>, prop:'512 Superior Ave Â· Newport', agent:'Marcus Reeves', agentTitle:'Principal', avatar:'MR', amt:'â€”', age:'1d 2h', tone:'ai', id:'C-2026-0401', flag:'4 redlines'},
-    {type:'Listing Mod', icon:<Icons.Listing size={14}/>, prop:'2100 Placentia Ave Â· Costa Mesa', agent:'Kai Nguyen', agentTitle:'Associate', avatar:'KN', amt:'â€”', age:'2d', tone:'slate', id:'L-2026-0395', flag:null},
-    {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'6400 W Coast Hwy Â· Newport', agent:'Taylor Barnes', agentTitle:'Senior Associate', avatar:'TB', amt:'$41,300', age:'3d', tone:'crimson', id:'V-2026-0388', flag:null},
+    {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'2847 Newport Blvd · Costa Mesa', agent:'Taylor Barnes', agentTitle:'Senior Associate', avatar:'TB', amt:'$127,935', age:'2h 14m', tone:'crimson', id:'V-2026-0418', flag:'Co-broker split'},
+    {type:'Listing', icon:<Icons.Listing size={14}/>, prop:'1250 E Alton Ave · Santa Ana', agent:'Marcus Reeves', agentTitle:'Principal', avatar:'MR', amt:'—', age:'4h 02m', tone:'slate', id:'L-2026-0412', flag:null},
+    {type:'Sign', icon:<Icons.Sign size={14}/>, prop:'3400 Bristol St · Costa Mesa', agent:'Taylor Barnes', agentTitle:'Senior Associate', avatar:'TB', amt:'$705', age:'6h 38m', tone:'neutral', id:'S-2026-0410', flag:null},
+    {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'875 W 17th St · Costa Mesa', agent:'Sam Park', agentTitle:'Associate', avatar:'SP', amt:'$58,200', age:'1d', tone:'crimson', id:'V-2026-0404', flag:'Missing W-9'},
+    {type:'Contract', icon:<Icons.Contract size={14}/>, prop:'512 Superior Ave · Newport', agent:'Marcus Reeves', agentTitle:'Principal', avatar:'MR', amt:'—', age:'1d 2h', tone:'ai', id:'C-2026-0401', flag:'4 redlines'},
+    {type:'Listing Mod', icon:<Icons.Listing size={14}/>, prop:'2100 Placentia Ave · Costa Mesa', agent:'Kai Nguyen', agentTitle:'Associate', avatar:'KN', amt:'—', age:'2d', tone:'slate', id:'L-2026-0395', flag:null},
+    {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'6400 W Coast Hwy · Newport', agent:'Taylor Barnes', agentTitle:'Senior Associate', avatar:'TB', amt:'$41,300', age:'3d', tone:'crimson', id:'V-2026-0388', flag:null},
   ];
   return (
     <div style={{ padding: 32, display:'grid', gridTemplateColumns: '1fr 320px', gap: 24, alignItems:'start' }}>
       <div style={{ display:'flex', flexDirection:'column', gap: 16 }}>
         {/* Sub-tabs */}
         <div style={{ display:'flex', gap: 4, borderBottom: '1px solid var(--ink-200)', padding: '0 4px' }}>
-          {['Pending Â· 7','In review Â· 2','Approved Â· 142','Rejected Â· 3','All'].map((t,i) => (
+          {['Pending · 7','In review · 2','Approved · 142','Rejected · 3','All'].map((t,i) => (
             <button key={i} style={{
               padding: '9px 14px', background:'transparent', border:'none', cursor:'pointer',
               fontSize: 12.5, fontWeight: i===0 ? 700 : 500,
@@ -220,7 +220,7 @@ function AdminInbox() {
           <div style={{ display:'flex', alignItems:'center', gap:8, padding: '0 4px' }}>
             <div style={{ display:'flex', alignItems:'center', gap:6, width: 220, height: 32, padding:'0 10px', background:'var(--ink-0)', border:'1px solid var(--ink-200)', borderRadius: 6 }}>
               <Icons.Search size={13} style={{ color: 'var(--ink-400)' }}/>
-              <input placeholder="Search submitter, propertyâ€¦" style={{ flex:1, border:'none', outline:'none', fontSize: 12, background:'transparent' }}/>
+              <input placeholder="Search submitter, property…" style={{ flex:1, border:'none', outline:'none', fontSize: 12, background:'transparent' }}/>
             </div>
             <Button variant="secondary" size="sm" icon={<Icons.Filter size={13}/>}>Filter</Button>
           </div>
@@ -281,7 +281,7 @@ function AdminInbox() {
 
           {/* Bulk actions bar */}
           <div style={{ padding: '10px 20px', borderTop: '1px solid var(--ink-200)', background: 'var(--ink-50)', display:'flex', alignItems:'center', gap: 10, fontSize: 12 }}>
-            <span style={{ color: 'var(--ink-500)' }}>7 items Â· bulk actions:</span>
+            <span style={{ color: 'var(--ink-500)' }}>7 items · bulk actions:</span>
             <Button variant="ghost" size="sm" icon={<Icons.Check size={12}/>}>Approve all</Button>
             <Button variant="ghost" size="sm" icon={<Icons.Send size={12}/>}>Push to Dealius</Button>
             <Button variant="ghost" size="sm" icon={<Icons.Download size={12}/>}>Export CSV</Button>
@@ -292,7 +292,7 @@ function AdminInbox() {
       {/* Right rail */}
       <div style={{ display:'flex', flexDirection:'column', gap: 16, position:'sticky', top: 24 }}>
         <Card padding={20}>
-          <div className="lee-eyebrow" style={{ marginBottom: 10 }}>This week Â· Newport Beach office</div>
+          <div className="lee-eyebrow" style={{ marginBottom: 10 }}>This week · Newport Beach office</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 12 }}>
             <div>
               <div className="lee-mono" style={{ fontSize: 22, fontWeight: 700 }}>14</div>
@@ -356,7 +356,7 @@ function AdminInbox() {
   );
 }
 
-// â”€â”€ Dealius push: quick-input for listings and deals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Dealius push: quick-input for listings and deals ──
 function AdminDealius() {
   const [mode, setMode] = React.useState('listing');
   return (
@@ -432,10 +432,10 @@ function AdminDealius() {
         <Card padding={20}>
           <div style={{ display:'flex', alignItems:'center', gap: 8, marginBottom: 10 }}>
             <span style={{ width: 8, height: 8, borderRadius: 999, background:'var(--ok-500)' }}/>
-            <div className="lee-eyebrow" style={{ margin: 0 }}>Dealius Â· Connected</div>
+            <div className="lee-eyebrow" style={{ margin: 0 }}>Dealius · Connected</div>
           </div>
           <div style={{ fontSize: 12, color: 'var(--ink-500)', lineHeight: 1.5 }}>
-            Last sync 3 min ago Â· OAuth valid through Jul 2026
+            Last sync 3 min ago · OAuth valid through Jul 2026
           </div>
           <div style={{ marginTop: 12, display:'flex', gap: 8 }}>
             <Button variant="ghost" size="sm">Open Dealius â†’</Button>
@@ -447,15 +447,15 @@ function AdminDealius() {
           <div className="lee-eyebrow" style={{ marginBottom: 12 }}>Recent pushes</div>
           {[
             {id:'L-2026-0412', label:'1250 E Alton Ave', when:'12m ago', ok:true},
-            {id:'D-2026-01868', label:'Deal Â· 875 W 17th St', when:'1h ago', ok:true},
+            {id:'D-2026-01868', label:'Deal · 875 W 17th St', when:'1h ago', ok:true},
             {id:'L-2026-0409', label:'512 Superior Ave', when:'3h ago', ok:false, err:'Missing SF'},
-            {id:'D-2026-01864', label:'Deal Â· 6400 W Coast Hwy', when:'yesterday', ok:true},
+            {id:'D-2026-01864', label:'Deal · 6400 W Coast Hwy', when:'yesterday', ok:true},
           ].map((p,i) => (
             <div key={i} style={{ display:'flex', alignItems:'center', gap: 10, padding: '10px 0', borderTop: i>0 ? '1px solid var(--ink-150)' : 'none' }}>
               <span style={{ width: 6, height: 6, borderRadius: 999, background: p.ok ? 'var(--ok-500)' : 'var(--err-600)' }}/>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12.5, fontWeight: 600, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{p.label}</div>
-                <div style={{ fontSize: 10.5, color: 'var(--ink-500)' }} className="lee-mono">{p.id}{p.err ? ` Â· ${p.err}` : ''}</div>
+                <div style={{ fontSize: 10.5, color: 'var(--ink-500)' }} className="lee-mono">{p.id}{p.err ? ` · ${p.err}` : ''}</div>
               </div>
               <div style={{ fontSize: 10.5, color: 'var(--ink-500)' }}>{p.when}</div>
             </div>
@@ -486,7 +486,7 @@ function AdminDealius() {
   );
 }
 
-// â”€â”€ Agent roster â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Agent roster ──
 function AdminRoster() {
   const roster = [
     {name:'Taylor Barnes', avatar:'TB', title:'Senior Associate', email:'tbarnes@lee-nb.com', phone:'(949) 556-0118', license:'DRE #01984412', team:'Industrial', ytd:'$287K', deals:9, status:'Active', joined:'Feb 2021'},
@@ -512,11 +512,11 @@ function AdminRoster() {
       <Card padding={0}>
         <div style={{ padding: '14px 20px', display:'flex', alignItems:'center', gap: 12, borderBottom: '1px solid var(--ink-150)' }}>
           <div style={{ fontSize: 14, fontWeight: 700 }}>Roster</div>
-          <Badge size="sm">{roster.length} shown Â· 24 total</Badge>
+          <Badge size="sm">{roster.length} shown · 24 total</Badge>
           <div style={{ flex: 1 }}/>
           <div style={{ display:'flex', alignItems:'center', gap:6, width: 260, height: 32, padding:'0 10px', background:'var(--ink-0)', border:'1px solid var(--ink-200)', borderRadius: 6 }}>
             <Icons.Search size={13} style={{ color: 'var(--ink-400)' }}/>
-            <input placeholder="Search name, license, teamâ€¦" style={{ flex:1, border:'none', outline:'none', fontSize: 12, background:'transparent' }}/>
+            <input placeholder="Search name, license, team…" style={{ flex:1, border:'none', outline:'none', fontSize: 12, background:'transparent' }}/>
           </div>
           <Select value="All teams" onChange={()=>{}} options={['All teams','Industrial','Office','Retail','Capital Markets']}/>
           <Button variant="secondary" size="sm" icon={<Icons.Download size={13}/>}>Export</Button>
@@ -571,12 +571,12 @@ function AdminRoster() {
   );
 }
 
-// â”€â”€ Office ops â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Office ops ──
 function AdminOps() {
   return (
     <div style={{ padding: 32, display:'grid', gridTemplateColumns:'1fr 1fr', gap: 16 }}>
       <Card padding={20}>
-        <div className="lee-eyebrow" style={{ marginBottom: 14 }}>Commission payouts Â· this week</div>
+        <div className="lee-eyebrow" style={{ marginBottom: 14 }}>Commission payouts · this week</div>
         {[
           {agent:'Taylor Barnes', amt:'$63,968', status:'Scheduled Fri'},
           {agent:'Marcus Reeves', amt:'$98,441', status:'Awaiting wire'},
@@ -597,7 +597,7 @@ function AdminOps() {
           {who:'Joel Martinez', what:'DRE license expires', when:'34 days', tone:'warn'},
           {who:'Priya Shah', what:'E&O insurance renewal', when:'62 days', tone:'neutral'},
           {who:'Reggie Alvarez', what:'Continuing ed hours', when:'2 of 45h done', tone:'warn'},
-          {who:'Office', what:'MLS dues Â· AIR CRE', when:'Paid Apr 10', tone:'success'},
+          {who:'Office', what:'MLS dues · AIR CRE', when:'Paid Apr 10', tone:'success'},
         ].map((r,i) => (
           <div key={i} style={{ display:'flex', alignItems:'center', gap: 10, padding: '10px 0', borderTop: i>0 ? '1px solid var(--ink-150)' : 'none' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -612,10 +612,10 @@ function AdminOps() {
       <Card padding={20}>
         <div className="lee-eyebrow" style={{ marginBottom: 14 }}>MLS & data feeds</div>
         {[
-          {label:'AIR CRE Â· listings feed', status:'Syncing', tone:'success', sub:'Last: 3 min ago'},
-          {label:'CoStar Â· comps pull', status:'Syncing', tone:'success', sub:'Last: 12 min ago'},
-          {label:'Dealius Â· deals', status:'Connected', tone:'success', sub:'OAuth valid'},
-          {label:'CREXi Â· listings', status:'Error', tone:'danger', sub:'Reauth required'},
+          {label:'AIR CRE · listings feed', status:'Syncing', tone:'success', sub:'Last: 3 min ago'},
+          {label:'CoStar · comps pull', status:'Syncing', tone:'success', sub:'Last: 12 min ago'},
+          {label:'Dealius · deals', status:'Connected', tone:'success', sub:'OAuth valid'},
+          {label:'CREXi · listings', status:'Error', tone:'danger', sub:'Reauth required'},
         ].map((f,i) => (
           <div key={i} style={{ display:'flex', alignItems:'center', gap: 10, padding: '10px 0', borderTop: i>0 ? '1px solid var(--ink-150)' : 'none' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -630,11 +630,11 @@ function AdminOps() {
       <Card padding={20}>
         <div className="lee-eyebrow" style={{ marginBottom: 14 }}>Open tasks</div>
         {[
-          'Review voucher V-2026-0404 Â· missing W-9',
+          'Review voucher V-2026-0404 · missing W-9',
           'Push 3 approved listings to Dealius',
           'Confirm Joel Martinez DRE renewal',
           'Reconcile April commission ledger',
-          'Approve sign vendor invoice Â· $2,140',
+          'Approve sign vendor invoice · $2,140',
         ].map((t,i) => (
           <label key={i} style={{ display:'flex', alignItems:'center', gap: 10, padding: '8px 0', borderTop: i>0 ? '1px solid var(--ink-150)' : 'none', cursor: 'pointer' }}>
             <input type="checkbox" style={{ accentColor:'var(--lee-crimson)' }}/>
@@ -646,27 +646,27 @@ function AdminOps() {
   );
 }
 
-// â”€â”€ Contract intake â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Contract intake ──
 function ContractScreen() {
   const [mode, setMode] = React.useState('upload');
   const groups = [
     { name: 'Listing Agreements', items: [
       'Exclusive Right to Sell',
       'Exclusive Right to Lease',
-      'Exclusive Right Â· Sublease',
+      'Exclusive Right · Sublease',
       'Limited Listing Agreement',
       'Open Listing Agreement',
       'Listing Modification / Extension',
     ]},
     { name: 'Representation', items: [
-      'Exclusive Right Â· Buyer/Lessee',
-      'Exclusive Right Â· Owner Sale',
-      'Exclusive Right Â· Owner Lease',
+      'Exclusive Right · Buyer/Lessee',
+      'Exclusive Right · Owner Sale',
+      'Exclusive Right · Owner Lease',
       'Non-Exclusive Buyer Rep',
     ]},
     { name: 'Commission Agreements', items: [
-      'Commission Agreement Â· Lease',
-      'Commission Agreement Â· Sale',
+      'Commission Agreement · Lease',
+      'Commission Agreement · Sale',
       'Co-Broker Commission Agreement',
       'Referral Agreement',
     ]},
@@ -686,7 +686,7 @@ function ContractScreen() {
     ]},
     { name: 'Purchase & Sale', items: [
       'AIR CRE Standard Purchase Agreement',
-      'Letter of Intent Â· Purchase',
+      'Letter of Intent · Purchase',
       'Counter Offer',
       'PSA Addendum',
       'Assignment of Purchase Agreement',
@@ -703,7 +703,7 @@ function ContractScreen() {
       'Arbitration Advisory',
     ]},
   ];
-  const [sel, setSel] = React.useState('Exclusive Right Â· Owner Lease');
+  const [sel, setSel] = React.useState('Exclusive Right · Owner Lease');
   return (
     <div>
       <PageHeader
@@ -715,7 +715,7 @@ function ContractScreen() {
         <Card padding={16} style={{ maxHeight: 780, overflow: 'auto' }}>
           <div style={{ display:'flex', alignItems:'center', gap: 8, marginBottom: 12, padding: '6px 10px', background: 'var(--ink-50)', border: '1px solid var(--ink-200)', borderRadius: 6 }}>
             <Icons.Search size={13} style={{ color: 'var(--ink-400)' }}/>
-            <input placeholder="Search agreementsâ€¦" style={{ flex: 1, border: 'none', outline: 'none', fontSize: 12, background: 'transparent' }}/>
+            <input placeholder="Search agreements…" style={{ flex: 1, border: 'none', outline: 'none', fontSize: 12, background: 'transparent' }}/>
           </div>
           {groups.map((g, gi) => (
             <div key={gi} style={{ marginBottom: 14 }}>
@@ -759,9 +759,15 @@ function ContractScreen() {
                 </div>
                 <div style={{ fontSize: 16, fontWeight: 600 }}>Drop signed contract PDF</div>
                 <div style={{ fontSize: 13, color: 'var(--ink-500)', marginTop: 4, maxWidth: 420, margin:'4px auto 16px' }}>
-                  Deal Assist will extract parties, dates, commission, and flag redlines vs. the standard AIR CRE form.
+                  Beta preview — use the production tool at <a href="/broker_tool.html" style={{ color: 'var(--lee-crimson)', fontWeight: 600, textDecoration: 'none' }}>/broker_tool.html</a> to upload contracts and run extraction.
                 </div>
-                <Button variant="ai" icon={<Icons.Upload size={14}/>}>Choose file</Button>
+                <Button
+                  variant="ai"
+                  icon={<Icons.Upload size={14}/>}
+                  onClick={() => { window.location.href = '/broker_tool.html#contracts'; }}
+                >
+                  Open contract tool
+                </Button>
               </div>
             ) : (
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 16 }}>
@@ -781,7 +787,7 @@ function ContractScreen() {
   );
 }
 
-// â”€â”€ Documents â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Documents ──
 function DocsScreen() {
   const folders = [
     {name:'Listing Agreements', count: 6, tone:'crimson'},
@@ -800,7 +806,7 @@ function DocsScreen() {
         right={<>
           <div style={{ display:'flex', alignItems:'center', gap:8, width: 280, height: 36, padding:'0 12px', background:'var(--ink-0)', border:'1px solid var(--ink-200)', borderRadius: 6 }}>
             <Icons.Search size={14} style={{ color: 'var(--ink-400)' }}/>
-            <input placeholder="Search 42 documentsâ€¦" style={{ flex:1, border:'none', outline:'none', fontSize: 13, background:'transparent' }}/>
+            <input placeholder="Search 42 documents…" style={{ flex:1, border:'none', outline:'none', fontSize: 13, background:'transparent' }}/>
           </div>
           <Button variant="secondary" size="sm" icon={<Icons.Upload size={14}/>}>Upload</Button>
         </>}
@@ -827,9 +833,9 @@ function DocsScreen() {
           </div>
           {[
             {name:'AIR CRE Standard Industrial Multi-Tenant Lease', type:'Lease', mod:'Apr 18'},
-            {name:'Exclusive Right to Sell â€” AIR CRE Form', type:'Listing', mod:'Apr 17'},
-            {name:'Commission Distribution Voucher â€” Lee NB', type:'Voucher', mod:'Apr 12'},
-            {name:'Agency Disclosure & Confirmation â€” CAR', type:'Disclosure', mod:'Apr 11'},
+            {name:'Exclusive Right to Sell — AIR CRE Form', type:'Listing', mod:'Apr 17'},
+            {name:'Commission Distribution Voucher — Lee NB', type:'Voucher', mod:'Apr 12'},
+            {name:'Agency Disclosure & Confirmation — CAR', type:'Disclosure', mod:'Apr 11'},
           ].map((d,i) => (
             <div key={i} style={{ display:'grid', gridTemplateColumns:'24px 1fr 120px 100px 80px', padding: '12px 20px', alignItems:'center', gap: 12, borderTop: i>0 ? '1px solid var(--ink-150)':'none' }}>
               <Icons.Docs size={16} style={{color:'var(--ink-500)'}}/>
@@ -848,8 +854,8 @@ function DocsScreen() {
   );
 }
 
-// â”€â”€ AI assist panel (slide-over) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function AiPanel({ open, onClose }) {
+// ── AI assist panel (slide-over) ──
+function AiPanel({ open, onClose }: any) {
   return (
     <>
       {open && <div onClick={onClose} style={{ position:'absolute', inset: 0, background:'rgba(10,10,11,.4)', zIndex: 20 }}/>}
@@ -867,7 +873,7 @@ function AiPanel({ open, onClose }) {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 15, fontWeight: 600 }}>Deal Assist</div>
-            <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Claude Â· fills fields &amp; extracts from docs</div>
+            <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Claude · fills fields &amp; extracts from docs</div>
           </div>
           <button onClick={onClose} style={{ background:'transparent', border:'none', cursor:'pointer', color:'var(--ink-500)' }}><Icons.X size={18}/></button>
         </div>
@@ -928,8 +934,8 @@ function AiPanel({ open, onClose }) {
   );
 }
 
-// â”€â”€ My Profile modal â€” single user only; brokers cannot view each other â”€â”€â”€â”€
-function ProfileModal({ open, onClose }) {
+// ── My Profile modal — single user only; brokers cannot view each other ──
+function ProfileModal({ open, onClose }: any) {
   if (!open) return null;
   return (
     <>
@@ -950,7 +956,7 @@ function ProfileModal({ open, onClose }) {
           <div style={{ width: 80, height: 80, borderRadius: 16, background: 'var(--lee-crimson)', color: '#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize: 26, fontWeight: 800, border: '4px solid var(--ink-0)', boxShadow: 'var(--shadow-md)' }}>TB</div>
           <div style={{ flex: 1, paddingBottom: 6 }}>
             <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em' }}>Taylor Barnes</div>
-            <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>Senior Broker Â· Industrial Â· DRE #02135478</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>Senior Broker · Industrial · DRE #02135478</div>
           </div>
           <Badge tone="success" size="sm" icon={<Icons.Check size={10} strokeWidth={3}/>}>Signed in</Badge>
         </div>
@@ -969,7 +975,7 @@ function ProfileModal({ open, onClose }) {
           </div>
 
           <div>
-            <div className="lee-eyebrow" style={{ marginBottom: 10 }}>Broker details <span style={{ color: 'var(--ink-400)', fontWeight: 500, textTransform:'none', letterSpacing: 0 }}>â€” used to pre-fill forms</span></div>
+            <div className="lee-eyebrow" style={{ marginBottom: 10 }}>Broker details <span style={{ color: 'var(--ink-400)', fontWeight: 500, textTransform:'none', letterSpacing: 0 }}>— used to pre-fill forms</span></div>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 12 }}>
               <Field label="Title"><Input defaultValue="Senior Broker"/></Field>
               <Field label="DRE license #" required><Input defaultValue="02135478"/></Field>
@@ -981,7 +987,7 @@ function ProfileModal({ open, onClose }) {
           <div style={{ padding: 14, background: 'var(--ink-50)', border: '1px solid var(--ink-200)', borderRadius: 10, display:'flex', alignItems:'center', gap: 12 }}>
             <Icons.Lock size={18} style={{ color: 'var(--ink-500)' }}/>
             <div style={{ flex: 1, fontSize: 12, color: 'var(--ink-600)' }}>
-              Your profile is private. Other brokers can't see it â€” only Admin can view it for deal processing.
+              Your profile is private. Other brokers can't see it — only Admin can view it for deal processing.
             </div>
           </div>
 

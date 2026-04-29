@@ -3595,7 +3595,7 @@ function drawListingType(p) {
   p.setY(y);
 }
 
-// ─── INDUSTRIAL ─────────────────────────────────────────────────────────────
+// ── INDUSTRIAL ──
 function exportIndustrialPdf() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
@@ -3669,7 +3669,7 @@ function exportIndustrialPdf() {
   doc.save('Industrial_Listing_' + (getVal('l-address') || 'Form').replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30) + '.pdf');
 }
 
-// ─── OFFICE ─────────────────────────────────────────────────────────────────
+// ── OFFICE ──
 function exportOfficePdf() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
@@ -3752,7 +3752,7 @@ function exportOfficePdf() {
   doc.save('Office_Listing_' + (getVal('l-address') || 'Form').replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30) + '.pdf');
 }
 
-// ─── RETAIL ─────────────────────────────────────────────────────────────────
+// ── RETAIL ──
 function exportRetailPdf() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
@@ -3840,7 +3840,7 @@ function exportRetailPdf() {
   doc.save('Retail_Listing_' + (getVal('l-address') || 'Form').replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30) + '.pdf');
 }
 
-// ─── LAND ───────────────────────────────────────────────────────────────────
+// ── LAND ──
 function exportLandPdf() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
@@ -7604,7 +7604,7 @@ function initS3Uploads() {
 
 document.addEventListener('DOMContentLoaded', initS3Uploads);
 
-// ─── DOCUMENTS TAB: SEARCH + COLLAPSE ───────────────────────────────────────
+// ── DOCUMENTS TAB: SEARCH + COLLAPSE ──
 
 function toggleDocsSection(id) {
   const body = document.getElementById('body-' + id);
@@ -7668,7 +7668,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// ─── BROCHURE UPLOAD + AI SCRAPE ─────────────────────────────────────────────
+// ── BROCHURE UPLOAD + AI SCRAPE ──
 
 let brochureFileUrl = null;
 let brochureMimeType = 'application/pdf';
@@ -7751,7 +7751,7 @@ async function scrapeBrochure() {
   }
 }
 
-// ─── VOUCHER BROCHURE UPLOAD + AI SCRAPE ────────────────────────────────────
+// ── VOUCHER BROCHURE UPLOAD + AI SCRAPE ──
 
 let voucherBrochureFileUrl = null;
 let voucherBrochureMimeType = 'application/pdf';
@@ -8419,7 +8419,7 @@ input.ai-smart, select.ai-smart, textarea.ai-smart { animation: ai-pulse-amber 0
 </div>
 
 <script>
-// ─── AI Assist Panel Logic ────────────────────────────────────────────────────
+// ── AI Assist Panel Logic ──
 
 function toggleAiPanel() {
   const panel = document.getElementById('ai-panel');
@@ -9175,7 +9175,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// ─── SEND TO ADMIN ────────────────────────────────────────────────────────────────
+// ── SEND TO ADMIN ──
 
 let _staFormType = 'listing';
 

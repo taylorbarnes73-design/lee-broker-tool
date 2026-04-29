@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { 
@@ -7,7 +7,7 @@ import {
 } from '../design/index.jsx';
 
 // Missing primitives that were not exported
-function SectionHeader({ eyebrow, title, description, right }) {
+function SectionHeader({ eyebrow, title, description, right }: any) {
   return (
     <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
       <div>
@@ -19,7 +19,7 @@ function SectionHeader({ eyebrow, title, description, right }) {
     </div>
   );
 }
-/* Lee Broker Tool Ã¢â‚¬â€ Sign Request + Voucher screens */
+/* Lee Broker Tool — Sign Request + Voucher screens */
 
 export default function SignRequestScreen() {
   const [shape, setShape] = useState('sf');
@@ -35,19 +35,27 @@ export default function SignRequestScreen() {
   const [access, setAccess] = useState("Gate code 4421#");
   const [comments, setComments] = useState("");
 
-  const submitMutation = trpc.submissions.submit.useMutation({
+  const submitMutation = trpc.submissions.create.useMutation({
     onSuccess: () => toast.success("Sign order submitted successfully!"),
     onError: (err) => toast.error("Error: " + err.message),
   });
 
   const handleSubmit = async () => {
     await submitMutation.mutateAsync({
-      formType: 'sign-request',
-      payload: {
-        shape, qty, otherSize, bannerSize, nameRider,
-        agent, sharedExpense, installBy, access, comments,
-        listing: "2847 Newport Blvd, Costa Mesa"
-      }
+      type: 'sign-request',
+      address: '2847 Newport Blvd',
+      city: 'Costa Mesa',
+      state: 'CA',
+      brokerName: agent,
+      shape,
+      qty,
+      otherSize,
+      bannerSize,
+      nameRider,
+      sharedExpense,
+      installBy,
+      access,
+      comments,
     });
   };
 
@@ -74,7 +82,7 @@ export default function SignRequestScreen() {
               <Field label="Listing" required>
                 <Input prefix={<Icons.Building size={14}/>} defaultValue="2847 Newport Blvd, Costa Mesa"/>
               </Field>
-              <Field label="Deal type"><Input auto value="Lease Ã‚Â· Industrial"/></Field>
+              <Field label="Deal type"><Input auto value="Lease · Industrial"/></Field>
               <Field label="Suite">
                 <Input defaultValue="Entire building"/>
               </Field>
@@ -117,9 +125,9 @@ export default function SignRequestScreen() {
             <SectionHeader eyebrow="Step 3" title="Sign specifications" right={<Badge tone="crimson" size="sm">{Object.values(qty).reduce((a,b)=>a+b,0)} signs total</Badge>}/>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {[
-                {k:'4x8',    label:"4' Ãƒâ€” 8'",  desc:'Standard roadside panel'},
-                {k:'6x8',    label:"6' Ãƒâ€” 8'",  desc:'Large frontage panel'},
-                {k:'other',  label:'Other',     desc:'Custom size', sizeInput: true, sizeValue: otherSize,  setSize: setOtherSize,  placeholder: 'e.g. 3Ãƒâ€”4'},
+                {k:'4x8',    label:"4' × 8'",  desc:'Standard roadside panel'},
+                {k:'6x8',    label:"6' × 8'",  desc:'Large frontage panel'},
+                {k:'other',  label:'Other',     desc:'Custom size', sizeInput: true, sizeValue: otherSize,  setSize: setOtherSize,  placeholder: 'e.g. 3×4'},
                 {k:'banner', label:'Banner',    desc:'Vinyl banner', sizeInput: true, sizeValue: bannerSize, setSize: setBannerSize, placeholder: 'Size'},
               ].map(row => {
                 const n = qty[row.k];
@@ -160,10 +168,10 @@ export default function SignRequestScreen() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Toggle on={nameRider} onClick={() => setNameRider(!nameRider)}/>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>Name rider <span style={{ fontWeight: 500, color: 'var(--ink-500)' }}>Ã‚Â· Optional</span></div>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>Name rider <span style={{ fontWeight: 500, color: 'var(--ink-500)' }}>· Optional</span></div>
                   <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Add broker name to rider panel</div>
                 </div>
-                {nameRider && <Input defaultValue="Taylor Barnes Ã‚Â· 714.555.0142" style={{ width: 280 }}/>}
+                {nameRider && <Input defaultValue="Taylor Barnes · 714.555.0142" style={{ width: 280 }}/>}
               </div>
             </div>
           </Card>
@@ -195,8 +203,8 @@ export default function SignRequestScreen() {
   );
 }
 
-function SignIcon({ type }) {
-  // S/F = Single-face post sign Ã¢â‚¬â€ one panel on a post, front view
+function SignIcon({ type }: any) {
+  // S/F = Single-face post sign — one panel on a post, front view
   if (type === 'sf') return (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       {/* panel */}
@@ -209,7 +217,7 @@ function SignIcon({ type }) {
       <path d="M22 52h20"/>
     </svg>
   );
-  // D/F = Double-face Ã¢â‚¬â€ panels back-to-back, shown in a slight 3/4 view
+  // D/F = Double-face — panels back-to-back, shown in a slight 3/4 view
   if (type === 'df') return (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       {/* front panel */}
@@ -250,25 +258,25 @@ const stepBtn = {
 const textareaStyle = {
   minHeight: 80, padding: 12, fontSize: 14, lineHeight: 1.5,
   background: 'var(--ink-0)', border: '1px solid var(--ink-200)', borderRadius: 6,
-  fontFamily: 'var(--font-sans)', color: 'var(--ink-900)', outline: 'none', resize: 'vertical',
+  fontFamily: 'var(--font-sans)', color: 'var(--ink-900)', outline: 'none', resize: 'vertical' as const,
 };
 
-function OrderSummaryRail({ qty, shape }) {
+function OrderSummaryRail({ qty, shape }: any) {
   const prices = { '4x8': 285, '6x8': 420, 'other': 175, 'banner': 95 };
-  const labels = { '4x8': "4' Ãƒâ€” 8'", '6x8': "6' Ãƒâ€” 8'", 'other': 'Other', 'banner': 'Banner' };
+  const labels = { '4x8': "4' × 8'", '6x8': "6' × 8'", 'other': 'Other', 'banner': 'Banner' };
   const shapeLabel = { sf: 'S/F', df: 'D/F', vshape: 'V-Shape' }[shape] || shape;
-  const total = Object.entries(qty).reduce((sum, [k, n]) => sum + (prices[k] || 0) * n, 0);
+  const total = (Object.entries(qty) as [keyof typeof prices, number][]).reduce((sum, [k, n]) => sum + (prices[k] || 0) * n, 0);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, position: 'sticky', top: 24 }}>
       <Card padding={20}>
         <div className="lee-eyebrow" style={{ marginBottom: 12 }}>Order summary</div>
         <div style={{ fontSize: 15, fontWeight: 600 }}>2847 Newport Blvd</div>
-        <div style={{ fontSize: 12, color:'var(--ink-500)', marginTop: 2 }}>PO-2026-0418 Ã‚Â· {shapeLabel}</div>
+        <div style={{ fontSize: 12, color:'var(--ink-500)', marginTop: 2 }}>PO-2026-0418 · {shapeLabel}</div>
 
         <div style={{ marginTop: 16, borderTop: '1px solid var(--ink-150)', paddingTop: 12, display:'flex', flexDirection:'column', gap: 6 }}>
-          {Object.entries(qty).filter(([,n])=>n>0).map(([k,n]) => (
+          {(Object.entries(qty) as [keyof typeof prices, number][]).filter(([,n])=>n>0).map(([k,n]) => (
             <div key={k} style={{ display:'flex', justifyContent:'space-between', fontSize: 13 }}>
-              <span style={{ color: 'var(--ink-600)' }}>{labels[k]}  Ã‚Â· Ãƒâ€” {n}</span>
+              <span style={{ color: 'var(--ink-600)' }}>{labels[k]}  · × {n}</span>
               <span className="lee-mono" style={{ color: 'var(--ink-900)', fontWeight: 600 }}>
                 ${(prices[k]*n).toLocaleString()}
               </span>
@@ -279,7 +287,7 @@ function OrderSummaryRail({ qty, shape }) {
           <span style={{ fontSize: 12, color: 'var(--ink-500)' }}>Estimated total</span>
           <span className="lee-mono" style={{ fontSize: 20, fontWeight: 700 }}>${total.toLocaleString()}</span>
         </div>
-        <div style={{ fontSize: 11, color: 'var(--ink-400)', marginTop: 4 }}>Split 50% with landlord Ã‚Â· your share ${(total/2).toLocaleString()}</div>
+        <div style={{ fontSize: 11, color: 'var(--ink-400)', marginTop: 4 }}>Split 50% with landlord · your share ${(total/2).toLocaleString()}</div>
       </Card>
 
       <Card padding={18} style={{ background: 'var(--ink-50)' }}>
