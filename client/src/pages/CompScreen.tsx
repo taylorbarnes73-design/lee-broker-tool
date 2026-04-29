@@ -9,6 +9,12 @@ import {
 
 // ── Comp Reports (the user said this is a mess — redesign as a clear workflow) ──
 function CompScreen() {
+  const [compType, setCompType] = useState('lease');
+  const [radius, setRadius] = useState('3 miles');
+  const [closedWithin, setClosedWithin] = useState('12 months');
+  const [city, setCity] = useState('');
+  const [county, setCounty] = useState('');
+  const [submarket, setSubmarket] = useState('');
   return (
     <div>
       <PageHeader
@@ -44,10 +50,13 @@ function CompScreen() {
               <div className="lee-eyebrow">Filters</div>
               <button style={{ fontSize: 11, color: 'var(--lee-crimson)', background:'none', border:'none', cursor:'pointer', fontWeight: 600 }}>Reset</button>
             </div>
-            <Field label="Comp type"><Segmented size="sm" value="lease" onChange={()=>{}} options={[{value:'lease',label:'Lease'},{value:'sale',label:'Sale'},{value:'both',label:'Both'}]}/></Field>
-            <div style={{ marginTop: 12 }}><Field label="Radius"><Select value="3" onChange={()=>{}} options={['1 mile','3 miles','5 miles','10 miles']}/></Field></div>
+            <Field label="Comp type"><Segmented size="sm" value={compType} onChange={(v: string) => setCompType(v)} options={[{value:'lease',label:'Lease'},{value:'sale',label:'Sale'},{value:'both',label:'Both'}]}/></Field>
+            <div style={{ marginTop: 12 }}><Field label="Radius"><Select value={radius} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRadius(e.target.value)} options={['1 mile','3 miles','5 miles','10 miles']}/></Field></div>
             <div style={{ marginTop: 12 }}><Field label="Size range"><Input suffix="SF" defaultValue="15,000 – 40,000"/></Field></div>
-            <div style={{ marginTop: 12 }}><Field label="Closed within"><Select value="12mo" onChange={()=>{}} options={['3 months','6 months','12 months','24 months']}/></Field></div>
+            <div style={{ marginTop: 12 }}><Field label="Closed within"><Select value={closedWithin} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setClosedWithin(e.target.value)} options={['3 months','6 months','12 months','24 months']}/></Field></div>
+            <div style={{ marginTop: 12 }}><Field label="City"><Select value={city} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCity(e.target.value)} placeholder="All cities" options={['Costa Mesa','Irvine','Santa Ana','Newport Beach','Anaheim','Orange','Tustin','Garden Grove','Huntington Beach','Long Beach','Los Angeles','Torrance','Carson','Compton','Vernon']}/></Field></div>
+            <div style={{ marginTop: 12 }}><Field label="County"><Select value={county} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCounty(e.target.value)} placeholder="All counties" options={['Orange County','Los Angeles County','San Bernardino County','Riverside County','San Diego County','Ventura County']}/></Field></div>
+            <div style={{ marginTop: 12 }}><Field label="Submarket"><Select value={submarket} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSubmarket(e.target.value)} placeholder="All submarkets" options={['Airport Area','South Coast Metro','Central Orange County','North Orange County','West Orange County','South Bay','Mid-Counties','Commerce/Vernon','Central LA','South LA','Inland Empire West','Inland Empire East']}/></Field></div>
             <div style={{ marginTop: 16, display:'flex', alignItems:'center', gap:10, padding: '10px 12px', background:'var(--ai-100)', borderRadius: 8, border:'1px solid rgba(110,63,217,.2)' }}>
               <Icons.Sparkles size={14} style={{ color:'var(--ai-500)' }}/>
               <div style={{ flex: 1, fontSize: 12, color: 'var(--ink-700)' }}><b>Deal Assist</b> picked these filters from your subject</div>
