@@ -1441,59 +1441,20 @@
             <input id="cr-query" placeholder="Address, project, tenant…">
           </div>
           <div class="field">
-            <label>City <span class="cr-multi-hint">(multi)</span></label>
-            <select id="cr-city" multiple class="cr-multi-sel">
-              <option>Anaheim</option>
-              <option>Buena Park</option>
-              <option>Costa Mesa</option>
-              <option>Cypress</option>
-              <option>Fullerton</option>
-              <option>Garden Grove</option>
-              <option>Huntington Beach</option>
-              <option>Irvine</option>
-              <option>Lake Forest</option>
-              <option>Laguna Hills</option>
-              <option>Laguna Niguel</option>
-              <option>Newport Beach</option>
-              <option>Orange</option>
-              <option>Santa Ana</option>
-              <option>Tustin</option>
-              <option>Westminster</option>
-              <option>National City</option>
-              <option>Cerritos</option>
-            </select>
+            <label>City</label>
+            <div id="cr-city" class="cr-dd"></div>
           </div>
           <div class="field">
-            <label>Market <span class="cr-multi-hint">(multi)</span></label>
-            <select id="cr-market" multiple class="cr-multi-sel">
-              <option>Los Angeles</option>
-              <option>Orange</option>
-              <option>Riverside</option>
-              <option>San Bernardino</option>
-            </select>
+            <label>Market</label>
+            <div id="cr-market" class="cr-dd"></div>
           </div>
           <div class="field">
-            <label>Submarket <span class="cr-multi-hint">(multi)</span></label>
-            <select id="cr-submarket" multiple class="cr-multi-sel">
-              <option>SCM</option>
-              <option>IBC</option>
-              <option>SAE</option>
-              <option>WC</option>
-              <option>NM</option>
-              <option>SOC</option>
-              <option>NOC</option>
-              <option>Mid Cities</option>
-            </select>
+            <label>Submarket</label>
+            <div id="cr-submarket" class="cr-dd"></div>
           </div>
           <div class="field">
-            <label>Property Type <span class="cr-multi-hint">(multi)</span></label>
-            <select id="cr-property-type" multiple class="cr-multi-sel">
-              <option>Industrial</option>
-              <option>Office</option>
-              <option>Retail</option>
-              <option>Multi-Family</option>
-              <option>Land</option>
-            </select>
+            <label>Property Type</label>
+            <div id="cr-property-type" class="cr-dd"></div>
           </div>
           <div class="field">
             <label>SF Range</label>
@@ -6122,6 +6083,96 @@ async function submitCompDirect() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// COMP REPORTS CUSTOM DROPDOWNS
+// ═══════════════════════════════════════════════════════════════════════════════
+let _crOpenPanel = null;
+
+function buildCrDropdown(containerId, options) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'cr-dd-btn';
+  btn.innerHTML = '<span class="cr-dd-label">All</span><svg class="cr-dd-arrow" viewBox="0 0 10 6" width="10" height="6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l4 4 4-4"/></svg>';
+
+  const panel = document.createElement('div');
+  panel.className = 'cr-dd-panel';
+
+  const opts = document.createElement('div');
+  opts.className = 'cr-dd-opts';
+  opts.innerHTML = options.map(o =>
+    `<label class="cr-dd-opt"><input type="checkbox" value="${o.replace(/"/g,'&quot;')}"><span>${o}</span></label>`
+  ).join('');
+  panel.appendChild(opts);
+
+  const footer = document.createElement('div');
+  footer.className = 'cr-dd-footer';
+  const clearBtn = document.createElement('button');
+  clearBtn.type = 'button';
+  clearBtn.textContent = 'Clear';
+  clearBtn.onclick = () => { panel.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = false); updateLabel(); };
+  footer.appendChild(clearBtn);
+  panel.appendChild(footer);
+
+  function updateLabel() {
+    const checked = Array.from(panel.querySelectorAll('input[type=checkbox]:checked'));
+    const lbl = btn.querySelector('.cr-dd-label');
+    if (checked.length === 0) lbl.textContent = 'All';
+    else if (checked.length === 1) lbl.textContent = checked[0].value;
+    else lbl.textContent = checked.length + ' selected';
+  }
+
+  panel.addEventListener('change', updateLabel);
+
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const isOpen = panel.classList.contains('open');
+    if (_crOpenPanel && _crOpenPanel !== panel) {
+      _crOpenPanel.classList.remove('open');
+      const prevBtn = _crOpenPanel.previousElementSibling;
+      if (prevBtn) prevBtn.classList.remove('open');
+    }
+    panel.classList.toggle('open', !isOpen);
+    btn.classList.toggle('open', !isOpen);
+    _crOpenPanel = !isOpen ? panel : null;
+  });
+
+  document.addEventListener('click', e => {
+    if (!container.contains(e.target) && panel.classList.contains('open')) {
+      panel.classList.remove('open');
+      btn.classList.remove('open');
+      if (_crOpenPanel === panel) _crOpenPanel = null;
+    }
+  }, { capture: true, passive: true });
+
+  container._getCrVals = () => {
+    const vals = Array.from(panel.querySelectorAll('input[type=checkbox]:checked')).map(c => c.value);
+    return vals.length ? vals : undefined;
+  };
+  container._resetCr = () => {
+    panel.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = false);
+    updateLabel();
+  };
+
+  container.appendChild(btn);
+  container.appendChild(panel);
+}
+
+function initCompReportDropdowns() {
+  const CITIES = ['Anaheim','Buena Park','Brea','Carson','Cerritos','Chino','Chino Hills','Corona','Costa Mesa','Cypress','El Segundo','Fontana','Fullerton','Garden Grove','Huntington Beach','Industry','Irvine','La Mirada','Lake Forest','Laguna Hills','Laguna Niguel','Long Beach','Los Angeles','National City','Newport Beach','Ontario','Orange','Perris','Placentia','Rancho Dominguez','Riverside','Santa Ana','Torrance','Tustin','Vernon','Westminster'];
+  const MARKETS = ['Los Angeles','Orange County','Inland Empire','San Diego'];
+  const SUBMARKETS = ['Airport Area','Anaheim','Brea/Fullerton','Cerritos','Chino/Chino Hills','Corona','Costa Mesa/Newport','Cypress','Fontana/Rialto','Huntington Beach','Industry','Irvine','La Mirada/Norwalk','Long Beach','Mira Loma','National City','Ontario','Orange/Tustin','Perris','Rancho Dominguez','Riverside','Santa Ana','South Bay','Torrance','Vernon/Commerce'];
+  const PROP_TYPES = ['Indust','Office','Retail','R&D/Flex','Land'];
+
+  buildCrDropdown('cr-city', CITIES);
+  buildCrDropdown('cr-market', MARKETS);
+  buildCrDropdown('cr-submarket', SUBMARKETS);
+  buildCrDropdown('cr-property-type', PROP_TYPES);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════════════════════════
 // Set default dates
@@ -6137,6 +6188,9 @@ onVoucherTxnChange();
 
 // Populate comp form dropdowns
 initCompFormSelects();
+
+// Build comp reports filter dropdowns
+initCompReportDropdowns();
 
 // Add initial suite rows
 addSuiteRow('office');
@@ -10430,21 +10484,20 @@ function compReportExportPdf() {
 }
 
 function compReportGetFilters() {
-  function multiVals(id) {
+  function crVals(id) {
     const el = document.getElementById(id);
     if (!el) return undefined;
-    const vals = Array.from(el.selectedOptions).map(o => o.value || o.text).filter(Boolean);
-    return vals.length ? vals : undefined;
+    return el._getCrVals ? el._getCrVals() : undefined;
   }
   const sfMinRaw = parseFloat(document.getElementById('cr-sf-min')?.value);
   const sfMaxRaw = parseFloat(document.getElementById('cr-sf-max')?.value);
   return {
     compType: document.getElementById('cr-comp-type')?.value || 'lease',
     query: document.getElementById('cr-query')?.value.trim() || undefined,
-    cities: multiVals('cr-city'),
-    markets: multiVals('cr-market'),
-    subMarkets: multiVals('cr-submarket'),
-    propertyTypes: multiVals('cr-property-type'),
+    cities: crVals('cr-city'),
+    markets: crVals('cr-market'),
+    subMarkets: crVals('cr-submarket'),
+    propertyTypes: crVals('cr-property-type'),
     sfMin: Number.isFinite(sfMinRaw) && sfMinRaw > 0 ? sfMinRaw : undefined,
     sfMax: Number.isFinite(sfMaxRaw) && sfMaxRaw > 0 ? sfMaxRaw : undefined,
     dateFrom: document.getElementById('cr-date-from')?.value || undefined,
@@ -10478,7 +10531,7 @@ function compReportResetFilters() {
   });
   ['cr-city', 'cr-market', 'cr-submarket', 'cr-property-type'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) Array.from(el.options).forEach(o => { o.selected = false; });
+    if (el && el._resetCr) el._resetCr();
   });
   const type = document.getElementById('cr-comp-type');
   if (type) type.value = 'lease';
