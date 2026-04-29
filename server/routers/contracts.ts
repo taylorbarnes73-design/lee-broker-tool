@@ -4,7 +4,7 @@ import { invokeLLM, type Message } from "../_core/llm";
 import { execSync } from "child_process";
 import { ENV } from "../_core/env";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ── Types ──
 
 const redlineSchema = z.object({
   paragraph: z.string(),
@@ -51,7 +51,7 @@ const contractDataSchema = z.object({
   redlines: z.array(redlineSchema).optional(),
 });
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ──
 
 /** Convert ISO date string (YYYY-MM-DD) from natural language date */
 function parseToIsoDate(raw: string): string {
@@ -82,17 +82,17 @@ function buildDataSheet(data: z.infer<typeof contractDataSchema>): string {
     `Generated: ${new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" })}`,
     "═".repeat(64),
     "",
-    "── BASIC PROVISIONS ──────────────────────────────────────────",
+    "── BASIC PROVISIONS ──",
     line("Agreement Date", data.agreementDate),
     "",
-    "── PARTY 1 (Sublessor / Owner / Client) ──────────────────────",
+    "── PARTY 1 (Sublessor / Owner / Client) ──",
     line("Name", data.party1Name),
     line("Entity Type", data.party1Entity),
     line("Address", data.party1Address),
     line("Phone", data.party1Phone),
     line("Fax", data.party1Fax),
     "",
-    "── AGENT / BROKER ────────────────────────────────────────────",
+    "── AGENT / BROKER ──",
     line("Agent Name", data.agentName),
     line("Agent Address", data.agentAddress),
     line("Agent Phone", data.agentPhone),
@@ -103,7 +103,7 @@ function buildDataSheet(data: z.infer<typeof contractDataSchema>): string {
     line("Agent DRE #", data.agentDre),
     line("Agent Email", data.agentEmail),
     "",
-    "── PROPERTY ──────────────────────────────────────────────────",
+    "── PROPERTY ──",
     line("Address", data.propAddress),
     line("City", data.propCity),
     line("State", data.propState),
@@ -112,34 +112,34 @@ function buildDataSheet(data: z.infer<typeof contractDataSchema>): string {
     line("Description", data.propDesc),
     ...(data.mlDate || data.mlLessor ? [
       "",
-      "── MASTER LEASE ──────────────────────────────────────────────",
+      "── MASTER LEASE ──",
       line("Master Lease Date", data.mlDate),
       line("Amendment Dates", data.mlAmendments),
       line("Master Lessor", data.mlLessor),
       line("Master Lessee", data.mlLessee),
     ] : []),
     "",
-    "── TERM OF AGREEMENT ─────────────────────────────────────────",
+    "── TERM OF AGREEMENT ──",
     line("Commencement", data.termStart),
     line("Expiration", data.termEnd),
     line("Sublease/Lease Terms", data.subleaseTerms),
     "",
-    "── COMMISSION ────────────────────────────────────────────────",
+    "── COMMISSION ──",
     line("Commission Type", data.commType),
     line("Commission Amount/Rate", data.commAmount),
     "",
-    "── ARBITRATION ───────────────────────────────────────────────",
+    "── ARBITRATION ──",
     line("Arbitration Body", data.arbitration),
     "",
-    "── ADDITIONAL PROVISIONS ─────────────────────────────────────",
+    "── ADDITIONAL PROVISIONS ──",
     line("Additional Provisions", data.additionalProvisions),
     "",
-    "── SIGNATORIES ───────────────────────────────────────────────",
+    "── SIGNATORIES ──",
     line("Party 1 Signatory", data.sig1Name),
     line("Party 1 Title", data.sig1Title),
     ...(redlineLines ? [
       "",
-      "── REDLINES / MODIFICATIONS TO APPLY IN AIR CRE ─────────────",
+      "── REDLINES / MODIFICATIONS TO APPLY IN AIR CRE ──",
       redlineLines,
     ] : []),
     "",
@@ -151,7 +151,7 @@ function buildDataSheet(data: z.infer<typeof contractDataSchema>): string {
     .join("\n");
 }
 
-// ─── Router ───────────────────────────────────────────────────────────────────
+// ── Router ──
 
 export const contractsRouter = router({
   /**

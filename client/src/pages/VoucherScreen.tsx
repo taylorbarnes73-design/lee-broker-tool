@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { 
@@ -7,7 +7,7 @@ import {
 } from '../design/index.jsx';
 
 // Missing primitives
-function SectionHeader({ eyebrow, title, description, right }) {
+function SectionHeader({ eyebrow, title, description, right }: any) {
   return (
     <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
       <div>
@@ -19,7 +19,7 @@ function SectionHeader({ eyebrow, title, description, right }) {
     </div>
   );
 }
-/* Lee Broker Tool â€” Commission Voucher screen */
+/* Lee Broker Tool — Commission Voucher screen */
 
 export default function VoucherScreen() {
   const [subTab, setSubTab] = useState('add');
@@ -32,18 +32,24 @@ export default function VoucherScreen() {
   const [totalCommission, setTotalCommission] = useState("127,935.00");
   const [dueToLee, setDueToLee] = useState("63,967.50");
 
-  const submitMutation = trpc.submissions.submit.useMutation({
+  const submitMutation = trpc.submissions.create.useMutation({
     onSuccess: () => toast.success("Voucher submitted successfully!"),
     onError: (err) => toast.error("Error: " + err.message),
   });
 
   const handleSubmit = async () => {
     await submitMutation.mutateAsync({
-      formType: 'voucher',
-      payload: {
-        dateOfLease, lessor, lessee, totalConsideration, totalCommission, dueToLee,
-        address: "2847 Newport Blvd, Costa Mesa CA 92627"
-      }
+      type: 'voucher',
+      address: '2847 Newport Blvd',
+      city: 'Costa Mesa',
+      state: 'CA',
+      zip: '92627',
+      dateOfLease,
+      lessor,
+      lessee,
+      totalConsideration,
+      totalCommission,
+      dueToLee,
     });
   };
 
@@ -54,7 +60,7 @@ export default function VoucherScreen() {
         title="Commission Voucher"
         description="Submit a completed deal for commission processing and Dealius submission."
         right={<>
-          <Badge tone="slate" size="md">Draft Â· Last saved 2 min ago</Badge>
+          <Badge tone="slate" size="md">Draft · Last saved 2 min ago</Badge>
           <Button variant="ghost" size="sm" icon={<Icons.Send size={14}/>}>Send to admin</Button>
         </>}
       >
@@ -69,7 +75,7 @@ export default function VoucherScreen() {
             {['Property','Parties','Financials','Commission','Rent schedule'].map(l => (
               <Badge key={l} tone="success" size="md" icon={<Icons.Check size={11} strokeWidth={3}/>}>{l}</Badge>
             ))}
-            <Badge tone="crimson" size="md">Rent schedule Â· in progress</Badge>
+            <Badge tone="crimson" size="md">Rent schedule · in progress</Badge>
             <Badge size="md">Invoicing</Badge>
             <Badge size="md">Documents</Badge>
           </div>
@@ -88,7 +94,7 @@ export default function VoucherScreen() {
           {/* Rent schedule */}
           <Card>
             <SectionHeader
-              eyebrow="Step 5 Â· Active"
+              eyebrow="Step 5 · Active"
               title="Monthly rent schedule"
               description="Step-ups, free rent and base rent across the term."
               right={<Segmented size="sm" options={['Monthly','Annual']} value="Monthly" onChange={()=>{}}/>}
@@ -114,7 +120,7 @@ export default function VoucherScreen() {
 function CommissionTable() {
   const rows = [
     {name:'Taylor Barnes', side:'Procuring', pct: 40, chipTone:'success', split:'Internal'},
-    {name:'Marcus Reeves', side:'Listing', pct: 35, chipTone:'crimson', split:'Internal'},
+    {name:'Rick Turner', side:'Listing', pct: 35, chipTone:'crimson', split:'Internal'},
     {name:'Janice Lee (CBRE)', side:'Referral', pct: 15, chipTone:'warn', split:'Outside'},
     {name:'House override', side:'Both', pct: 10, chipTone:'ai', split:'House'},
   ];
@@ -163,14 +169,14 @@ function CommissionTable() {
 
 function RentTable() {
   const rows = [
-    {mo:'Mo 1-2',   months:'Apr 2026 â€“ May 2026', baseRate: 0,    sf: 24500, monthly: 0, note:'Free rent'},
-    {mo:'Mo 3-12',  months:'Jun 2026 â€“ Mar 2027', baseRate: 1.45, sf: 24500, monthly: 35525},
-    {mo:'Mo 13-24', months:'Apr 2027 â€“ Mar 2028', baseRate: 1.50, sf: 24500, monthly: 36750},
-    {mo:'Mo 25-36', months:'Apr 2028 â€“ Mar 2029', baseRate: 1.55, sf: 24500, monthly: 37975},
-    {mo:'Mo 37-48', months:'Apr 2029 â€“ Mar 2030', baseRate: 1.60, sf: 24500, monthly: 39200},
-    {mo:'Mo 49-60', months:'Apr 2030 â€“ Mar 2031', baseRate: 1.66, sf: 24500, monthly: 40670},
+    {mo:'Mo 1-2',   months:'Apr 2026 – May 2026', baseRate: 0,    sf: 24500, monthly: 0, note:'Free rent'},
+    {mo:'Mo 3-12',  months:'Jun 2026 – Mar 2027', baseRate: 1.45, sf: 24500, monthly: 35525},
+    {mo:'Mo 13-24', months:'Apr 2027 – Mar 2028', baseRate: 1.50, sf: 24500, monthly: 36750},
+    {mo:'Mo 25-36', months:'Apr 2028 – Mar 2029', baseRate: 1.55, sf: 24500, monthly: 37975},
+    {mo:'Mo 37-48', months:'Apr 2029 – Mar 2030', baseRate: 1.60, sf: 24500, monthly: 39200},
+    {mo:'Mo 49-60', months:'Apr 2030 – Mar 2031', baseRate: 1.66, sf: 24500, monthly: 40670},
   ];
-  const total = rows.reduce((s,r)=>s+r.monthly*parseInt(r.mo.match(/-(\d+)/)?.[1]||1) - (r.monthly * parseInt(r.mo.match(/Mo (\d+)/)?.[1]||1) - r.monthly), 2132250);
+  const total = rows.reduce((s,r)=>s+r.monthly*parseInt(r.mo.match(/-(\d+)/)?.[1]||'1') - (r.monthly * parseInt(r.mo.match(/Mo (\d+)/)?.[1]||'1') - r.monthly), 2132250);
   return (
     <div style={{ border: '1px solid var(--ink-200)', borderRadius: 10, overflow: 'hidden' }}>
       <div style={{ display:'grid', gridTemplateColumns: '1fr 1.6fr 1fr 1fr 1fr', padding: '10px 16px', background: 'var(--ink-50)', fontSize: 11, fontWeight: 600, color: 'var(--ink-500)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
@@ -209,7 +215,7 @@ function VoucherRail() {
       <Card padding={20}>
         <div className="lee-eyebrow" style={{ marginBottom: 10 }}>Invoice</div>
         <div style={{ fontSize: 15, fontWeight: 600 }}>Invoice to: Landlord</div>
-        <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 2 }}>Pacific Holdings LLC Â· Ref LD-4491</div>
+        <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 2 }}>Pacific Holdings LLC · Ref LD-4491</div>
 
         <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <RowKV k="Gross commission" v="$127,935.00"/>
@@ -241,15 +247,15 @@ function VoucherRail() {
   );
 }
 
-function RowKV({ k, v, sub, big }) {
+function RowKV({ k, v, sub, big }: { k?: any; v?: any; sub?: boolean; big?: boolean }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-      <span style={{ fontSize: sub ? 11 : 12, color: sub ? 'var(--ink-500)' : 'var(--ink-600)' }}>{sub && '  â†³ '}{k}</span>
+      <span style={{ fontSize: sub ? 11 : 12, color: sub ? 'var(--ink-500)' : 'var(--ink-600)' }}>{sub && '  ↳ '}{k}</span>
       <span className="lee-mono" style={{ fontSize: big ? 18 : 13, fontWeight: big ? 700 : (sub ? 500 : 600), color: big ? 'var(--ink-900)' : 'var(--ink-700)' }}>{v}</span>
     </div>
   );
 }
-function TodoRow({ icon, label }) {
+function TodoRow({ icon, label }: any) {
   return (
     <div style={{ display:'flex', alignItems:'center', gap: 10, padding: '8px 10px', background: 'rgba(255,255,255,.04)', borderRadius: 6, fontSize: 12 }}>
       <span style={{ color: 'var(--ink-300)' }}>{icon}</span>

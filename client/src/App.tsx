@@ -2,58 +2,78 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch, useLocation } from "wouter";
+import { useEffect, useState } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 
-// Import the new design components
-import { 
-  AppShell, 
-  AdminScreen, 
-  ContractScreen, 
-  DocsScreen, 
-  AiPanel, 
-  ProfileModal 
-} from "./design/index.jsx";
-
-// Import the newly built functional pages
+// Design shell primitives (AppShell + modal components live in the design system)
+import { AppShell, AiPanel, ProfileModal } from "./design/index.jsx";
+// Functional pages — real data, not scratch
 import Login from "./pages/Login";
 import ListingEntryScreen from "./pages/ListingScreen";
 import SignRequestScreen from "./pages/SignScreen";
 import VoucherScreen from "./pages/VoucherScreen";
-import CompScreen from "./pages/CompScreen";
+import CompScreen, { AdminScreen, ContractScreen, DocsScreen } from "./pages/CompScreen";
 
-function AppLayout({ children }: { children: React.ReactNode }) {
+/**
+ * Full-screen redirect to the production broker tool HTML app.
+ *
+ * The original broker_tool.html is the fully-functional production workspace
+ * (Listing Entry, Sign Request, Commission Voucher, Comp Input, Admin Portal,
+ * PDF export, email drafting, S3 uploads, etc.). The Express server in
+ * `server/_core/index.ts` authenticates the request and serves the HTML directly,
+ * so a hard navigation is the safest way to hand off from the React SPA.
+ */
+function BrokerToolRedirect() {
+  useEffect(() => {
+    window.location.replace("/broker_tool.html");
+  }, []);
+  return (
+    <div style={{ display: "flex", width: "100vw", height: "100vh", alignItems: "center", justifyContent: "center", color: "#6b7280", fontFamily: "Inter, system-ui, sans-serif" }}>
+      Opening Broker Tool…
+    </div>
+  );
+}
+
+/**
+ * Optional "beta" layout for the redesigned React UI. This is intentionally
+ * opt-in and reachable only under /beta/* so the production tool keeps
+ * working uninterrupted. We'll graduate pages here back to the main routes
+ * as each one reaches functional parity with broker_tool.html.
+ */
+function BetaLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const [aiOpen, setAiOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  
+
   const { user, loading } = useAuth();
 
-  // Map route to activeTab
-  const activeTab = location === "/" ? "listing" : location.substring(1);
+  // Map /beta/<tab> -> activeTab
+  const activeTab = location === "/beta" ? "listing" : location.replace(/^\/beta\/?/, "");
 
-  if (loading) return null; // Or a nice full-page spinner
+  if (loading) return null;
+  if (!user) return <Login />;
 
-  // Always require login
-  if (!user) {
-    return <Login />;
-  }
+  const handleTab = (tab: string) => {
+    setLocation(tab === "listing" ? "/beta" : `/beta/${tab}`);
+  };
 
   return (
-    <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
+    <div style={{ position: "relative", width: "100vw", height: "100vh" }}>
       <AppShell
         activeTab={activeTab}
-        onTab={(tab: string) => setLocation(tab === 'listing' ? '/' : `/${tab}`)}
+        onTab={handleTab}
         onAiClick={() => setAiOpen(true)}
         onProfileClick={() => setProfileOpen(true)}
         viewportW="100%"
         viewportH="100%"
         profile={{
           name: user.name,
-          initials: user.name ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'L',
-          title: user.role === 'admin' ? 'Administrator' : 'Broker'
+          initials: user.name
+            ? user.name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()
+            : "L",
+          title: user.role === "admin" ? "Administrator" : "Broker",
         }}
       >
         {children}
@@ -64,21 +84,68 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Root wrapper — handles auth gating for the whole SPA.
+ * Authenticated users land on the production broker_tool.html;
+ * unauthenticated users see the Login screen.
+ */
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Login />;
+  return <>{children}</>;
+}
+
 function Router() {
   return (
-    <AppLayout>
-      <Switch>
-        <Route path={"/"} component={ListingEntryScreen} />
-        <Route path={"/sign"} component={SignRequestScreen} />
-        <Route path={"/voucher"} component={VoucherScreen} />
-        <Route path={"/comp"} component={CompScreen} />
-        <Route path={"/admin"} component={AdminScreen} />
-        <Route path={"/contract"} component={ContractScreen} />
-        <Route path={"/docs"} component={DocsScreen} />
-        <Route path={"/404"} component={NotFound} />
-        <Route component={NotFound} />
-      </Switch>
-    </AppLayout>
+    <Switch>
+      {/* Primary app: land logged-in users on the fully-functional broker tool */}
+      <Route path="/">
+        <AuthGate>
+          <BrokerToolRedirect />
+        </AuthGate>
+      </Route>
+
+      {/* Beta (new React UI) — kept behind an explicit prefix while pages reach parity */}
+      <Route path="/beta">
+        <BetaLayout>
+          <ListingEntryScreen />
+        </BetaLayout>
+      </Route>
+      <Route path="/beta/sign">
+        <BetaLayout>
+          <SignRequestScreen />
+        </BetaLayout>
+      </Route>
+      <Route path="/beta/voucher">
+        <BetaLayout>
+          <VoucherScreen />
+        </BetaLayout>
+      </Route>
+      <Route path="/beta/comp">
+        <BetaLayout>
+          <CompScreen />
+        </BetaLayout>
+      </Route>
+      <Route path="/beta/admin">
+        <BetaLayout>
+          <AdminScreen />
+        </BetaLayout>
+      </Route>
+      <Route path="/beta/contract">
+        <BetaLayout>
+          <ContractScreen />
+        </BetaLayout>
+      </Route>
+      <Route path="/beta/docs">
+        <BetaLayout>
+          <DocsScreen />
+        </BetaLayout>
+      </Route>
+
+      <Route path="/404" component={NotFound} />
+      <Route component={NotFound} />
+    </Switch>
   );
 }
 

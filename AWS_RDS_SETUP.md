@@ -1,10 +1,6 @@
 # AWS RDS Setup
 
-Use this path if you want to move the app to AWS MySQL.
-
-## Recommendation
-
-For this repo, AWS RDS for MySQL is the cleaner long-term fit than Azure because the app is already AWS-oriented.
+This repo uses AWS RDS for MySQL. Follow this guide to stand up the database.
 
 ## Before you start
 

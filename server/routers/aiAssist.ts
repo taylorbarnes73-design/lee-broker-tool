@@ -2,7 +2,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import { z } from "zod/v4";
 
-// ─── Field schemas per tab ────────────────────────────────────────────────────
+// ── Field schemas per tab ──
 
 const listingFields = z.object({
   propertyType: z.string().optional(),
@@ -645,7 +645,7 @@ function runVoucherAudit(dealData: Record<string, unknown>) {
   return suggestions;
 }
 
-// ─── System prompts ───────────────────────────────────────────────────────────
+// ── System prompts ──
 
 const PARSE_SYSTEM = `You are a commercial real estate data extraction specialist for Lee & Associates Newport Beach.
 Extract structured field values from a broker's natural language deal description.
@@ -687,7 +687,7 @@ CRITICAL RULES — follow exactly:
 - Extract all highlights/features into comments as a concise bullet list.
 - If the brochure is ambiguous or promotional without a precise field value, omit that field.`;
 
-// ─── Shared JSON schema builder ───────────────────────────────────────────────
+// ── Shared JSON schema builder ──
 
 function buildJsonSchema(name: string, fieldNames: string[]) {
   return {
@@ -702,7 +702,7 @@ function buildJsonSchema(name: string, fieldNames: string[]) {
   };
 }
 
-// ─── Router ───────────────────────────────────────────────────────────────────
+// ── Router ──
 
 export const aiAssistRouter = router({
   /**
@@ -793,7 +793,14 @@ export const aiAssistRouter = router({
   scrapeBrochure: publicProcedure
     .input(
       z.object({
-        fileUrl: z.string().url(),
+        // Accept either a public http(s) URL (e.g. an S3 object) or a data:
+        // URL uploaded inline from the browser. Both are fetched server-side.
+        fileUrl: z
+          .string()
+          .refine(
+            v => /^https?:\/\//i.test(v) || /^data:[^;]+;base64,/i.test(v),
+            { message: "fileUrl must be an http(s) URL or a data: URL" }
+          ),
         mimeType: z
           .enum(["application/pdf", "image/jpeg", "image/png", "image/webp"])
           .default("application/pdf"),

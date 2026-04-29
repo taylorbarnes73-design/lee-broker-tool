@@ -3,29 +3,56 @@ import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { 
   Icons, PageHeader, StepProgress, Segmented, Button, Card, Badge, 
-  Input, Select, StepCard, Field, Toggle, Metric, SummaryRow 
+  Input, Select, StepCard, Field, Toggle 
 } from '../design/index.jsx';
-/* Lee Broker Tool ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Listing Entry screen */
+/* Lee Broker Tool — Listing Entry screen */
 
 export default function ListingEntryScreen() {
   const [subTab, setSubTab] = useState('add');
   const [propType, setPropType] = useState('Industrial');
   const [dealType, setDealType] = useState('Lease');
-  const [showAiFill, setShowAiFill] = useState(false);
-
-
-  const submitMutation = trpc.submissions.submit.useMutation({
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [aiExtracted, setAiExtracted] = useState<Record<string, string> | null>(null);
+  const submitMutation = trpc.submissions.create.useMutation({
     onSuccess: () => toast.success("Listing submitted successfully!"),
     onError: (err) => toast.error("Error: " + err.message),
   });
+  const scrapeBrochure = trpc.aiAssist.scrapeBrochure.useMutation({
+    onSuccess: (data) => {
+      if (data.success) {
+        setAiExtracted(data.fields);
+        toast.success(`Deal Assist extracted ${data.fieldCount} fields`);
+      } else {
+        toast.error(`Deal Assist failed: ${('error' in data && data.error) || 'unknown error'}`);
+      }
+    },
+    onError: (err) => toast.error(`Deal Assist error: ${err.message}`),
+  });
+  // Convert the selected file to a data URL the server can fetch, then call scrapeBrochure.
+  // This avoids needing a separate S3 upload round-trip.
+  async function handleBrochureFile(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      const mimeType = file.type.startsWith('image/')
+        ? (file.type as 'image/jpeg' | 'image/png' | 'image/webp')
+        : 'application/pdf';
+      scrapeBrochure.mutate({ fileUrl: dataUrl, mimeType });
+    };
+    reader.onerror = () => toast.error('Could not read file');
+    reader.readAsDataURL(file);
+  }
 
   const handleSubmit = async () => {
     await submitMutation.mutateAsync({
-      formType: 'listing',
-      payload: {
-        propType, dealType, subTab,
-        address: "2847 Newport Blvd, Costa Mesa CA 92627"
-      }
+      type: 'listing',
+      propertyType: propType,
+      transactionType: dealType,
+      address: '2847 Newport Blvd',
+      city: 'Costa Mesa',
+      state: 'CA',
+      zip: '92627',
+      subTab,
     });
   };
 
@@ -50,7 +77,7 @@ export default function ListingEntryScreen() {
         {/* Main column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* AI brochure upload ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â ambient but prominent */}
+          {/* AI brochure upload — ambient but prominent */}
           <Card padding={0} style={{
             background: 'linear-gradient(120deg, #FBF8FE 0%, #FEF4F6 100%)',
             border: '1px solid rgba(139,95,240,.2)',
@@ -68,35 +95,68 @@ export default function ListingEntryScreen() {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-900)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  Skip the typing ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â drop a brochure
+                  Skip the typing — drop a brochure
                   <Badge tone="ai" size="sm" icon={<Icons.Sparkles size={10}/>}>AI</Badge>
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--ink-600)', marginTop: 2 }}>
                   We'll extract address, SF, rate, term, photos and pre-fill this form in ~8 seconds.
                 </div>
               </div>
-              <Button variant="ai" size="sm" icon={<Icons.Upload size={14}/>} onClick={() => setShowAiFill(true)}>
-                Upload brochure
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/pdf,image/png,image/jpeg,image/webp"
+                style={{ display: 'none' }}
+                onChange={e => {
+                  const f = e.target.files?.[0];
+                  if (f) handleBrochureFile(f);
+                  e.target.value = '';
+                }}
+              />
+              <Button
+                variant="ai"
+                size="sm"
+                icon={<Icons.Upload size={14}/>}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={scrapeBrochure.isPending}
+              >
+                {scrapeBrochure.isPending ? 'Extracting…' : 'Upload brochure'}
               </Button>
-              <Button variant="ghost" size="sm">Paste URL</Button>
             </div>
+            {aiExtracted && Object.keys(aiExtracted).length > 0 && (
+              <div style={{
+                borderTop: '1px solid rgba(139,95,240,.2)',
+                padding: '12px 20px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                gap: 10,
+                fontSize: 12,
+              }}>
+                {Object.entries(aiExtracted).slice(0, 12).map(([k, v]) => (
+                  <div key={k}>
+                    <div style={{ color: 'var(--ink-500)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{k}</div>
+                    <div style={{ color: 'var(--ink-900)', fontWeight: 500 }}>{String(v)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
 
-          {/* Step 1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ complete */}
+          {/* Step 1 — complete */}
           <StepCard
             step={1} total={7} status="complete"
             title="Transaction type"
-            summary="Lease Ãƒâ€šÃ‚Â· Industrial Ãƒâ€šÃ‚Â· 2,847 Newport Blvd, Costa Mesa CA 92627"
+            summary="Lease · Industrial · 2,847 Newport Blvd, Costa Mesa CA 92627"
           />
 
-          {/* Step 2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ complete */}
+          {/* Step 2 — complete */}
           <StepCard
             step={2} total={7} status="complete"
             title="Property details"
-            summary="24,500 SF Ãƒâ€šÃ‚Â· Clear height 28' Ãƒâ€šÃ‚Â· 4 DH doors Ãƒâ€šÃ‚Â· Built 2005"
+            summary="24,500 SF · Clear height 28' · 4 DH doors · Built 2005"
           />
 
-          {/* Step 3 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ active */}
+          {/* Step 3 — active */}
           <StepCard
             step={3} total={7} status="active"
             title="Listing terms"
@@ -122,10 +182,10 @@ export default function ListingEntryScreen() {
                 <Input prefix={<Icons.Calendar size={14}/>} defaultValue="June 1, 2026"/>
               </Field>
 
-              <Field label="Commission ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â listing side" required span={1}>
+              <Field label="Commission — listing side" required span={1}>
                 <Input suffix="%" defaultValue="3.00"/>
               </Field>
-              <Field label="Commission ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â procuring" required span={1}>
+              <Field label="Commission — procuring" required span={1}>
                 <Input suffix="%" defaultValue="3.00"/>
               </Field>
               <Field label="Total consideration" span={2}>
@@ -222,14 +282,14 @@ function ListingSidebar() {
           Your asking rate is <b>6% above</b> the median for industrial space in Costa Mesa (last 90 days: $1.37/SF/Mo NNN).
         </div>
         <button style={{ marginTop: 10, fontSize: 12, fontWeight: 600, color: 'var(--ai-500)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-          See 12 comparable deals ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢
+          See 12 comparable deals →
         </button>
       </Card>
     </div>
   );
 }
 
-function Metric({ label, value, unit }) {
+function Metric({ label, value, unit }: any) {
   return (
     <div>
       <div style={{ fontSize: 10, color: 'var(--ink-500)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{label}</div>
@@ -241,7 +301,7 @@ function Metric({ label, value, unit }) {
   );
 }
 
-function SummaryRow({ ok, current, label }) {
+function SummaryRow({ ok, current, label }: { ok?: boolean; current?: boolean; label?: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
       <div style={{

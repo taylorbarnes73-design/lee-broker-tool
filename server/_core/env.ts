@@ -25,6 +25,12 @@ export const ENV = {
     forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
     forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
 
+    // Direct OpenAI fallback (used when Forge is not configured).
+    // The LLM layer prefers Forge when set; otherwise falls back to OPENAI_API_KEY.
+    openaiApiUrl: (process.env.OPENAI_API_URL ?? "https://api.openai.com/v1").replace(/\/$/, ""),
+    openaiApiKey: process.env.OPENAI_API_KEY ?? "",
+    openaiModel: process.env.OPENAI_MODEL ?? "gpt-4.1-mini",
+
     // AWS storage placeholders for future direct-S3 integration
     awsS3Bucket: process.env.AWS_S3_BUCKET ?? "",
     awsS3Region: process.env.AWS_S3_REGION ?? process.env.AWS_REGION ?? "",

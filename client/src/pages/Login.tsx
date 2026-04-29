@@ -36,17 +36,14 @@ export default function Login() {
   return (
     <div style={{ display: 'flex', width: '100vw', height: '100vh', background: 'var(--ink-50)', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: 440 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32, justifyContent: 'center' }}>
-          <div style={{
-            width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'var(--lee-crimson)', color: '#fff', fontWeight: 800, fontSize: 16,
-            borderRadius: 6,
-          }}>L</div>
-          <div style={{ lineHeight: 1 }}>
-            <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--ink-900)' }}>LEE &amp; ASSOCIATES</div>
-            <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--ink-500)', marginTop: 4, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              Broker Workspace
-            </div>
+        <div style={{ marginBottom: 32, textAlign: 'center' }}>
+          <img
+            src="/lee-newport-beach-fullcolor.png"
+            alt="Lee & Associates Newport Beach"
+            style={{ height: 64, width: 'auto', display: 'inline-block' }}
+          />
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-500)', marginTop: 14, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+            Broker Workspace
           </div>
         </div>
 
