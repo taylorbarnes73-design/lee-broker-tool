@@ -3510,3 +3510,268 @@ body {
   font-style: normal;
 }
 .row.compact .field-hint { font-size: 11px; }
+
+
+/* ──────────────────────────────────────────────────────────────────
+   Deal at a Glance — two-column shell (Commission Voucher & Listing)
+   ──────────────────────────────────────────────────────────────── */
+.deal-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: start;
+}
+.deal-main { min-width: 0; }
+.deal-aside {
+  position: sticky;
+  top: 76px; /* sit below sticky tab-bar */
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: calc(100vh - 92px);
+  overflow: auto;
+  scrollbar-width: thin;
+  padding-right: 2px;
+}
+
+.deal-card {
+  background: #fff;
+  border: 1px solid var(--border, #E4E5E9);
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 2px 10px rgba(31, 35, 40, .03);
+}
+.deal-card-primary {
+  background: linear-gradient(180deg, #fff 0%, #FBF9F6 100%);
+  border-color: #EAE7DF;
+}
+
+.deal-eyebrow {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #6b7178;
+  margin-bottom: 10px;
+}
+.deal-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #14181E;
+  line-height: 1.2;
+  margin-bottom: 3px;
+  word-break: break-word;
+}
+.deal-subtitle {
+  font-size: 12px;
+  color: #6b7178;
+  margin-bottom: 10px;
+}
+.deal-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px; }
+.deal-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  background: #F2F3F5;
+  color: #2F343B;
+}
+.deal-chip.is-crimson { background: rgba(195,32,51,.1); color: var(--red, #C32033); }
+.deal-chip.is-slate   { background: rgba(87,90,116,.12); color: #575A74; }
+.deal-chip.is-ink     { background: #0A0A0B; color: #fff; }
+.deal-chip.is-ai      { background: rgba(139,95,240,.14); color: #6D42D1; }
+
+.deal-kv { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+.deal-kv > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 10px;
+}
+.deal-kv dt {
+  font-size: 11px;
+  color: #6b7178;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.deal-kv dd {
+  font-size: 13px;
+  font-weight: 600;
+  color: #14181E;
+  text-align: right;
+  margin: 0;
+  word-break: break-word;
+  max-width: 190px;
+}
+.deal-kv dd.mono {
+  font-family: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Menlo', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  letter-spacing: -0.01em;
+}
+.deal-kv-sep {
+  height: 1px;
+  background: var(--border, #E4E5E9);
+  margin: 4px 0;
+}
+.deal-kv-strong dd { color: var(--red, #C32033); font-weight: 700; }
+.deal-kv-accent { background: #FBF6F3; margin: 2px -8px; padding: 8px; border-radius: 8px; }
+.deal-kv-accent dd { color: #0A0A0B; font-weight: 800; font-size: 13.5px; }
+
+.deal-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.deal-steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: #6b7178;
+  padding: 4px 0;
+  transition: color .15s;
+}
+.deal-step-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid #CFD2D7;
+  background: #fff;
+  flex-shrink: 0;
+  position: relative;
+}
+.deal-steps li.is-active { color: #14181E; font-weight: 700; }
+.deal-steps li.is-active .deal-step-dot {
+  border-color: var(--red, #C32033);
+  box-shadow: 0 0 0 3px rgba(195,32,51,.12);
+}
+.deal-steps li.is-done { color: #2F6B3E; }
+.deal-steps li.is-done .deal-step-dot {
+  background: #14924D;
+  border-color: #14924D;
+}
+.deal-steps li.is-done .deal-step-dot::after {
+  content: "";
+  position: absolute;
+  top: 2px; left: 4px;
+  width: 4px; height: 7px;
+  border: solid #fff;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+
+.deal-actions { display: flex; flex-direction: column; gap: 8px; }
+.deal-actions .btn { width: 100%; justify-content: center; }
+
+/* Collapsed mode for narrower viewports */
+@media (max-width: 1100px) {
+  .deal-shell { grid-template-columns: minmax(0, 1fr); }
+  .deal-aside {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .deal-aside .deal-card { flex: 1 1 260px; }
+  .deal-actions { flex-direction: row; flex-wrap: wrap; }
+  .deal-actions .btn { flex: 1 1 160px; width: auto; }
+}
+
+
+/* Voucher panel gets a wider container to accommodate the side card */
+#tab-voucher.panel { max-width: 1420px; }
+@media (max-width: 1100px) {
+  #tab-voucher.panel { max-width: 1080px; }
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   Step flow — one card at a time (listing, voucher, sign, comp)
+   ──────────────────────────────────────────────────────────────── */
+.step-flow .card[data-step] {
+  display: none;
+}
+.step-flow .card[data-step].step--current {
+  display: block;
+}
+.step-flow .card[data-step].step--done {
+  display: none;
+}
+/* Compact summary strip for a completed step, shown in place of the card */
+.step-summary {
+  background: #fff;
+  border: 1px solid var(--border, #E4E5E9);
+  border-radius: 12px;
+  padding: 12px 18px;
+  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+}
+.step-summary:hover { border-color: rgba(195,32,51,.3); box-shadow: 0 2px 10px rgba(31,35,40,.05); }
+.step-summary .s-num {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: #14924D; color: #fff;
+  display: grid; place-items: center;
+  font-size: 11px; font-weight: 800;
+  box-shadow: 0 2px 4px rgba(20,146,77,.25);
+}
+.step-summary .s-num::after {
+  content: ""; width: 6px; height: 9px;
+  border: solid #fff; border-width: 0 2px 2px 0;
+  transform: rotate(45deg); margin-top: -2px;
+}
+.step-summary .s-text .s-title {
+  font-size: 11px; font-weight: 700; color: #6b7178;
+  text-transform: uppercase; letter-spacing: .08em;
+  margin-bottom: 2px;
+}
+.step-summary .s-text .s-preview {
+  font-size: 13.5px; color: #14181E; font-weight: 600;
+  word-break: break-word;
+}
+.step-summary .s-edit {
+  font-size: 11px; font-weight: 700; color: var(--red, #C32033);
+  letter-spacing: .05em; text-transform: uppercase;
+  padding: 4px 10px; border: 1px solid rgba(195,32,51,.3);
+  border-radius: 999px;
+}
+.step-summary:hover .s-edit { background: var(--red, #C32033); color: #fff; border-color: var(--red, #C32033); }
+
+/* Step nav bar at the bottom of each step card */
+.step-nav {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; margin-top: 24px; padding-top: 18px;
+  border-top: 1px solid var(--border, #E4E5E9);
+}
+.step-nav .step-nav-left { display: flex; gap: 8px; }
+.step-nav .step-nav-right { display: flex; gap: 8px; }
+.step-nav .step-count {
+  font-size: 11px; font-weight: 700; color: #6b7178;
+  letter-spacing: .06em; text-transform: uppercase;
+}
+
+
+/* Inside a step-flow, neutralize legacy progressive-disclosure state.
+   The flow controls show/hide per step via .step--current on the card. */
+.step-flow .card[data-vstep] .card-summary,
+.step-flow .card[data-lstep] .card-summary,
+.step-flow .card[data-sstep] .card-summary { display: none !important; }
+.step-flow .card[data-vstep].card-clickable,
+.step-flow .card[data-lstep].card-clickable,
+.step-flow .card[data-sstep].card-clickable { cursor: default; }
+.step-flow .card[data-vstep].step--current > *,
+.step-flow .card[data-lstep].step--current > *,
+.step-flow .card[data-sstep].step--current > * { display: revert; }
+.step-flow .card[data-vstep].step--current > .is-hidden,
+.step-flow .card[data-lstep].step--current > .is-hidden,
+.step-flow .card[data-sstep].step--current > .is-hidden { display: none; }
+/* Cards inside a step-flow get a more generous inner spacing */
+.step-flow .card.step--current { padding: 26px 24px; }

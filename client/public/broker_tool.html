@@ -63,7 +63,10 @@
   <div id="listing-add-mode">
     <div class="tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections as needed.</div>
 
-    <div class="card required-section">
+    <div class="deal-shell" id="l-deal-shell">
+    <div class="deal-main" id="listing-main">
+
+    <div class="card required-section" data-lstep="1">
       <h2>Add Listing <span class="required-badge">Required</span></h2>
       <div class="row c3">
         <div class="field"><label class="req">Date Entered</label><input id="l-date-entered" type="date"></div>
@@ -223,7 +226,7 @@
       </div>
     </div><!-- end required-section -->
 
-    <div class="card">
+    <div class="card" data-lstep="2">
       <h2>Listing Agents</h2>
       <table class="suite-table" id="listing-agent-table">
         <thead><tr><th>Agent Name</th><th>Phone</th><th>Email</th><th class="table-col-wide">Shared Expenses %</th><th class="table-col-narrow"></th></tr></thead>
@@ -233,7 +236,7 @@
       <p class="micro-copy micro-copy-top">Shared Expenses: commission split / cost sharing between co-listing agents.</p>
     </div>
 
-    <div class="card">
+    <div class="card" data-lstep="3">
       <h2>Release Instructions</h2>
       <h3>Listing Release</h3>
       <div class="check-group">
@@ -249,7 +252,7 @@
       </div>
     </div>
 
-    <div class="card" id="property-details-card">
+    <div class="card" id="property-details-card" data-lstep="4">
       <h2>Property Details</h2>
     <p class="micro-copy micro-copy-bottom">Fields shown are specific to the selected property type.</p>
 
@@ -344,9 +347,52 @@
       <div class="section-divider">
         <div class="field"><label>Comments / Special Instructions</label><textarea id="l-comments" rows="4"></textarea><div class="field-hint">Any additional comments or special instructions...</div></div>
       </div>
-    </div>
+     </div>
+    </div><!-- /listing-main -->
 
-    <div class="btn-bar" id="listing-form-actions">
+    <aside class="deal-aside" id="l-deal-aside" aria-label="Listing at a glance">
+      <div class="deal-card deal-card-primary">
+        <div class="deal-eyebrow">Listing at a Glance</div>
+        <div class="deal-title" id="lg-title">New listing</div>
+        <div class="deal-subtitle" id="lg-subtitle">Fill Step 1 to begin</div>
+        <div class="deal-chips" id="lg-chips"></div>
+        <dl class="deal-kv">
+          <div><dt>Property</dt><dd id="lg-address">—</dd></div>
+          <div><dt>City</dt><dd id="lg-city">—</dd></div>
+          <div><dt>Prop Type</dt><dd id="lg-ptype">—</dd></div>
+        </dl>
+      </div>
+
+      <div class="deal-card">
+        <div class="deal-eyebrow">Pricing</div>
+        <dl class="deal-kv deal-kv-mono">
+          <div class="lg-lease"><dt>Rate / SF·Mo</dt><dd id="lg-rate" class="mono">—</dd></div>
+          <div class="lg-lease"><dt>Monthly Rent</dt><dd id="lg-monthly" class="mono">—</dd></div>
+          <div class="lg-sale" hidden><dt>Asking Price</dt><dd id="lg-price" class="mono">—</dd></div>
+          <div class="lg-sale" hidden><dt>Price / SF</dt><dd id="lg-psf" class="mono">—</dd></div>
+          <div><dt>Building SF</dt><dd id="lg-bldgsf" class="mono">—</dd></div>
+        </dl>
+      </div>
+
+      <div class="deal-card">
+        <div class="deal-eyebrow">Progress</div>
+        <ol class="deal-steps" id="lg-steps">
+          <li data-step="1"><span class="deal-step-dot"></span><span class="deal-step-label">Add Listing</span></li>
+          <li data-step="2"><span class="deal-step-dot"></span><span class="deal-step-label">Listing Agents</span></li>
+          <li data-step="3"><span class="deal-step-dot"></span><span class="deal-step-label">Release Instructions</span></li>
+          <li data-step="4"><span class="deal-step-dot"></span><span class="deal-step-label">Property Details</span></li>
+        </ol>
+      </div>
+
+      <div class="deal-actions">
+        <button class="btn btn-gray" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
+        <button class="btn btn-red" onclick="showListingReview()">Review &amp; Submit</button>
+        <button class="btn btn-green" onclick="openSendToAdminModal('listing')">Send to Admin</button>
+      </div>
+    </aside>
+    </div><!-- /deal-shell -->
+
+    <div class="btn-bar is-hidden" id="listing-form-actions">
       <button class="btn btn-red" onclick="showListingReview()"><span class="btn-label">Review &amp; Confirm &rarr;</span></button>
       <button class="btn btn-gray" id="btn-listing-pdf" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
     <button class="btn btn-green" id="btn-listing-send-admin" onclick="openSendToAdminModal('listing')"><span class="btn-spinner"></span><span class="btn-label">Send to Admin</span></button>
@@ -410,8 +456,9 @@
 <div id="tab-sign" class="panel">
   <div class="tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections as needed.</div>
 
+  <div id="sign-main">
   <!-- ═══ REQUIRED SECTION ═══ -->
-  <div class="card required-section">
+  <div class="card required-section" data-sstep="1">
     <h2>Required Information <span class="required-badge">Required</span></h2>
 
     <div class="row c3">
@@ -532,7 +579,7 @@
     <button class="btn btn-gray top-gap-sm" onclick="addSignAgent()">+ Add Agent</button>
   </div><!-- end required-section -->
 
-  <div class="card">
+  <div class="card" data-sstep="2">
     <h2>Access &amp; Comments</h2>
     <div class="row c2">
       <div class="field"><label>Access Necessary?</label><select id="s-access"><option value="no">No</option><option value="yes">Yes</option></select></div>
@@ -541,6 +588,7 @@
     <div class="field"><label>Comments</label><textarea id="s-comments" rows="3"></textarea><div class="field-hint">Additional comments or special instructions...</div></div>
   </div>
 
+  </div><!-- /sign-main -->
   <div class="btn-bar btn-bar-top-md">
     <button class="btn btn-gray" onclick="exportSignPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
     <button class="btn btn-red" onclick="openEmailModal('sign')">Submit Sign Request</button>
@@ -553,7 +601,10 @@
 <div id="tab-voucher" class="panel">
   <div class="tip">Required fields are marked with <span class="required-mark">*</span> — complete all steps in order for fastest processing.</div>
 
-  <div class="card required-section card-active" id="vstep-1" data-vstep="1">
+  <div class="deal-shell" id="v-deal-shell">
+  <div class="deal-main" id="voucher-main">
+
+  <div class="card required-section" id="vstep-1" data-vstep="1">
     <h2>Step 1 — Transaction Type <span class="required-badge">Required</span></h2>
     <div class="row c4">
       <div class="field"><label class="req">Representation Type</label>
@@ -974,6 +1025,60 @@
   </div>
     </div><!-- end optional-body -->
   </div><!-- end optional-wrapper -->
+
+  </div><!-- /deal-main -->
+
+  <aside class="deal-aside" id="v-deal-aside" aria-label="Deal at a glance">
+    <div class="deal-card deal-card-primary">
+      <div class="deal-eyebrow">Deal at a Glance</div>
+      <div class="deal-title" id="dg-title">New voucher</div>
+      <div class="deal-subtitle" id="dg-subtitle">Fill Step 1 to begin</div>
+      <div class="deal-chips" id="dg-chips"></div>
+      <dl class="deal-kv">
+        <div><dt>Property</dt><dd id="dg-address">—</dd></div>
+        <div><dt>Suite</dt><dd id="dg-suite">—</dd></div>
+        <div><dt>Client</dt><dd id="dg-client">—</dd></div>
+        <div><dt>Prop Type</dt><dd id="dg-ptype">—</dd></div>
+      </dl>
+    </div>
+
+    <div class="deal-card">
+      <div class="deal-eyebrow">Deal Math</div>
+      <dl class="deal-kv deal-kv-mono">
+        <div><dt>Deal SF</dt><dd id="dg-sf" class="mono">—</dd></div>
+        <div class="dg-lease"><dt>Rate / SF·Mo</dt><dd id="dg-rate" class="mono">—</dd></div>
+        <div class="dg-lease"><dt>Term</dt><dd id="dg-term" class="mono">—</dd></div>
+        <div class="dg-sale" hidden><dt>Sale Price</dt><dd id="dg-sprice" class="mono">—</dd></div>
+        <div class="dg-sale" hidden><dt>Price / SF</dt><dd id="dg-psf" class="mono">—</dd></div>
+        <div class="deal-kv-sep"></div>
+        <div><dt>Total Consideration</dt><dd id="dg-consid" class="mono">$0</dd></div>
+        <div><dt>Commission %</dt><dd id="dg-commpct" class="mono">—</dd></div>
+        <div class="deal-kv-strong"><dt>Commission Due</dt><dd id="dg-commdue" class="mono">$0</dd></div>
+        <div><dt>Outside</dt><dd id="dg-outside" class="mono">$0</dd></div>
+        <div class="deal-kv-accent"><dt>Gross to Distribute</dt><dd id="dg-gross" class="mono">$0</dd></div>
+      </dl>
+    </div>
+
+    <div class="deal-card">
+      <div class="deal-eyebrow">Progress</div>
+      <ol class="deal-steps" id="dg-steps">
+        <li data-step="1"><span class="deal-step-dot"></span><span class="deal-step-label">Transaction Type</span></li>
+        <li data-step="2"><span class="deal-step-dot"></span><span class="deal-step-label">Broker Information</span></li>
+        <li data-step="3"><span class="deal-step-dot"></span><span class="deal-step-label">Client &amp; Property</span></li>
+        <li data-step="4"><span class="deal-step-dot"></span><span class="deal-step-label">Financial Details</span></li>
+        <li data-step="5"><span class="deal-step-dot"></span><span class="deal-step-label">Commission &amp; Invoice</span></li>
+        <li data-step="6"><span class="deal-step-dot"></span><span class="deal-step-label">Rent Schedule</span></li>
+        <li data-step="8"><span class="deal-step-dot"></span><span class="deal-step-label">Documents &amp; Distribution</span></li>
+      </ol>
+    </div>
+
+    <div class="deal-actions">
+      <button class="btn btn-gray" onclick="exportVoucherPdf()">Review (PDF)</button>
+      <button class="btn btn-red" onclick="openEmailModal('voucher')">Submit Voucher</button>
+      <button class="btn btn-green" onclick="openSendToAdminModal('voucher')">Send to Admin</button>
+    </div>
+  </aside>
+  </div><!-- /deal-shell -->
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
@@ -2491,7 +2596,136 @@ function switchTab(name) {
   if (name === 'comp-reports') {
     void initCompReports();
   }
+  bootstrapStepFlowFor(name);
 }
+
+// Ensure step flows are initialized after the first view of each tab
+function bootstrapStepFlowFor(name) {
+  if (name === 'voucher' && !window.__stepFlows['voucher-main']) {
+    initStepFlow({
+      mainId: 'voucher-main',
+      stepAttr: 'data-vstep',
+      previewFor: voucherStepPreview,
+      onStep: () => { try { syncDealGlance(); } catch(e) {} }
+    });
+  }
+  if (name === 'listing' && !window.__stepFlows['listing-main']) {
+    initStepFlow({
+      mainId: 'listing-main',
+      stepAttr: 'data-lstep',
+      previewFor: listingStepPreview,
+      onStep: () => { try { syncListingGlance(); } catch(e) {} }
+    });
+  }
+  if (name === 'sign' && !window.__stepFlows['sign-main']) {
+    initStepFlow({
+      mainId: 'sign-main',
+      stepAttr: 'data-sstep'
+    });
+  }
+}
+
+// Step previews used by the step-summary strip
+function voucherStepPreview(card, n) {
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  if (n === '1') {
+    const rep = document.getElementById('v-rep-type');
+    const txn = document.getElementById('v-txn-type');
+    return [rep?.options[rep.selectedIndex]?.text, txn?.options[txn.selectedIndex]?.text].filter(Boolean).join(' · ');
+  }
+  if (n === '2') return v('v-la-name') || v('v-pa-name') || 'Broker info';
+  if (n === '3') return [v('v-address'), v('v-suite')].filter(Boolean).join(', ') || v('v-on-behalf') || 'Client & property';
+  if (n === '4') return (v('v-l-dealsf') || v('v-s-price')) ? 'Financials set' : 'Financial details';
+  if (n === '5') return v('v-l-comm-rate') ? (v('v-l-comm-rate') + '% commission') : (v('v-s-comm-pct') ? (v('v-s-comm-pct') + '% commission') : 'Commission & invoice');
+  if (n === '6') return v('v-l-consideration') || 'Rent schedule';
+  if (n === '8') return v('v-gross-dist') ? ('Distribution: ' + v('v-gross-dist')) : 'Documents & distribution';
+  return '';
+}
+function listingStepPreview(card, n) {
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  if (n === '1') return [v('l-address'), v('l-city')].filter(Boolean).join(', ') || 'Listing basics';
+  if (n === '2') {
+    const rows = card.querySelectorAll('#listing-agent-body tr');
+    return rows.length ? (rows.length + ' agent' + (rows.length>1?'s':'')) : 'No agents';
+  }
+  if (n === '3') {
+    const r = card.querySelector('input[name="l-release"]:checked');
+    return r ? r.parentElement.textContent.trim() : 'Release instructions';
+  }
+  if (n === '4') {
+    const pt = document.getElementById('l-prop-type');
+    const label = pt?.options[pt.selectedIndex]?.text;
+    return label ? (label + ' details') : 'Property details';
+  }
+  return '';
+}
+
+// Listing Glance — sidebar sync
+function syncListingGlance() {
+  const shell = document.getElementById('l-deal-shell');
+  if (!shell) return;
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  const txn = (document.getElementById('l-txn-type')?.value) || 'lease';
+  const isLease = txn === 'lease';
+  shell.querySelectorAll('.lg-lease').forEach(el => el.hidden = !isLease);
+  shell.querySelectorAll('.lg-sale').forEach(el => el.hidden = isLease);
+
+  const addr = v('l-address');
+  const city = v('l-city');
+  const title = addr ? addr : 'New listing';
+  const sub = city ? city : 'Fill Step 1 to begin';
+  const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text || '—'; };
+  set('lg-title', title);
+  set('lg-subtitle', sub);
+  set('lg-address', addr || '—');
+  set('lg-city', city || '—');
+  const pt = document.getElementById('l-prop-type');
+  set('lg-ptype', pt && pt.value ? pt.options[pt.selectedIndex].text : '—');
+
+  const chips = document.getElementById('lg-chips');
+  if (chips) {
+    chips.innerHTML = '';
+    const add = (t, c) => { if (!t) return; const s = document.createElement('span'); s.className = 'deal-chip ' + (c || ''); s.textContent = t; chips.appendChild(s); };
+    add(isLease ? 'Lease' : 'Sale', 'is-ink');
+    if (pt && pt.value) add(pt.options[pt.selectedIndex].text, 'is-crimson');
+  }
+
+  if (isLease) {
+    set('lg-rate', v('l-lease-sf') || '—');
+    set('lg-monthly', v('l-lease-mo') || '—');
+  } else {
+    set('lg-price', v('l-sale-price') ? ('$' + v('l-sale-price')) : '—');
+    set('lg-psf', v('l-sale-sf') ? ('$' + v('l-sale-sf')) : '—');
+  }
+  set('lg-bldgsf', v('l-bldg-sf') || '—');
+
+  // Progress steps + summary strips
+  const flow = window.__stepFlows && window.__stepFlows['listing-main'];
+  const steps = document.getElementById('lg-steps');
+  if (flow && steps) {
+    steps.querySelectorAll('li').forEach((li, idx) => {
+      li.classList.toggle('is-done', idx < flow.current);
+      li.classList.toggle('is-active', idx === flow.current);
+    });
+  }
+  if (flow && typeof flow.renderSummaries === 'function') flow.renderSummaries();
+}
+
+// Live update glance on any input within listing-main
+document.addEventListener('DOMContentLoaded', function () {
+  const panel = document.getElementById('tab-listing');
+  if (panel) {
+    const h = () => { try { syncListingGlance(); } catch(e) {} };
+    panel.addEventListener('input', h, { passive: true });
+    panel.addEventListener('change', h, { passive: true });
+  }
+  // Bootstrap step flow for whichever tab is active at load
+  const active = document.querySelector('.panel.active');
+  if (active) {
+    const name = active.id.replace(/^tab-/, '');
+    if (typeof bootstrapStepFlowFor === 'function') bootstrapStepFlowFor(name);
+  }
+});
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // LISTING FORM: PROPERTY TYPE TOGGLING
@@ -2913,8 +3147,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const lDate = document.getElementById('l-date-entered');
   if (lDate && !lDate.value) lDate.value = new Date().toISOString().split('T')[0];
 
-  // Initialize voucher steps 2-8 as locked (step 1 is already card-active)
-  [2, 3, 4, 5, 6, 8].forEach(n => vstepMarkLocked(n));
+  // Step flow handles visibility now; no need to pre-lock steps.
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -3017,6 +3250,232 @@ function vstepExpand(stepNum) {
   setHiddenState(summary, true);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// STEP FLOW — shared "one step at a time" controller for every tab
+//   Usage:   initStepFlow({tabId, mainId, stepAttr, previewFor})
+// ═══════════════════════════════════════════════════════════════════════════════
+window.__stepFlows = window.__stepFlows || {};
+function initStepFlow(opts) {
+  const main = document.getElementById(opts.mainId);
+  if (!main) return null;
+  main.classList.add('step-flow');
+  const cards = Array.from(main.querySelectorAll('.card[' + opts.stepAttr + ']'));
+  if (!cards.length) return null;
+
+  const flow = {
+    opts,
+    main,
+    cards,
+    current: 0,
+    go(i) {
+      i = Math.max(0, Math.min(cards.length - 1, i));
+      this.current = i;
+      cards.forEach((c, idx) => {
+        c.classList.remove('step--current');
+        c.classList.toggle('step--done', idx < i);
+        if (idx === i) c.classList.add('step--current');
+      });
+      this.renderSummaries();
+      this.renderNav();
+      main.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (typeof opts.onStep === 'function') opts.onStep(i, cards[i]);
+    },
+    next() { this.go(this.current + 1); },
+    prev() { this.go(this.current - 1); },
+    renderSummaries() {
+      // remove prior summaries
+      main.querySelectorAll('.step-summary').forEach(el => el.remove());
+      cards.forEach((c, idx) => {
+        if (idx >= this.current) return;
+        const n = c.getAttribute(opts.stepAttr);
+        const title = (c.querySelector('h2')?.firstChild?.textContent || c.querySelector('h2')?.textContent || ('Step ' + n)).trim().replace(/\s*Required\s*$/, '');
+        const preview = (opts.previewFor ? opts.previewFor(c, n) : '') || 'Completed';
+        const strip = document.createElement('div');
+        strip.className = 'step-summary';
+        strip.setAttribute('data-step-summary', n);
+        strip.innerHTML = '<div class="s-num"></div>' +
+          '<div class="s-text"><div class="s-title">Step ' + n + ' — ' + title + '</div>' +
+          '<div class="s-preview"></div></div>' +
+          '<div class="s-edit">Edit</div>';
+        strip.querySelector('.s-preview').textContent = preview;
+        strip.addEventListener('click', () => this.go(idx));
+        c.insertAdjacentElement('beforebegin', strip);
+      });
+    },
+    renderNav() {
+      cards.forEach((c, idx) => {
+        let nav = c.querySelector(':scope > .step-nav');
+        if (!nav) {
+          nav = document.createElement('div');
+          nav.className = 'step-nav';
+          c.appendChild(nav);
+        }
+        nav.innerHTML = '';
+        const left = document.createElement('div');
+        left.className = 'step-nav-left';
+        if (idx > 0) {
+          const back = document.createElement('button');
+          back.type = 'button';
+          back.className = 'btn btn-gray';
+          back.textContent = '← Back';
+          back.onclick = () => this.prev();
+          left.appendChild(back);
+        }
+        const count = document.createElement('span');
+        count.className = 'step-count';
+        count.textContent = 'Step ' + (idx + 1) + ' of ' + cards.length;
+        const right = document.createElement('div');
+        right.className = 'step-nav-right';
+        if (idx < cards.length - 1) {
+          const nextBtn = document.createElement('button');
+          nextBtn.type = 'button';
+          nextBtn.className = 'btn btn-red';
+          nextBtn.textContent = 'Continue →';
+          nextBtn.onclick = () => this.next();
+          right.appendChild(nextBtn);
+        }
+        nav.appendChild(left);
+        nav.appendChild(count);
+        nav.appendChild(right);
+      });
+    }
+  };
+  flow.go(0);
+  window.__stepFlows[opts.mainId] = flow;
+  return flow;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DEAL AT A GLANCE — live sidebar summary for the Commission Voucher
+// ═══════════════════════════════════════════════════════════════════════════════
+function _dgVal(id) {
+  const el = document.getElementById(id);
+  if (!el) return '';
+  return (el.tagName === 'SELECT' ? (el.options[el.selectedIndex]?.text || el.value) : el.value).trim();
+}
+function _dgNum(id) {
+  const raw = _dgVal(id);
+  if (!raw) return 0;
+  const n = parseFloat(raw.replace(/[^0-9.\-]/g, ''));
+  return isNaN(n) ? 0 : n;
+}
+function _dgFmtMoney(n, dec) {
+  if (!n) return '$0';
+  return '$' + n.toLocaleString(undefined, {
+    minimumFractionDigits: dec || 0,
+    maximumFractionDigits: dec || 0
+  });
+}
+function _dgSet(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text || '—';
+}
+function _dgStepState(n) {
+  const c = document.getElementById('vstep-' + n);
+  if (!c) return 'pending';
+  if (c.classList.contains('card-done')) return 'done';
+  if (c.classList.contains('card-active')) return 'active';
+  return 'pending';
+}
+function syncDealGlance() {
+  const shell = document.getElementById('v-deal-shell');
+  if (!shell) return;
+  const txn = (document.getElementById('v-txn-type')?.value) || 'lease';
+  const isLease = txn === 'lease';
+
+  // Toggle lease/sale rows
+  shell.querySelectorAll('.dg-lease').forEach(el => el.hidden = !isLease);
+  shell.querySelectorAll('.dg-sale').forEach(el => el.hidden = isLease);
+
+  // Title & subtitle
+  const addr = _dgVal('v-address');
+  const city = _dgVal('v-city');
+  const suite = _dgVal('v-suite');
+  // Client = "on behalf of" (our client). If blank, fall back to the other party.
+  const client = _dgVal('v-on-behalf') || _dgVal('v-lb-company') || _dgVal('v-ls-company') || _dgVal('v-lb-contact') || _dgVal('v-ls-contact');
+  const rep = document.getElementById('v-rep-type');
+  const repTxt = rep && rep.options[rep.selectedIndex] ? rep.options[rep.selectedIndex].text : '';
+
+  _dgSet('dg-title', addr ? (addr + (suite ? ', ' + suite : '')) : 'New voucher');
+  _dgSet('dg-subtitle', city ? city : (addr ? '' : 'Fill Step 1 to begin'));
+  _dgSet('dg-address', addr || '—');
+  _dgSet('dg-suite', suite || '—');
+  _dgSet('dg-client', client || '—');
+  const pType = document.getElementById('v-prop-type');
+  const pTypeTxt = pType && pType.options[pType.selectedIndex] ? pType.options[pType.selectedIndex].text : '';
+  _dgSet('dg-ptype', pTypeTxt && pType.value ? pTypeTxt : '—');
+
+  // Chips
+  const chips = document.getElementById('dg-chips');
+  if (chips) {
+    chips.innerHTML = '';
+    const addChip = (txt, cls) => {
+      if (!txt) return;
+      const s = document.createElement('span');
+      s.className = 'deal-chip ' + (cls || '');
+      s.textContent = txt;
+      chips.appendChild(s);
+    };
+    addChip(isLease ? 'Lease' : 'Sale', 'is-ink');
+    if (repTxt && rep.value) addChip(repTxt, 'is-crimson');
+  }
+
+  // Deal math
+  if (isLease) {
+    const sf = _dgNum('v-l-dealsf');
+    const rate = _dgVal('v-avg-rate-sf') || _dgVal('v-l-rate');
+    const term = _dgVal('v-l-term');
+    _dgSet('dg-sf', sf ? sf.toLocaleString() : '—');
+    _dgSet('dg-rate', rate || '—');
+    _dgSet('dg-term', term ? (term + ' mo') : '—');
+  } else {
+    // Sale uses the same building SF id as lease; dedicated sale SF only in some builds.
+    const sf = _dgNum('v-l-dealsf');
+    _dgSet('dg-sf', sf ? sf.toLocaleString() : '—');
+    _dgSet('dg-sprice', _dgVal('v-s-price') || '—');
+    _dgSet('dg-psf', _dgVal('v-s-price-sf') || '—');
+  }
+
+  const consid = isLease ? _dgVal('v-l-consideration') : _dgVal('v-s-price');
+  _dgSet('dg-consid', consid || '$0');
+  const commPct = isLease ? _dgVal('v-l-comm-rate') : _dgVal('v-s-comm-pct');
+  _dgSet('dg-commpct', commPct ? (commPct + '%') : '—');
+  const commDue = isLease ? _dgVal('v-l-comm-due') : _dgVal('v-s-comm-due');
+  _dgSet('dg-commdue', commDue || '$0');
+  const outside = _dgVal('v-total-outside');
+  _dgSet('dg-outside', outside || '$0');
+  const gross = _dgVal('v-gross-dist');
+  _dgSet('dg-gross', gross || '$0');
+
+  // Progress steps — driven by step flow position when available
+  const stepsEl = document.getElementById('dg-steps');
+  const flow = window.__stepFlows && window.__stepFlows['voucher-main'];
+  if (flow && typeof flow.renderSummaries === 'function') flow.renderSummaries();
+  if (stepsEl) {
+    stepsEl.querySelectorAll('li').forEach((li, idx) => {
+      if (flow) {
+        li.classList.toggle('is-done', idx < flow.current);
+        li.classList.toggle('is-active', idx === flow.current);
+      } else {
+        const n = li.getAttribute('data-step');
+        const state = _dgStepState(n);
+        li.classList.toggle('is-done', state === 'done');
+        li.classList.toggle('is-active', state === 'active');
+      }
+    });
+  }
+}
+// Wire up live updates for voucher inputs (delegated)
+document.addEventListener('DOMContentLoaded', function () {
+  const panel = document.getElementById('tab-voucher');
+  if (!panel) return;
+  const handler = () => { try { syncDealGlance(); } catch(e) {} };
+  panel.addEventListener('input', handler, { passive: true });
+  panel.addEventListener('change', handler, { passive: true });
+  // Initial paint
+  handler();
+});
+
 // Update progress bar for voucher tab
 function updateVoucherProgress() {
   const steps = [1,2,3,4,5,6,8];
@@ -3033,6 +3492,7 @@ function updateVoucherProgress() {
   if (fill) fill.style.width = pct + '%';
   if (label) label.textContent = 'Step ' + (done + 1) + ' of ' + total;
   if (pctEl) pctEl.textContent = pct + '%';
+  syncDealGlance();
 }
 
 // Show progress bar when on voucher tab
@@ -3221,6 +3681,7 @@ function onVoucherTxnChange() {
   setHiddenState(reqCommSale, txn !== 'sale');
   document.getElementById('v-lbl-lessor').textContent = txn === 'sale' ? 'Seller' : 'Lessor / Seller';
   document.getElementById('v-lbl-lessee').textContent = txn === 'sale' ? 'Buyer' : 'Lessee / Buyer';
+  syncDealGlance();
 }
 
 // Show/hide "Other" type explanation
@@ -3326,6 +3787,7 @@ function calcCommSummary() {
   document.getElementById('v-dist-total-outside').value = totalOutside > 0 ? '$' + totalOutside.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '$0.00';
   const grossDist = totalInvoice - totalOutside;
   document.getElementById('v-gross-dist').value = '$' + grossDist.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+  syncDealGlance();
 }
 
 // Auto-calc NNN total
