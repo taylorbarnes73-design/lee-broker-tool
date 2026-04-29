@@ -110,3 +110,7 @@ temp/
 
 # Webdev artifacts (checkpoint zips, migrations, etc.)
 .webdev/
+
+# Build / export artifacts
+*.zip
+Lee\ Broker\ Tool*/

@@ -16,7 +16,7 @@ import { nanoid } from "nanoid";
 
 export const restApiRouter = Router();
 
-// ─── Utility ────────────────────────────────────────────────────────────────
+// ── Utility ──
 
 function ok(res: Response, data: unknown) {
   res.json({ success: true, data });
@@ -69,7 +69,7 @@ restApiRouter.use((req: Request, res: Response, next) => {
   next();
 });
 
-// ─── POST /api/v1/submit/listing ─────────────────────────────────────────────
+// ── POST /api/v1/submit/listing ──
 /**
  * Submit a new listing entry.
  * Body: ListingSubmission (see OpenAPI spec for full schema)
@@ -102,7 +102,7 @@ restApiRouter.post("/submit/listing", async (req: Request, res: Response) => {
   }
 });
 
-// ─── POST /api/v1/submit/voucher ─────────────────────────────────────────────
+// ── POST /api/v1/submit/voucher ──
 /**
  * Submit a commission voucher.
  */
@@ -134,7 +134,7 @@ restApiRouter.post("/submit/voucher", async (req: Request, res: Response) => {
   }
 });
 
-// ─── POST /api/v1/submit/sign-request ────────────────────────────────────────
+// ── POST /api/v1/submit/sign-request ──
 /**
  * Submit a sign order request.
  */
@@ -167,7 +167,7 @@ restApiRouter.post("/submit/sign-request", async (req: Request, res: Response) =
   }
 });
 
-// ─── POST /api/v1/submit/comp ─────────────────────────────────────────────────
+// ── POST /api/v1/submit/comp ──
 /**
  * Submit a comp input record.
  */
@@ -199,7 +199,7 @@ restApiRouter.post("/submit/comp", async (req: Request, res: Response) => {
   }
 });
 
-// ─── GET /api/v1/submissions ──────────────────────────────────────────────────
+// ── GET /api/v1/submissions ──
 /**
  * List recent form submissions.
  * Query params: formType, limit (default 50)
@@ -234,7 +234,7 @@ restApiRouter.get("/submissions", async (req: Request, res: Response) => {
   }
 });
 
-// ─── GET /api/v1/submissions/:id ─────────────────────────────────────────────
+// ── GET /api/v1/submissions/:id ──
 /**
  * Get full payload of a single submission by ID.
  */
@@ -263,7 +263,7 @@ restApiRouter.get("/submissions/:id", async (req: Request, res: Response) => {
   }
 });
 
-// ─── GET /api/v1/files ────────────────────────────────────────────────────────
+// ── GET /api/v1/files ──
 /**
  * List uploaded files.
  * Query params: category, reference, limit (default 50)
@@ -302,7 +302,7 @@ restApiRouter.get("/files", async (req: Request, res: Response) => {
   }
 });
 
-// ─── GET /api/v1/files/url ────────────────────────────────────────────────────
+// ── GET /api/v1/files/url ──
 /**
  * Get a fresh download URL for a file.
  * Query param: key (S3 file key)

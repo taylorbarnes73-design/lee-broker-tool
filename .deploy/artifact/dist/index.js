@@ -156,6 +156,11 @@ var ENV = {
   // Built-in Forge proxy backing storage, LLM, maps, and other managed services
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
+  // Direct OpenAI fallback (used when Forge is not configured).
+  // The LLM layer prefers Forge when set; otherwise falls back to OPENAI_API_KEY.
+  openaiApiUrl: (process.env.OPENAI_API_URL ?? "https://api.openai.com/v1").replace(/\/$/, ""),
+  openaiApiKey: process.env.OPENAI_API_KEY ?? "",
+  openaiModel: process.env.OPENAI_MODEL ?? "gpt-4.1-mini",
   // AWS storage placeholders for future direct-S3 integration
   awsS3Bucket: process.env.AWS_S3_BUCKET ?? "",
   awsS3Region: process.env.AWS_S3_REGION ?? process.env.AWS_REGION ?? "",
@@ -393,8 +398,7 @@ var SDKServer = class {
     if (set.has("REGISTERED_PLATFORM_EMAIL")) return "email";
     if (set.has("REGISTERED_PLATFORM_GOOGLE")) return "google";
     if (set.has("REGISTERED_PLATFORM_APPLE")) return "apple";
-    if (set.has("REGISTERED_PLATFORM_MICROSOFT") || set.has("REGISTERED_PLATFORM_AZURE"))
-      return "microsoft";
+    if (set.has("REGISTERED_PLATFORM_MICROSOFT")) return "microsoft";
     if (set.has("REGISTERED_PLATFORM_GITHUB")) return "github";
     const first = Array.from(set)[0];
     return first ? first.toLowerCase() : null;
@@ -936,17 +940,25 @@ var normalizeToolChoice = (toolChoice, tools) => {
   }
   return toolChoice;
 };
-var resolveApiUrl = () => {
-  if (ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0) {
-    return `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`;
+function resolveBackend() {
+  if (ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0 && ENV.forgeApiKey) {
+    return {
+      url: `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`,
+      key: ENV.forgeApiKey,
+      model: "gemini-2.5-flash"
+    };
   }
-  throw new Error("BUILT_IN_FORGE_API_URL is not configured");
-};
-var assertApiKey = () => {
-  if (!ENV.forgeApiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
+  if (ENV.openaiApiKey) {
+    return {
+      url: `${ENV.openaiApiUrl}/chat/completions`,
+      key: ENV.openaiApiKey,
+      model: ENV.openaiModel || "gpt-4.1-mini"
+    };
   }
-};
+  throw new Error(
+    "No LLM backend configured. Set BUILT_IN_FORGE_API_URL + BUILT_IN_FORGE_API_KEY or OPENAI_API_KEY."
+  );
+}
 var normalizeResponseFormat = ({
   responseFormat,
   response_format,
@@ -977,7 +989,7 @@ var normalizeResponseFormat = ({
   };
 };
 async function invokeLLM(params) {
-  assertApiKey();
+  const backend = resolveBackend();
   const {
     messages,
     tools,
@@ -989,7 +1001,7 @@ async function invokeLLM(params) {
     response_format
   } = params;
   const payload = {
-    model: "gemini-2.5-flash",
+    model: backend.model,
     messages: messages.map(normalizeMessage)
   };
   if (tools && tools.length > 0) {
@@ -1012,11 +1024,11 @@ async function invokeLLM(params) {
   if (normalizedResponseFormat) {
     payload.response_format = normalizedResponseFormat;
   }
-  const response = await fetch(resolveApiUrl(), {
+  const response = await fetch(backend.url, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`
+      authorization: `Bearer ${backend.key}`
     },
     body: JSON.stringify(payload)
   });
@@ -1678,7 +1690,12 @@ Return JSON:`
    */
   scrapeBrochure: publicProcedure.input(
     z2.object({
-      fileUrl: z2.string().url(),
+      // Accept either a public http(s) URL (e.g. an S3 object) or a data:
+      // URL uploaded inline from the browser. Both are fetched server-side.
+      fileUrl: z2.string().refine(
+        (v) => /^https?:\/\//i.test(v) || /^data:[^;]+;base64,/i.test(v),
+        { message: "fileUrl must be an http(s) URL or a data: URL" }
+      ),
       mimeType: z2.enum(["application/pdf", "image/jpeg", "image/png", "image/webp"]).default("application/pdf")
     })
   ).mutation(async ({ input }) => {
@@ -1839,6 +1856,15 @@ function formatReportDate(value) {
   if (Number.isNaN(parsed.getTime())) return value;
   return parsed.toLocaleDateString("en-US");
 }
+function buildBrokerLine(kind, brokerage, agents) {
+  const namedAgents = agents.map((a) => a.trim()).filter(Boolean);
+  if (!brokerage && namedAgents.length === 0) return "";
+  const label = kind === "List" ? "List. Brkr" : "Proc. Brkr";
+  const agentText = namedAgents.length ? namedAgents.join(" & ") : "";
+  if (brokerage && agentText) return `${label}: ${agentText} (${brokerage})`;
+  if (brokerage) return `${label}: ${brokerage}`;
+  return `${label}: ${agentText}`;
+}
 function buildUpdateLine(_verifiedBy, lastUpdated, id) {
   const parts = [];
   if (lastUpdated) parts.push(`Updated: ${formatReportDate(lastUpdated)}`);
@@ -1916,7 +1942,15 @@ function normalizeLeaseCompRecord(row, sourceSheet) {
     cam: cleanText(getRowValue(row, "CAM")),
     confidential: cleanFlag(getRowValue(row, "confidential")),
     expenseStop: cleanText(getRowValue(row, "expenseStop")),
-    rentUse: cleanText(getRowValue(row, "rentUse"))
+    rentUse: cleanText(getRowValue(row, "rentUse")),
+    photo: cleanText(getRowValue(row, "photo")),
+    listAgent1: [cleanText(getRowValue(row, "listAgent1First")), cleanText(getRowValue(row, "listAgent1Last"))].filter(Boolean).join(" "),
+    listAgent2: [cleanText(getRowValue(row, "listAgent2First")), cleanText(getRowValue(row, "listAgent2Last"))].filter(Boolean).join(" "),
+    procAgent1: [cleanText(getRowValue(row, "procAgent1First")), cleanText(getRowValue(row, "procAgent1Last"))].filter(Boolean).join(" "),
+    procAgent2: [cleanText(getRowValue(row, "procAgent2First")), cleanText(getRowValue(row, "procAgent2Last"))].filter(Boolean).join(" "),
+    verified: cleanFlag(getRowValue(row, "verified")),
+    updatedBy: cleanText(getRowValue(row, "updatedBy")),
+    apn: cleanText(getRowValue(row, "APN"))
   };
 }
 function normalizeSaleCompRecord(row, sourceSheet) {
@@ -1979,7 +2013,15 @@ function normalizeSaleCompRecord(row, sourceSheet) {
     sellerContact: cleanText(getRowValue(row, "sellerContact")),
     sellerPhone: cleanText(getRowValue(row, "sellerPhone")),
     comments: cleanText(getRowValue(row, "comments")),
-    askingPrice: cleanNumber(getRowValue(row, "askingPrice"))
+    askingPrice: cleanNumber(getRowValue(row, "askingPrice")),
+    photo: cleanText(getRowValue(row, "photo")),
+    listAgent1: [cleanText(getRowValue(row, "listAgent1First")), cleanText(getRowValue(row, "listAgent1Last"))].filter(Boolean).join(" "),
+    listAgent2: [cleanText(getRowValue(row, "listAgent2First")), cleanText(getRowValue(row, "listAgent2Last"))].filter(Boolean).join(" "),
+    procAgent1: [cleanText(getRowValue(row, "procAgent1First")), cleanText(getRowValue(row, "procAgent1Last"))].filter(Boolean).join(" "),
+    procAgent2: [cleanText(getRowValue(row, "procAgent2First")), cleanText(getRowValue(row, "procAgent2Last"))].filter(Boolean).join(" "),
+    verified: cleanFlag(getRowValue(row, "verified")),
+    updatedBy: cleanText(getRowValue(row, "updatedBy")),
+    apn: cleanText(getRowValue(row, "APN"))
   };
 }
 function sheetToRows(workbook, sheetName) {
@@ -2023,11 +2065,12 @@ function buildLeaseReportCard(record) {
     addressLine: record.address,
     cityLine: [record.city, record.state, record.zipCode].filter(Boolean).join(", "),
     submarketLine: [record.market, record.subMarket].filter(Boolean).join(" / "),
-    listingBrokerLine: record.listBroker ? `List. Brkr: ${record.listBroker}` : "",
-    procuringBrokerLine: record.procBroker ? `Proc. Brkr: ${record.procBroker}` : "",
+    listingBrokerLine: buildBrokerLine("List", record.listBroker, [record.listAgent1, record.listAgent2]),
+    procuringBrokerLine: buildBrokerLine("Proc", record.procBroker, [record.procAgent1, record.procAgent2]),
     sourceLine: record.source ? `Source: ${record.source}` : "",
     updatedLine: buildUpdateLine(record.verifiedBy, record.lastUpdated, record.id),
     comments: record.comments,
+    photo: record.photo,
     fields: {
       "Space Leased": formatNumber(record.leasedSqFt),
       Office: formatNumber(record.officeSqFt),
@@ -2070,11 +2113,12 @@ function buildSaleReportCard(record) {
     addressLine: record.address,
     cityLine: [record.city, record.state, record.zipCode].filter(Boolean).join(", "),
     submarketLine: [record.market, record.subMarket].filter(Boolean).join(" / "),
-    listingBrokerLine: record.listBroker ? `List. Brkr: ${record.listBroker}` : "",
-    procuringBrokerLine: record.procBroker ? `Proc. Brkr: ${record.procBroker}` : "",
+    listingBrokerLine: buildBrokerLine("List", record.listBroker, [record.listAgent1, record.listAgent2]),
+    procuringBrokerLine: buildBrokerLine("Proc", record.procBroker, [record.procAgent1, record.procAgent2]),
     sourceLine: record.source ? `Source: ${record.source}` : "",
     updatedLine: buildUpdateLine(record.verifiedBy, record.lastUpdated, record.id),
     comments: record.comments,
+    photo: record.photo,
     fields: {
       "Bldg. SqFt": formatNumber(record.buildingSqFt),
       "Sale Price": formatCurrency(record.salePrice),
@@ -2168,7 +2212,8 @@ function mapLeaseSearchResult(row) {
     source: record.source,
     reportCard: buildLeaseReportCard(record),
     metricLine: buildLeaseMetricLine(record),
-    metaLine: buildMetaLine(record)
+    metaLine: buildMetaLine(record),
+    photo: record.photo ?? ""
   };
 }
 function mapSaleSearchResult(row) {
@@ -2190,7 +2235,8 @@ function mapSaleSearchResult(row) {
     source: record.source,
     reportCard: buildSaleReportCard(record),
     metricLine: buildSaleMetricLine(record),
-    metaLine: buildMetaLine(record)
+    metaLine: buildMetaLine(record),
+    photo: record.photo ?? ""
   };
 }
 function buildLeaseInsertRows(records, importId) {
@@ -3142,17 +3188,17 @@ function buildDataSheet(data) {
     `Generated: ${(/* @__PURE__ */ new Date()).toLocaleString("en-US", { timeZone: "America/Los_Angeles" })}`,
     "\u2550".repeat(64),
     "",
-    "\u2500\u2500 BASIC PROVISIONS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+    "\u2500\u2500 BASIC PROVISIONS \u2500\u2500",
     line("Agreement Date", data.agreementDate),
     "",
-    "\u2500\u2500 PARTY 1 (Sublessor / Owner / Client) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+    "\u2500\u2500 PARTY 1 (Sublessor / Owner / Client) \u2500\u2500",
     line("Name", data.party1Name),
     line("Entity Type", data.party1Entity),
     line("Address", data.party1Address),
     line("Phone", data.party1Phone),
     line("Fax", data.party1Fax),
     "",
-    "\u2500\u2500 AGENT / BROKER \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+    "\u2500\u2500 AGENT / BROKER \u2500\u2500",
     line("Agent Name", data.agentName),
     line("Agent Address", data.agentAddress),
     line("Agent Phone", data.agentPhone),
@@ -3163,7 +3209,7 @@ function buildDataSheet(data) {
     line("Agent DRE #", data.agentDre),
     line("Agent Email", data.agentEmail),
     "",
-    "\u2500\u2500 PROPERTY \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+    "\u2500\u2500 PROPERTY \u2500\u2500",
     line("Address", data.propAddress),
     line("City", data.propCity),
     line("State", data.propState),
@@ -3172,34 +3218,34 @@ function buildDataSheet(data) {
     line("Description", data.propDesc),
     ...data.mlDate || data.mlLessor ? [
       "",
-      "\u2500\u2500 MASTER LEASE \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+      "\u2500\u2500 MASTER LEASE \u2500\u2500",
       line("Master Lease Date", data.mlDate),
       line("Amendment Dates", data.mlAmendments),
       line("Master Lessor", data.mlLessor),
       line("Master Lessee", data.mlLessee)
     ] : [],
     "",
-    "\u2500\u2500 TERM OF AGREEMENT \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+    "\u2500\u2500 TERM OF AGREEMENT \u2500\u2500",
     line("Commencement", data.termStart),
     line("Expiration", data.termEnd),
     line("Sublease/Lease Terms", data.subleaseTerms),
     "",
-    "\u2500\u2500 COMMISSION \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+    "\u2500\u2500 COMMISSION \u2500\u2500",
     line("Commission Type", data.commType),
     line("Commission Amount/Rate", data.commAmount),
     "",
-    "\u2500\u2500 ARBITRATION \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+    "\u2500\u2500 ARBITRATION \u2500\u2500",
     line("Arbitration Body", data.arbitration),
     "",
-    "\u2500\u2500 ADDITIONAL PROVISIONS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+    "\u2500\u2500 ADDITIONAL PROVISIONS \u2500\u2500",
     line("Additional Provisions", data.additionalProvisions),
     "",
-    "\u2500\u2500 SIGNATORIES \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+    "\u2500\u2500 SIGNATORIES \u2500\u2500",
     line("Party 1 Signatory", data.sig1Name),
     line("Party 1 Title", data.sig1Title),
     ...redlineLines ? [
       "",
-      "\u2500\u2500 REDLINES / MODIFICATIONS TO APPLY IN AIR CRE \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
+      "\u2500\u2500 REDLINES / MODIFICATIONS TO APPLY IN AIR CRE \u2500\u2500",
       redlineLines
     ] : [],
     "",
@@ -3507,6 +3553,27 @@ var submissionsRouter = router({
   })
 });
 
+// server/routers/brokers.ts
+var brokersRouter = router({
+  list: publicProcedure.query(() => {
+    const isBroker = (r) => /broker/i.test(r);
+    const sorted = [...brokerDirectory].sort((a, b) => {
+      const ab = isBroker(a.roles);
+      const bb = isBroker(b.roles);
+      if (ab !== bb) return ab ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+    return sorted.map((e) => ({
+      id: e.id,
+      name: e.name,
+      email: e.email,
+      role: e.roles,
+      office: e.office,
+      initials: e.name.split(/\s+/).map((s) => s[0]).filter(Boolean).slice(0, 2).join("").toUpperCase()
+    }));
+  })
+});
+
 // server/routers.ts
 var appRouter = router({
   system: systemRouter,
@@ -3515,6 +3582,7 @@ var appRouter = router({
   email: emailRouter,
   contracts: contractsRouter,
   submissions: submissionsRouter,
+  brokers: brokersRouter,
   auth: router({
     me: publicProcedure.query((opts) => {
       const user = opts.ctx.user;

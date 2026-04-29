@@ -67,7 +67,7 @@ describe("REST API — /api/v1", () => {
     expect(res.body.error).toMatch(/API key/i);
   });
 
-  // ── Listing ──────────────────────────────────────────────────────────────
+  // ── Listing ──
 
   describe("POST /submit/listing", () => {
     it("returns 400 when propertyAddress is missing", async () => {
@@ -101,7 +101,7 @@ describe("REST API — /api/v1", () => {
     });
   });
 
-  // ── Voucher ──────────────────────────────────────────────────────────────
+  // ── Voucher ──
 
   describe("POST /submit/voucher", () => {
     it("returns 400 when propertyAddress is missing", async () => {
@@ -131,7 +131,7 @@ describe("REST API — /api/v1", () => {
     });
   });
 
-  // ── Sign Request ─────────────────────────────────────────────────────────
+  // ── Sign Request ──
 
   describe("POST /submit/sign-request", () => {
     it("returns 400 when propertyAddress is missing", async () => {
@@ -159,7 +159,7 @@ describe("REST API — /api/v1", () => {
     });
   });
 
-  // ── Comp ─────────────────────────────────────────────────────────────────
+  // ── Comp ──
 
   describe("POST /submit/comp", () => {
     it("returns 400 when address is missing", async () => {
@@ -188,7 +188,7 @@ describe("REST API — /api/v1", () => {
     });
   });
 
-  // ── Submissions list ──────────────────────────────────────────────────────
+  // ── Submissions list ──
 
   describe("GET /submissions", () => {
     it("returns 200 with empty array when no submissions exist", async () => {
@@ -199,7 +199,7 @@ describe("REST API — /api/v1", () => {
     });
   });
 
-  // ── Files ─────────────────────────────────────────────────────────────────
+  // ── Files ──
 
   describe("GET /files", () => {
     it("returns 200 with empty array when no files exist", async () => {

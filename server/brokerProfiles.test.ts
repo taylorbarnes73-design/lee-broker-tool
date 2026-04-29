@@ -8,7 +8,7 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 
-// ─── Minimal in-memory localStorage shim ─────────────────────────────────────
+// ── Minimal in-memory localStorage shim ──
 
 class LocalStorageShim {
   private store: Record<string, string> = {};
@@ -18,7 +18,7 @@ class LocalStorageShim {
   clear() { this.store = {}; }
 }
 
-// ─── Pure helper functions (mirrors broker_profiles.js logic) ─────────────────
+// ── Pure helper functions (mirrors broker_profiles.js logic) ──
 
 const BP_KEY = "lee_broker_profiles";
 
@@ -66,7 +66,7 @@ function bpDeleteProfile(storage: LocalStorageShim, idx: number): BrokerProfile[
   return profiles;
 }
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
+// ── Tests ──
 
 describe("Broker Profiles — localStorage helpers", () => {
   let storage: LocalStorageShim;

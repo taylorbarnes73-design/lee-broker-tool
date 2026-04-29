@@ -1,26 +1,45 @@
-import type { ComponentType } from "react";
+/**
+ * Ambient type declarations for the design-system JSX modules.
+ *
+ * The design system was originally authored in plain .jsx (no TypeScript).
+ * Rather than rewriting thousands of lines, we expose every component as a
+ * permissive React.FC<any> so the rest of the app (.tsx) can consume it
+ * without `implicit any` errors. This keeps the door open for gradually
+ * migrating individual components to typed .tsx modules in the future.
+ */
+import * as React from "react";
 
-export const Icons: Record<string, ComponentType<any>>;
-export const Icon: ComponentType<any>;
-export const AppShell: ComponentType<any>;
-export const AiPanel: ComponentType<any>;
-export const ProfileModal: ComponentType<any>;
-export const PageHeader: ComponentType<any>;
-export const StepProgress: ComponentType<any>;
-export const Segmented: ComponentType<any>;
-export const Button: ComponentType<any>;
-export const Card: ComponentType<any>;
-export const Badge: ComponentType<any>;
-export const Input: ComponentType<any>;
-export const Select: ComponentType<any>;
-export const StepCard: ComponentType<any>;
-export const Field: ComponentType<any>;
-export const Toggle: ComponentType<any>;
-export const Metric: ComponentType<any>;
-export const SummaryRow: ComponentType<any>;
-export const FormSection: ComponentType<any>;
-export const FormRow: ComponentType<any>;
-export const CompScreen: ComponentType<any>;
-export const AdminScreen: ComponentType<any>;
-export const ContractScreen: ComponentType<any>;
-export const DocsScreen: ComponentType<any>;
+type AnyProps = Record<string, unknown> & { children?: React.ReactNode };
+type AnyComponent = React.FC<AnyProps>;
+
+declare module "../design/index.jsx" {
+  export const Icons: Record<string, AnyComponent>;
+  export const PageHeader: AnyComponent;
+  export const StepProgress: AnyComponent;
+  export const Segmented: AnyComponent;
+  export const Button: AnyComponent;
+  export const Card: AnyComponent;
+  export const Badge: AnyComponent;
+  export const Input: AnyComponent;
+  export const Select: AnyComponent;
+  export const StepCard: AnyComponent;
+  export const Field: AnyComponent;
+  export const Toggle: AnyComponent;
+  export const Metric: AnyComponent;
+  export const SummaryRow: AnyComponent;
+  export const FormSection: AnyComponent;
+  export const FormRow: AnyComponent;
+  export const SectionHeader: AnyComponent;
+  export const AppShell: AnyComponent;
+  export const AiPanel: AnyComponent;
+  export const ProfileModal: AnyComponent;
+  // catch-all
+  const _default: Record<string, AnyComponent>;
+  export default _default;
+}
+
+declare module "*.jsx" {
+  const value: Record<string, AnyComponent>;
+  export default value;
+  export const Icons: Record<string, AnyComponent>;
+}

@@ -209,19 +209,37 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-const resolveApiUrl = () => {
-  if (ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0) {
-    return `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`;
+/**
+ * Choose an OpenAI-compatible LLM backend.
+ *   1. If both BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY are set,
+ *      use the Forge proxy.
+ *   2. Otherwise, fall back to direct OpenAI using OPENAI_API_KEY (and
+ *      OPENAI_API_URL, which defaults to https://api.openai.com/v1).
+ */
+type LLMBackend = { url: string; key: string; model: string };
+function resolveBackend(): LLMBackend {
+  if (
+    ENV.forgeApiUrl &&
+    ENV.forgeApiUrl.trim().length > 0 &&
+    ENV.forgeApiKey
+  ) {
+    return {
+      url: `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`,
+      key: ENV.forgeApiKey,
+      model: "gemini-2.5-flash",
+    };
   }
-
-  throw new Error("BUILT_IN_FORGE_API_URL is not configured");
-};
-
-const assertApiKey = () => {
-  if (!ENV.forgeApiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
+  if (ENV.openaiApiKey) {
+    return {
+      url: `${ENV.openaiApiUrl}/chat/completions`,
+      key: ENV.openaiApiKey,
+      model: ENV.openaiModel || "gpt-4.1-mini",
+    };
   }
-};
+  throw new Error(
+    "No LLM backend configured. Set BUILT_IN_FORGE_API_URL + BUILT_IN_FORGE_API_KEY or OPENAI_API_KEY."
+  );
+}
 
 const normalizeResponseFormat = ({
   responseFormat,
@@ -269,7 +287,7 @@ const normalizeResponseFormat = ({
 };
 
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
-  assertApiKey();
+  const backend = resolveBackend();
 
   const {
     messages,
@@ -283,7 +301,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   } = params;
 
   const payload: Record<string, unknown> = {
-    model: "gemini-2.5-flash",
+    model: backend.model,
     messages: messages.map(normalizeMessage),
   };
 
@@ -312,11 +330,11 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
-  const response = await fetch(resolveApiUrl(), {
+  const response = await fetch(backend.url, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
+      authorization: `Bearer ${backend.key}`,
     },
     body: JSON.stringify(payload),
   });

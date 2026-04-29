@@ -1,21 +1,13 @@
-import React, { useState, type ReactNode } from 'react';
+import React, { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
-import { useAuth } from '@/_core/hooks/useAuth';
 import { 
   Icons, PageHeader, StepProgress, Segmented, Button, Card, Badge, 
   Input, Select, StepCard, Field, Toggle, Metric, SummaryRow, FormSection, FormRow 
 } from '../design/index.jsx';
 
-type SectionHeaderProps = {
-  eyebrow?: string;
-  title: string;
-  description?: string;
-  right?: ReactNode;
-};
-
 // Missing primitives
-function SectionHeader({ eyebrow, title, description, right }: SectionHeaderProps) {
+function SectionHeader({ eyebrow, title, description, right }: any) {
   return (
     <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
       <div>
@@ -30,7 +22,6 @@ function SectionHeader({ eyebrow, title, description, right }: SectionHeaderProp
 /* Lee Broker Tool — Commission Voucher screen */
 
 export default function VoucherScreen() {
-  const { user } = useAuth();
   const [subTab, setSubTab] = useState('add');
 
 
@@ -49,14 +40,10 @@ export default function VoucherScreen() {
   const handleSubmit = async () => {
     await submitMutation.mutateAsync({
       type: 'voucher',
-      status: 'pending',
-      address: "2847 Newport Blvd",
-      city: "Costa Mesa",
-      state: "CA",
-      zip: "92627",
-      brokerName: user?.name ?? "",
-      brokerEmail: user?.email ?? "",
-      office: user?.office ?? "",
+      address: '2847 Newport Blvd',
+      city: 'Costa Mesa',
+      state: 'CA',
+      zip: '92627',
       dateOfLease,
       lessor,
       lessee,
@@ -74,9 +61,7 @@ export default function VoucherScreen() {
         description="Submit a completed deal for commission processing and Dealius submission."
         right={<>
           <Badge tone="slate" size="md">Draft · Last saved 2 min ago</Badge>
-          <Button variant="ghost" size="sm" icon={<Icons.Send size={14}/>} onClick={handleSubmit} disabled={submitMutation.isPending}>
-            {submitMutation.isPending ? "Sending..." : "Send to admin"}
-          </Button>
+          <Button variant="ghost" size="sm" icon={<Icons.Send size={14}/>}>Send to admin</Button>
         </>}
       >
         <StepProgress step={5} total={8} percent={62}/>
@@ -121,9 +106,7 @@ export default function VoucherScreen() {
             <Button variant="ghost" icon={<Icons.Chevron size={14} style={{transform:'rotate(180deg)'}}/>}>Back</Button>
             <div style={{ display: 'flex', gap: 8 }}>
               <Button variant="secondary">Save draft</Button>
-              <Button variant="primary" iconRight={<Icons.Arrow size={14}/>} onClick={handleSubmit} disabled={submitMutation.isPending}>
-                {submitMutation.isPending ? "Submitting..." : "Continue to invoicing"}
-              </Button>
+              <Button variant="primary" iconRight={<Icons.Arrow size={14}/>}>Continue to invoicing</Button>
             </div>
           </div>
         </div>
@@ -135,10 +118,9 @@ export default function VoucherScreen() {
 }
 
 function CommissionTable() {
-  const { user } = useAuth();
   const rows = [
-    {name: user?.name || 'Broker', side:'Procuring', pct: 40, chipTone:'success', split:'Internal'},
-    {name:'Marcus Reeves', side:'Listing', pct: 35, chipTone:'crimson', split:'Internal'},
+    {name:'Taylor Barnes', side:'Procuring', pct: 40, chipTone:'success', split:'Internal'},
+    {name:'Rick Turner', side:'Listing', pct: 35, chipTone:'crimson', split:'Internal'},
     {name:'Janice Lee (CBRE)', side:'Referral', pct: 15, chipTone:'warn', split:'Outside'},
     {name:'House override', side:'Both', pct: 10, chipTone:'ai', split:'House'},
   ];
@@ -194,6 +176,7 @@ function RentTable() {
     {mo:'Mo 37-48', months:'Apr 2029 – Mar 2030', baseRate: 1.60, sf: 24500, monthly: 39200},
     {mo:'Mo 49-60', months:'Apr 2030 – Mar 2031', baseRate: 1.66, sf: 24500, monthly: 40670},
   ];
+  const total = rows.reduce((s,r)=>s+r.monthly*parseInt(r.mo.match(/-(\d+)/)?.[1]||'1') - (r.monthly * parseInt(r.mo.match(/Mo (\d+)/)?.[1]||'1') - r.monthly), 2132250);
   return (
     <div style={{ border: '1px solid var(--ink-200)', borderRadius: 10, overflow: 'hidden' }}>
       <div style={{ display:'grid', gridTemplateColumns: '1fr 1.6fr 1fr 1fr 1fr', padding: '10px 16px', background: 'var(--ink-50)', fontSize: 11, fontWeight: 600, color: 'var(--ink-500)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
@@ -264,15 +247,15 @@ function VoucherRail() {
   );
 }
 
-function RowKV({ k, v, sub, big }: { k: string; v: string; sub?: boolean; big?: boolean }) {
+function RowKV({ k, v, sub, big }: { k?: any; v?: any; sub?: boolean; big?: boolean }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-      <span style={{ fontSize: sub ? 11 : 12, color: sub ? 'var(--ink-500)' : 'var(--ink-600)' }}>{sub && '  â†³ '}{k}</span>
+      <span style={{ fontSize: sub ? 11 : 12, color: sub ? 'var(--ink-500)' : 'var(--ink-600)' }}>{sub && '  ↳ '}{k}</span>
       <span className="lee-mono" style={{ fontSize: big ? 18 : 13, fontWeight: big ? 700 : (sub ? 500 : 600), color: big ? 'var(--ink-900)' : 'var(--ink-700)' }}>{v}</span>
     </div>
   );
 }
-function TodoRow({ icon, label }: { icon: ReactNode; label: string }) {
+function TodoRow({ icon, label }: any) {
   return (
     <div style={{ display:'flex', alignItems:'center', gap: 10, padding: '8px 10px', background: 'rgba(255,255,255,.04)', borderRadius: 6, fontSize: 12 }}>
       <span style={{ color: 'var(--ink-300)' }}>{icon}</span>

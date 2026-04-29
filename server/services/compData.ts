@@ -63,6 +63,7 @@ export type CompSearchResult = {
   reportCard: ReturnType<typeof buildLeaseReportCard> | ReturnType<typeof buildSaleReportCard>;
   metricLine: string;
   metaLine: string;
+  photo: string;
 };
 
 function chunkArray<T>(items: T[], size: number): T[][] {
@@ -139,6 +140,7 @@ function mapLeaseSearchResult(row: LeaseComp): CompSearchResult {
     reportCard: buildLeaseReportCard(record),
     metricLine: buildLeaseMetricLine(record),
     metaLine: buildMetaLine(record),
+    photo: record.photo ?? "",
   };
 }
 
@@ -162,6 +164,7 @@ function mapSaleSearchResult(row: SaleComp): CompSearchResult {
     reportCard: buildSaleReportCard(record),
     metricLine: buildSaleMetricLine(record),
     metaLine: buildMetaLine(record),
+    photo: record.photo ?? "",
   };
 }
 

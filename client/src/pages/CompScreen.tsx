@@ -1,743 +1,129 @@
-import React, { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
-import { useAuth } from '@/_core/hooks/useAuth';
+import React, { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
-import {
-  Icons, PageHeader, Segmented, Button, Card, Badge,
-  Input, Select, Field
+import { 
+  Icons, PageHeader, StepProgress, Segmented, Button, Card, Badge, 
+  Input, Select, StepCard, Field, Toggle, Metric, SummaryRow, FormSection, FormRow, SectionHeader 
 } from '../design/index.jsx';
-
-type SectionHeaderProps = {
-  eyebrow?: string;
-  title: string;
-  description?: string;
-  right?: ReactNode;
-};
-
-type CompType = 'lease' | 'sale';
-type CompSearchResult = {
-  id: number;
-  importId: number;
-  compType: CompType;
-  title: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  market: string;
-  subMarket: string;
-  propertyType: string;
-  propertySubType: string;
-  transactionDate: string;
-  source: string;
-  metricLine: string;
-  metaLine: string;
-  sfLeased?: string | number;
-  sfSold?: string | number;
-  rate?: string | number;
-  salePrice?: string | number;
-  leaseTerm?: string | number;
-  leaseDate?: string;
-  saleDate?: string;
-  reportCard: {
-    heading?: string;
-    addressLine?: string;
-    cityLine?: string;
-    submarketLine?: string;
-    listingBrokerLine?: string;
-    procuringBrokerLine?: string;
-    sourceLine?: string;
-    updatedLine?: string;
-    comments?: string;
-    fields: Record<string, string>;
-  };
-};
-
-type UploadedFileRecord = {
-  id?: number;
-  fileKey: string;
-  url: string;
-  filename: string;
-  mimeType: string;
-  fileSize: number;
-  category: string;
-  reference: string | null;
-  uploaderName: string | null;
-  createdAt?: Date;
-  uploadedAt?: Date;
-};
-
-type ContractData = {
-  contractType: string;
-  party1Name?: string;
-  agentName?: string;
-  agentEmail?: string;
-  propAddress?: string;
-  propCity?: string;
-  propState?: string;
-  propZip?: string;
-  termStart?: string;
-  termEnd?: string;
-  commAmount?: string;
-  arbitration?: string;
-  additionalProvisions?: string;
-  redlines?: Array<{ paragraph: string; type: "strikethrough" | "added" | "modified"; note: string }>;
-};
-
-const DOC_CATEGORIES = [
-  { name: 'Listing Agreements', category: 'listing_agreement', tone: 'crimson' },
-  { name: 'Lease Documents', category: 'lease_document', tone: 'slate' },
-  { name: 'Purchase & Sale', category: 'purchase_sale', tone: 'neutral' },
-  { name: 'Commission Agreements', category: 'commission_agreement', tone: 'neutral' },
-  { name: 'Disclosures', category: 'disclosure', tone: 'warn' },
-  { name: 'Sign Orders', category: 'sign_order', tone: 'neutral' },
-  { name: 'Voucher Forms', category: 'voucher_doc', tone: 'neutral' },
-  { name: 'Office Forms', category: 'office_form', tone: 'slate' },
-  { name: 'Marketing & PR', category: 'marketing_pr', tone: 'neutral' },
-  { name: 'Comp Workbooks', category: 'comp_workbook', tone: 'neutral' },
-] as const;
-
-function readFileAsBase64(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const value = String(reader.result ?? "");
-      resolve(value.includes(",") ? value.split(",")[1] : value);
-    };
-    reader.onerror = () => reject(reader.error ?? new Error("Unable to read file"));
-    reader.readAsDataURL(file);
-  });
-}
-
-function downloadTextFile(filename: string, mimeType: string, content: string) {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-}
-
-function csvEscape(value: unknown) {
-  const text = String(value ?? "");
-  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-}
-
-function htmlEscape(value: unknown) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function formatShortDate(value?: Date | string | null) {
-  if (!value) return "-";
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
-function SectionHeader({ eyebrow, title, description, right }: SectionHeaderProps) {
-  return (
-    <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-      <div>
-        {eyebrow && <div className="lee-eyebrow" style={{ marginBottom: 4 }}>{eyebrow}</div>}
-        <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink-900)' }}>{title}</div>
-        {description && <div style={{ fontSize: 13, color: 'var(--ink-500)', marginTop: 2 }}>{description}</div>}
-      </div>
-      {right}
-    </div>
-  );
-}
-
-function compField(comp: CompSearchResult, field: string) {
-  return comp.reportCard?.fields?.[field] || "";
-}
-
-function compParty(comp: CompSearchResult) {
-  return comp.compType === 'lease'
-    ? compField(comp, "Lessee") || "Confidential"
-    : compField(comp, "Buyer") || "Confidential";
-}
-
-function compSize(comp: CompSearchResult) {
-  return comp.compType === 'lease'
-    ? compField(comp, "Space Leased") || compField(comp, "Bldg SqFt") || "-"
-    : compField(comp, "Bldg. SqFt") || "-";
-}
-
-function compRate(comp: CompSearchResult) {
-  return comp.compType === 'lease'
-    ? compField(comp, "Rent/SqFt") || "-"
-    : compField(comp, "Sale Price") || compField(comp, "Sale $/SF") || "-";
-}
-
-function compTerm(comp: CompSearchResult) {
-  return comp.compType === 'lease'
-    ? compField(comp, "Term") || "-"
-    : compField(comp, "Trans. Type") || "-";
-}
 /* Lee Broker Tool — Comps, Admin, Contracts, Documents, AI panel */
 
-// â”€â”€ Comp Reports (the user said this is a mess — redesign as a clear workflow) â”€â”€
-const LEASE_REPORT_FIELD_ORDER = [
-  "Space Leased",
-  "Office",
-  "Trans. Date",
-  "Prop. Type",
-  "On Mrkt",
-  "DH",
-  "Sprk",
-  "Lessee",
-  "Rent/SqFt",
-  "TI Allow",
-  "Expir. Date",
-  "Subtype",
-  "Amps",
-  "GL",
-  "Rail",
-  "Lessor",
-  "Eff. Rent",
-  "Free Rent",
-  "Term",
-  "Bldg. Class",
-  "Mul-Ten",
-  "POL",
-  "Yrd",
-  "Space Type",
-  "Bldg SqFt",
-  "NNN Chgs",
-  "Occ Date",
-  "Parking",
-  "Yr Built",
-  "HT",
-  "Land",
-  "Options/Rent Adj",
-] as const;
-
-const SALE_REPORT_FIELD_ORDER = [
-  "Bldg. SqFt",
-  "Sale Price",
-  "Trans. Date",
-  "Prop. Type",
-  "Yr Built",
-  "DH",
-  "Sprk",
-  "Buyer",
-  "Office SqFt",
-  "Sale $/SF",
-  "On Market",
-  "Subtype",
-  "Mul-Tnt",
-  "GL",
-  "RR",
-  "Seller",
-  "Land Size",
-  "Trans. Type",
-  "Cap Rate",
-  "Bldg. Class",
-  "Amps",
-  "Clr",
-  "Yard",
-  "Buyer Previous Location",
-] as const;
-
-function buildMetropolisCompPacketHtml({
-  compType,
-  rows,
-  subjectAddress,
-  subjectCity,
-  propertyType,
-}: {
-  compType: CompType;
-  rows: CompSearchResult[];
-  subjectAddress: string;
-  subjectCity: string;
-  propertyType: string;
-}) {
-  const title = compType === "lease" ? "LEASE COMPARABLES" : "SALE COMPARABLES";
-  const fieldOrder = compType === "lease" ? LEASE_REPORT_FIELD_ORDER : SALE_REPORT_FIELD_ORDER;
-  const generated = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-  const subjectLine = [subjectAddress, subjectCity, propertyType].filter(Boolean).join(" | ");
-  const cards = rows.map((comp, index) => {
-    const card = comp.reportCard;
-    const fields = fieldOrder.map((field) => `
-      <div class="field">
-        <div class="label">${htmlEscape(field)}</div>
-        <div class="value">${htmlEscape(card.fields[field] || "")}</div>
-      </div>
-    `).join("");
-    const brokerLines = [
-      card.procuringBrokerLine,
-      card.listingBrokerLine,
-      card.sourceLine,
-    ].filter(Boolean).map((line) => `<div>${htmlEscape(line)}</div>`).join("");
-    const locationLines = [
-      card.addressLine,
-      card.cityLine,
-      card.submarketLine,
-    ].filter(Boolean).map((line) => `<div>${htmlEscape(line)}</div>`).join("");
-
-    return `
-      <section class="comp-card">
-        <div class="comp-number">${index + 1}.</div>
-        <div class="photo">No Photo Available</div>
-        <div class="comp-body">
-          <div class="comp-title">${htmlEscape(card.heading || comp.title || comp.address)}</div>
-          <div class="location">${locationLines}</div>
-          <div class="field-grid">${fields}</div>
-          <div class="broker-lines">${brokerLines}</div>
-          ${card.comments ? `<div class="comments"><b>Comments:</b> ${htmlEscape(card.comments)}</div>` : ""}
-          <div class="updated">${htmlEscape(card.updatedLine)}</div>
-        </div>
-      </section>
-    `;
-  }).join("");
-
-  return `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>${htmlEscape(title)} - Metropolis</title>
-  <style>
-    @page { size: letter landscape; margin: 0.32in; }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      color: #111;
-      font-size: 8.5pt;
-      line-height: 1.25;
-      background: #fff;
-    }
-    .report-header {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 16px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid #111;
-      margin-bottom: 6px;
-    }
-    .title { font-size: 14pt; font-weight: 700; letter-spacing: 0; }
-    .subtitle, .date, .subject { font-size: 8.5pt; }
-    .disclaimer { font-size: 7pt; color: #333; margin-bottom: 6px; }
-    .comp-card {
-      display: grid;
-      grid-template-columns: 24px 104px 1fr;
-      gap: 8px;
-      padding: 6px 0;
-      border-top: 1px solid #999;
-      break-inside: avoid;
-      page-break-inside: avoid;
-      min-height: 112px;
-    }
-    .comp-number { font-weight: 700; font-size: 10pt; }
-    .photo {
-      border: 1px solid #bbb;
-      background: #f2f2f2;
-      color: #555;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 8px;
-      font-size: 7pt;
-      min-height: 76px;
-    }
-    .comp-title { font-size: 10pt; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
-    .location { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 4px; text-transform: uppercase; }
-    .field-grid {
-      display: grid;
-      grid-template-columns: repeat(8, minmax(0, 1fr));
-      border-top: 1px solid #cfcfcf;
-      border-left: 1px solid #cfcfcf;
-    }
-    .field {
-      min-height: 24px;
-      padding: 2px 4px;
-      border-right: 1px solid #cfcfcf;
-      border-bottom: 1px solid #cfcfcf;
-      overflow-wrap: anywhere;
-    }
-    .label { font-size: 6.5pt; color: #555; font-weight: 700; }
-    .value { font-size: 8pt; font-weight: 600; }
-    .broker-lines { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; margin-top: 4px; }
-    .comments { margin-top: 3px; }
-    .updated { margin-top: 2px; font-size: 7pt; color: #333; text-align: right; }
-  </style>
-</head>
-<body>
-  <header class="report-header">
-    <div>
-      <div class="title">${htmlEscape(title)}</div>
-      <div class="subtitle">Metropolis</div>
-      <div class="subtitle">Industrial with Small Pictures</div>
-      <div class="subject">${htmlEscape(subjectLine)}</div>
-    </div>
-    <div class="date">${htmlEscape(generated)}</div>
-  </header>
-  <div class="disclaimer">This information is compiled from data we believe to be correct but no liability is assumed by the company as to the accuracy of such data.</div>
-  ${cards}
-</body>
-</html>`;
-}
-
-function FunctionalCompScreen() {
-  const utils = trpc.useUtils();
-  const [compType, setCompType] = useState<CompType>('lease');
-  const [query, setQuery] = useState("");
-  const [city, setCity] = useState("");
-  const [propertyType, setPropertyType] = useState("");
-  const [closedWithin, setClosedWithin] = useState("12 months");
-  const [selectedCompKeys, setSelectedCompKeys] = useState<Set<string>>(new Set());
-  const compImportInputRef = useRef<HTMLInputElement | null>(null);
-
-  const dateFrom = useMemo(() => {
-    const months = Number(closedWithin.split(" ")[0]) || 12;
-    const date = new Date();
-    date.setMonth(date.getMonth() - months);
-    return date.toISOString().slice(0, 10);
-  }, [closedWithin]);
-
-  const compsQuery = trpc.compData.search.useQuery({
-    compType,
-    query: query.trim() || undefined,
-    city: city.trim() || undefined,
-    propertyType: propertyType.trim() || undefined,
-    dateFrom,
-    limit: 20,
-  });
-  const comps = useMemo(() => (compsQuery.data?.results ?? []) as CompSearchResult[], [compsQuery.data?.results]);
-  const latestImport = compsQuery.data?.latestImport;
-  const selectedComps = useMemo(
-    () => comps.filter((comp) => selectedCompKeys.has(`${comp.compType}-${comp.id}`)),
-    [comps, selectedCompKeys]
-  );
-
-  useEffect(() => {
-    setSelectedCompKeys(new Set(comps.map((comp) => `${comp.compType}-${comp.id}`)));
-  }, [comps]);
-
-  const workbookUploadMutation = trpc.files.upload.useMutation();
-  const workbookImportMutation = trpc.compData.importWorkbook.useMutation({
-    onSuccess: async () => {
-      toast.success("Comp workbook imported.");
-      await Promise.all([
-        utils.compData.search.invalidate(),
-        utils.compData.latest.invalidate(),
-      ]);
-    },
-    onError: (error) => toast.error(error.message),
-  });
-
-  const isImporting = workbookUploadMutation.isPending || workbookImportMutation.isPending;
-
-  const handleImportWorkbook = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-
-    try {
-      const base64Data = await readFileAsBase64(file);
-      const uploaded = await workbookUploadMutation.mutateAsync({
-        filename: file.name,
-        mimeType: file.type || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        base64Data,
-        category: "comp_workbook",
-        reference: "Comparable workbook import",
-      });
-      await workbookImportMutation.mutateAsync({ fileKey: uploaded.fileKey, filename: file.name });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to import workbook.");
-    }
-  };
-
-  const toggleComp = (key: string) => {
-    setSelectedCompKeys((current) => {
-      const next = new Set(current);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  };
-
-  const allChecked = comps.length > 0 && comps.every((c) => selectedCompKeys.has(`${c.compType}-${c.id}`));
-  const someChecked = comps.some((c) => selectedCompKeys.has(`${c.compType}-${c.id}`));
-
-  const handleSelectAll = () => {
-    if (allChecked) {
-      setSelectedCompKeys(new Set());
-    } else {
-      setSelectedCompKeys(new Set(comps.map((c) => `${c.compType}-${c.id}`)));
-    }
-  };
-
-  const handleExportCsv = () => {
-    const rows = selectedComps.length ? selectedComps : comps;
-    if (!rows.length) {
-      toast.error("No comps to export.");
-      return;
-    }
-
-    const headers = ["Type", "Property", "Address", "City", "Property Type", "Party", "Size", "Rate/Price", "Term", "Closed", "Source"];
-    const csv = [
-      headers.map(csvEscape).join(","),
-      ...rows.map((comp) => [
-        comp.compType,
-        comp.title,
-        comp.address,
-        comp.city,
-        comp.propertyType,
-        compParty(comp),
-        compSize(comp),
-        compRate(comp),
-        compTerm(comp),
-        comp.transactionDate,
-        comp.source,
-      ].map(csvEscape).join(",")),
-    ].join("\n");
-
-    downloadTextFile(`lee-${compType}-comps-${new Date().toISOString().slice(0, 10)}.csv`, "text/csv;charset=utf-8", csv);
-    toast.success("CSV exported.");
-  };
-
-  const handleBuildPacket = () => {
-    const rows = selectedComps.length ? selectedComps : comps;
-    if (!rows.length) {
-      toast.error("No comps selected.");
-      return;
-    }
-
-    const html = buildMetropolisCompPacketHtml({
-      compType,
-      rows,
-      subjectAddress: "",
-      subjectCity: city,
-      propertyType,
-    });
-
-    downloadTextFile(`lee-${compType}-comps-packet.html`, "text/html;charset=utf-8", html);
-    toast.success("Packet downloaded. Open the file and print to PDF.");
-  };
-
-  const selectedCount = selectedComps.length;
-
+// ── Comp Reports (the user said this is a mess — redesign as a clear workflow) ──
+function CompScreen() {
   return (
     <div>
-      <input
-        ref={compImportInputRef}
-        type="file"
-        accept=".xlsx,.xls,.csv"
-        style={{ display: "none" }}
-        onChange={handleImportWorkbook}
-      />
       <PageHeader
         eyebrow="Market Intelligence"
         title="Comparable Reports"
-        description="Filter comps, select the ones you want, then build a branded PDF packet."
+        description="Pull sale and lease comps for a subject property. Export as a branded PDF packet."
+        right={<>
+          <Button variant="secondary" size="sm" icon={<Icons.Upload size={14}/>}>Import CSV</Button>
+          <Button variant="primary" size="sm" icon={<Icons.Plus size={14}/>}>New comp report</Button>
+        </>}
       />
-
-      <div style={{ padding: '0 32px 32px', display: 'grid', gridTemplateColumns: '240px 1fr', gap: 20, alignItems: 'start' }}>
-        {/* Sidebar: filters */}
-        <div style={{ position: 'sticky', top: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <Card padding={16}>
-            <Field label="Comp type">
-              <Segmented
-                size="sm"
-                value={compType}
-                onChange={(value: CompType) => setCompType(value)}
-                options={[{ value: 'lease', label: 'Lease' }, { value: 'sale', label: 'Sale' }]}
-              />
-            </Field>
-            <div style={{ marginTop: 12 }}>
-              <Field label="Keyword">
-                <Input
-                  value={query}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
-                  placeholder="Tenant, buyer, address..."
-                />
-              </Field>
+      <div style={{ padding: 32, display: 'grid', gridTemplateColumns: '320px 1fr', gap: 24, alignItems:'start' }}>
+        {/* Left: subject + filters */}
+        <div style={{ display:'flex', flexDirection:'column', gap: 16, position:'sticky', top: 24 }}>
+          <Card padding={20}>
+            <div className="lee-eyebrow" style={{ marginBottom: 12 }}>Subject property</div>
+            <div style={{ width: '100%', height: 120, background: 'linear-gradient(135deg, var(--ink-100), var(--ink-200))', borderRadius: 8, position:'relative', overflow:'hidden', marginBottom: 12 }}>
+              <div style={{ position:'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(45deg, transparent 0 10px, rgba(0,0,0,.03) 10px 11px)' }}/>
+              <div style={{ position:'absolute', bottom: 8, left: 10, fontSize: 10, color: 'var(--ink-500)', letterSpacing: '0.08em', textTransform:'uppercase' }}>Satellite preview</div>
             </div>
-            <div style={{ marginTop: 12 }}>
-              <Field label="City">
-                <Input
-                  value={city}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => setCity(event.target.value)}
-                  placeholder="e.g. Costa Mesa"
-                />
-              </Field>
-            </div>
-            <div style={{ marginTop: 12 }}>
-              <Field label="Property type">
-                <Input
-                  value={propertyType}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => setPropertyType(event.target.value)}
-                  placeholder="e.g. Industrial"
-                />
-              </Field>
-            </div>
-            <div style={{ marginTop: 12 }}>
-              <Field label="Closed within">
-                <Select
-                  value={closedWithin}
-                  onChange={(event: ChangeEvent<HTMLSelectElement>) => setClosedWithin(event.target.value)}
-                  options={['3 months', '6 months', '12 months', '24 months']}
-                />
-              </Field>
+            <div style={{ fontSize: 15, fontWeight: 600 }}>2847 Newport Blvd</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>Costa Mesa, CA 92627</div>
+            <div style={{ marginTop: 12, display:'grid', gridTemplateColumns:'1fr 1fr', gap: 8 }}>
+              <Pill label="Type" value="Industrial"/>
+              <Pill label="Size" value="24,500 SF"/>
+              <Pill label="Built" value="2005"/>
+              <Pill label="Clear" value="28'"/>
             </div>
           </Card>
 
-          <button
-            onClick={() => compImportInputRef.current?.click()}
-            disabled={isImporting}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 7, padding: '8px 12px',
-              background: 'none', border: '1px solid var(--ink-200)', borderRadius: 7,
-              cursor: isImporting ? 'default' : 'pointer', fontSize: 12, color: 'var(--ink-600)',
-              fontWeight: 500,
-            }}
-          >
-            <Icons.Upload size={13}/>
-            {isImporting ? "Importing..." : "Import workbook"}
-          </button>
-
-          {latestImport && (
-            <div style={{ fontSize: 11, color: 'var(--ink-400)', lineHeight: 1.4, padding: '2px 2px' }}>
-              Source: {latestImport.workbookName}
+          <Card padding={20}>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom: 12 }}>
+              <div className="lee-eyebrow">Filters</div>
+              <button style={{ fontSize: 11, color: 'var(--lee-crimson)', background:'none', border:'none', cursor:'pointer', fontWeight: 600 }}>Reset</button>
             </div>
-          )}
+            <Field label="Comp type"><Segmented size="sm" value="lease" onChange={()=>{}} options={[{value:'lease',label:'Lease'},{value:'sale',label:'Sale'},{value:'both',label:'Both'}]}/></Field>
+            <div style={{ marginTop: 12 }}><Field label="Radius"><Select value="3" onChange={()=>{}} options={['1 mile','3 miles','5 miles','10 miles']}/></Field></div>
+            <div style={{ marginTop: 12 }}><Field label="Size range"><Input suffix="SF" defaultValue="15,000 – 40,000"/></Field></div>
+            <div style={{ marginTop: 12 }}><Field label="Closed within"><Select value="12mo" onChange={()=>{}} options={['3 months','6 months','12 months','24 months']}/></Field></div>
+            <div style={{ marginTop: 16, display:'flex', alignItems:'center', gap:10, padding: '10px 12px', background:'var(--ai-100)', borderRadius: 8, border:'1px solid rgba(110,63,217,.2)' }}>
+              <Icons.Sparkles size={14} style={{ color:'var(--ai-500)' }}/>
+              <div style={{ flex: 1, fontSize: 12, color: 'var(--ink-700)' }}><b>Deal Assist</b> picked these filters from your subject</div>
+            </div>
+          </Card>
         </div>
 
-        {/* Main: results table */}
-        <Card padding={0} style={{ overflow: 'hidden' }}>
-          {/* Column header */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '36px 2.2fr 1.1fr .9fr 1fr .9fr .9fr',
-            padding: '10px 20px',
-            background: 'var(--ink-50)',
-            borderBottom: '1px solid var(--ink-150)',
-            fontSize: 10, fontWeight: 700, color: 'var(--ink-500)',
-            letterSpacing: '0.08em', textTransform: 'uppercase',
-            alignItems: 'center',
-          }}>
-            <input
-              type="checkbox"
-              checked={allChecked}
-              ref={(el) => { if (el) el.indeterminate = someChecked && !allChecked; }}
-              onChange={handleSelectAll}
-              style={{ accentColor: 'var(--lee-crimson)', cursor: 'pointer' }}
-            />
-            <div>Property</div>
-            <div>{compType === 'lease' ? 'Tenant' : 'Buyer'}</div>
-            <div>SF</div>
-            <div>{compType === 'lease' ? 'Rate' : 'Price'}</div>
-            <div>{compType === 'lease' ? 'Term' : 'Type'}</div>
-            <div>Closed</div>
+        {/* Right: results */}
+        <div style={{ display:'flex', flexDirection:'column', gap: 16 }}>
+          {/* Stats strip */}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap: 12 }}>
+            <StatCard label="Comps found" value="12" unit=""/>
+            <StatCard label="Median rate" value="$1.37" unit="/SF/Mo NNN" trend="+4.2% YoY"/>
+            <StatCard label="Avg term" value="5.4" unit="yrs"/>
+            <StatCard label="Avg TI" value="$12" unit="/SF" trend="-8%"/>
           </div>
 
-          {compsQuery.isLoading && (
-            <div style={{ padding: '28px 20px', color: 'var(--ink-400)', fontSize: 13 }}>Loading...</div>
-          )}
-          {compsQuery.isError && (
-            <div style={{ padding: '20px', color: 'var(--err-600)', fontSize: 13 }}>{compsQuery.error.message}</div>
-          )}
-          {!compsQuery.isLoading && !compsQuery.isError && !comps.length && (
-            <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--ink-400)', fontSize: 13 }}>
-              No comps match the current filters.
+          {/* Map + list combo */}
+          <Card padding={0} style={{ overflow: 'hidden' }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding: '12px 20px', borderBottom: '1px solid var(--ink-150)' }}>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>12 comps · sorted by relevance</div>
+              <div style={{ display:'flex', gap: 6 }}>
+                <Segmented size="sm" options={[{value:'list',label:<Icons.List size={12}/>},{value:'grid',label:<Icons.Grid size={12}/>},{value:'map',label:<Icons.Pin size={12}/>}]} value="list" onChange={()=>{}}/>
+                <Button variant="ghost" size="sm" icon={<Icons.Sort size={12}/>}>Sort</Button>
+                <Button variant="ghost" size="sm" icon={<Icons.Filter size={12}/>}>Columns</Button>
+              </div>
             </div>
-          )}
 
-          {comps.map((r) => {
-            const key = `${r.compType}-${r.id}`;
-            const checked = selectedCompKeys.has(key);
-            return (
-              <label
-                key={key}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '36px 2.2fr 1.1fr .9fr 1fr .9fr .9fr',
-                  padding: '11px 20px',
-                  alignItems: 'center',
-                  borderTop: '1px solid var(--ink-150)',
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  background: checked ? 'var(--ink-0)' : 'transparent',
-                  transition: 'background 0.1s',
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => toggleComp(key)}
-                  style={{ accentColor: 'var(--lee-crimson)', cursor: 'pointer' }}
-                />
-                <div style={{ minWidth: 0, paddingRight: 12 }}>
-                  <div style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {r.title || r.address}
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--ink-400)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>
-                    {[r.city, r.propertyType].filter(Boolean).join(' · ')}
-                  </div>
-                </div>
-                <div style={{ color: 'var(--ink-600)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: 8, fontSize: 12 }}>
-                  {compParty(r)}
-                </div>
-                <div className="lee-mono" style={{ color: 'var(--ink-700)', fontSize: 12 }}>{compSize(r)}</div>
-                <div className="lee-mono" style={{ fontWeight: 600, fontSize: 13 }}>{compRate(r)}</div>
-                <div className="lee-mono" style={{ color: 'var(--ink-600)', fontSize: 12 }}>{compTerm(r)}</div>
-                <div style={{ color: 'var(--ink-500)', fontSize: 12 }}>{r.transactionDate || "—"}</div>
-              </label>
-            );
-          })}
-
-          {/* Action footer */}
-          <div style={{
-            padding: '12px 20px',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            borderTop: '1px solid var(--ink-150)',
-            background: 'var(--ink-50)',
-          }}>
-            <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>
-              {selectedCount} of {comps.length} selected
+            <div style={{ display:'grid', gridTemplateColumns: '32px 2fr 1fr .8fr 1fr .8fr .8fr 32px', padding: '10px 20px', background: 'var(--ink-50)', fontSize: 10, fontWeight: 600, color: 'var(--ink-500)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              <div/><div>Property</div><div>Tenant</div><div>SF</div><div>Rate</div><div>Term</div><div>Closed</div><div/>
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <Button variant="secondary" size="sm" icon={<Icons.Download size={13}/>} onClick={handleExportCsv}>
-                Export CSV
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                icon={<Icons.Docs size={13}/>}
-                onClick={handleBuildPacket}
-                disabled={selectedCount === 0}
-              >
-                Build packet ({selectedCount})
-              </Button>
+            {[
+              {addr:'1810 W MacArthur Blvd', tenant:'Arrowhead Logistics', sf:'22,400', rate:'$1.41', term:'7 yr', closed:'Feb 2026', score:'A'},
+              {addr:'3200 Airway Ave', tenant:'Confidential', sf:'31,200', rate:'$1.38', term:'5 yr', closed:'Jan 2026', score:'A'},
+              {addr:'2212 S Hathaway St', tenant:'Pacific Foods', sf:'18,900', rate:'$1.32', term:'10 yr', closed:'Dec 2025', score:'B'},
+              {addr:'650 E Dyer Rd', tenant:'Relay Robotics', sf:'26,700', rate:'$1.44', term:'5 yr', closed:'Nov 2025', score:'A'},
+              {addr:'440 Fischer Ave', tenant:'Harbor Paints', sf:'19,800', rate:'$1.29', term:'3 yr', closed:'Oct 2025', score:'B'},
+              {addr:'1125 Victoria St', tenant:'Vantage 3PL', sf:'35,100', rate:'$1.33', term:'7 yr', closed:'Sep 2025', score:'B'},
+            ].map((r,i) => (
+              <div key={i} style={{ display:'grid', gridTemplateColumns: '32px 2fr 1fr .8fr 1fr .8fr .8fr 32px', padding: '12px 20px', alignItems:'center', borderTop: '1px solid var(--ink-150)', fontSize: 13 }}>
+                <input type="checkbox" defaultChecked style={{ accentColor: 'var(--lee-crimson)' }}/>
+                <div>
+                  <div style={{ fontWeight: 600 }}>{r.addr}</div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Costa Mesa · Industrial</div>
+                </div>
+                <div style={{ color: 'var(--ink-600)' }}>{r.tenant}</div>
+                <div className="lee-mono" style={{ color: 'var(--ink-700)' }}>{r.sf}</div>
+                <div className="lee-mono" style={{ fontWeight: 600 }}>{r.rate}</div>
+                <div className="lee-mono" style={{ color: 'var(--ink-600)' }}>{r.term}</div>
+                <div style={{ color: 'var(--ink-600)' }}>{r.closed}</div>
+                <div><Badge tone={r.score==='A' ? 'success' : 'neutral'} size="sm">{r.score}</Badge></div>
+              </div>
+            ))}
+            <div style={{ padding: '14px 20px', display:'flex', justifyContent:'space-between', alignItems:'center', borderTop: '1px solid var(--ink-150)', background: 'var(--ink-50)' }}>
+              <div style={{ fontSize: 12, color: 'var(--ink-600)' }}>6 of 12 selected</div>
+              <div style={{ display:'flex', gap: 8 }}>
+                <Button variant="secondary" size="sm" icon={<Icons.Download size={14}/>}>Export CSV</Button>
+                <Button variant="primary" size="sm" icon={<Icons.Docs size={14}/>}>Build PDF packet</Button>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       </div>
     </div>
   );
 }
 
-export default function CompScreen() {
-  return <FunctionalCompScreen />;
+function Pill({label, value}: any) {
+  return (
+    <div style={{ background: 'var(--ink-50)', border: '1px solid var(--ink-200)', borderRadius: 6, padding: '6px 10px' }}>
+      <div style={{ fontSize: 10, color: 'var(--ink-500)', fontWeight: 600, letterSpacing:'0.06em', textTransform:'uppercase' }}>{label}</div>
+      <div style={{ fontSize: 12, fontWeight: 600, color:'var(--ink-900)', marginTop:1 }}>{value}</div>
+    </div>
+  );
 }
-
-
-function StatCard({label,value,unit,trend}: { label: string; value: ReactNode; unit?: string; trend?: string }) {
+function StatCard({label,value,unit,trend}: any) {
   return (
     <Card padding={16}>
       <div className="lee-eyebrow">{label}</div>
@@ -750,8 +136,8 @@ function StatCard({label,value,unit,trend}: { label: string; value: ReactNode; u
   );
 }
 
-// â”€â”€ Admin Portal — inbox, Dealius push, agent roster â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-export function AdminScreen() {
+// ── Admin Portal — inbox, Dealius push, agent roster ──
+function AdminScreen() {
   const [view, setView] = React.useState('inbox');
   return (
     <div>
@@ -805,15 +191,15 @@ export function AdminScreen() {
   );
 }
 
-// â”€â”€ Inbox: submissions with submitter info + queue context â”€â”€â”€â”€â”€
+// ── Inbox: submissions with submitter info + queue context ──
 function AdminInbox() {
   const rows = [
     {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'2847 Newport Blvd · Costa Mesa', agent:'Taylor Barnes', agentTitle:'Senior Associate', avatar:'TB', amt:'$127,935', age:'2h 14m', tone:'crimson', id:'V-2026-0418', flag:'Co-broker split'},
-    {type:'Listing', icon:<Icons.Listing size={14}/>, prop:'1250 E Alton Ave · Santa Ana', agent:'Marcus Reeves', agentTitle:'Principal', avatar:'MR', amt:'—', age:'4h 02m', tone:'slate', id:'L-2026-0412', flag:null},
+    {type:'Listing', icon:<Icons.Listing size={14}/>, prop:'1250 E Alton Ave · Santa Ana', agent:'Rick Turner', agentTitle:'Principal', avatar:'RT', amt:'—', age:'4h 02m', tone:'slate', id:'L-2026-0412', flag:null},
     {type:'Sign', icon:<Icons.Sign size={14}/>, prop:'3400 Bristol St · Costa Mesa', agent:'Taylor Barnes', agentTitle:'Senior Associate', avatar:'TB', amt:'$705', age:'6h 38m', tone:'neutral', id:'S-2026-0410', flag:null},
-    {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'875 W 17th St · Costa Mesa', agent:'Sam Park', agentTitle:'Associate', avatar:'SP', amt:'$58,200', age:'1d', tone:'crimson', id:'V-2026-0404', flag:'Missing W-9'},
-    {type:'Contract', icon:<Icons.Contract size={14}/>, prop:'512 Superior Ave · Newport', agent:'Marcus Reeves', agentTitle:'Principal', avatar:'MR', amt:'—', age:'1d 2h', tone:'ai', id:'C-2026-0401', flag:'4 redlines'},
-    {type:'Listing Mod', icon:<Icons.Listing size={14}/>, prop:'2100 Placentia Ave · Costa Mesa', agent:'Kai Nguyen', agentTitle:'Associate', avatar:'KN', amt:'—', age:'2d', tone:'slate', id:'L-2026-0395', flag:null},
+    {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'875 W 17th St · Costa Mesa', agent:'Matt Durkin', agentTitle:'Associate', avatar:'MD', amt:'$58,200', age:'1d', tone:'crimson', id:'V-2026-0404', flag:'Missing W-9'},
+    {type:'Contract', icon:<Icons.Contract size={14}/>, prop:'512 Superior Ave · Newport', agent:'Rick Turner', agentTitle:'Principal', avatar:'RT', amt:'—', age:'1d 2h', tone:'ai', id:'C-2026-0401', flag:'4 redlines'},
+    {type:'Listing Mod', icon:<Icons.Listing size={14}/>, prop:'2100 Placentia Ave · Costa Mesa', agent:'Carter Harrington', agentTitle:'Associate', avatar:'CH', amt:'—', age:'2d', tone:'slate', id:'L-2026-0395', flag:null},
     {type:'Voucher', icon:<Icons.Voucher size={14}/>, prop:'6400 W Coast Hwy · Newport', agent:'Taylor Barnes', agentTitle:'Senior Associate', avatar:'TB', amt:'$41,300', age:'3d', tone:'crimson', id:'V-2026-0388', flag:null},
   ];
   return (
@@ -834,7 +220,7 @@ function AdminInbox() {
           <div style={{ display:'flex', alignItems:'center', gap:8, padding: '0 4px' }}>
             <div style={{ display:'flex', alignItems:'center', gap:6, width: 220, height: 32, padding:'0 10px', background:'var(--ink-0)', border:'1px solid var(--ink-200)', borderRadius: 6 }}>
               <Icons.Search size={13} style={{ color: 'var(--ink-400)' }}/>
-              <input placeholder="Search submitter, propertyâ€¦" style={{ flex:1, border:'none', outline:'none', fontSize: 12, background:'transparent' }}/>
+              <input placeholder="Search submitter, property…" style={{ flex:1, border:'none', outline:'none', fontSize: 12, background:'transparent' }}/>
             </div>
             <Button variant="secondary" size="sm" icon={<Icons.Filter size={13}/>}>Filter</Button>
           </div>
@@ -970,9 +356,12 @@ function AdminInbox() {
   );
 }
 
-// â”€â”€ Dealius push: quick-input for listings and deals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Dealius push: quick-input for listings and deals ──
 function AdminDealius() {
   const [mode, setMode] = React.useState('listing');
+  const brokersQuery = trpc.brokers.list.useQuery();
+  const brokerNames = (brokersQuery.data ?? []).map(b => b.name);
+  const defaultLeadBroker = brokerNames[0] ?? 'Taylor Barnes';
   return (
     <div style={{ padding: 32, display:'grid', gridTemplateColumns:'1fr 360px', gap: 24, alignItems:'start' }}>
       <div style={{ display:'flex', flexDirection:'column', gap: 16 }}>
@@ -1002,12 +391,12 @@ function AdminDealius() {
               <Field label="Asking rate"><Input prefix="$" suffix="/SF/YR NNN" defaultValue="1.95"/></Field>
               <Field label="Listing start"><Input prefix={<Icons.Calendar size={14}/>} defaultValue="Apr 22, 2026"/></Field>
               <Field label="Listing end"><Input prefix={<Icons.Calendar size={14}/>} defaultValue="Oct 22, 2026"/></Field>
-              <Field label="Lead broker"><Select value="Taylor Barnes" onChange={()=>{}} options={['Taylor Barnes','Marcus Reeves','Sam Park','Kai Nguyen']}/></Field>
+              <Field label="Lead broker"><Select value={defaultLeadBroker} onChange={()=>{}} options={brokerNames}/></Field>
               <Field label="Co-broker"><Input placeholder="Optional"/></Field>
               <Field label="Commission %"><Input suffix="%" defaultValue="6.00"/></Field>
               <Field label="MLS"><Select value="AIR CRE" onChange={()=>{}} options={['AIR CRE','CoStar','LoopNet','CREXi']}/></Field>
               <Field label="Dealius pipeline stage" span={2}>
-                <Select value="Prospect → Active" onChange={()=>{}} options={['Prospect','Active','Under contract','Closed']}/>
+                <Select value="Active" onChange={()=>{}} options={['Prospect','Active','Under contract','Closed']}/>
               </Field>
             </div>
           ) : (
@@ -1021,7 +410,7 @@ function AdminDealius() {
               <Field label="Consideration"><Input prefix="$" defaultValue="4,312,500"/></Field>
               <Field label="Gross commission"><Input prefix="$" defaultValue="258,750"/></Field>
               <Field label="Lee side share"><Input suffix="%" defaultValue="50"/></Field>
-              <Field label="Lead broker"><Select value="Taylor Barnes" onChange={()=>{}} options={['Taylor Barnes','Marcus Reeves','Sam Park','Kai Nguyen']}/></Field>
+              <Field label="Lead broker"><Select value={defaultLeadBroker} onChange={()=>{}} options={brokerNames}/></Field>
               <Field label="Dealius deal ID"><Input className="lee-mono" defaultValue="D-2026-01872"/></Field>
             </div>
           )}
@@ -1052,7 +441,7 @@ function AdminDealius() {
             Last sync 3 min ago · OAuth valid through Jul 2026
           </div>
           <div style={{ marginTop: 12, display:'flex', gap: 8 }}>
-            <Button variant="ghost" size="sm">Open Dealius →</Button>
+            <Button variant="ghost" size="sm">Open Dealius â†’</Button>
             <Button variant="ghost" size="sm">Re-auth</Button>
           </div>
         </Card>
@@ -1083,9 +472,9 @@ function AdminDealius() {
           </div>
           <div style={{ marginTop: 10, display:'flex', flexDirection:'column', gap: 6, fontSize: 11.5 }}>
             {[
-              ['Voucher → Commission record', 12],
-              ['Listing → Property + Listing', 18],
-              ['Contract → Document', 6],
+              ['Voucher â†’ Commission record', 12],
+              ['Listing â†’ Property + Listing', 18],
+              ['Contract â†’ Document', 6],
             ].map(([k,n],i) => (
               <div key={i} style={{ display:'flex', justifyContent:'space-between', padding: '4px 0' }}>
                 <span style={{ color:'var(--ink-700)' }}>{k}</span>
@@ -1093,91 +482,85 @@ function AdminDealius() {
               </div>
             ))}
           </div>
-          <Button variant="ghost" size="sm" style={{ marginTop: 10 }}>Edit mapping →</Button>
+          <Button variant="ghost" size="sm" style={{ marginTop: 10 }}>Edit mapping â†’</Button>
         </Card>
       </div>
     </div>
   );
 }
 
-// â”€â”€ Agent roster â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Agent roster (live from shared/brokerDirectory.ts via trpc.brokers.list) ──
 function AdminRoster() {
-  const roster = [
-    {name:'Taylor Barnes', avatar:'TB', title:'Senior Associate', email:'tbarnes@lee-nb.com', phone:'(949) 556-0118', license:'DRE #01984412', team:'Industrial', ytd:'$287K', deals:9, status:'Active', joined:'Feb 2021'},
-    {name:'Marcus Reeves', avatar:'MR', title:'Principal', email:'mreeves@lee-nb.com', phone:'(949) 556-0102', license:'DRE #01456780', team:'Office', ytd:'$412K', deals:6, status:'Active', joined:'May 2015'},
-    {name:'Sam Park', avatar:'SP', title:'Associate', email:'spark@lee-nb.com', phone:'(949) 556-0124', license:'DRE #02123498', team:'Retail', ytd:'$128K', deals:4, status:'Active', joined:'Aug 2023'},
-    {name:'Kai Nguyen', avatar:'KN', title:'Associate', email:'knguyen@lee-nb.com', phone:'(949) 556-0131', license:'DRE #02201765', team:'Industrial', ytd:'$64K', deals:3, status:'Active', joined:'Jan 2024'},
-    {name:'Diana Cho', avatar:'DC', title:'Principal', email:'dcho@lee-nb.com', phone:'(949) 556-0109', license:'DRE #01312558', team:'Capital Markets', ytd:'$598K', deals:4, status:'Active', joined:'Oct 2012'},
-    {name:'Reggie Alvarez', avatar:'RA', title:'Senior Associate', email:'ralvarez@lee-nb.com', phone:'(949) 556-0115', license:'DRE #01876321', team:'Office', ytd:'$201K', deals:7, status:'Active', joined:'Jun 2018'},
-    {name:'Priya Shah', avatar:'PS', title:'Associate', email:'pshah@lee-nb.com', phone:'(949) 556-0128', license:'DRE #02098412', team:'Retail', ytd:'$92K', deals:5, status:'Active', joined:'Mar 2022'},
-    {name:'Joel Martinez', avatar:'JM', title:'Associate', email:'jmartinez@lee-nb.com', phone:'(949) 556-0133', license:'DRE #02245009', team:'Industrial', ytd:'$45K', deals:2, status:'Onboarding', joined:'Mar 2026'},
-  ];
+  const brokersQuery = trpc.brokers.list.useQuery();
+  const roster = (brokersQuery.data ?? []).map(b => ({
+    name: b.name,
+    avatar: b.initials,
+    title: /manager/i.test(b.role)
+      ? 'Principal'
+      : /broker/i.test(b.role)
+      ? 'Broker'
+      : b.role,
+    email: b.email,
+    role: b.role,
+    id: b.id,
+  }));
+  const totalAgents = roster.length;
+  const activeCount = roster.length;
   return (
     <div style={{ padding: 32, display:'flex', flexDirection:'column', gap: 16 }}>
       {/* Roster stats */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(5, 1fr)', gap: 12 }}>
-        <StatCard label="Total agents" value="24" unit=""/>
-        <StatCard label="Active" value="22" unit=""/>
-        <StatCard label="Onboarding" value="2" unit=""/>
-        <StatCard label="YTD production" value="$4.2M" unit=""/>
-        <StatCard label="Avg deals / agent" value="8.4" unit=""/>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap: 12 }}>
+        <StatCard label="Agents in directory" value={String(totalAgents)} unit=""/>
+        <StatCard label="Active" value={String(activeCount)} unit=""/>
+        <StatCard label="Office" value="Newport Beach" unit=""/>
       </div>
 
       <Card padding={0}>
         <div style={{ padding: '14px 20px', display:'flex', alignItems:'center', gap: 12, borderBottom: '1px solid var(--ink-150)' }}>
           <div style={{ fontSize: 14, fontWeight: 700 }}>Roster</div>
-          <Badge size="sm">{roster.length} shown · 24 total</Badge>
+          <Badge size="sm">{roster.length} agents</Badge>
           <div style={{ flex: 1 }}/>
           <div style={{ display:'flex', alignItems:'center', gap:6, width: 260, height: 32, padding:'0 10px', background:'var(--ink-0)', border:'1px solid var(--ink-200)', borderRadius: 6 }}>
             <Icons.Search size={13} style={{ color: 'var(--ink-400)' }}/>
-            <input placeholder="Search name, license, teamâ€¦" style={{ flex:1, border:'none', outline:'none', fontSize: 12, background:'transparent' }}/>
+            <input placeholder="Search name or email…" style={{ flex:1, border:'none', outline:'none', fontSize: 12, background:'transparent' }}/>
           </div>
-          <Select value="All teams" onChange={()=>{}} options={['All teams','Industrial','Office','Retail','Capital Markets']}/>
           <Button variant="secondary" size="sm" icon={<Icons.Download size={13}/>}>Export</Button>
-          <Button variant="primary" size="sm" icon={<Icons.Plus size={13}/>}>Add agent</Button>
         </div>
 
         {/* Column header */}
         <div style={{
-          display:'grid', gridTemplateColumns: '2fr 1.1fr 1.4fr 1fr 0.9fr 0.9fr 0.9fr 120px',
+          display:'grid', gridTemplateColumns: '2.2fr 1.3fr 2fr 0.8fr',
           padding: '10px 20px', gap: 12, alignItems:'center',
           background: 'var(--ink-50)', borderBottom: '1px solid var(--ink-200)',
           fontSize: 10, fontWeight: 700, color: 'var(--ink-500)', letterSpacing: '0.08em', textTransform: 'uppercase',
         }}>
           <div>Agent</div>
-          <div>Title</div>
-          <div>Contact</div>
-          <div>License</div>
-          <div>Team</div>
-          <div style={{ textAlign:'right' }}>YTD GCI</div>
-          <div style={{ textAlign:'right' }}>Deals</div>
-          <div style={{ textAlign:'right' }}>Status</div>
+          <div>Role</div>
+          <div>Email</div>
+          <div style={{ textAlign:'right' }}>ID</div>
         </div>
 
+        {brokersQuery.isLoading && (
+          <div style={{ padding: '24px 20px', fontSize: 13, color: 'var(--ink-500)' }}>
+            Loading roster…
+          </div>
+        )}
+
         {roster.map((a,i) => (
-          <div key={i} style={{
-            display:'grid', gridTemplateColumns: '2fr 1.1fr 1.4fr 1fr 0.9fr 0.9fr 0.9fr 120px',
+          <div key={a.id} style={{
+            display:'grid', gridTemplateColumns: '2.2fr 1.3fr 2fr 0.8fr',
             padding: '14px 20px', alignItems:'center', gap: 12,
             borderTop: i>0 ? '1px solid var(--ink-150)' : 'none',
-            cursor: 'pointer',
           }}>
             <div style={{ display:'flex', alignItems:'center', gap: 10, minWidth: 0 }}>
               <div style={{ width: 32, height: 32, borderRadius: 999, background: 'var(--ink-900)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{a.avatar}</div>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{a.name}</div>
-                <div style={{ fontSize: 10.5, color: 'var(--ink-500)' }}>Joined {a.joined}</div>
               </div>
             </div>
-            <div style={{ fontSize: 12.5, color: 'var(--ink-700)' }}>{a.title}</div>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 11.5, color: 'var(--ink-700)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{a.email}</div>
-              <div className="lee-mono" style={{ fontSize: 11, color: 'var(--ink-500)' }}>{a.phone}</div>
-            </div>
-            <div className="lee-mono" style={{ fontSize: 11.5, color: 'var(--ink-600)' }}>{a.license}</div>
-            <div><Badge size="sm" tone={a.team === 'Industrial' ? 'slate' : a.team === 'Office' ? 'neutral' : a.team === 'Retail' ? 'warn' : 'ai'}>{a.team}</Badge></div>
-            <div className="lee-mono" style={{ fontSize: 13, fontWeight: 600, textAlign:'right' }}>{a.ytd}</div>
-            <div className="lee-mono" style={{ fontSize: 13, fontWeight: 600, textAlign:'right' }}>{a.deals}</div>
-            <div style={{ textAlign:'right' }}><Badge size="sm" tone={a.status === 'Active' ? 'success' : 'warn'}>{a.status}</Badge></div>
+            <div style={{ fontSize: 12.5, color: 'var(--ink-700)' }}>{a.role}</div>
+            <div style={{ minWidth: 0, fontSize: 12, color: 'var(--ink-700)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{a.email}</div>
+            <div className="lee-mono" style={{ fontSize: 11.5, color: 'var(--ink-500)', textAlign:'right' }}>{a.id}</div>
           </div>
         ))}
       </Card>
@@ -1185,7 +568,7 @@ function AdminRoster() {
   );
 }
 
-// â”€â”€ Office ops â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Office ops ──
 function AdminOps() {
   return (
     <div style={{ padding: 32, display:'grid', gridTemplateColumns:'1fr 1fr', gap: 16 }}>
@@ -1193,9 +576,9 @@ function AdminOps() {
         <div className="lee-eyebrow" style={{ marginBottom: 14 }}>Commission payouts · this week</div>
         {[
           {agent:'Taylor Barnes', amt:'$63,968', status:'Scheduled Fri'},
-          {agent:'Marcus Reeves', amt:'$98,441', status:'Awaiting wire'},
-          {agent:'Sam Park', amt:'$29,100', status:'Paid'},
-          {agent:'Diana Cho', amt:'$152,890', status:'Paid'},
+          {agent:'Rick Turner', amt:'$98,441', status:'Awaiting wire'},
+          {agent:'Matt Durkin', amt:'$29,100', status:'Paid'},
+          {agent:'Libby Gessford', amt:'$152,890', status:'Paid'},
         ].map((p,i) => (
           <div key={i} style={{ display:'flex', alignItems:'center', gap: 10, padding: '10px 0', borderTop: i>0 ? '1px solid var(--ink-150)' : 'none' }}>
             <div style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{p.agent}</div>
@@ -1260,48 +643,27 @@ function AdminOps() {
   );
 }
 
-// â”€â”€ Contract intake â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function FunctionalContractScreen() {
-  const { user } = useAuth();
-  const [mode, setMode] = useState<"upload" | "fill">("upload");
-  const [search, setSearch] = useState("");
-  const [selectedContract, setSelectedContract] = useState("Exclusive Right - Owner Lease");
-  const [uploadedContract, setUploadedContract] = useState<{ url: string; fileKey: string; filename: string } | null>(null);
-  const [notes, setNotes] = useState("");
-  const [contractData, setContractData] = useState<ContractData>({
-    contractType: "Exclusive Right - Owner Lease",
-    party1Name: "Pacific Holdings LLC",
-    agentName: user?.name ?? "Taylor Barnes",
-    agentEmail: user?.email ?? "",
-    propAddress: "2847 Newport Blvd",
-    propCity: "Costa Mesa",
-    propState: "CA",
-    propZip: "92627",
-    termStart: "2026-04-22",
-    termEnd: "2026-10-22",
-    commAmount: "6.00%",
-    arbitration: "AAA",
-  });
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const contractGroups = [
+// ── Contract intake ──
+function ContractScreen() {
+  const [mode, setMode] = React.useState('upload');
+  const groups = [
     { name: 'Listing Agreements', items: [
       'Exclusive Right to Sell',
       'Exclusive Right to Lease',
-      'Exclusive Right - Sublease',
+      'Exclusive Right · Sublease',
       'Limited Listing Agreement',
       'Open Listing Agreement',
       'Listing Modification / Extension',
     ]},
     { name: 'Representation', items: [
-      'Exclusive Right - Buyer/Lessee',
-      'Exclusive Right - Owner Sale',
-      'Exclusive Right - Owner Lease',
+      'Exclusive Right · Buyer/Lessee',
+      'Exclusive Right · Owner Sale',
+      'Exclusive Right · Owner Lease',
       'Non-Exclusive Buyer Rep',
     ]},
     { name: 'Commission Agreements', items: [
-      'Commission Agreement - Lease',
-      'Commission Agreement - Sale',
+      'Commission Agreement · Lease',
+      'Commission Agreement · Sale',
       'Co-Broker Commission Agreement',
       'Referral Agreement',
     ]},
@@ -1321,7 +683,7 @@ function FunctionalContractScreen() {
     ]},
     { name: 'Purchase & Sale', items: [
       'AIR CRE Standard Purchase Agreement',
-      'Letter of Intent - Purchase',
+      'Letter of Intent · Purchase',
       'Counter Offer',
       'PSA Addendum',
       'Assignment of Purchase Agreement',
@@ -1338,128 +700,30 @@ function FunctionalContractScreen() {
       'Arbitration Advisory',
     ]},
   ];
-
-  const filteredGroups = contractGroups
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((item) => item.toLowerCase().includes(search.toLowerCase().trim())),
-    }))
-    .filter((group) => group.items.length);
-
-  useEffect(() => {
-    setContractData((current) => ({ ...current, contractType: selectedContract }));
-  }, [selectedContract]);
-
-  useEffect(() => {
-    setContractData((current) => ({
-      ...current,
-      agentName: current.agentName || user?.name || "",
-      agentEmail: current.agentEmail || user?.email || "",
-    }));
-  }, [user?.email, user?.name]);
-
-  const uploadMutation = trpc.files.upload.useMutation();
-  const extractMutation = trpc.contracts.extractContract.useMutation();
-  const submitMutation = trpc.contracts.submitContractToAdmin.useMutation();
-  const isExtracting = uploadMutation.isPending || extractMutation.isPending;
-
-  const setContractField = (field: Exclude<keyof ContractData, "redlines">, value: string) => {
-    setContractData((current) => ({ ...current, [field]: value }));
-  };
-
-  const processContractFile = async (file: File) => {
-    if (!file.type.includes("pdf") && !file.name.toLowerCase().endsWith(".pdf")) {
-      toast.error("Upload a PDF contract.");
-      return;
-    }
-
-    try {
-      const base64Data = await readFileAsBase64(file);
-      const uploaded = await uploadMutation.mutateAsync({
-        filename: file.name,
-        mimeType: file.type || "application/pdf",
-        base64Data,
-        category: "contract",
-        reference: selectedContract,
-        uploaderName: user?.name ?? undefined,
-      });
-      setUploadedContract({ url: uploaded.url, fileKey: uploaded.fileKey, filename: uploaded.filename });
-
-      const extracted = await extractMutation.mutateAsync({
-        pdfUrl: uploaded.url,
-        contractType: selectedContract,
-      });
-
-      if (extracted.success && extracted.data) {
-        setContractData((current) => ({
-          ...current,
-          ...(extracted.data as Partial<ContractData>),
-          contractType: selectedContract,
-        }));
-        setMode("fill");
-        toast.success("Contract fields extracted.");
-      } else {
-        toast.error(extracted.error || "Contract uploaded, but extraction failed.");
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to process contract.");
-    }
-  };
-
-  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (file) await processContractFile(file);
-  };
-
-  const handleSubmitContract = async () => {
-    try {
-      const result = await submitMutation.mutateAsync({
-        contractData,
-        brokerName: user?.name ?? contractData.agentName,
-        senderEmail: user?.email ?? contractData.agentEmail,
-        notes: notes.trim() || undefined,
-      });
-
-      if (result.success) toast.success("Contract sent to admin.");
-      else toast.error(result.error || "Contract submission failed.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Contract submission failed.");
-    }
-  };
-
-  const redlines = contractData.redlines ?? [];
-
+  const [sel, setSel] = React.useState('Exclusive Right · Owner Lease');
   return (
     <div>
-      <input ref={fileInputRef} type="file" accept="application/pdf,.pdf" style={{ display: "none" }} onChange={handleFileChange}/>
       <PageHeader
         eyebrow="AIR CRE"
         title="Contract Intake"
-        description="Prepare AIR CRE forms, extract signed PDFs, and send clean data sheets to admin."
-        right={<Button variant="primary" size="sm" icon={<Icons.Arrow size={14}/>} onClick={handleSubmitContract} disabled={submitMutation.isPending}>{submitMutation.isPending ? "Sending..." : "Submit to admin"}</Button>}
+        description="Prepare exclusive listings, right-to-represent, lease, purchase and commission agreements. Upload an Adobe draft and Deal Assist pulls redlines."
       />
       <div style={{ padding: 32, display:'grid', gridTemplateColumns: '300px 1fr', gap: 24, alignItems:'start' }}>
         <Card padding={16} style={{ maxHeight: 780, overflow: 'auto' }}>
           <div style={{ display:'flex', alignItems:'center', gap: 8, marginBottom: 12, padding: '6px 10px', background: 'var(--ink-50)', border: '1px solid var(--ink-200)', borderRadius: 6 }}>
             <Icons.Search size={13} style={{ color: 'var(--ink-400)' }}/>
-            <input
-              placeholder="Search agreements..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 12, background: 'transparent' }}
-            />
+            <input placeholder="Search agreements…" style={{ flex: 1, border: 'none', outline: 'none', fontSize: 12, background: 'transparent' }}/>
           </div>
-          {filteredGroups.map((group) => (
-            <div key={group.name} style={{ marginBottom: 14 }}>
+          {groups.map((g, gi) => (
+            <div key={gi} style={{ marginBottom: 14 }}>
               <div className="lee-eyebrow" style={{ marginBottom: 4, padding: '0 8px', display:'flex', justifyContent:'space-between', alignItems: 'center' }}>
-                <span>{group.name}</span>
-                <span style={{ color: 'var(--ink-400)', fontWeight: 500 }}>{group.items.length}</span>
+                <span>{g.name}</span>
+                <span style={{ color: 'var(--ink-400)', fontWeight: 500 }}>{g.items.length}</span>
               </div>
-              {group.items.map((item) => {
-                const active = item === selectedContract;
+              {g.items.map((l, i) => {
+                const active = l === sel;
                 return (
-                  <button key={item} onClick={() => setSelectedContract(item)} style={{
+                  <button key={i} onClick={() => setSel(l)} style={{
                     display:'block', width: '100%', textAlign:'left',
                     padding: '8px 10px', marginBottom: 2,
                     background: active ? 'var(--lee-crimson-wash)' : 'transparent',
@@ -1467,7 +731,7 @@ function FunctionalContractScreen() {
                     fontSize: 12.5, fontWeight: active ? 600 : 500,
                     color: active ? 'var(--lee-crimson-ink)' : 'var(--ink-700)',
                     cursor: 'pointer', lineHeight: 1.35,
-                  }}>{item}</button>
+                  }}>{l}</button>
                 );
               })}
             </div>
@@ -1476,91 +740,43 @@ function FunctionalContractScreen() {
 
         <div style={{ display:'flex', flexDirection:'column', gap: 16 }}>
           <Card>
-            <SectionHeader eyebrow="Selected" title={selectedContract} description="Upload a signed PDF to extract fields, or fill the data sheet directly."/>
+            <SectionHeader eyebrow="Selected" title={sel} description="AIR CRE form. Fill fields below, or upload a signed Adobe draft and let AI extract."/>
             <div style={{ display:'flex', gap: 8, marginBottom: 20 }}>
-              <Segmented options={[{value:'upload',label:'Upload signed PDF'},{value:'fill',label:'Fill out here'}]} value={mode} onChange={(value: "upload" | "fill") => setMode(value)}/>
+              <Segmented options={[{value:'upload',label:'Upload signed PDF'},{value:'fill',label:'Fill out here'}]} value={mode} onChange={setMode}/>
             </div>
 
             {mode === 'upload' ? (
-              <div
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  const file = event.dataTransfer.files?.[0];
-                  if (file) void processContractFile(file);
-                }}
-                style={{
-                  border: '2px dashed var(--ink-300)', borderRadius: 12,
-                  padding: 40, textAlign:'center',
-                  background: 'linear-gradient(180deg, #FBF8FE 0%, var(--ink-0) 100%)',
-                }}
-              >
+              <div style={{
+                border: '2px dashed var(--ink-300)', borderRadius: 12,
+                padding: 40, textAlign:'center',
+                background: 'linear-gradient(180deg, #FBF8FE 0%, var(--ink-0) 100%)',
+              }}>
                 <div style={{ width: 56, height: 56, margin: '0 auto 14px', borderRadius: 14, background: 'var(--ai-gradient)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', boxShadow: '0 8px 22px rgba(139,95,240,.35)' }}>
                   <Icons.Upload size={26}/>
                 </div>
                 <div style={{ fontSize: 16, fontWeight: 600 }}>Drop signed contract PDF</div>
                 <div style={{ fontSize: 13, color: 'var(--ink-500)', marginTop: 4, maxWidth: 420, margin:'4px auto 16px' }}>
-                  Deal Assist extracts parties, dates, commission, and redlines from the PDF.
+                  Beta preview — use the production tool at <a href="/broker_tool.html" style={{ color: 'var(--lee-crimson)', fontWeight: 600, textDecoration: 'none' }}>/broker_tool.html</a> to upload contracts and run extraction.
                 </div>
-                <Button variant="ai" icon={<Icons.Upload size={14}/>} onClick={() => fileInputRef.current?.click()} disabled={isExtracting}>
-                  {isExtracting ? "Processing..." : "Choose PDF"}
+                <Button
+                  variant="ai"
+                  icon={<Icons.Upload size={14}/>}
+                  onClick={() => { window.location.href = '/broker_tool.html#contracts'; }}
+                >
+                  Open contract tool
                 </Button>
-                {uploadedContract && (
-                  <div style={{ marginTop: 14, fontSize: 12, color: 'var(--ink-600)' }}>
-                    Uploaded: <button onClick={() => window.open(uploadedContract.url, "_blank", "noopener")} style={{ border: 'none', background: 'transparent', color: 'var(--lee-crimson)', cursor: 'pointer', fontWeight: 600 }}>{uploadedContract.filename}</button>
-                  </div>
-                )}
               </div>
             ) : (
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 16 }}>
-                <Field label="Owner / client name" required><Input value={contractData.party1Name ?? ""} onChange={(event: ChangeEvent<HTMLInputElement>) => setContractField("party1Name", event.target.value)}/></Field>
-                <Field label="Broker of record" required><Input value={contractData.agentName ?? ""} onChange={(event: ChangeEvent<HTMLInputElement>) => setContractField("agentName", event.target.value)}/></Field>
-                <Field label="Broker email"><Input value={contractData.agentEmail ?? ""} onChange={(event: ChangeEvent<HTMLInputElement>) => setContractField("agentEmail", event.target.value)}/></Field>
-                <Field label="Commission"><Input value={contractData.commAmount ?? ""} onChange={(event: ChangeEvent<HTMLInputElement>) => setContractField("commAmount", event.target.value)}/></Field>
-                <Field label="Property address" required span={2}><Input value={contractData.propAddress ?? ""} onChange={(event: ChangeEvent<HTMLInputElement>) => setContractField("propAddress", event.target.value)}/></Field>
-                <Field label="City"><Input value={contractData.propCity ?? ""} onChange={(event: ChangeEvent<HTMLInputElement>) => setContractField("propCity", event.target.value)}/></Field>
-                <Field label="State"><Input value={contractData.propState ?? ""} onChange={(event: ChangeEvent<HTMLInputElement>) => setContractField("propState", event.target.value)}/></Field>
-                <Field label="Zip"><Input value={contractData.propZip ?? ""} onChange={(event: ChangeEvent<HTMLInputElement>) => setContractField("propZip", event.target.value)}/></Field>
-                <Field label="Arbitration"><Select value={contractData.arbitration ?? "AAA"} onChange={(event: ChangeEvent<HTMLSelectElement>) => setContractField("arbitration", event.target.value)} options={['AAA','JAMS','Judicial reference','None']}/></Field>
-                <Field label="Listing start"><Input type="date" prefix={<Icons.Calendar size={14}/>} value={contractData.termStart ?? ""} onChange={(event: ChangeEvent<HTMLInputElement>) => setContractField("termStart", event.target.value)}/></Field>
-                <Field label="Listing end"><Input type="date" prefix={<Icons.Calendar size={14}/>} value={contractData.termEnd ?? ""} onChange={(event: ChangeEvent<HTMLInputElement>) => setContractField("termEnd", event.target.value)}/></Field>
+                <Field label="Owner name" required><Input defaultValue="Pacific Holdings LLC"/></Field>
+                <Field label="Broker of record" required><Input defaultValue="Lee & Associates Newport Beach"/></Field>
+                <Field label="Property address" required span={2}><Input defaultValue="2847 Newport Blvd, Costa Mesa, CA 92627"/></Field>
+                <Field label="Listing start"><Input prefix={<Icons.Calendar size={14}/>} defaultValue="Apr 22, 2026"/></Field>
+                <Field label="Listing end"><Input prefix={<Icons.Calendar size={14}/>} defaultValue="Oct 22, 2026"/></Field>
+                <Field label="Commission %"><Input suffix="%" defaultValue="6.00"/></Field>
+                <Field label="Arbitration"><Select value="AAA" onChange={()=>{}} options={['AAA','JAMS','Judicial reference','None']}/></Field>
               </div>
             )}
-          </Card>
-
-          <Card>
-            <SectionHeader eyebrow="Admin packet" title="Review and submit" description="Notes and extracted redlines are included with the admin data sheet."/>
-            <div style={{ display: 'grid', gridTemplateColumns: redlines.length ? '1fr 1fr' : '1fr', gap: 16 }}>
-              <div>
-                <div className="lee-eyebrow" style={{ marginBottom: 8 }}>Notes</div>
-                <textarea
-                  value={notes}
-                  onChange={(event) => setNotes(event.target.value)}
-                  placeholder="Anything admin should know before entering this in AIR CRE..."
-                  style={{ width: '100%', minHeight: 118, resize: 'vertical', border: '1px solid var(--ink-200)', borderRadius: 8, padding: 12, fontSize: 13, outline: 'none' }}
-                />
-              </div>
-              {redlines.length > 0 && (
-                <div>
-                  <div className="lee-eyebrow" style={{ marginBottom: 8 }}>Redlines</div>
-                  <div style={{ border: '1px solid var(--ink-200)', borderRadius: 8, overflow: 'hidden' }}>
-                    {redlines.map((redline, index) => (
-                      <div key={`${redline.paragraph}-${index}`} style={{ padding: 10, borderTop: index > 0 ? '1px solid var(--ink-150)' : 'none', fontSize: 12 }}>
-                        <div style={{ display:'flex', justifyContent:'space-between', gap: 8 }}>
-                          <strong>Para {redline.paragraph || "-"}</strong>
-                          <Badge size="sm" tone={redline.type === "added" ? "success" : "warn"}>{redline.type}</Badge>
-                        </div>
-                        <div style={{ color: 'var(--ink-600)', marginTop: 4 }}>{redline.note}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            <div style={{ marginTop: 16, display:'flex', justifyContent:'flex-end', gap: 8 }}>
-              <Button variant="secondary" size="sm" onClick={() => setMode("fill")}>Review fields</Button>
-              <Button variant="primary" size="sm" icon={<Icons.Arrow size={14}/>} onClick={handleSubmitContract} disabled={submitMutation.isPending}>{submitMutation.isPending ? "Sending..." : "Submit to admin"}</Button>
-            </div>
           </Card>
         </div>
       </div>
@@ -1568,99 +784,18 @@ function FunctionalContractScreen() {
   );
 }
 
-export function ContractScreen() {
-  return <FunctionalContractScreen />;
-}
-
-// â”€â”€ Documents â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function FunctionalDocsScreen() {
-  const { user } = useAuth();
-  const utils = trpc.useUtils();
-  const [query, setQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState<string | undefined>(undefined);
-  const uploadInputRef = useRef<HTMLInputElement | null>(null);
-
-  const docsQuery = trpc.files.list.useQuery({ limit: 200 });
-  const uploadMutation = trpc.files.upload.useMutation({
-    onSuccess: async () => {
-      toast.success("Document uploaded.");
-      await utils.files.list.invalidate();
-    },
-    onError: (error) => toast.error(error.message),
-  });
-
-  const allDocs = useMemo(() => (docsQuery.data ?? []) as UploadedFileRecord[], [docsQuery.data]);
-  const categoryCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const doc of allDocs) {
-      counts.set(doc.category, (counts.get(doc.category) ?? 0) + 1);
-    }
-    return counts;
-  }, [allDocs]);
-
-  const filteredDocs = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    return allDocs.filter((doc) => {
-      if (activeCategory && doc.category !== activeCategory) return false;
-      if (!normalizedQuery) return true;
-      return [
-        doc.filename,
-        doc.reference,
-        doc.category,
-        doc.uploaderName,
-      ].some((value) => String(value ?? "").toLowerCase().includes(normalizedQuery));
-    });
-  }, [activeCategory, allDocs, query]);
-
-  const activeCategoryInfo = DOC_CATEGORIES.find((item) => item.category === activeCategory);
-  const formatFileSize = (bytes?: number) => {
-    if (!bytes) return "-";
-    if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-  };
-
-  const handleUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-
-    try {
-      const base64Data = await readFileAsBase64(file);
-      await uploadMutation.mutateAsync({
-        filename: file.name,
-        mimeType: file.type || "application/octet-stream",
-        base64Data,
-        category: activeCategory ?? "other",
-        reference: activeCategoryInfo?.name ?? "Document Library",
-        uploaderName: user?.name ?? undefined,
-      });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to upload document.");
-    }
-  };
-
-  const openDoc = async (doc: UploadedFileRecord) => {
-    try {
-      const freshUrl = await utils.client.files.getUrl.query({ fileKey: doc.fileKey });
-      window.open(freshUrl.url, "_blank", "noopener");
-    } catch (error) {
-      if (doc.url) {
-        window.open(doc.url, "_blank", "noopener");
-        return;
-      }
-      toast.error(error instanceof Error ? error.message : "No download URL is available for this file.");
-    }
-  };
-
+// ── Documents ──
+function DocsScreen() {
+  const folders = [
+    {name:'Listing Agreements', count: 6, tone:'crimson'},
+    {name:'Lease Documents', count: 12, tone:'slate'},
+    {name:'Purchase & Sale', count: 8, tone:'neutral'},
+    {name:'Commission Agreements', count: 4, tone:'neutral'},
+    {name:'Disclosures', count: 9, tone:'warn'},
+    {name:'Sign Orders', count: 3, tone:'neutral'},
+  ];
   return (
     <div>
-      <input
-        ref={uploadInputRef}
-        type="file"
-        accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg"
-        style={{ display: "none" }}
-        onChange={handleUpload}
-      />
       <PageHeader
         eyebrow="Resources"
         title="Document Library"
@@ -1668,85 +803,206 @@ function FunctionalDocsScreen() {
         right={<>
           <div style={{ display:'flex', alignItems:'center', gap:8, width: 280, height: 36, padding:'0 12px', background:'var(--ink-0)', border:'1px solid var(--ink-200)', borderRadius: 6 }}>
             <Icons.Search size={14} style={{ color: 'var(--ink-400)' }}/>
-            <input
-              placeholder={`Search ${allDocs.length} documents...`}
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              style={{ flex:1, border:'none', outline:'none', fontSize: 13, background:'transparent' }}
-            />
+            <input placeholder="Search 42 documents…" style={{ flex:1, border:'none', outline:'none', fontSize: 13, background:'transparent' }}/>
           </div>
-          <Button variant="secondary" size="sm" icon={<Icons.Upload size={14}/>} onClick={() => uploadInputRef.current?.click()} disabled={uploadMutation.isPending}>
-            {uploadMutation.isPending ? "Uploading..." : "Upload"}
-          </Button>
+          <Button variant="secondary" size="sm" icon={<Icons.Upload size={14}/>}>Upload</Button>
         </>}
       />
       <div style={{ padding: 32, display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap: 16 }}>
-        <Card hoverable padding={20} style={{ cursor:'pointer', borderColor: activeCategory ? undefined : 'var(--lee-crimson)' }} onClick={() => setActiveCategory(undefined)}>
-          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between' }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--ink-100)', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--ink-600)' }}>
-              <Icons.Docs size={20}/>
-            </div>
-            <Badge tone={!activeCategory ? "crimson" : "neutral"} size="sm">{allDocs.length} files</Badge>
-          </div>
-          <div style={{ marginTop: 16, fontSize: 15, fontWeight: 600 }}>All documents</div>
-          <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 4 }}>Showing every uploaded file</div>
-        </Card>
-        {DOC_CATEGORIES.map((folder) => {
-          const active = activeCategory === folder.category;
-          const count = categoryCounts.get(folder.category) ?? 0;
-          return (
-            <Card key={folder.category} hoverable padding={20} style={{ cursor:'pointer', borderColor: active ? 'var(--lee-crimson)' : undefined }} onClick={() => setActiveCategory(folder.category)}>
-              <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between' }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--ink-100)', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--ink-600)' }}>
-                  <Icons.Docs size={20}/>
-                </div>
-                <Badge tone={folder.tone} size="sm">{count} files</Badge>
+        {folders.map((f,i) => (
+          <Card key={i} hoverable padding={20} style={{ cursor:'pointer' }}>
+            <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between' }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--ink-100)', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--ink-600)' }}>
+                <Icons.Docs size={20}/>
               </div>
-              <div style={{ marginTop: 16, fontSize: 15, fontWeight: 600 }}>{folder.name}</div>
-              <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 4 }}>{active ? "Filtered" : "Click to filter"}</div>
-            </Card>
-          );
-        })}
+              <Badge tone={f.tone} size="sm">{f.count} files</Badge>
+            </div>
+            <div style={{ marginTop: 16, fontSize: 15, fontWeight: 600 }}>{f.name}</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 4 }}>Updated 3 days ago</div>
+          </Card>
+        ))}
       </div>
       <div style={{ padding: '0 32px 32px' }}>
         <Card padding={0}>
           <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--ink-150)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>{activeCategoryInfo?.name ?? "Recently used"}</div>
-            <Button variant="ghost" size="sm" onClick={() => setActiveCategory(undefined)}>See all</Button>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>Recently used</div>
+            <Button variant="ghost" size="sm">See all</Button>
           </div>
-          {docsQuery.isLoading && <div style={{ padding: 20 }}>Loading documents...</div>}
-          {docsQuery.isError && <div style={{ padding: 20, color: 'var(--err-600)' }}>{docsQuery.error.message}</div>}
-          {!docsQuery.isLoading && !filteredDocs.length && (
-            <div style={{ padding: 28, textAlign: 'center', color: 'var(--ink-500)' }}>
-              No documents found.
-            </div>
-          )}
-          {filteredDocs.map((doc, index) => {
-            const category = DOC_CATEGORIES.find((item) => item.category === doc.category);
-            return (
-              <div key={doc.fileKey} style={{ display:'grid', gridTemplateColumns:'24px 1fr 140px 90px 100px 80px', padding: '12px 20px', alignItems:'center', gap: 12, borderTop: index > 0 ? '1px solid var(--ink-150)':'none' }}>
-                <Icons.Docs size={16} style={{color:'var(--ink-500)'}}/>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{doc.filename}</div>
-                  <div style={{ fontSize: 11, color: 'var(--ink-500)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{doc.reference ?? doc.uploaderName ?? "Document Library"}</div>
-                </div>
-                <Badge size="sm" tone={category?.tone ?? "neutral"}>{category?.name ?? doc.category}</Badge>
-                <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>{formatFileSize(doc.fileSize)}</div>
-                <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>{formatShortDate(doc.createdAt ?? doc.uploadedAt)}</div>
-                <div style={{ display:'flex', gap: 4, justifyContent:'flex-end' }}>
-                  <button onClick={() => void openDoc(doc)} title="Download" style={{ padding: 6, background:'transparent', border:'none', color:'var(--ink-600)', cursor:'pointer' }}><Icons.Download size={14}/></button>
-                  <button onClick={() => void openDoc(doc)} title="Open" style={{ padding: 6, background:'transparent', border:'none', color:'var(--ink-600)', cursor:'pointer' }}><Icons.External size={14}/></button>
-                </div>
+          {[
+            {name:'AIR CRE Standard Industrial Multi-Tenant Lease', type:'Lease', mod:'Apr 18'},
+            {name:'Exclusive Right to Sell — AIR CRE Form', type:'Listing', mod:'Apr 17'},
+            {name:'Commission Distribution Voucher — Lee NB', type:'Voucher', mod:'Apr 12'},
+            {name:'Agency Disclosure & Confirmation — CAR', type:'Disclosure', mod:'Apr 11'},
+          ].map((d,i) => (
+            <div key={i} style={{ display:'grid', gridTemplateColumns:'24px 1fr 120px 100px 80px', padding: '12px 20px', alignItems:'center', gap: 12, borderTop: i>0 ? '1px solid var(--ink-150)':'none' }}>
+              <Icons.Docs size={16} style={{color:'var(--ink-500)'}}/>
+              <div style={{ fontSize: 13, fontWeight: 500 }}>{d.name}</div>
+              <Badge size="sm">{d.type}</Badge>
+              <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>{d.mod}</div>
+              <div style={{ display:'flex', gap: 4, justifyContent:'flex-end' }}>
+                <button style={{ padding: 6, background:'transparent', border:'none', color:'var(--ink-600)', cursor:'pointer' }}><Icons.Download size={14}/></button>
+                <button style={{ padding: 6, background:'transparent', border:'none', color:'var(--ink-600)', cursor:'pointer' }}><Icons.External size={14}/></button>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </Card>
       </div>
     </div>
   );
 }
 
-export function DocsScreen() {
-  return <FunctionalDocsScreen />;
+// ── AI assist panel (slide-over) ──
+function AiPanel({ open, onClose }: any) {
+  return (
+    <>
+      {open && <div onClick={onClose} style={{ position:'absolute', inset: 0, background:'rgba(10,10,11,.4)', zIndex: 20 }}/>}
+      <aside style={{
+        position:'absolute', top: 0, right: 0, height: '100%', width: 440,
+        background: 'var(--ink-0)', borderLeft: '1px solid var(--ink-200)',
+        transform: open ? 'translateX(0)' : 'translateX(100%)',
+        transition: 'transform .3s var(--ease-out)',
+        zIndex: 21, display:'flex', flexDirection:'column',
+        boxShadow: open ? 'var(--shadow-xl)' : 'none',
+      }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--ink-150)', display:'flex', alignItems:'center', gap: 12 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--ai-gradient)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff' }}>
+            <Icons.Sparkles size={16}/>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 15, fontWeight: 600 }}>Deal Assist</div>
+            <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Claude · fills fields &amp; extracts from docs</div>
+          </div>
+          <button onClick={onClose} style={{ background:'transparent', border:'none', cursor:'pointer', color:'var(--ink-500)' }}><Icons.X size={18}/></button>
+        </div>
+
+        <div style={{ flex: 1, overflow: 'auto', padding: 24, display:'flex', flexDirection:'column', gap: 16 }}>
+          {/* Natural language input */}
+          <div>
+            <div className="lee-eyebrow" style={{ marginBottom: 8 }}>Describe the deal</div>
+            <div style={{ border: '1px solid var(--ai-400)', borderRadius: 10, padding: 14, background: '#FBF8FE', boxShadow: 'var(--ring-ai)' }}>
+              <div style={{ fontSize: 13, color: 'var(--ink-800)', lineHeight: 1.5 }}>
+                5 year industrial lease on 24,500 SF at 2847 Newport Blvd. Tenant is <b>Relay Robotics</b>. Start June 1, 2026, $1.45/SF NNN, 3% annual steps, 2 months free rent, 6% total commission split 50/50 between me and Marcus.
+              </div>
+              <div style={{ marginTop: 14, display:'flex', gap: 8, justifyContent:'flex-end' }}>
+                <Button variant="ghost" size="sm">Clear</Button>
+                <Button variant="ai" size="sm" icon={<Icons.Wand size={13}/>}>Populate form</Button>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display:'flex', alignItems:'center', gap: 10 }}>
+            <div style={{ flex: 1, height: 1, background: 'var(--ink-200)' }}/>
+            <span style={{ fontSize: 10, color: 'var(--ink-400)', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>or</span>
+            <div style={{ flex: 1, height: 1, background: 'var(--ink-200)' }}/>
+          </div>
+
+          <Button variant="secondary" style={{ width: '100%', justifyContent:'flex-start' }} icon={<Icons.Upload size={14}/>}>
+            Upload brochure, LOI or contract
+          </Button>
+          <Button variant="secondary" style={{ width: '100%', justifyContent:'flex-start' }} icon={<Icons.Sparkles size={14}/>}>
+            Smart-complete empty fields
+          </Button>
+
+          {/* Suggested actions */}
+          <div>
+            <div className="lee-eyebrow" style={{ marginBottom: 8 }}>Suggestions</div>
+            <div style={{ display:'flex', flexDirection:'column', gap: 6 }}>
+              {[
+                'Pull comparable industrial leases within 3mi',
+                'Draft the MLS description from property details',
+                'Check commission math',
+              ].map((s,i) => (
+                <button key={i} style={{
+                  display:'flex', alignItems:'center', gap: 10,
+                  padding: '10px 12px', textAlign:'left',
+                  background: 'var(--ink-50)', border: '1px solid var(--ink-200)',
+                  borderRadius: 8, cursor:'pointer', fontSize: 13, color: 'var(--ink-700)',
+                }}>
+                  <Icons.Sparkles size={12} style={{ color: 'var(--ai-500)' }}/>
+                  <span style={{ flex: 1 }}>{s}</span>
+                  <Icons.Arrow size={12} style={{ color: 'var(--ink-400)' }}/>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
 }
+
+// ── My Profile modal — single user only; brokers cannot view each other ──
+function ProfileModal({ open, onClose }: any) {
+  if (!open) return null;
+  return (
+    <>
+      <div onClick={onClose} style={{ position:'absolute', inset: 0, background:'rgba(10,10,11,.4)', zIndex: 30 }}/>
+      <div style={{
+        position:'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+        width: 520, maxHeight: '85vh', background:'var(--ink-0)',
+        borderRadius: 14, boxShadow: 'var(--shadow-xl)', zIndex: 31,
+        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+      }}>
+        {/* Header banner with avatar */}
+        <div style={{ position: 'relative', height: 100, background: 'linear-gradient(120deg, var(--ink-900) 0%, var(--lee-crimson-ink) 100%)' }}>
+          <button onClick={onClose} style={{ position:'absolute', top: 14, right: 14, background:'rgba(255,255,255,.12)', border:'none', cursor:'pointer', color:'#fff', width: 28, height: 28, borderRadius: 6, display:'flex', alignItems:'center', justifyContent:'center' }}><Icons.X size={16}/></button>
+          <div style={{ position: 'absolute', top: 16, left: 24, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.7)' }}>My Profile</div>
+        </div>
+
+        <div style={{ padding: '0 24px', marginTop: -40, display: 'flex', alignItems:'flex-end', gap: 16 }}>
+          <div style={{ width: 80, height: 80, borderRadius: 16, background: 'var(--lee-crimson)', color: '#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize: 26, fontWeight: 800, border: '4px solid var(--ink-0)', boxShadow: 'var(--shadow-md)' }}>TB</div>
+          <div style={{ flex: 1, paddingBottom: 6 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em' }}>Taylor Barnes</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>Senior Broker · Industrial · DRE #02135478</div>
+          </div>
+          <Badge tone="success" size="sm" icon={<Icons.Check size={10} strokeWidth={3}/>}>Signed in</Badge>
+        </div>
+
+        <div style={{ flex: 1, overflow: 'auto', padding: '24px', display:'flex', flexDirection:'column', gap: 16 }}>
+          <div>
+            <div className="lee-eyebrow" style={{ marginBottom: 10 }}>Account</div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 12 }}>
+              <Field label="First name" required><Input defaultValue="Taylor"/></Field>
+              <Field label="Last name" required><Input defaultValue="Barnes"/></Field>
+              <Field label="Email" required span={2}><Input prefix="@" defaultValue="taylor.barnes@lee-associates.com" auto/></Field>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--ink-500)', marginTop: 6, display:'flex', alignItems:'center', gap: 4 }}>
+              <Icons.Info size={11}/> Email is tied to your sign-in and can't be changed here. Contact Admin to update.
+            </div>
+          </div>
+
+          <div>
+            <div className="lee-eyebrow" style={{ marginBottom: 10 }}>Broker details <span style={{ color: 'var(--ink-400)', fontWeight: 500, textTransform:'none', letterSpacing: 0 }}>— used to pre-fill forms</span></div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 12 }}>
+              <Field label="Title"><Input defaultValue="Senior Broker"/></Field>
+              <Field label="DRE license #" required><Input defaultValue="02135478"/></Field>
+              <Field label="Direct phone"><Input defaultValue="714.555.0142"/></Field>
+              <Field label="Fax"><Input defaultValue="714.555.0143"/></Field>
+            </div>
+          </div>
+
+          <div style={{ padding: 14, background: 'var(--ink-50)', border: '1px solid var(--ink-200)', borderRadius: 10, display:'flex', alignItems:'center', gap: 12 }}>
+            <Icons.Lock size={18} style={{ color: 'var(--ink-500)' }}/>
+            <div style={{ flex: 1, fontSize: 12, color: 'var(--ink-600)' }}>
+              Your profile is private. Other brokers can't see it — only Admin can view it for deal processing.
+            </div>
+          </div>
+
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems: 'center', paddingTop: 8 }}>
+            <Button variant="ghost" size="sm">Sign out</Button>
+            <div style={{ display:'flex', gap: 8 }}>
+              <Button variant="secondary" size="sm" onClick={onClose}>Cancel</Button>
+              <Button variant="primary" size="sm">Save changes</Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+export { AdminScreen, ContractScreen, DocsScreen };
+export default CompScreen;
+
+
 
