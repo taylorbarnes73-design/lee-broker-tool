@@ -1230,105 +1230,79 @@
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="tab-comp-reports" class="panel">
-  <div class="comp-report-shell">
-    <div class="comp-report-hero card">
+  <div class="cr-shell">
+
+    <div class="cr-topbar">
       <div>
-        <div class="comp-report-kicker">Comp Reporting</div>
-        <h2>Search the active comp dataset from inside the tool.</h2>
-        <p>Use the published lease and sale dataset to find report-ready comparables, preview the exact fields being surfaced, and keep the comp workflow in the same workspace as the rest of the broker tool.</p>
+        <div class="cr-eyebrow">Comp Reports</div>
+        <h2>Find report-ready comps and export a Lee &amp; Associates template.</h2>
       </div>
-      <div class="comp-report-status" id="cr-user-status">Checking access</div>
+      <div class="cr-status" id="cr-user-status">Checking access</div>
     </div>
 
-    <div class="comp-report-layout" id="cr-layout">
-      <div class="comp-report-stack">
-        <div class="comp-report-card" id="cr-search-card">
-          <div class="comp-report-kicker">Search Filters</div>
-          <h3>Find report comps</h3>
-          <form class="comp-report-form" id="cr-search-form" onsubmit="event.preventDefault(); compReportSearch();">
-            <div class="row c2">
-              <div class="field">
-                <label>Report Type</label>
-                <select id="cr-comp-type">
-                  <option value="lease">Lease comp report</option>
-                  <option value="sale">Sale comp report</option>
-                </select>
-              </div>
-              <div class="field">
-                <label>Search</label>
-                <input id="cr-query" placeholder="Address, property type, market">
-              </div>
-            </div>
-            <div class="row c2">
-              <div class="field"><label>City</label><input id="cr-city" placeholder="Irvine"></div>
-              <div class="field"><label>Market</label><input id="cr-market" placeholder="Orange"></div>
-            </div>
-            <div class="row c2">
-              <div class="field"><label>Submarket</label><input id="cr-submarket" placeholder="IBC"></div>
-              <div class="field"><label>Property Type</label><input id="cr-property-type" placeholder="Industrial"></div>
-            </div>
-            <div class="row c2">
-              <div class="field"><label>Date From</label><input id="cr-date-from" type="date"></div>
-              <div class="field"><label>Date To</label><input id="cr-date-to" type="date"></div>
-            </div>
-            <div class="comp-report-actions">
-              <button class="btn btn-red" type="submit">Search Reports</button>
-              <button class="btn btn-gray" type="button" onclick="compReportResetFilters()">Clear Filters</button>
-            </div>
-          </form>
-          <div class="comp-report-form-note is-hidden" id="cr-search-note">The active comp dataset has not been published yet, so search is temporarily unavailable.</div>
-        </div>
-      </div>
-
-      <div class="comp-report-empty-state comp-report-hidden" id="cr-empty-state">
-        <div class="comp-report-empty-head">
-          <div class="comp-report-empty-copy">
-            <div class="comp-report-kicker">Comp Reporting</div>
-            <h3>No active comp dataset is available yet.</h3>
-            <p id="cr-empty-copy">Once the current comps are published internally, this page will turn into the full search and report preview workspace.</p>
+    <div class="cr-filters" id="cr-search-card">
+      <form id="cr-search-form" onsubmit="event.preventDefault(); compReportSearch();">
+        <div class="cr-filters-grid">
+          <div class="field">
+            <label>Transaction</label>
+            <select id="cr-comp-type">
+              <option value="lease">Lease</option>
+              <option value="sale">Sale</option>
+            </select>
           </div>
-          <div class="comp-report-empty-badge" id="cr-empty-badge">Awaiting Dataset</div>
-        </div>
-
-        <div class="comp-report-empty-grid">
-          <div class="comp-report-empty-panel">
-            <h4>What happens after import</h4>
-            <div class="comp-report-empty-list">
-              <div class="comp-report-empty-item">
-                <strong>Search</strong>
-                <span>Brokers can filter lease and sale comps by address, market, submarket, dates, and property type.</span>
-              </div>
-              <div class="comp-report-empty-item">
-                <strong>Preview</strong>
-                <span>The page renders report-ready cards from the active dataset instead of leaving the screen blank.</span>
-              </div>
-              <div class="comp-report-empty-item">
-                <strong>Refresh</strong>
-                <span>Once the dataset is published, this page automatically switches back into the full search workspace.</span>
-              </div>
+          <div class="field">
+            <label>Search</label>
+            <input id="cr-query" placeholder="Address, project, tenant">
+          </div>
+          <div class="field"><label>City</label><input id="cr-city" placeholder="Irvine"></div>
+          <div class="field"><label>Market</label><input id="cr-market" placeholder="Orange"></div>
+          <div class="field"><label>Submarket</label><input id="cr-submarket" placeholder="IBC"></div>
+          <div class="field"><label>Property Type</label><input id="cr-property-type" placeholder="Industrial"></div>
+          <div class="field">
+            <label>Date</label>
+            <div style="display:flex; gap:6px;">
+              <input id="cr-date-from" type="date" style="min-width:0;">
+              <input id="cr-date-to" type="date" style="min-width:0;">
             </div>
           </div>
-
-          <div class="comp-report-empty-panel">
-            <h4>Next step</h4>
-            <p id="cr-empty-side-copy">The current comp dataset needs to be published internally before comp reporting becomes searchable.</p>
-            <div class="comp-report-empty-cta" id="cr-empty-cta"></div>
-            <div id="cr-empty-status" class="comp-report-message is-hidden top-gap-md"></div>
+        </div>
+        <div class="cr-filters-actions">
+          <div class="cr-filters-note" id="cr-search-note"></div>
+          <div class="cr-filters-actions-right">
+            <button class="btn btn-gray" type="button" onclick="compReportResetFilters()">Clear</button>
+            <button class="btn btn-red" type="submit">Search</button>
           </div>
         </div>
-      </div>
+      </form>
+    </div>
 
-      <div class="comp-report-card" id="cr-results-card">
-        <div class="comp-report-results-head">
-          <div>
-            <div class="comp-report-kicker">Report Preview</div>
-            <h3>Report results</h3>
-          </div>
-          <p id="cr-results-count">No results loaded.</p>
-        </div>
-        <div id="cr-results" class="comp-report-empty">Run a search to preview report-ready comp records.</div>
+    <div class="cr-results-meta">
+      <div id="cr-results-count">No results loaded.</div>
+      <div class="cr-filters-actions-right">
+        <button class="btn btn-gray" type="button" onclick="compReportExportCsv()">Download CSV</button>
+        <button class="btn btn-outline" type="button" onclick="compReportExportPdf()">Download PDF (Lee Template)</button>
       </div>
     </div>
+
+    <div class="cr-table-wrap">
+      <table class="cr-table" id="cr-table">
+        <thead id="cr-thead"></thead>
+        <tbody id="cr-tbody">
+          <tr class="cr-empty-row"><td colspan="8">Run a search to preview report-ready comps.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Legacy empty-state kept for compatibility with existing JS; hidden visually -->
+    <div class="comp-report-empty-state comp-report-hidden" id="cr-empty-state" style="display:none;">
+      <div id="cr-empty-copy"></div>
+      <div id="cr-empty-side-copy"></div>
+      <div id="cr-empty-badge"></div>
+      <div id="cr-empty-cta"></div>
+      <div id="cr-empty-status" class="is-hidden"></div>
+    </div>
+    <div id="cr-layout" style="display:none;"></div>
+    <div id="cr-results-card" style="display:none;"><div id="cr-results"></div></div>
   </div>
 </div>
 
@@ -4923,6 +4897,352 @@ function exportSaleCompPdf() {
 
   const addr = gv('c-address') || 'Comp';
   doc.save('Sale_Comp_' + addr.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30) + '.pdf');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LEE & ASSOCIATES COMP REPORT — multi-row landscape PDF.
+   Visual target: the Lee & Associates Lease/Sale Comp Report
+   templates (Metropolis style) — crimson column header bar,
+   photo-left rows, broker and comment lines, black footer band.
+   Accepts: compType ('lease'|'sale'), rows (array of CompSearchResult).
+   ══════════════════════════════════════════════════════════════ */
+
+const LEE_CRIMSON_RGB = [155, 13, 42];
+const LEE_FOOTER_BLACK_RGB = [11, 11, 11];
+
+const LEE_LEASE_COLUMNS = [
+  { key: 'Space Leased', lines: ['Space Leased','Rent/SqFt','Eff. Rent','Bldg SqFt'],       w: 72, align: 'right' },
+  { key: 'Office',       lines: ['Office','TI Allow','Free Rent','NNN Chgs'],               w: 68, align: 'right' },
+  { key: 'Trans. Date',  lines: ['Trans. Date','Expir. Date','Term','Occ Date'],            w: 62, align: 'left' },
+  { key: 'Prop. Type',   lines: ['Prop. Type','Subtype','Bldg. Class','Parking'],           w: 72, align: 'left' },
+  { key: 'On Mrkt',      lines: ['On Mrkt','Amps','Mul-Ten','Yr Built'],                    w: 54, align: 'left' },
+  { key: 'DH',           lines: ['DH','GL','POL','HT'],                                     w: 42, align: 'left' },
+  { key: 'Sprk',         lines: ['Sprk','Rail','Yrd','Land'],                               w: 48, align: 'left' },
+  { key: 'Lessee',       lines: ['Lessee','Lessor','Space Type','Options/Rent Adj'],        w: 96, align: 'left' },
+];
+
+const LEE_SALE_COLUMNS = [
+  { key: 'Bldg. SqFt',   lines: ['Bldg. SqFt','Office SqFt','Land Size'],                   w: 72, align: 'right' },
+  { key: 'Sale Price',   lines: ['Sale Price','Sale $/SF','Trans. Type'],                   w: 80, align: 'right' },
+  { key: 'Trans. Date',  lines: ['Trans. Date','On Market','Cap Rate'],                     w: 64, align: 'left' },
+  { key: 'Prop. Type',   lines: ['Prop. Type','Subtype','Bldg. Class'],                     w: 74, align: 'left' },
+  { key: 'Yr Built',     lines: ['Yr Built','Mul-Tnt','Amps'],                              w: 54, align: 'left' },
+  { key: 'DH',           lines: ['DH','GL','Clr'],                                          w: 40, align: 'left' },
+  { key: 'Sprk',         lines: ['Sprk','RR','Yard'],                                       w: 40, align: 'left' },
+  { key: 'Buyer',        lines: ['Buyer','Seller','Buyer Previous Location'],               w: 108, align: 'left' },
+];
+
+function _leeLoadHeaderLogo() {
+  return new Promise((resolve) => {
+    try {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function() {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth || img.width;
+          canvas.height = img.naturalHeight || img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          resolve({ dataUrl: canvas.toDataURL('image/png'), w: canvas.width, h: canvas.height });
+        } catch (_) { resolve(null); }
+      };
+      img.onerror = function() { resolve(null); };
+      img.src = 'lee-newport-beach-fullcolor.png';
+    } catch (_) { resolve(null); }
+  });
+}
+
+async function _leeLoadRowPhotos(rows) {
+  const results = new Array(rows.length).fill(null);
+  await Promise.all(rows.map((row, i) => new Promise((resolve) => {
+    const url = row?.photoUrl || row?.reportCard?.photoUrl || '';
+    if (!url) { resolve(null); return; }
+    try {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function() {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth || img.width;
+          canvas.height = img.naturalHeight || img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          results[i] = { dataUrl: canvas.toDataURL('image/jpeg', 0.85), w: canvas.width, h: canvas.height };
+          resolve();
+        } catch (_) { resolve(); }
+      };
+      img.onerror = function() { resolve(); };
+      img.src = url;
+    } catch (_) { resolve(); }
+  })));
+  return results;
+}
+
+function _leeFormatFooterDate(d) {
+  try {
+    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  } catch (_) {
+    return d.toDateString();
+  }
+}
+
+function _leeSplitAddressBlock(row) {
+  const heading = row?.reportCard?.heading || row?.title || row?.address || '';
+  const addrLine = row?.reportCard?.addressLine || row?.address || '';
+  const cityLine = row?.reportCard?.cityLine || [row?.city, row?.state, row?.zipCode].filter(Boolean).join(', ');
+  const submarket = row?.reportCard?.submarketLine || [row?.market, row?.subMarket].filter(Boolean).join(' / ');
+  const out = [];
+  if (heading) out.push(heading);
+  if (addrLine && addrLine !== heading) out.push(addrLine);
+  if (cityLine) out.push(cityLine);
+  if (submarket) out.push('Submarket: ' + submarket);
+  return out.slice(0, 4);
+}
+
+async function exportLeeCompReportPdf(compType, rows) {
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    alert('PDF engine did not load. Please reload the page.');
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'letter', orientation: 'landscape' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const marginL = 36, marginR = 36, marginTop = 50, marginBottom = 52;
+
+  const isSale = compType === 'sale';
+  const columns = isSale ? LEE_SALE_COLUMNS : LEE_LEASE_COLUMNS;
+  const categoryText = isSale ? 'SALE COMPARABLES' : 'LEASE COMPARABLES';
+
+  /* Compute widths: left block (idx, photo, address) + data columns */
+  const idxW = 22;
+  const photoW = 96;
+  const photoH = 70;
+  const addrW = 170;
+  const leftBlockW = idxW + photoW + addrW;
+  const totalDataW = columns.reduce((sum, c) => sum + c.w, 0);
+  const availableW = pageW - marginL - marginR;
+  /* Scale data column widths if needed so the grid fits the page width */
+  const usedW = leftBlockW + totalDataW;
+  const scale = usedW > availableW ? (availableW - leftBlockW) / totalDataW : 1;
+  const scaledColumns = columns.map(c => ({ ...c, w: c.w * scale }));
+  const gridW = leftBlockW + scaledColumns.reduce((s, c) => s + c.w, 0);
+
+  /* Preload assets */
+  const [logo, photos] = await Promise.all([_leeLoadHeaderLogo(), _leeLoadRowPhotos(rows)]);
+
+  const footerDate = _leeFormatFooterDate(new Date());
+  let pageIndex = 0;
+
+  function drawPageFrame() {
+    pageIndex += 1;
+    /* Header logo */
+    if (logo) {
+      const logoH = 40;
+      const logoW = (logo.w / logo.h) * logoH;
+      try { doc.addImage(logo.dataUrl, 'PNG', marginL, 20, logoW, logoH); } catch (_) {}
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(40, 40, 40);
+      doc.text('COMMERCIAL REAL ESTATE SERVICES', marginL + logoW + 10, 34);
+      doc.setFontSize(6.5);
+      doc.setTextColor(100, 100, 100);
+      doc.text('NEWPORT BEACH', marginL + logoW + 10, 44);
+    }
+
+    /* Column header bar */
+    const hbY = marginTop + 12;
+    const hbH = 34;
+    doc.setFillColor(LEE_CRIMSON_RGB[0], LEE_CRIMSON_RGB[1], LEE_CRIMSON_RGB[2]);
+    doc.rect(marginL, hbY, gridW, hbH, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    let cx = marginL + leftBlockW;
+    const lineH = 7;
+    for (const col of scaledColumns) {
+      let ty = hbY + 10;
+      const align = col.align === 'right' ? 'right' : 'left';
+      const tx = align === 'right' ? cx + col.w - 4 : cx + 4;
+      for (const label of col.lines) {
+        doc.text(label, tx, ty, { align });
+        ty += lineH;
+      }
+      cx += col.w;
+    }
+    doc.setTextColor(0, 0, 0);
+
+    /* Footer band */
+    const footerBarW = 160;
+    const footerY = pageH - 36;
+    doc.setFillColor(LEE_FOOTER_BLACK_RGB[0], LEE_FOOTER_BLACK_RGB[1], LEE_FOOTER_BLACK_RGB[2]);
+    doc.rect(marginL, footerY, footerBarW, 18, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(255, 255, 255);
+    doc.text(categoryText, marginL + 10, footerY + 12);
+    doc.setTextColor(120, 120, 120);
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(6.5);
+    doc.text('Metropolis — Industrial with Small Pictures', marginL, footerY + 28);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(80, 80, 80);
+    const disclaimer = 'This information is compiled from data we believe to be correct but no liability is assumed by the company as to the accuracy of such data.';
+    const dispX = pageW / 2;
+    doc.text(disclaimer, dispX, footerY + 12, { align: 'center', maxWidth: pageW - marginL - marginR - footerBarW - 160 });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(80, 80, 80);
+    doc.text(footerDate, pageW - marginR, footerY + 6, { align: 'right' });
+    doc.text('Page ' + pageIndex, pageW - marginR, footerY + 16, { align: 'right' });
+
+    return hbY + hbH; /* returns y below column header */
+  }
+
+  function computeRowHeight(row) {
+    let rowH = 78; /* base: photo 70 + padding */
+    const comments = row?.reportCard?.comments || '';
+    const brokerLine = [row?.reportCard?.procuringBrokerLine, row?.reportCard?.listingBrokerLine].filter(Boolean).join('   ·   ');
+    if (brokerLine) rowH += 10;
+    if (comments) {
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(7);
+      const wrap = doc.splitTextToSize('Comments: ' + comments, gridW - leftBlockW);
+      rowH += wrap.length * 8 + 4;
+    }
+    return rowH;
+  }
+
+  function drawRow(row, index, y) {
+    const rowH = computeRowHeight(row);
+
+    /* Row container: light bottom border */
+    doc.setDrawColor(217, 217, 217);
+    doc.setLineWidth(0.5);
+    doc.line(marginL, y + rowH, marginL + gridW, y + rowH);
+
+    /* Row number */
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(40, 40, 40);
+    doc.text(String(index + 1) + '.', marginL + 4, y + 14);
+
+    /* Photo box */
+    const photoX = marginL + idxW;
+    const photoY = y + 6;
+    doc.setDrawColor(195, 195, 195);
+    doc.setLineWidth(0.5);
+    doc.rect(photoX, photoY, photoW, photoH);
+    const photo = photos[index];
+    if (photo) {
+      try {
+        doc.addImage(photo.dataUrl, 'JPEG', photoX + 1, photoY + 1, photoW - 2, photoH - 2);
+      } catch (_) {}
+    } else {
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(7);
+      doc.setTextColor(150, 150, 150);
+      doc.text('(No Photo Available)', photoX + photoW / 2, photoY + photoH / 2 + 2, { align: 'center' });
+    }
+
+    /* Address block */
+    const addrX = photoX + photoW + 6;
+    const addrLines = _leeSplitAddressBlock(row);
+    doc.setTextColor(20, 20, 20);
+    let ay = y + 14;
+    const addrLineH = 11;
+    addrLines.forEach((line, i) => {
+      if (i === 0) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+      } else if (i === addrLines.length - 1 && line.startsWith('Submarket:')) {
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(7.5);
+        doc.setTextColor(110, 110, 110);
+      } else {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(40, 40, 40);
+      }
+      const wrapped = doc.splitTextToSize(line, addrW - 6);
+      doc.text(wrapped, addrX, ay);
+      ay += addrLineH * wrapped.length;
+    });
+
+    /* Data columns */
+    const fields = row?.reportCard?.fields || {};
+    let cx = marginL + leftBlockW;
+    doc.setTextColor(20, 20, 20);
+    for (const col of scaledColumns) {
+      let sy = y + 14;
+      const align = col.align === 'right' ? 'right' : 'left';
+      const tx = align === 'right' ? cx + col.w - 4 : cx + 4;
+      for (const label of col.lines) {
+        const value = fields[label] || '';
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        const wrapped = doc.splitTextToSize(String(value), col.w - 8);
+        if (wrapped.length) doc.text(wrapped[0], tx, sy, { align });
+        sy += 11;
+      }
+      cx += col.w;
+    }
+
+    /* Broker line */
+    const brokerLine = [row?.reportCard?.procuringBrokerLine, row?.reportCard?.listingBrokerLine].filter(Boolean).join('   ·   ');
+    let extraY = y + 14 + addrLineH * addrLines.length + 2;
+    if (extraY < y + photoH + 12) extraY = y + photoH + 10;
+    if (brokerLine) {
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(7);
+      doc.setTextColor(90, 90, 90);
+      doc.text(brokerLine, addrX, extraY);
+      extraY += 10;
+    }
+
+    /* Comments */
+    const comments = row?.reportCard?.comments || '';
+    if (comments) {
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(7);
+      doc.setTextColor(95, 95, 95);
+      const wrap = doc.splitTextToSize('Comments: ' + comments, gridW - leftBlockW);
+      doc.text(wrap, addrX, extraY);
+      extraY += wrap.length * 8 + 2;
+    }
+
+    /* Source + updated stamp bottom-right */
+    const sourceLine = row?.reportCard?.sourceLine || (row?.source ? 'Source: ' + row.source : '');
+    const updatedLine = row?.reportCard?.updatedLine || '';
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.5);
+    doc.setTextColor(130, 130, 130);
+    if (sourceLine) doc.text(sourceLine, marginL + gridW - 4, y + rowH - 14, { align: 'right' });
+    if (updatedLine) doc.text(updatedLine, marginL + gridW - 4, y + rowH - 4, { align: 'right' });
+
+    return rowH;
+  }
+
+  /* Draw pages */
+  let y = drawPageFrame();
+  y += 6;
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rowH = computeRowHeight(row);
+    if (y + rowH > pageH - marginBottom) {
+      doc.addPage();
+      y = drawPageFrame() + 6;
+    }
+    const drawnH = drawRow(row, i, y);
+    y += drawnH + 4;
+  }
+
+  const fname = (isSale ? 'Lee-Sale' : 'Lee-Lease') + '-CompReport-' + new Date().toISOString().slice(0,10) + '.pdf';
+  doc.save(fname);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -8746,91 +9066,185 @@ async function forceSharedBrokerSessionRestore() {
 let compReportsInitialized = false;
 let compReportsUser = null;
 let compReportsLatest = null;
+let compReportsResultsCache = [];
+let compReportsTypeCache = 'lease';
 
 function compReportVisibleFields(fields) {
   return Object.entries(fields || {}).filter(([, value]) => !!value).slice(0, 10);
 }
 
-const COMP_REPORT_FIELD_ROWS = {
+/* Column definitions for the compact photo-left results table.
+   `key` looks up result.reportCard.fields[key]; `accessor` is a function
+   that receives the result and returns a value when no field key applies. */
+const COMP_REPORT_TABLE_COLUMNS = {
   lease: [
-    ['Space Leased', 'Office', 'Trans. Date', 'Prop. Type', 'On Mrkt', 'DH', 'Sprk', 'Lessee'],
-    ['Rent/SqFt', 'TI Allow', 'Expir. Date', 'Subtype', 'Amps', 'GL', 'Rail', 'Lessor'],
-    ['Eff. Rent', 'Free Rent', 'Term', 'Bldg. Class', 'Mul-Ten', 'POL', 'Yrd', 'Space Type'],
-    ['Bldg SqFt', 'NNN Chgs', 'Occ Date', 'Parking', 'Yr Built', 'HT', 'Land', 'Options/Rent Adj'],
+    { key: 'Space Leased', label: 'SF Leased', align: 'num' },
+    { key: 'Rent/SqFt', label: 'Rent / SF', align: 'num' },
+    { key: 'Trans. Date', label: 'Trans. Date' },
+    { key: 'Prop. Type', label: 'Prop. Type' },
+    { key: 'Lessee', label: 'Lessee' },
+    { accessor: (r) => r?.source || '', label: 'Source' },
   ],
   sale: [
-    ['Bldg. SqFt', 'Sale Price', 'Trans. Date', 'Prop. Type', 'Yr Built', 'DH', 'Sprk', 'Buyer'],
-    ['Office SqFt', 'Sale $/SF', 'On Market', 'Subtype', 'Mul-Tnt', 'GL', 'RR', 'Seller'],
-    ['Land Size', 'Trans. Type', 'Cap Rate', 'Bldg. Class', 'Amps', 'Clr', 'Yard', 'Buyer Previous Location'],
+    { key: 'Bldg. SqFt', label: 'Bldg. SF', align: 'num' },
+    { key: 'Sale Price', label: 'Sale Price', align: 'num' },
+    { key: 'Sale $/SF', label: '$ / SF', align: 'num' },
+    { key: 'Trans. Date', label: 'Trans. Date' },
+    { key: 'Buyer', label: 'Buyer' },
+    { accessor: (r) => r?.source || '', label: 'Source' },
   ],
 };
 
-function compReportGetFieldRows(compType) {
-  return COMP_REPORT_FIELD_ROWS[compType] || [];
-}
+/* Order of labels shown in the expandable drawer grid. */
+const COMP_REPORT_DRAWER_FIELDS = {
+  lease: [
+    'Space Leased','Rent/SqFt','Eff. Rent','Bldg SqFt',
+    'Office','TI Allow','Free Rent','NNN Chgs',
+    'Trans. Date','Expir. Date','Term','Occ Date',
+    'Prop. Type','Subtype','Bldg. Class','Parking',
+    'On Mrkt','Amps','Mul-Ten','Yr Built',
+    'DH','GL','POL','HT',
+    'Sprk','Rail','Yrd','Land',
+    'Lessee','Lessor','Space Type','Options/Rent Adj',
+  ],
+  sale: [
+    'Bldg. SqFt','Sale Price','Sale $/SF','Trans. Type',
+    'Office SqFt','Land Size','Cap Rate','Trans. Date',
+    'Prop. Type','Subtype','Bldg. Class','Yr Built',
+    'On Market','Mul-Tnt','Amps','Clr',
+    'DH','GL','Sprk','RR','Yard',
+    'Buyer','Seller','Buyer Previous Location',
+  ],
+};
 
 function compReportGetFieldValue(result, label) {
-  return result?.reportCard?.fields?.[label] || '—';
-}
-
-function compReportGetMarketLine(result) {
-  const parts = [];
-  if (result.market) parts.push('Market: ' + result.market);
-  if (result.subMarket) parts.push('Submarket: ' + result.subMarket);
-  if (!parts.length && result.metaLine) return result.metaLine;
-  return parts.join(' / ');
+  return result?.reportCard?.fields?.[label] || '';
 }
 
 function compReportGetBrokerLine(result) {
   const parts = [];
-  if (result.reportCard?.procuringBrokerLine) parts.push(result.reportCard.procuringBrokerLine);
-  if (result.reportCard?.listingBrokerLine) parts.push(result.reportCard.listingBrokerLine);
-  return parts.filter(Boolean).join('  |  ');
+  if (result?.reportCard?.procuringBrokerLine) parts.push(result.reportCard.procuringBrokerLine);
+  if (result?.reportCard?.listingBrokerLine) parts.push(result.reportCard.listingBrokerLine);
+  return parts.join('   ·   ');
 }
 
-function compReportRenderResult(result, index) {
-  const fieldRows = compReportGetFieldRows(result.compType);
+function compReportGetSubmarketText(result) {
+  if (result?.reportCard?.submarketLine) return result.reportCard.submarketLine;
+  return [result?.market, result?.subMarket].filter(Boolean).join(' / ');
+}
+
+function compReportRenderPhotoBox(result) {
+  const url = result?.photoUrl || result?.reportCard?.photoUrl || '';
+  if (url) {
+    return '<div class="cr-photo-box"><img src="' + dxEscHtml(url) + '" alt="Property photo"></div>';
+  }
+  return '<div class="cr-photo-box">No<br>Photo</div>';
+}
+
+function compReportRenderTableHeader(compType) {
+  const cols = COMP_REPORT_TABLE_COLUMNS[compType] || COMP_REPORT_TABLE_COLUMNS.lease;
+  let html = '<tr>';
+  html += '<th>#</th>';
+  html += '<th>Photo</th>';
+  html += '<th>Address</th>';
+  for (const col of cols) {
+    html += '<th' + (col.align === 'num' ? ' class="num"' : '') + '>' + dxEscHtml(col.label) + '</th>';
+  }
+  html += '<th></th>';
+  html += '</tr>';
+  return html;
+}
+
+function compReportRenderRow(result, index, compType) {
+  const cols = COMP_REPORT_TABLE_COLUMNS[compType] || COMP_REPORT_TABLE_COLUMNS.lease;
+  const heading = result?.reportCard?.heading || result?.title || result?.address || 'Comp';
+  const addrLine = result?.reportCard?.addressLine || result?.address || '';
+  const cityLine = result?.reportCard?.cityLine || [result?.city, result?.state, result?.zipCode].filter(Boolean).join(', ');
+  const submarket = compReportGetSubmarketText(result);
+
+  let cells = '';
+  cells += '<td class="cr-idx">' + (index + 1) + '</td>';
+  cells += '<td class="cr-photo">' + compReportRenderPhotoBox(result) + '</td>';
+  cells += '<td>' +
+    '<div class="cr-addr-name">' + dxEscHtml(heading) + '</div>' +
+    (addrLine && addrLine !== heading ? '<div class="cr-addr-line">' + dxEscHtml(addrLine) + '</div>' : '') +
+    (cityLine ? '<div class="cr-addr-line">' + dxEscHtml(cityLine) + '</div>' : '') +
+    (submarket ? '<div class="cr-addr-meta">' + dxEscHtml(submarket) + '</div>' : '') +
+    '</td>';
+  for (const col of cols) {
+    const value = col.key ? compReportGetFieldValue(result, col.key) : (col.accessor ? col.accessor(result) : '');
+    cells += '<td' + (col.align === 'num' ? ' class="num"' : '') + '>' + dxEscHtml(value || '—') + '</td>';
+  }
+  cells += '<td style="text-align:right;">' +
+    '<button type="button" class="cr-chev" aria-label="Toggle details" onclick="compReportToggleRow(' + index + ')">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>' +
+    '</button>' +
+    '</td>';
+
+  return '<tr class="cr-row" data-idx="' + index + '">' + cells + '</tr>';
+}
+
+function compReportRenderDrawer(result, index, compType) {
+  const labels = COMP_REPORT_DRAWER_FIELDS[compType] || COMP_REPORT_DRAWER_FIELDS.lease;
+  const fields = result?.reportCard?.fields || {};
   const brokerLine = compReportGetBrokerLine(result);
-  const sourceParts = [result.reportCard?.sourceLine, result.reportCard?.updatedLine].filter(Boolean);
-  return (
-    '<article class="comp-report-result">' +
-      '<div class="comp-report-result-shell">' +
-        '<div class="comp-report-result-side">' +
-          '<div class="comp-report-result-index">' + String(index + 1) + '</div>' +
-          '<div class="comp-report-result-photo">No Photo Available</div>' +
-        '</div>' +
-        '<div class="comp-report-result-main">' +
-          '<div class="comp-report-result-head">' +
-            '<div class="comp-report-result-title">' + dxEscHtml(result.reportCard?.heading || result.title || 'Comp Record') + '</div>' +
-            '<div class="comp-report-result-address">' + dxEscHtml(result.reportCard?.addressLine || result.address || '') + '</div>' +
-            '<div class="comp-report-result-city">' + dxEscHtml(result.reportCard?.cityLine || [result.city, result.state, result.zipCode].filter(Boolean).join(', ')) + '</div>' +
-            '<div class="comp-report-result-market">' + dxEscHtml(compReportGetMarketLine(result)) + '</div>' +
-          '</div>' +
-          '<div class="comp-report-field-matrix">' +
-            fieldRows.map(row =>
-              '<div class="comp-report-field-row">' +
-                row.map(label =>
-                  '<div class="comp-report-field-cell">' +
-                    '<span>' + dxEscHtml(label) + '</span>' +
-                    '<strong>' + dxEscHtml(compReportGetFieldValue(result, label)) + '</strong>' +
-                  '</div>'
-                ).join('') +
-              '</div>'
-            ).join('') +
-          '</div>' +
-          (brokerLine ? '<div class="comp-report-result-broker-line">' + dxEscHtml(brokerLine) + '</div>' : '') +
-          (sourceParts.length ? '<div class="comp-report-result-source-line">' + dxEscHtml(sourceParts.join('  |  ')) + '</div>' : '') +
-          (result.reportCard?.comments ? '<div class="comp-report-comments"><strong>Comments</strong>' + dxEscHtml(result.reportCard.comments) + '</div>' : '') +
-        '</div>' +
-      '</div>' +
-    '</article>'
-  );
+  const comments = result?.reportCard?.comments || '';
+  const updated = result?.reportCard?.updatedLine || '';
+  const sourceLine = result?.reportCard?.sourceLine || (result?.source ? 'Source: ' + result.source : '');
+  const colspanTotal = 3 /* idx, photo, address */ + (COMP_REPORT_TABLE_COLUMNS[compType] || COMP_REPORT_TABLE_COLUMNS.lease).length + 1 /* chev */;
+
+  let body = '<div class="cr-drawer">';
+  for (const label of labels) {
+    const value = fields[label];
+    if (!value) continue;
+    body += '<div class="cr-field">' +
+      '<div class="cr-field-label">' + dxEscHtml(label) + '</div>' +
+      '<div class="cr-field-value">' + dxEscHtml(value) + '</div>' +
+      '</div>';
+  }
+  if (brokerLine || comments) {
+    body += '<div class="cr-drawer-notes">';
+    if (brokerLine) {
+      body += '<div class="cr-field">' +
+        '<div class="cr-field-label">Brokers</div>' +
+        '<div class="cr-field-value">' + dxEscHtml(brokerLine) + '</div>' +
+        '</div>';
+    }
+    if (comments) {
+      body += '<div class="cr-field">' +
+        '<div class="cr-field-label">Comments</div>' +
+        '<div class="cr-field-value">' + dxEscHtml(comments) + '</div>' +
+        '</div>';
+    }
+    body += '</div>';
+  }
+  if (sourceLine || updated) {
+    body += '<div class="cr-drawer-footer">' +
+      '<span>' + dxEscHtml(sourceLine) + '</span>' +
+      '<span>' + dxEscHtml(updated) + '</span>' +
+      '</div>';
+  }
+  body += '</div>';
+
+  return '<tr class="cr-drawer-row" data-drawer="' + index + '" style="display:none;"><td colspan="' + colspanTotal + '">' + body + '</td></tr>';
+}
+
+function compReportToggleRow(index) {
+  const tbody = document.getElementById('cr-tbody');
+  if (!tbody) return;
+  const row = tbody.querySelector('tr.cr-row[data-idx="' + index + '"]');
+  const drawer = tbody.querySelector('tr.cr-drawer-row[data-drawer="' + index + '"]');
+  if (!row || !drawer) return;
+  const open = row.classList.toggle('is-open');
+  drawer.style.display = open ? '' : 'none';
 }
 
 function compReportSetUserStatus(label, tone) {
   const el = document.getElementById('cr-user-status');
   if (!el) return;
   el.textContent = label;
+  el.classList.toggle('is-active', tone !== 'muted');
+  /* legacy classes kept for backward-compat selectors */
   el.classList.toggle('comp-report-status-muted', tone === 'muted');
   el.classList.toggle('comp-report-status-default', tone !== 'muted');
 }
@@ -8902,21 +9316,91 @@ function compReportRenderDatasetSummary() {
 }
 
 function compReportRenderResults(results) {
-  if (!results || !results.length) {
+  compReportsResultsCache = Array.isArray(results) ? results : [];
+  const compType =
+    (compReportsResultsCache[0] && compReportsResultsCache[0].compType) ||
+    document.getElementById('cr-comp-type')?.value ||
+    'lease';
+  compReportsTypeCache = compType;
+
+  const thead = document.getElementById('cr-thead');
+  const tbody = document.getElementById('cr-tbody');
+  if (thead) thead.innerHTML = compReportRenderTableHeader(compType);
+
+  if (!compReportsResultsCache.length) {
     compReportSetResultsCount('No matching comps.');
-    compReportSetResultsHtml(
-      compReportsLatest
-        ? 'No comps matched the current filters. Try widening the city, market, or date range.'
-        : 'Run a search after the active comp dataset is published to preview report-ready comp records.',
-      'comp-report-empty'
-    );
+    if (tbody) {
+      const totalCols = 3 + (COMP_REPORT_TABLE_COLUMNS[compType] || COMP_REPORT_TABLE_COLUMNS.lease).length + 1;
+      const msg = compReportsLatest
+        ? 'No comps match the current filters. Try widening the city, market, or date range.'
+        : 'Run a search after the active comp dataset is published to preview report-ready comps.';
+      tbody.innerHTML = '<tr class="cr-empty-row"><td colspan="' + totalCols + '">' + dxEscHtml(msg) + '</td></tr>';
+    }
     return;
   }
 
-  compReportSetResultsCount('Showing ' + results.length + ' result' + (results.length === 1 ? '' : 's'));
-  const html = results.map((result, index) => compReportRenderResult(result, index)).join('');
+  compReportSetResultsCount('Showing ' + compReportsResultsCache.length + ' comp' + (compReportsResultsCache.length === 1 ? '' : 's'));
+  if (tbody) {
+    tbody.innerHTML = compReportsResultsCache
+      .map((result, index) => compReportRenderRow(result, index, compType) + compReportRenderDrawer(result, index, compType))
+      .join('');
+  }
+}
 
-  compReportSetResultsHtml(html, 'comp-report-results');
+function compReportExportCsv() {
+  const rows = compReportsResultsCache || [];
+  if (!rows.length) {
+    alert('Run a search first so there is something to export.');
+    return;
+  }
+  const compType = compReportsTypeCache || 'lease';
+  const labels = COMP_REPORT_DRAWER_FIELDS[compType] || COMP_REPORT_DRAWER_FIELDS.lease;
+  const headers = ['#','Heading','Address','City','State','Zip','Market','Submarket','Source'].concat(labels).concat(['Procuring Broker','Listing Broker','Comments','Updated']);
+  const esc = (v) => {
+    const s = String(v == null ? '' : v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const lines = [headers.map(esc).join(',')];
+  rows.forEach((r, i) => {
+    const fields = r?.reportCard?.fields || {};
+    const out = [
+      i + 1,
+      r?.reportCard?.heading || r?.title || '',
+      r?.reportCard?.addressLine || r?.address || '',
+      r?.city || '', r?.state || '', r?.zipCode || '',
+      r?.market || '', r?.subMarket || '',
+      r?.source || '',
+    ];
+    for (const label of labels) out.push(fields[label] || '');
+    out.push(r?.reportCard?.procuringBrokerLine || '');
+    out.push(r?.reportCard?.listingBrokerLine || '');
+    out.push(r?.reportCard?.comments || '');
+    out.push(r?.reportCard?.updatedLine || '');
+    lines.push(out.map(esc).join(','));
+  });
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Lee-' + (compType === 'sale' ? 'Sale' : 'Lease') + '-CompReport-' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function compReportExportPdf() {
+  const rows = compReportsResultsCache || [];
+  if (!rows.length) {
+    alert('Run a search first so there is something to export.');
+    return;
+  }
+  const compType = compReportsTypeCache || 'lease';
+  if (typeof exportLeeCompReportPdf === 'function') {
+    exportLeeCompReportPdf(compType, rows);
+  } else {
+    alert('PDF export is not available in this build.');
+  }
 }
 
 function compReportGetFilters() {
