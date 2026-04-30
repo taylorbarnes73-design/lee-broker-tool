@@ -69,8 +69,18 @@ mapsApiRouter.get("/maps/api/streetview", async (req, res) => {
   await proxyGoogleMapsAsset(req, res, "/maps/api/streetview");
 });
 
+// Back-compat alias: some clients built `/api/maps/maps/api/streetview` (double `maps`).
+mapsApiRouter.get("/maps/maps/api/streetview", async (req, res) => {
+  await proxyGoogleMapsAsset(req, res, "/maps/api/streetview");
+});
+
 // Static map image proxy (optional).
 mapsApiRouter.get("/maps/api/staticmap", async (req, res) => {
+  await proxyGoogleMapsAsset(req, res, "/maps/api/staticmap");
+});
+
+// Back-compat alias for static maps too.
+mapsApiRouter.get("/maps/maps/api/staticmap", async (req, res) => {
   await proxyGoogleMapsAsset(req, res, "/maps/api/staticmap");
 });
 
