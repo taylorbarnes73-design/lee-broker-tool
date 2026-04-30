@@ -69,7 +69,7 @@ export function serveStatic(app: Express) {
       : PROD_PUBLIC_ROOT;
   if (!fs.existsSync(distPath)) {
     console.error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`
+      `Could not find the build directory: ${distPath}, make sure to build the public assets first`
     );
   }
 
@@ -85,8 +85,8 @@ export function serveStatic(app: Express) {
 
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist
+  // Tool-only deployment: fall through to broker_tool.html.
   app.use("*", (_req, res) => {
-    res.sendFile("index.html", { root: distPath });
+    res.sendFile("broker_tool.html", { root: distPath });
   });
 }
