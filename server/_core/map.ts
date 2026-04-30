@@ -123,7 +123,9 @@ export function buildMapsAssetUrl(
   // If we're using the direct Google API key, NEVER return a URL containing it.
   // Instead, use our server-side proxy route.
   if (baseUrl === "https://maps.googleapis.com") {
-    const url = new URL(`/api/maps${endpoint}`, "http://localhost");
+    // mapsApiRouter is mounted at `/api` and registers routes like `/maps/api/streetview`,
+    // so the effective URL is `/api` + endpoint.
+    const url = new URL(`/api${endpoint}`, "http://localhost");
     for (const [key, value] of Object.entries(params)) {
       if (value === undefined || value === null) continue;
       url.searchParams.append(key, String(value));
