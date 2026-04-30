@@ -47,6 +47,12 @@ async function startServer() {
     res.redirect(301, "/tool");
   });
 
+  // Make the product feel like a single-purpose tool.
+  // Old/beta/portal routes hard-redirect to the broker tool.
+  app.get(["/", "/portal", "/portal/*", "/beta", "/beta/*", "/login", "/404"], (_req, res) => {
+    res.redirect(302, "/tool");
+  });
+
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // REST API for Power Automate Custom Connector
