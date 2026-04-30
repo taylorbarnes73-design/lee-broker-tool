@@ -319,7 +319,7 @@ function AdminInbox() {
                 <div style={{ display:'flex', gap: 8, marginTop: 2, alignItems:'center' }}>
                   <span className="lee-mono" style={{ fontSize: 10, color: 'var(--ink-400)' }}>{r.id}</span>
                   {r.flag && (
-                    <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 3, background: 'var(--warn-100)', color: 'var(--warn-600)', fontWeight: 600 }}>âš  {r.flag}</span>
+                    <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 3, background: 'var(--warn-100)', color: 'var(--warn-600)', fontWeight: 600 }}>⚠ {r.flag}</span>
                   )}
                 </div>
               </div>
@@ -407,7 +407,7 @@ function AdminInbox() {
             'V-2026-0418 split doesn\'t match listing agmt',
           ].map((m,i) => (
             <div key={i} style={{ display:'flex', gap: 8, padding: '8px 0', borderTop: i>0 ? '1px solid var(--ink-150)' : 'none', fontSize: 12, color: 'var(--ink-700)' }}>
-              <span style={{ color: 'var(--warn-500)' }}>âš </span>
+              <span style={{ color: 'var(--warn-500)' }}>⚠</span>
               {m}
             </div>
           ))}
@@ -502,7 +502,7 @@ function AdminDealius() {
             Last sync 3 min ago · OAuth valid through Jul 2026
           </div>
           <div style={{ marginTop: 12, display:'flex', gap: 8 }}>
-            <Button variant="ghost" size="sm">Open Dealius â†’</Button>
+            <Button variant="ghost" size="sm">Open Dealius →</Button>
             <Button variant="ghost" size="sm">Re-auth</Button>
           </div>
         </Card>
@@ -533,9 +533,9 @@ function AdminDealius() {
           </div>
           <div style={{ marginTop: 10, display:'flex', flexDirection:'column', gap: 6, fontSize: 11.5 }}>
             {[
-              ['Voucher â†’ Commission record', 12],
-              ['Listing â†’ Property + Listing', 18],
-              ['Contract â†’ Document', 6],
+              ['Voucher → Commission record', 12],
+              ['Listing → Property + Listing', 18],
+              ['Contract → Document', 6],
             ].map(([k,n],i) => (
               <div key={i} style={{ display:'flex', justifyContent:'space-between', padding: '4px 0' }}>
                 <span style={{ color:'var(--ink-700)' }}>{k}</span>
@@ -543,7 +543,7 @@ function AdminDealius() {
               </div>
             ))}
           </div>
-          <Button variant="ghost" size="sm" style={{ marginTop: 10 }}>Edit mapping â†’</Button>
+          <Button variant="ghost" size="sm" style={{ marginTop: 10 }}>Edit mapping →</Button>
         </Card>
       </div>
     </div>

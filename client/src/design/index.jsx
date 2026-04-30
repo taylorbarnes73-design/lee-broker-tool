@@ -289,6 +289,16 @@ function Badge({ tone = 'neutral', children, icon, size = 'md', style }) {
 // ── Card ──
 function Card({ children, padding = 24, style, hoverable }) {
   const [hover, setHover] = React.useState(false);
+  const resolvedPadding =
+    typeof padding === "number"
+      ? padding
+      : {
+          sm: 16,
+          md: 24,
+          lg: 32,
+          xl: 40,
+          none: 0,
+        }[padding] ?? 24;
   return (
     <div
       onMouseEnter={() => hoverable && setHover(true)}
@@ -297,7 +307,7 @@ function Card({ children, padding = 24, style, hoverable }) {
         background: 'var(--ink-0)',
         border: '1px solid var(--ink-200)',
         borderRadius: 'var(--r-12)',
-        padding,
+        padding: resolvedPadding,
         boxShadow: hover ? 'var(--shadow-md)' : 'var(--shadow-sm)',
         transition: 'box-shadow .15s, border-color .15s',
         ...style,
@@ -812,21 +822,21 @@ function ListingEntryScreen() {
             </div>
           </Card>
 
-          {/* Step 1 â‚¬“ complete */}
+          {/* Step 1 — complete */}
           <StepCard
             step={1} total={7} status="complete"
             title="Transaction type"
             summary="Lease · Industrial · 2,847 Newport Blvd, Costa Mesa CA 92627"
           />
 
-          {/* Step 2 â‚¬“ complete */}
+          {/* Step 2 — complete */}
           <StepCard
             step={2} total={7} status="complete"
             title="Property details"
             summary="24,500 SF · Clear height 28' · 4 DH doors · Built 2005"
           />
 
-          {/* Step 3 â‚¬“ active */}
+          {/* Step 3 — active */}
           <StepCard
             step={3} total={7} status="active"
             title="Listing terms"
@@ -1362,12 +1372,12 @@ function CommissionTable() {
 
 function RentTable() {
   const rows = [
-    {mo:'Mo 1-2',   months:'Apr 2026 â‚¬“ May 2026', baseRate: 0,    sf: 24500, monthly: 0, note:'Free rent'},
-    {mo:'Mo 3-12',  months:'Jun 2026 â‚¬“ Mar 2027', baseRate: 1.45, sf: 24500, monthly: 35525},
-    {mo:'Mo 13-24', months:'Apr 2027 â‚¬“ Mar 2028', baseRate: 1.50, sf: 24500, monthly: 36750},
-    {mo:'Mo 25-36', months:'Apr 2028 â‚¬“ Mar 2029', baseRate: 1.55, sf: 24500, monthly: 37975},
-    {mo:'Mo 37-48', months:'Apr 2029 â‚¬“ Mar 2030', baseRate: 1.60, sf: 24500, monthly: 39200},
-    {mo:'Mo 49-60', months:'Apr 2030 â‚¬“ Mar 2031', baseRate: 1.66, sf: 24500, monthly: 40670},
+    {mo:'Mo 1-2',   months:'Apr 2026 — May 2026', baseRate: 0,    sf: 24500, monthly: 0, note:'Free rent'},
+    {mo:'Mo 3-12',  months:'Jun 2026 — Mar 2027', baseRate: 1.45, sf: 24500, monthly: 35525},
+    {mo:'Mo 13-24', months:'Apr 2027 — Mar 2028', baseRate: 1.50, sf: 24500, monthly: 36750},
+    {mo:'Mo 25-36', months:'Apr 2028 — Mar 2029', baseRate: 1.55, sf: 24500, monthly: 37975},
+    {mo:'Mo 37-48', months:'Apr 2029 — Mar 2030', baseRate: 1.60, sf: 24500, monthly: 39200},
+    {mo:'Mo 49-60', months:'Apr 2030 — Mar 2031', baseRate: 1.66, sf: 24500, monthly: 40670},
   ];
   const total = rows.reduce((s,r)=>s+r.monthly*parseInt(r.mo.match(/-(\d+)/)?.[1]||1) - (r.monthly * parseInt(r.mo.match(/Mo (\d+)/)?.[1]||1) - r.monthly), 2132250);
   return (

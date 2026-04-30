@@ -25,16 +25,25 @@
   --ink-0:   #FFFFFF;
 
   /* ── Functional ── */
+  /* Success */
+  --ok-700: #0B5E31;
   --ok-600: #0F7A3F;
   --ok-500: #14924D;
+  --ok-200: #CDEBDA;
   --ok-100: #E8F5EE;
 
+  /* Warning */
+  --warn-700: #8A4D00;
   --warn-600: #B36B00;
   --warn-500: #D48806;
   --warn-100: #FDF3E1;
 
+  /* Error */
+  --err-700: #8A1F17;
   --err-600: #B42318;
+  --err-200: #F9C6C4;
   --err-100: #FEE8E7;
+  --err-50:  #FFF3F2;
 
   --ai-500: #6E3FD9;       /* AI / intelligence accent — violet */
   --ai-400: #8B5FF0;

@@ -1,7 +1,6 @@
 import { publicProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import { z } from "zod/v4";
-import pdfParse from "pdf-parse";
 
 // ── Field schemas per tab ──
 
@@ -837,7 +836,10 @@ export const aiAssistRouter = router({
                 type: "text",
                 text: await (async () => {
                   try {
-                    const parsed = await pdfParse(fileBuffer);
+                    const mod = await import("pdf-parse");
+                    const parse =
+                      (mod as any).default ?? (mod as any);
+                    const parsed = await parse(fileBuffer);
                     const cleaned = normalizeWhitespace(parsed.text || "");
                     const trimmed = cleaned.slice(0, 40_000);
                     return `${promptText}\n\nBrochure text (extracted):\n${trimmed}`;

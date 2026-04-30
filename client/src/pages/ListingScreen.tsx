@@ -77,7 +77,7 @@ export default function ListingEntryScreen() {
         {/* Main column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* AI brochure upload — ambient but prominent */}
+          {/* AI brochure upload — ambient but prominent */}
           <Card padding={0} style={{
             background: 'linear-gradient(120deg, #FBF8FE 0%, #FEF4F6 100%)',
             border: '1px solid rgba(139,95,240,.2)',
@@ -95,7 +95,7 @@ export default function ListingEntryScreen() {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-900)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  Skip the typing — drop a brochure
+                  Skip the typing — drop a brochure
                   <Badge tone="ai" size="sm" icon={<Icons.Sparkles size={10}/>}>AI</Badge>
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--ink-600)', marginTop: 2 }}>
@@ -182,10 +182,10 @@ export default function ListingEntryScreen() {
                 <Input prefix={<Icons.Calendar size={14}/>} defaultValue="June 1, 2026"/>
               </Field>
 
-              <Field label="Commission — listing side" required span={1}>
+              <Field label="Commission — listing side" required span={1}>
                 <Input suffix="%" defaultValue="3.00"/>
               </Field>
-              <Field label="Commission — procuring" required span={1}>
+              <Field label="Commission — procuring" required span={1}>
                 <Input suffix="%" defaultValue="3.00"/>
               </Field>
               <Field label="Total consideration" span={2}>
