@@ -4122,3 +4122,280 @@ body {
 .cr-table tbody tr.cr-row:has(.cr-row-check:not(:checked)) {
   opacity: .55;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2026 VISUAL REDESIGN LAYER (V2)
+   - Purely-presentational overrides (no DOM/class changes).
+   - Appended last to safely win specificity when selectors tie.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --lee-v2-paper: #fbfbf9;
+  --lee-v2-surface: #ffffff;
+  --lee-v2-surface-2: rgba(255, 255, 255, 0.74);
+  --lee-v2-border: rgba(23, 24, 27, 0.10);
+  --lee-v2-border-strong: rgba(23, 24, 27, 0.16);
+  --lee-v2-shadow: 0 10px 28px rgba(10, 10, 11, 0.06), 0 2px 8px rgba(10, 10, 11, 0.04);
+  --lee-v2-shadow-soft: 0 6px 18px rgba(10, 10, 11, 0.05);
+  --lee-v2-ring: 0 0 0 4px rgba(155, 13, 42, 0.14);
+  --lee-v2-ring-soft: 0 0 0 4px rgba(87, 90, 116, 0.14);
+  --lee-v2-radius: 14px;
+  --lee-v2-radius-sm: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+body {
+  background: var(--lee-v2-paper);
+  background-image:
+    radial-gradient(900px 540px at 18% -12%, rgba(155, 13, 42, 0.08), transparent 55%),
+    radial-gradient(720px 520px at 92% 8%, rgba(87, 90, 116, 0.10), transparent 55%),
+    linear-gradient(180deg, rgba(10, 10, 11, 0.04), transparent 28%);
+}
+
+/* Better keyboard focus affordances (without visual noise on click). */
+:where(button, a[href], input, select, textarea, [role="button"], .tab, .sub-tab):focus {
+  outline: none;
+}
+:where(button, a[href], input, select, textarea, [role="button"], .tab, .sub-tab):focus-visible {
+  box-shadow: var(--lee-v2-ring);
+}
+
+/* ── Header: premium dark bar, calmer density ── */
+.header {
+  background:
+    radial-gradient(900px 420px at 16% 0%, rgba(155, 13, 42, 0.20), transparent 55%),
+    radial-gradient(840px 420px at 88% 0%, rgba(87, 90, 116, 0.22), transparent 58%),
+    linear-gradient(180deg, #0b0c0e 0%, #090a0b 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 16px 28px;
+}
+.header h1 {
+  font-size: 19px;
+  letter-spacing: -0.018em;
+}
+.header-kicker {
+  opacity: 0.92;
+}
+.header-user {
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+.admin-toggle {
+  border-radius: 999px;
+  padding: 10px 14px;
+  letter-spacing: 0.12em;
+}
+
+/* ── Tab bar: pill highlight, less “underline-only” ── */
+.tab-bar {
+  background: transparent;
+  border-bottom: 0;
+  padding: 12px 22px;
+  box-shadow: none;
+  isolation: isolate;
+}
+.tab-bar::before {
+  content: "";
+  display: block;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 10px;
+  width: min(1180px, calc(100% - 44px));
+  height: 44px;
+  border-radius: 999px;
+  background: var(--lee-v2-surface-2);
+  border: 1px solid var(--lee-v2-border);
+  box-shadow: var(--lee-v2-shadow-soft);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: none;
+  z-index: 0;
+}
+.tab {
+  position: relative;
+  z-index: 1;
+  padding: 10px 14px;
+  margin: 0 2px;
+  border-bottom: 0;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: rgba(23, 24, 27, 0.68);
+}
+.tab:hover {
+  background: rgba(10, 10, 11, 0.05);
+  color: rgba(10, 10, 11, 0.92);
+}
+.tab.active {
+  background: rgba(155, 13, 42, 0.10);
+  color: var(--lee-crimson);
+  box-shadow: inset 0 0 0 1px rgba(155, 13, 42, 0.18);
+}
+
+/* ── Panels: more breathing room, consistent width ── */
+.panel {
+  max-width: 1180px;
+  padding: 22px 18px 96px;
+}
+@media (min-width: 1024px) {
+  .panel {
+    padding: 26px 22px 110px;
+  }
+}
+
+/* ── Sub-tabs: compact, pill, aligned with tab language ── */
+.sub-tab-bar {
+  background: transparent;
+  border-bottom: 0;
+  padding: 6px 22px 0;
+}
+.sub-tab {
+  border-radius: 999px;
+  padding: 9px 14px;
+  border: 1px solid transparent;
+  background: transparent;
+}
+.sub-tab:hover {
+  background: rgba(10, 10, 11, 0.04);
+}
+.sub-tab.active {
+  background: var(--lee-v2-surface);
+  border-color: var(--lee-v2-border);
+  box-shadow: var(--lee-v2-shadow-soft);
+}
+
+/* ── Cards: softer surface, clearer hierarchy ── */
+.card {
+  background: rgba(255, 255, 255, 0.88) !important;
+  border: 1px solid var(--lee-v2-border) !important;
+  border-radius: var(--lee-v2-radius);
+  box-shadow: var(--lee-v2-shadow-soft);
+}
+.card:hover {
+  box-shadow: var(--lee-v2-shadow);
+  border-color: var(--lee-v2-border-strong) !important;
+}
+.card.card-active {
+  box-shadow: var(--lee-v2-ring), var(--lee-v2-shadow-soft) !important;
+  border-color: rgba(155, 13, 42, 0.18) !important;
+}
+.card h2 {
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  color: rgba(23, 24, 27, 0.60);
+}
+.card h3 {
+  color: rgba(23, 24, 27, 0.56);
+}
+
+/* ── Fields: calmer labels + more “designed” inputs ── */
+.field label {
+  color: rgba(23, 24, 27, 0.66);
+}
+.field input,
+.field select,
+.field textarea {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(23, 24, 27, 0.12);
+  border-radius: var(--lee-v2-radius-sm);
+}
+.field input::placeholder,
+.field textarea::placeholder {
+  color: rgba(23, 24, 27, 0.40);
+}
+.field input:hover,
+.field select:hover,
+.field textarea:hover {
+  border-color: rgba(23, 24, 27, 0.18);
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  box-shadow: var(--lee-v2-ring);
+}
+.field input.auto-calc,
+.field input[readonly] {
+  background: rgba(245, 245, 247, 0.92);
+}
+
+/* Make checkbox/radio focus rings consistent (some are custom). */
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  box-shadow: var(--lee-v2-ring-soft);
+}
+
+/* ── Buttons: consistent elevation and focus ── */
+.btn {
+  border-radius: 999px;
+  min-height: 40px;
+}
+.btn:focus-visible {
+  box-shadow: var(--lee-v2-ring);
+}
+.btn-red {
+  box-shadow: 0 1px 2px rgba(155, 13, 42, 0.16), 0 12px 26px rgba(155, 13, 42, 0.14);
+}
+.btn-gray,
+.btn-outline {
+  box-shadow: none;
+}
+
+/* ── Tip bar: more “system notice”, less warning ── */
+.tip {
+  background: rgba(87, 90, 116, 0.08);
+  border-left-color: rgba(87, 90, 116, 0.70);
+  color: rgba(23, 24, 27, 0.72);
+}
+
+/* ── Sign-in gate: intentional “welcome” moment ── */
+.tool-sign-in {
+  padding: 56px 20px;
+}
+.tool-sign-in::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(980px 620px at 18% 8%, rgba(155, 13, 42, 0.18), transparent 55%),
+    radial-gradient(860px 560px at 88% 10%, rgba(87, 90, 116, 0.16), transparent 58%),
+    linear-gradient(180deg, rgba(10, 10, 11, 0.04), transparent 30%);
+  pointer-events: none;
+}
+.tool-sign-in-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--lee-v2-border);
+  border-radius: calc(var(--lee-v2-radius) + 2px);
+  box-shadow: var(--lee-v2-shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.tool-sign-in-title {
+  letter-spacing: -0.02em;
+}
+.tool-sign-in-error {
+  background: rgba(155, 13, 42, 0.06);
+  border: 1px solid rgba(155, 13, 42, 0.16);
+  color: rgba(122, 10, 32, 0.95);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+/* ── Responsive: reduce glass pill on small screens for clarity ── */
+@media (max-width: 640px) {
+  .header { padding: 14px 16px; }
+  .tab-bar { padding: 10px 12px; }
+  .tab-bar::before { top: 8px; height: 42px; width: calc(100% - 24px); }
+  .tab { padding: 10px 12px; font-size: 10px; }
+  .panel { padding: 16px 12px 72px; }
+}
