@@ -19,7 +19,6 @@ import { contractsRouter } from "./routers/contracts";
 import { submissionsRouter } from "./routers/submissions";
 import { brokersRouter } from "./routers/brokers";
 import { localAuth, sdk } from "./_core/sdk";
-import { hashPassword, verifyPassword } from "./_core/passwords";
 import { ENV } from "./_core/env";
 
 export const appRouter = router({
@@ -51,6 +50,8 @@ export const appRouter = router({
           lastName: z.string().trim().min(1).max(60).optional(),
           name: z.string().trim().min(2).max(120).optional(),
           email: z.string().trim().email(),
+          // Local password auth is currently disabled in production because
+          // some environments have not run the `users.passwordHash` migration.
           password: z.string().min(8).max(200).optional(),
         }).refine(
           value =>
@@ -92,19 +93,7 @@ export const appRouter = router({
           isBrokerDirectoryAdmin(brokerEntry);
         const role = isAdminIdentity ? "admin" : "user";
 
-        if (input.password) {
-          const existing = await getUserByOpenId(openId);
-          if (existing?.passwordHash) {
-            const ok = await verifyPassword(input.password, existing.passwordHash);
-            if (!ok) {
-              return { success: false as const, error: "Invalid email or password." };
-            }
-          } else {
-            // First-time local login: set password hash for this openId.
-            const passwordHash = await hashPassword(input.password);
-            await upsertUser({ openId, passwordHash });
-          }
-        }
+        // Note: password-based local auth intentionally disabled for now.
 
         await upsertUser({
           openId,

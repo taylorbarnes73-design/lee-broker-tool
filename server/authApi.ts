@@ -5,7 +5,6 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { localAuth, sdk } from "./_core/sdk";
 import { ENV } from "./_core/env";
 import { getUserByOpenId, upsertUser } from "./db";
-import { hashPassword, verifyPassword } from "./_core/passwords";
 
 const loginSchema = z.object({
   email: z.string().trim().email(),
@@ -38,26 +37,8 @@ authApiRouter.post("/login", async (req, res) => {
   const name = parsed.data.name?.trim() || email;
   const role = isAdminIdentity({ email, name }) ? "admin" : "user";
 
-  const existing = await getUserByOpenId(openId);
-  if (existing?.passwordHash) {
-    const ok = await verifyPassword(parsed.data.password, existing.passwordHash);
-    if (!ok) {
-      res.status(401).json({ success: false, error: "Invalid email or password." });
-      return;
-    }
-  } else {
-    const passwordHash = await hashPassword(parsed.data.password);
-    await upsertUser({
-      openId,
-      email,
-      name,
-      loginMethod: "local",
-      role,
-      passwordHash,
-      lastSignedIn: new Date(),
-    });
-  }
-
+  // Password-based local auth is disabled until all environments have applied
+  // the `users.passwordHash` migration. We still allow local login via broker directory.
   await upsertUser({
     openId,
     email,
