@@ -3245,6 +3245,7 @@ function notifyMLS() {
 // ═══════════════════════════════════════════════════════════════════════════════
 function addSuiteRow(type) {
   const body = document.getElementById(type + '-suite-body');
+  if (!body) return;
   const isOffice = type === 'office';
   const tr = document.createElement('tr');
   tr.innerHTML = (isOffice ? '<td><input placeholder="Flr"></td>' : '') +
@@ -6189,7 +6190,7 @@ async function handleToolSignIn(event) {
 async function initBrokerToolAuth() {
   try {
     const me = await callTrpc('auth.me');
-    if (me) {
+    if (me && me.email) {
       showBrokerTool(me);
       return;
     }
@@ -6303,8 +6304,7 @@ onPropTypeChange();
 onTxnTypeChange();
 onVoucherTxnChange();
 
-// Check auth and show sign-in gate or tool
-void initBrokerToolAuth();
+// Auth initialization runs after the shared API helper is declared later in the page.
 
 // Populate comp form dropdowns
 initCompFormSelects();
@@ -10014,7 +10014,11 @@ async function callTrpc(procedure, input) {
   if (!res.ok) throw new Error('API error ' + res.status);
   const data = await res.json();
   if (data.error) throw new Error(data.error.message || 'AI error');
-  return data.result?.data?.json ?? data.result?.data;
+  const payload = data.result?.data;
+  if (payload && typeof payload === 'object' && Object.prototype.hasOwnProperty.call(payload, 'json')) {
+    return payload.json;
+  }
+  return payload;
 }
 
 const SHARED_AUTH_STORAGE_KEY = 'lee-broker-tool.auth';
@@ -10114,7 +10118,7 @@ async function ensureSharedBrokerSession() {
   sharedBrokerSessionPromise = (async () => {
     try {
       const me = await callTrpc('auth.me');
-      if (me) {
+      if (me && me.email) {
         compReportsUser = me;
         applySharedBrokerIdentity(me);
         return me;
@@ -11709,7 +11713,7 @@ function ciReset() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  void ensureSharedBrokerSession();
+  void initBrokerToolAuth();
 });
 </script>
 <script src="/broker_profiles.js"></script>
