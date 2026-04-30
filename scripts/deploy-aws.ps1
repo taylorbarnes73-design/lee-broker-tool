@@ -34,7 +34,8 @@ function Invoke-Aws {
 }
 
 function Get-AwsAccountId([string] $region) {
-    $identityJson = Invoke-Aws sts get-caller-identity --region $region --output json
+    # AWS CLI output can arrive as a string array; normalize to a single JSON string.
+    $identityJson = (Invoke-Aws sts get-caller-identity --region $region --output json) | Out-String
     if (-not $identityJson) {
         throw "AWS CLI returned no identity. Run 'aws login' or configure your credentials in AWS Toolkit first."
     }
@@ -124,7 +125,7 @@ Invoke-Aws cloudformation deploy `
     --stack-name $StackName `
     --template-file template.yaml `
     --capabilities CAPABILITY_IAM `
-    --parameter-overrides $parameterOverrides
+    --parameter-overrides @parameterOverrides
 
 Write-Host "Fetching stack outputs" -ForegroundColor Yellow
 Invoke-Aws cloudformation describe-stacks `
