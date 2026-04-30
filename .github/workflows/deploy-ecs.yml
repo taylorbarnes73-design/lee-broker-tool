@@ -20,6 +20,9 @@ env:
   ECS_CLUSTER: lee-broker-tool-cluster
   ECS_SERVICE: lee-broker-tool
   CONTAINER_NAME: lee-broker-tool
+  # GitHub Actions is deprecating Node.js 20 for JS-based actions.
+  # Opt into Node.js 24 now to avoid future breakage.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   deploy:
@@ -30,7 +33,9 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          # Use the repo-scoped GitHub OIDC deploy role created by `infra/github-oidc-role.yaml`.
+          # This avoids failing deploys when `AWS_ROLE_TO_ASSUME` secret is missing/misconfigured.
+          role-to-assume: arn:aws:iam::867958226961:role/lee-broker-tool-github-deploy
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
