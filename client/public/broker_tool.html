@@ -6916,7 +6916,8 @@ function openSubmissionDetail(id) {
     actions += '<button class="btn btn-blue" onclick="dxPushListing(\'' + s.id + '\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Push to Dealius</button>';
   }
   if (s.type === 'voucher') {
-    actions += '<button class="btn btn-blue btn-blue-red" onclick="dxPushVoucher(\'' + s.id + '\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Push to Dealius Deal</button>';
+    actions += '<button class="btn btn-green" data-action="push-dealius" onclick="adminPushSubmissionToDealius(\\\'' + s.id + '\\\')"><span class="btn-spinner"></span><span class="btn-label">Review & push to Dealius</span></button>';
+    actions += '<button class="btn btn-blue btn-blue-red" onclick="dxPushVoucher(\'' + s.id + '\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Prefill Dealius Entry</button>';
   }
   actions += '<button class="btn btn-blue" ' + (s.status === 'in_review' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'in_review\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Review</button>';
   actions += '<button class="btn btn-green" ' + (s.status === 'approved' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'approved\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Approve</button>';
@@ -6956,6 +6957,54 @@ function updateSubStatus(id, status) {
       renderSubmissions();
       openSubmissionDetail(id);
     });
+}
+
+// Server-side Dealius push (admin-only)
+async function adminPushSubmissionToDealius(id) {
+  const sub = ADMIN_SUBMISSIONS.find(s => s.id === id);
+  if (!sub || !sub.serverSubmissionId) {
+    alert('This submission is missing a server record ID — it cannot be pushed to Dealius.');
+    return;
+  }
+
+  const actionsEl = document.getElementById('adm-detail-actions');
+  const btn = actionsEl ? actionsEl.querySelector('[data-action="push-dealius"]') : null;
+  const setBtnLabel = label => {
+    if (!btn) return;
+    const lbl = btn.querySelector('.btn-label');
+    if (lbl) lbl.textContent = label;
+    btn.classList.toggle('loading', label.includes('Pushing'));
+    btn.disabled = label.includes('Pushing');
+  };
+
+  try {
+    setBtnLabel('Pushing…');
+    const res = await fetch('/api/submissions/' + sub.serverSubmissionId + '/push-dealius', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body && body.error ? body.error : ('HTTP ' + res.status));
+
+    await refreshAdminSubmissions();
+    renderDashboard();
+    renderSubmissions();
+    openSubmissionDetail(id);
+
+    const dealId = body && body.data ? body.data.dealID : null;
+    if (dealId) {
+      alert('✅ Pushed to Dealius. Deal #' + dealId + ' created.');
+    } else {
+      alert('✅ Pushed to Dealius successfully.');
+    }
+  } catch (e) {
+    console.warn('Dealius push failed:', e && e.message ? e.message : e);
+    alert('❌ Dealius push failed: ' + (e && e.message ? e.message : 'Unknown error'));
+  } finally {
+    setBtnLabel('Review & push to Dealius');
+  }
 }
 
 function dxParseNumberish(value) {
