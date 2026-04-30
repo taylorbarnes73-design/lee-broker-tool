@@ -180,6 +180,8 @@ function mapLeaseSearchResult(row: LeaseComp): CompSearchResult {
   const fallbackPhoto = buildStreetViewPhotoUrl({
     location: [record.address, record.city, record.state, record.zipCode].filter(Boolean).join(", "),
   });
+  const photo = record.photo?.trim() ? record.photo : fallbackPhoto;
+  const recordForCard = photo ? { ...record, photo } : record;
   return {
     id: row.id,
     importId: row.importId,
@@ -195,10 +197,10 @@ function mapLeaseSearchResult(row: LeaseComp): CompSearchResult {
     propertySubType: record.propertySubType,
     transactionDate: record.transactionDate,
     source: record.source,
-    reportCard: buildLeaseReportCard(record),
+    reportCard: buildLeaseReportCard(recordForCard),
     metricLine: buildLeaseMetricLine(record),
     metaLine: buildMetaLine(record),
-    photo: record.photo?.trim() ? record.photo : fallbackPhoto,
+    photo,
   };
 }
 
@@ -207,6 +209,8 @@ function mapSaleSearchResult(row: SaleComp): CompSearchResult {
   const fallbackPhoto = buildStreetViewPhotoUrl({
     location: [record.address, record.city, record.state, record.zipCode].filter(Boolean).join(", "),
   });
+  const photo = record.photo?.trim() ? record.photo : fallbackPhoto;
+  const recordForCard = photo ? { ...record, photo } : record;
   return {
     id: row.id,
     importId: row.importId,
@@ -222,10 +226,10 @@ function mapSaleSearchResult(row: SaleComp): CompSearchResult {
     propertySubType: record.propertySubType,
     transactionDate: record.transactionDate,
     source: record.source,
-    reportCard: buildSaleReportCard(record),
+    reportCard: buildSaleReportCard(recordForCard),
     metricLine: buildSaleMetricLine(record),
     metaLine: buildMetaLine(record),
-    photo: record.photo?.trim() ? record.photo : fallbackPhoto,
+    photo,
   };
 }
 
