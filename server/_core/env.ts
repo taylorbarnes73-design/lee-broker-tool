@@ -25,6 +25,10 @@ export const ENV = {
     forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
     forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
 
+    // Google Maps (server-side only). Used to proxy Street View/static map assets so the key
+    // is never exposed to the browser.
+    googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY ?? "",
+
     // Direct OpenAI fallback (used when Forge is not configured).
     // The LLM layer prefers Forge when set; otherwise falls back to OPENAI_API_KEY.
     openaiApiUrl: (process.env.OPENAI_API_URL ?? "https://api.openai.com/v1").replace(/\/$/, ""),

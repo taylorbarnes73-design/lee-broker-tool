@@ -15,6 +15,7 @@ import { restApiRouter } from "../restApi";
 import { sdk } from "./sdk";
 import { authApiRouter } from "../authApi";
 import { submissionsApiRouter } from "../submissionsApi";
+import { mapsApiRouter } from "../mapsApi";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -57,6 +58,8 @@ async function startServer() {
   registerOAuthRoutes(app);
   // REST API for Power Automate Custom Connector
   app.use("/api/v1", restApiRouter);
+  // Google Maps asset proxy (Street View, Static Maps)
+  app.use("/api", mapsApiRouter);
   // Auth + submissions REST API for the SPA portal
   app.use("/api/auth", authApiRouter);
   app.use("/api/submissions", submissionsApiRouter);

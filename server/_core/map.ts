@@ -19,12 +19,20 @@ type MapsConfig = {
 };
 
 function getMapsConfig(): MapsConfig {
+  // Prefer direct Google key (server-side proxy) when available.
+  if (ENV.googleMapsApiKey) {
+    return {
+      baseUrl: "https://maps.googleapis.com",
+      apiKey: ENV.googleMapsApiKey,
+    };
+  }
+
   const baseUrl = ENV.forgeApiUrl;
   const apiKey = ENV.forgeApiKey;
 
   if (!baseUrl || !apiKey) {
     throw new Error(
-      "Google Maps proxy credentials missing: set BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY"
+      "Google Maps credentials missing: set GOOGLE_MAPS_API_KEY (preferred) or BUILT_IN_FORGE_API_URL + BUILT_IN_FORGE_API_KEY"
     );
   }
 
@@ -111,6 +119,19 @@ export function buildMapsAssetUrl(
   if (!config) return "";
 
   const { baseUrl, apiKey } = config;
+
+  // If we're using the direct Google API key, NEVER return a URL containing it.
+  // Instead, use our server-side proxy route.
+  if (baseUrl === "https://maps.googleapis.com") {
+    const url = new URL(`/api/maps${endpoint}`, "http://localhost");
+    for (const [key, value] of Object.entries(params)) {
+      if (value === undefined || value === null) continue;
+      url.searchParams.append(key, String(value));
+    }
+    return `${url.pathname}${url.search}`;
+  }
+
+  // Forge proxy path: baseUrl + /v1/maps/proxy + endpoint
   const url = new URL(`${baseUrl}/v1/maps/proxy${endpoint}`);
   url.searchParams.append("key", apiKey);
 
