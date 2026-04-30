@@ -1,6 +1,7 @@
 import { publicProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import { z } from "zod/v4";
+import pdfParse from "pdf-parse";
 
 // ── Field schemas per tab ──
 
@@ -811,12 +812,12 @@ export const aiAssistRouter = router({
       const fieldNames = Object.keys(listingFields.shape);
 
       // Fetch file server-side → avoids CORS and lets us send as base64 inline data
-      let base64Data: string;
+      let fileBuffer: Buffer;
       try {
         const fileResp = await fetch(fileUrl, { signal: AbortSignal.timeout(30_000) });
         if (!fileResp.ok) throw new Error(`File fetch failed: ${fileResp.status}`);
         const buffer = await fileResp.arrayBuffer();
-        base64Data = Buffer.from(buffer).toString("base64");
+        fileBuffer = Buffer.from(buffer);
       } catch (e: any) {
         return {
           success: false,
@@ -827,19 +828,39 @@ export const aiAssistRouter = router({
         };
       }
 
-      // Use data URL — works for images; for PDFs some providers support it too
-      const dataUrl = `data:${mimeType};base64,${base64Data}`;
+      const promptText = `Extract all listing fields you can identify from this ${mimeType === "application/pdf" ? "PDF brochure" : "brochure image"}.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nReturn JSON with only fields you can confidently extract:`;
 
-      const userContent: any[] = [
-        {
-          type: "image_url",
-          image_url: { url: dataUrl, detail: "high" },
-        },
-        {
-          type: "text",
-          text: `Extract all listing fields you can identify from this ${mimeType === "application/pdf" ? "PDF brochure" : "brochure image"}.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nReturn JSON with only fields you can confidently extract:`,
-        },
-      ];
+      const userContent: any[] =
+        mimeType === "application/pdf"
+          ? [
+              {
+                type: "text",
+                text: await (async () => {
+                  try {
+                    const parsed = await pdfParse(fileBuffer);
+                    const cleaned = normalizeWhitespace(parsed.text || "");
+                    const trimmed = cleaned.slice(0, 40_000);
+                    return `${promptText}\n\nBrochure text (extracted):\n${trimmed}`;
+                  } catch (e: any) {
+                    const message = e?.message ? String(e.message) : "Unknown PDF parse error";
+                    return `${promptText}\n\nNote: PDF text extraction failed (${message}). Return an empty JSON object.`;
+                  }
+                })(),
+              },
+            ]
+          : [
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:${mimeType};base64,${fileBuffer.toString("base64")}`,
+                  detail: "high",
+                },
+              },
+              {
+                type: "text",
+                text: promptText,
+              },
+            ];
 
       const response = await invokeLLM({
         messages: [

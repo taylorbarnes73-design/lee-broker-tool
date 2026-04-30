@@ -25,6 +25,13 @@ This repo is a **TypeScript Node/Express** server that serves a **Vite + React**
 pnpm install
 ```
 
+On Windows without `pnpm` on PATH, you can run it via `corepack`:
+
+```bash
+corepack prepare pnpm@10.4.1 --activate
+corepack pnpm install
+```
+
 2) Configure env
 
 - Copy `.env.example` → `.env`
@@ -33,6 +40,18 @@ pnpm install
   - `JWT_SECRET`
   - `LOCAL_AUTH_ENABLED=true`
   - `LOCAL_ADMIN_EMAILS` and/or `LOCAL_ADMIN_NAMES`
+
+#### AI / “Deal Assist” setup
+
+The `aiAssist` endpoints (parse, brochure scrape, smart complete, voucher review) use an **OpenAI-compatible** backend.
+
+- Preferred (managed proxy): set `BUILT_IN_FORGE_API_URL` + `BUILT_IN_FORGE_API_KEY`
+- Fallback (direct OpenAI): set `OPENAI_API_KEY` (optional: `OPENAI_MODEL`, `OPENAI_API_URL`)
+
+Notes:
+- `aiAssist.parse` uses text-only prompts.
+- `aiAssist.scrapeBrochure` supports both images and PDFs. **PDFs are parsed to text server-side** before being sent to the model for extraction.
+- `aiAssist.smartComplete` and `aiAssist.reviewVoucher` are deterministic and do not call the LLM.
 
 3) Run migrations (Drizzle)
 

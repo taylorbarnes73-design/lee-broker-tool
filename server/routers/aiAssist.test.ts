@@ -7,7 +7,13 @@ vi.mock("../_core/llm", () => ({
   invokeLLM: vi.fn(),
 }));
 
+// Mock PDF parsing so brochure tests don't need real PDFs
+vi.mock("pdf-parse", () => ({
+  default: vi.fn().mockResolvedValue({ text: "Mock brochure text: 123 Commerce Way, Irvine CA 92618, 12,500 SF, $1.10/SF/Mo NNN" }),
+}));
+
 import { invokeLLM } from "../_core/llm";
+import pdfParse from "pdf-parse";
 
 function createCtx(): TrpcContext {
   return {
@@ -174,6 +180,7 @@ describe("aiAssist.scrapeBrochure", () => {
     expect(result.fields.city).toBe("Irvine");
     expect(result.fields.buildingSf).toBe("12500");
     expect(result.fieldCount).toBe(8);
+    expect(pdfParse).toHaveBeenCalledTimes(1);
   });
 
   it("handles image brochure URLs", async () => {
@@ -200,6 +207,7 @@ describe("aiAssist.scrapeBrochure", () => {
     expect(result.success).toBe(true);
     expect(result.fields.propertyType).toBe("Office");
     expect(result.fields.city).toBe("Newport Beach");
+    expect(pdfParse).not.toHaveBeenCalled();
   });
 
   it("filters empty fields from brochure scrape result", async () => {
