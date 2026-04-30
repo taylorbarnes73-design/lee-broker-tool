@@ -95,6 +95,7 @@ function CompReportCard({
     city: string;
     state: string;
     zipCode: string;
+    photo?: string;
     metricLine: string;
     metaLine: string;
     reportCard: {
@@ -109,6 +110,17 @@ function CompReportCard({
 
   return (
     <article className="rounded-[1.25rem] border border-[#e2e1dc] bg-[#fbfbf8] p-5">
+      {result.photo ? (
+        <div className="mb-4 overflow-hidden rounded-2xl border border-[#ecebe6] bg-white">
+          <img
+            src={result.photo}
+            alt={`Photo of ${result.title}`}
+            className="h-[160px] w-full object-cover"
+            loading="lazy"
+            referrerPolicy="no-referrer"
+          />
+        </div>
+      ) : null}
       <div className="border-b border-[#ecebe6] pb-4">
         <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-[#9d1e2d]">
           Report Preview

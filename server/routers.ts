@@ -51,7 +51,7 @@ export const appRouter = router({
           lastName: z.string().trim().min(1).max(60).optional(),
           name: z.string().trim().min(2).max(120).optional(),
           email: z.string().trim().email(),
-          password: z.string().min(8).max(200),
+          password: z.string().min(8).max(200).optional(),
         }).refine(
           value =>
             Boolean(value.name) || Boolean(value.firstName && value.lastName),
@@ -78,6 +78,12 @@ export const appRouter = router({
         }
 
         const brokerEntry = findBrokerDirectoryEntry(email);
+        if (!brokerEntry) {
+          return {
+            success: false as const,
+            error: "Email not recognized. Use your @lee-associates.com email.",
+          };
+        }
         const resolvedName = brokerEntry?.name || enteredName;
         const openId = localAuth.toLocalOpenId(email);
         const isAdminIdentity =
@@ -86,16 +92,18 @@ export const appRouter = router({
           isBrokerDirectoryAdmin(brokerEntry);
         const role = isAdminIdentity ? "admin" : "user";
 
-        const existing = await getUserByOpenId(openId);
-        if (existing?.passwordHash) {
-          const ok = await verifyPassword(input.password, existing.passwordHash);
-          if (!ok) {
-            return { success: false as const, error: "Invalid email or password." };
+        if (input.password) {
+          const existing = await getUserByOpenId(openId);
+          if (existing?.passwordHash) {
+            const ok = await verifyPassword(input.password, existing.passwordHash);
+            if (!ok) {
+              return { success: false as const, error: "Invalid email or password." };
+            }
+          } else {
+            // First-time local login: set password hash for this openId.
+            const passwordHash = await hashPassword(input.password);
+            await upsertUser({ openId, passwordHash });
           }
-        } else {
-          // First-time local login: set password hash for this openId.
-          const passwordHash = await hashPassword(input.password);
-          await upsertUser({ openId, passwordHash });
         }
 
         await upsertUser({

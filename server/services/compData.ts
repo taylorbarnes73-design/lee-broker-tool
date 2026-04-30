@@ -15,6 +15,7 @@ import {
   type SaleCompRecord,
 } from "../../shared/comp-data";
 import { storageGet } from "../storage";
+import { buildStreetViewPhotoUrl } from "../_core/map";
 
 const INSERT_BATCH_SIZE = 500;
 
@@ -176,6 +177,9 @@ function buildMetaLine(record: LeaseCompRecord | SaleCompRecord) {
 
 function mapLeaseSearchResult(row: LeaseComp): CompSearchResult {
   const record = parseLeasePayload(row.rawPayload);
+  const fallbackPhoto = buildStreetViewPhotoUrl({
+    location: [record.address, record.city, record.state, record.zipCode].filter(Boolean).join(", "),
+  });
   return {
     id: row.id,
     importId: row.importId,
@@ -194,12 +198,15 @@ function mapLeaseSearchResult(row: LeaseComp): CompSearchResult {
     reportCard: buildLeaseReportCard(record),
     metricLine: buildLeaseMetricLine(record),
     metaLine: buildMetaLine(record),
-    photo: record.photo ?? "",
+    photo: record.photo?.trim() ? record.photo : fallbackPhoto,
   };
 }
 
 function mapSaleSearchResult(row: SaleComp): CompSearchResult {
   const record = parseSalePayload(row.rawPayload);
+  const fallbackPhoto = buildStreetViewPhotoUrl({
+    location: [record.address, record.city, record.state, record.zipCode].filter(Boolean).join(", "),
+  });
   return {
     id: row.id,
     importId: row.importId,
@@ -218,7 +225,7 @@ function mapSaleSearchResult(row: SaleComp): CompSearchResult {
     reportCard: buildSaleReportCard(record),
     metricLine: buildSaleMetricLine(record),
     metaLine: buildMetaLine(record),
-    photo: record.photo ?? "",
+    photo: record.photo?.trim() ? record.photo : fallbackPhoto,
   };
 }
 

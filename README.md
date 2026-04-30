@@ -53,6 +53,15 @@ Notes:
 - `aiAssist.scrapeBrochure` supports both images and PDFs. **PDFs are parsed to text server-side** before being sent to the model for extraction.
 - `aiAssist.smartComplete` and `aiAssist.reviewVoucher` are deterministic and do not call the LLM.
 
+#### Google Maps photos (Comp Reports)
+
+Comp report previews can automatically populate a property photo (Street View) when a comp record has no stored `photo`.
+
+- This uses the same Forge proxy credentials as the AI features:
+  - `BUILT_IN_FORGE_API_URL`
+  - `BUILT_IN_FORGE_API_KEY`
+- If those are not set, the app will simply omit photos (no errors).
+
 3) Run migrations (Drizzle)
 
 ```bash

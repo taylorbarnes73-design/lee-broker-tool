@@ -34,6 +34,14 @@ function getMapsConfig(): MapsConfig {
   };
 }
 
+function getMapsConfigOrNull(): MapsConfig | null {
+  try {
+    return getMapsConfig();
+  } catch {
+    return null;
+  }
+}
+
 // ============================================================================
 // Core Request Handler
 // ============================================================================
@@ -87,6 +95,51 @@ export async function makeRequest<T = unknown>(
   }
 
   return (await response.json()) as T;
+}
+
+/**
+ * Build a Google Maps image/asset URL (Static Maps, Street View, Place Photos, etc).
+ * Uses the built-in Forge proxy so the Google API key never reaches the client.
+ *
+ * Returns empty string when Forge credentials are not configured.
+ */
+export function buildMapsAssetUrl(
+  endpoint: string,
+  params: Record<string, unknown> = {}
+): string {
+  const config = getMapsConfigOrNull();
+  if (!config) return "";
+
+  const { baseUrl, apiKey } = config;
+  const url = new URL(`${baseUrl}/v1/maps/proxy${endpoint}`);
+  url.searchParams.append("key", apiKey);
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null) continue;
+    url.searchParams.append(key, String(value));
+  }
+
+  return url.toString();
+}
+
+export function buildStreetViewPhotoUrl(params: {
+  location: string;
+  size?: string; // e.g. "400x260"
+  fov?: number;
+  pitch?: number;
+  heading?: number;
+  source?: "default" | "outdoor";
+}): string {
+  const location = params.location.trim();
+  if (!location) return "";
+  return buildMapsAssetUrl("/maps/api/streetview", {
+    size: params.size ?? "400x260",
+    location,
+    fov: params.fov ?? 70,
+    pitch: params.pitch ?? 0,
+    ...(params.heading != null ? { heading: params.heading } : {}),
+    source: params.source ?? "outdoor",
+  });
 }
 
 // ============================================================================
