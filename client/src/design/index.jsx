@@ -382,6 +382,7 @@ function AppShell({ activeTab, onTab, profile, onProfileClick, onAiClick, childr
     { id: 'sign', label: 'Sign Orders', icon: Icons.Sign },
     { id: 'voucher', label: 'Vouchers', icon: Icons.Voucher },
     { id: 'comp', label: 'Comps', icon: Icons.Comp },
+    { id: 'queue', label: 'Queue', icon: Icons.List },
     { id: 'contract', label: 'Contracts', icon: Icons.Contract },
     { id: 'docs', label: 'Documents', icon: Icons.Docs },
     { id: 'admin', label: 'Admin', icon: Icons.Admin },

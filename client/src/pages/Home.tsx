@@ -152,6 +152,7 @@ export default function Home() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [compType, setCompType] = useState<"lease" | "sale">("lease");
   const [compQuery, setCompQuery] = useState("");
   const [compCity, setCompCity] = useState("");
@@ -191,7 +192,7 @@ export default function Home() {
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await loginMutation.mutateAsync({ firstName, lastName, email });
+    await loginMutation.mutateAsync({ firstName, lastName, email, password });
   };
 
   const recentSubmissions = submissionsQuery.data ?? [];
@@ -353,6 +354,20 @@ export default function Home() {
                       onChange={e => setEmail(e.target.value)}
                       placeholder="name@lee-associates.com"
                       type="email"
+                      required
+                      className="h-12 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-[15px] text-[#1f2328] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
+                    />
+                  </label>
+
+                  <label className="block space-y-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#6e7881]">
+                      Password
+                    </span>
+                    <input
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      type="password"
                       required
                       className="h-12 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-[15px] text-[#1f2328] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
                     />

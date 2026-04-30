@@ -3,7 +3,10 @@
     "allow": [
       "PowerShell(cd c:\\\\Users\\\\TaylorBarnes\\\\Documents\\\\GitHub\\\\lee-broker-tool; git ls-tree \"origin/main\" -- \".github/workflows/\" 2>&1)",
       "Bash(git checkout *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(aws s3 *)",
+      "Bash(aws ec2 *)"
     ]
   }
 }

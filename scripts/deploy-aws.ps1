@@ -27,6 +27,10 @@ function Invoke-Aws {
     else {
         & aws @Args
     }
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "AWS command failed (exit code $LASTEXITCODE)."
+    }
 }
 
 function Get-AwsAccountId([string] $region) {

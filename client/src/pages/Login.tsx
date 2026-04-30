@@ -1,6 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { getLoginUrl, isAuthRedirectEnabled } from "@/const";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useLocation } from "wouter";
 
 // We import design primitives to build a nice looking login
@@ -13,6 +14,21 @@ export default function Login() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  // If OAuth redirect is enabled, do not show the local login UI at all.
+  // This avoids the "double login" experience where the SPA renders a login
+  // form but the app also navigates to the external OAuth portal.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (user) return;
+    if (!isAuthRedirectEnabled()) return;
+
+    const loginUrl = getLoginUrl();
+    if (!loginUrl) return;
+
+    window.location.href = loginUrl;
+  }, [user]);
 
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: async result => {
@@ -25,12 +41,58 @@ export default function Login() {
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await loginMutation.mutateAsync({ firstName, lastName, email });
+    await loginMutation.mutateAsync({ firstName, lastName, email, password });
   };
 
-  if (user) {
-    setLocation("/");
-    return null;
+  useEffect(() => {
+    if (user) setLocation("/");
+  }, [setLocation, user]);
+
+  const oauthRedirectEnabled =
+    typeof window !== "undefined" &&
+    !user &&
+    isAuthRedirectEnabled() &&
+    Boolean(getLoginUrl());
+
+  if (oauthRedirectEnabled) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          width: "100vw",
+          height: "100vh",
+          background: "var(--ink-50)",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ width: 440 }}>
+          <Card padding="lg">
+            <div style={{ textAlign: "center" }}>
+              <h1 style={{ fontSize: 20, fontWeight: 700, color: "var(--ink-900)" }}>
+                Redirecting to sign in…
+              </h1>
+              <p style={{ fontSize: 14, color: "var(--ink-500)", marginTop: 8 }}>
+                If you are not redirected automatically, use the button below.
+              </p>
+              <Button
+                type="button"
+                variant="primary"
+                size="lg"
+                disabled={loading}
+                style={{ marginTop: 16, width: "100%" }}
+                onClick={() => {
+                  const url = getLoginUrl();
+                  if (url) window.location.href = url;
+                }}
+              >
+                Continue to Sign In
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -68,6 +130,11 @@ export default function Login() {
             <div>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>Lee Email</label>
               <Input type="email" value={email} onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)} required placeholder="tbarnes@lee-associates.com" />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>Password</label>
+              <Input type="password" value={password} onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)} required placeholder="••••••••" />
             </div>
 
             <Button type="submit" variant="primary" size="lg" disabled={loginMutation.isPending || loading} style={{ marginTop: 8 }}>

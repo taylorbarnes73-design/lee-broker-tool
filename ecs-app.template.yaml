@@ -11,6 +11,9 @@ Parameters:
     Type: List<AWS::EC2::Subnet::Id>
   ContainerImageUri:
     Type: String
+  CertificateArn:
+    Type: String
+    Default: ''
   AppPort:
     Type: Number
     Default: 3000
@@ -96,6 +99,9 @@ Parameters:
     Type: String
     Default: ''
 
+Conditions:
+  HasCertificate: !Not [!Equals [!Ref CertificateArn, '']]
+
 Resources:
   Cluster:
     Type: AWS::ECS::Cluster
@@ -179,7 +185,7 @@ Resources:
       Subnets: !Ref PublicSubnetIds
       LoadBalancerAttributes:
         - Key: deletion_protection.enabled
-          Value: 'true'
+          Value: 'false'
 
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -200,22 +206,49 @@ Resources:
       LoadBalancerArn: !Ref LoadBalancer
       Port: 80
       Protocol: HTTP
-      DefaultActions:
-        - Type: redirect
-          RedirectConfig:
-            Protocol: HTTPS
-            Port: '443'
-            StatusCode: HTTP_301
+      DefaultActions: !If
+        - HasCertificate
+        - - Type: redirect
+            RedirectConfig:
+              Protocol: HTTPS
+              Port: '443'
+              StatusCode: HTTP_301
+        - - Type: forward
+            TargetGroupArn: !Ref TargetGroup
 
-  Listener:
+  HttpsListener:
+    Condition: HasCertificate
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       LoadBalancerArn: !Ref LoadBalancer
       Port: 443
       Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref CertificateArn
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref TargetGroup
+
+  WwwRedirectRule:
+    Condition: HasCertificate
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref HttpsListener
+      Priority: 1
+      Conditions:
+        - Field: host-header
+          HostHeaderConfig:
+            Values:
+              - www.leebrokertool.com
+      Actions:
+        - Type: redirect
+          RedirectConfig:
+            Host: leebrokertool.com
+            Protocol: HTTPS
+            Port: '443'
+            Path: '/#{path}'
+            Query: '#{query}'
+            StatusCode: HTTP_301
 
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -295,7 +328,6 @@ Resources:
   Service:
     Type: AWS::ECS::Service
     DependsOn:
-      - Listener
       - HttpListener
       - DatabaseIngressFromService
     Properties:

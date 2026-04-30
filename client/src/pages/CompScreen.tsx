@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
+import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 import { 
   Icons, PageHeader, StepProgress, Segmented, Button, Card, Badge, 
   Input, Select, StepCard, Field, Toggle, Metric, SummaryRow, FormSection, FormRow, SectionHeader 
@@ -9,6 +10,28 @@ import {
 
 // ── Comp Reports (the user said this is a mess — redesign as a clear workflow) ──
 function CompScreen() {
+  type CompType = 'lease' | 'sale' | 'both';
+  type ViewMode = 'list' | 'grid' | 'map';
+
+  const [compType, setCompType] = useState<CompType>('lease');
+  const [radius, setRadius] = useState<'1' | '3' | '5' | '10'>('3');
+  const [closedWithin, setClosedWithin] = useState<'3' | '6' | '12' | '24'>('12');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+
+  const radiusOptions: ComboboxOption[] = [
+    { value: "1", label: "1 mile" },
+    { value: "3", label: "3 miles" },
+    { value: "5", label: "5 miles" },
+    { value: "10", label: "10 miles" },
+  ];
+
+  const closedWithinOptions: ComboboxOption[] = [
+    { value: "3", label: "3 months" },
+    { value: "6", label: "6 months" },
+    { value: "12", label: "12 months" },
+    { value: "24", label: "24 months" },
+  ];
+
   return (
     <div>
       <PageHeader
@@ -44,10 +67,39 @@ function CompScreen() {
               <div className="lee-eyebrow">Filters</div>
               <button style={{ fontSize: 11, color: 'var(--lee-crimson)', background:'none', border:'none', cursor:'pointer', fontWeight: 600 }}>Reset</button>
             </div>
-            <Field label="Comp type"><Segmented size="sm" value="lease" onChange={()=>{}} options={[{value:'lease',label:'Lease'},{value:'sale',label:'Sale'},{value:'both',label:'Both'}]}/></Field>
-            <div style={{ marginTop: 12 }}><Field label="Radius"><Select value="3" onChange={()=>{}} options={['1 mile','3 miles','5 miles','10 miles']}/></Field></div>
+            <Field label="Comp type">
+              <Segmented
+                size="sm"
+                value={compType}
+                onChange={setCompType}
+                options={[
+                  { value: 'lease', label: 'Lease' },
+                  { value: 'sale', label: 'Sale' },
+                  { value: 'both', label: 'Both' },
+                ]}
+              />
+            </Field>
+            <div style={{ marginTop: 12 }}>
+              <Field label="Radius">
+                <Combobox
+                  value={radius}
+                  onChange={v => setRadius(v as typeof radius)}
+                  options={radiusOptions}
+                  searchPlaceholder="Type miles…"
+                />
+              </Field>
+            </div>
             <div style={{ marginTop: 12 }}><Field label="Size range"><Input suffix="SF" defaultValue="15,000 – 40,000"/></Field></div>
-            <div style={{ marginTop: 12 }}><Field label="Closed within"><Select value="12mo" onChange={()=>{}} options={['3 months','6 months','12 months','24 months']}/></Field></div>
+            <div style={{ marginTop: 12 }}>
+              <Field label="Closed within">
+                <Combobox
+                  value={closedWithin}
+                  onChange={v => setClosedWithin(v as typeof closedWithin)}
+                  options={closedWithinOptions}
+                  searchPlaceholder="Type months…"
+                />
+              </Field>
+            </div>
             <div style={{ marginTop: 16, display:'flex', alignItems:'center', gap:10, padding: '10px 12px', background:'var(--ai-100)', borderRadius: 8, border:'1px solid rgba(110,63,217,.2)' }}>
               <Icons.Sparkles size={14} style={{ color:'var(--ai-500)' }}/>
               <div style={{ flex: 1, fontSize: 12, color: 'var(--ink-700)' }}><b>Deal Assist</b> picked these filters from your subject</div>
@@ -70,7 +122,16 @@ function CompScreen() {
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding: '12px 20px', borderBottom: '1px solid var(--ink-150)' }}>
               <div style={{ fontSize: 14, fontWeight: 600 }}>12 comps · sorted by relevance</div>
               <div style={{ display:'flex', gap: 6 }}>
-                <Segmented size="sm" options={[{value:'list',label:<Icons.List size={12}/>},{value:'grid',label:<Icons.Grid size={12}/>},{value:'map',label:<Icons.Pin size={12}/>}]} value="list" onChange={()=>{}}/>
+                <Segmented
+                  size="sm"
+                  options={[
+                    { value: 'list', label: <Icons.List size={12} /> },
+                    { value: 'grid', label: <Icons.Grid size={12} /> },
+                    { value: 'map', label: <Icons.Pin size={12} /> },
+                  ]}
+                  value={viewMode}
+                  onChange={setViewMode}
+                />
                 <Button variant="ghost" size="sm" icon={<Icons.Sort size={12}/>}>Sort</Button>
                 <Button variant="ghost" size="sm" icon={<Icons.Filter size={12}/>}>Columns</Button>
               </div>

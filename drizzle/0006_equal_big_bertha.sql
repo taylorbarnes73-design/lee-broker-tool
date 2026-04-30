@@ -1,0 +1,2 @@
+CREATE INDEX `submissions_status_createdAt_id_idx` ON `submissions` (`status`,`createdAt`,`id`);--> statement-breakpoint
+CREATE INDEX `submissions_broker_status_createdAt_id_idx` ON `submissions` (`submittedByOpenId`,`status`,`createdAt`,`id`);

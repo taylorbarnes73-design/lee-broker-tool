@@ -1,0 +1,69 @@
+## Lee Broker Tool (local dev)
+
+This repo is a **TypeScript Node/Express** server that serves a **Vite + React** frontend. It uses **Drizzle ORM + MySQL** for persistence.
+
+### What was added (auth + RBAC + submissions portal)
+
+- **Password-based local auth** (bcrypt hashing) layered onto the existing signed-cookie session system.
+- **Role-based access control**:
+  - **Admins**: only allowlisted identities (see `LOCAL_ADMIN_EMAILS` / `LOCAL_ADMIN_NAMES`)
+  - **Agents**: everyone else
+- **Submissions API** with authorization rules:
+  - Agents can only see/manage their own submissions
+  - Admins can see/manage all submissions
+- A simple UI at `/portal` for:
+  - Login
+  - Dashboard
+  - My submissions list + detail
+  - Admin: all submissions
+
+### Setup
+
+1) Install deps
+
+```bash
+pnpm install
+```
+
+2) Configure env
+
+- Copy `.env.example` → `.env`
+- Set at minimum:
+  - `DATABASE_URL` (MySQL connection string)
+  - `JWT_SECRET`
+  - `LOCAL_AUTH_ENABLED=true`
+  - `LOCAL_ADMIN_EMAILS` and/or `LOCAL_ADMIN_NAMES`
+
+3) Run migrations (Drizzle)
+
+```bash
+pnpm db:push
+```
+
+4) Start dev server (API + Vite)
+
+```bash
+pnpm dev
+```
+
+Then open:
+
+- `http://localhost:3000/portal` (submissions portal)
+- `http://localhost:3000/beta` (existing “beta” UI)
+- `http://localhost:3000/` (redirects to `/tool` when authenticated)
+
+### Auth behavior (local)
+
+- Login uses **email + password**.
+- If the user doesn’t exist yet (or has no stored password), the first successful login **creates** (or sets) the password hash.
+- **Admin role** is assigned only when the normalized email is in `LOCAL_ADMIN_EMAILS` or the normalized name is in `LOCAL_ADMIN_NAMES`.
+
+### Admin identification assumptions
+
+Because the prompt specified **“Errissa Kat”** and **“Taylor Barnes”** but did not provide canonical emails, the implementation supports both:
+
+- **By email**: set `LOCAL_ADMIN_EMAILS=errissa@example.com,taylor@example.com`
+- **By name** (case-insensitive): default `.env.example` sets `LOCAL_ADMIN_NAMES=Errissa Kat,Taylor Barnes`
+
+If you have the real emails, prefer **email allowlisting** (more stable than names).
+

@@ -1,0 +1,85 @@
+name: Deploy to ECS (leebrokertool.com)
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: ["main"]
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: lee-broker-tool-deploy
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: us-east-2
+  AWS_ACCOUNT_ID: "867958226961"
+  ECR_REPOSITORY: lee-broker-tool
+  ECS_CLUSTER: lee-broker-tool-cluster
+  ECS_SERVICE: lee-broker-tool
+  CONTAINER_NAME: lee-broker-tool
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        env:
+          ECR_REGISTRY: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t "${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}" .
+          docker push "${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+          docker tag "${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}" "${ECR_REGISTRY}/${ECR_REPOSITORY}:latest"
+          docker push "${ECR_REGISTRY}/${ECR_REPOSITORY}:latest"
+
+      - name: Deploy new task definition
+        env:
+          ECR_REGISTRY: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          TD_ARN="$(aws ecs describe-services \
+            --cluster "${ECS_CLUSTER}" \
+            --services "${ECS_SERVICE}" \
+            --query 'services[0].taskDefinition' \
+            --output text)"
+
+          aws ecs describe-task-definition --task-definition "${TD_ARN}" --query 'taskDefinition' > td.json
+
+          # Remove fields that can't be passed to register-task-definition
+          jq 'del(
+              .taskDefinitionArn,
+              .revision,
+              .status,
+              .requiresAttributes,
+              .compatibilities,
+              .registeredAt,
+              .registeredBy
+            )
+            | (.containerDefinitions[] | select(.name=="'"${CONTAINER_NAME}"'") | .image) = "'"${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"'"
+          ' td.json > td-clean.json
+
+          NEW_TD_ARN="$(aws ecs register-task-definition --cli-input-json file://td-clean.json --query 'taskDefinition.taskDefinitionArn' --output text)"
+
+          aws ecs update-service \
+            --cluster "${ECS_CLUSTER}" \
+            --service "${ECS_SERVICE}" \
+            --task-definition "${NEW_TD_ARN}" \
+            --force-new-deployment
+
+          aws ecs wait services-stable --cluster "${ECS_CLUSTER}" --services "${ECS_SERVICE}"

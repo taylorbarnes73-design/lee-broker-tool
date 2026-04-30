@@ -43,6 +43,13 @@
       "when": 1776567172896,
       "tag": "0005_graceful_black_bird",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1777527350713,
+      "tag": "0006_equal_big_bertha",
+      "breakpoints": true
     }
   ]
 }

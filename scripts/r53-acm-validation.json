@@ -1,0 +1,31 @@
+{
+  "Comment": "ACM validation for leebrokertool.space",
+  "Changes": [
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "_64d572cf5519bbd361997f76fe91428b.leebrokertool.space.",
+        "Type": "CNAME",
+        "TTL": 300,
+        "ResourceRecords": [
+          {
+            "Value": "_b7616f366c9d29e4a37d208ff347033c.jkddzztszm.acm-validations.aws."
+          }
+        ]
+      }
+    },
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "_b99116cdc315c5a2b95a1d2db301ddbe.www.leebrokertool.space.",
+        "Type": "CNAME",
+        "TTL": 300,
+        "ResourceRecords": [
+          {
+            "Value": "_e008b1ccd7c204da3921dacab1aa533f.jkddzztszm.acm-validations.aws."
+          }
+        ]
+      }
+    }
+  ]
+}

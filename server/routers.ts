@@ -20,6 +20,7 @@ import { submissionsRouter } from "./routers/submissions";
 import { brokersRouter } from "./routers/brokers";
 import { localAuth, sdk } from "./_core/sdk";
 import { hashPassword, verifyPassword } from "./_core/passwords";
+import { ENV } from "./_core/env";
 
 export const appRouter = router({
   system: systemRouter,

@@ -5,6 +5,7 @@ param(
     [string] $ImageTag = "latest",
     [string] $ServiceName = "lee-broker-tool",
     [string] $DbInstanceIdentifier = "lee-broker-tool-db",
+    [string] $CertificateArn = "",
     [string] $AwsProfile = "TaylorBarnes"
 )
 
@@ -27,6 +28,10 @@ function Invoke-Aws {
     }
     else {
         & aws @Args
+    }
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "AWS command failed (exit code $LASTEXITCODE)."
     }
 }
 
@@ -128,6 +133,7 @@ $parameterOverrides = @(
     "VpcId=$vpcId",
     "PublicSubnetIds=$subnetParam",
     "ContainerImageUri=$imageUri",
+    "CertificateArn=$CertificateArn",
     "DatabaseSecurityGroupId=$dbSecurityGroupId",
     "DatabaseUrl=$($paramMap["DATABASE_URL"])",
     "DatabaseSslMode=$($paramMap["DATABASE_SSL_MODE"])",
@@ -158,12 +164,20 @@ Write-Host "Using subnets: $subnetParam" -ForegroundColor Green
 Write-Host "Using DB security group: $dbSecurityGroupId" -ForegroundColor Green
 
 Write-Host "Deploying ECS stack '$StackName'" -ForegroundColor Yellow
-Invoke-Aws cloudformation deploy `
-    --region $Region `
-    --stack-name $StackName `
-    --template-file ecs-app.template.yaml `
-    --capabilities CAPABILITY_IAM `
-    --parameter-overrides $parameterOverrides
+$changeSetName = "$StackName-$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())"
+$deployArgs = [System.Collections.Generic.List[string]]::new()
+$deployArgs.AddRange([string[]]@(
+    "cloudformation",
+    "deploy",
+    "--region", $Region,
+    "--stack-name", $StackName,
+    "--template-file", "ecs-app.template.yaml",
+    "--capabilities", "CAPABILITY_IAM",
+    "--change-set-name", $changeSetName,
+    "--parameter-overrides"
+))
+$deployArgs.AddRange([string[]]$parameterOverrides)
+Invoke-Aws @deployArgs
 
 Write-Host "Fetching stack outputs" -ForegroundColor Yellow
 Invoke-Aws cloudformation describe-stacks `

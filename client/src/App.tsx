@@ -15,6 +15,11 @@ import ListingEntryScreen from "./pages/ListingScreen";
 import SignRequestScreen from "./pages/SignScreen";
 import VoucherScreen from "./pages/VoucherScreen";
 import CompScreen, { AdminScreen, ContractScreen, DocsScreen } from "./pages/CompScreen";
+import QueueScreen from "./pages/QueueScreen";
+import PortalDashboard from "./pages/PortalDashboard";
+import PortalSubmissions from "./pages/PortalSubmissions";
+import PortalSubmissionDetail from "./pages/PortalSubmissionDetail";
+import PortalAdminSubmissions from "./pages/PortalAdminSubmissions";
 
 /**
  * Full-screen redirect to the production broker tool HTML app.
@@ -141,6 +146,33 @@ function Router() {
         <BetaLayout>
           <DocsScreen />
         </BetaLayout>
+      </Route>
+      <Route path="/beta/queue">
+        <BetaLayout>
+          <QueueScreen />
+        </BetaLayout>
+      </Route>
+
+      {/* Simple submissions portal (auth + RBAC demo) */}
+      <Route path="/portal">
+        <AuthGate>
+          <PortalDashboard />
+        </AuthGate>
+      </Route>
+      <Route path="/portal/submissions">
+        <AuthGate>
+          <PortalSubmissions />
+        </AuthGate>
+      </Route>
+      <Route path="/portal/submissions/:id">
+        <AuthGate>
+          <PortalSubmissionDetail />
+        </AuthGate>
+      </Route>
+      <Route path="/portal/admin/submissions">
+        <AuthGate>
+          <PortalAdminSubmissions />
+        </AuthGate>
       </Route>
 
       <Route path="/404" component={NotFound} />
