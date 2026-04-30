@@ -80,13 +80,24 @@ export function serveStatic(app: Express) {
 
   // Serve the broker tool at the clean /tool path
   app.get("/tool", (_req, res) => {
+    // Avoid CDN/browser caching hiding updates to the tool UI.
+    res.setHeader("Cache-Control", "no-store");
     res.sendFile("broker_tool.html", { root: distPath });
   });
 
-  app.use(express.static(distPath));
+  app.use(
+    express.static(distPath, {
+      setHeaders(res, filePath) {
+        if (filePath.endsWith("broker_tool.html")) {
+          res.setHeader("Cache-Control", "no-store");
+        }
+      },
+    })
+  );
 
   // Tool-only deployment: fall through to broker_tool.html.
   app.use("*", (_req, res) => {
+    res.setHeader("Cache-Control", "no-store");
     res.sendFile("broker_tool.html", { root: distPath });
   });
 }
