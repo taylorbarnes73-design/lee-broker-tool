@@ -11,17 +11,23 @@ type SubmissionSummary = {
   submittedBy: string | null;
   submittedByEmail: string | null;
   createdAt: string;
+  queuePosition: number | null;
 };
 
 export default function PortalAdminSubmissions() {
   const { user } = useAuth();
   const [items, setItems] = useState<SubmissionSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [sortByQueue, setSortByQueue] = useState(false);
 
   useEffect(() => {
     if (user?.role !== "admin") return;
     let alive = true;
-    fetch("/api/submissions?limit=200", { credentials: "include" })
+    const params = new URLSearchParams({ limit: "200", includeQueue: "1" });
+    if (statusFilter) params.set("status", statusFilter);
+    fetch(`/api/submissions?${params.toString()}`, { credentials: "include" })
       .then(r => r.json().then(b => ({ ok: r.ok, b })))
       .then(({ ok, b }) => {
         if (!alive) return;
@@ -35,7 +41,7 @@ export default function PortalAdminSubmissions() {
     return () => {
       alive = false;
     };
-  }, [user?.role]);
+  }, [user?.role, statusFilter]);
 
   if (user?.role !== "admin") {
     return (
@@ -66,13 +72,69 @@ export default function PortalAdminSubmissions() {
 
       <div style={{ marginTop: 14 }}>
         <Card padding="lg">
+          <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
+            <input
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Filter by user name or email…"
+              style={{
+                width: 340,
+                maxWidth: "100%",
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid var(--ink-200)",
+                background: "white",
+                fontSize: 13,
+              }}
+            />
+            <select
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value)}
+              style={{
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid var(--ink-200)",
+                background: "white",
+                fontSize: 13,
+              }}
+            >
+              <option value="">All statuses</option>
+              <option value="pending">pending</option>
+              <option value="in_review">in_review</option>
+              <option value="approved">approved</option>
+              <option value="rejected">rejected</option>
+            </select>
+            <Button variant={sortByQueue ? "primary" : "secondary"} onClick={() => setSortByQueue(v => !v)}>
+              Sort by queue
+            </Button>
+            <div style={{ fontSize: 12, color: "var(--ink-500)" }}>
+              Showing {items.filter(s => {
+                const q = query.trim().toLowerCase();
+                if (!q) return true;
+                return `${s.submittedBy ?? ""} ${s.submittedByEmail ?? ""}`.toLowerCase().includes(q);
+              }).length} of {items.length}
+            </div>
+          </div>
           {error ? (
             <div style={{ color: "var(--err-700)", fontSize: 13 }}>{error}</div>
           ) : items.length === 0 ? (
             <div style={{ color: "var(--ink-500)", fontSize: 13 }}>No submissions found.</div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {items.map(s => (
+              {items
+                .filter(s => {
+                  const q = query.trim().toLowerCase();
+                  if (!q) return true;
+                  return `${s.submittedBy ?? ""} ${s.submittedByEmail ?? ""}`.toLowerCase().includes(q);
+                })
+                .slice()
+                .sort((a, b) => {
+                  if (!sortByQueue) return 0;
+                  const ap = a.queuePosition ?? Number.POSITIVE_INFINITY;
+                  const bp = b.queuePosition ?? Number.POSITIVE_INFINITY;
+                  return ap - bp;
+                })
+                .map(s => (
                 <Link key={s.id} href={`/portal/submissions/${s.id}`}>
                   <a style={{ textDecoration: "none" }}>
                     <div
@@ -88,11 +150,16 @@ export default function PortalAdminSubmissions() {
                     >
                       <div>
                         <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>
-                          #{s.id} · {s.formType}
+                          #{s.id} · {s.reference || "(untitled)"}
                         </div>
                         <div style={{ fontSize: 13, color: "var(--ink-500)", marginTop: 2 }}>
-                          {s.reference || "(no reference)"} · status: {s.status}
+                          status: {s.status}
                         </div>
+                        {s.queuePosition !== null && (
+                          <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 2 }}>
+                            queue: #{s.queuePosition}
+                          </div>
+                        )}
                         <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 2 }}>
                           {s.submittedBy || "(unknown)"} {s.submittedByEmail ? `· ${s.submittedByEmail}` : ""}
                         </div>

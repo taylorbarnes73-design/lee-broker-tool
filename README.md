@@ -6,8 +6,8 @@ This repo is a **TypeScript Node/Express** server that serves a **Vite + React**
 
 - **Password-based local auth** (bcrypt hashing) layered onto the existing signed-cookie session system.
 - **Role-based access control**:
-  - **Admins**: only allowlisted identities (see `LOCAL_ADMIN_EMAILS` / `LOCAL_ADMIN_NAMES`)
-  - **Agents**: everyone else
+  - **Admins**: only users whose **display name** is exactly **"Errissa Kat"** or **"Taylor Barnes"** (case-insensitive match)
+  - **Agents**: everyone else (non-admin)
 - **Submissions API** with authorization rules:
   - Agents can only see/manage their own submissions
   - Admins can see/manage all submissions
@@ -39,7 +39,7 @@ corepack pnpm install
   - `DATABASE_URL` (MySQL connection string)
   - `JWT_SECRET`
   - `LOCAL_AUTH_ENABLED=true`
-  - `LOCAL_ADMIN_EMAILS` and/or `LOCAL_ADMIN_NAMES`
+  - (No admin allowlist env vars; admin names are fixed in code)
 
 #### AI / “Deal Assist” setup
 
@@ -84,14 +84,12 @@ Then open:
 
 - Login uses **email + password**.
 - If the user doesn’t exist yet (or has no stored password), the first successful login **creates** (or sets) the password hash.
-- **Admin role** is assigned only when the normalized email is in `LOCAL_ADMIN_EMAILS` or the normalized name is in `LOCAL_ADMIN_NAMES`.
+- **Admin role** is assigned only when the normalized display name equals **"errissa kat"** or **"taylor barnes"**.
 
-### Admin identification assumptions
+### Admin identification
 
-Because the prompt specified **“Errissa Kat”** and **“Taylor Barnes”** but did not provide canonical emails, the implementation supports both:
+Admins are **hardcoded** to exactly:
 
-- **By email**: set `LOCAL_ADMIN_EMAILS=errissa@example.com,taylor@example.com`
-- **By name** (case-insensitive): default `.env.example` sets `LOCAL_ADMIN_NAMES=Errissa Kat,Taylor Barnes`
-
-If you have the real emails, prefer **email allowlisting** (more stable than names).
+- `Errissa Kat`
+- `Taylor Barnes`
 

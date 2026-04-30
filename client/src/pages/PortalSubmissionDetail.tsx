@@ -13,6 +13,7 @@ type SubmissionDetail = {
   createdAt: string;
   updatedAt: string;
   payload: unknown;
+  queuePosition?: number | null;
 };
 
 export default function PortalSubmissionDetail() {
@@ -23,11 +24,13 @@ export default function PortalSubmissionDetail() {
   const [error, setError] = useState<string | null>(null);
   const [pushing, setPushing] = useState(false);
   const [pushError, setPushError] = useState<string | null>(null);
+  const [queueMeta, setQueueMeta] = useState<{ position: number | null; totalActive: number; aheadOfYou: number | null } | null>(null);
 
   useEffect(() => {
     let alive = true;
     setError(null);
     setItem(null);
+    setQueueMeta(null);
     fetch(`/api/submissions/${id}`, { credentials: "include" })
       .then(r => r.json().then(b => ({ ok: r.ok, b })))
       .then(({ ok, b }) => {
@@ -38,6 +41,17 @@ export default function PortalSubmissionDetail() {
       .catch(e => {
         if (!alive) return;
         setError(e.message ?? "Failed to load");
+      });
+
+    fetch(`/api/submissions/${id}/queue`, { credentials: "include" })
+      .then(r => r.json().then(b => ({ ok: r.ok, b })))
+      .then(({ ok, b }) => {
+        if (!alive) return;
+        if (!ok) return;
+        setQueueMeta(b?.data ?? null);
+      })
+      .catch(() => {
+        // ignore queue failures; detail still renders
       });
     return () => {
       alive = false;
@@ -87,10 +101,16 @@ export default function PortalSubmissionDetail() {
             <>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                 <div>
-                  <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>{item.formType}</div>
+                  <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>{item.reference || "(untitled)"}</div>
                   <div style={{ fontSize: 13, color: "var(--ink-500)", marginTop: 2 }}>
-                    {item.reference || "(no reference)"} · status: {item.status}
+                    status: {item.status}
                   </div>
+                  {queueMeta?.position !== null && queueMeta?.position !== undefined && (
+                    <div style={{ fontSize: 13, color: "var(--ink-500)", marginTop: 2 }}>
+                      queue: #{queueMeta.position} of {queueMeta.totalActive}
+                      {typeof queueMeta.aheadOfYou === "number" ? ` (ahead: ${queueMeta.aheadOfYou})` : ""}
+                    </div>
+                  )}
                 </div>
                 <div style={{ fontSize: 12, color: "var(--ink-500)" }}>
                   Created: {new Date(item.createdAt).toLocaleString()}
@@ -113,21 +133,26 @@ export default function PortalSubmissionDetail() {
 
               <div style={{ marginTop: 14 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 6 }}>
-                  Payload
+                  Body
                 </div>
-                <pre
+                <div
                   style={{
                     margin: 0,
                     padding: 12,
                     borderRadius: 10,
                     border: "1px solid var(--ink-200)",
-                    background: "var(--ink-50)",
+                    background: "white",
                     overflow: "auto",
-                    fontSize: 12,
+                    fontSize: 13,
+                    color: "var(--ink-900)",
+                    whiteSpace: "pre-wrap",
                   }}
                 >
-                  {JSON.stringify(item.payload, null, 2)}
-                </pre>
+                  {(() => {
+                    const p: any = item.payload as any;
+                    return typeof p?.body === "string" ? p.body : JSON.stringify(item.payload, null, 2);
+                  })()}
+                </div>
               </div>
             </>
           )}

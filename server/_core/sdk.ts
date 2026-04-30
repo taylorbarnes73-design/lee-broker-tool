@@ -40,6 +40,11 @@ const isLocalOpenId = (openId: string) => openId.startsWith(LOCAL_OPEN_ID_PREFIX
 const emailFromLocalOpenId = (openId: string) =>
   isLocalOpenId(openId) ? openId.slice(LOCAL_OPEN_ID_PREFIX.length) : null;
 
+function isAdminName(name: string | null | undefined) {
+  const normalized = String(name ?? "").trim().toLowerCase();
+  return normalized === "errissa kat" || normalized === "taylor barnes";
+}
+
 class OAuthService {
   constructor(private client: ReturnType<typeof axios.create>) {
     console.log("[OAuth] Initialized with baseURL:", ENV.oAuthServerUrl);
@@ -296,10 +301,7 @@ class SDKServer {
           email: email ?? null,
           loginMethod: "local",
           lastSignedIn: signedInAt,
-          role:
-            email && ENV.localAdminEmails.includes(email.toLowerCase())
-              ? "admin"
-              : undefined,
+          role: isAdminName(session.name) ? "admin" : "user",
         });
         user = await db.getUserByOpenId(sessionUserId);
       }
@@ -314,6 +316,7 @@ class SDKServer {
         email: email ?? user.email,
         loginMethod: "local",
         lastSignedIn: signedInAt,
+        role: isAdminName(session.name || user.name) ? "admin" : "user",
       });
 
       return {
@@ -322,6 +325,7 @@ class SDKServer {
         email: email ?? user.email,
         loginMethod: "local",
         lastSignedIn: signedInAt,
+        role: isAdminName(session.name || user.name) ? "admin" : "user",
       };
     }
 
@@ -350,9 +354,13 @@ class SDKServer {
     await db.upsertUser({
       openId: user.openId,
       lastSignedIn: signedInAt,
+      role: isAdminName(user.name) ? "admin" : "user",
     });
 
-    return user;
+    return {
+      ...user,
+      role: isAdminName(user.name) ? "admin" : "user",
+    };
   }
 }
 

@@ -2,35 +2,56 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useState } from "react";
 import { Link } from "wouter";
 import { Button, Card, Input } from "../design/index.jsx";
+import { useEffect } from "react";
 
 export default function PortalDashboard() {
   const { user, logout } = useAuth();
-  const [formType, setFormType] = useState("note");
-  const [reference, setReference] = useState("");
-  const [payloadJson, setPayloadJson] = useState('{"message":"Hello"}');
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
   const [status, setStatus] = useState<string | null>(null);
+  const [queueSummary, setQueueSummary] = useState<{ position: number; totalActive: number } | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    setQueueSummary(null);
+    fetch("/api/submissions?limit=100&includeQueue=1", { credentials: "include" })
+      .then(r => r.json().then(b => ({ ok: r.ok, b })))
+      .then(async ({ ok, b }) => {
+        if (!alive) return;
+        if (!ok) return;
+        const items = (b?.data ?? []) as Array<{ id: number; queuePosition: number | null }>;
+        const active = items.filter(i => typeof i.queuePosition === "number") as Array<{ id: number; queuePosition: number }>;
+        if (active.length === 0) return;
+        active.sort((a, b) => a.queuePosition - b.queuePosition);
+        const top = active[0];
+        const r2 = await fetch(`/api/submissions/${top.id}/queue`, { credentials: "include" });
+        const b2 = await r2.json().catch(() => ({}));
+        if (!alive) return;
+        const pos = Number(b2?.data?.position);
+        const total = Number(b2?.data?.totalActive);
+        if (Number.isFinite(pos) && Number.isFinite(total)) setQueueSummary({ position: pos, totalActive: total });
+      })
+      .catch(() => {
+        // ignore
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const createSubmission = async () => {
     setStatus(null);
-    const payload = (() => {
-      try {
-        return JSON.parse(payloadJson || "{}");
-      } catch {
-        throw new Error("Payload must be valid JSON");
-      }
-    })();
-
     const res = await fetch("/api/submissions", {
       method: "POST",
       headers: { "content-type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ formType, reference: reference || undefined, payload }),
+      body: JSON.stringify({ title, body }),
     });
-    const body = await res.json().catch(() => null);
+    const respBody = await res.json().catch(() => null);
     if (!res.ok) {
-      throw new Error(body?.error ?? "Failed to create submission");
+      throw new Error(respBody?.error ?? "Failed to create submission");
     }
-    setStatus(`Created submission #${body?.data?.id ?? "?"}`);
+    setStatus(`Created submission #${respBody?.data?.id ?? "?"}`);
   };
 
   return (
@@ -60,46 +81,36 @@ export default function PortalDashboard() {
         )}
       </div>
 
+      {user?.role !== "admin" && queueSummary && (
+        <div style={{ marginTop: 14 }}>
+          <Card padding="lg">
+            <div style={{ fontSize: 14, color: "var(--ink-700)" }}>
+              You are <b>#{queueSummary.position}</b> of <b>{queueSummary.totalActive}</b> in the active queue.
+            </div>
+          </Card>
+        </div>
+      )}
+
       <div style={{ marginTop: 18 }}>
         <Card padding="lg">
           <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink-900)" }}>Create a submission</div>
           <div style={{ fontSize: 13, color: "var(--ink-500)", marginTop: 6 }}>
-            Minimal “submission” record stored server-side and scoped to your user.
+            Create a title + body submission stored server-side and scoped to your user.
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 14 }}>
             <div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 6 }}>
-                Form type
+                Title
               </label>
-              <Input value={formType} onChange={(e: any) => setFormType(e.target.value)} />
+              <Input value={title} onChange={(e: any) => setTitle(e.target.value)} placeholder="Short title" />
             </div>
             <div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 6 }}>
-                Reference (optional)
+                Body
               </label>
-              <Input value={reference} onChange={(e: any) => setReference(e.target.value)} placeholder="123 Main St" />
+              <Input value={body} onChange={(e: any) => setBody(e.target.value)} placeholder="Write something…" />
             </div>
-          </div>
-
-          <div style={{ marginTop: 12 }}>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 6 }}>
-              Payload (JSON)
-            </label>
-            <textarea
-              value={payloadJson}
-              onChange={e => setPayloadJson(e.target.value)}
-              rows={7}
-              style={{
-                width: "100%",
-                fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                fontSize: 12,
-                padding: 12,
-                borderRadius: 10,
-                border: "1px solid var(--ink-200)",
-                background: "white",
-              }}
-            />
           </div>
 
           <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 12 }}>

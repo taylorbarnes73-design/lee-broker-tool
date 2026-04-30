@@ -8,6 +8,7 @@ type SubmissionSummary = {
   status: string;
   reference: string | null;
   createdAt: string;
+  queuePosition: number | null;
 };
 
 export default function PortalSubmissions() {
@@ -16,7 +17,7 @@ export default function PortalSubmissions() {
 
   useEffect(() => {
     let alive = true;
-    fetch("/api/submissions?limit=100", { credentials: "include" })
+    fetch("/api/submissions?limit=100&includeQueue=1", { credentials: "include" })
       .then(r => r.json().then(b => ({ ok: r.ok, b })))
       .then(({ ok, b }) => {
         if (!alive) return;
@@ -65,11 +66,16 @@ export default function PortalSubmissions() {
                     >
                       <div>
                         <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>
-                          #{s.id} · {s.formType}
+                          #{s.id} · {s.reference || "(untitled)"}
                         </div>
                         <div style={{ fontSize: 13, color: "var(--ink-500)", marginTop: 2 }}>
-                          {s.reference || "(no reference)"} · status: {s.status}
+                          status: {s.status}
                         </div>
+                        {s.queuePosition !== null && (
+                          <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 2 }}>
+                            queue: #{s.queuePosition}
+                          </div>
+                        )}
                       </div>
                       <div style={{ fontSize: 12, color: "var(--ink-500)" }}>
                         {new Date(s.createdAt).toLocaleString()}

@@ -2,15 +2,41 @@ import { Router } from "express";
 import { z } from "zod/v4";
 import { getDb } from "./db";
 import { submissions } from "../drizzle/schema";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { sdk } from "./_core/sdk";
 import { pushVoucherSubmissionToDealius } from "./services/dealiusPush";
 
-const createSchema = z.object({
-  formType: z.string().trim().min(1).max(32),
-  reference: z.string().trim().max(512).optional(),
-  payload: z.unknown().optional(),
-});
+const ACTIVE_QUEUE_STATUSES = ["pending", "in_review"] as const;
+type ActiveQueueStatus = (typeof ACTIVE_QUEUE_STATUSES)[number];
+
+function isActiveQueueStatus(status: string): status is ActiveQueueStatus {
+  return (ACTIVE_QUEUE_STATUSES as readonly string[]).includes(status);
+}
+
+// Support the "title/body" shape (preferred), and keep backward compatibility
+// for older portal clients that still send { formType, reference, payload }.
+const createSchema = z
+  .union([
+    z.object({
+      title: z.string().trim().min(1).max(256),
+      body: z.string().trim().min(1).max(20_000),
+    }),
+    z.object({
+      formType: z.string().trim().min(1).max(32),
+      reference: z.string().trim().max(512).optional(),
+      payload: z.unknown().optional(),
+    }),
+  ])
+  .transform(value => {
+    if ("title" in value) {
+      return {
+        formType: "item",
+        reference: value.title,
+        payload: { body: value.body },
+      };
+    }
+    return value;
+  });
 
 const updateSchema = z.object({
   status: z.string().trim().max(32).optional(),
@@ -39,9 +65,51 @@ submissionsApiRouter.get("/", async (req, res) => {
 
   const limit = Math.min(parseInt(String(req.query.limit ?? "50"), 10) || 50, 200);
   const isAdmin = user.role === "admin";
-  const baseQuery = db.select().from(submissions);
-  const scopedQuery = isAdmin ? baseQuery : baseQuery.where(eq(submissions.submittedByOpenId, user.openId));
-  const rows = await scopedQuery.orderBy(desc(submissions.createdAt)).limit(limit);
+  const includeQueue =
+    String(req.query.includeQueue ?? "").trim().toLowerCase() === "1" ||
+    String(req.query.includeQueue ?? "").trim().toLowerCase() === "true";
+
+  const statusFilter = String(req.query.status ?? "").trim();
+  const submittedByOpenIdFilter = String(req.query.submittedByOpenId ?? "").trim();
+  const submittedByEmailFilter = String(req.query.submittedByEmail ?? "").trim();
+
+  const whereClauses: any[] = [];
+  if (!isAdmin) {
+    whereClauses.push(sql`${submissions.submittedByOpenId} = ${user.openId}`);
+  } else {
+    if (statusFilter) whereClauses.push(sql`${submissions.status} = ${statusFilter}`);
+    if (submittedByOpenIdFilter) whereClauses.push(sql`${submissions.submittedByOpenId} = ${submittedByOpenIdFilter}`);
+    if (submittedByEmailFilter) whereClauses.push(sql`${submissions.submittedByEmail} = ${submittedByEmailFilter}`);
+  }
+
+  const whereSql = whereClauses.length ? sql`where ${sql.join(whereClauses, sql` and `)}` : sql``;
+
+  const baseSql = includeQueue
+    ? sql`
+        with queue as (
+          select
+            id,
+            row_number() over (order by createdAt asc, id asc) as queuePosition
+          from submissions
+          where status in (${sql.join(ACTIVE_QUEUE_STATUSES.map(s => sql`${s}`), sql`, `)})
+        )
+        select s.*, q.queuePosition as queuePosition
+        from submissions s
+        left join queue q on q.id = s.id
+        ${whereSql}
+        order by s.createdAt desc
+        limit ${limit}
+      `
+    : sql`
+        select s.*
+        from submissions s
+        ${whereSql}
+        order by s.createdAt desc
+        limit ${limit}
+      `;
+
+  const result = await db.execute(baseSql);
+  const rows = (result as any)?.rows ?? result;
 
   res.json({
     success: true,
@@ -55,6 +123,7 @@ submissionsApiRouter.get("/", async (req, res) => {
       submittedByOpenId: r.submittedByOpenId,
       createdAt: r.createdAt,
       updatedAt: r.updatedAt,
+      queuePosition: includeQueue ? (r as any).queuePosition ?? null : null,
     })),
   });
 });
@@ -73,12 +142,12 @@ submissionsApiRouter.post("/", async (req, res) => {
     return;
   }
 
-  const payload = parsed.data.payload ?? {};
+  const payload = (parsed.data as any).payload ?? {};
   const [result] = await db.insert(submissions).values({
-    formType: parsed.data.formType,
+    formType: (parsed.data as any).formType,
     status: "pending",
     payload: JSON.stringify(payload),
-    reference: parsed.data.reference ?? null,
+    reference: (parsed.data as any).reference ?? null,
     submittedBy: user.name ?? user.email ?? user.openId,
     submittedByOpenId: user.openId,
     submittedByEmail: user.email ?? null,
@@ -136,6 +205,77 @@ submissionsApiRouter.get("/:id", async (req, res) => {
           return {};
         }
       })(),
+    },
+  });
+});
+
+submissionsApiRouter.get("/:id/queue", async (req, res) => {
+  const user = (req as any).user as { openId: string; role: string };
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id) || id <= 0) {
+    res.status(400).json({ success: false, error: "Invalid id" });
+    return;
+  }
+
+  const db = await getDb();
+  if (!db) {
+    res.status(503).json({ success: false, error: "Database unavailable" });
+    return;
+  }
+
+  const rows = await db.select().from(submissions).where(eq(submissions.id, id)).limit(1);
+  const row = rows[0];
+  if (!row) {
+    res.status(404).json({ success: false, error: "Not found" });
+    return;
+  }
+
+  const isAdmin = user.role === "admin";
+  if (!isAdmin && row.submittedByOpenId !== user.openId) {
+    res.status(403).json({ success: false, error: "Forbidden" });
+    return;
+  }
+
+  const [{ count: totalActiveRaw }] = await db.execute(
+    sql`select count(*) as count from submissions where status in (${sql.join(ACTIVE_QUEUE_STATUSES.map(s => sql`${s}`), sql`, `)})`
+  ) as any;
+  const totalActive = Number(totalActiveRaw ?? 0) || 0;
+
+  if (!isActiveQueueStatus(row.status)) {
+    res.json({
+      success: true,
+      data: { position: null, totalActive, aheadOfYou: null },
+    });
+    return;
+  }
+
+  const queueRows = await db.execute(
+    sql`
+      with queue as (
+        select
+          id,
+          row_number() over (order by createdAt asc, id asc) as position,
+          count(*) over () as totalActive
+        from submissions
+        where status in (${sql.join(ACTIVE_QUEUE_STATUSES.map(s => sql`${s}`), sql`, `)})
+      )
+      select position, totalActive
+      from queue
+      where id = ${id}
+      limit 1
+    `
+  ) as any[];
+
+  const q = queueRows[0] as any;
+  const position = q?.position ? Number(q.position) : null;
+  const totalFromWindow = q?.totalActive ? Number(q.totalActive) : totalActive;
+
+  res.json({
+    success: true,
+    data: {
+      position,
+      totalActive: totalFromWindow,
+      aheadOfYou: position ? position - 1 : null,
     },
   });
 });

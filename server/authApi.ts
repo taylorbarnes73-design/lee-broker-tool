@@ -13,9 +13,10 @@ const loginSchema = z.object({
 });
 
 function isAdminIdentity(params: { email: string; name?: string | null }) {
-  const email = params.email.trim().toLowerCase();
-  const name = (params.name ?? "").trim().toLowerCase();
-  return ENV.localAdminEmails.includes(email) || (name && ENV.localAdminNames.includes(name));
+  // Only these two admins exist (case-insensitive match).
+  // Preserve the display name stored for the user; only normalize for comparison.
+  const normalizedName = (params.name ?? "").trim().toLowerCase();
+  return normalizedName === "errissa kat" || normalizedName === "taylor barnes";
 }
 
 export const authApiRouter = Router();
