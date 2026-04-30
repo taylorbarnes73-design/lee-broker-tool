@@ -13,6 +13,8 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { restApiRouter } from "../restApi";
 import { sdk } from "./sdk";
+import { authApiRouter } from "../authApi";
+import { submissionsApiRouter } from "../submissionsApi";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -49,6 +51,9 @@ async function startServer() {
   registerOAuthRoutes(app);
   // REST API for Power Automate Custom Connector
   app.use("/api/v1", restApiRouter);
+  // Auth + submissions REST API for the SPA portal
+  app.use("/api/auth", authApiRouter);
+  app.use("/api/submissions", submissionsApiRouter);
 
   // tRPC API
   app.use(
