@@ -36,6 +36,7 @@ jobs:
           # Use the repo-scoped GitHub OIDC deploy role created by `infra/github-oidc-role.yaml`.
           # This avoids failing deploys when `AWS_ROLE_TO_ASSUME` secret is missing/misconfigured.
           role-to-assume: arn:aws:iam::867958226961:role/lee-broker-tool-github-deploy
+          role-session-name: lee-broker-tool-github-actions
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
