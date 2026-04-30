@@ -4,6 +4,7 @@ import { getDb } from "./db";
 import { submissions } from "../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
 import { sdk } from "./_core/sdk";
+import { pushVoucherSubmissionToDealius } from "./services/dealiusPush";
 
 const createSchema = z.object({
   formType: z.string().trim().min(1).max(32),
@@ -137,6 +138,70 @@ submissionsApiRouter.get("/:id", async (req, res) => {
       })(),
     },
   });
+});
+
+submissionsApiRouter.post("/:id/push-dealius", async (req, res) => {
+  const user = (req as any).user as { openId: string; role: string };
+  if (user.role !== "admin") {
+    res.status(403).json({ success: false, error: "Admin access required" });
+    return;
+  }
+
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id) || id <= 0) {
+    res.status(400).json({ success: false, error: "Invalid id" });
+    return;
+  }
+
+  const db = await getDb();
+  if (!db) {
+    res.status(503).json({ success: false, error: "Database unavailable" });
+    return;
+  }
+
+  const rows = await db.select().from(submissions).where(eq(submissions.id, id)).limit(1);
+  const row = rows[0];
+  if (!row) {
+    res.status(404).json({ success: false, error: "Not found" });
+    return;
+  }
+
+  let payload: any = {};
+  try {
+    payload = JSON.parse(row.payload ?? "{}");
+  } catch {
+    payload = {};
+  }
+
+  try {
+    if (row.formType !== "voucher") {
+      res.status(400).json({ success: false, error: `Dealius push not implemented for formType "${row.formType}" yet.` });
+      return;
+    }
+
+    const result = await pushVoucherSubmissionToDealius({ payload });
+    const nextPayload = {
+      ...payload,
+      dealiusPush: {
+        pushedAt: new Date().toISOString(),
+        ...result,
+      },
+    };
+
+    await db
+      .update(submissions)
+      .set({
+        status: "approved",
+        payload: JSON.stringify(nextPayload),
+        updatedAt: new Date(),
+      })
+      .where(eq(submissions.id, id));
+
+    res.json({ success: true, data: result });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ success: false, error: msg });
+  }
 });
 
 submissionsApiRouter.put("/:id", async (req, res) => {

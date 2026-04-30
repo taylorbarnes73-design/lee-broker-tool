@@ -38,6 +38,13 @@ export const ENV = {
     // Admin
     adminEmail: process.env.ADMIN_EMAIL ?? "",
 
+    // Dealius (server-to-server integration)
+    // Base URL should NOT include trailing slash, e.g. https://leenewportbeach.dealius.com
+    dealiusBaseUrl: (process.env.DEALIUS_BASE_URL ?? "https://leenewportbeach.dealius.com").replace(/\/$/, ""),
+    // Service credentials used when brokers do not provide per-user credentials.
+    dealiusEmail: process.env.DEALIUS_EMAIL ?? "",
+    dealiusPassword: process.env.DEALIUS_PASSWORD ?? "",
+
     // SMTP email delivery for reliable PDF attachments
     smtpHost: process.env.SMTP_HOST ?? "",
     smtpPort: parseInt(process.env.SMTP_PORT ?? "587", 10),

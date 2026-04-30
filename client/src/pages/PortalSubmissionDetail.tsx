@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useRoute } from "wouter";
 import { Button, Card } from "../design/index.jsx";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 type SubmissionDetail = {
   id: number;
@@ -15,10 +16,13 @@ type SubmissionDetail = {
 };
 
 export default function PortalSubmissionDetail() {
+  const { user } = useAuth();
   const [, params] = useRoute("/portal/submissions/:id");
   const id = Number(params?.id);
   const [item, setItem] = useState<SubmissionDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pushing, setPushing] = useState(false);
+  const [pushError, setPushError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -39,6 +43,30 @@ export default function PortalSubmissionDetail() {
       alive = false;
     };
   }, [id]);
+
+  async function pushToDealius() {
+    if (!item) return;
+    setPushing(true);
+    setPushError(null);
+    try {
+      const r = await fetch(`/api/submissions/${item.id}/push-dealius`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const b = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(b?.error ?? "Push failed");
+      // Refresh the submission so the admin can see dealiusPush result stored in payload.
+      const r2 = await fetch(`/api/submissions/${item.id}`, { credentials: "include" });
+      const b2 = await r2.json().catch(() => ({}));
+      if (r2.ok) setItem(b2?.data ?? null);
+    } catch (e: any) {
+      setPushError(e?.message ?? "Push failed");
+    } finally {
+      setPushing(false);
+    }
+  }
 
   return (
     <div style={{ maxWidth: 920, margin: "0 auto", padding: 24 }}>
@@ -70,6 +98,18 @@ export default function PortalSubmissionDetail() {
                   Updated: {new Date(item.updatedAt).toLocaleString()}
                 </div>
               </div>
+
+              {user?.role === "admin" && (
+                <div style={{ marginTop: 14, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                  <Button variant="primary" disabled={pushing} onClick={pushToDealius}>
+                    {pushing ? "Pushing to Dealius…" : "Review & push to Dealius"}
+                  </Button>
+                  {pushError && <span style={{ color: "var(--err-700)", fontSize: 12 }}>{pushError}</span>}
+                  <span style={{ fontSize: 12, color: "var(--ink-500)" }}>
+                    (voucher submissions only for now)
+                  </span>
+                </div>
+              )}
 
               <div style={{ marginTop: 14 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 6 }}>

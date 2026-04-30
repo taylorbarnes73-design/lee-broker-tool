@@ -1892,6 +1892,9 @@
       <option value="commission-lease">Commission Agreement — Lease</option>
       <option value="commission-sale">Commission Agreement — Sale</option>
     </select>
+    <div class="ci-type-hint" id="ci-type-hint">
+      Tip: choose <b>Upload PDF</b> if the broker already completed the form in Adobe.
+    </div>
   </div>
 
   <div id="ci-path-chooser" class="is-hidden">
@@ -1931,6 +1934,9 @@
 
     <div class="ci-section">
       <h3>1. Basic Provisions</h3>
+      <div class="ci-required-note">
+        Required: <b>Agreement Date</b>, <b>Party 1 Name</b>, <b>Property Address</b>, <b>City</b>, <b>Commencement</b>, <b>Expiration</b>
+      </div>
       <div class="row">
         <div class="field"><label class="req">Agreement Date</label><input id="ci-date" type="date"></div>
         <div class="field"><label>Reference Date Only</label><select id="ci-date-ref"><option value="yes">Yes — for reference only</option><option value="no">No</option></select></div>
@@ -2040,6 +2046,15 @@
       <div class="row">
         <div class="field"><label>Party 1 Signatory Name</label><input id="ci-sig1-name"></div>
         <div class="field"><label>Party 1 Title</label><input id="ci-sig1-title"></div>
+      </div>
+    </div>
+
+    <div class="ci-section">
+      <h3>Admin Notes (Optional)</h3>
+      <p class="ci-hint">Anything the admin should know before entering this into AIR CRE (missing signatures, special handling, questions, etc.).</p>
+      <div class="field">
+        <label>Notes to Admin</label>
+        <textarea id="ci-notes" rows="3" placeholder="Example: Client will sign tomorrow; please prepare data sheet now."></textarea>
       </div>
     </div>
 
@@ -9271,6 +9286,7 @@ async function scrapeVoucherBrochure() {
   padding: 18px 32px;
   border-bottom: 1px solid var(--border);
   background: #fafafa;
+  flex-wrap: wrap;
 }
 .ci-type-label { font-size: 13px; font-weight: 600; color: var(--text2); white-space: nowrap; }
 .ci-type-bar select {
@@ -9281,6 +9297,15 @@ async function scrapeVoucherBrochure() {
   border-radius: 6px;
   font-size: 14px;
   background: #fff;
+}
+.ci-type-hint {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.4;
+  padding: 6px 10px;
+  border: 1px dashed rgba(195,32,51,.22);
+  border-radius: 8px;
+  background: #fff8f8;
 }
 
 .ci-path-cards {
@@ -9345,6 +9370,13 @@ async function scrapeVoucherBrochure() {
 }
 .ci-ai-icon { flex-shrink: 0; }
 
+.ci-required-note {
+  font-size: 12px;
+  color: var(--text2);
+  margin: -4px 0 12px;
+  line-height: 1.5;
+}
+
 .ci-section {
   padding: 20px 32px;
   border-bottom: 1px solid var(--border);
@@ -9401,6 +9433,13 @@ async function scrapeVoucherBrochure() {
 .ci-ai-field {
   border-color: var(--navy) !important;
   background: rgba(31,35,40,.04) !important;
+}
+
+/* Validation highlight */
+.ci-error-field {
+  border-color: var(--red) !important;
+  background: rgba(195,32,51,.06) !important;
+  box-shadow: 0 0 0 3px rgba(195,32,51,.10) !important;
 }
 </style>
 
@@ -11269,6 +11308,7 @@ async function submitSendToAdmin() {
 
 let _ciCurrentPath = null; // 'fill' | 'upload'
 let _ciRedlineCount = 0;
+let _ciDraftSaveTimer = null;
 
 function ciOnContractTypeChange() {
   const type = document.getElementById('ci-contract-type').value;
@@ -11295,6 +11335,13 @@ function ciOnContractTypeChange() {
   setHiddenState(document.getElementById('ci-upload-path'), true);
   setHiddenState(document.getElementById('ci-form-area'), true);
   document.querySelectorAll('.ci-path-card').forEach(c => c.classList.remove('selected'));
+
+  if (type) {
+    // Most common flow is upload → extract → review. Default there to remove an extra click.
+    ciSelectPath('upload');
+    ciPrefillBrokerIdentity();
+    ciLoadDraft(type);
+  }
 }
 
 function ciSelectPath(path) {
@@ -11305,10 +11352,14 @@ function ciSelectPath(path) {
     setHiddenState(document.getElementById('ci-upload-path'), true);
     setHiddenState(document.getElementById('ci-form-area'), false);
     setHiddenState(document.getElementById('ci-ai-banner'), true);
+    ciAttachAutosave();
   } else {
     setHiddenState(document.getElementById('ci-upload-path'), false);
     setHiddenState(document.getElementById('ci-form-area'), true);
   }
+
+  const type = document.getElementById('ci-contract-type')?.value;
+  if (type) ciSaveDraft(type);
 }
 
 function ciHandleDrop(event) {
@@ -11332,8 +11383,14 @@ async function ciProcessPdf(file) {
   const zone = document.getElementById('ci-upload-zone');
   setHiddenState(statusEl, false);
   statusEl.innerHTML = '<span class="text-muted-sm status-strong">Uploading PDF...</span>';
+  zone.classList.add('upload-zone-active');
 
   try {
+    const contractType = document.getElementById('ci-contract-type').value;
+    if (!contractType) {
+      throw new Error('Please select a contract type first.');
+    }
+
     // 1. Read file as base64
     const base64 = await new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -11354,7 +11411,6 @@ async function ciProcessPdf(file) {
     if (!uploadRes || !uploadRes.url) throw new Error('Upload failed');
 
     // 3. Extract fields via AI
-    const contractType = document.getElementById('ci-contract-type').value;
     statusEl.innerHTML = '<span class="text-error status-strong">Reading the contract and extracting fields...</span>';
 
     const extractResp = await fetch('/api/trpc/contracts.extractContract', {
@@ -11382,10 +11438,96 @@ async function ciProcessPdf(file) {
     statusEl.innerHTML = '<span class="status-success">\u2713 Extraction complete — review the fields below</span>';
     zone.classList.add('upload-zone-success');
     zone.classList.remove('upload-zone-active');
+    ciAttachAutosave();
+    ciPrefillBrokerIdentity();
+    ciSaveDraft(contractType);
 
   } catch(err) {
     statusEl.innerHTML = '<span class="text-error status-strong">\u2717 ' + err.message + '</span>';
+    zone.classList.remove('upload-zone-active');
   }
+}
+
+function ciDraftKey(contractType) {
+  return `leeBrokerTool:contractIntakeDraft:${contractType}`;
+}
+
+function ciPrefillBrokerIdentity() {
+  try {
+    const authUser = getSignedInBrokerIdentity?.();
+    if (!authUser) return;
+    const setIfEmpty = (id, value) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (!el.value && value) el.value = value;
+    };
+    setIfEmpty('ci-agent-individual', authUser.name);
+    setIfEmpty('ci-agent-email', authUser.email);
+  } catch {}
+}
+
+function ciAttachAutosave() {
+  const root = document.getElementById('tab-contracts');
+  if (!root || root.dataset.ciAutosaveAttached === 'true') return;
+  root.dataset.ciAutosaveAttached = 'true';
+  root.addEventListener('input', () => {
+    const type = document.getElementById('ci-contract-type')?.value;
+    if (!type) return;
+    clearTimeout(_ciDraftSaveTimer);
+    _ciDraftSaveTimer = setTimeout(() => ciSaveDraft(type), 250);
+  }, { passive: true });
+  root.addEventListener('change', () => {
+    const type = document.getElementById('ci-contract-type')?.value;
+    if (!type) return;
+    ciSaveDraft(type);
+  }, { passive: true });
+}
+
+function ciSaveDraft(contractType) {
+  try {
+    const payload = {
+      version: 1,
+      contractType,
+      path: _ciCurrentPath,
+      form: ciCollectData(),
+      notes: (document.getElementById('ci-notes') || {}).value || '',
+      savedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(ciDraftKey(contractType), JSON.stringify(payload));
+  } catch {}
+}
+
+function ciLoadDraft(contractType) {
+  try {
+    const raw = localStorage.getItem(ciDraftKey(contractType));
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    const data = parsed?.form;
+    if (!data || typeof data !== 'object') return;
+    ciPopulateFromExtraction(data);
+    const notesEl = document.getElementById('ci-notes');
+    if (notesEl && parsed?.notes) notesEl.value = parsed.notes;
+  } catch {}
+}
+
+function ciClearValidation() {
+  document.querySelectorAll('#tab-contracts .ci-error-field').forEach(el => el.classList.remove('ci-error-field'));
+}
+
+function ciValidateRequired(contractData) {
+  const missing = [];
+  const req = [
+    ['ci-date', 'Agreement Date', contractData.agreementDate],
+    ['ci-party1-name', 'Party 1 Name', contractData.party1Name],
+    ['ci-prop-address', 'Property Address', contractData.propAddress],
+    ['ci-prop-city', 'City', contractData.propCity],
+    ['ci-term-start', 'Commencement Date', contractData.termStart],
+    ['ci-term-end', 'Expiration Date', contractData.termEnd],
+  ];
+  req.forEach(([id, label, value]) => {
+    if (!String(value || '').trim()) missing.push({ id, label });
+  });
+  return missing;
 }
 
 function ciPopulateFromExtraction(data) {
@@ -11542,11 +11684,35 @@ async function ciSubmitToAdmin() {
   const authUser = getSignedInBrokerIdentity();
 
   const contractData = ciCollectData();
-  const propAddr = [contractData.propAddress, contractData.propCity].filter(Boolean).join(', ');
+  const notes = (document.getElementById('ci-notes') || {}).value || '';
 
   if (!contractData.contractType || contractData.contractType === '\u2014 Select a contract type \u2014') {
     statusEl.textContent = '\u2717 Please select a contract type first.';
     statusEl.classList.add('text-error', 'status-strong');
+    return;
+  }
+
+  // Require either: (a) fill path OR (b) upload path completed into form area.
+  if (_ciCurrentPath !== 'fill' && _ciCurrentPath !== 'upload') {
+    statusEl.textContent = '\u2717 Please choose Fill Out Here or Upload PDF.';
+    statusEl.classList.add('text-error', 'status-strong');
+    return;
+  }
+
+  ciClearValidation();
+  const missing = ciValidateRequired(contractData);
+  if (missing.length) {
+    missing.forEach(m => {
+      const el = document.getElementById(m.id);
+      if (el) el.classList.add('ci-error-field');
+    });
+    statusEl.innerHTML =
+      '<span class="text-error status-strong">\u2717 Missing required fields:</span> ' +
+      missing.map(m => m.label).join(', ') +
+      '.';
+    statusEl.classList.add('text-error');
+    const first = document.getElementById(missing[0].id);
+    if (first && typeof first.scrollIntoView === 'function') first.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
 
@@ -11564,7 +11730,7 @@ async function ciSubmitToAdmin() {
           contractData,
           brokerName: authUser?.name || 'Broker',
           senderEmail: authUser?.email || '',
-          notes: '',
+          notes,
         }
       })
     });
@@ -11574,6 +11740,8 @@ async function ciSubmitToAdmin() {
     if (res && res.success) {
       statusEl.innerHTML = '<span class="status-success status-strong">\u2713 Contract submitted to admin successfully!</span>';
       btn.querySelector('.btn-label').textContent = '\u2713 Submitted!';
+      const contractType = document.getElementById('ci-contract-type')?.value;
+      if (contractType) ciSaveDraft(contractType);
       setTimeout(() => {
         btn.classList.remove('loading');
         btn.querySelector('.btn-label').textContent = '\u2709 Submit to Admin';
@@ -11710,6 +11878,9 @@ function ciReset() {
   document.getElementById('ci-submit-status').textContent = '';
   _ciCurrentPath = null;
   document.querySelectorAll('.ci-path-card').forEach(c => c.classList.remove('selected'));
+  const notesEl = document.getElementById('ci-notes');
+  if (notesEl) notesEl.value = '';
+  ciClearValidation();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
