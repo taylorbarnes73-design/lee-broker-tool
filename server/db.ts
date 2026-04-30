@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import { createPool, type Pool, type PoolOptions } from "mysql2";
 import { InsertUser, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { sql } from "drizzle-orm";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 let _pool: Pool | null = null;
@@ -122,9 +123,53 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       updateSet.lastSignedIn = new Date();
     }
 
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
-      set: updateSet,
-    });
+    try {
+      await db.insert(users).values(values).onDuplicateKeyUpdate({
+        set: updateSet,
+      });
+    } catch (error) {
+      const message = String((error as any)?.message ?? error);
+      // Backwards-compatible fallback: some deployed environments may not have run
+      // the `passwordHash` migration yet. Retry without referencing that column.
+      if (!/passwordHash/i.test(message)) {
+        throw error;
+      }
+
+      const fallbackValues = {
+        openId: values.openId,
+        name: (values as any).name ?? null,
+        email: (values as any).email ?? null,
+        loginMethod: (values as any).loginMethod ?? null,
+        role: (values as any).role ?? null,
+        lastSignedIn: (values as any).lastSignedIn ?? new Date(),
+      };
+
+      const fallbackUpdate = {
+        name: updateSet.name ?? fallbackValues.name,
+        email: updateSet.email ?? fallbackValues.email,
+        loginMethod: updateSet.loginMethod ?? fallbackValues.loginMethod,
+        role: updateSet.role ?? fallbackValues.role,
+        lastSignedIn: updateSet.lastSignedIn ?? fallbackValues.lastSignedIn,
+      };
+
+      await db.execute(sql`
+        insert into users (openId, name, email, loginMethod, role, lastSignedIn)
+        values (
+          ${fallbackValues.openId},
+          ${fallbackValues.name},
+          ${fallbackValues.email},
+          ${fallbackValues.loginMethod},
+          ${fallbackValues.role},
+          ${fallbackValues.lastSignedIn}
+        )
+        on duplicate key update
+          name = ${fallbackUpdate.name},
+          email = ${fallbackUpdate.email},
+          loginMethod = ${fallbackUpdate.loginMethod},
+          role = ${fallbackUpdate.role},
+          lastSignedIn = ${fallbackUpdate.lastSignedIn}
+      `);
+    }
   } catch (error) {
     console.error("[Database] Failed to upsert user:", error);
     throw error;

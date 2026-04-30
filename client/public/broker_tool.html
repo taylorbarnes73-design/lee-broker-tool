@@ -6174,7 +6174,10 @@ function showBrokerTool(user) {
 
 async function handleToolSignIn(event) {
   event.preventDefault();
-  const email = document.getElementById('tool-sign-in-email').value.trim().toLowerCase();
+  const inputEl = document.getElementById('tool-sign-in-email');
+  const rawEmail = inputEl.value.trim().toLowerCase();
+  const email = rawEmail.includes('@') ? rawEmail : (rawEmail ? `${rawEmail}@lee-associates.com` : rawEmail);
+  inputEl.value = email;
   const errorEl = document.getElementById('tool-sign-in-error');
   const btn = document.getElementById('tool-sign-in-btn');
   errorEl.textContent = '';
