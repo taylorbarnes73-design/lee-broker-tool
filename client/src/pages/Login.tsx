@@ -7,6 +7,13 @@ import { useLocation } from "wouter";
 // We import design primitives to build a nice looking login
 import { Button, Input, Card, Icons } from "../design/index.jsx";
 
+function normalizeLeeEmail(raw: string) {
+  const value = raw.trim();
+  if (!value) return value;
+  if (value.includes("@")) return value.toLowerCase();
+  return `${value}@lee-associates.com`.toLowerCase();
+}
+
 export default function Login() {
   const { user, loading, refresh } = useAuth();
   const [, setLocation] = useLocation();
@@ -41,7 +48,14 @@ export default function Login() {
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await loginMutation.mutateAsync({ firstName, lastName, email, password });
+    const normalizedEmail = normalizeLeeEmail(email);
+    if (normalizedEmail !== email) setEmail(normalizedEmail);
+    await loginMutation.mutateAsync({
+      firstName,
+      lastName,
+      email: normalizedEmail,
+      password,
+    });
   };
 
   useEffect(() => {
@@ -129,7 +143,14 @@ export default function Login() {
 
             <div>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>Lee Email</label>
-              <Input type="email" value={email} onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)} required placeholder="tbarnes@lee-associates.com" />
+              <Input
+                type="email"
+                value={email}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                onBlur={() => setEmail(normalizeLeeEmail(email))}
+                required
+                placeholder="tbarnes@lee-associates.com"
+              />
             </div>
 
             <div>
