@@ -3796,6 +3796,9 @@ function voucherZipAutofill(zip) {
       if (stateEl) stateEl.value = place['state abbreviation'] || 'CA';
     })
     .catch(() => {});
+
+  // Also suggest market/submarket based on ZIP
+  try { applyZipMarketSubmarket(z); } catch (e) { /* no-op */ }
 }
 
 function getSideChipClass(side) {
@@ -6286,6 +6289,13 @@ function buildCrDropdown(containerId, options) {
   container._getCrVals = () => {
     const vals = Array.from(panel.querySelectorAll('input[type=checkbox]:checked')).map(c => c.value);
     return vals.length ? vals : undefined;
+  };
+  container._setCrVals = (vals) => {
+    const set = new Set((Array.isArray(vals) ? vals : []).filter(Boolean));
+    panel.querySelectorAll('input[type=checkbox]').forEach(c => {
+      c.checked = set.has(c.value);
+    });
+    updateLabel();
   };
   container._resetCr = () => {
     panel.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = false);
@@ -8827,11 +8837,104 @@ document.addEventListener('blur', (e) => {
 .autocomplete-sub { font-size: 11px; color: var(--text2); }
 </style>
 <script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// HYBRID AUTOFILL: ZIP → MARKET / SUBMARKET (SoCal)
+// ═══════════════════════════════════════════════════════════════════════════════
+let _zipMarketSubmarketPromise = null;
+
+function _normalizeZip5(zip) {
+  const z = String(zip || '').trim();
+  const m = z.match(/^(\d{5})/);
+  return m ? m[1] : '';
+}
+
+async function _getZipMarketSubmarketMap() {
+  if (_zipMarketSubmarketPromise) return _zipMarketSubmarketPromise;
+  _zipMarketSubmarketPromise = (async () => {
+    try {
+      const res = await fetch('/zip_market_submarket.json', { cache: 'force-cache' });
+      if (!res.ok) throw new Error('zip_market_submarket.json HTTP ' + res.status);
+      const json = await res.json();
+      return (json && typeof json === 'object') ? json : {};
+    } catch (e) {
+      console.warn('ZIP market/submarket mapping load failed:', e && e.message ? e.message : e);
+      return {};
+    }
+  })();
+  return _zipMarketSubmarketPromise;
+}
+
+function _setSelectIfEmpty(id, value, fallbackValue) {
+  const el = document.getElementById(id);
+  if (!el || el.tagName !== 'SELECT') return;
+  if (el.value) return; // suggest-only
+  const desired = value || '';
+  const fallback = fallbackValue || '';
+  const has = (v) => Array.from(el.options || []).some(o => o.value === v || o.textContent === v);
+  const setVal = (v) => {
+    // prefer exact option.value match; otherwise try matching by option text
+    const opt = Array.from(el.options || []).find(o => o.value === v) || Array.from(el.options || []).find(o => (o.textContent || '').trim() === v);
+    if (opt) el.value = opt.value;
+  };
+  if (desired && has(desired)) setVal(desired);
+  else if (fallback && has(fallback)) setVal(fallback);
+}
+
+function _setCrDropdownIfEmpty(containerId, value) {
+  const container = document.getElementById(containerId);
+  if (!container || typeof container._getCrVals !== 'function' || typeof container._setCrVals !== 'function') return;
+  const existing = container._getCrVals();
+  if (existing && existing.length) return; // suggest-only
+  if (!value) return;
+  container._setCrVals([value]);
+}
+
+async function applyZipMarketSubmarket(zip) {
+  const z5 = _normalizeZip5(zip);
+  if (!z5) return;
+  const map = await _getZipMarketSubmarketMap();
+  const rec = map ? map[z5] : null;
+  if (!rec) return;
+
+  const market = rec.market || '';
+  const submarket = rec.submarket || '';
+
+  // Voucher: Submarket input (suggest-only)
+  if (submarket) {
+    const vSub = document.getElementById('v-submarket');
+    if (vSub && !String(vSub.value || '').trim()) vSub.value = submarket;
+  }
+
+  // Comp entry selects (suggest-only; only set if option exists)
+  // c-market options are a subset; provide a small fallback for common SoCal mappings.
+  const compMarketFallback =
+    market === 'Orange County' ? 'Orange' :
+    market === 'Inland Empire' ? 'Riverside' :
+    '';
+  _setSelectIfEmpty('c-market', market, compMarketFallback);
+  _setSelectIfEmpty('c-submarket', submarket);
+
+  // Comp report filters (suggest-only; only if nothing selected)
+  _setCrDropdownIfEmpty('cr-market', market);
+  _setCrDropdownIfEmpty('cr-submarket', submarket);
+}
+
+function initZipMarketSubmarketAutofill() {
+  const ids = ['l-zip', 'v-zip', 'v-ls-zip', 'v-lb-zip'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('blur', () => {
+      try { applyZipMarketSubmarket(el.value); } catch (e) { /* no-op */ }
+    });
+  });
+}
+
 function initFreeAutocomplete() {
   const addressFieldGroups = [
     { addr: 'l-address', city: 'l-city', zip: 'l-zip' },       // Listing
     { addr: 's-address', city: 's-city', zip: null },          // Sign Note: no specific zip field currently visible
-    { addr: 'v-address', city: null, zip: null },              // Voucher
+    { addr: 'v-address', city: 'v-city', zip: 'v-zip' },       // Voucher
     { addr: 'c-address', city: 'c-city', zip: null },          // Comp Input
     { addr: 'v-ls-address', city: 'v-ls-city', zip: 'v-ls-zip' }, // Voucher Lessor
     { addr: 'v-lb-address', city: 'v-lb-city', zip: 'v-lb-zip' }  // Voucher Lessee
@@ -8912,6 +9015,11 @@ function initFreeAutocomplete() {
                 const idPrefix = group.addr.substring(0, group.addr.lastIndexOf('-'));
                 const stateInput = document.getElementById(idPrefix + '-state');
                 if (stateInput && state) stateInput.value = state;
+
+                // Suggest market/submarket based on ZIP (exact ZIP match only)
+                if (zip) {
+                  try { applyZipMarketSubmarket(zip); } catch (e) { /* no-op */ }
+                }
                 
                 setHiddenState(dropdown, true);
               });
@@ -8947,7 +9055,10 @@ function initFreeAutocomplete() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', initFreeAutocomplete);
+document.addEventListener('DOMContentLoaded', () => {
+  initFreeAutocomplete();
+  initZipMarketSubmarketAutofill();
+});
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // S3 FILE UPLOAD — uploads files to backend /api/trpc/files.upload

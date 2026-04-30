@@ -3,6 +3,8 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { and, desc, eq, or, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import fs from "node:fs";
+import path from "node:path";
 import { z } from "zod/v4";
 import { addSingleComp } from "../services/compData";
 import type { LeaseCompRecord, SaleCompRecord } from "../../shared/comp-data";
@@ -69,6 +71,46 @@ function isoDateOrEmpty(raw: unknown): string {
   return parsed.toISOString().slice(0, 10);
 }
 
+type ZipMarketSubmarketMap = Record<string, { market?: string; submarket?: string }>;
+
+let cachedZipMarketSubmarket: ZipMarketSubmarketMap | null = null;
+
+function loadZipMarketSubmarket(): ZipMarketSubmarketMap {
+  if (cachedZipMarketSubmarket) return cachedZipMarketSubmarket;
+
+  const candidates = [
+    path.resolve(process.cwd(), "client", "public", "zip_market_submarket.json"),
+    path.resolve(process.cwd(), "dist", "public", "zip_market_submarket.json"),
+  ];
+
+  for (const filePath of candidates) {
+    try {
+      if (!fs.existsSync(filePath)) continue;
+      const raw = fs.readFileSync(filePath, "utf8");
+      const parsed = JSON.parse(raw) as ZipMarketSubmarketMap;
+      cachedZipMarketSubmarket = parsed;
+      return parsed;
+    } catch {
+      // Ignore and try next location.
+    }
+  }
+
+  cachedZipMarketSubmarket = {};
+  return cachedZipMarketSubmarket;
+}
+
+function inferMarketSubmarketFromZip(zipCode: string): { market: string; subMarket: string } | null {
+  const zip = zipCode.trim();
+  if (!/^\d{5}$/.test(zip)) return null;
+  const map = loadZipMarketSubmarket();
+  const match = map[zip];
+  if (!match) return null;
+  return {
+    market: String(match.market ?? "").trim(),
+    subMarket: String(match.submarket ?? "").trim(),
+  };
+}
+
 function toCompRecordFromVoucher(params: {
   input: Record<string, unknown>;
   submittedBy: string;
@@ -90,6 +132,12 @@ function toCompRecordFromVoucher(params: {
   const listAgent1 = String(input.laName ?? input.listAgent1 ?? "").trim();
   const procAgent1 = String(input.paName ?? input.procAgent1 ?? "").trim();
 
+  const inferredMarket = inferMarketSubmarketFromZip(zipCode);
+  const marketFromInput = String(input.market ?? "").trim();
+  const subMarketFromInput = String(input.submarket ?? input.subMarket ?? "").trim();
+  const market = marketFromInput || inferredMarket?.market || "";
+  const subMarket = subMarketFromInput || inferredMarket?.subMarket || "";
+
   const base = {
     sourceSheet: isLease ? "Voucher-Lease" : "Voucher-Sale",
     id: null,
@@ -98,8 +146,8 @@ function toCompRecordFromVoucher(params: {
     city,
     state,
     zipCode,
-    market: String(input.market ?? "").trim(),
-    subMarket: String(input.submarket ?? input.subMarket ?? "").trim(),
+    market,
+    subMarket,
     projectName: String(input.projectName ?? "").trim(),
     propertyType,
     propertySubType: String(input.subtype ?? input.propertySubType ?? "").trim(),

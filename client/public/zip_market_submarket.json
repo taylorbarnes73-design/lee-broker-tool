@@ -1,0 +1,75 @@
+{
+  "92660": { "market": "Orange County", "submarket": "Costa Mesa/Newport" },
+  "92661": { "market": "Orange County", "submarket": "Costa Mesa/Newport" },
+  "92662": { "market": "Orange County", "submarket": "Costa Mesa/Newport" },
+
+  "92626": { "market": "Orange County", "submarket": "Costa Mesa/Newport" },
+  "92627": { "market": "Orange County", "submarket": "Costa Mesa/Newport" },
+
+  "92602": { "market": "Orange County", "submarket": "Irvine" },
+  "92603": { "market": "Orange County", "submarket": "Irvine" },
+  "92604": { "market": "Orange County", "submarket": "Irvine" },
+  "92606": { "market": "Orange County", "submarket": "Irvine" },
+  "92612": { "market": "Orange County", "submarket": "Irvine" },
+  "92614": { "market": "Orange County", "submarket": "Irvine" },
+  "92618": { "market": "Orange County", "submarket": "Irvine" },
+  "92620": { "market": "Orange County", "submarket": "Irvine" },
+
+  "92801": { "market": "Orange County", "submarket": "Anaheim" },
+  "92802": { "market": "Orange County", "submarket": "Anaheim" },
+  "92803": { "market": "Orange County", "submarket": "Anaheim" },
+  "92804": { "market": "Orange County", "submarket": "Anaheim" },
+  "92805": { "market": "Orange County", "submarket": "Anaheim" },
+  "92806": { "market": "Orange County", "submarket": "Anaheim" },
+  "92807": { "market": "Orange County", "submarket": "Anaheim" },
+  "92808": { "market": "Orange County", "submarket": "Anaheim" },
+
+  "92701": { "market": "Orange County", "submarket": "Santa Ana" },
+  "92703": { "market": "Orange County", "submarket": "Santa Ana" },
+  "92704": { "market": "Orange County", "submarket": "Santa Ana" },
+  "92705": { "market": "Orange County", "submarket": "Santa Ana" },
+  "92706": { "market": "Orange County", "submarket": "Santa Ana" },
+  "92707": { "market": "Orange County", "submarket": "Santa Ana" },
+
+  "92646": { "market": "Orange County", "submarket": "Huntington Beach" },
+  "92647": { "market": "Orange County", "submarket": "Huntington Beach" },
+  "92648": { "market": "Orange County", "submarket": "Huntington Beach" },
+  "92649": { "market": "Orange County", "submarket": "Huntington Beach" },
+
+  "92780": { "market": "Orange County", "submarket": "Orange/Tustin" },
+  "92782": { "market": "Orange County", "submarket": "Orange/Tustin" },
+
+  "92630": { "market": "Orange County", "submarket": "SOC" },
+
+  "92865": { "market": "Orange County", "submarket": "Orange/Tustin" },
+  "92866": { "market": "Orange County", "submarket": "Orange/Tustin" },
+  "92867": { "market": "Orange County", "submarket": "Orange/Tustin" },
+  "92868": { "market": "Orange County", "submarket": "Orange/Tustin" },
+  "92869": { "market": "Orange County", "submarket": "Orange/Tustin" },
+
+  "90012": { "market": "Los Angeles", "submarket": "Vernon/Commerce" },
+  "90021": { "market": "Los Angeles", "submarket": "Vernon/Commerce" },
+  "90058": { "market": "Los Angeles", "submarket": "Vernon/Commerce" },
+  "90230": { "market": "Los Angeles", "submarket": "Mid Cities" },
+  "90045": { "market": "Los Angeles", "submarket": "Airport Area" },
+  "90247": { "market": "Los Angeles", "submarket": "South Bay" },
+  "90501": { "market": "Los Angeles", "submarket": "Torrance" },
+
+  "91761": { "market": "Inland Empire", "submarket": "Ontario" },
+  "91762": { "market": "Inland Empire", "submarket": "Ontario" },
+  "91764": { "market": "Inland Empire", "submarket": "Ontario" },
+  "91710": { "market": "Inland Empire", "submarket": "Chino/Chino Hills" },
+  "91709": { "market": "Inland Empire", "submarket": "Chino/Chino Hills" },
+  "92879": { "market": "Riverside", "submarket": "Corona" },
+  "92880": { "market": "Riverside", "submarket": "Corona" },
+  "92501": { "market": "Riverside", "submarket": "Riverside" },
+  "92507": { "market": "Riverside", "submarket": "Riverside" },
+  "91752": { "market": "Inland Empire", "submarket": "Mira Loma" },
+  "92570": { "market": "Riverside", "submarket": "Perris" },
+
+  "92335": { "market": "San Bernardino", "submarket": "Fontana/Rialto" },
+  "92336": { "market": "San Bernardino", "submarket": "Fontana/Rialto" },
+
+  "91950": { "market": "San Diego", "submarket": "National City" },
+  "92101": { "market": "San Diego", "submarket": "National City" }
+}

@@ -178,6 +178,30 @@ export type ParsedCompWorkbook = {
   regionalLeaseSheets: Array<{ sheetName: string; rowCount: number }>;
 };
 
+export const PROPERTY_TYPE_LABEL_ALIASES: Record<string, string> = {
+  off: "Office",
+  office: "Office",
+  ind: "Industrial",
+  indust: "Industrial",
+  industrial: "Industrial",
+  ret: "Retail",
+  retail: "Retail",
+  lnd: "Land",
+  land: "Land",
+  flx: "Flex",
+  flex: "Flex",
+  "r&d": "R&D",
+  "r&d/flex": "R&D/Flex",
+  "rd/flex": "R&D/Flex",
+};
+
+export function normalizePropertyTypeLabel(value: unknown): string {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  const key = raw.toLowerCase();
+  return PROPERTY_TYPE_LABEL_ALIASES[key] ?? raw;
+}
+
 function cleanText(value: unknown): string {
   if (value === null || value === undefined) return "";
   const text = String(value).trim();
