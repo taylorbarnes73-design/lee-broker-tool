@@ -1,9 +1,11 @@
 import { submissions } from "../../drizzle/schema";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, or, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
+import { addSingleComp } from "../services/compData";
+import type { LeaseCompRecord, SaleCompRecord } from "../../shared/comp-data";
 
 const submissionSummarySchema = z
   .object({
@@ -36,6 +38,168 @@ function parsePayload(payload: string | null) {
   }
 }
 
+function numberFromCount(value: unknown) {
+  const count = Number(value ?? 0);
+  return Number.isFinite(count) ? count : 0;
+}
+
+function parseConfidentialFlag(raw: unknown): boolean {
+  if (raw === true) return true;
+  if (raw === false) return false;
+  const value = String(raw ?? "").trim().toLowerCase();
+  return value === "yes" || value === "y" || value === "true" || value === "1";
+}
+
+function parseNumberOrNull(raw: unknown): number | null {
+  if (raw === null || raw === undefined || raw === "") return null;
+  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+  const normalized = String(raw).replace(/[$,%]/g, "").replace(/,/g, "").trim();
+  if (!normalized) return null;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function isoDateOrEmpty(raw: unknown): string {
+  const value = String(raw ?? "").trim();
+  if (!value) return "";
+  // Accept ISO-ish or US dates; normalize to ISO date for comp tables.
+  if (/^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toISOString().slice(0, 10);
+}
+
+function toCompRecordFromVoucher(params: {
+  input: Record<string, unknown>;
+  submittedBy: string;
+}): { compType: "lease" | "sale"; record: LeaseCompRecord | SaleCompRecord } | null {
+  const { input, submittedBy } = params;
+  const txnType = String(input.txnType ?? input.transactionType ?? "").trim().toLowerCase();
+  const isSale = txnType.includes("sale");
+  const isLease = txnType.includes("lease");
+  if (!isSale && !isLease) return null;
+
+  const address = String(input.address ?? input.propertyAddress ?? "").trim();
+  const suite = String(input.suite ?? "").trim();
+  const fullAddress = [address, suite].filter(Boolean).join(" ");
+  const city = String(input.city ?? "").trim();
+  const state = String(input.state ?? "CA").trim() || "CA";
+  const zipCode = String(input.zip ?? input.zipCode ?? "").trim();
+  const propertyType = String(input.propType ?? input.propertyType ?? "").trim() || "Indust";
+
+  const listAgent1 = String(input.laName ?? input.listAgent1 ?? "").trim();
+  const procAgent1 = String(input.paName ?? input.procAgent1 ?? "").trim();
+
+  const base = {
+    sourceSheet: isLease ? "Voucher-Lease" : "Voucher-Sale",
+    id: null,
+    office: String(input.office ?? "").trim(),
+    address: fullAddress,
+    city,
+    state,
+    zipCode,
+    market: String(input.market ?? "").trim(),
+    subMarket: String(input.submarket ?? input.subMarket ?? "").trim(),
+    projectName: String(input.projectName ?? "").trim(),
+    propertyType,
+    propertySubType: String(input.subtype ?? input.propertySubType ?? "").trim(),
+    buildingClass: String(input.bldgClass ?? input.buildingClass ?? "").trim(),
+    constructionType: String(input.constType ?? input.constructionType ?? "").trim(),
+    dhDoors: parseNumberOrNull(input.dh),
+    glDoors: parseNumberOrNull(input.gl),
+    clearHeight: parseNumberOrNull(input.clearance),
+    amperage: parseNumberOrNull(input.amps),
+    parkingType: String(input.parkingType ?? "").trim(),
+    parkingRatio: String(input.parkRatio ?? input.parkingRatio ?? "").trim(),
+    sprinklers: String(input.sprinklers ?? "").trim(),
+    rail: String(input.rail ?? "").trim(),
+    yard: String(input.yard ?? "").trim(),
+    listBroker: String(input.lbCompany ?? input.listBroker ?? "").trim(),
+    procBroker: String(input.lsCompany ?? input.procBroker ?? "").trim(),
+    source: `Voucher · ${submittedBy}`,
+    verifiedBy: submittedBy,
+    lastUpdated: new Date().toISOString().slice(0, 10),
+    monthsOnMarket: parseNumberOrNull(input.lMktMonths ?? input.sMktMonths),
+    photo: String(input.photo ?? "").trim(),
+    listAgent1,
+    listAgent2: String(input.listAgent2 ?? "").trim(),
+    procAgent1,
+    procAgent2: String(input.procAgent2 ?? "").trim(),
+    verified: "",
+    updatedBy: submittedBy,
+    apn: String(input.apn ?? "").trim(),
+  } as const;
+
+  if (isLease) {
+    const record: LeaseCompRecord = {
+      ...base,
+      spaceType: String(input.spaceType ?? input.occType ?? "").trim(),
+      multiTenant: String(input.multiTenant ?? "").trim(),
+      yearBuilt: parseNumberOrNull(input.yearBuilt),
+      pol: String(input.pol ?? "").trim(),
+      transactionDate: isoDateOrEmpty(input.lStart ?? input.transactionDate ?? input.dateFilled),
+      occupancyDate: isoDateOrEmpty(input.lOcc ?? input.occupancyDate),
+      expirationDate: isoDateOrEmpty(input.lEnd ?? input.expirationDate),
+      leasedSqFt: parseNumberOrNull(input.lDealSF ?? input.dealSF),
+      rentPerSqFt: parseNumberOrNull(input.lRate ?? input.rentPerSqFt),
+      rentType: String(input.lRateType ?? input.rentType ?? "").trim(),
+      askRentPerSqFt: parseNumberOrNull(input.lAskingRate ?? input.askRentPerSqFt),
+      askRentType: String(input.askRentType ?? "").trim(),
+      termInMonths: parseNumberOrNull(input.lTerm ?? input.termInMonths),
+      effectiveRent: parseNumberOrNull(input.lNnnEff ?? input.effectiveRent),
+      freeRentMonths: null,
+      rentAdjustments: String(input.lEscalations ?? input.rentAdjustments ?? "").trim(),
+      options: "",
+      tia: String(input.lTiTotal ?? input.tia ?? "").trim(),
+      consideration: String(input.lConsideration ?? input.consideration ?? "").trim(),
+      lessee: String(input.lsCompany ?? input.lessee ?? "").trim(),
+      lesseeBusiness: "",
+      lesseeContact: String(input.lsContact ?? "").trim(),
+      lesseePhone: String(input.lsPhone ?? "").trim(),
+      lesseePriorLocation: String(input.priorLoc ?? input.lesseePriorLocation ?? "").trim(),
+      lessor: String(input.lbCompany ?? input.lessor ?? "").trim(),
+      comments: String(input.notes ?? input.comments ?? "").trim(),
+      buildingSqFt: parseNumberOrNull(input.bldgSF),
+      officeSqFt: parseNumberOrNull(input.officeSF),
+      nnnCharges: parseNumberOrNull(input.lNnnTotal ?? input.nnnCharges),
+      landSqFt: parseNumberOrNull(input.landSF),
+      cam: String(input.opex ?? input.cam ?? "").trim(),
+      confidential: "",
+      expenseStop: "",
+      rentUse: "",
+    };
+    return { compType: "lease", record };
+  }
+
+  const record: SaleCompRecord = {
+    ...base,
+    yearBuilt: parseNumberOrNull(input.yearBuilt),
+    multiTenant: String(input.multiTenant ?? "").trim(),
+    floors: parseNumberOrNull(input.floors),
+    passengerElevators: null,
+    freightElevators: null,
+    transactionDate: isoDateOrEmpty(input.sClose ?? input.transactionDate ?? input.dateFilled),
+    buildingSqFt: parseNumberOrNull(input.bldgSF),
+    landSqFt: parseNumberOrNull(input.landSF),
+    officeSqFt: parseNumberOrNull(input.officeSF),
+    salePrice: parseNumberOrNull(input.sPrice ?? input.salePrice),
+    salePricePerSqFt: parseNumberOrNull(input.sPriceSF ?? input.salePricePerSqFt),
+    capRate: parseNumberOrNull(input.sCapRate ?? input.capRate),
+    transactionType: String(input.dealType ?? input.transactionType ?? "Sale").trim(),
+    buyer: String(input.lsCompany ?? input.buyer ?? "").trim(),
+    buyerBusiness: "",
+    buyerContact: String(input.lsContact ?? "").trim(),
+    buyerPhone: String(input.lsPhone ?? "").trim(),
+    buyerPriorLocation: String(input.priorLoc ?? input.buyerPriorLocation ?? "").trim(),
+    seller: String(input.lbCompany ?? input.seller ?? "").trim(),
+    sellerContact: String(input.lbContact ?? "").trim(),
+    sellerPhone: String(input.lbPhone ?? "").trim(),
+    comments: String(input.notes ?? input.comments ?? "").trim(),
+    askingPrice: null,
+  };
+  return { compType: "sale", record };
+}
+
 export const submissionsRouter = router({
   create: protectedProcedure
     .input(submissionSummarySchema)
@@ -60,6 +224,25 @@ export const submissionsRouter = router({
         submittedByOpenId: ctx.user.openId,
         submittedByEmail: ctx.user.email ?? (input.brokerEmail || null),
       });
+
+      // Best-effort: push voucher deals into comps dataset when NOT confidential.
+      // Confidential vouchers remain only in the submissions table.
+      try {
+        if (input.type === "voucher" && !parseConfidentialFlag((input as any).confidential)) {
+          const submittedBy =
+            input.brokerName || ctx.user.name || ctx.user.email || ctx.user.openId;
+          const comp = toCompRecordFromVoucher({ input: input as any, submittedBy });
+          if (comp) {
+            await addSingleComp({
+              db,
+              compType: comp.compType,
+              record: comp.record,
+            });
+          }
+        }
+      } catch {
+        // Intentionally ignore comps write failures; the voucher submission is already stored.
+      }
 
       return {
         success: true as const,
@@ -95,6 +278,75 @@ export const submissionsRouter = router({
         updatedAt: row.updatedAt,
         payload: parsePayload(row.payload),
       }));
+    }),
+
+  queueMine: protectedProcedure
+    .input(
+      z
+        .object({
+          limit: z.number().min(1).max(100).default(50),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { totalPending: 0, requests: [] as any[] };
+
+      const limit = input?.limit ?? 50;
+
+      // 1) Get *my* pending requests (the broker should only see their own).
+      const myPendingRows = await db
+        .select()
+        .from(submissions)
+        .where(and(eq(submissions.submittedByOpenId, ctx.user.openId), eq(submissions.status, "pending")))
+        .orderBy(submissions.createdAt, submissions.id)
+        .limit(limit);
+
+      // 2) Total pending in the global queue (used for context / UX).
+      const totalPendingRows = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(submissions)
+        .where(eq(submissions.status, "pending"));
+      const totalPending = numberFromCount(totalPendingRows[0]?.count);
+
+      // 3) For each of my pending requests, compute how many pending are ahead.
+      // Ordering rule: createdAt ASC, then id ASC for stable tie-break.
+      const requests = await Promise.all(
+        myPendingRows.map(async row => {
+          const aheadRows = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(submissions)
+            .where(
+              and(
+                eq(submissions.status, "pending"),
+                or(
+                  sql`${submissions.createdAt} < ${row.createdAt}`,
+                  and(eq(submissions.createdAt, row.createdAt), sql`${submissions.id} < ${row.id}`)
+                )
+              )
+            );
+
+          const aheadCount = numberFromCount(aheadRows[0]?.count);
+          return {
+            id: row.id,
+            formType: row.formType,
+            status: row.status,
+            reference: row.reference,
+            submittedBy: row.submittedBy,
+            submittedByEmail: row.submittedByEmail,
+            createdAt: row.createdAt,
+            updatedAt: row.updatedAt,
+            aheadCount,
+            position: aheadCount + 1,
+            payload: parsePayload(row.payload),
+          };
+        })
+      );
+
+      return {
+        totalPending,
+        requests,
+      };
     }),
 
   byId: protectedProcedure
