@@ -55,4 +55,8 @@ export const ENV = {
         .split(",")
         .map(value => value.trim().toLowerCase())
         .filter(Boolean),
+    localAdminNames: (process.env.LOCAL_ADMIN_NAMES ?? "")
+        .split(",")
+        .map(value => value.trim().toLowerCase())
+        .filter(Boolean),
 };
