@@ -108,6 +108,7 @@ const FILTER_ALIASES: Record<string, string[]> = {
   "santa ana": ["Santa Ana", "SAE", "SCM"],
   "vernon/commerce": ["Vernon/Commerce", "Vernon", "Commerce"],
   "orange county": ["Orange County", "Orange"],
+  orange: ["Orange County", "Orange"],
   "inland empire": ["Inland Empire", "Riverside", "San Bernardino"],
   ind: ["IND", "Indust", "Industrial"],
   indust: ["Indust", "Industrial", "IND"],

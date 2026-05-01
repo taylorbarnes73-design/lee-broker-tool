@@ -3334,6 +3334,25 @@ body {
 .cr-dd-panel.open {
   display: block;
 }
+.cr-dd-search {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  background: var(--surface-1, #fff);
+}
+.cr-dd-search-input {
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 13px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #d1d5db);
+  background: var(--surface-2, #fafafa);
+  outline: none;
+}
+.cr-dd-search-input:focus {
+  border-color: rgba(155, 13, 42, 0.45);
+  box-shadow: 0 0 0 3px rgba(155, 13, 42, 0.12);
+  background: #fff;
+}
 .cr-dd-opts {
   max-height: 220px;
   overflow-y: auto;
