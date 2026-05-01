@@ -48,6 +48,8 @@ export const ENV = {
     // Service credentials used when brokers do not provide per-user credentials.
     dealiusEmail: process.env.DEALIUS_EMAIL ?? "",
     dealiusPassword: process.env.DEALIUS_PASSWORD ?? "",
+    /** Optional path to Dealius **Users** report (.xlsx) or JSON roster — improves `/brokers` matching on deal push. */
+    dealiusUsersDirectory: process.env.DEALIUS_USERS_DIRECTORY ?? "",
 
     // SMTP email delivery for reliable PDF attachments
     smtpHost: process.env.SMTP_HOST ?? "",

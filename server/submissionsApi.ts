@@ -4,7 +4,8 @@ import { getDb } from "./db";
 import { submissions } from "../drizzle/schema";
 import { desc, eq, sql } from "drizzle-orm";
 import { sdk } from "./_core/sdk";
-import { pushVoucherSubmissionToDealius } from "./services/dealiusPush";
+import { pushVoucherSubmissionToDealius, validateVoucherPayloadForDealiusPush } from "./services/dealiusPush";
+import { parseLeeVoucherExcelBuffer, submissionPayloadPatchFromParsedVoucher } from "./services/voucherExcel";
 
 const ACTIVE_QUEUE_STATUSES = ["pending", "in_review"] as const;
 type ActiveQueueStatus = (typeof ACTIVE_QUEUE_STATUSES)[number];
@@ -42,6 +43,11 @@ const updateSchema = z.object({
   status: z.string().trim().max(32).optional(),
   reference: z.string().trim().max(512).optional(),
   payload: z.unknown().optional(),
+});
+
+const importVoucherExcelBody = z.object({
+  base64Data: z.string().min(1),
+  filename: z.string().trim().min(1).max(255),
 });
 
 export const submissionsApiRouter = Router();
@@ -319,11 +325,34 @@ submissionsApiRouter.post("/:id/push-dealius", async (req, res) => {
       return;
     }
 
-    const result = await pushVoucherSubmissionToDealius({ payload });
+    const overrides = (req.body && typeof req.body === "object" ? (req.body as any).overrides : null) as any;
+    const feePercentOverrideRaw = overrides?.feePercent;
+    const feePercentOverride =
+      feePercentOverrideRaw === null || feePercentOverrideRaw === undefined || feePercentOverrideRaw === ""
+        ? null
+        : Number(feePercentOverrideRaw);
+
+    const pushPayload =
+      feePercentOverride != null && Number.isFinite(feePercentOverride) && feePercentOverride > 0
+        ? { ...payload, feePercent: feePercentOverride }
+        : payload;
+
+    const validation = validateVoucherPayloadForDealiusPush(pushPayload);
+    if (!validation.ok) {
+      res.status(400).json({
+        success: false,
+        error: validation.errors.join(" "),
+        errors: validation.errors,
+      });
+      return;
+    }
+
+    const result = await pushVoucherSubmissionToDealius({ payload: pushPayload });
     const nextPayload = {
       ...payload,
       dealiusPush: {
         pushedAt: new Date().toISOString(),
+        feePercentOverride: feePercentOverride ?? null,
         ...result,
       },
     };
@@ -341,6 +370,113 @@ submissionsApiRouter.post("/:id/push-dealius", async (req, res) => {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     res.status(500).json({ success: false, error: msg });
+  }
+});
+
+/** Admin: merge Lee voucher Excel (.xlsx / .xlsm) into submission payload (same grid as legacy tool). */
+submissionsApiRouter.post("/:id/import-voucher-excel", async (req, res) => {
+  const user = (req as any).user as { openId: string; role: string };
+  if (user.role !== "admin") {
+    res.status(403).json({ success: false, error: "Admin access required" });
+    return;
+  }
+
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id) || id <= 0) {
+    res.status(400).json({ success: false, error: "Invalid id" });
+    return;
+  }
+
+  const parsedBody = importVoucherExcelBody.safeParse(req.body);
+  if (!parsedBody.success) {
+    res.status(400).json({ success: false, error: parsedBody.error.issues[0]?.message ?? "Invalid body" });
+    return;
+  }
+
+  const fn = parsedBody.data.filename.toLowerCase();
+  if (!fn.endsWith(".xlsx") && !fn.endsWith(".xlsm") && !fn.endsWith(".xls")) {
+    res.status(400).json({ success: false, error: "filename must end in .xlsx, .xlsm, or .xls" });
+    return;
+  }
+
+  const db = await getDb();
+  if (!db) {
+    res.status(503).json({ success: false, error: "Database unavailable" });
+    return;
+  }
+
+  const rows = await db.select().from(submissions).where(eq(submissions.id, id)).limit(1);
+  const row = rows[0];
+  if (!row) {
+    res.status(404).json({ success: false, error: "Not found" });
+    return;
+  }
+
+  if (row.formType !== "voucher") {
+    res.status(400).json({ success: false, error: "Excel import is only supported for voucher submissions." });
+    return;
+  }
+
+  let payload: any = {};
+  try {
+    payload = JSON.parse(row.payload ?? "{}");
+  } catch {
+    payload = {};
+  }
+
+  let buffer: Buffer;
+  try {
+    buffer = Buffer.from(parsedBody.data.base64Data, "base64");
+  } catch {
+    res.status(400).json({ success: false, error: "Invalid base64 data" });
+    return;
+  }
+  if (!buffer.length) {
+    res.status(400).json({ success: false, error: "Empty file" });
+    return;
+  }
+  const maxBytes = 25 * 1024 * 1024;
+  if (buffer.length > maxBytes) {
+    res.status(400).json({ success: false, error: "File too large (max 25MB)" });
+    return;
+  }
+
+  try {
+    const parsed = parseLeeVoucherExcelBuffer(buffer);
+    const patch = submissionPayloadPatchFromParsedVoucher(parsed);
+    const prevImport = (patch.excelImport && typeof patch.excelImport === "object" ? patch.excelImport : {}) as Record<
+      string,
+      unknown
+    >;
+    patch.excelImport = { ...prevImport, filename: parsedBody.data.filename };
+
+    const nextPayload = { ...payload, ...patch };
+
+    await db
+      .update(submissions)
+      .set({
+        payload: JSON.stringify(nextPayload),
+        updatedAt: new Date(),
+      })
+      .where(eq(submissions.id, id));
+
+    res.json({
+      success: true,
+      data: {
+        dealName: parsed.dealName,
+        address: parsed.address,
+        city: parsed.city,
+        zip: parsed.zip,
+        transactionType: parsed.transactionType,
+        representationType: parsed.representationType,
+        feePercent: patch.feePercent ?? null,
+        rentRowCount: Array.isArray(parsed.rentRows) ? parsed.rentRows.length : 0,
+        brokerCount: Array.isArray(parsed.brokers) ? parsed.brokers.length : 0,
+      },
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    res.status(400).json({ success: false, error: msg });
   }
 });
 

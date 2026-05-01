@@ -8033,6 +8033,11 @@ async function dxSubmitDeal() {
     // Step 5: Create deal
     dxStepMark(5, 'active');
     dxStat('load', 'Step 5/7 — Creating deal…');
+    // Dealius validates rent schedules against deal fee %s.
+    // Keep "fee percent" as a percent value (e.g. 3 = 3%), not a fraction (0.03).
+    const rawCommInput = d.saleCommPct != null ? d.saleCommPct : null;
+    const feePct = rawCommInput != null ? (rawCommInput <= 1 ? rawCommInput * 100 : rawCommInput) : null;
+
     const createPayload = dxOmitNulls({
       DealName: d.dealName, RepresentationTypeID: d.repTypeID, SpaceTypeID: stid,
       EstimatedCloseDate: new Date().toISOString(),
@@ -8048,8 +8053,9 @@ async function dxSubmitDeal() {
       }) : {}),
       ...(d.isSale ? dxOmitNulls({
         SaleAskingPriceAmount: d.totalConsideration, SalePurchasePriceAmount: d.totalConsideration,
-        ClientRepFee: d.saleCommPct,
+        ClientRepFee: feePct,
       }) : {}),
+      ...(feePct != null ? { ClientRepFee: feePct, OppositeSideRepFee: feePct } : {}),
     });
     dxAddLog('info', 'POST /deals payload: ' + JSON.stringify(createPayload, null, 0).substring(0, 400));
     const dealRes = await dxCallAPI('POST', '/deals', H, createPayload);
@@ -8074,8 +8080,9 @@ async function dxSubmitDeal() {
       dxStat('load', 'Step 6/7 — Updating financial details…');
       const rentMonthTotal = d.rentRows && d.rentRows.length > 0 ? d.rentRows.reduce((s, r) => s + (r.months || 0), 0) : null;
       const effectiveTerm = rentMonthTotal || d.term || null;
+      // Dealius expects "fee percent" as a percent value (e.g. 3 = 3%).
       const rawComm = d.saleCommPct != null ? d.saleCommPct : null;
-      const commFee = rawComm != null ? (rawComm > 1 ? rawComm / 100 : rawComm) : null;
+      const commFeePct = rawComm != null ? (rawComm <= 1 ? rawComm * 100 : rawComm) : null;
       const finPayload = dxOmitNulls({
         DealID: dealID, DealName: d.dealName,
         ClientID: (clientID && clientID > 0) ? clientID : undefined,
@@ -8085,7 +8092,7 @@ async function dxSubmitDeal() {
         LeaseTypeID: DX_LEASE_TYPE_NEW,
         LeaseCurrentSquareFeetOccupied: d.sqft ? Math.round(d.sqft) : undefined,
         RequestedSpace: d.sqft ? Math.round(d.sqft) : undefined,
-        ...(commFee != null ? { ClientRepFee: commFee, OppositeSideRepFee: commFee } : {}),
+        ...(commFeePct != null ? { ClientRepFee: commFeePct, OppositeSideRepFee: commFeePct } : {}),
         ...(d.askingRate != null ? { LeaseAskingRatePerSf: d.askingRate, LeaseAskingRatePerSfType: DX_RATE_PER_YEAR } : {}),
         ...(d.totalNNN   != null ? { LeaseNNNPerSF: d.totalNNN, LeaseNNNPerSFType: DX_RATE_PER_YEAR } : {}),
         ...(d.propTaxes  != null ? { LeaseTaxes: d.propTaxes, LeaseTaxesType: DX_RATE_PER_YEAR } : {}),

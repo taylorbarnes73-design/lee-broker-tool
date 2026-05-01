@@ -1,4 +1,5 @@
 import { DealiusClient, resolveBrokerContactId } from "./dealiusClient";
+import { getDealiusUserDirectory } from "./dealiusUserDirectory";
 
 type RentRowInput = { months: number; monthly?: number | null; free?: boolean };
 type BrokerRowInput = { name: string; pct?: number | null };
@@ -14,6 +15,50 @@ function num(raw: unknown): number | null {
 
 function str(raw: unknown): string {
   return String(raw ?? "").trim();
+}
+
+function parseAddressParts(raw: string): { address?: string; city?: string; state?: string; zip?: string } {
+  // Handles: "123 Main St, Costa Mesa, CA 92627" (and minor variations)
+  const match = raw.match(
+    /^\s*(.+?)(?:,\s*|\s+)([A-Za-z][A-Za-z.\- ]+?)(?:,\s*|\s+)([A-Za-z]{2}|California)(?:\s+(\d{5}(?:-\d{4})?))?\s*$/
+  );
+  if (!match) return {};
+  const [, address, city, state, zip] = match;
+  const st = state.toLowerCase() === "california" ? "CA" : state.toUpperCase();
+  const zip5 = zip ? zip.replace(/\D/g, "").slice(0, 5) : undefined;
+  return { address: address.trim(), city: city.trim(), state: st, zip: zip5 };
+}
+
+function feePercentFrom(raw: unknown): number | null {
+  const n = num(raw);
+  if (n == null) return null;
+  // Treat <=1 as a fraction (0.03 -> 3%). Otherwise assume already a percent (3 -> 3%).
+  if (n <= 0) return null;
+  const pct = n <= 1 ? n * 100 : n;
+  return Number.isFinite(pct) ? pct : null;
+}
+
+function feePercentFromPayload(p: Record<string, unknown>): number | null {
+  // Prefer explicit fee/commission percent inputs. Many sources store these as strings.
+  const candidates: unknown[] = [
+    p.clientRepFee,
+    p.oppositeSideRepFee,
+    p.feePercent,
+    p.feePct,
+    (p as any).commissionRate,
+    (p as any).commissionPct,
+    (p as any).commRate,
+    (p as any).commPct,
+    (p as any).saleCommPct,
+    (p as any).dx_saleCommPct,
+    (p as any).voucherCommissionPct,
+    (p as any).voucherCommissionRate,
+  ];
+  for (const c of candidates) {
+    const pct = feePercentFrom(c);
+    if (pct != null) return pct;
+  }
+  return null;
 }
 
 function asRentRows(raw: unknown): RentRowInput[] {
@@ -37,6 +82,32 @@ function asBrokers(raw: unknown): BrokerRowInput[] {
     .filter(b => b.name);
 }
 
+function uniqNames(names: Array<string | undefined | null>) {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const n of names) {
+    const v = String(n ?? "").trim();
+    if (!v) continue;
+    const key = v.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(v);
+  }
+  return out;
+}
+
+function repTypeIdFrom(raw: unknown): number {
+  // Matches Dealius rep type IDs used by the legacy tool:
+  // 1 Buyer Rep, 2 Seller Rep, 3 Tenant Rep, 4 Landlord Rep.
+  const v = str(raw).toLowerCase();
+  if (!v) return 4;
+  if (v.includes("tenant")) return 3;
+  if (v.includes("landlord")) return 4;
+  if (v.includes("buyer")) return 1;
+  if (v.includes("seller")) return 2;
+  return 4;
+}
+
 function propertyTypeIdFrom(raw: string) {
   const v = raw.toLowerCase();
   const map: Record<string, number> = {
@@ -51,22 +122,82 @@ function propertyTypeIdFrom(raw: string) {
   return map[v] ?? 3;
 }
 
+function isLeaseLikePayload(p: Record<string, unknown>): boolean {
+  const txn = str((p as any).transactionType ?? (p as any).txnType).toLowerCase();
+  if (txn.includes("lease") || txn.includes("leasing")) return true;
+  const rep = str((p as any).representationType).toLowerCase();
+  if (rep.includes("tenant") || rep.includes("landlord")) return true;
+  return false;
+}
+
+/** Same address / deal-name resolution as Dealius push (keeps validation in sync). */
+export function resolveVoucherLocationForDealius(payload: Record<string, unknown>) {
+  const p = payload ?? {};
+  const rawAddress = str(p.address || p.propertyAddress || (p as any).property || "");
+  const parts = parseAddressParts(rawAddress);
+  const address = str(p.address || parts.address || rawAddress);
+  const city = str(p.city || parts.city);
+  const zip = str(p.zip || p.zipCode || parts.zip);
+  const dealName =
+    str(p.dealName) ||
+    [str(p.transactionType || p.txnType || "Deal") + ":", address].filter(Boolean).join(" ");
+  return { address, city, zip, dealName, rawAddress };
+}
+
+/**
+ * Validates a voucher submission payload before calling Dealius.
+ * Mirrors the portal pre-flight checklist; returns 400-friendly errors.
+ */
+export function validateVoucherPayloadForDealiusPush(
+  payload: Record<string, unknown>
+): { ok: true } | { ok: false; errors: string[] } {
+  const p = payload ?? {};
+  const { address, city, zip, dealName } = resolveVoucherLocationForDealius(p);
+  const errors: string[] = [];
+
+  if (!address) errors.push("Missing property address (address or propertyAddress).");
+  if (!city) errors.push("Missing city (or could not parse from a single-line address).");
+  if (!zip) errors.push("Missing zip (or could not parse from a single-line address).");
+  if (!dealName) errors.push("Missing deal name (set dealName or transaction type + address).");
+
+  const feePct = feePercentFromPayload(p);
+  if (feePct == null || feePct <= 0) {
+    errors.push("Missing fee percent (feePercent, commissionRate, or pass overrides.feePercent).");
+  }
+
+  if (isLeaseLikePayload(p)) {
+    const rentRows = asRentRows(p.rentRows || (p as any).rentSchedule);
+    if (rentRows.length === 0) {
+      errors.push(
+        "Lease-like deal requires at least one rent schedule row (rentRows or rentSchedule with months > 0)."
+      );
+    }
+  }
+
+  if (errors.length) return { ok: false, errors };
+  return { ok: true };
+}
+
 export async function pushVoucherSubmissionToDealius(params: {
   payload: Record<string, unknown>;
 }) {
   const p = params.payload ?? {};
-  const address = str(p.address || p.propertyAddress);
-  const city = str(p.city);
-  const zip = str(p.zip || p.zipCode);
+  const { address, city, zip, dealName } = resolveVoucherLocationForDealius(p);
   const propType = str(p.propertyType || p.propType || "Industrial");
 
   const sqft = num(p.sqft || p.dealSF || p.leasedSqFt || p.squareFeet) ?? 1;
-  const dealName =
-    str(p.dealName) ||
-    [str(p.transactionType || p.txnType || "Deal") + ":", address].filter(Boolean).join(" ");
 
-  const brokers = asBrokers(p.brokers || (p as any).internalBrokers || (p as any).commissionBrokers);
+  const brokersRaw = asBrokers(p.brokers || (p as any).internalBrokers || (p as any).commissionBrokers);
+  const brokerNameFallbacks = uniqNames([
+    (p as any).listingAgentName,
+    (p as any).procuringAgentName,
+    (p as any).brokerName,
+    (p as any).agentName,
+    (p as any).submittedBy,
+  ]).map(name => ({ name, pct: null }));
+  const brokers = brokersRaw.length ? brokersRaw : brokerNameFallbacks;
   const rentRows = asRentRows(p.rentRows || (p as any).rentSchedule);
+  const feePct = feePercentFromPayload(p);
 
   const missing: string[] = [];
   if (!address) missing.push("address");
@@ -79,6 +210,7 @@ export async function pushVoucherSubmissionToDealius(params: {
 
   const client = new DealiusClient();
   const token = await client.authenticate();
+  const dealiusUserDirectory = getDealiusUserDirectory();
 
   // Step 1: Create property
   const CA_STATE_ID = 1004;
@@ -123,7 +255,7 @@ export async function pushVoucherSubmissionToDealius(params: {
     typeof spRes.data === "number" ? spRes.data : spRes.data?.PropertySpaceID || spRes.data?.ID || null;
 
   // Step 3: Create deal (lease default)
-  const repType = num(p.repTypeID || p.repType) ?? 4; // default Landlord Rep
+  const repType = num(p.repTypeID || p.repType) ?? repTypeIdFrom((p as any).representationType); // default Landlord Rep
   const dealPayload: Record<string, unknown> = {
     DealName: dealName,
     RepresentationTypeID: repType,
@@ -131,12 +263,24 @@ export async function pushVoucherSubmissionToDealius(params: {
     EstimatedCloseDate: new Date().toISOString(),
     PropertyID: propertyID,
     ...(propertySpaceID ? { PropertySpaceID: propertySpaceID } : {}),
+    ...(feePct != null ? { ClientRepFee: feePct, OppositeSideRepFee: feePct } : {}),
   };
 
   const dealRes = await client.request<any>({ token, method: "POST", path: "/deals", data: dealPayload });
   const dealID = dealRes.data?.DealID || dealRes.data?.ID || null;
   if (!dealID) {
     throw new Error(`Dealius deal create failed (HTTP ${dealRes.status}).`);
+  }
+
+  // Dealius rent schedule validation requires fee %s to be set on the deal.
+  // POST /deals sometimes ignores fee fields depending on deal type; enforce via PUT before rents.
+  if (feePct != null) {
+    await client.request<any>({
+      token,
+      method: "PUT",
+      path: "/deals",
+      data: { DealID: dealID, ClientRepFee: feePct, OppositeSideRepFee: feePct },
+    });
   }
 
   // Step 4: Rents (best-effort with fallback null->0)
@@ -167,7 +311,12 @@ export async function pushVoucherSubmissionToDealius(params: {
   if (brokers.length) {
     const rows: any[] = [];
     for (const b of brokers) {
-      const contactId = await resolveBrokerContactId({ client, token, name: b.name });
+      const contactId = await resolveBrokerContactId({
+        client,
+        token,
+        name: b.name,
+        directory: dealiusUserDirectory,
+      });
       if (!contactId) continue;
       const pct = (b.pct ?? 0) > 1 ? (b.pct ?? 0) / 100 : b.pct ?? 0;
       rows.push({

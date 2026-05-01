@@ -13,6 +13,7 @@ import { uploads, submissions } from "../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
 import { storagePut, storageGet } from "./storage";
 import { nanoid } from "nanoid";
+import { DealiusClient } from "./services/dealiusClient";
 
 export const restApiRouter = Router();
 
@@ -314,6 +315,195 @@ restApiRouter.get("/files/url", async (req: Request, res: Response) => {
 
     const { url } = await storageGet(key);
     ok(res, { fileKey: key, url });
+  } catch (e: any) {
+    err(res, 500, e.message ?? "Internal server error");
+  }
+});
+
+// ── POST /api/v1/inbox/email ──
+/**
+ * Create a trackable request from an inbound shared-mailbox email.
+ * Intended to be called from Power Automate ("When a new email arrives").
+ *
+ * Body:
+ * {
+ *   messageId: string,
+ *   internetMessageId?: string,
+ *   subject?: string,
+ *   from?: string,
+ *   receivedAt?: string,
+ *   bodyPreview?: string,
+ *   category?: string,          // voucher, docusign, listing, contract, etc.
+ *   docusignEnvelopeId?: string,
+ *   dealiusDealId?: string,
+ *   dealiusListingId?: string,
+ *   reference?: string,         // e.g. "123 Main St, Newport Beach"
+ *   attachments?: [{ filename, mimeType, base64Data }]
+ * }
+ */
+restApiRouter.post("/inbox/email", async (req: Request, res: Response) => {
+  try {
+    const body = req.body ?? {};
+    const messageId = String(body.messageId ?? "").trim();
+    if (!messageId) return err(res, 400, "messageId is required");
+
+    const subject = String(body.subject ?? "").trim();
+    const from = String(body.from ?? "").trim();
+    const receivedAt = String(body.receivedAt ?? "").trim();
+    const reference = String(body.reference ?? "").trim() || subject || null;
+
+    const db = await getDb();
+    if (!db) return err(res, 503, "Database unavailable");
+
+    const payload = {
+      kind: "email",
+      messageId,
+      internetMessageId: body.internetMessageId ?? null,
+      subject,
+      from,
+      receivedAt: receivedAt || null,
+      bodyPreview: body.bodyPreview ?? null,
+      category: body.category ?? null,
+      docusignEnvelopeId: body.docusignEnvelopeId ?? null,
+      dealiusDealId: body.dealiusDealId ?? null,
+      dealiusListingId: body.dealiusListingId ?? null,
+    };
+
+    const [result] = await db.insert(submissions).values({
+      formType: "email-request",
+      status: "pending",
+      payload: JSON.stringify(payload),
+      reference,
+      submittedBy: from || null,
+    });
+    const submissionId = (result as any).insertId as number;
+
+    const attachments: any[] = Array.isArray(body.attachments) ? body.attachments : [];
+    const saved: Array<{ filename: string; fileKey: string; url: string }> = [];
+
+    for (const a of attachments) {
+      const filename = String(a?.filename ?? "").trim();
+      const mimeType = String(a?.mimeType ?? "application/octet-stream").trim() || "application/octet-stream";
+      const base64Data = String(a?.base64Data ?? "").trim();
+      if (!filename || !base64Data) continue;
+
+      const buffer = Buffer.from(base64Data, "base64");
+      const ext = filename.split(".").pop() ?? "bin";
+      const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const fileKey = `broker-inbox/${submissionId}/${nanoid(10)}-${safeName}.${ext === safeName.split(".").pop() ? "" : ""}`.replace(/\.$/, "");
+
+      const { url } = await storagePut(fileKey, buffer, mimeType);
+      await db.insert(uploads).values({
+        fileKey,
+        url,
+        filename,
+        mimeType,
+        fileSize: buffer.length,
+        category: "inbox",
+        reference: `submission:${submissionId}`,
+        uploaderName: from || null,
+        uploaderOpenId: null,
+      });
+
+      saved.push({ filename, fileKey, url });
+    }
+
+    ok(res, { submissionId, savedAttachments: saved });
+  } catch (e: any) {
+    err(res, 500, e.message ?? "Internal server error");
+  }
+});
+
+// ── POST /api/v1/docusign/completed ──
+/**
+ * Ingest a completed DocuSign (executed PDF) and attach it to Dealius deal+listing.
+ * Intended to be called from Power Automate when a "Completed" DocuSign email arrives.
+ *
+ * Body:
+ * {
+ *   submissionId?: number,          // link to an existing email-request if you have it
+ *   docusignEnvelopeId?: string,
+ *   dealiusDealId?: string|number,
+ *   dealiusListingId?: string|number,
+ *   filename: string,
+ *   mimeType?: string,
+ *   base64Pdf: string,
+ *   documentType?: string           // optional Dealius DocumentType
+ * }
+ */
+restApiRouter.post("/docusign/completed", async (req: Request, res: Response) => {
+  try {
+    const body = req.body ?? {};
+    const filename = String(body.filename ?? "").trim();
+    const base64Pdf = String(body.base64Pdf ?? "").trim();
+    if (!filename) return err(res, 400, "filename is required");
+    if (!base64Pdf) return err(res, 400, "base64Pdf is required");
+
+    const db = await getDb();
+    if (!db) return err(res, 503, "Database unavailable");
+
+    const submissionId = Number(body.submissionId ?? 0) || null;
+    const envelopeId = String(body.docusignEnvelopeId ?? "").trim() || null;
+
+    const buffer = Buffer.from(base64Pdf, "base64");
+    const mimeType = String(body.mimeType ?? "application/pdf").trim() || "application/pdf";
+
+    // Store executed PDF in tool storage first (system of record)
+    const key = `broker-docusign/executed/${nanoid(10)}-${filename.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const { url } = await storagePut(key, buffer, mimeType);
+
+    await db.insert(uploads).values({
+      fileKey: key,
+      url,
+      filename,
+      mimeType,
+      fileSize: buffer.length,
+      category: "docusign-executed",
+      reference: submissionId ? `submission:${submissionId}` : envelopeId ? `envelope:${envelopeId}` : null,
+      uploaderName: "DocuSign",
+      uploaderOpenId: null,
+    });
+
+    // Attach to Dealius (deal + listing) when IDs are present
+    const dealiusDealId = body.dealiusDealId != null ? String(body.dealiusDealId).trim() : "";
+    const dealiusListingId = body.dealiusListingId != null ? String(body.dealiusListingId).trim() : "";
+
+    const client = new DealiusClient();
+    const token = await client.authenticate();
+
+    const documentType = body.documentType != null ? String(body.documentType).trim() : null;
+    const results: any = { stored: { fileKey: key, url }, attached: {} as any };
+
+    if (dealiusDealId) {
+      const r = await client.uploadDocument({
+        token,
+        entityType: "deal",
+        entityId: dealiusDealId,
+        filename,
+        mimeType,
+        buffer,
+        documentType,
+      });
+      results.attached.deal = r;
+      if (r.status < 200 || r.status >= 300) {
+        // Keep going; listing attach might still succeed.
+      }
+    }
+
+    if (dealiusListingId) {
+      const r = await client.uploadDocument({
+        token,
+        entityType: "listing",
+        entityId: dealiusListingId,
+        filename,
+        mimeType,
+        buffer,
+        documentType,
+      });
+      results.attached.listing = r;
+    }
+
+    ok(res, results);
   } catch (e: any) {
     err(res, 500, e.message ?? "Internal server error");
   }
