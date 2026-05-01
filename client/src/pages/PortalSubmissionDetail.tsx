@@ -4,6 +4,7 @@ import { Button, Card } from "../design/index.jsx";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { mergeVoucherFromContractExtraction } from "@shared/contractIntake";
 
 type SubmissionDetail = {
   id: number;
@@ -167,72 +168,6 @@ export default function PortalSubmissionDetail() {
       if (pct != null) return pct;
     }
     return null;
-  }
-
-  function feePercentFromCommAmount(raw: unknown): number | null {
-    const s = String(raw ?? "").trim();
-    if (!s) return null;
-    const m = s.match(/(\d+(?:\.\d+)?)\s*%/);
-    if (!m) return null;
-    return feePercentFrom(m[1]);
-  }
-
-  function mergeVoucherFromContractExtraction(params: {
-    payload: any;
-    contract: any;
-    pdf?: { url?: string; fileKey?: string; filename?: string } | null;
-    contractType: string;
-  }) {
-    const { payload, contract, pdf, contractType } = params;
-    const next: any = { ...(payload || {}) };
-    const safeContract = contract && typeof contract === "object" ? contract : {};
-
-    const propAddress = String(safeContract.propAddress ?? "").trim();
-    const propCity = String(safeContract.propCity ?? "").trim();
-    const propState = String(safeContract.propState ?? "").trim();
-    const propZip = String(safeContract.propZip ?? "").trim();
-
-    // Populate common voucher fields used by Dealius push.
-    if (propAddress) next.address = next.address ?? propAddress;
-    if (propCity) next.city = next.city ?? propCity;
-    if (propState) next.state = next.state ?? propState;
-    if (propZip) next.zip = next.zip ?? propZip;
-
-    // Also set propertyAddress for legacy payloads if it's absent.
-    if (!next.propertyAddress && (propAddress || propCity || propState || propZip)) {
-      const addr = [propAddress, propCity, propState].filter(Boolean).join(", ");
-      next.propertyAddress = addr + (propZip ? ` ${propZip}` : "");
-    }
-
-    // Parties
-    const lessor = String(safeContract.mlLessor ?? safeContract.party1Name ?? "").trim();
-    const lessee = String(safeContract.mlLessee ?? "").trim();
-    if (lessor) next.lessorName = next.lessorName ?? lessor;
-    if (lessee) next.lesseeName = next.lesseeName ?? lessee;
-
-    // Term dates
-    if (safeContract.termStart) next.commencementDate = next.commencementDate ?? String(safeContract.termStart);
-    if (safeContract.termEnd) next.expirationDate = next.expirationDate ?? String(safeContract.termEnd);
-
-    // Commission percent
-    const pct = feePercentFromCommAmount(safeContract.commAmount);
-    if (pct != null && next.feePercent == null && next.commissionRate == null) {
-      next.feePercent = pct;
-      next.commissionRate = String(pct);
-    }
-
-    // Keep full extraction payload for audit/debugging.
-    next.aiExtract = {
-      ...(next.aiExtract || {}),
-      contract: {
-        extractedAt: new Date().toISOString(),
-        contractType,
-        pdf: pdf ?? null,
-        data: safeContract,
-      },
-    };
-
-    return next;
   }
 
   async function handleImportVoucherExcel(file: File) {
