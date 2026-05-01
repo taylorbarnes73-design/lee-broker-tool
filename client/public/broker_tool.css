@@ -3263,6 +3263,9 @@ body {
   grid-template-columns: 140px 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
   gap: 10px;
 }
+.cr-filters-grid .cr-span-2 {
+  grid-column: span 2;
+}
 .cr-filters .field { display: flex; flex-direction: column; min-width: 0; }
 .cr-filters .field label {
   font-size: 10px;
