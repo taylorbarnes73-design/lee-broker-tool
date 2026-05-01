@@ -2,6 +2,13 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { useState, type FormEvent } from "react";
 
+function normalizeLeeEmail(raw: string) {
+  const value = raw.trim();
+  if (!value) return value;
+  if (value.includes("@")) return value.toLowerCase();
+  return `${value}@lee-associates.com`.toLowerCase();
+}
+
 const workspaceCards = [
   {
     label: "Broker Tool",
@@ -161,10 +168,7 @@ function CompReportCard({
 
 export default function Home() {
   const { user, loading, logout, refresh } = useAuth();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [compType, setCompType] = useState<"lease" | "sale">("lease");
   const [compQuery, setCompQuery] = useState("");
   const [compCity, setCompCity] = useState("");
@@ -204,7 +208,9 @@ export default function Home() {
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await loginMutation.mutateAsync({ firstName, lastName, email, password });
+    const normalizedEmail = normalizeLeeEmail(email);
+    if (normalizedEmail !== email) setEmail(normalizedEmail);
+    await loginMutation.mutateAsync({ email: normalizedEmail });
   };
 
   const recentSubmissions = submissionsQuery.data ?? [];
@@ -325,64 +331,28 @@ export default function Home() {
                 </h2>
                 <p className="mt-3 text-sm leading-6 text-[#616972]">
                   Use your Lee email to open the tool and keep your submissions tied to your own
-                  broker session.
+                  broker session. No password or Microsoft permission screen is needed.
                 </p>
 
                 <form className="mt-6 flex flex-col gap-4" onSubmit={handleLogin}>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="block space-y-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#6e7881]">
-                        First Name
-                      </span>
-                      <input
-                        value={firstName}
-                        onChange={e => setFirstName(e.target.value)}
-                        placeholder="First"
-                        required
-                        className="h-12 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-[15px] text-[#1f2328] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
-                      />
-                    </label>
-
-                    <label className="block space-y-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#6e7881]">
-                        Last Name
-                      </span>
-                      <input
-                        value={lastName}
-                        onChange={e => setLastName(e.target.value)}
-                        placeholder="Last"
-                        required
-                        className="h-12 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-[15px] text-[#1f2328] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
-                      />
-                    </label>
-                  </div>
-
                   <label className="block space-y-1.5">
                     <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#6e7881]">
-                      Lee Email
+                      Lee Email or Username
                     </span>
                     <input
                       value={email}
                       onChange={e => setEmail(e.target.value)}
-                      placeholder="name@lee-associates.com"
-                      type="email"
+                      onBlur={() => setEmail(normalizeLeeEmail(email))}
+                      placeholder="tbarnes"
+                      type="text"
+                      inputMode="email"
+                      autoComplete="email"
                       required
                       className="h-12 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-[15px] text-[#1f2328] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
                     />
-                  </label>
-
-                  <label className="block space-y-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#6e7881]">
-                      Password
+                    <span className="block pt-1 text-xs text-[#7a838c]">
+                      Type just the part before @lee-associates.com.
                     </span>
-                    <input
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      type="password"
-                      required
-                      className="h-12 w-full rounded-xl border border-[#d8d7d2] bg-white px-4 text-[15px] text-[#1f2328] outline-none transition focus:border-[#c32033] focus:ring-4 focus:ring-[#c32033]/10"
-                    />
                   </label>
 
                   <button
@@ -411,8 +381,8 @@ export default function Home() {
                     Access Model
                   </p>
                   <p className="mt-2 text-sm leading-6 text-[#5d646d]">
-                    Broker sessions stay inside this application. No Microsoft handoff is required
-                    to access the tool.
+                    Broker sessions stay inside this application. Access is checked against the
+                    Lee broker roster and we do not store passwords.
                   </p>
                 </div>
               </div>
