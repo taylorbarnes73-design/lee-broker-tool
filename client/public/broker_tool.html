@@ -108,7 +108,7 @@
       <h3 class="section-heading-top">Upload Documents</h3>
 
       <div class="field field-stack-gap">
-        <label class="inline-flex-label">Property Brochure <span class="inline-badge">AI Scrape</span></label>
+        <label class="inline-flex-label">Property Brochure <span class="inline-badge">Auto-Fill from Document</span></label>
         <div class="brochure-zone" id="brochure-zone" onclick="document.getElementById('l-brochure-file').click()">
           <input type="file" id="l-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" onchange="onBrochureSelected(this)">
           <div class="brochure-zone-inner">
@@ -660,7 +660,7 @@
   </div><!-- /deal-shell -->
   <div class="btn-bar btn-bar-top-md">
     <button class="btn btn-gray" onclick="exportSignPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
-    <button class="btn btn-red" onclick="openSendToAdminModal('sign')">Submit Sign Request</button>
+    <button class="btn btn-red" onclick="openSendToAdminModal('sign')">Send Sign Order to Admin</button>
     <button class="btn btn-gray" onclick="clearSign()">Clear Form</button>
   </div>
 </div>
@@ -674,7 +674,7 @@
 
   <!-- AI Auto-fill (optional shortcut, sits above Step 1) -->
   <div class="card ai-shortcut-card">
-    <h2>Auto-fill from Document <span class="inline-badge">AI Scrape</span></h2>
+    <h2>Auto-fill from Document <span class="inline-badge">Auto-Fill from Document</span></h2>
     <p class="micro-copy">Optional. Upload a deal brochure, OM, or commission agreement and the AI will pre-fill as many voucher fields as it can. You can still edit every value in the steps below.</p>
     <div class="brochure-zone" id="v-brochure-zone" onclick="document.getElementById('v-brochure-file').click()">
       <input type="file" id="v-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" onchange="onVoucherBrochureSelected(this)">
@@ -2065,8 +2065,8 @@
     </div>
 
     <div class="btn-bar btn-bar-top-lg">
-      <button class="btn btn-green" id="btn-ci-send" onclick="ciSubmitToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Submit to Admin</span></button>
-      <button class="btn btn-outline" onclick="ciDownloadDataSheet()" title="Download a formatted AIR CRE Data Sheet as a text file">Download Data Sheet</button>
+      <button class="btn btn-green" id="btn-ci-send" onclick="ciSubmitToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Send Contract to Admin</span></button>
+      <button class="btn btn-outline" onclick="ciDownloadDataSheet()" title="Download a formatted AIR CRE Data Sheet as a text file">Download AIR CRE Data Sheet</button>
       <button class="btn btn-gray" onclick="ciReset()">Clear Form</button>
     </div>
     <div id="ci-submit-status" class="status-copy"></div>
@@ -2081,7 +2081,7 @@
         <h2>Your position in line</h2>
         <p>See your active submissions and where each one sits in the shared processing queue. Full submission details remain available to admins in the Admin Portal.</p>
       </div>
-      <button type="button" class="btn btn-outline" onclick="refreshBrokerQueue()">Refresh Queue</button>
+      <button type="button" class="btn btn-outline" id="btn-broker-queue-refresh" onclick="refreshBrokerQueue()"><span class="btn-spinner"></span><span class="btn-label">Refresh Queue</span></button>
     </div>
 
     <div class="stat-grid queue-stat-grid">
@@ -2154,26 +2154,37 @@
             <p class="page-desc">Review broker work, monitor request status, and open stored submission files from one clean operating surface.</p>
           </div>
           <div class="admin-page-actions">
-            <a class="admin-page-link" href="/">Home / Sign In</a>
-            <button type="button" class="btn btn-outline" onclick="switchAdminPage('submissions')">Open Submission Queue</button>
+            <a class="admin-page-link" href="/">← Back to Broker Tool</a>
+            <button type="button" class="btn btn-outline" onclick="switchAdminPage('submissions')">View All Submissions</button>
+          </div>
+        </div>
+
+        <div class="admin-welcome" id="admin-welcome" style="display:none"></div>
+
+        <div class="admin-microbar">
+          <div class="admin-last-updated" id="admin-last-updated"></div>
+          <div class="admin-quick-actions">
+            <button type="button" class="btn btn-outline btn-sm" onclick="adminQuickAction('voucher')">+ New Voucher</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="adminQuickAction('listing')">+ New Listing</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="adminQuickAction('sign')">+ Sign Request</button>
           </div>
         </div>
 
         <div class="stat-grid">
           <div class="stat-card">
-            <div class="stat-header"><span class="stat-label">Total Requests</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2d3339" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div class="stat-header"><span class="stat-label">Total Requests</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2d3339" stroke-width="2" title="Total submissions received"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
             <div class="stat-value" id="stat-total">8</div>
           </div>
           <div class="stat-card">
-            <div class="stat-header"><span class="stat-label">Pending</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#a56c0b" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="stat-header"><span class="stat-label">Pending</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#a56c0b" stroke-width="2" title="Waiting for admin review"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
             <div class="stat-value" id="stat-pending">3</div>
           </div>
           <div class="stat-card">
-            <div class="stat-header"><span class="stat-label">In Review</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#5c636b" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+            <div class="stat-header"><span class="stat-label">In Review</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#5c636b" stroke-width="2" title="Currently being reviewed"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
             <div class="stat-value" id="stat-review">1</div>
           </div>
           <div class="stat-card">
-            <div class="stat-header"><span class="stat-label">Approved</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1e7e34" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+            <div class="stat-header"><span class="stat-label">Approved</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1e7e34" stroke-width="2" title="Processed and complete"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
             <div class="stat-value" id="stat-approved">3</div>
           </div>
         </div>
@@ -2186,7 +2197,7 @@
               <div class="admin-section-copy">The newest broker requests appear here as they are received and archived.</div>
               <div class="admin-section-meta" id="dashboard-meta"></div>
             </div>
-            <a class="admin-page-link" href="#" onclick="switchAdminPage('submissions');return false;">View Full Queue</a>
+            <!-- Removed redundant "View Full Queue" link (duplicate navigation) -->
           </div>
           <div class="admin-table-wrap">
             <table class="admin-table">
@@ -2207,7 +2218,7 @@
             <p class="page-desc">Inspect every request record, open the stored submission PDF, and update status without leaving the queue.</p>
           </div>
           <div class="admin-page-actions">
-            <button type="button" class="btn btn-outline" onclick="refreshAdminWorkspace()">Refresh Queue</button>
+            <button type="button" class="btn btn-outline" id="btn-admin-refresh" onclick="refreshAdminWorkspace()"><span class="btn-spinner"></span><span class="btn-label">Refresh Queue</span></button>
           </div>
         </div>
 
@@ -2240,7 +2251,7 @@
           </div>
           <div class="admin-table-wrap">
             <table class="admin-table">
-              <thead><tr><th>ID</th><th>Type</th><th>Address</th><th>Broker</th><th>Office</th><th>Status</th><th>Submitted</th></tr></thead>
+              <thead><tr><th>Type</th><th>Address</th><th>Broker</th><th>Submitted</th><th>Status</th><th>Ref #</th><th class="th-chevron"></th></tr></thead>
               <tbody id="submissions-tbody">
                 <tr><td colspan="7">
                   <div class="empty-state">
@@ -2275,7 +2286,7 @@
               <span class="dx-header-tag">Lee &amp; Associates &middot; Listings and Deals</span>
             </div>
           </div>
-          <span class="dx-version-badge">v16</span>
+          <span class="dx-version-badge">Up to date ✓</span>
         </div>
 
         <div class="dx-card dx-setup-card">
@@ -2289,8 +2300,8 @@
         <div class="dx-drop" id="dxDz">
           <input type="file" id="dxFi" accept=".xlsm,.xlsx"/>
           <span class="dx-drop-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></span>
-          <h3>Drop Voucher Here</h3>
-          <p>.xlsm or .xlsx — Lee &amp; Associates commission voucher</p>
+          <h3>Drop Voucher File Here (Excel)</h3>
+          <p>Drag it here or click to choose your Lee &amp; Associates commission voucher.</p>
         </div>
 
         <div class="dx-status" id="dxSt"><div class="dx-spin" id="dxSp"></div><span id="dxSm"></span></div>
@@ -6987,6 +6998,24 @@ function fmtDate(iso) {
 
 function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
 
+function setBtnLoading(btn, loading, loadingLabel) {
+  if (!btn) return;
+  btn.classList.toggle('loading', Boolean(loading));
+  const label = btn.querySelector('.btn-label');
+  if (label && loadingLabel) label.textContent = loading ? loadingLabel : label.dataset.idle || label.textContent;
+}
+
+function adminQuickAction(tab) {
+  try {
+    if (document.body.classList.contains('admin-mode')) {
+      document.body.classList.remove('admin-mode');
+      document.getElementById('admin-toggle-label').textContent = 'Admin Portal';
+    }
+    if (typeof switchTab === 'function') switchTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (e) { /* no-op */ }
+}
+
 // Toggle admin mode
 async function toggleAdminMode() {
   const isAdmin = document.body.classList.toggle('admin-mode');
@@ -7012,9 +7041,19 @@ function switchAdminPage(page) {
 }
 
 async function refreshAdminWorkspace() {
-  await refreshAdminSubmissions();
-  renderDashboard();
-  renderSubmissions();
+  const btn = document.getElementById('btn-admin-refresh');
+  if (btn) {
+    const label = btn.querySelector('.btn-label');
+    if (label && !label.dataset.idle) label.dataset.idle = label.textContent;
+    setBtnLoading(btn, true, 'Refreshing…');
+  }
+  try {
+    await refreshAdminSubmissions();
+    renderDashboard();
+    renderSubmissions();
+  } finally {
+    setBtnLoading(btn, false);
+  }
 }
 
 // Render dashboard
@@ -7027,6 +7066,22 @@ function renderDashboard() {
   document.getElementById('stat-pending').textContent = pending;
   document.getElementById('stat-review').textContent = review;
   document.getElementById('stat-approved').textContent = approved;
+
+  const welcome = document.getElementById('admin-welcome');
+  if (welcome) {
+    if (total === 0) {
+      welcome.style.display = '';
+      welcome.innerHTML = '<strong>Welcome.</strong> No submissions yet — brokers will start appearing here as soon as they submit their first request.';
+    } else {
+      welcome.style.display = 'none';
+      welcome.textContent = '';
+    }
+  }
+
+  const lastUpdated = document.getElementById('admin-last-updated');
+  if (lastUpdated) {
+    lastUpdated.textContent = 'Last updated: ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
 
   const recent = [...ADMIN_SUBMISSIONS].sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)).slice(0, 5);
   const tbody = document.getElementById('dashboard-recent');
@@ -7068,7 +7123,15 @@ function filterSubmissions() {
     return;
   }
   tbody.innerHTML = filtered.map(s =>
-    '<tr onclick="openSubmissionDetail(\'' + s.id + '\')"><td class="cell-mono-sm">' + s.id + '</td><td class="text-capitalize">' + s.type + '</td><td>' + ([s.address, s.city].filter(Boolean).join(', ') || '-') + '</td><td>' + (s.brokerName || '-') + '</td><td>' + (s.office || '-') + '</td><td>' + statusBadge(s.status) + '</td><td class="text-muted-sm">' + fmtDate(s.submittedAt) + '</td></tr>'
+    '<tr onclick="openSubmissionDetail(\'' + s.id + '\')">' +
+      '<td class="text-capitalize">' + s.type + '</td>' +
+      '<td>' + ([s.address, s.city].filter(Boolean).join(', ') || '-') + '</td>' +
+      '<td>' + (s.brokerName || '-') + (s.office ? '<div class="text-muted-sm">' + s.office + '</div>' : '') + '</td>' +
+      '<td class="text-muted-sm">' + fmtDate(s.submittedAt) + '</td>' +
+      '<td>' + statusBadge(s.status) + '</td>' +
+      '<td class="cell-mono-sm">' + s.id + '</td>' +
+      '<td class="cell-chevron">›</td>' +
+    '</tr>'
   ).join('');
 }
 
@@ -10608,6 +10671,12 @@ function renderBrokerQueue(data) {
 }
 
 async function refreshBrokerQueue() {
+  const btn = document.getElementById('btn-broker-queue-refresh');
+  if (btn) {
+    const label = btn.querySelector('.btn-label');
+    if (label && !label.dataset.idle) label.dataset.idle = label.textContent;
+    setBtnLoading(btn, true, 'Refreshing…');
+  }
   setQueueStatus('Loading queue...');
   try {
     await ensureSharedBrokerSession();
@@ -10615,6 +10684,8 @@ async function refreshBrokerQueue() {
     renderBrokerQueue(data);
   } catch (error) {
     setQueueStatus((error && error.message) ? error.message : 'Unable to load queue.', true);
+  } finally {
+    setBtnLoading(btn, false);
   }
 }
 
@@ -12451,6 +12522,7 @@ function ciDownloadDataSheet() {
 }
 
 function ciReset() {
+  if (!confirm('Clear the contract intake form? All entered data will be deleted.')) return;
   // Reset contract type
   document.getElementById('ci-contract-type').value = '';
   // Hide sections

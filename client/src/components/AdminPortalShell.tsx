@@ -13,11 +13,17 @@ type AdminPortalShellProps = {
   children: ReactNode;
 };
 
-const navItems = [
+const navItems: ReadonlyArray<{
+  section: AdminPortalSection;
+  label: string;
+  subhead: string;
+  href: string;
+  adminOnly?: boolean;
+}> = [
   { section: "dashboard", label: "Dashboard", subhead: "Overview", href: "/portal" },
   { section: "my-submissions", label: "My submissions", subhead: "Broker queue", href: "/portal/submissions" },
   { section: "admin-submissions", label: "Admin queue", subhead: "Review work", href: "/portal/admin/submissions", adminOnly: true },
-] as const;
+];
 
 export default function AdminPortalShell({
   section,
