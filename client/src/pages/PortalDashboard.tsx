@@ -1,11 +1,11 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
+import AdminPortalShell from "@/components/AdminPortalShell";
 import { Button, Card, Input } from "../design/index.jsx";
-import { useEffect } from "react";
 
 export default function PortalDashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [status, setStatus] = useState<string | null>(null);
@@ -55,20 +55,12 @@ export default function PortalDashboard() {
   };
 
   return (
-    <div style={{ maxWidth: 920, margin: "0 auto", padding: 24 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ink-900)" }}>Dashboard</div>
-          <div style={{ fontSize: 13, color: "var(--ink-500)", marginTop: 6 }}>
-            Signed in as <b>{user?.name}</b> ({user?.email}) — {user?.role === "admin" ? "Admin" : "Agent"}
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <Button variant="secondary" onClick={() => logout()}>
-            Log out
-          </Button>
-        </div>
-      </div>
+    <AdminPortalShell
+      section="dashboard"
+      eyebrow="Admin Portal"
+      title="Submission Operations"
+      description={`Signed in as ${user?.name ?? "Lee user"}${user?.email ? ` (${user.email})` : ""} - ${user?.role === "admin" ? "Admin" : "Agent"}`}
+    >
 
       <div style={{ display: "flex", gap: 12, marginTop: 18, flexWrap: "wrap" }}>
         <Link href="/portal/submissions">
@@ -121,7 +113,7 @@ export default function PortalDashboard() {
           </div>
         </Card>
       </div>
-    </div>
+    </AdminPortalShell>
   );
 }
 

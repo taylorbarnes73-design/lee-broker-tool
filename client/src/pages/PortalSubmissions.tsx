@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
+import AdminPortalShell from "@/components/AdminPortalShell";
 import { Button, Card } from "../design/index.jsx";
 
 type SubmissionSummary = {
@@ -34,15 +35,17 @@ export default function PortalSubmissions() {
   }, []);
 
   return (
-    <div style={{ maxWidth: 920, margin: "0 auto", padding: 24 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ink-900)" }}>My submissions</div>
+    <AdminPortalShell
+      section="my-submissions"
+      title="My Submissions"
+      description="Track broker submissions, queue position, and submitted deal packages."
+      actions={
         <Link href="/portal">
           <Button variant="secondary">Back to dashboard</Button>
         </Link>
-      </div>
-
-      <div style={{ marginTop: 14 }}>
+      }
+    >
+      <div className="admin-portal-card">
         <Card padding="lg">
           {error ? (
             <div style={{ color: "var(--err-700)", fontSize: 13 }}>{error}</div>
@@ -88,7 +91,7 @@ export default function PortalSubmissions() {
           )}
         </Card>
       </div>
-    </div>
+    </AdminPortalShell>
   );
 }
 

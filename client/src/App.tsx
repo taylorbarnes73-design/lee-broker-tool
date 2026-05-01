@@ -1,18 +1,21 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Route, Switch } from "wouter";
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import Login from "./pages/Login";
+import PortalAdminSubmissions from "./pages/PortalAdminSubmissions";
+import PortalDashboard from "./pages/PortalDashboard";
+import PortalSubmissionDetail from "./pages/PortalSubmissionDetail";
+import PortalSubmissions from "./pages/PortalSubmissions";
 
 /**
- * Full-screen redirect to the production broker tool HTML app.
+ * Full-screen redirect to the legacy broker workflow HTML app.
  *
- * The original broker_tool.html is the fully-functional production workspace
- * (Listing Entry, Sign Request, Commission Voucher, Comp Input, Admin Portal,
- * PDF export, email drafting, S3 uploads, etc.). The Express server in
- * `server/_core/index.ts` authenticates the request and serves the HTML directly,
- * so a hard navigation is the safest way to hand off from the React SPA.
+ * Broker-facing workflows still live in broker_tool.html while the admin portal
+ * is integrated into the React app under /portal.
  */
 function BrokerToolRedirect() {
   useEffect(() => {
@@ -25,11 +28,48 @@ function BrokerToolRedirect() {
   );
 }
 
+function PortalRoute({ children }: { children: ReactNode }) {
+  const { loading, isAuthenticated } = useAuth({
+    redirectOnUnauthenticated: true,
+    redirectPath: "/login",
+  });
+
+  if (loading || !isAuthenticated) {
+    return (
+      <div className="portal-loading">
+        <div className="portal-loading-card">Opening admin portal...</div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
 function Router() {
   return (
     <Switch>
-      {/* Single-purpose app: everything navigates to /tool */}
       <Route path="/" component={BrokerToolRedirect} />
+      <Route path="/login" component={Login} />
+      <Route path="/portal">
+        <PortalRoute>
+          <PortalDashboard />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/submissions">
+        <PortalRoute>
+          <PortalSubmissions />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/admin/submissions">
+        <PortalRoute>
+          <PortalAdminSubmissions />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/submissions/:id">
+        <PortalRoute>
+          <PortalSubmissionDetail />
+        </PortalRoute>
+      </Route>
       <Route component={BrokerToolRedirect} />
     </Switch>
   );

@@ -917,7 +917,7 @@ export const aiAssistRouter = router({
 
   /**
    * Scrape a property brochure (PDF or image) and extract listing fields.
-   * Fetches the file server-side to avoid CORS issues and sends as base64.
+   * Fetches the file server-side and sends the content as base64.
    */
   scrapeBrochure: publicProcedure
     .input(
