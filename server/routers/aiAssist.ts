@@ -788,7 +788,7 @@ export const aiAssistRouter = router({
 
   /**
    * Scrape a property brochure (PDF or image) and extract listing fields.
-   * Fetches the file server-side to avoid CORS issues and sends as base64.
+   * Fetches the file server-side and sends the content as base64.
    */
   scrapeBrochure: publicProcedure
     .input(
@@ -810,7 +810,7 @@ export const aiAssistRouter = router({
       const { fileUrl, mimeType } = input;
       const fieldNames = Object.keys(listingFields.shape);
 
-      // Fetch file server-side → avoids CORS and lets us send as base64 inline data
+      // Fetch file server-side and send as base64 inline data.
       let fileBuffer: Buffer;
       try {
         const fileResp = await fetch(fileUrl, { signal: AbortSignal.timeout(30_000) });

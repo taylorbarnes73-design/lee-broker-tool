@@ -677,15 +677,6 @@ body.admin-mode .header .sub { display: none; }
   content: ''; display: inline-block; width: 3px; height: 14px;
   background: var(--red); border-radius: 2px;
 }
-#dealius-tool .dx-cors-note {
-  background: #fff6df;
-  border: 1px solid #fbbf24; border-radius: 10px;
-  padding: 16px 20px; font-size: 12.5px; color: #78350f;
-  margin-bottom: 16px; line-height: 1.7;
-}
-#dealius-tool .dx-cors-note strong { color: #451a03; }
-#dealius-tool .dx-cors-note a { color: var(--navy); font-weight: 500; }
-#dealius-tool .dx-cors-note code { background: rgba(120,53,15,.08); border-radius: 4px; padding: 2px 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
 #dealius-tool .dx-cred-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
 #dealius-tool .dx-saved-badge { font-size: 10px; color: #059669; font-weight: 600; margin-top: 4px; display: none; }
 #dealius-tool .dx-field { display: flex; flex-direction: column; gap: 6px; }

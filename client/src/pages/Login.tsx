@@ -41,7 +41,7 @@ export default function Login() {
     onSuccess: async result => {
       if (result.success) {
         await refresh();
-        setLocation("/"); // Redirect to main app
+        setLocation("/portal");
       }
     },
   });
@@ -59,7 +59,7 @@ export default function Login() {
   };
 
   useEffect(() => {
-    if (user) setLocation("/");
+    if (user) setLocation("/portal");
   }, [setLocation, user]);
 
   const oauthRedirectEnabled =

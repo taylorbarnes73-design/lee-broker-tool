@@ -2224,17 +2224,7 @@
           <span class="dx-version-badge">v16</span>
         </div>
 
-        <div class="dx-cors-note" id="dxCorsNote">
-          <strong>One-time setup:</strong> This tool must be run from a local web server to call the Dealius API (browser CORS restriction).<br><br>
-          <strong>Easiest — CORS extension:</strong> Install
-          <a href="https://chrome.google.com/webstore/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf" target="_blank">Allow CORS for Chrome</a>
-          and enable it while using this tool.<br><br>
-          <strong>Alternative — local server:</strong> Open Terminal, <code>cd ~/Downloads</code>, run
-          <code>python3 -m http.server 8080</code>, then open
-          <a href="http://localhost:8080">localhost:8080</a>.
-        </div>
-
-        <div class="dx-card">
+        <div class="dx-card dx-setup-card">
           <div class="dx-card-title">Dealius Credentials</div>
           <div class="dx-cred-grid">
             <div class="dx-field"><label>Dealius Email</label><input type="email" id="demail" class="mono" autocomplete="off" oninput="dxSaveCreds()"/><span class="dx-saved-badge" id="demailSaved">&check; Saved</span></div>
@@ -7458,7 +7448,6 @@ function dxLoadFile(file) {
       dxApplyEntryModeUI();
       dxRenderPreview(DX_P);
       dxStat('ok', 'Parsed: ' + DX_P.dealName);
-      setHiddenState(document.getElementById('dxCorsNote'), true);
       setHiddenState(document.getElementById('dxAib'), false);
       setHiddenState(document.getElementById('dxAiPanel'), true);
       document.getElementById('dxAiPanel').innerHTML = '';
@@ -8173,14 +8162,8 @@ async function dxSubmitDeal() {
     btn.classList.add('dx-btn-success');
   } catch (err) {
     const msg = err.message || '';
-    const isCors = msg.toLowerCase().includes('fetch') || msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('networkerror') || msg.toLowerCase().includes('cors');
-    if (isCors) {
-      dxAddLog('err', 'CORS/network error — enable the CORS extension or run via local server.');
-      dxStat('err', 'CORS/network error — see setup note');
-    } else {
-      dxAddLog('err', 'Error: ' + msg);
-      dxStat('err', msg);
-    }
+    dxAddLog('err', 'Error: ' + msg);
+    dxStat('err', msg);
     document.querySelectorAll('.dx-step.active').forEach(s => s.classList.replace('active', 'err'));
     btn.disabled = false;
     btn.classList.remove('loading');
@@ -8412,7 +8395,6 @@ function dxResetTool() {
   document.getElementById('dxLg').innerHTML = '';
   document.getElementById('dxFi').value = '';
   setHiddenState(document.getElementById('dxStepBar'), true);
-  setHiddenState(document.getElementById('dxCorsNote'), false);
   setHiddenState(document.getElementById('dxAiPanel'), true);
   document.getElementById('dxAiPanel').innerHTML = '';
   setHiddenState(document.getElementById('dxAib'), true);
