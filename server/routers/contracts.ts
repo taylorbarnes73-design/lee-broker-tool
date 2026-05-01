@@ -253,13 +253,20 @@ Return JSON with these fields (omit any that are blank):
           return { success: false, error: "AI returned invalid JSON", data: null };
         }
 
+        parsed.contractType = input.contractType;
+
         // Normalize date fields
         const dateFields = ["agreementDate", "mlDate", "termStart", "termEnd"];
         for (const f of dateFields) {
           if (parsed[f]) parsed[f] = parseToIsoDate(String(parsed[f]));
         }
 
-        return { success: true, data: parsed, error: null };
+        const validated = contractDataSchema.safeParse(parsed);
+        if (!validated.success) {
+          return { success: false, error: "AI returned data in an unexpected format", data: null };
+        }
+
+        return { success: true, data: validated.data, error: null };
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         return { success: false, error: msg, data: null };
