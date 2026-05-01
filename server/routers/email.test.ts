@@ -163,13 +163,7 @@ describe("email.sendToAdmin", () => {
     expect(callArg).toContain("contentBytes");
   });
 
-  it("falls back to a secure link email when Outlook attachment sending fails", async () => {
-    execSyncMock
-      .mockImplementationOnce(() => {
-        throw new Error("attachment payload rejected");
-      })
-      .mockImplementationOnce(() => Buffer.from("OK"));
-
+  it("queues sign submissions without sending an email", async () => {
     const caller = makeCaller();
     const result = await caller.sendToAdmin({
       formType: "sign",
@@ -186,8 +180,8 @@ describe("email.sendToAdmin", () => {
 
     expect(result.success).toBe(true);
     expect(result.attachmentIncluded).toBe(false);
-    expect(result.deliveryMethod).toBe("outlook-mcp-link");
-    expect(execSyncMock).toHaveBeenCalledTimes(2);
+    expect(result.deliveryMethod).toBe("queue-only");
+    expect(execSyncMock).not.toHaveBeenCalled();
   });
 
   it("uses SMTP with a true attachment when configured", async () => {

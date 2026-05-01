@@ -396,7 +396,9 @@ export const emailRouter = router({
           ? {
               success: true,
               deliveryMethod: "queue-only" as const,
-              attachmentIncluded: Boolean(archivedPdf),
+              // Queue-only: no email is sent, so no attachment is included in delivery.
+              attachmentIncluded: false,
+              error: undefined as string | undefined,
             }
           : await deliverSubmissionEmail({
               to: [adminEmail],

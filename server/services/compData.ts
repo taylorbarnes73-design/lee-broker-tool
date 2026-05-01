@@ -110,6 +110,9 @@ const FILTER_ALIASES: Record<string, string[]> = {
   "orange county": ["Orange County", "Orange"],
   orange: ["Orange County", "Orange"],
   "inland empire": ["Inland Empire", "Riverside", "San Bernardino"],
+  "ie": ["IE", "IE East"],
+  "ie east": ["IE East", "IE"],
+  "ie west": ["IE West"],
   ind: ["IND", "Indust", "Industrial"],
   indust: ["Indust", "Industrial", "IND"],
   industrial: ["Industrial", "Indust", "IND"],
@@ -122,6 +125,14 @@ const FILTER_ALIASES: Record<string, string[]> = {
   flex: ["Flex", "FLEX", "FLX", "R&D/Flex"],
   "r&d/flex": ["R&D/Flex", "R&D", "Flex", "FLEX", "FLX"],
 };
+
+function normalizeSubMarketLabel(value: string) {
+  const trimmed = value?.trim?.() ?? "";
+  if (!trimmed) return "";
+  // Data normalization: legacy "IE" means "IE East".
+  if (trimmed.toLowerCase() === "ie") return "IE East";
+  return trimmed;
+}
 
 function expandFilterValues(values: string[] | undefined) {
   const expanded = new Set<string>();
@@ -186,6 +197,7 @@ function mapLeaseSearchResult(row: LeaseComp): CompSearchResult {
   const normalizedRecord: LeaseCompRecord = {
     ...record,
     propertyType: normalizePropertyTypeLabel(record.propertyType),
+    subMarket: normalizeSubMarketLabel(record.subMarket),
   };
   const recordForCard = photo ? { ...normalizedRecord, photo } : normalizedRecord;
   return {
@@ -198,7 +210,7 @@ function mapLeaseSearchResult(row: LeaseComp): CompSearchResult {
     state: record.state,
     zipCode: record.zipCode,
     market: record.market,
-    subMarket: record.subMarket,
+    subMarket: normalizedRecord.subMarket,
     propertyType: normalizedRecord.propertyType,
     propertySubType: record.propertySubType,
     transactionDate: record.transactionDate,
@@ -219,6 +231,7 @@ function mapSaleSearchResult(row: SaleComp): CompSearchResult {
   const normalizedRecord: SaleCompRecord = {
     ...record,
     propertyType: normalizePropertyTypeLabel(record.propertyType),
+    subMarket: normalizeSubMarketLabel(record.subMarket),
   };
   const recordForCard = photo ? { ...normalizedRecord, photo } : normalizedRecord;
   return {
@@ -231,7 +244,7 @@ function mapSaleSearchResult(row: SaleComp): CompSearchResult {
     state: record.state,
     zipCode: record.zipCode,
     market: record.market,
-    subMarket: record.subMarket,
+    subMarket: normalizedRecord.subMarket,
     propertyType: normalizedRecord.propertyType,
     propertySubType: record.propertySubType,
     transactionDate: record.transactionDate,
