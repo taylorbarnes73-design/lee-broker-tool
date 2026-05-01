@@ -24,14 +24,17 @@
     <div class="header-copy">
     <div class="header-kicker">Lee &amp; Associates Newport Beach</div>
     <h1>Broker Submission Tool</h1>
-    <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher &bull; Comp Input &bull; Queue &bull; Comp Reports &bull; Documents &bull; Contracts</div>
+    <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher &bull; Comp Input &bull; Comp Reports &bull; Documents &bull; Contracts</div>
     </div>
   </div>
   <div class="header-actions">
-    <div class="header-user" id="header-user">
-      <div class="header-user-label">Signed In</div>
-      <div class="header-user-name" id="header-user-name">Not signed in</div>
-      <div class="header-user-email" id="header-user-email"></div>
+    <div class="header-account">
+      <div class="header-user" id="header-user">
+        <div class="header-user-label">Signed In</div>
+        <div class="header-user-name" id="header-user-name">Not signed in</div>
+        <div class="header-user-email" id="header-user-email"></div>
+      </div>
+      <button type="button" class="submission-queue-button" onclick="switchTab('queue')">Submission Queue</button>
     </div>
     <button class="admin-toggle is-hidden" onclick="toggleAdminMode()">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -64,7 +67,6 @@
   <div class="tab" data-tab="sign" onclick="switchTab('sign')">Sign Request</div>
   <div class="tab" data-tab="voucher" onclick="switchTab('voucher')">Commission Voucher</div>
   <div class="tab" data-tab="comp" onclick="switchTab('comp')">Comp Input</div>
-  <div class="tab" data-tab="queue" onclick="switchTab('queue')">Queue</div>
   <div class="tab" data-tab="comp-reports" onclick="switchTab('comp-reports')">Comp Reports</div>
   <div class="tab" data-tab="docs" onclick="switchTab('docs')">Documents</div>
   <div class="tab" data-tab="contracts" onclick="switchTab('contracts')">Contracts</div>
@@ -2072,8 +2074,8 @@
   <div class="queue-shell">
     <div class="queue-header">
       <div>
-        <div class="admin-page-eyebrow">Broker Queue</div>
-        <h2>Your position in line</h2>
+        <div class="admin-page-eyebrow">Broker Desk</div>
+        <h2>Submission Queue</h2>
         <p>See your active submissions and where each one sits in the shared processing queue. Full submission details remain available to admins in the Admin Portal.</p>
       </div>
       <button type="button" class="btn btn-outline" onclick="refreshBrokerQueue()">Refresh Queue</button>
