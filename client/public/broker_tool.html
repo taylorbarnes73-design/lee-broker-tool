@@ -9312,13 +9312,11 @@ async function scrapeBrochure() {
   btn.classList.add('loading');
   btn.textContent = 'Analyzing brochure...';
   try {
-    const resp = await fetch('/api/trpc/aiAssist.scrapeBrochure', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ json: { fileUrl: brochureFileUrl, mimeType: brochureMimeType } })
+    const result = await callTrpc('aiAssist.extractDocument', {
+      fileUrl: brochureFileUrl,
+      mimeType: brochureMimeType,
+      tab: 'listing'
     });
-    const data = await resp.json();
-    const result = data?.result?.data?.json;
     if (result && result.success) {
       const count = applyAiFields('listing', result.fields);
       status.textContent = `Extracted ${result.fieldCount || count} fields from brochure`;
@@ -9387,40 +9385,13 @@ async function scrapeVoucherBrochure() {
   btn.classList.add('loading');
   btn.textContent = 'Analyzing document...';
   try {
-    const resp = await fetch('/api/trpc/aiAssist.scrapeBrochure', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ json: { fileUrl: voucherBrochureFileUrl, mimeType: voucherBrochureMimeType } })
+    const result = await callTrpc('aiAssist.extractDocument', {
+      fileUrl: voucherBrochureFileUrl,
+      mimeType: voucherBrochureMimeType,
+      tab: 'voucher'
     });
-    const data = await resp.json();
-    const result = data?.result?.data?.json;
     if (result && result.success) {
-      // Map listing fields to voucher fields where they overlap
-      const voucherMapping = {
-        address: 'v-address',
-        city: 'v-city',
-        state: 'v-state',
-        zip: 'v-zip',
-        buildingSf: 'v-deal-sf',
-        suiteSf: 'v-deal-sf',
-        rateSfMo: 'v-base-rent',
-        askingPrice: 'v-total-consideration',
-        listingAgentName: 'v-listing-agent',
-        comments: 'v-notes',
-      };
-      let count = 0;
-      Object.entries(result.fields).forEach(([key, val]) => {
-        const elId = voucherMapping[key];
-        if (elId) {
-          const el = document.getElementById(elId);
-          if (el && !el.readOnly && !el.value) {
-            el.value = val;
-            el.classList.add('ai-filled');
-            addAiBadge(el);
-            count++;
-          }
-        }
-      });
+      const count = applyAiFields('voucher', result.fields || {});
       status.textContent = `Filled ${count} voucher field${count !== 1 ? 's' : ''} from document`;
       if (count > 0) showToast(`Filled ${count} voucher field${count !== 1 ? 's' : ''} from document`);
       else showToast('No matching voucher fields found in document', 'warn');
@@ -11583,13 +11554,10 @@ async function ciProcessPdf(file) {
     // 3. Extract fields via AI
     statusEl.innerHTML = '<span class="text-error status-strong">Reading the contract and extracting fields...</span>';
 
-    const extractResp = await fetch('/api/trpc/contracts.extractContract', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ json: { pdfUrl: uploadRes.url, contractType } })
+    const extractRes = await callTrpc('contracts.extractContract', {
+      pdfUrl: uploadRes.url,
+      contractType
     });
-    const extractData = await extractResp.json();
-    const extractRes = extractData?.result?.data?.json;
 
     if (!extractRes.success || !extractRes.data) {
       throw new Error(extractRes.error || 'AI extraction failed');
