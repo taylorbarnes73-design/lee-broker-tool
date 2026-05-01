@@ -653,16 +653,14 @@
       </ol>
     </div>
     <div class="deal-actions">
-      <button class="btn btn-gray" onclick="exportSignPdf()">Review (PDF)</button>
-      <button class="btn btn-red" onclick="openEmailModal('sign')">Submit Sign Request</button>
-      <button class="btn btn-green" onclick="openSendToAdminModal('sign')">Send to Admin</button>
+      <button class="btn btn-gray" onclick="exportSignPdf()">Download PDF</button>
+      <button class="btn btn-red" onclick="openSendToAdminModal('sign')">Submit Sign Request</button>
     </div>
   </aside>
   </div><!-- /deal-shell -->
   <div class="btn-bar btn-bar-top-md">
-    <button class="btn btn-gray" onclick="exportSignPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
-    <button class="btn btn-red" onclick="openEmailModal('sign')">Submit Sign Request</button>
-    <button class="btn btn-green" id="btn-sign-send-admin" onclick="openSendToAdminModal('sign')"><span class="btn-spinner"></span><span class="btn-label">Send to Admin</span></button>
+    <button class="btn btn-gray" onclick="exportSignPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
+    <button class="btn btn-red" onclick="openSendToAdminModal('sign')">Submit Sign Request</button>
     <button class="btn btn-gray" onclick="clearSign()">Clear Form</button>
   </div>
 </div>
@@ -1086,7 +1084,7 @@
   </div>
 
   <div class="btn-bar">
-    <button class="btn btn-gray" onclick="exportVoucherPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
+    <button class="btn btn-gray" onclick="exportVoucherPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
     <button class="btn btn-red" onclick="openEmailModal('voucher')">Submit Voucher</button>
     <button class="btn btn-green" id="btn-voucher-send-admin" onclick="openSendToAdminModal('voucher')"><span class="btn-spinner"></span><span class="btn-label">Send to Admin</span></button>
     <button class="btn btn-outline" onclick="notifyMLS()">Notify MLS</button>
@@ -1143,7 +1141,7 @@
     </div>
 
     <div class="deal-actions">
-      <button class="btn btn-gray" onclick="exportVoucherPdf()">Review (PDF)</button>
+      <button class="btn btn-gray" onclick="exportVoucherPdf()">Download PDF</button>
       <button class="btn btn-red" onclick="openEmailModal('voucher')">Submit Voucher</button>
       <button class="btn btn-green" onclick="openSendToAdminModal('voucher')">Send to Admin</button>
     </div>
@@ -1400,7 +1398,7 @@
   </div><!-- end optional-wrapper -->
 
   <div class="btn-bar btn-bar-top-md">
-    <button class="btn btn-gray" onclick="exportCompPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
+    <button class="btn btn-gray" onclick="exportCompPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
     <button class="btn btn-red" onclick="submitCompDirect()">Submit Comp</button>
     <button class="btn btn-outline" onclick="switchTab('comp-reports')">Open Comp Reports</button>
     <button class="btn btn-gray" onclick="clearComp()">Clear Form</button>
@@ -7030,12 +7028,94 @@ function openSubmissionDetail(id) {
     actions += '<button class="btn btn-green" data-action="push-dealius" onclick="adminPushSubmissionToDealius(\\\'' + s.id + '\\\')"><span class="btn-spinner"></span><span class="btn-label">Review & push to Dealius</span></button>';
     actions += '<button class="btn btn-blue btn-blue-red" onclick="dxPushVoucher(\'' + s.id + '\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Prefill Dealius Entry</button>';
   }
+  if (s.type === 'sign') {
+    const disabled = s.status !== 'approved' ? 'disabled' : '';
+    actions += '<button class="btn btn-green" ' + disabled + ' onclick="adminSendSignToCimarron(\\\'' + s.id + '\\\')"><span class="btn-label">Send to Cimarron (PO #)</span></button>';
+  }
   actions += '<button class="btn btn-blue" ' + (s.status === 'in_review' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'in_review\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Review</button>';
   actions += '<button class="btn btn-green" ' + (s.status === 'approved' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'approved\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Approve</button>';
   actions += '<button class="btn btn-danger" ' + (s.status === 'rejected' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'rejected\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Reject</button>';
   document.getElementById('adm-detail-actions').innerHTML = actions;
 
   document.getElementById('admin-detail-modal').classList.add('open');
+}
+
+function _applySignFormDataToDom(formData) {
+  if (!formData || typeof formData !== 'object') return;
+  Object.keys(formData).forEach(id => {
+    if (id === 'signAgents') return;
+    const el = document.getElementById(id);
+    if (!el) return;
+    const v = formData[id];
+    if (el.type === 'checkbox') el.checked = Boolean(v);
+    else el.value = String(v ?? '');
+  });
+  // Agents: rebuild from signAgents list if present
+  const agents = Array.isArray(formData.signAgents) ? formData.signAgents : [];
+  if (agents.length) {
+    try {
+      document.getElementById('sign-agent-body').innerHTML = '';
+      agents.forEach(a => {
+        addSignAgent();
+        const rows = document.querySelectorAll('#sign-agent-body tr');
+        const last = rows[rows.length - 1];
+        if (!last) return;
+        const inputs = last.querySelectorAll('input');
+        if (inputs[0]) inputs[0].value = String(a?.name ?? '');
+        if (inputs[1]) inputs[1].value = String(a?.pct ?? '');
+      });
+    } catch (e) { /* no-op */ }
+  }
+}
+
+async function adminSendSignToCimarron(id) {
+  const sub = ADMIN_SUBMISSIONS.find(s => s.id === id);
+  if (!sub || !sub.serverSubmissionId) {
+    alert('Missing server submission id.');
+    return;
+  }
+  if (sub.status !== 'approved') {
+    alert('Approve the sign request first.');
+    return;
+  }
+  const po = prompt('Enter PO # (required):');
+  if (!po || !String(po).trim()) return;
+
+  // Populate the sign tab DOM so we can regenerate the PDF with PO #.
+  const payload = sub.payload || {};
+  _applySignFormDataToDom(payload.formData || null);
+  const poEl = document.getElementById('s-po');
+  if (poEl) poEl.value = String(po).trim();
+
+  try {
+    const pdfAttachment = await (async () => {
+      const prevType = _staFormType;
+      _staFormType = 'sign';
+      const result = await buildSendToAdminPdfAttachment();
+      _staFormType = prevType;
+      return result;
+    })();
+
+    const resp = await fetch('/api/trpc/email.sendApprovedSignToCimarron', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        json: {
+          submissionId: sub.serverSubmissionId,
+          poNumber: String(po).trim(),
+          pdfAttachment,
+        }
+      })
+    });
+    const data = await resp.json().catch(() => ({}));
+    const result = data?.result?.data?.json;
+    if (!result?.success) throw new Error(result?.error || 'Send failed');
+    alert('✅ Sent to Cimarron. Broker was CC’d and PDF attached.');
+  } catch (e) {
+    console.warn('Send to Cimarron failed:', e && e.message ? e.message : e);
+    alert('❌ Send failed: ' + (e && e.message ? e.message : 'Unknown error'));
+  }
 }
 
 function closeAdminModal() {
@@ -11318,13 +11398,18 @@ function openSendToAdminModal(formType) {
   const status = document.getElementById('sta-status');
   const btn = document.getElementById('sta-send-btn');
   if (!modal) return;
-  const label = formType === 'listing' ? 'Listing Entry' : 'Commission Voucher';
-  title.textContent = `Send ${label} to Admin`;
-  desc.textContent = `This will email all filled ${label} fields to the office admin. You will be CC’d automatically.`;
+  const label =
+    formType === 'listing' ? 'Listing Entry' :
+    formType === 'voucher' ? 'Commission Voucher' :
+    'Sign Request';
+  title.textContent = formType === 'sign' ? `Submit ${label}` : `Send ${label} to Admin`;
+  desc.textContent = formType === 'sign'
+    ? 'This will submit the sign request into the admin submission queue. The admin will approve it, assign a PO #, and send it to Cimarron.'
+    : `This will email all filled ${label} fields to the office admin. You will be CC’d automatically.`;
   status.textContent = '';
   status.classList.remove('text-success', 'text-error', 'status-strong');
   btn.classList.remove('loading');
-  btn.querySelector('.btn-label').textContent = 'Send Email';
+  btn.querySelector('.btn-label').textContent = formType === 'sign' ? 'Submit to Queue' : 'Send Email';
   modal.classList.add('open');
 }
 
@@ -11621,7 +11706,7 @@ async function submitSendToAdmin() {
 
   try {
     const pdfAttachment = await buildSendToAdminPdfAttachment();
-    btn.querySelector('.btn-label').textContent = 'Uploading & Sending...';
+    btn.querySelector('.btn-label').textContent = _staFormType === 'sign' ? 'Submitting…' : 'Uploading & Sending...';
 
     const resp = await fetch('/api/trpc/email.sendToAdmin', {
       method: 'POST',
@@ -11635,6 +11720,7 @@ async function submitSendToAdmin() {
           sections,
           senderEmail,
           pdfAttachment,
+          formData: _staFormType === 'sign' ? collectSignFormData() : undefined,
         }
       })
     });
@@ -11643,14 +11729,18 @@ async function submitSendToAdmin() {
     if (result?.success) {
       const sentWithAttachment = Boolean(result?.attachmentIncluded);
       const archivedLink = result?.archivedFile?.url;
-      status.textContent = sentWithAttachment
-        ? 'Email sent successfully with the PDF attached and archived.'
-        : archivedLink
-          ? 'Email sent successfully. The PDF was archived and included as a secure link.'
-          : 'Email sent successfully.';
+      status.textContent = _staFormType === 'sign'
+        ? 'Submitted to the admin queue successfully.'
+        : sentWithAttachment
+          ? 'Email sent successfully with the PDF attached and archived.'
+          : archivedLink
+            ? 'Email sent successfully. The PDF was archived and included as a secure link.'
+            : 'Email sent successfully.';
       status.classList.add('text-success', 'status-strong');
       btn.querySelector('.btn-label').textContent = 'Sent';
-      showToast(sentWithAttachment ? 'Submission emailed with PDF attached.' : 'Submission emailed and archived.');
+      showToast(_staFormType === 'sign'
+        ? 'Sign request submitted to queue.'
+        : (sentWithAttachment ? 'Submission emailed with PDF attached.' : 'Submission emailed and archived.'));
       setTimeout(closeSendToAdminModal, 2000);
     } else {
       const errMsg = result?.error || 'Unknown error';
@@ -11665,6 +11755,35 @@ async function submitSendToAdmin() {
     btn.classList.remove('loading');
     btn.querySelector('.btn-label').textContent = 'Send Email';
   }
+}
+
+function collectSignFormData() {
+  const ids = [
+    's-date','s-order-type','s-address','s-city','s-cross',
+    's-4x8-qty','s-6x8-qty','s-other-size','s-other-qty',
+    's-banner-size','s-banner-qty','s-rider','s-access','s-access-contact','s-comments',
+    's-rider-toggle','s-placement-toggle',
+    's-support',
+    's-requested-by',
+  ];
+  const data = {};
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.type === 'checkbox') data[id] = Boolean(el.checked);
+    else data[id] = String(el.value ?? '');
+  });
+  // Sign agents table
+  data['signAgents'] = (function() {
+    const out = [];
+    document.querySelectorAll('#sign-agent-body tr').forEach(tr => {
+      const name = tr.querySelector('input[name="s-agent-name"]')?.value || tr.querySelector('.agent-name')?.textContent || '';
+      const pct = tr.querySelector('input[name="s-agent-pct"]')?.value || '';
+      if ((name || '').trim() || (pct || '').trim()) out.push({ name, pct });
+    });
+    return out;
+  })();
+  return data;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

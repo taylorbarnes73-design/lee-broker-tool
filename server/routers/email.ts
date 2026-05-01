@@ -4,9 +4,10 @@ import { nanoid } from "nanoid";
 import { z } from "zod/v4";
 import { submissions, uploads } from "../../drizzle/schema";
 import { ENV } from "../_core/env";
-import { publicProcedure, router } from "../_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { storagePut } from "../storage";
+import { storageGetBytes, storagePut } from "../storage";
+import { eq } from "drizzle-orm";
 
 const fieldSchema = z.object({
   label: z.string(),
@@ -31,6 +32,7 @@ const sendToAdminInput = z.object({
   sections: z.array(sectionSchema),
   senderEmail: z.string().email().optional(),
   pdfAttachment: pdfAttachmentSchema.optional(),
+  formData: z.record(z.string(), z.unknown()).optional(),
 });
 
 type FormType = z.infer<typeof sendToAdminInput>["formType"];
@@ -301,6 +303,7 @@ async function recordSubmissionRequest(params: {
   uploaderOpenId?: string | null;
   deliveryMethod?: string;
   deliveryError?: string;
+  formData?: Record<string, unknown>;
 }): Promise<RecordedSubmission> {
   const db = await getDb();
   if (!db) {
@@ -322,6 +325,7 @@ async function recordSubmissionRequest(params: {
       senderEmail: params.senderEmail ?? "",
       propertyAddress: params.propertyAddress,
       sections: params.sections,
+      formData: params.formData ?? null,
       archivedFile: params.archivedPdf
         ? {
             fileKey: params.archivedPdf.fileKey,
@@ -345,7 +349,7 @@ export const emailRouter = router({
   sendToAdmin: publicProcedure
     .input(sendToAdminInput)
     .mutation(async ({ input, ctx }) => {
-      const { formType, brokerName = "", propertyAddress = "", sections, senderEmail, pdfAttachment } = input;
+      const { formType, brokerName = "", propertyAddress = "", sections, senderEmail, pdfAttachment, formData } = input;
       const adminEmail = ENV.adminEmail;
 
       if (!adminEmail) {
@@ -385,16 +389,22 @@ export const emailRouter = router({
         archivedPdfName: archivedPdf?.filename,
       });
 
-      const to = [adminEmail];
-      const cc = senderEmail ? [senderEmail] : [];
-
-      const delivery = await deliverSubmissionEmail({
-        to,
-        cc,
-        subject,
-        content,
-        archivedPdf,
-      });
+      // For sign requests, we record/queue the submission for the admin portal.
+      // The admin later sends to Cimarron after approval + PO assignment.
+      const delivery =
+        formType === "sign"
+          ? {
+              success: true,
+              deliveryMethod: "queue-only" as const,
+              attachmentIncluded: Boolean(archivedPdf),
+            }
+          : await deliverSubmissionEmail({
+              to: [adminEmail],
+              cc: senderEmail ? [senderEmail] : [],
+              subject,
+              content,
+              archivedPdf,
+            });
 
       let recordedSubmission: RecordedSubmission | null = null;
       try {
@@ -408,6 +418,7 @@ export const emailRouter = router({
           uploaderOpenId: ctx.user?.openId ?? null,
           deliveryMethod: delivery.deliveryMethod,
           deliveryError: delivery.error,
+          formData,
         });
       } catch (error: unknown) {
         return {
@@ -441,6 +452,80 @@ export const emailRouter = router({
               fileSize: archivedPdf.fileSize,
             }
           : null,
+      };
+    }),
+
+  sendApprovedSignToCimarron: protectedProcedure
+    .input(
+      z.object({
+        submissionId: z.number().int().positive(),
+        poNumber: z.string().trim().min(1).max(64),
+        pdfAttachment: pdfAttachmentSchema,
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        return { success: false as const, error: "Admin access required." };
+      }
+      if (!ENV.cimarronEmail) {
+        return {
+          success: false as const,
+          error: "Cimarron email not configured. Please set CIMARRON_EMAIL in environment variables.",
+        };
+      }
+
+      const db = await getDb();
+      if (!db) return { success: false as const, error: "Database unavailable." };
+
+      const [row] = await db
+        .select()
+        .from(submissions)
+        .where(eq(submissions.id, input.submissionId))
+        .limit(1);
+
+      if (!row) return { success: false as const, error: "Submission not found." };
+
+      const payload = row.payload ? (() => { try { return JSON.parse(row.payload); } catch { return {}; } })() : {};
+      const brokerEmail = String(row.submittedByEmail ?? payload?.senderEmail ?? "").trim();
+      const reference = String(row.reference ?? payload?.propertyAddress ?? "").trim();
+
+      const archivedPdf: ArchivedPdf = {
+        filename: input.pdfAttachment.filename,
+        mimeType: "application/pdf",
+        base64Data: input.pdfAttachment.base64Data,
+        fileKey: row.pdfFileKey ?? "",
+        url: row.pdfUrl ?? "",
+        fileSize: Buffer.from(input.pdfAttachment.base64Data, "base64").length,
+      };
+
+      const subject = `[Lee] Sign Request PO ${input.poNumber}${reference ? ` - ${reference}` : ""}`;
+      const content = [
+        "Hi Cimarron,",
+        "",
+        "Please see the attached sign request.",
+        "",
+        `PO #: ${input.poNumber}`,
+        reference ? `Property: ${reference}` : "",
+        "",
+        "Thank you,",
+        ctx.user.name || "Lee & Associates Newport Beach",
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      const delivery = await deliverSubmissionEmail({
+        to: [ENV.cimarronEmail],
+        cc: brokerEmail ? [brokerEmail] : [],
+        subject,
+        content,
+        archivedPdf,
+      });
+
+      return {
+        success: delivery.success,
+        error: delivery.error,
+        deliveryMethod: delivery.deliveryMethod,
+        attachmentIncluded: delivery.attachmentIncluded,
       };
     }),
 });
