@@ -255,6 +255,161 @@ describe("aiAssist.scrapeBrochure", () => {
   });
 });
 
+describe("aiAssist.extractDocument", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8)),
+      })
+    );
+  });
+
+  it("extracts voucher-shaped fields from an uploaded document", async () => {
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              transactionType: "Lease",
+              representationType: "Tenant Rep",
+              clientName: "Acme Logistics",
+              dealSf: "12500",
+              baseRent: "1.25",
+              totalConsideration: "2400000",
+              address: "123 Commerce Way",
+              city: "Irvine",
+              state: "CA",
+              zip: "92618",
+              buildingSf: "99999",
+            }),
+          },
+        },
+      ],
+    } as any);
+
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.extractDocument({
+      fileUrl: "https://example.com/voucher.pdf",
+      mimeType: "application/pdf",
+      tab: "voucher",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.tab).toBe("voucher");
+    expect(result.fields).toMatchObject({
+      transactionType: "Lease",
+      representationType: "Tenant Rep",
+      clientName: "Acme Logistics",
+      dealSf: "12500",
+      baseRent: "1.25",
+      totalConsideration: "2400000",
+      address: "123 Commerce Way",
+      city: "Irvine",
+      state: "CA",
+      zip: "92618",
+    });
+    expect(result.fields.buildingSf).toBeUndefined();
+    expect(result.fieldCount).toBe(10);
+    expect(pdfParse).toHaveBeenCalledTimes(1);
+  });
+
+  it("supports image documents for non-listing tabs", async () => {
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              propertyAddress: "9 Main Street",
+              city: "Newport Beach",
+              state: "CA",
+              requestedBy: "Jane Broker",
+            }),
+          },
+        },
+      ],
+    } as any);
+
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.extractDocument({
+      fileUrl: "https://example.com/sign-request.png",
+      mimeType: "image/png",
+      tab: "sign",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.tab).toBe("sign");
+    expect(result.fields.propertyAddress).toBe("9 Main Street");
+    expect(result.fields.requestedBy).toBe("Jane Broker");
+    expect(pdfParse).not.toHaveBeenCalled();
+  });
+
+  it("returns a structured error when document fetch fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+      })
+    );
+
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.extractDocument({
+      fileUrl: "https://example.com/missing.pdf",
+      mimeType: "application/pdf",
+      tab: "voucher",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.fields).toEqual({});
+    expect(result.fieldCount).toBe(0);
+    expect(result.error).toContain("File fetch failed: 404");
+    expect(invokeLLM).not.toHaveBeenCalled();
+  });
+
+  it("filters document fields to the requested tab schema", async () => {
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              propertyType: "Retail",
+              address: "55 Coast Highway",
+              city: "Newport Beach",
+              buildingSf: "12000",
+              dealSf: "7500",
+              listingAgentName: "Wrong Tab Field",
+              brokerName: "Right Comp Field",
+            }),
+          },
+        },
+      ],
+    } as any);
+
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.extractDocument({
+      fileUrl: "https://example.com/comp-sheet.png",
+      mimeType: "image/png",
+      tab: "comp",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.tab).toBe("comp");
+    expect(result.fields).toMatchObject({
+      propertyType: "Retail",
+      address: "55 Coast Highway",
+      city: "Newport Beach",
+      buildingSf: "12000",
+      dealSf: "7500",
+      brokerName: "Right Comp Field",
+    });
+    expect(result.fields.listingAgentName).toBeUndefined();
+    expect(pdfParse).not.toHaveBeenCalled();
+  });
+});
+
 describe("aiAssist.smartComplete", () => {
   beforeEach(() => {
     vi.clearAllMocks();
