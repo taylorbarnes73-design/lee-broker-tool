@@ -101,12 +101,12 @@ function applyDerivedFields(
   previousFields: Record<string, unknown>,
 ) {
   const allKeys = new Set([...Object.keys(previousFields), ...Object.keys(currentFields)]);
-  for (const key of allKeys) {
+  allKeys.forEach((key) => {
     const nextValue = currentFields[key];
     const previousValue = previousFields[key];
     if (nextValue !== undefined) {
       if (shouldReplaceField(payload[key], previousValue)) payload[key] = nextValue;
-      continue;
+      return;
     }
 
     // Contract revisions are full snapshots. If a value came from the previous
@@ -114,7 +114,7 @@ function applyDerivedFields(
     if (previousValue !== undefined && sameValue(payload[key], previousValue)) {
       delete payload[key];
     }
-  }
+  });
 }
 
 function normalizeExistingRevisions(contractRecord: unknown): ContractRevision[] {
