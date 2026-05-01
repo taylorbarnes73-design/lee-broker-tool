@@ -10802,18 +10802,62 @@ function compReportExportCsv() {
   URL.revokeObjectURL(url);
 }
 
+async function compReportFetchAllRowsForCurrentFilters() {
+  const base = compReportGetFilters();
+  const limit = 100; // server enforces max=100
+  const all = [];
+  let offset = 0;
+  let total = Infinity;
+
+  while (all.length < total) {
+    const data = await callTrpc('compData.search', { ...base, limit, offset });
+    const batch = Array.isArray(data?.results) ? data.results : [];
+    const info = data?.pageInfo;
+    if (typeof info?.total === 'number' && Number.isFinite(info.total)) total = info.total;
+
+    all.push(...batch);
+    if (!batch.length) break;
+    offset += limit;
+
+    // Safety guard against accidental infinite loops or runaway exports.
+    if (all.length >= 5000) break;
+    if (info && info.hasNext === false) break;
+  }
+
+  return all;
+}
+
 function compReportExportPdf() {
-  const rows = compReportSelectedRows();
-  if (!rows.length) {
-    alert((compReportsResultsCache || []).length ? 'Select at least one comp to export.' : 'Run a search first so there is something to export.');
-    return;
-  }
-  const compType = compReportsTypeCache || 'lease';
-  if (typeof exportLeeCompReportPdf === 'function') {
-    exportLeeCompReportPdf(compType, rows);
-  } else {
-    alert('PDF export is not available in this build.');
-  }
+  void (async () => {
+    const rows = compReportSelectedRows();
+    if (!rows.length) {
+      alert((compReportsResultsCache || []).length ? 'Select at least one comp to export.' : 'Run a search first so there is something to export.');
+      return;
+    }
+    const compType = compReportsTypeCache || 'lease';
+    if (typeof exportLeeCompReportPdf !== 'function') {
+      alert('PDF export is not available in this build.');
+      return;
+    }
+
+    // If the user has effectively selected "all rows" on the current page and
+    // there are more results than are currently loaded, export the full result set.
+    const selectedAllOnPage = compReportsResultsCache?.length && compReportsDeselected?.size === 0;
+    const total = Number(compReportsPageInfo?.total ?? compReportsResultsCache?.length ?? 0);
+    const moreThanLoaded = Number.isFinite(total) && total > (compReportsResultsCache?.length || 0);
+
+    let exportRows = rows;
+    if (selectedAllOnPage && moreThanLoaded) {
+      try {
+        exportRows = await compReportFetchAllRowsForCurrentFilters();
+      } catch (e) {
+        console.warn('Comp report export: unable to fetch full result set:', e?.message || e);
+        exportRows = rows; // fall back to current page selection
+      }
+    }
+
+    exportLeeCompReportPdf(compType, exportRows);
+  })();
 }
 
 function compReportGetFilters() {
