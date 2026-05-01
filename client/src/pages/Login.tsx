@@ -104,7 +104,7 @@ export default function Login() {
   }
 
   return (
-    <div style={{ display: 'flex', width: '100vw', height: '100vh', background: 'var(--ink-50)', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="lee-page-flow" style={{ display: 'flex', width: '100vw', height: '100vh', background: 'var(--ink-50)', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: 440 }}>
         <div style={{ marginBottom: 32, textAlign: 'center' }}>
           <img

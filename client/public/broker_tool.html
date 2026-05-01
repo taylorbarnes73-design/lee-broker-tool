@@ -6166,8 +6166,20 @@ const BROKER_EMAIL_MAP = {
 };
 
 function showBrokerTool(user) {
-  document.getElementById('tool-sign-in').style.display = 'none';
-  document.getElementById('broker-view').style.display = '';
+  const signInEl = document.getElementById('tool-sign-in');
+  const brokerViewEl = document.getElementById('broker-view');
+
+  if (signInEl) {
+    signInEl.classList.add('is-exiting');
+    window.setTimeout(() => {
+      signInEl.style.display = 'none';
+    }, 180);
+  }
+  if (brokerViewEl) {
+    brokerViewEl.style.display = '';
+    brokerViewEl.classList.remove('is-ready');
+    requestAnimationFrame(() => brokerViewEl.classList.add('is-ready'));
+  }
   if (user) {
     applySharedBrokerIdentity(user);
     compReportsUser = user;

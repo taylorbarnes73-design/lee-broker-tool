@@ -4185,6 +4185,41 @@ body {
   * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
 
+@keyframes leePanelFlowIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes leeCardFlowIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tool-sign-in {
+  transition: opacity 180ms cubic-bezier(0.16, 1, 0.3, 1), transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tool-sign-in.is-exiting {
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+}
+#broker-view {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 240ms cubic-bezier(0.16, 1, 0.3, 1), transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+#broker-view.is-ready {
+  opacity: 1;
+  transform: translateY(0);
+}
+.panel.active {
+  animation: leePanelFlowIn 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.card,
+.tool-sign-in-card {
+  animation: leeCardFlowIn 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 body {
   background: var(--lee-alt-bg);
   background-image: none;

@@ -219,7 +219,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#f2f2ef] text-[#1f2328]">
-      <header className="border-b border-[#dddcd6] bg-[#f7f7f3]">
+      <header className="lee-page-flow border-b border-[#dddcd6] bg-[#f7f7f3]">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
             <img
@@ -271,7 +271,7 @@ export default function Home() {
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-[1.75rem] border border-[#dddcd6] bg-[#f8f8f5] p-8">
+          <div className="lee-card-flow rounded-[1.75rem] border border-[#dddcd6] bg-[#f8f8f5] p-8">
             <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#7b858d]">
               Access and Workflow
             </p>
@@ -288,7 +288,7 @@ export default function Home() {
                 <a
                   key={card.title}
                   href={card.href}
-                  className="rounded-[1.25rem] border border-[#e2e1dc] bg-white px-5 py-5 transition hover:border-[#d6c0c4]"
+                  className="lee-card-flow rounded-[1.25rem] border border-[#e2e1dc] bg-white px-5 py-5 transition hover:border-[#d6c0c4]"
                 >
                   <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-[#9d1e2d]">
                     {card.label}
@@ -319,7 +319,7 @@ export default function Home() {
 
           <aside
             id="sign-in"
-            className="rounded-[1.75rem] border border-[#dddcd6] bg-white p-7 shadow-[0_10px_24px_rgba(28,31,35,0.05)]"
+            className="lee-card-flow rounded-[1.75rem] border border-[#dddcd6] bg-white p-7 shadow-[0_10px_24px_rgba(28,31,35,0.05)]"
           >
             {!user ? (
               <div className="flex h-full flex-col">
