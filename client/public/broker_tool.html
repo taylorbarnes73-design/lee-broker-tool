@@ -24,7 +24,7 @@
     <div class="header-copy">
     <div class="header-kicker">Lee &amp; Associates Newport Beach</div>
     <h1>Broker Submission Tool</h1>
-    <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher &bull; Comp Input &bull; Comp Reports &bull; Documents &bull; Contracts</div>
+    <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher &bull; Comp Input &bull; Queue &bull; Comp Reports &bull; Documents &bull; Contracts</div>
     </div>
   </div>
   <div class="header-actions">
@@ -33,7 +33,7 @@
       <div class="header-user-name" id="header-user-name">Not signed in</div>
       <div class="header-user-email" id="header-user-email"></div>
     </div>
-    <button class="admin-toggle" onclick="toggleAdminMode()">
+    <button class="admin-toggle is-hidden" onclick="toggleAdminMode()">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
       <span id="admin-toggle-label">Admin Portal</span>
     </button>
@@ -64,6 +64,7 @@
   <div class="tab" data-tab="sign" onclick="switchTab('sign')">Sign Request</div>
   <div class="tab" data-tab="voucher" onclick="switchTab('voucher')">Commission Voucher</div>
   <div class="tab" data-tab="comp" onclick="switchTab('comp')">Comp Input</div>
+  <div class="tab" data-tab="queue" onclick="switchTab('queue')">Queue</div>
   <div class="tab" data-tab="comp-reports" onclick="switchTab('comp-reports')">Comp Reports</div>
   <div class="tab" data-tab="docs" onclick="switchTab('docs')">Documents</div>
   <div class="tab" data-tab="contracts" onclick="switchTab('contracts')">Contracts</div>
@@ -2067,6 +2068,39 @@
   </div>
 </div><!-- /tab-contracts -->
 
+<div id="tab-queue" class="panel">
+  <div class="queue-shell">
+    <div class="queue-header">
+      <div>
+        <div class="admin-page-eyebrow">Broker Queue</div>
+        <h2>Your position in line</h2>
+        <p>See your active submissions and where each one sits in the shared processing queue. Full submission details remain available to admins in the Admin Portal.</p>
+      </div>
+      <button type="button" class="btn btn-outline" onclick="refreshBrokerQueue()">Refresh Queue</button>
+    </div>
+
+    <div class="stat-grid queue-stat-grid">
+      <div class="stat-card">
+        <div class="stat-header"><span class="stat-label">Your Active Requests</span></div>
+        <div class="stat-value" id="queue-stat-yours">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header"><span class="stat-label">Total Active Queue</span></div>
+        <div class="stat-value" id="queue-stat-total">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header"><span class="stat-label">Next Position</span></div>
+        <div class="stat-value" id="queue-stat-next">&mdash;</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="broker-queue-status" class="queue-status">Loading queue&hellip;</div>
+      <div id="broker-queue-list" class="queue-list"></div>
+    </div>
+  </div>
+</div><!-- /tab-queue -->
+
 </div><!-- /broker-view -->
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
@@ -2727,6 +2761,9 @@ function switchTab(name) {
   });
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'queue') {
+    void refreshBrokerQueue();
+  }
   if (name === 'comp-reports') {
     void initCompReports();
   }
@@ -6156,6 +6193,7 @@ const BROKER_EMAIL_MAP = {
 };
 
 function showBrokerTool(user) {
+  setAdminAccessForUser(user || null);
   const signInEl = document.getElementById('tool-sign-in');
   const brokerViewEl = document.getElementById('broker-view');
 
@@ -6175,6 +6213,7 @@ function showBrokerTool(user) {
     compReportsUser = user;
     updateHeaderUserDisplay(user);
   }
+  void refreshBrokerQueue();
 }
 
 async function handleToolSignIn(event) {
@@ -6229,6 +6268,7 @@ async function initBrokerToolAuth() {
   } catch (e) {
     console.warn('Auth check on load:', e && e.message ? e.message : e);
   }
+  setAdminAccessForUser(null);
   // Not signed in — keep sign-in screen visible
 }
 
@@ -10179,6 +10219,7 @@ function getCurrentFormState(tab) {
 const TRPC_QUERY_PROCEDURES = new Set([
   'auth.me',
   'submissions.adminList',
+  'submissions.queueMine',
   'compData.latest',
   'compData.search',
 ]);
@@ -10266,8 +10307,97 @@ function getSignedInBrokerIdentity() {
   return compReportsUser || readSharedBrokerIdentity();
 }
 
+function setAdminAccessForUser(user) {
+  const adminToggle = document.querySelector('.admin-toggle');
+  const canUseAdmin = user && user.role === 'admin';
+  if (adminToggle) setHiddenState(adminToggle, !canUseAdmin);
+  if (!canUseAdmin && document.body.classList.contains('admin-mode')) {
+    document.body.classList.remove('admin-mode');
+    const label = document.getElementById('admin-toggle-label');
+    if (label) label.textContent = 'Admin Portal';
+  }
+}
+
+function escapeQueueHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
+
+function formatQueueFormType(type) {
+  const labels = { listing: 'Listing', voucher: 'Voucher', sign: 'Sign Request', 'sign-request': 'Sign Request', comp: 'Comp' };
+  return labels[type] || cap(String(type || 'Submission'));
+}
+
+function formatQueueDate(value) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function setQueueStatus(message, isError) {
+  const status = document.getElementById('broker-queue-status');
+  if (!status) return;
+  status.textContent = message || '';
+  status.classList.toggle('queue-error', !!isError);
+}
+
+function renderBrokerQueue(data) {
+  const requests = Array.isArray(data?.requests) ? data.requests : [];
+  const totalActive = Number(data?.totalActive ?? data?.totalPending ?? 0) || 0;
+  const positions = requests.map(item => Number(item.position)).filter(Number.isFinite);
+  const nextPosition = positions.length ? Math.min(...positions) : null;
+  const setText = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = String(value);
+  };
+  setText('queue-stat-yours', requests.length);
+  setText('queue-stat-total', totalActive);
+  setText('queue-stat-next', nextPosition ? '#' + nextPosition : '-');
+
+  const list = document.getElementById('broker-queue-list');
+  if (!list) return;
+  if (!requests.length) {
+    setQueueStatus('No active submissions in queue.');
+    list.innerHTML = '<div class="empty-state queue-empty"><div class="empty-icon"></div><h3>No active queue items</h3><p>Once you submit a listing, sign request, voucher, contract, or comp input, its queue position will appear here while it is pending or in review.</p></div>';
+    return;
+  }
+
+  setQueueStatus('Showing your active submissions. Admins can still review full submission detail in the Admin Portal.');
+  list.innerHTML = requests
+    .slice()
+    .sort((a, b) => Number(a.position || 0) - Number(b.position || 0))
+    .map(item => {
+      const position = Number(item.position) || 0;
+      const ahead = Number(item.aheadCount) || 0;
+      const reference = item.reference || item.payload?.address || item.payload?.propertyAddress || 'No property reference';
+      return '<div class="queue-item">' +
+        '<div class="queue-position"><span class="queue-number">#' + position + '</span><small class="queue-label">in line</small></div>' +
+        '<div class="queue-item-main">' +
+          '<div class="queue-item-top"><span class="badge badge-pending">' + escapeQueueHtml(formatQueueFormType(item.formType)) + '</span><span class="cell-mono-sm">SUB-' + escapeQueueHtml(String(item.id).padStart(4, '0')) + '</span><span>' + statusBadge(item.status || 'pending') + '</span></div>' +
+          '<div class="queue-item-title queue-title">' + escapeQueueHtml(reference) + '</div>' +
+          '<div class="queue-item-meta queue-detail">' + escapeQueueHtml(ahead + ' ahead of you') + ' &middot; Submitted ' + escapeQueueHtml(formatQueueDate(item.createdAt)) + '</div>' +
+        '</div>' +
+      '</div>';
+    })
+    .join('');
+}
+
+async function refreshBrokerQueue() {
+  setQueueStatus('Loading queue...');
+  try {
+    await ensureSharedBrokerSession();
+    const data = await callTrpc('submissions.queueMine', { limit: 50 });
+    renderBrokerQueue(data);
+  } catch (error) {
+    setQueueStatus((error && error.message) ? error.message : 'Unable to load queue.', true);
+  }
+}
+
 function applySharedBrokerIdentity(user) {
   updateHeaderUserDisplay(user);
+  setAdminAccessForUser(user);
   if (!user) return;
 
   writeSharedBrokerIdentity(user);

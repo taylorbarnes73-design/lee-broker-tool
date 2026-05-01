@@ -29,6 +29,11 @@ const submissionSummarySchema = z
   .catchall(z.unknown());
 
 const adminStatusSchema = z.enum(["pending", "in_review", "approved", "rejected"]);
+const ACTIVE_QUEUE_STATUSES = ["pending", "in_review"] as const;
+
+function activeQueueStatusCondition() {
+  return sql`${submissions.status} in (${sql.join(ACTIVE_QUEUE_STATUSES.map(status => sql`${status}`), sql`, `)})`;
+}
 
 function parsePayload(payload: string | null) {
   if (!payload) return {};
@@ -342,31 +347,31 @@ export const submissionsRouter = router({
 
       const limit = input?.limit ?? 50;
 
-      // 1) Get *my* pending requests (the broker should only see their own).
-      const myPendingRows = await db
+      // 1) Get *my* active queue requests (the broker should only see their own).
+      const myQueueRows = await db
         .select()
         .from(submissions)
-        .where(and(eq(submissions.submittedByOpenId, ctx.user.openId), eq(submissions.status, "pending")))
+        .where(and(eq(submissions.submittedByOpenId, ctx.user.openId), activeQueueStatusCondition()))
         .orderBy(submissions.createdAt, submissions.id)
         .limit(limit);
 
-      // 2) Total pending in the global queue (used for context / UX).
-      const totalPendingRows = await db
+      // 2) Total active requests in the global queue (used for context / UX).
+      const totalActiveRows = await db
         .select({ count: sql<number>`count(*)` })
         .from(submissions)
-        .where(eq(submissions.status, "pending"));
-      const totalPending = numberFromCount(totalPendingRows[0]?.count);
+        .where(activeQueueStatusCondition());
+      const totalActive = numberFromCount(totalActiveRows[0]?.count);
 
-      // 3) For each of my pending requests, compute how many pending are ahead.
+      // 3) For each of my active requests, compute how many active requests are ahead.
       // Ordering rule: createdAt ASC, then id ASC for stable tie-break.
       const requests = await Promise.all(
-        myPendingRows.map(async row => {
+        myQueueRows.map(async row => {
           const aheadRows = await db
             .select({ count: sql<number>`count(*)` })
             .from(submissions)
             .where(
               and(
-                eq(submissions.status, "pending"),
+                activeQueueStatusCondition(),
                 or(
                   sql`${submissions.createdAt} < ${row.createdAt}`,
                   and(eq(submissions.createdAt, row.createdAt), sql`${submissions.id} < ${row.id}`)
@@ -392,7 +397,8 @@ export const submissionsRouter = router({
       );
 
       return {
-        totalPending,
+        totalPending: totalActive,
+        totalActive,
         requests,
       };
     }),
