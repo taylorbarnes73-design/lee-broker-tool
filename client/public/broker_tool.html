@@ -45,14 +45,14 @@
   <div class="tool-sign-in-card">
     <img src="lee-newport-beach-fullcolor.png" alt="Lee &amp; Associates Newport Beach" class="tool-sign-in-logo">
     <h1 class="tool-sign-in-title">Broker Workspace</h1>
-    <p class="tool-sign-in-sub">Enter your Lee email to sign in.</p>
+    <p class="tool-sign-in-sub">Type your Lee username or email to open the tool. No password required.</p>
     <form id="tool-sign-in-form" onsubmit="handleToolSignIn(event)" autocomplete="on">
       <div class="field">
-        <label for="tool-sign-in-email">Lee Email</label>
-        <input id="tool-sign-in-email" type="email" name="email" placeholder="jdoe@lee-associates.com" required autocomplete="email">
+        <label for="tool-sign-in-email">Lee Username or Email</label>
+        <input id="tool-sign-in-email" type="text" name="email" placeholder="tbarnes" required autocomplete="email" onblur="normalizeToolSignInEmail()">
       </div>
       <div id="tool-sign-in-error" class="tool-sign-in-error"></div>
-      <button type="submit" class="btn btn-red tool-sign-in-btn" id="tool-sign-in-btn">Sign In</button>
+      <button type="submit" class="btn btn-red tool-sign-in-btn" id="tool-sign-in-btn">Continue</button>
     </form>
   </div>
 </div>
@@ -6156,8 +6156,20 @@ const BROKER_EMAIL_MAP = {
 };
 
 function showBrokerTool(user) {
-  document.getElementById('tool-sign-in').style.display = 'none';
-  document.getElementById('broker-view').style.display = '';
+  const signInEl = document.getElementById('tool-sign-in');
+  const brokerViewEl = document.getElementById('broker-view');
+
+  if (signInEl) {
+    signInEl.classList.add('is-exiting');
+    window.setTimeout(() => {
+      signInEl.style.display = 'none';
+    }, 180);
+  }
+  if (brokerViewEl) {
+    brokerViewEl.style.display = '';
+    brokerViewEl.classList.remove('is-ready');
+    requestAnimationFrame(() => brokerViewEl.classList.add('is-ready'));
+  }
   if (user) {
     applySharedBrokerIdentity(user);
     compReportsUser = user;
@@ -6168,8 +6180,7 @@ function showBrokerTool(user) {
 async function handleToolSignIn(event) {
   event.preventDefault();
   const inputEl = document.getElementById('tool-sign-in-email');
-  const rawEmail = inputEl.value.trim().toLowerCase();
-  const email = rawEmail.includes('@') ? rawEmail : (rawEmail ? `${rawEmail}@lee-associates.com` : rawEmail);
+  const email = normalizeToolSignInEmail();
   inputEl.value = email;
   const errorEl = document.getElementById('tool-sign-in-error');
   const btn = document.getElementById('tool-sign-in-btn');
@@ -6194,9 +6205,19 @@ async function handleToolSignIn(event) {
     errorEl.textContent = (e && e.message) ? e.message : 'Sign in failed. Please try again.';
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Sign In';
+    btn.textContent = 'Continue';
   }
 }
+
+function normalizeToolSignInEmail() {
+  const inputEl = document.getElementById('tool-sign-in-email');
+  const value = (inputEl?.value || '').trim().toLowerCase();
+  const email = value.includes('@') || !value ? value : `${value}@lee-associates.com`;
+  if (inputEl) inputEl.value = email;
+  return email;
+}
+
+window.normalizeToolSignInEmail = normalizeToolSignInEmail;
 
 async function initBrokerToolAuth() {
   try {

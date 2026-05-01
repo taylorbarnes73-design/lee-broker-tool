@@ -160,6 +160,59 @@
   }
 }
 
+@layer utilities {
+  .lee-page-flow {
+    animation: lee-page-flow 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .lee-card-flow {
+    transition:
+      transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 180ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1),
+      background-color 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .lee-card-flow:hover,
+  .lee-card-flow:focus-within {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px rgba(31, 35, 40, 0.08);
+  }
+
+  .lee-control-flow {
+    transition:
+      border-color 160ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 160ms cubic-bezier(0.16, 1, 0.3, 1),
+      background-color 160ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 120ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .lee-control-flow:hover {
+    transform: translateY(-0.5px);
+  }
+
+  @keyframes lee-page-flow {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lee-page-flow,
+    .lee-card-flow,
+    .lee-control-flow {
+      animation: none !important;
+      transition: none !important;
+      transform: none !important;
+    }
+  }
+}
+
 @layer components {
   /**
    * Custom container utility that centers content and adds responsive padding.

@@ -18,10 +18,7 @@ export default function Login() {
   const { user, loading, refresh } = useAuth();
   const [, setLocation] = useLocation();
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
 
   // If OAuth redirect is enabled, do not show the local login UI at all.
   // This avoids the "double login" experience where the SPA renders a login
@@ -51,10 +48,7 @@ export default function Login() {
     const normalizedEmail = normalizeLeeEmail(email);
     if (normalizedEmail !== email) setEmail(normalizedEmail);
     await loginMutation.mutateAsync({
-      firstName,
-      lastName,
       email: normalizedEmail,
-      password,
     });
   };
 
@@ -110,7 +104,7 @@ export default function Login() {
   }
 
   return (
-    <div style={{ display: 'flex', width: '100vw', height: '100vh', background: 'var(--ink-50)', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="lee-page-flow" style={{ display: 'flex', width: '100vw', height: '100vh', background: 'var(--ink-50)', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: 440 }}>
         <div style={{ marginBottom: 32, textAlign: 'center' }}>
           <img
@@ -126,36 +120,25 @@ export default function Login() {
         <Card padding="lg">
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
             <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--ink-900)' }}>Sign In</h1>
-            <p style={{ fontSize: 14, color: 'var(--ink-500)', marginTop: 8 }}>Use your Lee email to access the broker tools.</p>
+            <p style={{ fontSize: 14, color: 'var(--ink-500)', marginTop: 8 }}>Type your Lee username or email to access the broker tools. No password required.</p>
           </div>
 
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>First Name</label>
-                <Input value={firstName} onChange={(e: ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)} required placeholder="Taylor" />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>Last Name</label>
-                <Input value={lastName} onChange={(e: ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)} required placeholder="Barnes" />
-              </div>
-            </div>
-
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>Lee Email</label>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>Lee Username or Email</label>
               <Input
-                type="email"
+                type="text"
+                inputMode="email"
                 value={email}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                 onBlur={() => setEmail(normalizeLeeEmail(email))}
                 required
-                placeholder="tbarnes@lee-associates.com"
+                autoComplete="email"
+                placeholder="tbarnes"
               />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>Password</label>
-              <Input type="password" value={password} onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)} required placeholder="••••••••" />
+              <p style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 6, marginBottom: 0 }}>
+                We will add @lee-associates.com automatically.
+              </p>
             </div>
 
             <Button type="submit" variant="primary" size="lg" disabled={loginMutation.isPending || loading} style={{ marginTop: 8 }}>
