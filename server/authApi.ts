@@ -9,6 +9,12 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { localAuth, sdk } from "./_core/sdk";
 import { ENV } from "./_core/env";
 import { upsertUser } from "./db";
+import {
+  handlePlatformPasswordLogin,
+  handlePlatformLogout,
+  isPlatformPasswordLoginBody,
+} from "./auth/passwordPlatformAuth";
+import { resolvePlatformUserFromRequest } from "./auth/platformSession";
 
 const loginSchema = z.object({
   email: z.string().trim().min(1).max(320),
@@ -24,6 +30,11 @@ function normalizeLeeLogin(raw: string) {
 export const authApiRouter = Router();
 
 authApiRouter.post("/login", async (req, res) => {
+  if (isPlatformPasswordLoginBody(req.body)) {
+    await handlePlatformPasswordLogin(req, res);
+    return;
+  }
+
   if (!localAuth.isEnabled()) {
     res.status(400).json({ success: false, error: "Local auth is disabled." });
     return;
@@ -88,13 +99,27 @@ authApiRouter.post("/login", async (req, res) => {
   });
 });
 
-authApiRouter.post("/logout", (req, res) => {
+authApiRouter.post("/logout", async (req, res) => {
+  await handlePlatformLogout(req, res);
   const cookieOptions = getSessionCookieOptions(req);
   res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
   res.json({ success: true });
 });
 
 authApiRouter.get("/me", async (req, res) => {
+  const platformUser = await resolvePlatformUserFromRequest(req);
+  if (platformUser) {
+    res.json({
+      id: platformUser.id,
+      email: platformUser.email,
+      username: platformUser.username,
+      full_name: platformUser.fullName,
+      role: platformUser.role,
+      office: platformUser.office,
+    });
+    return;
+  }
+
   try {
     const user = await sdk.authenticateRequest(req);
     res.json({
