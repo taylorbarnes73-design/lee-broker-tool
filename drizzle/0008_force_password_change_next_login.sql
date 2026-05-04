@@ -1,0 +1,1 @@
+ALTER TABLE `app_users` ADD `force_password_change_next_login` boolean DEFAULT false NOT NULL;

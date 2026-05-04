@@ -57,6 +57,13 @@
       "when": 1777911642377,
       "tag": "0007_app_users_sessions_settings_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1777912618414,
+      "tag": "0008_force_password_change_next_login",
+      "breakpoints": true
     }
   ]
 }

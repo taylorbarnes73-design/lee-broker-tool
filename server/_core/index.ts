@@ -17,6 +17,7 @@ import { authApiRouter } from "../authApi";
 import { submissionsApiRouter } from "../submissionsApi";
 import { brokerAdminApiRouter } from "../brokerAdminApi";
 import { mapsApiRouter } from "../mapsApi";
+import { adminUsersRouter } from "../adminUsersApi";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -65,6 +66,7 @@ async function startServer() {
   app.use("/api/auth", authApiRouter);
   app.use("/api/submissions", submissionsApiRouter);
   app.use("/api/broker-admin", brokerAdminApiRouter);
+  app.use("/api/admin/users", adminUsersRouter);
 
   // tRPC API
   app.use(

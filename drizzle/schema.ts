@@ -50,6 +50,7 @@ export const appUsers = mysqlTable(
     office: varchar("office", { length: 255 }),
     phone: varchar("phone", { length: 64 }),
     passwordHash: varchar("password_hash", { length: 255 }),
+    forcePasswordChangeNextLogin: boolean("force_password_change_next_login").notNull().default(false),
     isActive: boolean("is_active").notNull().default(true),
     lastLoginAt: datetime("last_login_at", { mode: "date", fsp: 3 }),
     createdAt: datetime("created_at", { mode: "date", fsp: 3 })
