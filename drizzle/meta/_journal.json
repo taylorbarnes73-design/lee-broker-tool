@@ -50,6 +50,13 @@
       "when": 1777527350713,
       "tag": "0006_equal_big_bertha",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1777911642377,
+      "tag": "0007_app_users_sessions_settings_audit",
+      "breakpoints": true
     }
   ]
 }

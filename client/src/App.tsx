@@ -7,6 +7,8 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Login from "./pages/Login";
 import PortalAdminSubmissions from "./pages/PortalAdminSubmissions";
+import PortalBrokerAdminRequestDetail from "./pages/PortalBrokerAdminRequestDetail";
+import PortalBrokerAdminRequests from "./pages/PortalBrokerAdminRequests";
 import PortalDashboard from "./pages/PortalDashboard";
 import PortalSubmissionDetail from "./pages/PortalSubmissionDetail";
 import PortalSubmissions from "./pages/PortalSubmissions";
@@ -63,6 +65,16 @@ function Router() {
       <Route path="/portal/admin/submissions">
         <PortalRoute>
           <PortalAdminSubmissions />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/admin/broker-admin">
+        <PortalRoute>
+          <PortalBrokerAdminRequests />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/admin/broker-admin/:id">
+        <PortalRoute>
+          <PortalBrokerAdminRequestDetail />
         </PortalRoute>
       </Route>
       <Route path="/portal/submissions/:id">
