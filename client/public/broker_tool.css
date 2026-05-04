@@ -1635,6 +1635,33 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   gap: 3px;
   min-width: 0;
 }
+.header-account {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+.submission-queue-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  background: #fff;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.submission-queue-button:hover {
+  background: #fff5f6;
+  border-color: #dfb8bf;
+  color: var(--red);
+}
 .header-user-label {
   font-size: 10px;
   font-weight: 800;
@@ -3080,7 +3107,8 @@ body {
 }
 .header-user-name { color: #fff; font-size: 13px; }
 .header-user-email { color: var(--ink-300); font-size: 11px; }
-.admin-toggle {
+.admin-toggle,
+.submission-queue-button {
   background: rgba(255,255,255,.06);
   border: 1px solid rgba(255,255,255,.12);
   color: #fff;
@@ -3091,12 +3119,17 @@ body {
   box-shadow: none;
   transition: background .15s var(--ease-out), border-color .15s var(--ease-out);
 }
-.admin-toggle:hover {
+.admin-toggle:hover,
+.submission-queue-button:hover {
   background: rgba(255,255,255,.10);
   border-color: rgba(255,255,255,.22);
   color: #fff;
 }
 .admin-toggle svg { width: 14px; height: 14px; }
+.submission-queue-button {
+  margin-top: 8px;
+  justify-content: center;
+}
 
 /* ── TAB BAR: white tab strip sitting under the dark header ── */
 .tab-bar {
@@ -4412,6 +4445,19 @@ a:hover { text-decoration: none; }
   border: 1px solid var(--lee-alt-border);
   border-radius: var(--lee-alt-radius);
   padding: 8px 10px;
+}
+.submission-queue-button {
+  width: 100%;
+  justify-content: center;
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+  padding: 8px 12px;
+}
+.submission-queue-button:hover {
+  background: var(--red-dark);
+  border-color: var(--red-dark);
+  color: #fff;
 }
 .admin-toggle {
   background: rgba(255, 255, 255, 0.92);
