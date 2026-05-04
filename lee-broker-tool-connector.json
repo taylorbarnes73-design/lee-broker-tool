@@ -8,7 +8,7 @@
       "name": "Lee & Associates Newport Beach"
     }
   },
-  "host": "leebrokertool.space",
+  "host": "leebrokertool.com",
   "basePath": "/api/v1",
   "schemes": [
     "https"
@@ -416,6 +416,116 @@
           },
           "500": {
             "description": "Server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/inbox/email": {
+      "post": {
+        "summary": "Ingest Broker Admin inbox email",
+        "description": "Create a trackable Broker Admin request from a shared mailbox email (optionally including base64-encoded attachments). Intended for Power Automate Outlook triggers.",
+        "operationId": "IngestBrokerAdminInboxEmail",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/BrokerAdminInboxEmailRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request created (attachments saved when provided)",
+            "schema": {
+              "$ref": "#/definitions/BrokerAdminInboxEmailResponse"
+            }
+          },
+          "400": {
+            "description": "Missing required field",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "503": {
+            "description": "Database unavailable",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/docusign/completed": {
+      "post": {
+        "summary": "Ingest completed DocuSign executed PDF",
+        "description": "Store an executed PDF in the tool and (when Dealius IDs are provided) upload it to the matching Dealius Deal and/or Listing.",
+        "operationId": "IngestDocusignCompletedPdf",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DocusignCompletedRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF stored (Dealius attach results included when attempted)",
+            "schema": {
+              "$ref": "#/definitions/DocusignCompletedResponse"
+            }
+          },
+          "400": {
+            "description": "Missing required field",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "503": {
+            "description": "Database unavailable",
             "schema": {
               "$ref": "#/definitions/ErrorResponse"
             }
@@ -963,6 +1073,214 @@
         "uploadedAt": {
           "type": "string",
           "format": "date-time"
+        }
+      }
+    },
+    "BrokerAdminInboxAttachment": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "type": "string"
+        },
+        "mimeType": {
+          "type": "string",
+          "default": "application/octet-stream"
+        },
+        "base64Data": {
+          "type": "string",
+          "description": "Base64-encoded file bytes (no data: URL prefix)"
+        }
+      }
+    },
+    "BrokerAdminInboxEmailRequest": {
+      "type": "object",
+      "required": [
+        "messageId"
+      ],
+      "properties": {
+        "messageId": {
+          "type": "string",
+          "description": "Outlook message id"
+        },
+        "internetMessageId": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "from": {
+          "type": "string",
+          "description": "Sender email address"
+        },
+        "receivedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "bodyPreview": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string",
+          "description": "Optional classification (examples: voucher, docusign, listing, contract)"
+        },
+        "confidential": {
+          "type": "boolean",
+          "default": false
+        },
+        "systemImpact": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional explicit system impact list (otherwise derived for voucher category)"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "dueDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "priority": {
+          "type": "string"
+        },
+        "outlookWebLink": {
+          "type": "string"
+        },
+        "threadKey": {
+          "type": "string"
+        },
+        "docusignEnvelopeId": {
+          "type": "string"
+        },
+        "dealiusDealId": {
+          "type": "string"
+        },
+        "dealiusListingId": {
+          "type": "string"
+        },
+        "reference": {
+          "type": "string",
+          "description": "Optional human reference (defaults to subject when omitted)"
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/BrokerAdminInboxAttachment"
+          }
+        }
+      }
+    },
+    "SavedInboxAttachment": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "type": "string"
+        },
+        "fileKey": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "BrokerAdminInboxEmailResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "requestId": {
+              "type": "integer"
+            },
+            "savedAttachments": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/SavedInboxAttachment"
+              }
+            }
+          }
+        }
+      }
+    },
+    "DocusignCompletedRequest": {
+      "type": "object",
+      "required": [
+        "filename",
+        "base64Pdf"
+      ],
+      "properties": {
+        "requestId": {
+          "type": "integer",
+          "description": "Broker admin request id (preferred)"
+        },
+        "submissionId": {
+          "type": "integer",
+          "description": "Alias of requestId (supported for backwards compatibility)"
+        },
+        "docusignEnvelopeId": {
+          "type": "string"
+        },
+        "dealiusDealId": {
+          "type": "string"
+        },
+        "dealiusListingId": {
+          "type": "string"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "mimeType": {
+          "type": "string",
+          "default": "application/pdf"
+        },
+        "base64Pdf": {
+          "type": "string",
+          "description": "Base64-encoded PDF bytes (no data: URL prefix)"
+        },
+        "documentType": {
+          "type": "string",
+          "description": "Optional Dealius document type"
+        }
+      }
+    },
+    "DocusignCompletedResponse": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "type": "boolean"
+        },
+        "data": {
+          "type": "object",
+          "description": "Includes storage details plus best-effort Dealius upload results",
+          "properties": {
+            "stored": {
+              "type": "object",
+              "properties": {
+                "fileKey": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            },
+            "attached": {
+              "type": "object",
+              "properties": {
+                "deal": {
+                  "type": "object"
+                },
+                "listing": {
+                  "type": "object"
+                }
+              }
+            }
+          }
         }
       }
     },
