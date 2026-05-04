@@ -10445,8 +10445,20 @@ async function callTrpc(procedure, input) {
     credentials: 'include',
     body: isQuery ? undefined : JSON.stringify({ json: input }),
   });
-  if (!res.ok) throw new Error('API error ' + res.status);
-  const data = await res.json();
+  const text = await res.text();
+  let data;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch (parseErr) {
+    if (!res.ok) throw new Error('API error ' + res.status);
+    throw new Error('Invalid JSON from API');
+  }
+  if (!res.ok) {
+    const block = Array.isArray(data) ? data[0] : data;
+    const inner = block && block.error ? (block.error.json || block.error) : null;
+    const msg = inner && (inner.message || inner.data) ? String(inner.message || inner.data).trim() : '';
+    throw new Error(msg || ('API error ' + res.status));
+  }
   if (data.error) throw new Error(data.error.message || 'AI error');
   const payload = data.result?.data;
   if (payload && typeof payload === 'object' && Object.prototype.hasOwnProperty.call(payload, 'json')) {

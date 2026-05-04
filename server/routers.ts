@@ -94,37 +94,59 @@ export const appRouter = router({
           isBrokerDirectoryAdmin(brokerEntry);
         const role = isAdminIdentity ? "admin" : "user";
 
-        await upsertUser({
-          openId,
-          name: resolvedName,
-          email,
-          loginMethod: "local",
-          role,
-          lastSignedIn: new Date(),
-        });
+        if (ENV.isProduction && !String(ENV.cookieSecret ?? "").trim()) {
+          console.error("[auth.login] JWT_SECRET is not set; cannot sign session cookies.");
+          return {
+            success: false as const,
+            error:
+              "Broker sign-in is not configured (missing JWT_SECRET). Set JWT_SECRET in the server environment and redeploy.",
+          };
+        }
 
-        const sessionToken = await sdk.createSessionToken(openId, {
-          name: resolvedName,
-          email,
-        });
-
-        const cookieOptions = getSessionCookieOptions(ctx.req);
-        ctx.res.cookie(COOKIE_NAME, sessionToken, {
-          ...cookieOptions,
-          maxAge: ONE_YEAR_MS,
-        });
-
-        await linkPlatformSessionAfterLegacyLogin(ctx.req, ctx.res, email);
-
-        return {
-          success: true as const,
-          user: {
+        try {
+          await upsertUser({
+            openId,
             name: resolvedName,
             email,
+            loginMethod: "local",
             role,
-            office: brokerEntry?.office ?? null,
-          },
-        };
+            lastSignedIn: new Date(),
+          });
+
+          const sessionToken = await sdk.createSessionToken(openId, {
+            name: resolvedName,
+            email,
+          });
+
+          const cookieOptions = getSessionCookieOptions(ctx.req);
+          ctx.res.cookie(COOKIE_NAME, sessionToken, {
+            ...cookieOptions,
+            maxAge: ONE_YEAR_MS,
+          });
+
+          try {
+            await linkPlatformSessionAfterLegacyLogin(ctx.req, ctx.res, email);
+          } catch (linkErr) {
+            console.error("[auth.login] Platform session link failed (legacy session cookie is set):", linkErr);
+          }
+
+          return {
+            success: true as const,
+            user: {
+              name: resolvedName,
+              email,
+              role,
+              office: brokerEntry?.office ?? null,
+            },
+          };
+        } catch (err) {
+          console.error("[auth.login] Sign-in failed:", err);
+          return {
+            success: false as const,
+            error:
+              "Could not complete sign-in (database or session error). Please try again or contact support.",
+          };
+        }
       }),
     logout: publicProcedure.mutation(async ({ ctx }) => {
       await handlePlatformLogout(ctx.req, ctx.res);
