@@ -1210,7 +1210,7 @@
         <div class="field"><label class="req">Space Leased / Leased SF</label><input id="c-leased-sf" type="text" placeholder="e.g. 25,000"></div>
         <div class="field"><label class="req">Rent/SqFt / Start Rate</label><input id="c-rent-sf" type="text" placeholder="e.g. $1.25"></div>
         <div class="field"><label>Rent Type</label>
-          <select id="c-rent-type"><option value="">—</option><option>NNN</option><option>G</option></select>
+          <select id="c-rent-type"><option value="">—</option><option>G</option><option>IG</option><option>MG</option><option>NNN</option><option>FS</option><option>FSG</option><option>Modified Gross</option><option>Industrial Gross</option><option>Full Service Gross</option></select>
         </div>
       </div>
       <div class="row c3">
@@ -1223,18 +1223,26 @@
         <div class="field"><label>Lessee / Tenant</label><input id="c-lessee" list="comp-party-options"><div class="field-hint">Tenant name</div></div>
         <div class="field"><label>Lessor / Landlord</label><input id="c-lessor" list="comp-party-options"><div class="field-hint">Landlord name</div></div>
       </div>
+      <div class="row comp-lease-only" style="margin-top:8px;">
+        <div class="field">
+          <label><input type="checkbox" id="c-sublease-party-labels"> Sublease — PDF labels use Sublessor / Sublessee</label>
+        </div>
+      </div>
     </div>
 
     <div class="comp-sale-only">
       <h3 class="section-heading-top">Key Sale Terms</h3>
       <div class="row c3">
         <div class="field"><label class="req">Building SF</label><input id="cs-bldg-sf" type="text" placeholder="e.g. 50,000"></div>
-        <div class="field"><label class="req">Selling Price</label><input id="cs-sell-price" type="text" placeholder="e.g. $5,000,000"></div>
-        <div class="field"><label class="req">Transaction Date</label><input id="cs-txn-date" type="date"></div>
+        <div class="field"><label class="req">Selling Price</label><input id="cs-sell-price" type="text" placeholder="e.g. $5,000,000" autocomplete="off"></div>
+        <div class="field"><label>Sale $/SF <span class="field-hint">auto</span></label><input id="cs-psf-calc" type="text" readonly tabindex="-1" placeholder="—" title="Calculated from selling price ÷ building SF"></div>
       </div>
       <div class="row c3">
+        <div class="field"><label class="req">Transaction Date</label><input id="cs-txn-date" type="date"></div>
         <div class="field"><label>Seller</label><input id="cs-seller" list="comp-party-options"><div class="field-hint">Seller name</div></div>
         <div class="field"><label>Buyer</label><input id="cs-buyer" list="comp-party-options"><div class="field-hint">Buyer name</div></div>
+      </div>
+      <div class="row c3">
         <div class="field"><label>Year Built</label><input id="cs-year-built" type="text" placeholder="e.g. 1998"></div>
       </div>
     </div>
@@ -1279,8 +1287,9 @@
         <select id="c-ti"><option value="">—</option><option>As-Is</option><option>Paint &amp; Carpet</option><option>Standard</option><option>Not Disclosed</option><option>See comments</option></select>
       </div>
       <div class="field"><label>NNN Charges</label><input id="c-nnn" type="text" placeholder="e.g. $0.45"></div>
-      <div class="field"><label>Rent Adj / Escalations</label><input id="c-escalations" type="text" placeholder="e.g. 3% annually"></div>
+      <div class="field"><label>Rent Adj / Escalations</label><input id="c-escalations" type="text" placeholder="e.g. 3% annually or 0.03"></div>
     </div>
+    <p class="field-hint comp-lease-only" id="c-eff-nnn-hint" style="margin-top:6px;"></p>
     <div class="row c2">
       <div class="field"><label>Options</label>
         <select id="c-options"><option value="">—</option><option>1, 3-year</option><option>1, 5-year</option><option>2, 5-year</option><option>1, 10-year</option><option>Not Disclosed</option><option>See Comments</option><option>None</option><option>NA</option></select>
@@ -1293,7 +1302,14 @@
     <div class="row c3">
       <div class="field"><label>Office SF</label><input id="cs-office-sf" type="text" placeholder="e.g. 2,500"></div>
       <div class="field"><label>Land / Lot Size (SF)</label><input id="cs-land-sf" type="text" placeholder="e.g. 40,000"></div>
-      <div class="field"><label>Transaction Type</label><input id="cs-txn-type" type="text"></div>
+      <div class="field"><label>Transaction Type</label><input id="cs-txn-type" type="text" list="sale-txn-type-list" placeholder="User or Investment" autocomplete="off"></div>
+      <datalist id="sale-txn-type-list">
+        <option value="User"></option>
+        <option value="Investment"></option>
+        <option value="Developer"></option>
+        <option value="Sale-Leaseback"></option>
+        <option value="Partial Interest"></option>
+      </datalist>
     </div>
     <div class="row c3">
       <div class="field"><label>Parking Ratio</label><input id="cs-parking" type="text" placeholder="e.g. 2/1000"></div>
@@ -5140,6 +5156,66 @@ function _cgv(id) {
   return el.value || '';
 }
 
+function formatCompPdfMmDdYyyy(val) {
+  const v = String(val ?? '').trim();
+  if (!v) return '';
+  const iso = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[2]}/${iso[3]}/${iso[1]}`;
+  const md = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (md) {
+    const mm = String(Number(md[1])).padStart(2, '0');
+    const dd = String(Number(md[2])).padStart(2, '0');
+    return `${mm}/${dd}/${md[3]}`;
+  }
+  return v;
+}
+
+function formatCompPdfTxnTypeDisplay(val) {
+  const t = String(val ?? '').trim();
+  if (!t) return '';
+  const compact = t.toLowerCase().replace(/[\s/_-]+/g, '');
+  if (compact.includes('owner') && compact.includes('user')) return 'User';
+  if (compact === 'investor' || compact === 'investment') return 'Investment';
+  if (compact === 'developer') return 'Developer';
+  if (compact.includes('saleleaseback')) return 'Sale-Leaseback';
+  if (compact.includes('partial')) return 'Partial Interest';
+  return t;
+}
+
+function formatCompPdfRentAdjDisplay(val) {
+  const t = String(val ?? '').trim();
+  if (!t) return '';
+  const onlyNum = t.replace(/,/g, '').replace(/%/g, '').trim();
+  const n = Number(onlyNum);
+  if (Number.isFinite(n) && n > 0 && n < 1 && !/%/.test(t)) {
+    return (n * 100).toFixed(1) + '%';
+  }
+  return t.replace(/\b0\.\d+\b/g, function (match) {
+    const v = Number(match);
+    if (!Number.isFinite(v) || v <= 0 || v >= 1) return match;
+    return (v * 100).toFixed(1) + '%';
+  });
+}
+
+function formatCompPdfParkingDisplay(val) {
+  const t = String(val ?? '').trim();
+  if (!t) return '';
+  const norm = t.replace(/\s+/g, '');
+  const m = norm.match(/^(\d+(?:\.\d+)?)[:/](\d+(?:,\d{3})*|\d+)$/);
+  if (!m) return t;
+  const left = parseFloat(m[1]);
+  const right = parseFloat(String(m[2]).replace(/,/g, ''));
+  if (!Number.isFinite(left) || !Number.isFinite(right)) return t;
+  return left.toFixed(1) + ':' + right.toLocaleString('en-US');
+}
+
+function formatCompPdfYearBuilt(val) {
+  const s = String(val ?? '').replace(/,/g, '').trim();
+  if (!s) return '';
+  const n = parseInt(s, 10);
+  return Number.isFinite(n) ? String(n) : s;
+}
+
 let compPropertyPhotoDataUrl = '';
 let compPropertyPhotoFilename = '';
 let compPropertyPhotoStorageUrl = '';
@@ -5311,11 +5387,12 @@ function exportLeaseCompPdf() {
   doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(60);
   doc.text('Date:', M + 4, y + 11);
   doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
-  doc.text(gv('c-date'), M + 32, y + 11);
+  doc.text(formatCompPdfMmDdYyyy(gv('c-date')), M + 32, y + 11);
   y += LH + 10;
 
   /* ── LEFT: Location  |  RIGHT: Property Features ── */
   const blockY = y;
+  const subleasePartyLabels = document.getElementById('c-sublease-party-labels')?.checked;
 
   // LEFT column — Location
   leftHeader('Location:'); y += HDR;
@@ -5339,16 +5416,16 @@ function exportLeaseCompPdf() {
   leftCell('Space Leased / Leased SF:', gv('c-leased-sf')); y += LH;
   leftCell('Rent/SqFt / Start Rate:', gv('c-rent-sf')); y += LH;
   leftCell('Rent Type:', gv('c-rent-type')); y += LH;
-  leftCell('Trans. / Exec. Date:', gv('c-exec-date')); y += LH;
-  leftCell('Occ Date:', gv('c-occ-date')); y += LH;
-  leftCell('Expire Date:', gv('c-expire-date')); y += LH;
+  leftCell('Trans. / Exec. Date:', formatCompPdfMmDdYyyy(gv('c-exec-date'))); y += LH;
+  leftCell('Occ Date:', formatCompPdfMmDdYyyy(gv('c-occ-date'))); y += LH;
+  leftCell('Expire Date:', formatCompPdfMmDdYyyy(gv('c-expire-date'))); y += LH;
   leftCell('Term (Months):', gv('c-term')); y += LH;
   leftCell('Effective Rent:', gv('c-eff-rent')); y += LH;
   leftCell('Mos on Mrkt:', gv('c-mkt-months')); y += LH;
   leftCell('Free Rent:', gv('c-free-rent')); y += LH;
   leftCell('TI Allowance:', gv('c-ti')); y += LH;
   leftCell('NNN Charges:', gv('c-nnn')); y += LH;
-  leftCell('Rent Adj / Escalations:', gv('c-escalations')); y += LH;
+  leftCell('Rent Adj / Escalations:', formatCompPdfRentAdjDisplay(gv('c-escalations'))); y += LH;
   leftCell('Options:', gv('c-options')); y += LH;
   const leftEndY = y;
 
@@ -5357,12 +5434,12 @@ function exportLeaseCompPdf() {
   rightHeader('Property Features:'); y += HDR;
   rightCell('Building SF:', gv('c-bldg-sf')); y += LH;
   rightCell('Land / Lot Size (SF):', gv('c-land-sf')); y += LH;
-  rightCell('Yr Built / Year Built:', gv('c-year-built')); y += LH;
+  rightCell('Yr Built / Year Built:', formatCompPdfYearBuilt(gv('c-year-built'))); y += LH;
   rightCell('Office SF:', gv('c-office-sf')); y += LH;
   rightCell('DH (Dock-high Doors):', gv('c-dh')); y += LH;
   rightCell('GL (Grade Level Doors):', gv('c-gl')); y += LH;
   rightCell('Clear Height:', gv('c-clearance')); y += LH;
-  rightCell('Parking Ratio:', gv('c-parking')); y += LH;
+  rightCell('Parking Ratio:', formatCompPdfParkingDisplay(gv('c-parking'))); y += LH;
   rightCell('Amps / Power:', gv('c-amps')); y += LH;
   rightCell('Sprinklers:', gv('c-sprinklers')); y += LH;
   rightCell('Rail:', gv('c-rail')); y += LH;
@@ -5372,8 +5449,8 @@ function exportLeaseCompPdf() {
 
   // RIGHT column — Lessor/Tenant Info
   rightHeader('Lessor/Tenant Info:'); y += HDR;
-  rightCell('Lessor / Landlord:', gv('c-lessor')); y += LH;
-  rightCell('Lessee / Tenant:', gv('c-lessee')); y += LH;
+  rightCell(subleasePartyLabels ? 'Sublessor:' : 'Lessor / Landlord:', gv('c-lessor')); y += LH;
+  rightCell(subleasePartyLabels ? 'Sublessee:' : 'Lessee / Tenant:', gv('c-lessee')); y += LH;
   y += LH; // blank spacer
   rightCell('Listing Brokerage:', gv('c-list-brokerage')); y += LH;
   rightCell('Listing Agent 1:', gv('c-list-agent1')); y += LH;
@@ -5509,7 +5586,7 @@ function exportSaleCompPdf() {
   doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(60);
   doc.text('Date:', M + 4, y + 11);
   doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
-  doc.text(gv('c-date'), M + 32, y + 11);
+  doc.text(formatCompPdfMmDdYyyy(gv('c-date')), M + 32, y + 11);
   y += LH + 10;
 
   /* ── LEFT: Location  |  RIGHT: Property Features (continued) ── */
@@ -5535,11 +5612,13 @@ function exportSaleCompPdf() {
   leftCell('Building SF:', gv('cs-bldg-sf')); y += LH;
   leftCell('Office SF:', gv('cs-office-sf')); y += LH;
   leftCell('Land / Lot Size (SF):', gv('cs-land-sf')); y += LH;
-  leftCell('Transaction Date:', gv('cs-txn-date')); y += LH;
+  leftCell('Transaction Date:', formatCompPdfMmDdYyyy(gv('cs-txn-date'))); y += LH;
   leftCell('Selling Price:', gv('cs-sell-price')); y += LH;
-  leftCell('Year Built:', gv('cs-year-built')); y += LH;
-  leftCell('Transaction Type (User, Investor):', gv('cs-txn-type')); y += LH;
-  leftCell('Parking Ratio:', gv('cs-parking')); y += LH;
+  const salePsf = compSalePricePerSf();
+  leftCell('Sale $/SF (calc):', salePsf ? ('$' + Number(salePsf).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })) : ''); y += LH;
+  leftCell('Year Built:', formatCompPdfYearBuilt(gv('cs-year-built'))); y += LH;
+  leftCell('Transaction Type (User, Investment):', formatCompPdfTxnTypeDisplay(gv('cs-txn-type'))); y += LH;
+  leftCell('Parking Ratio:', formatCompPdfParkingDisplay(gv('cs-parking'))); y += LH;
   leftCell('Mos on Mrkt:', gv('cs-mkt-months')); y += LH;
   leftCell('Multi-Ten / Space Type (Y/N):', gv('cs-multi-ten')); y += LH;
   const leftEndY = y;
@@ -6100,14 +6179,13 @@ function initCompFormSelects() {
   const YEARS = ['1960','1970','1980','1990','1995','2000','2005','2010','2015','2020','2025'];
   const DOORS = ['0','1','2','4','6','8','10','12','16','20'];
   const HEIGHTS = ["12'","14'","16'","18'","20'","22'","24'","28'","30'","32'","36'"];
-  const PARKING = ['1.0:1,000','1.5:1,000','2.0:1,000','2.5:1,000','3.0:1,000','4/1,000','5/1,000','Not Disclosed'];
+  const PARKING = ['1.0:1,000','1.5:1,000','2.0:1,000','2.5:1,000','3.0:1,000','4.0:1,000','5.0:1,000','Not Disclosed'];
   const POWER = ['100A','200A','400A','600A','800A','1,000A','1,200A','2,000A','120/208V','277/480V','Heavy power'];
   const MONTHS = ['0','1','3','6','9','12','18','24','36'];
   const FREE_RENT = ['None','1 month','2 months','3 months','4 months','6 months','Not Disclosed'];
   const NNN = ['$0.05','$0.10','$0.15','$0.20','$0.25','$0.30','$0.35','$0.40','Not Disclosed'];
   const ESCAL = ['3% annual','4% annual','5% annual','CPI','Fixed increases','None','Not Disclosed','See comments'];
   const SALE_PRICES = ['$1,000,000','$2,500,000','$5,000,000','$7,500,000','$10,000,000','$15,000,000','$25,000,000','$50,000,000'];
-  const SALE_TXN = ['Owner/User','Investor','Developer','Investment','Sale-Leaseback','Partial Interest'];
   const CAP_RATES = ['3.50%','4.00%','4.50%','5.00%','5.50%','6.00%','6.50%','7.00%','7.50%','8.00%','Not Disclosed'];
   const SPACE_TYPES = ['Direct Lease','Sublease','Renewal','Expansion','New Lease','Extension','Blend and Extend','Owner/User'];
   const PROJECTS = ['Airport Business Center','Irvine Business Complex','MacArthur Business Park','Orange County Commerce Center','South Coast Metro','Tustin Legacy','Warner Business Park'];
@@ -6134,7 +6212,6 @@ function initCompFormSelects() {
   fillSel('c-nnn', NNN);
   fillSel('c-escalations', ESCAL);
   fillSel('cs-sell-price', SALE_PRICES);
-  fillSel('cs-txn-type', SALE_TXN);
   fillSel('cs-cap-rate', CAP_RATES);
   fillSel('c-space-type', SPACE_TYPES);
   fillSel('c-project', PROJECTS);
@@ -7363,6 +7440,63 @@ function dxParseNumberish(value) {
   const parsed = parseFloat(String(value).replace(/[^0-9.\-]/g, ''));
   return Number.isFinite(parsed) ? parsed : null;
 }
+
+function initCompSalePsfPreview() {
+  const price = document.getElementById('cs-sell-price');
+  const sf = document.getElementById('cs-bldg-sf');
+  const out = document.getElementById('cs-psf-calc');
+  if (!price || !sf || !out) return;
+  function tick() {
+    const salePrice = dxParseNumberish(price.value);
+    const buildingSf = dxParseNumberish(sf.value);
+    if (!salePrice || !buildingSf) {
+      out.value = '';
+      return;
+    }
+    const psf = salePrice / buildingSf;
+    out.value = '$' + psf.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '/SF';
+  }
+  price.addEventListener('input', tick);
+  price.addEventListener('change', tick);
+  sf.addEventListener('input', tick);
+  sf.addEventListener('change', tick);
+  tick();
+}
+
+function initCompLeaseDerivedHints() {
+  const rent = document.getElementById('c-rent-sf');
+  const nnn = document.getElementById('c-nnn');
+  const eff = document.getElementById('c-eff-rent');
+  const hint = document.getElementById('c-eff-nnn-hint');
+  if (!rent || !nnn || !hint) return;
+  function tick() {
+    const a = dxParseNumberish(String(rent.value || '').replace(/^\$/, ''));
+    const b = dxParseNumberish(String(nnn.value || '').replace(/^\$/, ''));
+    if (!a || !b) {
+      hint.textContent = '';
+      return;
+    }
+    const sum = a + b;
+    let msg = 'Base rent + NNN (reference): $' + sum.toFixed(2) + '/SF';
+    if (eff) {
+      const e = dxParseNumberish(String(eff.value || '').replace(/^\$/, ''));
+      if (e) msg += ' · Effective entered: $' + e.toFixed(2) + '/SF';
+    }
+    hint.textContent = msg;
+  }
+  rent.addEventListener('input', tick);
+  rent.addEventListener('change', tick);
+  nnn.addEventListener('input', tick);
+  nnn.addEventListener('change', tick);
+  if (eff) {
+    eff.addEventListener('input', tick);
+    eff.addEventListener('change', tick);
+  }
+  tick();
+}
+
+initCompSalePsfPreview();
+initCompLeaseDerivedHints();
 
 function dxNormalizeDateField(value) {
   if (!value) return '';

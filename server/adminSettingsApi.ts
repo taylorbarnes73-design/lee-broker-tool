@@ -1,15 +1,20 @@
 import { Router } from "express";
 import type { Request, Response, NextFunction } from "express";
 import { z } from "zod/v4";
+import { count } from "drizzle-orm";
 import { getDb } from "./db";
 import { sendAdminError, sendAdminUserError, AdminUserError } from "./adminUsers/adminErrors";
 import { requirePlatformAdmin } from "./adminUsers/requirePlatformAdmin";
+import { isAdminInviteSmtpConfigured } from "./adminUsers/inviteMail";
+import { writeAuditLog } from "./auth/writeAuditLog";
+import { appSessions } from "../drizzle/schema";
 import type { SettingsCategory } from "./settings/settingsSchema";
 import {
   getGroupedCategory,
   getGroupedSettings,
   patchSettings,
   runDealiusSettingsTest,
+  verifyDealiusCredentials,
 } from "./settings/settingsStore";
 
 const categorySchema = z.enum(["branding", "workflow", "notifications", "integrations", "security"]);
@@ -40,6 +45,48 @@ adminSettingsRouter.get(
       return;
     }
     res.json(await getGroupedSettings(true));
+  })
+);
+
+adminSettingsRouter.get(
+  "/meta",
+  asyncAdmin(async (_req, res) => {
+    res.json({ invite_email_configured: isAdminInviteSmtpConfigured() });
+  })
+);
+
+adminSettingsRouter.post(
+  "/actions/revoke-all-sessions",
+  asyncAdmin(async (req, res) => {
+    const db = await getDb();
+    if (!db) {
+      sendAdminError(res, 503, "NO_DATABASE", "Database is not available.");
+      return;
+    }
+    const [row] = await db.select({ c: count() }).from(appSessions);
+    const cleared = Number(row?.c ?? 0);
+    await db.delete(appSessions);
+    await writeAuditLog(req.user!.id, "sessions.revoked_all", "system", null, { sessions_cleared: cleared }, req);
+    res.json({ cleared });
+  })
+);
+
+const dealiusVerifyBodySchema = z.object({
+  username: z.string().trim().min(1).max(320),
+  password: z.string().min(1).max(512),
+});
+
+adminSettingsRouter.post(
+  "/integrations/dealius/verify",
+  asyncAdmin(async (req, res) => {
+    const parsed = dealiusVerifyBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0];
+      sendAdminError(res, 400, "VALIDATION_ERROR", issue?.message ?? "Invalid body.", issue?.path?.join("."));
+      return;
+    }
+    const result = await verifyDealiusCredentials(parsed.data.username, parsed.data.password);
+    res.json(result);
   })
 );
 

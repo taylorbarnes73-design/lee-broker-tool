@@ -336,6 +336,25 @@ export async function runDealiusSettingsTest(
   return { success, message, tested_at: testedAt };
 }
 
+/** Validate Dealius credentials without persisting (used by admin Settings modal). */
+export async function verifyDealiusCredentials(username: string, password: string): Promise<{ success: boolean; message: string }> {
+  const user = username.trim();
+  const pass = password;
+  if (process.env.SETTINGS_DEALIUS_TEST_STUB === "fail") {
+    return { success: false, message: "Stub failure (SETTINGS_DEALIUS_TEST_STUB=fail)." };
+  }
+  if (!user || !pass) {
+    return { success: false, message: "Username and password are required." };
+  }
+  try {
+    const client = new DealiusClient();
+    await client.authenticate({ email: user, password: pass });
+    return { success: true, message: "Authentication succeeded." };
+  } catch (e: unknown) {
+    return { success: false, message: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 export async function getSetting(key: string): Promise<unknown> {
   if (!isSettingKey(key)) {
     throw new Error(`Unknown setting key: ${key}`);
