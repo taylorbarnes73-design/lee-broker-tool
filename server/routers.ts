@@ -20,6 +20,8 @@ import { submissionsRouter } from "./routers/submissions";
 import { brokersRouter } from "./routers/brokers";
 import { localAuth, sdk } from "./_core/sdk";
 import { ENV } from "./_core/env";
+import { handlePlatformLogout } from "./auth/passwordPlatformAuth";
+import { linkPlatformSessionAfterLegacyLogin } from "./auth/linkPlatformSessionAfterLegacyLogin";
 
 function normalizeLeeLogin(raw: string) {
   const value = raw.trim().toLowerCase();
@@ -112,6 +114,8 @@ export const appRouter = router({
           maxAge: ONE_YEAR_MS,
         });
 
+        await linkPlatformSessionAfterLegacyLogin(ctx.req, ctx.res, email);
+
         return {
           success: true as const,
           user: {
@@ -122,7 +126,8 @@ export const appRouter = router({
           },
         };
       }),
-    logout: publicProcedure.mutation(({ ctx }) => {
+    logout: publicProcedure.mutation(async ({ ctx }) => {
+      await handlePlatformLogout(ctx.req, ctx.res);
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;

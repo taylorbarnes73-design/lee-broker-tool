@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import AdminPortalShell from "@/components/AdminPortalShell";
+import { usePublicBranding } from "@/hooks/usePublicBranding";
 import { Button, Card, Icons, Field, Input, Toggle } from "../design/index.jsx";
 import { trpc } from "@/lib/trpc";
 import {
@@ -98,6 +99,7 @@ type FieldSaveState = "idle" | "saving" | "saved" | "error";
 
 export default function PortalAdminSettings() {
   const { user, loading } = useAuth();
+  const publicBranding = usePublicBranding();
   const [, setLocation] = useLocation();
   const uploadMutation = trpc.files.upload.useMutation();
 
@@ -526,9 +528,9 @@ export default function PortalAdminSettings() {
                       <input
                         type="color"
                         value={(() => {
-                          const raw = String(b.primary_color ?? "#A6192E").trim();
+                          const raw = String(b.primary_color ?? publicBranding.primary_color).trim();
                           const hex = raw.startsWith("#") ? raw : `#${raw}`;
-                          return /^#[0-9A-Fa-f]{6}$/.test(hex) ? hex : "#A6192E";
+                          return /^#[0-9A-Fa-f]{6}$/.test(hex) ? hex : publicBranding.primary_color;
                         })()}
                         onChange={e => {
                           const hex = e.target.value.toUpperCase();
@@ -537,7 +539,12 @@ export default function PortalAdminSettings() {
                           );
                           schedulePatch("branding.primary_color", hex, 800);
                         }}
-                        onBlur={() => void patchKey("branding.primary_color", String(b.primary_color ?? "#A6192E").toUpperCase())}
+                        onBlur={() =>
+                          void patchKey(
+                            "branding.primary_color",
+                            String(b.primary_color ?? publicBranding.primary_color).toUpperCase()
+                          )
+                        }
                         style={{ width: 48, height: 40, padding: 0, border: "1px solid var(--ink-200)", borderRadius: 8, cursor: "pointer" }}
                         aria-label="Pick primary color"
                       />
@@ -547,7 +554,7 @@ export default function PortalAdminSettings() {
                           width: 40,
                           height: 40,
                           borderRadius: 8,
-                          background: String(b.primary_color ?? "#A6192E"),
+                          background: String(b.primary_color ?? publicBranding.primary_color),
                           border: "1px solid var(--ink-200)",
                           boxShadow: "var(--shadow-sm)",
                         }}

@@ -1,6 +1,8 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import type { User } from "../../drizzle/schema";
-import { sdk } from "./sdk";
+import { resolvePlatformUserFromRequest } from "../auth/platformSession";
+import { getUserByOpenId, upsertUser } from "../db";
+import { sdk, localAuth } from "./sdk";
 
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
@@ -13,11 +15,36 @@ export async function createContext(
 ): Promise<TrpcContext> {
   let user: User | null = null;
 
-  try {
-    user = await sdk.authenticateRequest(opts.req);
-  } catch (error) {
-    // Authentication is optional for public procedures.
-    user = null;
+  const platformUser = await resolvePlatformUserFromRequest(opts.req);
+  if (platformUser) {
+    const openId = localAuth.toLocalOpenId(platformUser.email);
+    const legacyRole: "admin" | "user" = platformUser.role === "admin" ? "admin" : "user";
+    await upsertUser({
+      openId,
+      name: platformUser.fullName,
+      email: platformUser.email,
+      loginMethod: "platform",
+      role: legacyRole,
+      lastSignedIn: new Date(),
+    });
+    const row = await getUserByOpenId(openId);
+    if (row) {
+      user = {
+        ...row,
+        name: platformUser.fullName,
+        email: platformUser.email ?? row.email,
+        role: legacyRole,
+        lastSignedIn: new Date(),
+      };
+    }
+  }
+
+  if (!user) {
+    try {
+      user = await sdk.authenticateRequest(opts.req);
+    } catch {
+      user = null;
+    }
   }
 
   return {

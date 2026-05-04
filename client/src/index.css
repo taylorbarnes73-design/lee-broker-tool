@@ -259,23 +259,117 @@
 @import './design/tokens.css';
 
 .admin-portal {
+  --admin-accent: var(--lee-crimson, #c32033);
+  display: grid;
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
   min-height: 100vh;
   background: var(--ink-50);
   color: var(--ink-900);
 }
 
-.admin-portal-topbar {
+.admin-portal-sidebar {
   position: sticky;
   top: 0;
-  z-index: 20;
-  display: grid;
-  grid-template-columns: minmax(220px, 0.9fr) minmax(320px, 1.4fr) minmax(220px, 0.9fr);
-  gap: 18px;
+  align-self: start;
+  max-height: 100vh;
+  overflow-y: auto;
+  border-right: 1px solid var(--ink-200);
+  background: rgba(255, 255, 255, 0.96);
+  padding: 18px 14px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 10;
+}
+
+.admin-portal-sidebar-brand {
+  display: flex;
   align-items: center;
-  padding: 14px 24px;
+  gap: 10px;
+  padding: 4px 6px 14px;
+  border-bottom: 1px solid var(--ink-150);
+  margin-bottom: 8px;
+}
+
+.admin-portal-sidebar-brand img {
+  width: 48px;
+  height: auto;
+  flex: 0 0 auto;
+}
+
+.admin-portal-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-portal-nav-section-label {
+  margin-top: 14px;
+  margin-bottom: 6px;
+  padding: 0 8px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+
+.admin-portal-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100vh;
+}
+
+.admin-portal-header {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 10px 20px;
   border-bottom: 1px solid var(--ink-200);
   background: rgba(255, 255, 255, 0.94);
   box-shadow: var(--shadow-sm);
+}
+
+.admin-portal-header-spacer {
+  flex: 1;
+}
+
+.admin-portal-session {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.admin-portal-session-text {
+  font-size: 12px;
+  color: var(--ink-600);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: min(420px, 46vw);
+}
+
+.admin-portal-session-text strong {
+  color: var(--ink-900);
+}
+
+.admin-portal-session-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-6);
+  background: var(--ink-0);
+  color: var(--ink-700);
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .admin-portal-brand {
@@ -307,18 +401,12 @@
   letter-spacing: -0.03em;
 }
 
-.admin-portal-nav {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  min-width: 0;
-}
-
 .admin-portal-nav-item {
   display: grid;
   gap: 2px;
-  min-width: 132px;
-  padding: 9px 12px;
+  min-width: 0;
+  width: 100%;
+  padding: 9px 10px;
   border: 1px solid transparent;
   border-radius: var(--r-8);
   color: var(--ink-600);
@@ -333,9 +421,9 @@
 }
 
 .admin-portal-nav-item.active {
-  background: var(--lee-crimson-wash);
-  border-color: rgba(155, 13, 42, 0.2);
-  color: var(--lee-crimson);
+  background: color-mix(in srgb, var(--admin-accent) 12%, var(--ink-0));
+  border-color: color-mix(in srgb, var(--admin-accent) 22%, var(--ink-200));
+  color: var(--admin-accent);
 }
 
 .admin-portal-nav-item span {
@@ -350,47 +438,11 @@
   color: var(--ink-500);
 }
 
-.admin-portal-user {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  min-width: 0;
-  font-size: 12px;
-  color: var(--ink-500);
-}
-
-.admin-portal-user div {
-  display: grid;
-  min-width: 0;
-  text-align: right;
-}
-
-.admin-portal-user strong,
-.admin-portal-user span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.admin-portal-user strong {
-  color: var(--ink-900);
-}
-
-.admin-portal-user button {
-  border: 1px solid var(--ink-200);
-  border-radius: var(--r-6);
-  background: var(--ink-0);
-  color: var(--ink-700);
-  padding: 8px 10px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
 .admin-portal-main {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 22px 0 56px;
+  padding: 22px 16px 56px;
+  flex: 1;
 }
 
 .admin-portal-hero,
@@ -535,23 +587,23 @@
 }
 
 @media (max-width: 960px) {
-  .admin-portal-topbar {
+  .admin-portal {
     grid-template-columns: 1fr;
-    align-items: stretch;
   }
 
-  .admin-portal-nav {
-    justify-content: flex-start;
-    overflow-x: auto;
-    padding-bottom: 2px;
+  .admin-portal-sidebar {
+    position: relative;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid var(--ink-200);
   }
 
-  .admin-portal-user {
-    justify-content: space-between;
+  .admin-portal-header {
+    position: relative;
   }
 
-  .admin-portal-user div {
-    text-align: left;
+  .admin-portal-session-text {
+    max-width: 100%;
   }
 
   .admin-portal-hero {
@@ -568,10 +620,6 @@
 }
 
 @media (max-width: 560px) {
-  .admin-portal-topbar {
-    padding: 12px 14px;
-  }
-
   .admin-portal-main {
     width: min(100% - 20px, 1180px);
     padding-top: 14px;

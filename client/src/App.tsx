@@ -9,8 +9,10 @@ import Login from "./pages/Login";
 import PortalAdminSubmissions from "./pages/PortalAdminSubmissions";
 import PortalBrokerAdminRequestDetail from "./pages/PortalBrokerAdminRequestDetail";
 import PortalBrokerAdminRequests from "./pages/PortalBrokerAdminRequests";
+import PortalAdminAuditLog from "./pages/PortalAdminAuditLog";
 import PortalAdminUsers from "./pages/PortalAdminUsers";
 import PortalAdminSettings from "./pages/PortalAdminSettings";
+import PortalAccount from "./pages/PortalAccount";
 import PortalDashboard from "./pages/PortalDashboard";
 import PortalSubmissionDetail from "./pages/PortalSubmissionDetail";
 import PortalSubmissions from "./pages/PortalSubmissions";
@@ -49,6 +51,31 @@ function PortalRoute({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+function AdminPortalRoute({ children }: { children: ReactNode }) {
+  const { loading, isAuthenticated, user } = useAuth({
+    redirectOnUnauthenticated: true,
+    redirectPath: "/login",
+  });
+
+  if (loading || !isAuthenticated) {
+    return (
+      <div className="portal-loading">
+        <div className="portal-loading-card">Opening admin portal...</div>
+      </div>
+    );
+  }
+
+  if (user?.role !== "admin") {
+    return (
+      <div className="portal-loading">
+        <div className="portal-loading-card">Administrator access required.</div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
 function Router() {
   return (
     <Switch>
@@ -69,40 +96,55 @@ function Router() {
           <PortalSubmissions />
         </PortalRoute>
       </Route>
-      <Route path="/portal/admin/submissions">
+      <Route path="/portal/account">
         <PortalRoute>
-          <PortalAdminSubmissions />
+          <PortalAccount />
         </PortalRoute>
+      </Route>
+      <Route path="/portal/admin/submissions">
+        <AdminPortalRoute>
+          <PortalAdminSubmissions />
+        </AdminPortalRoute>
       </Route>
       <Route path="/portal/admin/broker-admin">
-        <PortalRoute>
+        <AdminPortalRoute>
           <PortalBrokerAdminRequests />
-        </PortalRoute>
+        </AdminPortalRoute>
       </Route>
       <Route path="/portal/admin/users">
-        <PortalRoute>
+        <AdminPortalRoute>
           <PortalAdminUsers />
-        </PortalRoute>
+        </AdminPortalRoute>
       </Route>
       <Route path="/admin/users">
-        <PortalRoute>
+        <AdminPortalRoute>
           <PortalAdminUsers />
-        </PortalRoute>
+        </AdminPortalRoute>
       </Route>
       <Route path="/portal/admin/settings">
-        <PortalRoute>
+        <AdminPortalRoute>
           <PortalAdminSettings />
-        </PortalRoute>
+        </AdminPortalRoute>
       </Route>
       <Route path="/admin/settings">
-        <PortalRoute>
+        <AdminPortalRoute>
           <PortalAdminSettings />
-        </PortalRoute>
+        </AdminPortalRoute>
+      </Route>
+      <Route path="/portal/admin/audit-log">
+        <AdminPortalRoute>
+          <PortalAdminAuditLog />
+        </AdminPortalRoute>
+      </Route>
+      <Route path="/admin/audit-log">
+        <AdminPortalRoute>
+          <PortalAdminAuditLog />
+        </AdminPortalRoute>
       </Route>
       <Route path="/portal/admin/broker-admin/:id">
-        <PortalRoute>
+        <AdminPortalRoute>
           <PortalBrokerAdminRequestDetail />
-        </PortalRoute>
+        </AdminPortalRoute>
       </Route>
       <Route path="/portal/submissions/:id">
         <PortalRoute>

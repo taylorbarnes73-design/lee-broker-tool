@@ -3,31 +3,13 @@ import { z } from "zod/v4";
 import { desc, eq, sql } from "drizzle-orm";
 import { getDb } from "./db";
 import { brokerAdminRequests, uploads } from "../drizzle/schema";
-import { sdk } from "./_core/sdk";
+import { requireAuth, requireRole } from "./middleware/requireAuth";
 
 export const brokerAdminApiRouter = Router();
 
-brokerAdminApiRouter.use(async (req, res, next) => {
-  try {
-    (req as any).user = await sdk.authenticateRequest(req);
-    next();
-  } catch {
-    res.status(401).json({ success: false, error: "Not authenticated" });
-  }
-});
-
-function requireAdmin(req: any, res: any) {
-  const user = req.user as { role: string };
-  if (user?.role !== "admin") {
-    res.status(403).json({ success: false, error: "Admin access required" });
-    return false;
-  }
-  return true;
-}
+brokerAdminApiRouter.use(requireAuth, requireRole("admin"));
 
 brokerAdminApiRouter.get("/requests", async (req, res) => {
-  if (!requireAdmin(req as any, res)) return;
-
   const db = await getDb();
   if (!db) return res.status(503).json({ success: false, error: "Database unavailable" });
 
@@ -58,8 +40,6 @@ brokerAdminApiRouter.get("/requests", async (req, res) => {
 });
 
 brokerAdminApiRouter.get("/stats", async (req, res) => {
-  if (!requireAdmin(req as any, res)) return;
-
   const db = await getDb();
   if (!db) return res.status(503).json({ success: false, error: "Database unavailable" });
 
@@ -100,8 +80,6 @@ brokerAdminApiRouter.get("/stats", async (req, res) => {
 });
 
 brokerAdminApiRouter.get("/requests/:id", async (req, res) => {
-  if (!requireAdmin(req as any, res)) return;
-
   const id = Number(req.params.id);
   if (!Number.isFinite(id) || id <= 0) {
     res.status(400).json({ success: false, error: "Invalid id" });
@@ -142,8 +120,6 @@ const updateSchema = z.object({
 });
 
 brokerAdminApiRouter.put("/requests/:id", async (req, res) => {
-  if (!requireAdmin(req as any, res)) return;
-
   const id = Number(req.params.id);
   if (!Number.isFinite(id) || id <= 0) {
     res.status(400).json({ success: false, error: "Invalid id" });

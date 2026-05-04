@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { ENV } from "../_core/env";
+import { getSetting } from "../settings/getSetting";
 
 export function isAdminInviteSmtpConfigured(): boolean {
   return Boolean(ENV.smtpHost && ENV.smtpFrom);
@@ -15,9 +16,10 @@ export async function sendUserInviteEmail(params: {
     return { ok: false, error: "SMTP is not configured." };
   }
 
-  const subject = "Your Lee Broker Tool account";
+  const companyName = String(await getSetting("branding.company_name"));
+  const subject = `Your ${companyName} Broker Tool account`;
   const text = [
-    "An administrator created an account for you on the Lee Broker Tool.",
+    `An administrator created an account for you on the ${companyName} Broker Tool.`,
     "",
     `Username: ${params.username}`,
     `Temporary password: ${params.tempPassword}`,
@@ -26,7 +28,7 @@ export async function sendUserInviteEmail(params: {
     "",
     "Change your password after first sign-in if prompted.",
     "",
-    "— Lee & Associates Newport Beach",
+    `— ${companyName}`,
   ].join("\n");
 
   try {

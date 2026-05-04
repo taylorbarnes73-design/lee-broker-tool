@@ -1,8 +1,8 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { trpc } from "@/lib/trpc";
 import { getLoginUrl, isAuthRedirectEnabled } from "@/const";
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useLocation } from "wouter";
+import { usePublicBranding } from "@/hooks/usePublicBranding";
 
 // We import design primitives to build a nice looking login
 import { Button, Input, Card, Icons } from "../design/index.jsx";
@@ -17,8 +17,11 @@ function normalizeLeeEmail(raw: string) {
 export default function Login() {
   const { user, loading, refresh } = useAuth();
   const [, setLocation] = useLocation();
+  const branding = usePublicBranding();
 
   const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // If OAuth redirect is enabled, do not show the local login UI at all.
   // This avoids the "double login" experience where the SPA renders a login
@@ -34,22 +37,31 @@ export default function Login() {
     window.location.href = loginUrl;
   }, [user]);
 
-  const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: async result => {
-      if (result.success) {
-        await refresh();
-        setLocation("/portal");
-      }
-    },
-  });
-
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setError(null);
     const normalizedEmail = normalizeLeeEmail(email);
     if (normalizedEmail !== email) setEmail(normalizedEmail);
-    await loginMutation.mutateAsync({
-      email: normalizedEmail,
-    });
+    setSubmitting(true);
+    try {
+      const r = await fetch("/api/auth/login", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || j?.success === false) {
+        setError(j?.error ?? "Sign in failed.");
+        return;
+      }
+      await refresh();
+      setLocation("/portal");
+    } catch {
+      setError("Sign in failed.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   useEffect(() => {
@@ -109,7 +121,7 @@ export default function Login() {
         <div style={{ marginBottom: 32, textAlign: 'center' }}>
           <img
             src="/lee-newport-beach-fullcolor.png"
-            alt="Lee & Associates Newport Beach"
+            alt={branding.company_name}
             style={{ height: 64, width: 'auto', display: 'inline-block' }}
           />
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-500)', marginTop: 14, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
@@ -141,18 +153,13 @@ export default function Login() {
               </p>
             </div>
 
-            <Button type="submit" variant="primary" size="lg" disabled={loginMutation.isPending || loading} style={{ marginTop: 8 }}>
-              {loginMutation.isPending ? "Signing in..." : "Continue to Workspace"}
+            <Button type="submit" variant="primary" size="lg" disabled={submitting || loading} style={{ marginTop: 8 }}>
+              {submitting ? "Signing in..." : "Continue to Workspace"}
             </Button>
 
-            {loginMutation.data && !loginMutation.data.success && (
+            {error && (
               <div style={{ padding: 12, background: 'var(--err-50)', color: 'var(--err-700)', borderRadius: 8, fontSize: 13, border: '1px solid var(--err-200)' }}>
-                {loginMutation.data.error}
-              </div>
-            )}
-            {loginMutation.error && (
-              <div style={{ padding: 12, background: 'var(--err-50)', color: 'var(--err-700)', borderRadius: 8, fontSize: 13, border: '1px solid var(--err-200)' }}>
-                {loginMutation.error.message}
+                {error}
               </div>
             )}
           </form>

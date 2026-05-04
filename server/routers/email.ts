@@ -8,6 +8,7 @@ import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { storageGetBytes, storagePut } from "../storage";
 import { eq } from "drizzle-orm";
+import { getSetting } from "../settings/getSetting";
 
 const fieldSchema = z.object({
   label: z.string(),
@@ -71,15 +72,17 @@ function sanitizeFileName(filename: string): string {
   return safe.toLowerCase().endsWith(".pdf") ? safe : `${safe}.pdf`;
 }
 
-function buildEmailBody(params: {
+async function buildEmailBody(params: {
   formType: FormType;
   brokerName: string;
   propertyAddress: string;
   sections: Array<{ title: string; fields: Array<{ label: string; value: string }> }>;
   archivedPdfUrl?: string;
   archivedPdfName?: string;
-}): string {
+}): Promise<string> {
   const { formType, brokerName, propertyAddress, sections, archivedPdfUrl, archivedPdfName } = params;
+  const companyName = String(await getSetting("branding.company_name"));
+  const supportEmail = String(await getSetting("branding.support_email"));
   const now = new Date().toLocaleString("en-US", {
     timeZone: "America/Los_Angeles",
     dateStyle: "full",
@@ -98,7 +101,7 @@ function buildEmailBody(params: {
     .join("\n");
 
   return [
-    `Lee & Associates Newport Beach - ${formLabelFor(formType)} Submission`,
+    `${companyName} - ${formLabelFor(formType)} Submission`,
     `Submitted: ${now}`,
     brokerName ? `Broker: ${brokerName}` : "",
     propertyAddress ? `Property: ${propertyAddress}` : "",
@@ -109,8 +112,8 @@ function buildEmailBody(params: {
     "",
     "=".repeat(60),
     "",
-    "This email was generated automatically by the Lee & Associates Broker Submission Tool.",
-    "Taylor Barnes | Lee & Associates Newport Beach",
+    "This email was generated automatically by the Broker Submission Tool.",
+    `${supportEmail} | ${companyName}`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -379,8 +382,9 @@ export const emailRouter = router({
       }
 
       const addressPart = propertyAddress ? ` - ${propertyAddress}` : "";
-      const subject = `[Lee & Associates] ${formLabelFor(formType)} Submission${addressPart}`;
-      const content = buildEmailBody({
+      const companyName = String(await getSetting("branding.company_name"));
+      const subject = `[${companyName}] ${formLabelFor(formType)} Submission${addressPart}`;
+      const content = await buildEmailBody({
         formType,
         brokerName,
         propertyAddress,
@@ -500,7 +504,9 @@ export const emailRouter = router({
         fileSize: Buffer.from(input.pdfAttachment.base64Data, "base64").length,
       };
 
-      const subject = `[Lee] Sign Request PO ${input.poNumber}${reference ? ` - ${reference}` : ""}`;
+      const companyName = String(await getSetting("branding.company_name"));
+      const supportEmail = String(await getSetting("branding.support_email"));
+      const subject = `[${companyName}] Sign Request PO ${input.poNumber}${reference ? ` - ${reference}` : ""}`;
       const content = [
         "Hi Cimarron,",
         "",
@@ -510,7 +516,7 @@ export const emailRouter = router({
         reference ? `Property: ${reference}` : "",
         "",
         "Thank you,",
-        ctx.user.name || "Lee & Associates Newport Beach",
+        ctx.user.name || `${supportEmail} | ${companyName}`,
       ]
         .filter(Boolean)
         .join("\n");

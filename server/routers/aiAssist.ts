@@ -1,6 +1,7 @@
 import { publicProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import { z } from "zod/v4";
+import { getSetting } from "../settings/getSetting";
 
 // ── Field schemas per tab ──
 
@@ -650,9 +651,11 @@ function runVoucherAudit(dealData: Record<string, unknown>) {
   return suggestions;
 }
 
-// ── System prompts ──
+// ── System prompts (company name from settings) ──
 
-const PARSE_SYSTEM = `You are a commercial real estate data extraction specialist for Lee & Associates Newport Beach.
+async function parseSystemPrompt(): Promise<string> {
+  const company = String(await getSetting("branding.company_name"));
+  return `You are a commercial real estate data extraction specialist for ${company}.
 Extract structured field values from a broker's natural language deal description.
 
 CRITICAL RULES — follow exactly:
@@ -671,8 +674,11 @@ CRITICAL RULES — follow exactly:
 - Address: street address only (no city/state). City and state go in their own fields.
 - State: two-letter abbreviation. "California" → "CA".
 - If a value is implied but not explicitly stated, omit it. Never guess, estimate, or fill market-default values.`;
+}
 
-const BROCHURE_SYSTEM = `You are a commercial real estate data extraction specialist for Lee & Associates Newport Beach.
+async function brochureSystemPrompt(): Promise<string> {
+  const company = String(await getSetting("branding.company_name"));
+  return `You are a commercial real estate data extraction specialist for ${company}.
 Extract structured listing data from a property marketing brochure or flyer.
 
 CRITICAL RULES — follow exactly:
@@ -691,8 +697,11 @@ CRITICAL RULES — follow exactly:
 - Extract agent/broker full name if visible.
 - Extract all highlights/features into comments as a concise bullet list.
 - If the brochure is ambiguous or promotional without a precise field value, omit that field.`;
+}
 
-const DOCUMENT_SYSTEM = `You are a commercial real estate data extraction specialist for Lee & Associates Newport Beach.
+async function documentSystemPrompt(): Promise<string> {
+  const company = String(await getSetting("branding.company_name"));
+  return `You are a commercial real estate data extraction specialist for ${company}.
 Extract structured form data from broker-provided documents such as brochures, offering memoranda, commission agreements, sign requests, and comp sheets.
 
 CRITICAL RULES — follow exactly:
@@ -711,6 +720,7 @@ CRITICAL RULES — follow exactly:
 - State: two-letter abbreviation.
 - Broker/agent names: full name only, no phone or email.
 - If the document is ambiguous or promotional without a precise field value, omit that field.`;
+}
 
 // ── Shared JSON schema builder ──
 
@@ -808,9 +818,13 @@ async function extractDocumentFields(
     promptText
   );
 
+  const systemContent = options.listingBrochurePrompt
+    ? await brochureSystemPrompt()
+    : await documentSystemPrompt();
+
   const response = await invokeLLM({
     messages: [
-      { role: "system", content: options.listingBrochurePrompt ? BROCHURE_SYSTEM : DOCUMENT_SYSTEM },
+      { role: "system", content: systemContent },
       { role: "user", content: userContent as any[] },
     ],
     response_format: {
@@ -851,7 +865,7 @@ export const aiAssistRouter = router({
 
       const response = await invokeLLM({
         messages: [
-          { role: "system", content: PARSE_SYSTEM },
+          { role: "system", content: await parseSystemPrompt() },
           {
             role: "user",
             content: `Extract fields for the "${tab}" form tab.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nDeal description:\n"${description}"\n\nReturn JSON:`,

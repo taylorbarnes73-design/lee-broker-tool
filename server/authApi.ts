@@ -15,6 +15,7 @@ import {
   isPlatformPasswordLoginBody,
 } from "./auth/passwordPlatformAuth";
 import { resolvePlatformUserFromRequest } from "./auth/platformSession";
+import { linkPlatformSessionAfterLegacyLogin } from "./auth/linkPlatformSessionAfterLegacyLogin";
 
 const loginSchema = z.object({
   email: z.string().trim().min(1).max(320),
@@ -84,6 +85,8 @@ authApiRouter.post("/login", async (req, res) => {
   const sessionToken = await sdk.createSessionToken(openId, { name, email });
   const cookieOptions = getSessionCookieOptions(req);
   res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+
+  await linkPlatformSessionAfterLegacyLogin(req, res, email);
 
   res.json({
     success: true,
