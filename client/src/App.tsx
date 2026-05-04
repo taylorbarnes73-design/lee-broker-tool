@@ -10,6 +10,7 @@ import PortalAdminSubmissions from "./pages/PortalAdminSubmissions";
 import PortalBrokerAdminRequestDetail from "./pages/PortalBrokerAdminRequestDetail";
 import PortalBrokerAdminRequests from "./pages/PortalBrokerAdminRequests";
 import PortalAdminUsers from "./pages/PortalAdminUsers";
+import PortalAdminSettings from "./pages/PortalAdminSettings";
 import PortalDashboard from "./pages/PortalDashboard";
 import PortalSubmissionDetail from "./pages/PortalSubmissionDetail";
 import PortalSubmissions from "./pages/PortalSubmissions";
@@ -86,6 +87,16 @@ function Router() {
       <Route path="/admin/users">
         <PortalRoute>
           <PortalAdminUsers />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/admin/settings">
+        <PortalRoute>
+          <PortalAdminSettings />
+        </PortalRoute>
+      </Route>
+      <Route path="/admin/settings">
+        <PortalRoute>
+          <PortalAdminSettings />
         </PortalRoute>
       </Route>
       <Route path="/portal/admin/broker-admin/:id">

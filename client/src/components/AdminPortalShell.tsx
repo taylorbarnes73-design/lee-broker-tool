@@ -2,7 +2,14 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Link, useLocation } from "wouter";
 import type { ReactNode } from "react";
 
-type AdminPortalSection = "dashboard" | "my-submissions" | "admin-submissions" | "broker-admin" | "users" | "detail";
+type AdminPortalSection =
+  | "dashboard"
+  | "my-submissions"
+  | "admin-submissions"
+  | "broker-admin"
+  | "users"
+  | "settings"
+  | "detail";
 
 type AdminPortalShellProps = {
   section: AdminPortalSection;
@@ -25,6 +32,7 @@ const navItems: ReadonlyArray<{
   { section: "admin-submissions", label: "Admin queue", subhead: "Review work", href: "/portal/admin/submissions", adminOnly: true },
   { section: "broker-admin", label: "Broker Admin", subhead: "Inbox requests", href: "/portal/admin/broker-admin", adminOnly: true },
   { section: "users", label: "Users", subhead: "Brokers & Admins", href: "/portal/admin/users", adminOnly: true },
+  { section: "settings", label: "Settings", subhead: "Branding & workflow", href: "/portal/admin/settings", adminOnly: true },
 ];
 
 export default function AdminPortalShell({
