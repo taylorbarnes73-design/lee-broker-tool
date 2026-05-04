@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import PortalAdminSubmissions from "./pages/PortalAdminSubmissions";
 import PortalBrokerAdminRequestDetail from "./pages/PortalBrokerAdminRequestDetail";
 import PortalBrokerAdminRequests from "./pages/PortalBrokerAdminRequests";
+import PortalAdminUsers from "./pages/PortalAdminUsers";
 import PortalDashboard from "./pages/PortalDashboard";
 import PortalSubmissionDetail from "./pages/PortalSubmissionDetail";
 import PortalSubmissions from "./pages/PortalSubmissions";
@@ -57,6 +58,11 @@ function Router() {
           <PortalDashboard />
         </PortalRoute>
       </Route>
+      <Route path="/dashboard">
+        <PortalRoute>
+          <PortalDashboard />
+        </PortalRoute>
+      </Route>
       <Route path="/portal/submissions">
         <PortalRoute>
           <PortalSubmissions />
@@ -70,6 +76,16 @@ function Router() {
       <Route path="/portal/admin/broker-admin">
         <PortalRoute>
           <PortalBrokerAdminRequests />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/admin/users">
+        <PortalRoute>
+          <PortalAdminUsers />
+        </PortalRoute>
+      </Route>
+      <Route path="/admin/users">
+        <PortalRoute>
+          <PortalAdminUsers />
         </PortalRoute>
       </Route>
       <Route path="/portal/admin/broker-admin/:id">
@@ -92,7 +108,7 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          <Toaster />
+          <Toaster position="bottom-right" duration={4000} />
           <Router />
         </TooltipProvider>
       </ThemeProvider>

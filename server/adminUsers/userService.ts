@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { hash } from "bcryptjs";
-import { and, count, desc, eq, ne, or, like, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, ne, or, like, sql, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/mysql-core";
 import type { Request } from "express";
 import { appUsers, auditLog } from "../../drizzle/schema";
@@ -89,6 +89,19 @@ export async function listUsers(db: AppDb, query: ListUsersQuery) {
     .where(whereClause);
   const total = Number(totalRow[0]?.c ?? 0);
 
+  const activeAdminsRow = await db
+    .select({ c: count() })
+    .from(appUsers)
+    .where(and(eq(appUsers.role, "admin"), eq(appUsers.isActive, true)));
+  const active_admin_count = Number(activeAdminsRow[0]?.c ?? 0);
+
+  const orderBy =
+    query.sort === "name_asc"
+      ? [asc(appUsers.fullName), asc(appUsers.email)]
+      : query.sort === "last_login"
+        ? [asc(sql`(${appUsers.lastLoginAt} IS NULL)`), desc(appUsers.lastLoginAt)]
+        : [desc(appUsers.createdAt)];
+
   const rows = await db
     .select({
       id: appUsers.id,
@@ -106,7 +119,7 @@ export async function listUsers(db: AppDb, query: ListUsersQuery) {
     .from(appUsers)
     .leftJoin(creator, eq(appUsers.createdBy, creator.id))
     .where(whereClause)
-    .orderBy(desc(appUsers.createdAt))
+    .orderBy(...orderBy)
     .limit(pageSize)
     .offset(offset);
 
@@ -115,6 +128,7 @@ export async function listUsers(db: AppDb, query: ListUsersQuery) {
     total,
     page,
     page_size: pageSize,
+    active_admin_count,
   };
 }
 

@@ -4,10 +4,13 @@ export const usernameRegex = /^[a-z][a-z0-9_-]{1,30}$/;
 
 export const platformRoleSchema = z.enum(["admin", "broker", "readonly"]);
 
+export const listUsersSortSchema = z.enum(["name_asc", "recent", "last_login"]);
+
 export const listUsersQuerySchema = z.object({
   search: z.string().optional(),
   role: platformRoleSchema.optional(),
   is_active: z.enum(["true", "false"]).optional(),
+  sort: listUsersSortSchema.optional().default("recent"),
   page: z.coerce.number().int().positive().default(1),
   page_size: z.coerce.number().int().positive().max(100).default(25),
 });

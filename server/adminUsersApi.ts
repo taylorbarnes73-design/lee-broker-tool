@@ -8,6 +8,7 @@ import {
   patchUserBodySchema,
   uuidParamSchema,
 } from "./adminUsers/schemas";
+import { isAdminInviteSmtpConfigured } from "./adminUsers/inviteMail";
 import {
   createUser,
   getUserDetail,
@@ -42,6 +43,13 @@ function asyncAdmin(
     });
   };
 }
+
+adminUsersRouter.get(
+  "/config",
+  asyncAdmin(async (_req, res) => {
+    res.json({ invite_email_configured: isAdminInviteSmtpConfigured() });
+  })
+);
 
 adminUsersRouter.get(
   "/",
