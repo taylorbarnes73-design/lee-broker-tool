@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { Button, Card } from "../design/index.jsx";
 import { useAuth } from "@/_core/hooks/useAuth";
+import AdminPortalShell from "@/components/AdminPortalShell";
 
 type SubmissionSummary = {
   id: number;
@@ -45,30 +46,34 @@ export default function PortalAdminSubmissions() {
 
   if (user?.role !== "admin") {
     return (
-      <div style={{ maxWidth: 920, margin: "0 auto", padding: 24 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ink-900)" }}>Admin: all submissions</div>
+      <AdminPortalShell
+        section="admin-submissions"
+        title="Admin Queue"
+        description="Admin access is required to review all broker submissions."
+        actions={
           <Link href="/portal">
             <Button variant="secondary">Back to dashboard</Button>
           </Link>
-        </div>
-        <div style={{ marginTop: 14 }}>
-          <Card padding="lg">
-            <div style={{ color: "var(--err-700)", fontSize: 13 }}>Admin access required.</div>
-          </Card>
-        </div>
-      </div>
+        }
+      >
+        <Card padding="lg">
+          <div style={{ color: "var(--err-700)", fontSize: 13 }}>Admin access required.</div>
+        </Card>
+      </AdminPortalShell>
     );
   }
 
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ink-900)" }}>Admin: all submissions</div>
+    <AdminPortalShell
+      section="admin-submissions"
+      title="Admin Queue"
+      description="Review broker submissions, filter the queue, and open a detail workspace for deal submission."
+      actions={
         <Link href="/portal">
           <Button variant="secondary">Back to dashboard</Button>
         </Link>
-      </div>
+      }
+    >
 
       <div style={{ marginTop: 14 }}>
         <Card padding="lg">
@@ -135,47 +140,47 @@ export default function PortalAdminSubmissions() {
                   return ap - bp;
                 })
                 .map(s => (
-                <Link key={s.id} href={`/portal/submissions/${s.id}`}>
-                  <a style={{ textDecoration: "none" }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        gap: 12,
-                        padding: 12,
-                        borderRadius: 10,
-                        border: "1px solid var(--ink-200)",
-                        background: "white",
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>
-                          #{s.id} · {s.reference || "(untitled)"}
-                        </div>
-                        <div style={{ fontSize: 13, color: "var(--ink-500)", marginTop: 2 }}>
-                          status: {s.status}
-                        </div>
-                        {s.queuePosition !== null && (
-                          <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 2 }}>
-                            queue: #{s.queuePosition}
+                  <Link key={s.id} href={`/portal/submissions/${s.id}`}>
+                    <a style={{ textDecoration: "none" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 12,
+                          padding: 12,
+                          borderRadius: 10,
+                          border: "1px solid var(--ink-200)",
+                          background: "white",
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>
+                            #{s.id} · {s.reference || "(untitled)"}
                           </div>
-                        )}
-                        <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 2 }}>
-                          {s.submittedBy || "(unknown)"} {s.submittedByEmail ? `· ${s.submittedByEmail}` : ""}
+                          <div style={{ fontSize: 13, color: "var(--ink-500)", marginTop: 2 }}>
+                            status: {s.status}
+                          </div>
+                          {s.queuePosition !== null && (
+                            <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 2 }}>
+                              queue: #{s.queuePosition}
+                            </div>
+                          )}
+                          <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 2 }}>
+                            {s.submittedBy || "(unknown)"} {s.submittedByEmail ? `· ${s.submittedByEmail}` : ""}
+                          </div>
+                        </div>
+                        <div style={{ fontSize: 12, color: "var(--ink-500)" }}>
+                          {new Date(s.createdAt).toLocaleString()}
                         </div>
                       </div>
-                      <div style={{ fontSize: 12, color: "var(--ink-500)" }}>
-                        {new Date(s.createdAt).toLocaleString()}
-                      </div>
-                    </div>
-                  </a>
-                </Link>
-              ))}
+                    </a>
+                  </Link>
+                ))}
             </div>
           )}
         </Card>
       </div>
-    </div>
+    </AdminPortalShell>
   );
 }
 

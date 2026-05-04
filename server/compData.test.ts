@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  abbreviateRentTypeForReport,
   buildLeaseReportCard,
   buildSaleReportCard,
+  formatParkingRatioDisplay,
+  formatRentAdjustmentsDisplay,
+  formatSaleTransactionTypeDisplay,
   normalizeLeaseCompRecord,
   normalizeSaleCompRecord,
 } from "../shared/comp-data";
@@ -73,6 +77,40 @@ describe("comp data normalization", () => {
     expect(card.fields["Rent/SqFt"]).toContain("NNN");
     expect(card.fields["Land"]).toBe("238,709");
     expect(card.fields["Options/Rent Adj"]).toContain("WND");
+    expect(card.fields["Trans. Date"]).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
+    expect(card.fields["Yr Built"]).toBe("2025");
+  });
+
+  it("joins two street numbers with a dash in the address", () => {
+    const record = normalizeLeaseCompRecord(
+      {
+        ihlcID: 2,
+        office: "LeeIrvine",
+        streetNumber1: "4210",
+        streetNumber2: "4212",
+        streetName: "Newport",
+        streetSuffix: "Blvd",
+        city: "Costa Mesa",
+        state: "CA",
+        zipCode: "92627",
+        market: "OC",
+        subMarket: "Coast",
+        propertyType: "Indust",
+        buildingClass: "B",
+        listBroker: "Lee",
+        procBroker: "Lee",
+        source: "Internal",
+        verifiedBy: "Test",
+        lastUpdated: "2026-01-01",
+        transactionDate: "2026-01-15",
+        lessee: "T",
+        lessor: "L",
+        comments: "",
+        buildingSqFt: 10000,
+      },
+      "LeeIrvine_LeaseComps"
+    );
+    expect(record.address).toBe("4210-4212 Newport Blvd");
   });
 
   it("normalizes sale workbook rows into report-ready records", () => {
@@ -127,5 +165,16 @@ describe("comp data normalization", () => {
     const card = buildSaleReportCard(record);
     expect(card.fields["Sale Price"]).toContain("$1,150,000");
     expect(card.fields["Buyer"]).toContain("Shamel");
+    expect(card.fields["Trans. Date"]).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
+    expect(card.fields["Trans. Type"]).toBe("User");
+  });
+
+  it("formats rent adjustment decimals as percentages and normalizes parking display", () => {
+    expect(formatRentAdjustmentsDisplay("0.03")).toBe("3.0%");
+    expect(formatRentAdjustmentsDisplay("3% annual")).toBe("3% annual");
+    expect(formatParkingRatioDisplay("2/1000")).toBe("2.0:1,000");
+    expect(formatSaleTransactionTypeDisplay("Investor")).toBe("Investment");
+    expect(formatSaleTransactionTypeDisplay("Owner/User")).toBe("User");
+    expect(abbreviateRentTypeForReport("Full Service Gross")).toBe("FSG");
   });
 });

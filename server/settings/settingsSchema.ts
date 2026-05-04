@@ -1,0 +1,270 @@
+import { z } from "zod/v4";
+
+export type SettingsCategory = "branding" | "workflow" | "notifications" | "integrations" | "security";
+
+const hexColor = z
+  .string()
+  .regex(/^#[0-9A-Fa-f]{6}$/, "Must be a #RRGGBB hex color.")
+  .default("#A6192E");
+
+const optionalUrl = z.preprocess(
+  v => (v === "" || v === undefined ? null : v),
+  z.union([z.string().url(), z.null()]).optional()
+);
+
+const hhmm = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Must be "HH:MM" in 24h format.')
+  .default("08:00");
+
+const testResultSchema = z.enum(["success", "failed"]).nullable().default(null);
+
+export const MASKED_SECRET = "•••••••• (set)";
+
+export type SettingKey =
+  | "branding.company_name"
+  | "branding.support_email"
+  | "branding.logo_url"
+  | "branding.primary_color"
+  | "branding.letterhead_template_url"
+  | "workflow.confidential_warning_enabled"
+  | "workflow.confidential_warning_text"
+  | "workflow.auto_save_interval_seconds"
+  | "workflow.default_listing_term_months"
+  | "workflow.commission_split_must_sum_100"
+  | "workflow.require_voucher_attachment"
+  | "notifications.email_on_submission"
+  | "notifications.email_on_status_change"
+  | "notifications.email_on_dealius_success"
+  | "notifications.admin_digest_enabled"
+  | "notifications.admin_digest_time"
+  | "integrations.dealius.username"
+  | "integrations.dealius.password"
+  | "integrations.dealius.last_test_at"
+  | "integrations.dealius.last_test_result"
+  | "security.session_timeout_hours"
+  | "security.password_min_length"
+  | "security.require_password_change_days";
+
+export const SETTING_KEYS = [
+  "branding.company_name",
+  "branding.support_email",
+  "branding.logo_url",
+  "branding.primary_color",
+  "branding.letterhead_template_url",
+  "workflow.confidential_warning_enabled",
+  "workflow.confidential_warning_text",
+  "workflow.auto_save_interval_seconds",
+  "workflow.default_listing_term_months",
+  "workflow.commission_split_must_sum_100",
+  "workflow.require_voucher_attachment",
+  "notifications.email_on_submission",
+  "notifications.email_on_status_change",
+  "notifications.email_on_dealius_success",
+  "notifications.admin_digest_enabled",
+  "notifications.admin_digest_time",
+  "integrations.dealius.username",
+  "integrations.dealius.password",
+  "integrations.dealius.last_test_at",
+  "integrations.dealius.last_test_result",
+  "security.session_timeout_hours",
+  "security.password_min_length",
+  "security.require_password_change_days",
+] as const satisfies readonly SettingKey[];
+
+export type SettingKeyConst = (typeof SETTING_KEYS)[number];
+
+export type SettingDef = {
+  key: SettingKey;
+  category: SettingsCategory;
+  sensitive: boolean;
+  /** Zod schema used to validate PATCH values (defaults applied when loading missing keys). */
+  valueSchema: z.ZodTypeAny;
+  defaultValue: unknown;
+  description?: string;
+};
+
+const defs: SettingDef[] = [
+  {
+    key: "branding.company_name",
+    category: "branding",
+    sensitive: false,
+    valueSchema: z.string().min(1).max(100),
+    defaultValue: "Lee & Associates Newport Beach",
+    description: "Public-facing company name",
+  },
+  {
+    key: "branding.support_email",
+    category: "branding",
+    sensitive: false,
+    valueSchema: z.string().email(),
+    defaultValue: "tbarnes@lee-associates.com",
+  },
+  {
+    key: "branding.logo_url",
+    category: "branding",
+    sensitive: false,
+    valueSchema: optionalUrl,
+    defaultValue: null,
+  },
+  {
+    key: "branding.primary_color",
+    category: "branding",
+    sensitive: false,
+    valueSchema: hexColor,
+    defaultValue: "#A6192E",
+  },
+  {
+    key: "branding.letterhead_template_url",
+    category: "branding",
+    sensitive: false,
+    valueSchema: optionalUrl,
+    defaultValue: null,
+  },
+  {
+    key: "workflow.confidential_warning_enabled",
+    category: "workflow",
+    sensitive: false,
+    valueSchema: z.boolean(),
+    defaultValue: true,
+  },
+  {
+    key: "workflow.confidential_warning_text",
+    category: "workflow",
+    sensitive: false,
+    valueSchema: z.string().min(1).max(2000),
+    defaultValue:
+      "Confidential deals follow restricted handling per the deal team's instructions.",
+  },
+  {
+    key: "workflow.auto_save_interval_seconds",
+    category: "workflow",
+    sensitive: false,
+    valueSchema: z.coerce.number().int().min(10).max(300),
+    defaultValue: 30,
+  },
+  {
+    key: "workflow.default_listing_term_months",
+    category: "workflow",
+    sensitive: false,
+    valueSchema: z.coerce.number().int().min(1).max(60),
+    defaultValue: 12,
+  },
+  {
+    key: "workflow.commission_split_must_sum_100",
+    category: "workflow",
+    sensitive: false,
+    valueSchema: z.boolean(),
+    defaultValue: true,
+  },
+  {
+    key: "workflow.require_voucher_attachment",
+    category: "workflow",
+    sensitive: false,
+    valueSchema: z.boolean(),
+    defaultValue: true,
+  },
+  {
+    key: "notifications.email_on_submission",
+    category: "notifications",
+    sensitive: false,
+    valueSchema: z.boolean(),
+    defaultValue: true,
+  },
+  {
+    key: "notifications.email_on_status_change",
+    category: "notifications",
+    sensitive: false,
+    valueSchema: z.boolean(),
+    defaultValue: true,
+  },
+  {
+    key: "notifications.email_on_dealius_success",
+    category: "notifications",
+    sensitive: false,
+    valueSchema: z.boolean(),
+    defaultValue: true,
+  },
+  {
+    key: "notifications.admin_digest_enabled",
+    category: "notifications",
+    sensitive: false,
+    valueSchema: z.boolean(),
+    defaultValue: false,
+  },
+  {
+    key: "notifications.admin_digest_time",
+    category: "notifications",
+    sensitive: false,
+    valueSchema: hhmm,
+    defaultValue: "08:00",
+  },
+  {
+    key: "integrations.dealius.username",
+    category: "integrations",
+    sensitive: true,
+    valueSchema: z.string().max(320),
+    defaultValue: "",
+  },
+  {
+    key: "integrations.dealius.password",
+    category: "integrations",
+    sensitive: true,
+    valueSchema: z.string().max(512),
+    defaultValue: "",
+  },
+  {
+    key: "integrations.dealius.last_test_at",
+    category: "integrations",
+    sensitive: false,
+    valueSchema: z.union([z.string().min(4), z.null()]),
+    defaultValue: null,
+  },
+  {
+    key: "integrations.dealius.last_test_result",
+    category: "integrations",
+    sensitive: false,
+    valueSchema: testResultSchema,
+    defaultValue: null,
+  },
+  {
+    key: "security.session_timeout_hours",
+    category: "security",
+    sensitive: false,
+    valueSchema: z.coerce.number().int().min(1).max(72),
+    defaultValue: 12,
+  },
+  {
+    key: "security.password_min_length",
+    category: "security",
+    sensitive: false,
+    valueSchema: z.coerce.number().int().min(8).max(32),
+    defaultValue: 12,
+  },
+  {
+    key: "security.require_password_change_days",
+    category: "security",
+    sensitive: false,
+    valueSchema: z.coerce.number().int().min(0).max(365),
+    defaultValue: 0,
+  },
+];
+
+export const SETTINGS_BY_KEY = Object.fromEntries(defs.map(d => [d.key, d])) as Record<SettingKey, SettingDef>;
+
+export const SETTINGS_KEYS_SET = new Set<string>(SETTING_KEYS);
+
+export function isSettingKey(key: string): key is SettingKey {
+  return SETTINGS_KEYS_SET.has(key);
+}
+
+export function getDef(key: string): SettingDef {
+  if (!isSettingKey(key)) {
+    throw new Error(`Unknown setting key: ${key}`);
+  }
+  return SETTINGS_BY_KEY[key];
+}
+
+export function categoryForKey(key: SettingKey): SettingsCategory {
+  return SETTINGS_BY_KEY[key].category;
+}

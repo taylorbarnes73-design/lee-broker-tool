@@ -20,6 +20,14 @@ import { submissionsRouter } from "./routers/submissions";
 import { brokersRouter } from "./routers/brokers";
 import { localAuth, sdk } from "./_core/sdk";
 import { ENV } from "./_core/env";
+import { handlePlatformLogout } from "./auth/passwordPlatformAuth";
+import { linkPlatformSessionAfterLegacyLogin } from "./auth/linkPlatformSessionAfterLegacyLogin";
+
+function normalizeLeeLogin(raw: string) {
+  const value = raw.trim().toLowerCase();
+  if (!value || value.includes("@")) return localAuth.normalizeEmail(value);
+  return localAuth.normalizeEmail(`${value}@lee-associates.com`);
+}
 
 export const appRouter = router({
   system: systemRouter,
@@ -46,30 +54,23 @@ export const appRouter = router({
     login: publicProcedure
       .input(
         z.object({
-          firstName: z.string().trim().min(1).max(60).optional(),
-          lastName: z.string().trim().min(1).max(60).optional(),
           name: z.string().trim().min(2).max(120).optional(),
-          email: z.string().trim().email(),
-          // Local password auth is currently disabled in production because
-          // some environments have not run the `users.passwordHash` migration.
-          password: z.string().min(8).max(200).optional(),
-        }).refine(
-          value =>
-            Boolean(value.name) || Boolean(value.firstName && value.lastName),
-          {
-            message: "Provide first name, last name, and email.",
-          }
-        )
+          email: z.string().trim().min(1).max(320),
+        })
       )
       .mutation(async ({ ctx, input }) => {
         if (!localAuth.isEnabled()) {
           return { success: false as const, error: "Local auth is disabled." };
         }
 
-        const email = localAuth.normalizeEmail(input.email);
-        const enteredName =
-          input.name?.trim() ||
-          [input.firstName?.trim(), input.lastName?.trim()].filter(Boolean).join(" ");
+        const email = normalizeLeeLogin(input.email);
+        if (!z.string().email().safeParse(email).success) {
+          return {
+            success: false as const,
+            error: "Enter your Lee username or email address.",
+          };
+        }
+        const enteredName = input.name?.trim() || "";
         const allowedDomain = (process.env.LOCAL_AUTH_EMAIL_DOMAIN ?? "").trim().toLowerCase();
         if (allowedDomain && !email.endsWith(`@${allowedDomain}`)) {
           return {
@@ -93,8 +94,6 @@ export const appRouter = router({
           isBrokerDirectoryAdmin(brokerEntry);
         const role = isAdminIdentity ? "admin" : "user";
 
-        // Note: password-based local auth intentionally disabled for now.
-
         await upsertUser({
           openId,
           name: resolvedName,
@@ -115,6 +114,8 @@ export const appRouter = router({
           maxAge: ONE_YEAR_MS,
         });
 
+        await linkPlatformSessionAfterLegacyLogin(ctx.req, ctx.res, email);
+
         return {
           success: true as const,
           user: {
@@ -125,7 +126,8 @@ export const appRouter = router({
           },
         };
       }),
-    logout: publicProcedure.mutation(({ ctx }) => {
+    logout: publicProcedure.mutation(async ({ ctx }) => {
+      await handlePlatformLogout(ctx.req, ctx.res);
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;

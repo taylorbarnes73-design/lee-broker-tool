@@ -15,7 +15,12 @@ import { restApiRouter } from "../restApi";
 import { sdk } from "./sdk";
 import { authApiRouter } from "../authApi";
 import { submissionsApiRouter } from "../submissionsApi";
+import { brokerAdminApiRouter } from "../brokerAdminApi";
 import { mapsApiRouter } from "../mapsApi";
+import { adminUsersRouter } from "../adminUsersApi";
+import { adminSettingsRouter } from "../adminSettingsApi";
+import { publicSettingsRouter } from "../publicSettingsApi";
+import { adminAuditLogRouter } from "../adminAuditLogApi";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -48,9 +53,9 @@ async function startServer() {
     res.redirect(301, "/tool");
   });
 
-  // Make the product feel like a single-purpose tool.
-  // Old/beta/portal routes hard-redirect to the broker tool.
-  app.get(["/", "/portal", "/portal/*", "/beta", "/beta/*", "/login", "/404"], (_req, res) => {
+  // Make the broker surface a single-purpose tool while allowing the
+  // integrated React admin portal to own /portal and /login.
+  app.get(["/", "/beta", "/beta/*", "/404"], (_req, res) => {
     res.redirect(302, "/tool");
   });
 
@@ -63,6 +68,11 @@ async function startServer() {
   // Auth + submissions REST API for the SPA portal
   app.use("/api/auth", authApiRouter);
   app.use("/api/submissions", submissionsApiRouter);
+  app.use("/api/broker-admin", brokerAdminApiRouter);
+  app.use("/api/admin/users", adminUsersRouter);
+  app.use("/api/admin/settings", adminSettingsRouter);
+  app.use("/api/admin/audit-log", adminAuditLogRouter);
+  app.use("/api/settings", publicSettingsRouter);
 
   // tRPC API
   app.use(

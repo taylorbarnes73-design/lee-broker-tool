@@ -256,9 +256,20 @@ function cleanFlag(value: unknown): string {
   return cleanText(value);
 }
 
+const STREET_NUMBER_TOKEN = /^\d+[A-Za-z]?$/;
+
 function joinAddress(parts: unknown[]): string {
-  const streetCore = parts.map(cleanText).filter(Boolean).join(" ");
-  return streetCore.replace(/\s+/g, " ").trim();
+  const cleaned = parts.map(cleanText).filter(Boolean);
+  if (!cleaned.length) return "";
+  let head = cleaned;
+  if (
+    cleaned.length >= 2 &&
+    STREET_NUMBER_TOKEN.test(cleaned[0]!) &&
+    STREET_NUMBER_TOKEN.test(cleaned[1]!)
+  ) {
+    head = [`${cleaned[0]}-${cleaned[1]}`, ...cleaned.slice(2)];
+  }
+  return head.join(" ").replace(/\s+/g, " ").trim();
 }
 
 function getRowValue(row: CompRow, key: string): unknown {
@@ -271,6 +282,12 @@ function formatNumber(value: number | null | undefined, decimals = 0): string {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
+}
+
+/** Year built and similar: no thousands grouping (avoids "2,005" style glitches). */
+function formatPlainInteger(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return "";
+  return String(Math.round(value));
 }
 
 function formatCurrency(value: number | null | undefined, decimals = 0): string {
@@ -289,9 +306,84 @@ function formatCurrencyPerSf(value: number | null | undefined, suffix = ""): str
 
 function formatReportDate(value: string): string {
   if (!value) return "";
+  const isoDateOnly = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoDateOnly) {
+    const [, y, m, d] = isoDateOnly;
+    return `${m}/${d}/${y}`;
+  }
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
-  return parsed.toLocaleDateString("en-US");
+  const mm = String(parsed.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(parsed.getUTCDate()).padStart(2, "0");
+  const yyyy = parsed.getUTCFullYear();
+  return `${mm}/${dd}/${yyyy}`;
+}
+
+/** Parking ratio: normalize to one decimal before the colon (e.g. 2/1000 → 2.0:1,000). */
+export function formatParkingRatioDisplay(raw: string): string {
+  const t = String(raw ?? "").trim();
+  if (!t) return "";
+  const norm = t.replace(/\s+/g, "");
+  const m = norm.match(/^(\d+(?:\.\d+)?)[:/](\d+(?:,\d{3})*|\d+)$/);
+  if (!m) return t;
+  const left = Number(m[1]);
+  const right = Number(String(m[2]).replace(/,/g, ""));
+  if (!Number.isFinite(left) || !Number.isFinite(right)) return t;
+  return `${left.toFixed(1)}:${right.toLocaleString("en-US")}`;
+}
+
+/** Sale comp report: spell out User vs Investment (per broker admin spec). */
+export function formatSaleTransactionTypeDisplay(raw: string): string {
+  const t = String(raw ?? "").trim();
+  if (!t) return "";
+  const compact = t.toLowerCase().replace(/[\s/_-]+/g, "");
+  if (compact.includes("owner") && compact.includes("user")) return "User";
+  if (compact === "investor" || compact === "investment") return "Investment";
+  if (compact === "developer") return "Developer";
+  if (compact.includes("saleleaseback")) return "Sale-Leaseback";
+  if (compact.includes("partial")) return "Partial Interest";
+  return t;
+}
+
+const RENT_TYPE_ABBREV_RULES: Array<{ match: RegExp; abbrev: string }> = [
+  { match: /\bnnn\b/i, abbrev: "NNN" },
+  { match: /\bmodified\s+gross\b/i, abbrev: "MG" },
+  { match: /\bindustrial\s+gross\b/i, abbrev: "IG" },
+  { match: /\bfull\s+service\s+gross\b/i, abbrev: "FSG" },
+  { match: /\bfull\s+service\b/i, abbrev: "FS" },
+  { match: /\bgross\b/i, abbrev: "G" },
+  { match: /\bfs\b/i, abbrev: "FS" },
+  { match: /\bfsg\b/i, abbrev: "FSG" },
+  { match: /\bmg\b/i, abbrev: "MG" },
+  { match: /\big\b/i, abbrev: "IG" },
+];
+
+export function abbreviateRentTypeForReport(raw: string): string {
+  const t = String(raw ?? "").trim();
+  if (!t) return "";
+  if (/^(G|IG|MG|NNN|FS|FSG|NN)$/i.test(t)) return t.toUpperCase();
+  for (const { match, abbrev } of RENT_TYPE_ABBREV_RULES) {
+    if (match.test(t)) return abbrev;
+  }
+  return t;
+}
+
+/**
+ * Rent adjustment / escalation: show percentages as X.X% instead of decimals like 0.03.
+ */
+export function formatRentAdjustmentsDisplay(raw: string): string {
+  const t = String(raw ?? "").trim();
+  if (!t) return "";
+  const onlyNum = t.replace(/,/g, "").replace(/%/g, "").trim();
+  const n = Number(onlyNum);
+  if (Number.isFinite(n) && n > 0 && n < 1 && !/%/.test(t)) {
+    return `${(n * 100).toFixed(1)}%`;
+  }
+  return t.replace(/\b0\.\d+\b/g, match => {
+    const v = Number(match);
+    if (!Number.isFinite(v) || v <= 0 || v >= 1) return match;
+    return `${(v * 100).toFixed(1)}%`;
+  });
 }
 
 function buildBrokerLine(kind: "List" | "Proc", brokerage: string, agents: string[]): string {
@@ -537,15 +629,17 @@ export function buildLeaseReportCard(record: LeaseCompRecord): LeaseReportCard {
     fields: {
       "Space Leased": formatNumber(record.leasedSqFt),
       Office: formatNumber(record.officeSqFt),
-      "Trans. Date": record.transactionDate,
+      "Trans. Date": formatReportDate(record.transactionDate),
       "Prop. Type": record.propertyType,
       "On Mrkt": record.monthsOnMarket !== null ? `${formatNumber(record.monthsOnMarket)} mos` : "",
       DH: formatNumber(record.dhDoors),
       Sprk: record.sprinklers,
       Lessee: record.lessee,
-      "Rent/SqFt": [formatCurrencyPerSf(record.rentPerSqFt), record.rentType].filter(Boolean).join(" "),
+      "Rent/SqFt": [formatCurrencyPerSf(record.rentPerSqFt), abbreviateRentTypeForReport(record.rentType)]
+        .filter(Boolean)
+        .join(" "),
       "TI Allow": record.tia,
-      "Expir. Date": record.expirationDate,
+      "Expir. Date": formatReportDate(record.expirationDate),
       Subtype: record.propertySubType,
       Amps: formatNumber(record.amperage),
       GL: formatNumber(record.glDoors),
@@ -561,12 +655,14 @@ export function buildLeaseReportCard(record: LeaseCompRecord): LeaseReportCard {
       "Space Type": record.spaceType,
       "Bldg SqFt": formatNumber(record.buildingSqFt),
       "NNN Chgs": formatCurrencyPerSf(record.nnnCharges),
-      "Occ Date": record.occupancyDate,
-      Parking: record.parkingRatio,
-      "Yr Built": formatNumber(record.yearBuilt),
+      "Occ Date": formatReportDate(record.occupancyDate),
+      Parking: formatParkingRatioDisplay(record.parkingRatio),
+      "Yr Built": formatPlainInteger(record.yearBuilt),
       HT: formatNumber(record.clearHeight),
       Land: formatNumber(record.landSqFt),
-      "Options/Rent Adj": [record.options, record.rentAdjustments].filter(Boolean).join(" / "),
+      "Options/Rent Adj": [record.options, formatRentAdjustmentsDisplay(record.rentAdjustments)]
+        .filter(Boolean)
+        .join(" / "),
     },
   };
 }
@@ -586,9 +682,9 @@ export function buildSaleReportCard(record: SaleCompRecord): SaleReportCard {
     fields: {
       "Bldg. SqFt": formatNumber(record.buildingSqFt),
       "Sale Price": formatCurrency(record.salePrice),
-      "Trans. Date": record.transactionDate,
+      "Trans. Date": formatReportDate(record.transactionDate),
       "Prop. Type": record.propertyType,
-      "Yr Built": formatNumber(record.yearBuilt),
+      "Yr Built": formatPlainInteger(record.yearBuilt),
       DH: formatNumber(record.dhDoors),
       Sprk: record.sprinklers,
       Buyer: record.buyer,
@@ -601,7 +697,7 @@ export function buildSaleReportCard(record: SaleCompRecord): SaleReportCard {
       RR: record.rail,
       Seller: record.seller,
       "Land Size": formatNumber(record.landSqFt),
-      "Trans. Type": record.transactionType,
+      "Trans. Type": formatSaleTransactionTypeDisplay(record.transactionType),
       "Cap Rate": record.capRate !== null ? `${record.capRate}%` : "",
       "Bldg. Class": record.buildingClass,
       Amps: formatNumber(record.amperage),

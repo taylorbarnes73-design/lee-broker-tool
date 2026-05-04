@@ -3,6 +3,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { invokeLLM, type Message } from "../_core/llm";
 import { execSync } from "child_process";
 import { ENV } from "../_core/env";
+import { getSetting } from "../settings/getSetting";
 
 // ── Types ──
 
@@ -68,7 +69,9 @@ function parseToIsoDate(raw: string): string {
 }
 
 /** Build a formatted AIR CRE Data Sheet as plain text */
-function buildDataSheet(data: z.infer<typeof contractDataSchema>): string {
+async function buildDataSheet(data: z.infer<typeof contractDataSchema>): Promise<string> {
+  const companyName = String(await getSetting("branding.company_name"));
+  const supportEmail = String(await getSetting("branding.support_email"));
   const line = (label: string, val?: string) =>
     val ? `  ${label}: ${val}` : "";
 
@@ -145,7 +148,7 @@ function buildDataSheet(data: z.infer<typeof contractDataSchema>): string {
     "",
     "═".repeat(64),
     "Enter these values into AIR CRE Contracts at https://www.aircre.com",
-    "Taylor Barnes | Lee & Associates Newport Beach | (949) 724-4755",
+    `${supportEmail} | ${companyName}`,
   ]
     .filter((l) => l !== undefined && l !== "  : ")
     .join("\n");
@@ -253,13 +256,20 @@ Return JSON with these fields (omit any that are blank):
           return { success: false, error: "AI returned invalid JSON", data: null };
         }
 
+        parsed.contractType = input.contractType;
+
         // Normalize date fields
         const dateFields = ["agreementDate", "mlDate", "termStart", "termEnd"];
         for (const f of dateFields) {
           if (parsed[f]) parsed[f] = parseToIsoDate(String(parsed[f]));
         }
 
-        return { success: true, data: parsed, error: null };
+        const validated = contractDataSchema.safeParse(parsed);
+        if (!validated.success) {
+          return { success: false, error: "AI returned data in an unexpected format", data: null };
+        }
+
+        return { success: true, data: validated.data, error: null };
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         return { success: false, error: msg, data: null };
@@ -296,12 +306,13 @@ Return JSON with these fields (omit any that are blank):
           }
         : contractData;
 
-      const dataSheet = buildDataSheet(dataWithNotes);
+      const dataSheet = await buildDataSheet(dataWithNotes);
       const contractLabel = contractData.contractType || "Contract";
       const addressPart = [contractData.propAddress, contractData.propCity]
         .filter(Boolean)
         .join(", ");
-      const subject = `[Lee & Associates] Contract Intake — ${contractLabel}${addressPart ? ` — ${addressPart}` : ""}`;
+      const companyName = String(await getSetting("branding.company_name"));
+      const subject = `[${companyName}] Contract Intake — ${contractLabel}${addressPart ? ` — ${addressPart}` : ""}`;
 
       const body = [
         `Contract submitted by: ${brokerName || "Broker"}`,

@@ -9,7 +9,7 @@
 import { Router, Request, Response } from "express";
 import { timingSafeEqual } from "node:crypto";
 import { getDb } from "./db";
-import { uploads, submissions } from "../drizzle/schema";
+import { brokerAdminRequests, uploads, submissions } from "../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
 import { storagePut, storageGet } from "./storage";
 import { nanoid } from "nanoid";
@@ -355,28 +355,39 @@ restApiRouter.post("/inbox/email", async (req: Request, res: Response) => {
     const db = await getDb();
     if (!db) return err(res, 503, "Database unavailable");
 
-    const payload = {
-      kind: "email",
-      messageId,
+    const category = body.category != null ? String(body.category).trim() : "";
+    const confidential = Boolean(body.confidential);
+    const requestedSystemImpact = body.systemImpact ?? null;
+    const systemImpact =
+      category.toLowerCase() === "voucher"
+        ? ["Dealius", ...(confidential ? [] : ["Metropolis"])]
+        : Array.isArray(requestedSystemImpact)
+          ? requestedSystemImpact
+          : null;
+
+    const [result] = await db.insert(brokerAdminRequests).values({
+      title: subject || "(no subject)",
+      receivedAt: receivedAt ? new Date(receivedAt) : null,
+      fromEmail: from || null,
+      category: category || null,
+      confidential: confidential ? 1 : 0,
+      systemImpact: systemImpact ? JSON.stringify(systemImpact) : null,
+      owner: body.owner ?? null,
+      status: "new",
+      dueDate: body.dueDate ? new Date(String(body.dueDate)) : null,
+      priority: body.priority ?? null,
+      emailMessageId: messageId,
       internetMessageId: body.internetMessageId ?? null,
-      subject,
-      from,
-      receivedAt: receivedAt || null,
-      bodyPreview: body.bodyPreview ?? null,
-      category: body.category ?? null,
-      docusignEnvelopeId: body.docusignEnvelopeId ?? null,
+      outlookWebLink: body.outlookWebLink ?? null,
+      threadKey: body.threadKey ?? null,
       dealiusDealId: body.dealiusDealId ?? null,
       dealiusListingId: body.dealiusListingId ?? null,
-    };
-
-    const [result] = await db.insert(submissions).values({
-      formType: "email-request",
-      status: "pending",
-      payload: JSON.stringify(payload),
+      docusignEnvelopeId: body.docusignEnvelopeId ?? null,
+      matchStatus: "matched",
       reference,
-      submittedBy: from || null,
+      bodyPreview: body.bodyPreview ?? null,
     });
-    const submissionId = (result as any).insertId as number;
+    const requestId = (result as any).insertId as number;
 
     const attachments: any[] = Array.isArray(body.attachments) ? body.attachments : [];
     const saved: Array<{ filename: string; fileKey: string; url: string }> = [];
@@ -388,9 +399,8 @@ restApiRouter.post("/inbox/email", async (req: Request, res: Response) => {
       if (!filename || !base64Data) continue;
 
       const buffer = Buffer.from(base64Data, "base64");
-      const ext = filename.split(".").pop() ?? "bin";
       const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const fileKey = `broker-inbox/${submissionId}/${nanoid(10)}-${safeName}.${ext === safeName.split(".").pop() ? "" : ""}`.replace(/\.$/, "");
+      const fileKey = `broker-admin/${requestId}/${nanoid(10)}-${safeName}`;
 
       const { url } = await storagePut(fileKey, buffer, mimeType);
       await db.insert(uploads).values({
@@ -400,7 +410,7 @@ restApiRouter.post("/inbox/email", async (req: Request, res: Response) => {
         mimeType,
         fileSize: buffer.length,
         category: "inbox",
-        reference: `submission:${submissionId}`,
+        reference: `brokerAdminRequest:${requestId}`,
         uploaderName: from || null,
         uploaderOpenId: null,
       });
@@ -408,7 +418,18 @@ restApiRouter.post("/inbox/email", async (req: Request, res: Response) => {
       saved.push({ filename, fileKey, url });
     }
 
-    ok(res, { submissionId, savedAttachments: saved });
+    // Best-effort: store attachment names for quick scanning
+    try {
+      const summary = saved.map(s => s.filename).join("\n");
+      await db
+        .update(brokerAdminRequests)
+        .set({ attachmentsSummary: summary || null, updatedAt: new Date() })
+        .where(eq(brokerAdminRequests.id, requestId));
+    } catch {
+      // ignore
+    }
+
+    ok(res, { requestId, savedAttachments: saved });
   } catch (e: any) {
     err(res, 500, e.message ?? "Internal server error");
   }
@@ -421,7 +442,7 @@ restApiRouter.post("/inbox/email", async (req: Request, res: Response) => {
  *
  * Body:
  * {
- *   submissionId?: number,          // link to an existing email-request if you have it
+ *   requestId?: number,             // link to an existing broker admin request if you have it
  *   docusignEnvelopeId?: string,
  *   dealiusDealId?: string|number,
  *   dealiusListingId?: string|number,
@@ -442,7 +463,7 @@ restApiRouter.post("/docusign/completed", async (req: Request, res: Response) =>
     const db = await getDb();
     if (!db) return err(res, 503, "Database unavailable");
 
-    const submissionId = Number(body.submissionId ?? 0) || null;
+    const requestId = Number(body.requestId ?? body.submissionId ?? 0) || null;
     const envelopeId = String(body.docusignEnvelopeId ?? "").trim() || null;
 
     const buffer = Buffer.from(base64Pdf, "base64");
@@ -459,7 +480,7 @@ restApiRouter.post("/docusign/completed", async (req: Request, res: Response) =>
       mimeType,
       fileSize: buffer.length,
       category: "docusign-executed",
-      reference: submissionId ? `submission:${submissionId}` : envelopeId ? `envelope:${envelopeId}` : null,
+      reference: requestId ? `brokerAdminRequest:${requestId}` : envelopeId ? `envelope:${envelopeId}` : null,
       uploaderName: "DocuSign",
       uploaderOpenId: null,
     });

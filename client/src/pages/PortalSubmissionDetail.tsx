@@ -4,6 +4,8 @@ import { Button, Card } from "../design/index.jsx";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import AdminPortalShell from "@/components/AdminPortalShell";
+import { mergeVoucherFromContractExtraction } from "@shared/contractIntake";
 
 type SubmissionDetail = {
   id: number;
@@ -22,10 +24,12 @@ export default function PortalSubmissionDetail() {
   const { user } = useAuth();
   const [, params] = useRoute("/portal/submissions/:id");
   const id = Number(params?.id);
+  const [activeTab, setActiveTab] = useState<"summary" | "deal" | "documents" | "payload">("summary");
   const [item, setItem] = useState<SubmissionDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pushing, setPushing] = useState(false);
   const [pushError, setPushError] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [queueMeta, setQueueMeta] = useState<{ position: number | null; totalActive: number; aheadOfYou: number | null } | null>(null);
   const [feeOverride, setFeeOverride] = useState<string>("");
   const [contractType, setContractType] = useState<string>("Lease Agreement");
@@ -167,72 +171,6 @@ export default function PortalSubmissionDetail() {
       if (pct != null) return pct;
     }
     return null;
-  }
-
-  function feePercentFromCommAmount(raw: unknown): number | null {
-    const s = String(raw ?? "").trim();
-    if (!s) return null;
-    const m = s.match(/(\d+(?:\.\d+)?)\s*%/);
-    if (!m) return null;
-    return feePercentFrom(m[1]);
-  }
-
-  function mergeVoucherFromContractExtraction(params: {
-    payload: any;
-    contract: any;
-    pdf?: { url?: string; fileKey?: string; filename?: string } | null;
-    contractType: string;
-  }) {
-    const { payload, contract, pdf, contractType } = params;
-    const next: any = { ...(payload || {}) };
-    const safeContract = contract && typeof contract === "object" ? contract : {};
-
-    const propAddress = String(safeContract.propAddress ?? "").trim();
-    const propCity = String(safeContract.propCity ?? "").trim();
-    const propState = String(safeContract.propState ?? "").trim();
-    const propZip = String(safeContract.propZip ?? "").trim();
-
-    // Populate common voucher fields used by Dealius push.
-    if (propAddress) next.address = next.address ?? propAddress;
-    if (propCity) next.city = next.city ?? propCity;
-    if (propState) next.state = next.state ?? propState;
-    if (propZip) next.zip = next.zip ?? propZip;
-
-    // Also set propertyAddress for legacy payloads if it's absent.
-    if (!next.propertyAddress && (propAddress || propCity || propState || propZip)) {
-      const addr = [propAddress, propCity, propState].filter(Boolean).join(", ");
-      next.propertyAddress = addr + (propZip ? ` ${propZip}` : "");
-    }
-
-    // Parties
-    const lessor = String(safeContract.mlLessor ?? safeContract.party1Name ?? "").trim();
-    const lessee = String(safeContract.mlLessee ?? "").trim();
-    if (lessor) next.lessorName = next.lessorName ?? lessor;
-    if (lessee) next.lesseeName = next.lesseeName ?? lessee;
-
-    // Term dates
-    if (safeContract.termStart) next.commencementDate = next.commencementDate ?? String(safeContract.termStart);
-    if (safeContract.termEnd) next.expirationDate = next.expirationDate ?? String(safeContract.termEnd);
-
-    // Commission percent
-    const pct = feePercentFromCommAmount(safeContract.commAmount);
-    if (pct != null && next.feePercent == null && next.commissionRate == null) {
-      next.feePercent = pct;
-      next.commissionRate = String(pct);
-    }
-
-    // Keep full extraction payload for audit/debugging.
-    next.aiExtract = {
-      ...(next.aiExtract || {}),
-      contract: {
-        extractedAt: new Date().toISOString(),
-        contractType,
-        pdf: pdf ?? null,
-        data: safeContract,
-      },
-    };
-
-    return next;
   }
 
   async function handleImportVoucherExcel(file: File) {
@@ -406,17 +344,41 @@ export default function PortalSubmissionDetail() {
     }
   }
 
-  return (
-    <div style={{ maxWidth: 920, margin: "0 auto", padding: 24 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ink-900)" }}>Submission #{id}</div>
-        <Link href="/portal/submissions">
-          <Button variant="secondary">Back</Button>
-        </Link>
-      </div>
+  async function updateStatus(status: string) {
+    if (!item || user?.role !== "admin") return;
+    setUpdatingStatus(status);
+    try {
+      const r = await fetch(`/api/submissions/${item.id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const b = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(b?.error ?? "Status update failed");
+      setItem({ ...item, status, updatedAt: new Date().toISOString() });
+      toast.success(`Submission marked ${status.replace("_", " ")}.`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Status update failed");
+    } finally {
+      setUpdatingStatus(null);
+    }
+  }
 
-      <div style={{ marginTop: 14 }}>
-        <Card padding="lg">
+  const statusActions = ["in_review", "approved", "rejected"];
+
+  return (
+    <AdminPortalShell
+      section="detail"
+      title={`Submission #${id}`}
+      description={item ? `${item.reference || "(untitled)"} - ${item.formType} - ${item.status}` : "Loading submission detail workspace."}
+      actions={
+        <Link href={user?.role === "admin" ? "/portal/admin/submissions" : "/portal/submissions"}>
+          <Button variant="secondary">Back to queue</Button>
+        </Link>
+      }
+    >
+      <Card padding="lg">
           {error ? (
             <div style={{ color: "var(--err-700)", fontSize: 13 }}>{error}</div>
           ) : !item ? (
@@ -443,29 +405,110 @@ export default function PortalSubmissionDetail() {
                 </div>
               </div>
 
-              {user?.role === "admin" && (
-                <div style={{ marginTop: 14, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                  <Button
-                    variant="primary"
-                    disabled={pushing || !dealiusChecklist.canPush}
-                    onClick={pushToDealius}
+              <div className="admin-detail-tabs" role="tablist" aria-label="Submission detail sections">
+                {[
+                  ["summary", "Summary", "Status and queue"],
+                  ["deal", "Deal submission", "Dealius controls"],
+                  ["documents", "Documents", "Imports and extraction"],
+                  ["payload", "Payload", "Raw data"],
+                ].map(([key, label, subhead]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className={activeTab === key ? "active" : ""}
+                    onClick={() => setActiveTab(key as typeof activeTab)}
                   >
-                    {pushing ? "Pushing to Dealius…" : "Review & push to Dealius"}
-                  </Button>
-                  {pushError && <span style={{ color: "var(--err-700)", fontSize: 12 }}>{pushError}</span>}
-                  {!dealiusChecklist.canPush && (
-                    <span style={{ color: "var(--err-700)", fontSize: 12 }}>
-                      Fix missing fields before pushing.
-                    </span>
+                    <span>{label}</span>
+                    <small>{subhead}</small>
+                  </button>
+                ))}
+              </div>
+
+              {activeTab === "summary" && (
+                <section className="admin-detail-panel">
+                  <div className="admin-detail-summary-grid">
+                    <div>
+                      <span>Reference</span>
+                      <strong>{item.reference || "(untitled)"}</strong>
+                    </div>
+                    <div>
+                      <span>Type</span>
+                      <strong>{item.formType}</strong>
+                    </div>
+                    <div>
+                      <span>Status</span>
+                      <strong>{item.status}</strong>
+                    </div>
+                    <div>
+                      <span>Submitted by</span>
+                      <strong>{item.submittedBy || item.submittedByEmail || "Unknown"}</strong>
+                    </div>
+                    <div>
+                      <span>Created</span>
+                      <strong>{new Date(item.createdAt).toLocaleString()}</strong>
+                    </div>
+                    <div>
+                      <span>Updated</span>
+                      <strong>{new Date(item.updatedAt).toLocaleString()}</strong>
+                    </div>
+                    {queueMeta?.position !== null && queueMeta?.position !== undefined && (
+                      <div>
+                        <span>Queue</span>
+                        <strong>
+                          #{queueMeta.position} of {queueMeta.totalActive}
+                          {typeof queueMeta.aheadOfYou === "number" ? ` (${queueMeta.aheadOfYou} ahead)` : ""}
+                        </strong>
+                      </div>
+                    )}
+                  </div>
+                  {user?.role === "admin" && (
+                    <div className="admin-status-actions">
+                      {["pending", "in_review", "approved", "rejected"].map(status => (
+                        <Button
+                          key={status}
+                          variant={item.status === status ? "primary" : "secondary"}
+                          disabled={updatingStatus !== null || item.status === status}
+                          onClick={() => updateStatus(status)}
+                        >
+                          {updatingStatus === status ? "Updating..." : status.replace("_", " ")}
+                        </Button>
+                      ))}
+                    </div>
                   )}
-                  <span style={{ fontSize: 12, color: "var(--ink-500)" }}>
-                    (voucher submissions only for now)
-                  </span>
-                </div>
+                </section>
               )}
 
-              {user?.role === "admin" && item?.formType === "voucher" && (
-                <div style={{ marginTop: 12 }}>
+              {activeTab === "deal" && user?.role !== "admin" && (
+                <section className="admin-detail-panel">
+                  <div style={{ color: "var(--ink-500)", fontSize: 13 }}>Admin access is required for deal submission controls.</div>
+                </section>
+              )}
+
+              {activeTab === "deal" && user?.role === "admin" && (
+                <section className="admin-detail-panel">
+                  <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                    <Button
+                      variant="primary"
+                      disabled={pushing || !dealiusChecklist.canPush}
+                      onClick={pushToDealius}
+                    >
+                      {pushing ? "Pushing to Dealius…" : "Review & push to Dealius"}
+                    </Button>
+                    {pushError && <span style={{ color: "var(--err-700)", fontSize: 12 }}>{pushError}</span>}
+                    {!dealiusChecklist.canPush && (
+                      <span style={{ color: "var(--err-700)", fontSize: 12 }}>
+                        Fix missing fields before pushing.
+                      </span>
+                    )}
+                    <span style={{ fontSize: 12, color: "var(--ink-500)" }}>
+                      Voucher submissions only for now.
+                    </span>
+                  </div>
+                </section>
+              )}
+
+              {activeTab === "deal" && user?.role === "admin" && item?.formType === "voucher" && (
+                <section className="admin-detail-panel">
                   <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 6 }}>
                     Dealius push settings
                   </div>
@@ -491,11 +534,11 @@ export default function PortalSubmissionDetail() {
                       Sent to Dealius as percent (3 = 3%, 0.03 = 3%).
                     </span>
                   </div>
-                </div>
+                </section>
               )}
 
-              {user?.role === "admin" && (
-                <div style={{ marginTop: 12 }}>
+              {activeTab === "deal" && user?.role === "admin" && (
+                <section className="admin-detail-panel">
                   <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 6 }}>
                     Dealius pre-flight checklist
                   </div>
@@ -531,11 +574,17 @@ export default function PortalSubmissionDetail() {
                       Blocking issues: {dealiusChecklist.blockingMissing.map(i => i.label).join(", ")}
                     </div>
                   )}
-                </div>
+                </section>
               )}
 
-              {user?.role === "admin" && item?.formType === "voucher" && (
-                <div style={{ marginTop: 12 }}>
+              {activeTab === "documents" && user?.role !== "admin" && (
+                <section className="admin-detail-panel">
+                  <div style={{ color: "var(--ink-500)", fontSize: 13 }}>Admin access is required for document import and extraction.</div>
+                </section>
+              )}
+
+              {activeTab === "documents" && user?.role === "admin" && item?.formType === "voucher" && (
+                <section className="admin-detail-panel">
                   <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 6 }}>
                     Import Lee voucher (Excel)
                   </div>
@@ -562,11 +611,11 @@ export default function PortalSubmissionDetail() {
                       Uses the same cell layout as the legacy commission voucher workbook (first sheet).
                     </span>
                   </div>
-                </div>
+                </section>
               )}
 
-              {user?.role === "admin" && (
-                <div style={{ marginTop: 12 }}>
+              {activeTab === "documents" && user?.role === "admin" && (
+                <section className="admin-detail-panel">
                   <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 6 }}>
                     AI extract (voucher / lease / PSA PDF)
                   </div>
@@ -614,37 +663,38 @@ export default function PortalSubmissionDetail() {
                       {derivedFee != null ? ` (current fee: ${derivedFee.toFixed(2)}%)` : ""}
                     </span>
                   </div>
-                </div>
+                </section>
               )}
 
-              <div style={{ marginTop: 14 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 6 }}>
-                  Body
-                </div>
-                <div
-                  style={{
-                    margin: 0,
-                    padding: 12,
-                    borderRadius: 10,
-                    border: "1px solid var(--ink-200)",
-                    background: "white",
-                    overflow: "auto",
-                    fontSize: 13,
-                    color: "var(--ink-900)",
-                    whiteSpace: "pre-wrap",
-                  }}
-                >
-                  {(() => {
-                    const p: any = item.payload as any;
-                    return typeof p?.body === "string" ? p.body : JSON.stringify(item.payload, null, 2);
-                  })()}
-                </div>
-              </div>
+              {activeTab === "payload" && (
+                <section className="admin-detail-panel">
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 6 }}>
+                    Body
+                  </div>
+                  <div
+                    style={{
+                      margin: 0,
+                      padding: 12,
+                      borderRadius: 10,
+                      border: "1px solid var(--ink-200)",
+                      background: "white",
+                      overflow: "auto",
+                      fontSize: 13,
+                      color: "var(--ink-900)",
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    {(() => {
+                      const p: any = item.payload as any;
+                      return typeof p?.body === "string" ? p.body : JSON.stringify(item.payload, null, 2);
+                    })()}
+                  </div>
+                </section>
+              )}
             </>
           )}
-        </Card>
-      </div>
-    </div>
+      </Card>
+    </AdminPortalShell>
   );
 }
 

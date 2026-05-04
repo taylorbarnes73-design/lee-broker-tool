@@ -1,6 +1,7 @@
 import { publicProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import { z } from "zod/v4";
+import { getSetting } from "../settings/getSetting";
 
 // ── Field schemas per tab ──
 
@@ -86,6 +87,11 @@ const tabFieldSchemas: Record<string, z.ZodObject<any>> = {
 };
 
 type FormTab = keyof typeof tabFieldSchemas;
+
+const formTabSchema = z.enum(["listing", "voucher", "sign", "comp"]);
+const aiDocumentMimeSchema = z
+  .enum(["application/pdf", "image/jpeg", "image/png", "image/webp"])
+  .default("application/pdf");
 
 type VoucherSuggestion = {
   field: string;
@@ -645,9 +651,11 @@ function runVoucherAudit(dealData: Record<string, unknown>) {
   return suggestions;
 }
 
-// ── System prompts ──
+// ── System prompts (company name from settings) ──
 
-const PARSE_SYSTEM = `You are a commercial real estate data extraction specialist for Lee & Associates Newport Beach.
+async function parseSystemPrompt(): Promise<string> {
+  const company = String(await getSetting("branding.company_name"));
+  return `You are a commercial real estate data extraction specialist for ${company}.
 Extract structured field values from a broker's natural language deal description.
 
 CRITICAL RULES — follow exactly:
@@ -666,8 +674,11 @@ CRITICAL RULES — follow exactly:
 - Address: street address only (no city/state). City and state go in their own fields.
 - State: two-letter abbreviation. "California" → "CA".
 - If a value is implied but not explicitly stated, omit it. Never guess, estimate, or fill market-default values.`;
+}
 
-const BROCHURE_SYSTEM = `You are a commercial real estate data extraction specialist for Lee & Associates Newport Beach.
+async function brochureSystemPrompt(): Promise<string> {
+  const company = String(await getSetting("branding.company_name"));
+  return `You are a commercial real estate data extraction specialist for ${company}.
 Extract structured listing data from a property marketing brochure or flyer.
 
 CRITICAL RULES — follow exactly:
@@ -686,6 +697,30 @@ CRITICAL RULES — follow exactly:
 - Extract agent/broker full name if visible.
 - Extract all highlights/features into comments as a concise bullet list.
 - If the brochure is ambiguous or promotional without a precise field value, omit that field.`;
+}
+
+async function documentSystemPrompt(): Promise<string> {
+  const company = String(await getSetting("branding.company_name"));
+  return `You are a commercial real estate data extraction specialist for ${company}.
+Extract structured form data from broker-provided documents such as brochures, offering memoranda, commission agreements, sign requests, and comp sheets.
+
+CRITICAL RULES — follow exactly:
+- Return ONLY a valid JSON object. No markdown fences, no explanation.
+- Include ONLY fields listed in the user's available fields list.
+- Extract ONLY values you can identify with high confidence. Omit uncertain fields entirely.
+- Monetary values: numeric strings without $ or commas. "$1.25/SF/Mo" -> "1.25".
+- Building/suite/deal SF: numeric string without commas. "12,500 SF" -> "12500".
+- Dates: MM/DD/YYYY format.
+- Property type: exactly one of Industrial, Office, Retail, Land, Other.
+- Transaction type: Lease or Sale.
+- Representation type: Tenant Rep, Landlord Rep, Buyer Rep, Seller Rep, or Dual.
+- Lease type: NNN, FSG, MG, Gross, or Net.
+- Term: integer months as string if stated. "5 years" -> "60".
+- Address: street only (no city/state). Put city and state in separate fields.
+- State: two-letter abbreviation.
+- Broker/agent names: full name only, no phone or email.
+- If the document is ambiguous or promotional without a precise field value, omit that field.`;
+}
 
 // ── Shared JSON schema builder ──
 
@@ -699,6 +734,114 @@ function buildJsonSchema(name: string, fieldNames: string[]) {
       required: [] as string[],
       additionalProperties: false,
     },
+  };
+}
+
+async function fetchDocumentBuffer(fileUrl: string) {
+  try {
+    const fileResp = await fetch(fileUrl, { signal: AbortSignal.timeout(30_000) });
+    if (!fileResp.ok) throw new Error(`File fetch failed: ${fileResp.status}`);
+    const buffer = await fileResp.arrayBuffer();
+    return { fileBuffer: Buffer.from(buffer), error: null as string | null };
+  } catch (e: any) {
+    return { fileBuffer: null, error: `Could not fetch file: ${e.message}` };
+  }
+}
+
+async function buildDocumentUserContent(
+  fileBuffer: Buffer,
+  mimeType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp",
+  promptText: string
+) {
+  if (mimeType !== "application/pdf") {
+    return [
+      {
+        type: "image_url",
+        image_url: {
+          url: `data:${mimeType};base64,${fileBuffer.toString("base64")}`,
+          detail: "high",
+        },
+      },
+      {
+        type: "text",
+        text: promptText,
+      },
+    ];
+  }
+
+  return [
+    {
+      type: "text",
+      text: await (async () => {
+        try {
+          const mod = await import("pdf-parse");
+          const parse = (mod as any).default ?? (mod as any);
+          const parsed = await parse(fileBuffer);
+          const cleaned = normalizeWhitespace(parsed.text || "");
+          const trimmed = cleaned.slice(0, 40_000);
+          return `${promptText}\n\nDocument text (extracted):\n${trimmed}`;
+        } catch (e: any) {
+          const message = e?.message ? String(e.message) : "Unknown PDF parse error";
+          return `${promptText}\n\nNote: PDF text extraction failed (${message}). Return an empty JSON object.`;
+        }
+      })(),
+    },
+  ];
+}
+
+async function extractDocumentFields(
+  tab: FormTab,
+  fileUrl: string,
+  mimeType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp",
+  options: { listingBrochurePrompt?: boolean } = {}
+) {
+  const fieldNames = Object.keys(tabFieldSchemas[tab].shape);
+  const fetched = await fetchDocumentBuffer(fileUrl);
+
+  if (!fetched.fileBuffer) {
+    return {
+      success: false as const,
+      fields: {},
+      tab,
+      fieldCount: 0,
+      error: fetched.error ?? "Could not fetch file",
+    };
+  }
+
+  const promptText = options.listingBrochurePrompt
+    ? `Extract all listing fields you can identify from this ${mimeType === "application/pdf" ? "PDF brochure" : "brochure image"}.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nReturn JSON with only fields you can confidently extract:`
+    : `Extract all fields you can identify for the "${tab}" form from this ${mimeType === "application/pdf" ? "PDF document" : "document image"}.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nReturn JSON with only fields you can confidently extract:`;
+
+  const userContent = await buildDocumentUserContent(
+    fetched.fileBuffer,
+    mimeType,
+    promptText
+  );
+
+  const systemContent = options.listingBrochurePrompt
+    ? await brochureSystemPrompt()
+    : await documentSystemPrompt();
+
+  const response = await invokeLLM({
+    messages: [
+      { role: "system", content: systemContent },
+      { role: "user", content: userContent as any[] },
+    ],
+    response_format: {
+      type: "json_schema",
+      json_schema: buildJsonSchema(`${tab}_document_fields`, fieldNames),
+    },
+  });
+
+  const raw = response.choices?.[0]?.message?.content;
+  const parsed = parseJsonObject(raw);
+  const fields = sanitizeAiFields(tab, parsed);
+
+  return {
+    success: true as const,
+    fields,
+    tab,
+    fieldCount: Object.keys(fields).length,
   };
 }
 
@@ -722,7 +865,7 @@ export const aiAssistRouter = router({
 
       const response = await invokeLLM({
         messages: [
-          { role: "system", content: PARSE_SYSTEM },
+          { role: "system", content: await parseSystemPrompt() },
           {
             role: "user",
             content: `Extract fields for the "${tab}" form tab.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nDeal description:\n"${description}"\n\nReturn JSON:`,
@@ -788,7 +931,7 @@ export const aiAssistRouter = router({
 
   /**
    * Scrape a property brochure (PDF or image) and extract listing fields.
-   * Fetches the file server-side to avoid CORS issues and sends as base64.
+   * Fetches the file server-side and sends the content as base64.
    */
   scrapeBrochure: publicProcedure
     .input(
@@ -807,85 +950,36 @@ export const aiAssistRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      const { fileUrl, mimeType } = input;
-      const fieldNames = Object.keys(listingFields.shape);
-
-      // Fetch file server-side → avoids CORS and lets us send as base64 inline data
-      let fileBuffer: Buffer;
-      try {
-        const fileResp = await fetch(fileUrl, { signal: AbortSignal.timeout(30_000) });
-        if (!fileResp.ok) throw new Error(`File fetch failed: ${fileResp.status}`);
-        const buffer = await fileResp.arrayBuffer();
-        fileBuffer = Buffer.from(buffer);
-      } catch (e: any) {
-        return {
-          success: false,
-          fields: {},
-          tab: "listing" as const,
-          fieldCount: 0,
-          error: `Could not fetch file: ${e.message}`,
-        };
-      }
-
-      const promptText = `Extract all listing fields you can identify from this ${mimeType === "application/pdf" ? "PDF brochure" : "brochure image"}.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nReturn JSON with only fields you can confidently extract:`;
-
-      const userContent: any[] =
-        mimeType === "application/pdf"
-          ? [
-              {
-                type: "text",
-                text: await (async () => {
-                  try {
-                    const mod = await import("pdf-parse");
-                    const parse =
-                      (mod as any).default ?? (mod as any);
-                    const parsed = await parse(fileBuffer);
-                    const cleaned = normalizeWhitespace(parsed.text || "");
-                    const trimmed = cleaned.slice(0, 40_000);
-                    return `${promptText}\n\nBrochure text (extracted):\n${trimmed}`;
-                  } catch (e: any) {
-                    const message = e?.message ? String(e.message) : "Unknown PDF parse error";
-                    return `${promptText}\n\nNote: PDF text extraction failed (${message}). Return an empty JSON object.`;
-                  }
-                })(),
-              },
-            ]
-          : [
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:${mimeType};base64,${fileBuffer.toString("base64")}`,
-                  detail: "high",
-                },
-              },
-              {
-                type: "text",
-                text: promptText,
-              },
-            ];
-
-      const response = await invokeLLM({
-        messages: [
-          { role: "system", content: BROCHURE_SYSTEM },
-          { role: "user", content: userContent },
-        ],
-        response_format: {
-          type: "json_schema",
-          json_schema: buildJsonSchema("brochure_listing_fields", fieldNames),
-        },
-      });
-
-      const raw = response.choices?.[0]?.message?.content;
-      const parsed = parseJsonObject(raw);
-      const fields = sanitizeAiFields("listing", parsed);
-
-      return {
-        success: true,
-        fields,
-        tab: "listing" as const,
-        fieldCount: Object.keys(fields).length,
-      };
+      return extractDocumentFields(
+        "listing",
+        input.fileUrl,
+        input.mimeType,
+        { listingBrochurePrompt: true }
+      );
     }),
+
+  /**
+   * Extract fields from a broker document for any supported tool tab.
+   * This keeps client-side AI document workflows behind the broker tool API.
+   */
+  extractDocument: publicProcedure
+    .input(
+      z.object({
+        fileUrl: z
+          .string()
+          .refine(
+            v => /^https?:\/\//i.test(v) || /^data:[^;]+;base64,/i.test(v),
+            { message: "fileUrl must be an http(s) URL or a data: URL" }
+          ),
+        mimeType: z
+          .enum(["application/pdf", "image/jpeg", "image/png", "image/webp"])
+          .default("application/pdf"),
+        tab: z.enum(["listing", "voucher", "sign", "comp"]),
+      })
+    )
+    .mutation(async ({ input }) =>
+      extractDocumentFields(input.tab, input.fileUrl, input.mimeType)
+    ),
 
   /**
    * Review parsed voucher/deal data and return structured suggestions.

@@ -41,6 +41,8 @@ export const ENV = {
 
     // Admin
     adminEmail: process.env.ADMIN_EMAIL ?? "",
+    // Sign request vendor
+    cimarronEmail: process.env.CIMARRON_EMAIL ?? "",
 
     // Dealius (server-to-server integration)
     // Base URL should NOT include trailing slash, e.g. https://leenewportbeach.dealius.com

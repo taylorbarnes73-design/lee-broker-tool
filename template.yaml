@@ -55,6 +55,9 @@ Parameters:
   AdminEmail:
     Type: String
     Default: ''
+  CimarronEmail:
+    Type: String
+    Default: ''
   LocalAuthEnabled:
     Type: String
     Default: 'true'
@@ -143,6 +146,8 @@ Resources:
                 Value: !Ref OwnerOpenId
               - Name: ADMIN_EMAIL
                 Value: !Ref AdminEmail
+              - Name: CIMARRON_EMAIL
+                Value: !Ref CimarronEmail
               - Name: LOCAL_AUTH_ENABLED
                 Value: !Ref LocalAuthEnabled
               - Name: LOCAL_AUTH_EMAIL_DOMAIN

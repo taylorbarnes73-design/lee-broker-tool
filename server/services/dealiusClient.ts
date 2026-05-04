@@ -175,7 +175,7 @@ export async function resolveBrokerContactId(params: {
     if (!Number.isFinite(id)) continue;
     if (!byBrokerId.has(id)) byBrokerId.set(id, br);
   }
-  const list = [...byBrokerId.values()];
+  const list = Array.from(byBrokerId.values());
   const scored = list
     .map((br: any) => {
       const id = br.ContactID || br.BrokerID || br.ID || br.id || null;

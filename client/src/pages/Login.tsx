@@ -1,8 +1,8 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { trpc } from "@/lib/trpc";
 import { getLoginUrl, isAuthRedirectEnabled } from "@/const";
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useLocation } from "wouter";
+import { usePublicBranding } from "@/hooks/usePublicBranding";
 
 // We import design primitives to build a nice looking login
 import { Button, Input, Card, Icons } from "../design/index.jsx";
@@ -17,11 +17,11 @@ function normalizeLeeEmail(raw: string) {
 export default function Login() {
   const { user, loading, refresh } = useAuth();
   const [, setLocation] = useLocation();
+  const branding = usePublicBranding();
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // If OAuth redirect is enabled, do not show the local login UI at all.
   // This avoids the "double login" experience where the SPA renders a login
@@ -37,29 +37,35 @@ export default function Login() {
     window.location.href = loginUrl;
   }, [user]);
 
-  const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: async result => {
-      if (result.success) {
-        await refresh();
-        setLocation("/"); // Redirect to main app
-      }
-    },
-  });
-
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setError(null);
     const normalizedEmail = normalizeLeeEmail(email);
     if (normalizedEmail !== email) setEmail(normalizedEmail);
-    await loginMutation.mutateAsync({
-      firstName,
-      lastName,
-      email: normalizedEmail,
-      password,
-    });
+    setSubmitting(true);
+    try {
+      const r = await fetch("/api/auth/login", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || j?.success === false) {
+        setError(j?.error ?? "Sign in failed.");
+        return;
+      }
+      await refresh();
+      setLocation("/portal");
+    } catch {
+      setError("Sign in failed.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   useEffect(() => {
-    if (user) setLocation("/");
+    if (user) setLocation("/portal");
   }, [setLocation, user]);
 
   const oauthRedirectEnabled =
@@ -110,12 +116,12 @@ export default function Login() {
   }
 
   return (
-    <div style={{ display: 'flex', width: '100vw', height: '100vh', background: 'var(--ink-50)', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="lee-page-flow" style={{ display: 'flex', width: '100vw', height: '100vh', background: 'var(--ink-50)', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: 440 }}>
         <div style={{ marginBottom: 32, textAlign: 'center' }}>
           <img
             src="/lee-newport-beach-fullcolor.png"
-            alt="Lee & Associates Newport Beach"
+            alt={branding.company_name}
             style={{ height: 64, width: 'auto', display: 'inline-block' }}
           />
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-500)', marginTop: 14, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
@@ -126,50 +132,34 @@ export default function Login() {
         <Card padding="lg">
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
             <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--ink-900)' }}>Sign In</h1>
-            <p style={{ fontSize: 14, color: 'var(--ink-500)', marginTop: 8 }}>Use your Lee email to access the broker tools.</p>
+            <p style={{ fontSize: 14, color: 'var(--ink-500)', marginTop: 8 }}>Type your Lee username or email to access the broker tools. No password required.</p>
           </div>
 
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>First Name</label>
-                <Input value={firstName} onChange={(e: ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)} required placeholder="Taylor" />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>Last Name</label>
-                <Input value={lastName} onChange={(e: ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)} required placeholder="Barnes" />
-              </div>
-            </div>
-
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>Lee Email</label>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>Lee Username or Email</label>
               <Input
-                type="email"
+                type="text"
+                inputMode="email"
                 value={email}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                 onBlur={() => setEmail(normalizeLeeEmail(email))}
                 required
-                placeholder="tbarnes@lee-associates.com"
+                autoComplete="email"
+                placeholder="tbarnes"
               />
+              <p style={{ fontSize: 12, color: 'var(--ink-500)', marginTop: 6, marginBottom: 0 }}>
+                We will add @lee-associates.com automatically.
+              </p>
             </div>
 
-            <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>Password</label>
-              <Input type="password" value={password} onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)} required placeholder="••••••••" />
-            </div>
-
-            <Button type="submit" variant="primary" size="lg" disabled={loginMutation.isPending || loading} style={{ marginTop: 8 }}>
-              {loginMutation.isPending ? "Signing in..." : "Continue to Workspace"}
+            <Button type="submit" variant="primary" size="lg" disabled={submitting || loading} style={{ marginTop: 8 }}>
+              {submitting ? "Signing in..." : "Continue to Workspace"}
             </Button>
 
-            {loginMutation.data && !loginMutation.data.success && (
+            {error && (
               <div style={{ padding: 12, background: 'var(--err-50)', color: 'var(--err-700)', borderRadius: 8, fontSize: 13, border: '1px solid var(--err-200)' }}>
-                {loginMutation.data.error}
-              </div>
-            )}
-            {loginMutation.error && (
-              <div style={{ padding: 12, background: 'var(--err-50)', color: 'var(--err-700)', borderRadius: 8, fontSize: 13, border: '1px solid var(--err-200)' }}>
-                {loginMutation.error.message}
+                {error}
               </div>
             )}
           </form>

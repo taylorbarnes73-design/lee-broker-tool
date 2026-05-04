@@ -95,7 +95,13 @@ export function serveStatic(app: Express) {
     })
   );
 
-  // Tool-only deployment: fall through to broker_tool.html.
+  // React portal routes fall through to the SPA shell.
+  app.get(["/", "/portal", "/portal/*", "/login", "/404"], (_req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    res.sendFile("index.html", { root: distPath });
+  });
+
+  // Legacy broker workflows still fall through to broker_tool.html.
   app.use("*", (_req, res) => {
     res.setHeader("Cache-Control", "no-store");
     res.sendFile("broker_tool.html", { root: distPath });

@@ -103,6 +103,7 @@ $parameterOverrides = @(
     "ConnectorApiKey=$($paramMap["CONNECTOR_API_KEY"])",
     "OwnerOpenId=$($paramMap["OWNER_OPEN_ID"])",
     "AdminEmail=$($paramMap["ADMIN_EMAIL"])",
+    "CimarronEmail=$($paramMap["CIMARRON_EMAIL"])",
     "LocalAuthEnabled=$($paramMap["LOCAL_AUTH_ENABLED"])",
     "LocalAuthEmailDomain=$($paramMap["LOCAL_AUTH_EMAIL_DOMAIN"])",
     "LocalAdminEmails=$($paramMap["LOCAL_ADMIN_EMAILS"])",

@@ -6,6 +6,18 @@ function getS3Client() {
   return new S3Client({ region: ENV.awsS3Region || ENV.awsRegion });
 }
 
+async function streamToBuffer(stream: unknown): Promise<Buffer> {
+  if (!stream) return Buffer.from([]);
+  if (Buffer.isBuffer(stream)) return stream;
+  const chunks: Buffer[] = [];
+  // AWS SDK v3 GetObject Body is usually a Node.js Readable stream
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for await (const chunk of stream as any) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
+}
+
 export async function storagePut(
   relKey: string,
   data: Buffer | Uint8Array | string,
@@ -42,4 +54,14 @@ export async function storageGet(relKey: string): Promise<{ key: string; url: st
   );
 
   return { key, url };
+}
+
+export async function storageGetBytes(relKey: string): Promise<{ key: string; bytes: Buffer }> {
+  const bucket = ENV.awsS3Bucket;
+  if (!bucket) throw new Error("AWS_S3_BUCKET is not set");
+
+  const key = relKey.replace(/^\/+/, "");
+  const resp = await getS3Client().send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+  const bytes = await streamToBuffer(resp.Body);
+  return { key, bytes };
 }

@@ -1,4 +1,20 @@
-import { index, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { sql } from "drizzle-orm";
+import {
+  boolean,
+  char,
+  check,
+  datetime,
+  foreignKey,
+  index,
+  int,
+  json,
+  mysqlEnum,
+  mysqlTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -19,6 +35,144 @@ export const users = mysqlTable("users", {
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+
+/**
+ * UUID-backed directory users (separate from legacy `users` / openId auth).
+ */
+export const appUsers = mysqlTable(
+  "app_users",
+  {
+    id: char("id", { length: 36 }).notNull().primaryKey(),
+    email: varchar("email", { length: 320 }).notNull(),
+    username: varchar("username", { length: 64 }).notNull(),
+    fullName: varchar("full_name", { length: 255 }).notNull(),
+    role: mysqlEnum("role", ["admin", "broker", "readonly"]).notNull().default("broker"),
+    office: varchar("office", { length: 255 }),
+    phone: varchar("phone", { length: 64 }),
+    passwordHash: varchar("password_hash", { length: 255 }),
+    forcePasswordChangeNextLogin: boolean("force_password_change_next_login").notNull().default(false),
+    isActive: boolean("is_active").notNull().default(true),
+    lastLoginAt: datetime("last_login_at", { mode: "date", fsp: 3 }),
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
+      .notNull()
+      .default(sql`(UTC_TIMESTAMP(3))`),
+    createdBy: char("created_by", { length: 36 }),
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
+      .notNull()
+      .default(sql`(UTC_TIMESTAMP(3))`),
+    deactivatedAt: datetime("deactivated_at", { mode: "date", fsp: 3 }),
+  },
+  table => ({
+    emailUnique: uniqueIndex("app_users_email_unique").on(table.email),
+    usernameUnique: uniqueIndex("app_users_username_unique").on(table.username),
+    createdByFk: foreignKey({
+      columns: [table.createdBy],
+      foreignColumns: [table.id],
+      name: "app_users_created_by_fk",
+    }).onDelete("set null"),
+    emailLowerCheck: check("app_users_email_lowercase", sql`email = LOWER(email)`),
+    usernameLowerCheck: check("app_users_username_lowercase", sql`username = LOWER(username)`),
+  })
+);
+
+export type AppUser = typeof appUsers.$inferSelect;
+export type InsertAppUser = typeof appUsers.$inferInsert;
+
+/**
+ * Server-side session rows for app_users (token stored as hash only).
+ */
+export const appSessions = mysqlTable(
+  "sessions",
+  {
+    id: char("id", { length: 36 }).notNull().primaryKey(),
+    userId: char("user_id", { length: 36 }).notNull(),
+    tokenHash: varchar("token_hash", { length: 255 }).notNull(),
+    expiresAt: datetime("expires_at", { mode: "date", fsp: 3 }).notNull(),
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
+      .notNull()
+      .default(sql`(UTC_TIMESTAMP(3))`),
+    ipAddress: varchar("ip_address", { length: 45 }),
+    userAgent: varchar("user_agent", { length: 512 }),
+  },
+  table => ({
+    userFk: foreignKey({
+      columns: [table.userId],
+      foreignColumns: [appUsers.id],
+      name: "sessions_user_id_fk",
+    }).onDelete("cascade"),
+    tokenHashIdx: index("sessions_token_hash_idx").on(table.tokenHash),
+    userIdIdx: index("sessions_user_id_idx").on(table.userId),
+  })
+);
+
+export type AppSession = typeof appSessions.$inferSelect;
+export type InsertAppSession = typeof appSessions.$inferInsert;
+
+/**
+ * Key/value application configuration (JSON values).
+ */
+export const appSettings = mysqlTable(
+  "app_settings",
+  {
+    key: varchar("key", { length: 255 }).notNull().primaryKey(),
+    value: json("value").notNull(),
+    description: text("description"),
+    category: mysqlEnum("category", [
+      "branding",
+      "notifications",
+      "integrations",
+      "workflow",
+      "security",
+    ]).notNull(),
+    updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
+      .notNull()
+      .default(sql`(UTC_TIMESTAMP(3))`),
+    updatedBy: char("updated_by", { length: 36 }),
+  },
+  table => ({
+    updatedByFk: foreignKey({
+      columns: [table.updatedBy],
+      foreignColumns: [appUsers.id],
+      name: "app_settings_updated_by_fk",
+    }).onDelete("set null"),
+  })
+);
+
+export type AppSetting = typeof appSettings.$inferSelect;
+export type InsertAppSetting = typeof appSettings.$inferInsert;
+
+/**
+ * Append-only audit trail for admin and security events.
+ */
+export const auditLog = mysqlTable(
+  "audit_log",
+  {
+    id: char("id", { length: 36 }).notNull().primaryKey(),
+    userId: char("user_id", { length: 36 }),
+    action: varchar("action", { length: 128 }).notNull(),
+    targetType: varchar("target_type", { length: 64 }),
+    targetId: varchar("target_id", { length: 255 }),
+    metadata: json("metadata")
+      .notNull()
+      .default(sql`(JSON_OBJECT())`),
+    ipAddress: varchar("ip_address", { length: 45 }),
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
+      .notNull()
+      .default(sql`(UTC_TIMESTAMP(3))`),
+  },
+  table => ({
+    userFk: foreignKey({
+      columns: [table.userId],
+      foreignColumns: [appUsers.id],
+      name: "audit_log_user_id_fk",
+    }).onDelete("set null"),
+    createdAtIdx: index("audit_log_created_at_idx").on(table.createdAt),
+    userIdIdx: index("audit_log_user_id_idx").on(table.userId),
+  })
+);
+
+export type AuditLogRow = typeof auditLog.$inferSelect;
+export type InsertAuditLogRow = typeof auditLog.$inferInsert;
 
 /**
  * Tracks uploaded documents (listing agreements, agency disclosures, etc.)
@@ -92,6 +246,65 @@ export const submissions = mysqlTable("submissions", {
 
 export type Submission = typeof submissions.$inferSelect;
 export type InsertSubmission = typeof submissions.$inferInsert;
+
+/**
+ * Broker Admin shared-inbox requests.
+ *
+ * Trackable request record created for each inbound email that hits the
+ * Broker Admin shared mailbox via Power Automate.
+ *
+ * Attachments are stored in S3 and tracked via `uploads` with:
+ *   reference = `brokerAdminRequest:<id>`
+ */
+export const brokerAdminRequests = mysqlTable(
+  "brokerAdminRequests",
+  {
+    id: int("id").autoincrement().primaryKey(),
+
+    // Intake metadata
+    title: varchar("title", { length: 512 }).notNull().default(""),
+    receivedAt: timestamp("receivedAt"),
+    fromEmail: varchar("fromEmail", { length: 320 }),
+
+    // Classification / routing
+    category: varchar("category", { length: 64 }),
+    confidential: int("confidential").notNull().default(0),
+    systemImpact: text("systemImpact"), // JSON string
+    owner: varchar("owner", { length: 64 }),
+    status: varchar("status", { length: 32 }).notNull().default("new"),
+    dueDate: timestamp("dueDate"),
+    priority: varchar("priority", { length: 16 }),
+
+    // Thread / source linking
+    emailMessageId: varchar("emailMessageId", { length: 256 }).notNull(),
+    internetMessageId: varchar("internetMessageId", { length: 256 }),
+    outlookWebLink: text("outlookWebLink"),
+    threadKey: varchar("threadKey", { length: 256 }),
+
+    // External system mapping
+    dealiusDealId: varchar("dealiusDealId", { length: 64 }),
+    dealiusListingId: varchar("dealiusListingId", { length: 64 }),
+    docusignEnvelopeId: varchar("docusignEnvelopeId", { length: 128 }),
+    matchStatus: mysqlEnum("matchStatus", ["matched", "needs_match"]).default("matched").notNull(),
+
+    // Convenience
+    reference: varchar("reference", { length: 512 }),
+    bodyPreview: text("bodyPreview"),
+    attachmentsSummary: text("attachmentsSummary"),
+    notes: text("notes"),
+
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => ({
+    statusCreatedAtIdIdx: index("bar_status_createdAt_id_idx").on(table.status, table.createdAt, table.id),
+    emailMessageIdIdx: index("bar_emailMessageId_idx").on(table.emailMessageId),
+    docusignEnvelopeIdIdx: index("bar_docusignEnvelopeId_idx").on(table.docusignEnvelopeId),
+  })
+);
+
+export type BrokerAdminRequest = typeof brokerAdminRequests.$inferSelect;
+export type InsertBrokerAdminRequest = typeof brokerAdminRequests.$inferInsert;
 
 /**
  * Tracks workbook imports for comp reporting so the app can search against

@@ -652,16 +652,14 @@
       </ol>
     </div>
     <div class="deal-actions">
-      <button class="btn btn-gray" onclick="exportSignPdf()">Review (PDF)</button>
-      <button class="btn btn-red" onclick="openEmailModal('sign')">Submit Sign Request</button>
-      <button class="btn btn-green" onclick="openSendToAdminModal('sign')">Send to Admin</button>
+      <button class="btn btn-gray" onclick="exportSignPdf()">Download PDF</button>
+      <button class="btn btn-red" onclick="openSendToAdminModal('sign')">Submit Sign Request</button>
     </div>
   </aside>
   </div><!-- /deal-shell -->
   <div class="btn-bar btn-bar-top-md">
-    <button class="btn btn-gray" onclick="exportSignPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
-    <button class="btn btn-red" onclick="openEmailModal('sign')">Submit Sign Request</button>
-    <button class="btn btn-green" id="btn-sign-send-admin" onclick="openSendToAdminModal('sign')"><span class="btn-spinner"></span><span class="btn-label">Send to Admin</span></button>
+    <button class="btn btn-gray" onclick="exportSignPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
+    <button class="btn btn-red" onclick="openSendToAdminModal('sign')">Submit Sign Request</button>
     <button class="btn btn-gray" onclick="clearSign()">Clear Form</button>
   </div>
 </div>
@@ -1085,7 +1083,7 @@
   </div>
 
   <div class="btn-bar">
-    <button class="btn btn-gray" onclick="exportVoucherPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
+    <button class="btn btn-gray" onclick="exportVoucherPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
     <button class="btn btn-red" onclick="openEmailModal('voucher')">Submit Voucher</button>
     <button class="btn btn-green" id="btn-voucher-send-admin" onclick="openSendToAdminModal('voucher')"><span class="btn-spinner"></span><span class="btn-label">Send to Admin</span></button>
     <button class="btn btn-outline" onclick="notifyMLS()">Notify MLS</button>
@@ -1142,7 +1140,7 @@
     </div>
 
     <div class="deal-actions">
-      <button class="btn btn-gray" onclick="exportVoucherPdf()">Review (PDF)</button>
+      <button class="btn btn-gray" onclick="exportVoucherPdf()">Download PDF</button>
       <button class="btn btn-red" onclick="openEmailModal('voucher')">Submit Voucher</button>
       <button class="btn btn-green" onclick="openSendToAdminModal('voucher')">Send to Admin</button>
     </div>
@@ -1399,7 +1397,7 @@
   </div><!-- end optional-wrapper -->
 
   <div class="btn-bar btn-bar-top-md">
-    <button class="btn btn-gray" onclick="exportCompPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
+    <button class="btn btn-gray" onclick="exportCompPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
     <button class="btn btn-red" onclick="submitCompDirect()">Submit Comp</button>
     <button class="btn btn-outline" onclick="switchTab('comp-reports')">Open Comp Reports</button>
     <button class="btn btn-gray" onclick="clearComp()">Clear Form</button>
@@ -1474,20 +1472,20 @@
             <label>Property Type</label>
             <div id="cr-property-type" class="cr-dd"></div>
           </div>
-          <div class="field">
+          <div class="field cr-span-2">
             <label>SF Range</label>
             <div class="cr-range-row">
-              <input id="cr-sf-min" type="number" min="0" placeholder="Min SF">
+              <input id="cr-sf-min" type="text" inputmode="numeric" placeholder="Min SF">
               <span class="cr-range-sep">–</span>
-              <input id="cr-sf-max" type="number" min="0" placeholder="Max SF">
+              <input id="cr-sf-max" type="text" inputmode="numeric" placeholder="Max SF">
             </div>
           </div>
           <div class="field">
             <label>Date Range</label>
             <div class="cr-range-row">
-              <input id="cr-date-from" type="date" style="min-width:0;">
+              <input id="cr-date-from" type="text" inputmode="numeric" placeholder="MM/DD/YYYY" style="min-width:0;">
               <span class="cr-range-sep">–</span>
-              <input id="cr-date-to" type="date" style="min-width:0;">
+              <input id="cr-date-to" type="text" inputmode="numeric" placeholder="MM/DD/YYYY" style="min-width:0;">
             </div>
           </div>
         </div>
@@ -1976,9 +1974,16 @@
         <div class="field"><label>Zip</label><input id="ci-prop-zip"></div>
       </div>
       <div class="row">
-        <div class="field"><label>County</label><input id="ci-prop-county"></div>
+        <div class="field"><label>County</label><input id="ci-prop-county" list="ci-county-options" placeholder="Start typing…"></div>
         <div class="field flex-2"><label>Property Description</label><input id="ci-prop-desc"></div>
       </div>
+      <datalist id="ci-county-options">
+        <option value="Orange County"></option>
+        <option value="Los Angeles County"></option>
+        <option value="Riverside County"></option>
+        <option value="San Bernardino County"></option>
+        <option value="San Diego County"></option>
+      </datalist>
       <div id="ci-master-lease-block" class="is-hidden">
         <h4>Master Lease</h4>
         <div class="row">
@@ -2224,17 +2229,7 @@
           <span class="dx-version-badge">v16</span>
         </div>
 
-        <div class="dx-cors-note" id="dxCorsNote">
-          <strong>One-time setup:</strong> This tool must be run from a local web server to call the Dealius API (browser CORS restriction).<br><br>
-          <strong>Easiest — CORS extension:</strong> Install
-          <a href="https://chrome.google.com/webstore/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf" target="_blank">Allow CORS for Chrome</a>
-          and enable it while using this tool.<br><br>
-          <strong>Alternative — local server:</strong> Open Terminal, <code>cd ~/Downloads</code>, run
-          <code>python3 -m http.server 8080</code>, then open
-          <a href="http://localhost:8080">localhost:8080</a>.
-        </div>
-
-        <div class="dx-card">
+        <div class="dx-card dx-setup-card">
           <div class="dx-card-title">Dealius Credentials</div>
           <div class="dx-cred-grid">
             <div class="dx-field"><label>Dealius Email</label><input type="email" id="demail" class="mono" autocomplete="off" oninput="dxSaveCreds()"/><span class="dx-saved-badge" id="demailSaved">&check; Saved</span></div>
@@ -5751,7 +5746,6 @@ async function exportLeeCompReportPdf(compType, rows) {
     doc.setTextColor(120, 120, 120);
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(6.5);
-    doc.text('Metropolis — Industrial with Small Pictures', marginL, footerY + 28);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
@@ -6218,6 +6212,12 @@ function buildCrDropdown(containerId, options) {
   const panel = document.createElement('div');
   panel.className = 'cr-dd-panel';
 
+  const searchWrap = document.createElement('div');
+  searchWrap.className = 'cr-dd-search';
+  searchWrap.innerHTML = '<input type="text" class="cr-dd-search-input" placeholder="Type to filter…" autocomplete="off">';
+  const searchInput = searchWrap.querySelector('input');
+  panel.appendChild(searchWrap);
+
   const opts = document.createElement('div');
   opts.className = 'cr-dd-opts';
   opts.innerHTML = options.map(o =>
@@ -6244,6 +6244,26 @@ function buildCrDropdown(containerId, options) {
 
   panel.addEventListener('change', updateLabel);
 
+  // Allow dependent filters (e.g. Market -> City) to hide options.
+  container._updateCrLabel = updateLabel;
+  container._filterCrOptions = (allowed) => {
+    const allowedSet = allowed instanceof Set ? allowed : null;
+    const rows = Array.from(opts.querySelectorAll('.cr-dd-opt'));
+    rows.forEach(row => {
+      const cb = row.querySelector('input[type=checkbox]');
+      const value = cb ? cb.value : '';
+      const depHidden = allowedSet ? !allowedSet.has(value) : false;
+      row.dataset.crDepHidden = depHidden ? '1' : '0';
+      if (depHidden) {
+        row.style.display = 'none';
+        if (cb) cb.checked = false;
+      } else {
+        row.style.display = '';
+      }
+    });
+    updateLabel();
+  };
+
   btn.addEventListener('click', e => {
     e.stopPropagation();
     const isOpen = panel.classList.contains('open');
@@ -6255,6 +6275,13 @@ function buildCrDropdown(containerId, options) {
     panel.classList.toggle('open', !isOpen);
     btn.classList.toggle('open', !isOpen);
     _crOpenPanel = !isOpen ? panel : null;
+    if (!isOpen && searchInput) {
+      searchInput.value = '';
+      opts.querySelectorAll('.cr-dd-opt').forEach(el => {
+        el.style.display = el.dataset.crDepHidden === '1' ? 'none' : '';
+      });
+      requestAnimationFrame(() => searchInput.focus());
+    }
   });
 
   document.addEventListener('click', e => {
@@ -6264,6 +6291,33 @@ function buildCrDropdown(containerId, options) {
       if (_crOpenPanel === panel) _crOpenPanel = null;
     }
   }, { capture: true, passive: true });
+
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      const q = String(searchInput.value || '').trim().toLowerCase();
+      const rows = Array.from(opts.querySelectorAll('.cr-dd-opt'));
+      if (!q) {
+        rows.forEach(el => (el.style.display = el.dataset.crDepHidden === '1' ? 'none' : ''));
+        return;
+      }
+      rows.forEach(el => {
+        if (el.dataset.crDepHidden === '1') { el.style.display = 'none'; return; }
+        const text = (el.textContent || '').trim().toLowerCase();
+        el.style.display = text.includes(q) ? '' : 'none';
+      });
+    });
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const visible = Array.from(opts.querySelectorAll('.cr-dd-opt')).filter(el => el.style.display !== 'none');
+        if (visible.length === 1) {
+          const cb = visible[0].querySelector('input[type=checkbox]');
+          if (cb) cb.checked = !cb.checked;
+          updateLabel();
+        }
+      }
+    });
+  }
 
   container._getCrVals = () => {
     const vals = Array.from(panel.querySelectorAll('input[type=checkbox]:checked')).map(c => c.value);
@@ -6280,14 +6334,86 @@ function buildCrDropdown(containerId, options) {
 
 function initCompReportDropdowns() {
   const CITIES = ['Anaheim','Buena Park','Brea','Carson','Cerritos','Chino','Chino Hills','Corona','Costa Mesa','Cypress','El Segundo','Fontana','Fullerton','Garden Grove','Huntington Beach','Industry','Irvine','La Mirada','Lake Forest','Laguna Hills','Laguna Niguel','Long Beach','Los Angeles','National City','Newport Beach','Ontario','Orange','Perris','Placentia','Rancho Dominguez','Riverside','Santa Ana','Torrance','Tustin','Vernon','Westminster'];
-  const MARKETS = ['Orange County','Orange','Los Angeles','Inland Empire','Riverside','San Bernardino','San Diego'];
-  const SUBMARKETS = ['IBC','NOC','SOC','SAE','SCM','WC','NM','Mid Cities','Airport Area','Anaheim','Brea/Fullerton','Cerritos','Chino/Chino Hills','Corona','Costa Mesa/Newport','Cypress','Fontana/Rialto','Huntington Beach','Industry','Irvine','La Mirada/Norwalk','Long Beach','Mira Loma','National City','Ontario','Orange/Tustin','Perris','Rancho Dominguez','Riverside','Santa Ana','South Bay','Torrance','Vernon/Commerce'];
-  const PROP_TYPES = ['IND','OFF','RET','LND','Indust','Industrial','Office','Retail','R&D/Flex','Flex','Land'];
+  const MARKETS = ['Orange County','Los Angeles','Inland Empire','Riverside','San Bernardino','San Diego'];
+  const SUBMARKETS = ['IBC','NOC','SOC','SAE','SCM','WC','NM','Mid Cities','Airport Area','IE East','IE West','Anaheim','Brea/Fullerton','Cerritos','Chino/Chino Hills','Corona','Costa Mesa/Newport','Cypress','Fontana/Rialto','Huntington Beach','Industry','Irvine','La Mirada/Norwalk','Long Beach','Mira Loma','National City','Ontario','Orange/Tustin','Perris','Rancho Dominguez','Riverside','Santa Ana','South Bay','Torrance','Vernon/Commerce'];
+  const PROP_TYPES = ['Industrial','Office','Retail','Land','Flex','R&D/Flex'];
 
   buildCrDropdown('cr-city', CITIES);
   buildCrDropdown('cr-market', MARKETS);
   buildCrDropdown('cr-submarket', SUBMARKETS);
   buildCrDropdown('cr-property-type', PROP_TYPES);
+
+  // Dependent filters: Market selection limits available cities.
+  const marketEl = document.getElementById('cr-market');
+  const cityEl = document.getElementById('cr-city');
+  if (marketEl && cityEl) {
+    const CITY_BY_MARKET = {
+      'Orange County': new Set(['Anaheim','Buena Park','Brea','Costa Mesa','Cypress','Fullerton','Garden Grove','Huntington Beach','Irvine','Lake Forest','Laguna Hills','Laguna Niguel','Newport Beach','Orange','Placentia','Santa Ana','Tustin','Westminster']),
+      'Los Angeles': new Set(['Carson','Cerritos','El Segundo','Long Beach','Los Angeles','Rancho Dominguez','Torrance','Vernon']),
+      'Inland Empire': new Set(['Chino','Chino Hills','Corona','Fontana','Ontario','Perris','Riverside']),
+      'Riverside': new Set(['Perris','Riverside']),
+      'San Bernardino': new Set(['Chino','Chino Hills','Fontana','Ontario']),
+      'San Diego': new Set(['National City']),
+    };
+
+    function updateCityOptions() {
+      const selectedMarkets = marketEl._getCrVals ? (marketEl._getCrVals() || []) : [];
+      const allowed = new Set();
+      if (!selectedMarkets.length) {
+        if (cityEl._filterCrOptions) cityEl._filterCrOptions(null);
+        return;
+      }
+      selectedMarkets.forEach(m => {
+        const set = CITY_BY_MARKET[m];
+        if (set) set.forEach(c => allowed.add(c));
+      });
+      if (cityEl._filterCrOptions) cityEl._filterCrOptions(allowed);
+    }
+
+    marketEl.addEventListener('change', updateCityOptions);
+    updateCityOptions();
+  }
+}
+
+function initCompReportRangeInputs() {
+  const sfIds = ['cr-sf-min', 'cr-sf-max'];
+  sfIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('blur', () => {
+      const raw = String(el.value || '').trim();
+      if (!raw) return;
+      const num = Number(raw.replace(/,/g, '').trim());
+      if (!Number.isFinite(num) || num <= 0) return;
+      el.value = Math.round(num).toLocaleString('en-US');
+    });
+  });
+
+  function fmtIsoToMdy(iso) {
+    const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return '';
+    return `${m[2]}/${m[3]}/${m[1]}`;
+  }
+
+  ['cr-date-from', 'cr-date-to'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('blur', () => {
+      const v = String(el.value || '').trim();
+      if (!v) return;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+        const out = fmtIsoToMdy(v);
+        if (out) el.value = out;
+        return;
+      }
+      const m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (!m) return;
+      const mm = String(Number(m[1])).padStart(2, '0');
+      const dd = String(Number(m[2])).padStart(2, '0');
+      const yyyy = m[3];
+      el.value = `${mm}/${dd}/${yyyy}`;
+    });
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -6311,6 +6437,7 @@ initCompFormSelects();
 
 // Build comp reports filter dropdowns
 initCompReportDropdowns();
+initCompReportRangeInputs();
 
 // Add initial suite rows
 addSuiteRow('office');
@@ -6903,12 +7030,92 @@ function openSubmissionDetail(id) {
   if (s.type === 'voucher') {
     actions += '<button class="btn btn-blue btn-blue-red" onclick="dxPushVoucher(\'' + s.id + '\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Push to Dealius Deal</button>';
   }
+  if (s.type === 'sign') {
+    const disabled = s.status !== 'approved' ? 'disabled' : '';
+    actions += '<button class="btn btn-green" ' + disabled + ' onclick="adminSendSignToCimarron(\\\'' + s.id + '\\\')"><span class="btn-label">Send to Cimarron (PO #)</span></button>';
+  }
   actions += '<button class="btn btn-blue" ' + (s.status === 'in_review' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'in_review\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Review</button>';
   actions += '<button class="btn btn-green" ' + (s.status === 'approved' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'approved\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Approve</button>';
   actions += '<button class="btn btn-danger" ' + (s.status === 'rejected' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'rejected\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Reject</button>';
   document.getElementById('adm-detail-actions').innerHTML = actions;
 
   document.getElementById('admin-detail-modal').classList.add('open');
+}
+
+function _applySignFormDataToDom(formData) {
+  if (!formData || typeof formData !== 'object') return;
+  Object.keys(formData).forEach(id => {
+    if (id === 'signAgents') return;
+    const el = document.getElementById(id);
+    if (!el) return;
+    const v = formData[id];
+    if (el.type === 'checkbox') el.checked = Boolean(v);
+    else el.value = String(v ?? '');
+  });
+  const agents = Array.isArray(formData.signAgents) ? formData.signAgents : [];
+  if (agents.length) {
+    try {
+      document.getElementById('sign-agent-body').innerHTML = '';
+      agents.forEach(a => {
+        addSignAgent();
+        const rows = document.querySelectorAll('#sign-agent-body tr');
+        const last = rows[rows.length - 1];
+        if (!last) return;
+        const inputs = last.querySelectorAll('input');
+        if (inputs[0]) inputs[0].value = String(a?.name ?? '');
+        if (inputs[1]) inputs[1].value = String(a?.pct ?? '');
+      });
+    } catch (e) { /* no-op */ }
+  }
+}
+
+async function adminSendSignToCimarron(id) {
+  const sub = ADMIN_SUBMISSIONS.find(s => s.id === id);
+  if (!sub || !sub.serverSubmissionId) {
+    alert('Missing server submission id.');
+    return;
+  }
+  if (sub.status !== 'approved') {
+    alert('Approve the sign request first.');
+    return;
+  }
+  const po = prompt('Enter PO # (required):');
+  if (!po || !String(po).trim()) return;
+
+  const payload = sub.payload || {};
+  _applySignFormDataToDom(payload.formData || null);
+  const poEl = document.getElementById('s-po');
+  if (poEl) poEl.value = String(po).trim();
+
+  try {
+    const pdfAttachment = await (async () => {
+      const prevType = _staFormType;
+      _staFormType = 'sign';
+      const result = await buildSendToAdminPdfAttachment();
+      _staFormType = prevType;
+      return result;
+    })();
+
+    const resp = await fetch('/api/trpc/email.sendApprovedSignToCimarron', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        json: {
+          submissionId: sub.serverSubmissionId,
+          poNumber: String(po).trim(),
+          pdfAttachment,
+        }
+      })
+    });
+    const data = await resp.json().catch(() => ({}));
+    const result = data?.result?.data?.json;
+    if (!result?.success) throw new Error(result?.error || 'Send failed');
+    alert('✅ Sent to Cimarron. Broker was CC’d and PDF attached.');
+  } catch (e) {
+    console.warn('Send to Cimarron failed:', e && e.message ? e.message : e);
+    alert('❌ Send failed: ' + (e && e.message ? e.message : 'Unknown error'));
+  }
 }
 
 function closeAdminModal() {
@@ -7458,7 +7665,6 @@ function dxLoadFile(file) {
       dxApplyEntryModeUI();
       dxRenderPreview(DX_P);
       dxStat('ok', 'Parsed: ' + DX_P.dealName);
-      setHiddenState(document.getElementById('dxCorsNote'), true);
       setHiddenState(document.getElementById('dxAib'), false);
       setHiddenState(document.getElementById('dxAiPanel'), true);
       document.getElementById('dxAiPanel').innerHTML = '';
@@ -8173,14 +8379,8 @@ async function dxSubmitDeal() {
     btn.classList.add('dx-btn-success');
   } catch (err) {
     const msg = err.message || '';
-    const isCors = msg.toLowerCase().includes('fetch') || msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('networkerror') || msg.toLowerCase().includes('cors');
-    if (isCors) {
-      dxAddLog('err', 'CORS/network error — enable the CORS extension or run via local server.');
-      dxStat('err', 'CORS/network error — see setup note');
-    } else {
-      dxAddLog('err', 'Error: ' + msg);
-      dxStat('err', msg);
-    }
+    dxAddLog('err', 'Error: ' + msg);
+    dxStat('err', msg);
     document.querySelectorAll('.dx-step.active').forEach(s => s.classList.replace('active', 'err'));
     btn.disabled = false;
     btn.classList.remove('loading');
@@ -8412,7 +8612,6 @@ function dxResetTool() {
   document.getElementById('dxLg').innerHTML = '';
   document.getElementById('dxFi').value = '';
   setHiddenState(document.getElementById('dxStepBar'), true);
-  setHiddenState(document.getElementById('dxCorsNote'), false);
   setHiddenState(document.getElementById('dxAiPanel'), true);
   document.getElementById('dxAiPanel').innerHTML = '';
   setHiddenState(document.getElementById('dxAib'), true);
@@ -10600,18 +10799,62 @@ function compReportExportCsv() {
   URL.revokeObjectURL(url);
 }
 
+async function compReportFetchAllRowsForCurrentFilters() {
+  const base = compReportGetFilters();
+  const limit = 100; // server enforces max=100
+  const all = [];
+  let offset = 0;
+  let total = Infinity;
+
+  while (all.length < total) {
+    const data = await callTrpc('compData.search', { ...base, limit, offset });
+    const batch = Array.isArray(data?.results) ? data.results : [];
+    const info = data?.pageInfo;
+    if (typeof info?.total === 'number' && Number.isFinite(info.total)) total = info.total;
+
+    all.push(...batch);
+    if (!batch.length) break;
+    offset += limit;
+
+    // Safety guard against accidental infinite loops or runaway exports.
+    if (all.length >= 5000) break;
+    if (info && info.hasNext === false) break;
+  }
+
+  return all;
+}
+
 function compReportExportPdf() {
-  const rows = compReportSelectedRows();
-  if (!rows.length) {
-    alert((compReportsResultsCache || []).length ? 'Select at least one comp to export.' : 'Run a search first so there is something to export.');
-    return;
-  }
-  const compType = compReportsTypeCache || 'lease';
-  if (typeof exportLeeCompReportPdf === 'function') {
-    exportLeeCompReportPdf(compType, rows);
-  } else {
-    alert('PDF export is not available in this build.');
-  }
+  void (async () => {
+    const rows = compReportSelectedRows();
+    if (!rows.length) {
+      alert((compReportsResultsCache || []).length ? 'Select at least one comp to export.' : 'Run a search first so there is something to export.');
+      return;
+    }
+    const compType = compReportsTypeCache || 'lease';
+    if (typeof exportLeeCompReportPdf !== 'function') {
+      alert('PDF export is not available in this build.');
+      return;
+    }
+
+    // If the user has effectively selected "all rows" on the current page and
+    // there are more results than are currently loaded, export the full result set.
+    const selectedAllOnPage = compReportsResultsCache?.length && compReportsDeselected?.size === 0;
+    const total = Number(compReportsPageInfo?.total ?? compReportsResultsCache?.length ?? 0);
+    const moreThanLoaded = Number.isFinite(total) && total > (compReportsResultsCache?.length || 0);
+
+    let exportRows = rows;
+    if (selectedAllOnPage && moreThanLoaded) {
+      try {
+        exportRows = await compReportFetchAllRowsForCurrentFilters();
+      } catch (e) {
+        console.warn('Comp report export: unable to fetch full result set:', e?.message || e);
+        exportRows = rows; // fall back to current page selection
+      }
+    }
+
+    exportLeeCompReportPdf(compType, exportRows);
+  })();
 }
 
 function compReportGetFilters() {
@@ -10620,8 +10863,27 @@ function compReportGetFilters() {
     if (!el) return undefined;
     return el._getCrVals ? el._getCrVals() : undefined;
   }
-  const sfMinRaw = parseFloat(document.getElementById('cr-sf-min')?.value);
-  const sfMaxRaw = parseFloat(document.getElementById('cr-sf-max')?.value);
+  function crParseSf(value) {
+    const cleaned = String(value || '').replace(/,/g, '').trim();
+    const num = cleaned ? Number(cleaned) : NaN;
+    return Number.isFinite(num) && num > 0 ? num : undefined;
+  }
+  function crParseDateToIso(value) {
+    const v = String(value || '').trim();
+    if (!v) return undefined;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+    const m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!m) return undefined;
+    const mm = Number(m[1]);
+    const dd = Number(m[2]);
+    const yyyy = Number(m[3]);
+    if (!(mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31 && yyyy >= 1900 && yyyy <= 2100)) return undefined;
+    const mm2 = String(mm).padStart(2, '0');
+    const dd2 = String(dd).padStart(2, '0');
+    return `${yyyy}-${mm2}-${dd2}`;
+  }
+  const sfMinRaw = document.getElementById('cr-sf-min')?.value;
+  const sfMaxRaw = document.getElementById('cr-sf-max')?.value;
   return {
     compType: document.getElementById('cr-comp-type')?.value || 'lease',
     query: document.getElementById('cr-query')?.value.trim() || undefined,
@@ -10629,10 +10891,10 @@ function compReportGetFilters() {
     markets: crVals('cr-market'),
     subMarkets: crVals('cr-submarket'),
     propertyTypes: crVals('cr-property-type'),
-    sfMin: Number.isFinite(sfMinRaw) && sfMinRaw > 0 ? sfMinRaw : undefined,
-    sfMax: Number.isFinite(sfMaxRaw) && sfMaxRaw > 0 ? sfMaxRaw : undefined,
-    dateFrom: document.getElementById('cr-date-from')?.value || undefined,
-    dateTo: document.getElementById('cr-date-to')?.value || undefined,
+    sfMin: crParseSf(sfMinRaw),
+    sfMax: crParseSf(sfMaxRaw),
+    dateFrom: crParseDateToIso(document.getElementById('cr-date-from')?.value),
+    dateTo: crParseDateToIso(document.getElementById('cr-date-to')?.value),
     limit: COMP_REPORT_PAGE_SIZE,
     offset: compReportsPageOffset
   };
@@ -10921,13 +11183,18 @@ function openSendToAdminModal(formType) {
   const status = document.getElementById('sta-status');
   const btn = document.getElementById('sta-send-btn');
   if (!modal) return;
-  const label = formType === 'listing' ? 'Listing Entry' : 'Commission Voucher';
-  title.textContent = `Send ${label} to Admin`;
-  desc.textContent = `This will email all filled ${label} fields to the office admin. You will be CC’d automatically.`;
+  const label =
+    formType === 'listing' ? 'Listing Entry' :
+    formType === 'voucher' ? 'Commission Voucher' :
+    'Sign Request';
+  title.textContent = formType === 'sign' ? `Submit ${label}` : `Send ${label} to Admin`;
+  desc.textContent = formType === 'sign'
+    ? 'This will submit the sign request into the admin submission queue. The admin will approve it, assign a PO #, and send it to Cimarron.'
+    : `This will email all filled ${label} fields to the office admin. You will be CC’d automatically.`;
   status.textContent = '';
   status.classList.remove('text-success', 'text-error', 'status-strong');
   btn.classList.remove('loading');
-  btn.querySelector('.btn-label').textContent = 'Send Email';
+  btn.querySelector('.btn-label').textContent = formType === 'sign' ? 'Submit to Queue' : 'Send Email';
   modal.classList.add('open');
 }
 
@@ -11224,7 +11491,7 @@ async function submitSendToAdmin() {
 
   try {
     const pdfAttachment = await buildSendToAdminPdfAttachment();
-    btn.querySelector('.btn-label').textContent = 'Uploading & Sending...';
+    btn.querySelector('.btn-label').textContent = _staFormType === 'sign' ? 'Submitting…' : 'Uploading & Sending...';
 
     const resp = await fetch('/api/trpc/email.sendToAdmin', {
       method: 'POST',
@@ -11238,6 +11505,7 @@ async function submitSendToAdmin() {
           sections,
           senderEmail,
           pdfAttachment,
+          formData: _staFormType === 'sign' ? collectSignFormData() : undefined,
         }
       })
     });
@@ -11246,14 +11514,18 @@ async function submitSendToAdmin() {
     if (result?.success) {
       const sentWithAttachment = Boolean(result?.attachmentIncluded);
       const archivedLink = result?.archivedFile?.url;
-      status.textContent = sentWithAttachment
-        ? 'Email sent successfully with the PDF attached and archived.'
-        : archivedLink
-          ? 'Email sent successfully. The PDF was archived and included as a secure link.'
-          : 'Email sent successfully.';
+      status.textContent = _staFormType === 'sign'
+        ? 'Submitted to the admin queue successfully.'
+        : sentWithAttachment
+          ? 'Email sent successfully with the PDF attached and archived.'
+          : archivedLink
+            ? 'Email sent successfully. The PDF was archived and included as a secure link.'
+            : 'Email sent successfully.';
       status.classList.add('text-success', 'status-strong');
       btn.querySelector('.btn-label').textContent = 'Sent';
-      showToast(sentWithAttachment ? 'Submission emailed with PDF attached.' : 'Submission emailed and archived.');
+      showToast(_staFormType === 'sign'
+        ? 'Sign request submitted to queue.'
+        : (sentWithAttachment ? 'Submission emailed with PDF attached.' : 'Submission emailed and archived.'));
       setTimeout(closeSendToAdminModal, 2000);
     } else {
       const errMsg = result?.error || 'Unknown error';
@@ -11268,6 +11540,34 @@ async function submitSendToAdmin() {
     btn.classList.remove('loading');
     btn.querySelector('.btn-label').textContent = 'Send Email';
   }
+}
+
+function collectSignFormData() {
+  const ids = [
+    's-date','s-order-type','s-address','s-city','s-cross',
+    's-4x8-qty','s-6x8-qty','s-other-size','s-other-qty',
+    's-banner-size','s-banner-qty','s-rider','s-access','s-access-contact','s-comments',
+    's-rider-toggle','s-placement-toggle',
+    's-support',
+    's-requested-by',
+  ];
+  const data = {};
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.type === 'checkbox') data[id] = Boolean(el.checked);
+    else data[id] = String(el.value ?? '');
+  });
+  data['signAgents'] = (function() {
+    const out = [];
+    document.querySelectorAll('#sign-agent-body tr').forEach(tr => {
+      const name = tr.querySelector('input')?.value || '';
+      const pct = tr.querySelectorAll('input')[1]?.value || '';
+      if ((name || '').trim() || (pct || '').trim()) out.push({ name, pct });
+    });
+    return out;
+  })();
+  return data;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

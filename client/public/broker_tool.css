@@ -677,15 +677,6 @@ body.admin-mode .header .sub { display: none; }
   content: ''; display: inline-block; width: 3px; height: 14px;
   background: var(--red); border-radius: 2px;
 }
-#dealius-tool .dx-cors-note {
-  background: #fff6df;
-  border: 1px solid #fbbf24; border-radius: 10px;
-  padding: 16px 20px; font-size: 12.5px; color: #78350f;
-  margin-bottom: 16px; line-height: 1.7;
-}
-#dealius-tool .dx-cors-note strong { color: #451a03; }
-#dealius-tool .dx-cors-note a { color: var(--navy); font-weight: 500; }
-#dealius-tool .dx-cors-note code { background: rgba(120,53,15,.08); border-radius: 4px; padding: 2px 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
 #dealius-tool .dx-cred-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
 #dealius-tool .dx-saved-badge { font-size: 10px; color: #059669; font-weight: 600; margin-top: 4px; display: none; }
 #dealius-tool .dx-field { display: flex; flex-direction: column; gap: 6px; }
@@ -2029,9 +2020,65 @@ body.admin-mode #admin-view {
   letter-spacing: .14em;
   text-transform: uppercase;
 }
-.badge-review {
+.badge-pending {
   background: #f1f1ed;
   color: #525962;
+}
+.badge-review {
+  background: #fff3cd;
+  color: #856404;
+}
+.badge-approved {
+  background: #d4edda;
+  color: #155724;
+}
+.badge-rejected {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.admin-welcome {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text2);
+  font-size: 13px;
+}
+
+.admin-microbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.admin-last-updated {
+  font-size: 12px;
+  color: var(--text3);
+}
+.admin-quick-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.btn.btn-sm {
+  padding: 9px 12px;
+  font-size: 12px;
+  border-radius: 10px;
+}
+
+.cell-chevron {
+  width: 28px;
+  text-align: right;
+  color: var(--text3);
+  font-size: 18px;
+  padding-right: 12px !important;
+}
+.th-chevron {
+  width: 28px;
 }
 .admin-modal-overlay {
   background: rgba(25, 28, 32, .38);
@@ -3305,6 +3352,9 @@ body {
   grid-template-columns: 140px 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
   gap: 10px;
 }
+.cr-filters-grid .cr-span-2 {
+  grid-column: span 2;
+}
 .cr-filters .field { display: flex; flex-direction: column; min-width: 0; }
 .cr-filters .field label {
   font-size: 10px;
@@ -3375,6 +3425,25 @@ body {
 }
 .cr-dd-panel.open {
   display: block;
+}
+.cr-dd-search {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  background: var(--surface-1, #fff);
+}
+.cr-dd-search-input {
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 13px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #d1d5db);
+  background: var(--surface-2, #fafafa);
+  outline: none;
+}
+.cr-dd-search-input:focus {
+  border-color: rgba(155, 13, 42, 0.45);
+  box-shadow: 0 0 0 3px rgba(155, 13, 42, 0.12);
+  background: #fff;
 }
 .cr-dd-opts {
   max-height: 220px;
@@ -4269,6 +4338,41 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+
+@keyframes leePanelFlowIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes leeCardFlowIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tool-sign-in {
+  transition: opacity 180ms cubic-bezier(0.16, 1, 0.3, 1), transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tool-sign-in.is-exiting {
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+}
+#broker-view {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 240ms cubic-bezier(0.16, 1, 0.3, 1), transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+#broker-view.is-ready {
+  opacity: 1;
+  transform: translateY(0);
+}
+.panel.active {
+  animation: leePanelFlowIn 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.card,
+.tool-sign-in-card {
+  animation: leeCardFlowIn 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 body {
