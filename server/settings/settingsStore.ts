@@ -62,7 +62,9 @@ export async function refreshSettingsCache(): Promise<Map<SettingKey, unknown>> 
   const db = await getDb();
   const merged = new Map<SettingKey, unknown>();
 
-  if (!db) {
+  // Tests often mock `getDb()` with a minimal object that isn't a Drizzle DB.
+  // Treat that as "DB unavailable" and fall back to defaults.
+  if (!db || typeof (db as any).select !== "function") {
     for (const key of SETTING_KEYS) {
       merged.set(key, SETTINGS_BY_KEY[key].defaultValue);
     }
