@@ -276,10 +276,11 @@ export const brokerAdminRequests = mysqlTable(
     priority: varchar("priority", { length: 16 }),
 
     // Thread / source linking
-    emailMessageId: varchar("emailMessageId", { length: 256 }).notNull(),
-    internetMessageId: varchar("internetMessageId", { length: 256 }),
+    // Microsoft Graph / Outlook message identifiers are commonly >256 chars.
+    emailMessageId: varchar("emailMessageId", { length: 512 }).notNull(),
+    internetMessageId: varchar("internetMessageId", { length: 512 }),
     outlookWebLink: text("outlookWebLink"),
-    threadKey: varchar("threadKey", { length: 256 }),
+    threadKey: varchar("threadKey", { length: 512 }),
 
     // External system mapping
     dealiusDealId: varchar("dealiusDealId", { length: 64 }),

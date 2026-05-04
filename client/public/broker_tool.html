@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#A9223B">
-<title>Lee &amp; Associates Newport Beach &mdash; Broker Tool</title>
+<title>Broker Tool</title>
 <link rel="icon" type="image/png" href="lee-newport-beach-fullcolor.png">
 <link rel="apple-touch-icon" href="lee-newport-beach-fullcolor.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,9 +20,9 @@
 
 <div class="header">
   <div class="header-main">
-    <img class="header-logo" src="lee-newport-beach-fullcolor.png" alt="Lee &amp; Associates Newport Beach">
+    <img class="header-logo" id="header-logo" src="lee-newport-beach-fullcolor.png" alt="Broker Tool">
     <div class="header-copy">
-    <div class="header-kicker">Lee &amp; Associates Newport Beach</div>
+    <div class="header-kicker" id="header-kicker">Broker Workspace</div>
     <h1>Broker Submission Tool</h1>
     <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher &bull; Comp Input &bull; Queue &bull; Comp Reports &bull; Documents &bull; Contracts</div>
     </div>
@@ -43,7 +43,7 @@
 <!-- ═══ SIGN-IN GATE ═══ -->
 <div id="tool-sign-in" class="tool-sign-in">
   <div class="tool-sign-in-card">
-    <img src="lee-newport-beach-fullcolor.png" alt="Lee &amp; Associates Newport Beach" class="tool-sign-in-logo">
+    <img src="lee-newport-beach-fullcolor.png" alt="Broker Tool" class="tool-sign-in-logo" id="tool-sign-in-logo">
     <h1 class="tool-sign-in-title">Broker Workspace</h1>
     <p class="tool-sign-in-sub">Type your Lee username or email to open the tool. No password required.</p>
     <form id="tool-sign-in-form" onsubmit="handleToolSignIn(event)" autocomplete="on">
@@ -87,7 +87,7 @@
 
     <div class="card required-section" data-lstep="1">
       <h2>Add Listing <span class="required-badge">Required</span></h2>
-      <div class="row c3">
+      <div class="row c4">
         <div class="field"><label class="req">Date Entered</label><input id="l-date-entered" type="date"></div>
         <div class="field"><label class="req">Property Type</label>
           <select id="l-prop-type" onchange="onPropTypeChange()">
@@ -103,6 +103,7 @@
             <option value="sale">Sale</option>
           </select>
         </div>
+        <div class="field"><label>Listing expiration</label><input id="l-listing-expiration" type="date" data-lbt-auto-expiry="1"><div class="field-hint">Defaults from Date Entered + office term</div></div>
       </div>
 
       <h3 class="section-heading-top">Upload Documents</h3>
@@ -374,6 +375,7 @@
         <div class="deal-eyebrow">Listing at a Glance</div>
         <div class="deal-title" id="lg-title">New listing</div>
         <div class="deal-subtitle" id="lg-subtitle">Fill Step 1 to begin</div>
+        <div class="micro-copy micro-copy-top" id="lg-autosave" aria-live="polite"></div>
         <div class="deal-chips" id="lg-chips"></div>
         <dl class="deal-kv">
           <div><dt>Property</dt><dd id="lg-address">—</dd></div>
@@ -692,6 +694,7 @@
 
   <div class="card required-section" id="vstep-1" data-vstep="1">
     <h2>Step 1 — Transaction Type <span class="required-badge">Required</span></h2>
+    <div class="tip is-hidden top-gap-sm" id="voucher-confidential-warning"></div>
     <div class="row c4">
       <div class="field"><label class="req">Representation Type</label>
         <select id="v-rep-type">
@@ -964,6 +967,7 @@
   <div class="card" id="vstep-8" data-vstep="8">
     <h2>Step 8 — Upload Documents &amp; Commission Distribution</h2>
     <h3>Compliance Documents</h3>
+    <div id="voucher-attachment-required-msg" class="tip text-error is-hidden" role="alert"></div>
 
     <div class="row c2">
       <div class="field">
@@ -1101,6 +1105,7 @@
       <div class="deal-eyebrow">Deal at a Glance</div>
       <div class="deal-title" id="dg-title">New voucher</div>
       <div class="deal-subtitle" id="dg-subtitle">Fill Step 1 to begin</div>
+      <div class="micro-copy micro-copy-top" id="dg-autosave" aria-live="polite"></div>
       <div class="deal-chips" id="dg-chips"></div>
       <dl class="deal-kv">
         <div><dt>Property</dt><dd id="dg-address">—</dd></div>
@@ -3865,6 +3870,18 @@ function getSideChipClass(side) {
   return map[side] || 'other';
 }
 
+function workflowCommissionSplitMustSum100() {
+  const wf = LBT_PUBLIC_SETTINGS && LBT_PUBLIC_SETTINGS.workflow;
+  if (!wf || typeof wf.commission_split_must_sum_100 === 'undefined') return true;
+  return Boolean(wf.commission_split_must_sum_100);
+}
+
+function workflowRequireVoucherAttachment() {
+  const wf = LBT_PUBLIC_SETTINGS && LBT_PUBLIC_SETTINGS.workflow;
+  if (!wf || typeof wf.require_voucher_attachment === 'undefined') return true;
+  return Boolean(wf.require_voucher_attachment);
+}
+
 function updateDistChips() {
   document.querySelectorAll('#v-dist-body tr').forEach(tr => {
     const sel = tr.querySelector('select');
@@ -3878,12 +3895,18 @@ function updateDistChips() {
 }
 
 function updateDistPctTotal() {
+  let indicator = document.getElementById('dist-pct-total');
+  if (!workflowCommissionSplitMustSum100()) {
+    if (indicator) indicator.classList.add('is-hidden');
+    return;
+  }
+  if (indicator) indicator.classList.remove('is-hidden');
+
   let total = 0;
   document.querySelectorAll('#v-dist-body tr').forEach(tr => {
     const pctInput = tr.querySelectorAll('input')[1];
     if (pctInput) total += parseFloat(pctInput.value) || 0;
   });
-  let indicator = document.getElementById('dist-pct-total');
   if (!indicator) {
     indicator = document.createElement('div');
     indicator.id = 'dist-pct-total';
@@ -4136,6 +4159,13 @@ function clearListing() {
   listingAgentCount = 0;
   addListingAgent(); // Add one empty row
   onPropTypeChange(); onTxnTypeChange();
+  const today = new Date().toISOString().split('T')[0];
+  const de = document.getElementById('l-date-entered');
+  if (de) de.value = today;
+  applyDefaultListingExpirationFromStart(true);
+  try { localStorage.removeItem(LBT_AUTOSAVE_KEYS.listing); } catch (e) {}
+  const au = document.getElementById('lg-autosave');
+  if (au) au.textContent = '';
 }
 
 function clearSign() {
@@ -4163,11 +4193,29 @@ function clearVoucher() {
   ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   rentRowCount = 0;
   onVoucherTxnChange();
+  try { localStorage.removeItem(LBT_AUTOSAVE_KEYS.voucher); } catch (e) {}
+  const au = document.getElementById('dg-autosave');
+  if (au) au.textContent = '';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PDF HELPERS — shared drawing primitives that replicate the original form look
 // ═══════════════════════════════════════════════════════════════════════════════
+function getPdfBrandRgb() {
+  const b = LBT_PUBLIC_SETTINGS || {};
+  const hex = String(b.primary_color || '').trim();
+  if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+    return { r: parseInt(hex.slice(1, 3), 16), g: parseInt(hex.slice(3, 5), 16), b: parseInt(hex.slice(5, 7), 16) };
+  }
+  return { r: 196, g: 18, b: 48 };
+}
+
+function getPdfCompanyHeadline() {
+  const b = LBT_PUBLIC_SETTINGS || {};
+  const name = String(b.company_name || '').trim();
+  return name ? name.toUpperCase() : 'LEE & ASSOCIATES — NEWPORT BEACH';
+}
+
 function pdfHelpers(doc) {
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
@@ -4184,7 +4232,8 @@ function pdfHelpers(doc) {
     doc.setFontSize(18); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
     doc.text(title, M + 12, 49);
     // Red SUBMIT box
-    doc.setFillColor(196, 18, 48);
+    const br = getPdfBrandRgb();
+    doc.setFillColor(br.r, br.g, br.b);
     doc.rect(M + cw * 0.62, 24, 60, 36, 'F');
     doc.setTextColor(255); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
     doc.text('SUBMIT', M + cw * 0.62 + 10, 46);
@@ -4275,6 +4324,8 @@ function drawReleaseAndAgent(p) {
   p.checkbox(release === 'date', 'Release to MLS and Website on', p.M, y);
   p.value(getVal('l-release-date') || '________', p.M + 210, y);
   p.value('(Date)', p.M + 270, y); y += 20;
+  p.fieldWithLine('Listing expiration:', getVal('l-listing-expiration'), p.M, y, p.cw * 0.55);
+  y += 18;
   // MLS Notification
   p.label('Notify the Multiple Listing Services?', p.M, y); y += 16;
   const agentNotify = getVal('l-agent-notify');
@@ -4638,14 +4689,15 @@ function exportSignPdf() {
   const W = doc.internal.pageSize.getWidth();
   let y = 40;
   const margin = 36;
+  const br = getPdfBrandRgb();
 
   // Header — Lee logo area (left) and Cimarron area (right)
-  doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(196, 18, 48);
-  doc.text('LEE & ASSOCIATES', margin, 40);
+  doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(br.r, br.g, br.b);
+  doc.text(getPdfCompanyHeadline(), margin, 40);
   doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(100);
   doc.text('COMMERCIAL REAL ESTATE SERVICES', margin, 50);
   doc.text('NEWPORT BEACH', margin, 60);
-  doc.setTextColor(196, 18, 48); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+  doc.setTextColor(br.r, br.g, br.b); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
   doc.text('949.724.1000', margin, 74);
 
   // Title
@@ -4788,26 +4840,27 @@ function exportVoucherPdf() {
   const margin = 36;
   const cw = W - margin * 2;
   let y = 30;
+  const br = getPdfBrandRgb();
 
   // Header — Lee & Associates style
-  doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(196, 18, 48);
-  doc.text('LEE & ASSOCIATES — NEWPORT BEACH', margin, y);
+  doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(br.r, br.g, br.b);
+  doc.text(getPdfCompanyHeadline(), margin, y);
   doc.setFontSize(16); doc.setTextColor(0);
   y += 22;
   doc.text('LEASE/SALE COMMISSION & COMP VOUCHER', margin, y);
   doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(100);
   doc.text('Date: ' + (getVal('v-date-filled') || new Date().toLocaleDateString()), W - margin, y, { align: 'right' });
   y += 8;
-  doc.setDrawColor(196, 18, 48); doc.setLineWidth(2); doc.line(margin, y, W - margin, y);
+  doc.setDrawColor(br.r, br.g, br.b); doc.setLineWidth(2); doc.line(margin, y, W - margin, y);
   y += 16;
   doc.setTextColor(0, 0, 0);
 
   function vSection(title) {
     if (y > 700) { doc.addPage(); y = 40; }
     doc.setFontSize(10); doc.setFont('helvetica', 'bold');
-    doc.setTextColor(196, 18, 48);
+    doc.setTextColor(br.r, br.g, br.b);
     doc.text(title, margin, y); y += 4;
-    doc.setDrawColor(196, 18, 48); doc.setLineWidth(0.75); doc.line(margin, y, W - margin, y); y += 12;
+    doc.setDrawColor(br.r, br.g, br.b); doc.setLineWidth(0.75); doc.line(margin, y, W - margin, y); y += 12;
     doc.setTextColor(0, 0, 0); doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
   }
 
@@ -6605,6 +6658,181 @@ document.getElementById('l-date-entered').value = new Date().toISOString().split
 document.getElementById('s-date').value = new Date().toISOString().split('T')[0];
 document.getElementById('v-date-filled').value = new Date().toISOString().split('T')[0];
 document.getElementById('c-date').value = new Date().toISOString().split('T')[0];
+
+// Load public settings (branding + workflow + notifications) before wiring up setting-driven behaviors.
+let LBT_PUBLIC_SETTINGS = null;
+async function loadPublicToolSettings() {
+  try {
+    const r = await fetch('/api/settings/public', { credentials: 'include' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    LBT_PUBLIC_SETTINGS = j || {};
+  } catch (e) {
+    LBT_PUBLIC_SETTINGS = {};
+  }
+  return LBT_PUBLIC_SETTINGS;
+}
+
+function hexToRgb(hex) {
+  const v = String(hex || '').trim();
+  if (!/^#[0-9A-Fa-f]{6}$/.test(v)) return null;
+  const r = parseInt(v.slice(1, 3), 16);
+  const g = parseInt(v.slice(3, 5), 16);
+  const b = parseInt(v.slice(5, 7), 16);
+  return { r, g, b };
+}
+
+function applyBrandingFromSettings() {
+  const b = LBT_PUBLIC_SETTINGS || {};
+  const company = String(b.company_name || '').trim();
+  const logoUrl = b.logo_url ? String(b.logo_url).trim() : '';
+  const primary = String(b.primary_color || '').trim();
+
+  if (company) {
+    document.title = company + ' — Broker Tool';
+    const kicker = document.getElementById('header-kicker');
+    if (kicker) kicker.textContent = company;
+  }
+
+  if (logoUrl) {
+    const headerLogo = document.getElementById('header-logo');
+    const signInLogo = document.getElementById('tool-sign-in-logo');
+    if (headerLogo) headerLogo.src = logoUrl;
+    if (signInLogo) signInLogo.src = logoUrl;
+  }
+
+  if (primary && /^#[0-9A-Fa-f]{6}$/.test(primary)) {
+    const rgb = hexToRgb(primary);
+    document.documentElement.style.setProperty('--lee-crimson', primary);
+    document.documentElement.style.setProperty('--red', primary);
+    if (rgb) {
+      document.documentElement.style.setProperty('--lee-crimson-wash', 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.08)');
+      document.documentElement.style.setProperty('--lee-crimson-glow', 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.14)');
+      document.documentElement.style.setProperty('--shadow-focus', '0 0 0 4px rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.12)');
+    }
+  }
+}
+
+function applyVoucherConfidentialWarningFromSettings() {
+  const el = document.getElementById('voucher-confidential-warning');
+  if (!el) return;
+  const wf = (LBT_PUBLIC_SETTINGS && LBT_PUBLIC_SETTINGS.workflow) ? LBT_PUBLIC_SETTINGS.workflow : {};
+  const enabled = Boolean(wf.confidential_warning_enabled);
+  const text = String(wf.confidential_warning_text || '').trim();
+  if (!enabled || !text) {
+    el.classList.add('is-hidden');
+    el.textContent = '';
+    return;
+  }
+  el.textContent = text;
+  el.classList.remove('is-hidden');
+}
+
+function addCalendarMonthsIsoDate(iso, monthsToAdd) {
+  const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return '';
+  const y = Number(m[1]);
+  const mo = Number(m[2]) - 1;
+  const d = Number(m[3]);
+  const dt = new Date(y, mo, d);
+  dt.setMonth(dt.getMonth() + monthsToAdd);
+  const yyyy = dt.getFullYear();
+  const mm = String(dt.getMonth() + 1).padStart(2, '0');
+  const dd = String(dt.getDate()).padStart(2, '0');
+  return yyyy + '-' + mm + '-' + dd;
+}
+
+function applyDefaultListingExpirationFromStart(force) {
+  const exp = document.getElementById('l-listing-expiration');
+  const startEl = document.getElementById('l-date-entered');
+  if (!exp || !startEl) return;
+  const wf = (LBT_PUBLIC_SETTINGS && LBT_PUBLIC_SETTINGS.workflow) || {};
+  let months = Number(wf.default_listing_term_months);
+  if (!Number.isFinite(months) || months < 1) months = 12;
+  const start = String(startEl.value || '').trim();
+  if (!start) return;
+  const next = addCalendarMonthsIsoDate(start, months);
+  if (!next) return;
+  if (force || exp.getAttribute('data-lbt-auto-expiry') === '1' || !String(exp.value || '').trim()) {
+    exp.value = next;
+    exp.setAttribute('data-lbt-auto-expiry', '1');
+  }
+}
+
+function wireListingExpirationListeners() {
+  const start = document.getElementById('l-date-entered');
+  const exp = document.getElementById('l-listing-expiration');
+  if (exp && !exp.dataset.lbtExpiryWired) {
+    exp.dataset.lbtExpiryWired = '1';
+    exp.addEventListener('input', function() {
+      this.setAttribute('data-lbt-auto-expiry', '0');
+    });
+    exp.addEventListener('change', function() {
+      this.setAttribute('data-lbt-auto-expiry', '0');
+    });
+  }
+  if (start && !start.dataset.lbtExpiryWired) {
+    start.dataset.lbtExpiryWired = '1';
+    start.addEventListener('change', function() {
+      const ex = document.getElementById('l-listing-expiration');
+      if (ex && ex.getAttribute('data-lbt-auto-expiry') === '1') {
+        applyDefaultListingExpirationFromStart(true);
+      }
+    });
+  }
+}
+
+const LBT_AUTOSAVE_KEYS = { listing: 'lbt_autosave_listing_v1', voucher: 'lbt_autosave_voucher_v1' };
+
+function lbtCollectDraftFields(rootSel) {
+  const root = document.querySelector(rootSel);
+  if (!root) return {};
+  const out = {};
+  root.querySelectorAll('input[id], select[id], textarea[id]').forEach(function(el) {
+    const id = el.id;
+    const t = el.type;
+    if (t === 'file' || t === 'button' || t === 'submit' || t === 'hidden') return;
+    if (t === 'checkbox') {
+      out[id] = el.checked ? '1' : '';
+      return;
+    }
+    if (t === 'radio') {
+      if (el.checked) out[id] = el.value;
+      return;
+    }
+    out[id] = el.value;
+  });
+  return out;
+}
+
+function startWorkflowAutosaveTimer() {
+  const wf = (LBT_PUBLIC_SETTINGS && LBT_PUBLIC_SETTINGS.workflow) || {};
+  let sec = Number(wf.auto_save_interval_seconds);
+  if (!Number.isFinite(sec) || sec <= 0) return;
+  sec = Math.min(Math.max(sec, 15), 900);
+  function tick() {
+    try {
+      localStorage.setItem(LBT_AUTOSAVE_KEYS.listing, JSON.stringify({ savedAt: Date.now(), values: lbtCollectDraftFields('#listing-add-mode') }));
+      localStorage.setItem(LBT_AUTOSAVE_KEYS.voucher, JSON.stringify({ savedAt: Date.now(), values: lbtCollectDraftFields('#v-deal-shell') }));
+      const ts = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+      const msg = 'Draft autosaved at ' + ts;
+      const elL = document.getElementById('lg-autosave');
+      const elV = document.getElementById('dg-autosave');
+      if (elL) elL.textContent = msg;
+      if (elV) elV.textContent = msg;
+    } catch (e) { /* storage full or disabled */ }
+  }
+  setInterval(tick, sec * 1000);
+}
+
+void loadPublicToolSettings().then(function() {
+  applyBrandingFromSettings();
+  applyVoucherConfidentialWarningFromSettings();
+  applyDefaultListingExpirationFromStart(true);
+  wireListingExpirationListeners();
+  startWorkflowAutosaveTimer();
+  updateDistPctTotal();
+});
 
 // Initialize property type sections
 onPropTypeChange();
@@ -11710,8 +11938,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let _staFormType = 'listing';
 
+function hasVoucherComplianceAttachment() {
+  const d = document.getElementById('v-doc-disclosure');
+  const a = document.getElementById('v-doc-agreement');
+  if ((d && d.files && d.files.length) || (a && a.files && a.files.length)) return true;
+  return Boolean(uploadedFiles['v-doc-disclosure'] || uploadedFiles['v-doc-agreement']);
+}
+
 function openSendToAdminModal(formType) {
   _staFormType = formType;
+  const attachErr = document.getElementById('voucher-attachment-required-msg');
+  if (attachErr) {
+    attachErr.classList.add('is-hidden');
+    attachErr.textContent = '';
+  }
+  if (formType === 'voucher' && workflowRequireVoucherAttachment() && !hasVoucherComplianceAttachment()) {
+    if (attachErr) {
+      attachErr.textContent = 'Upload at least one compliance document (Agency Disclosure or Exclusive Listing Agreement) before sending to admin.';
+      attachErr.classList.remove('is-hidden');
+    }
+    try {
+      document.getElementById('vstep-8')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (e) { /* ignore */ }
+    showToast('Add a voucher attachment before sending to admin.', 'error');
+    return;
+  }
   applySharedBrokerIdentity(getSignedInBrokerIdentity());
   void ensureSharedBrokerSession();
   const modal = document.getElementById('send-admin-modal');
@@ -12004,6 +12255,11 @@ async function buildSendToAdminPdfAttachment() {
 async function submitSendToAdmin() {
   const btn = document.getElementById('sta-send-btn');
   const status = document.getElementById('sta-status');
+  if (_staFormType === 'voucher' && workflowRequireVoucherAttachment() && !hasVoucherComplianceAttachment()) {
+    status.textContent = 'Add at least one compliance document attachment before sending.';
+    status.classList.add('text-error', 'status-strong');
+    return;
+  }
   await ensureSharedBrokerSession();
   const authUser = getSignedInBrokerIdentity();
   const brokerName = ((document.getElementById('sta-broker-name')?.value || '').trim() || authUser?.name || '').trim();

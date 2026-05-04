@@ -64,6 +64,13 @@
       "when": 1777912618414,
       "tag": "0008_force_password_change_next_login",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1778010000000,
+      "tag": "0009_broker_admin_message_ids_widen",
+      "breakpoints": true
     }
   ]
 }

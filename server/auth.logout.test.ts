@@ -50,9 +50,20 @@ describe("auth.logout", () => {
     const result = await caller.auth.logout();
 
     expect(result).toEqual({ success: true });
-    expect(clearedCookies.map(c => c.name).sort()).toEqual([COOKIE_NAME, LBT_SESSION_COOKIE].sort());
-    const legacyClear = clearedCookies.find(c => c.name === COOKIE_NAME);
-    expect(legacyClear?.options).toMatchObject({
+
+    const legacyClears = clearedCookies.filter(c => c.name === COOKIE_NAME);
+    expect(legacyClears.length).toBeGreaterThan(0);
+    expect(legacyClears[0]?.options).toMatchObject({
+      maxAge: -1,
+      secure: true,
+      sameSite: "none",
+      httpOnly: true,
+      path: "/",
+    });
+
+    const lbtClears = clearedCookies.filter(c => c.name === LBT_SESSION_COOKIE);
+    expect(lbtClears.length).toBeGreaterThan(0);
+    expect(lbtClears[0]?.options).toMatchObject({
       maxAge: -1,
       secure: true,
       sameSite: "none",

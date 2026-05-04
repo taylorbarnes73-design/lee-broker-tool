@@ -379,3 +379,48 @@ export async function getPublicBranding(): Promise<{
     support_email: String(merged.get("branding.support_email") ?? ""),
   };
 }
+
+export async function getPublicToolSettings(): Promise<{
+  company_name: string;
+  logo_url: string | null;
+  primary_color: string;
+  support_email: string;
+  workflow: {
+    confidential_warning_enabled: boolean;
+    confidential_warning_text: string;
+    auto_save_interval_seconds: number;
+    default_listing_term_months: number;
+    commission_split_must_sum_100: boolean;
+    require_voucher_attachment: boolean;
+  };
+  notifications: {
+    email_on_submission: boolean;
+    email_on_status_change: boolean;
+    email_on_dealius_success: boolean;
+    admin_digest_enabled: boolean;
+    admin_digest_time: string;
+  };
+}> {
+  const merged = await ensureSettingsCache();
+  return {
+    company_name: String(merged.get("branding.company_name") ?? ""),
+    logo_url: (merged.get("branding.logo_url") as string | null) ?? null,
+    primary_color: String(merged.get("branding.primary_color") ?? "#A6192E"),
+    support_email: String(merged.get("branding.support_email") ?? ""),
+    workflow: {
+      confidential_warning_enabled: Boolean(merged.get("workflow.confidential_warning_enabled")),
+      confidential_warning_text: String(merged.get("workflow.confidential_warning_text") ?? ""),
+      auto_save_interval_seconds: Number(merged.get("workflow.auto_save_interval_seconds") ?? 30),
+      default_listing_term_months: Number(merged.get("workflow.default_listing_term_months") ?? 12),
+      commission_split_must_sum_100: Boolean(merged.get("workflow.commission_split_must_sum_100")),
+      require_voucher_attachment: Boolean(merged.get("workflow.require_voucher_attachment")),
+    },
+    notifications: {
+      email_on_submission: Boolean(merged.get("notifications.email_on_submission")),
+      email_on_status_change: Boolean(merged.get("notifications.email_on_status_change")),
+      email_on_dealius_success: Boolean(merged.get("notifications.email_on_dealius_success")),
+      admin_digest_enabled: Boolean(merged.get("notifications.admin_digest_enabled")),
+      admin_digest_time: String(merged.get("notifications.admin_digest_time") ?? "08:00"),
+    },
+  };
+}

@@ -31,6 +31,14 @@ vi.mock("../db", () => ({
   }),
 }));
 
+vi.mock("../settings/getSetting", () => ({
+  getSetting: vi.fn(async (key: string) => {
+    if (key === "branding.company_name") return "Test Company";
+    if (key === "branding.support_email") return "support@example.test";
+    return "";
+  }),
+}));
+
 vi.mock("nodemailer", () => ({
   default: {
     createTransport: vi.fn(() => ({
