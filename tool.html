@@ -33,7 +33,8 @@
       <div class="header-user-name" id="header-user-name">Not signed in</div>
       <div class="header-user-email" id="header-user-email"></div>
     </div>
-    <button class="admin-toggle" onclick="toggleAdminMode()">
+    <a id="header-admin-settings-link" class="header-admin-settings-link is-hidden" href="/portal/admin/settings">App settings</a>
+    <button class="admin-toggle is-hidden" onclick="toggleAdminMode()">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
       <span id="admin-toggle-label">Admin Portal</span>
     </button>
@@ -6195,6 +6196,7 @@ const BROKER_EMAIL_MAP = {
 };
 
 function showBrokerTool(user) {
+  setAdminAccessForUser(user || null);
   document.getElementById('tool-sign-in').style.display = 'none';
   document.getElementById('broker-view').style.display = '';
   if (user) {
@@ -10529,8 +10531,22 @@ function getSignedInBrokerIdentity() {
   return compReportsUser || readSharedBrokerIdentity();
 }
 
+function setAdminAccessForUser(user) {
+  const adminToggle = document.querySelector('.admin-toggle');
+  const settingsLink = document.getElementById('header-admin-settings-link');
+  const canUseAdmin = user && user.role === 'admin';
+  if (adminToggle) setHiddenState(adminToggle, !canUseAdmin);
+  if (settingsLink) setHiddenState(settingsLink, !canUseAdmin);
+  if (!canUseAdmin && document.body.classList.contains('admin-mode')) {
+    document.body.classList.remove('admin-mode');
+    const label = document.getElementById('admin-toggle-label');
+    if (label) label.textContent = 'Admin Portal';
+  }
+}
+
 function applySharedBrokerIdentity(user) {
   updateHeaderUserDisplay(user);
+  setAdminAccessForUser(user);
   if (!user) return;
 
   writeSharedBrokerIdentity(user);

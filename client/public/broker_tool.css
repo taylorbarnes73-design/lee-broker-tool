@@ -1662,6 +1662,27 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   border-color: #dfb8bf;
   color: var(--red);
 }
+.header-admin-settings-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  background: #fff;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.header-admin-settings-link:hover {
+  background: #fff5f6;
+  border-color: #dfb8bf;
+  color: var(--red);
+}
 .header-user-label {
   font-size: 10px;
   font-weight: 800;
