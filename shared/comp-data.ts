@@ -219,27 +219,73 @@ function cleanNumber(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function cleanDate(value: unknown): string {
-  const fromExcelSerial = (serial: number): string => {
-    const parsed = XLSX.SSF.parse_date_code(serial);
-    if (!parsed || !parsed.y || parsed.y < 1900 || parsed.y > 2100) return "";
-    const month = String(parsed.m).padStart(2, "0");
-    const day = String(parsed.d).padStart(2, "0");
-    return `${parsed.y}-${month}-${day}`;
-  };
+function excelSerialDate(serial: number): string {
+  const parsed = XLSX.SSF.parse_date_code(serial);
+  if (!parsed || !parsed.y || parsed.y < 1900 || parsed.y > 2100) return "";
+  const month = String(parsed.m).padStart(2, "0");
+  const day = String(parsed.d).padStart(2, "0");
+  return `${parsed.y}-${month}-${day}`;
+}
 
+function normalizeCompDateYear(yearText: string): number | null {
+  const n = Number(yearText);
+  if (!Number.isInteger(n)) return null;
+  if (n >= 1900 && n <= 2100) return n;
+  if (n >= 0 && n <= 69) return 2000 + n;
+  if (n >= 70 && n <= 99) return 1900 + n;
+  if (/^0+\d{1,2}$/.test(yearText)) return 2000 + Number(yearText.slice(-2));
+  return null;
+}
+
+function normalizeDateParts(year: number | null, month: number, day: number): string {
+  if (!year || year < 1900 || year > 2100) return "";
+  if (!(month >= 1 && month <= 12 && day >= 1 && day <= 31)) return "";
+  const dt = new Date(Date.UTC(year, month - 1, day));
+  if (dt.getUTCFullYear() !== year || dt.getUTCMonth() !== month - 1 || dt.getUTCDate() !== day) return "";
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+export function normalizeCompDateValue(value: unknown): string {
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
     return value.toISOString().slice(0, 10);
   }
   if (typeof value === "number" && Number.isFinite(value)) {
-    const excelDate = fromExcelSerial(value);
+    const excelDate = excelSerialDate(value);
     if (excelDate) return excelDate;
   }
   const text = cleanText(value);
   if (!text) return "";
+
+  const isoLike = text.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (isoLike) {
+    return normalizeDateParts(
+      normalizeCompDateYear(isoLike[1]),
+      Number(isoLike[2]),
+      Number(isoLike[3])
+    );
+  }
+
+  const usLike = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})\b/);
+  if (usLike) {
+    return normalizeDateParts(
+      normalizeCompDateYear(usLike[3]),
+      Number(usLike[1]),
+      Number(usLike[2])
+    );
+  }
+
+  const compactDate = text.replace(/\D/g, "");
+  if (/^(19|20)\d{6}$/.test(compactDate)) {
+    return normalizeDateParts(
+      normalizeCompDateYear(compactDate.slice(0, 4)),
+      Number(compactDate.slice(4, 6)),
+      Number(compactDate.slice(6, 8))
+    );
+  }
+
   const numericText = Number(text);
   if (Number.isFinite(numericText)) {
-    const excelDate = fromExcelSerial(numericText);
+    const excelDate = excelSerialDate(numericText);
     if (excelDate) return excelDate;
   }
   const parsed = new Date(text);
@@ -247,6 +293,10 @@ function cleanDate(value: unknown): string {
   const year = parsed.getUTCFullYear();
   if (year < 1900 || year > 2100) return "";
   return parsed.toISOString().slice(0, 10);
+}
+
+function cleanDate(value: unknown): string {
+  return normalizeCompDateValue(value);
 }
 
 function cleanFlag(value: unknown): string {
@@ -300,18 +350,18 @@ function formatCurrency(value: number | null | undefined, decimals = 0): string 
 
 function formatCurrencyPerSf(value: number | null | undefined, suffix = ""): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return "";
-  const decimals = value % 1 === 0 ? 2 : 3;
-  return `${formatCurrency(value, decimals)}${suffix}`;
+  return `${formatCurrency(value, 2)}${suffix}`;
 }
 
 function formatReportDate(value: string): string {
-  if (!value) return "";
-  const isoDateOnly = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const normalized = normalizeCompDateValue(value);
+  if (!normalized) return "";
+  const isoDateOnly = normalized.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (isoDateOnly) {
     const [, y, m, d] = isoDateOnly;
     return `${m}/${d}/${y}`;
   }
-  const parsed = new Date(value);
+  const parsed = new Date(normalized);
   if (Number.isNaN(parsed.getTime())) return value;
   const mm = String(parsed.getUTCMonth() + 1).padStart(2, "0");
   const dd = String(parsed.getUTCDate()).padStart(2, "0");

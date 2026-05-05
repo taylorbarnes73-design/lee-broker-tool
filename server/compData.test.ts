@@ -6,6 +6,7 @@ import {
   formatParkingRatioDisplay,
   formatRentAdjustmentsDisplay,
   formatSaleTransactionTypeDisplay,
+  normalizeCompDateValue,
   normalizeLeaseCompRecord,
   normalizeSaleCompRecord,
 } from "../shared/comp-data";
@@ -74,11 +75,33 @@ describe("comp data normalization", () => {
     expect(record.multiTenant).toBe("No");
 
     const card = buildLeaseReportCard(record);
-    expect(card.fields["Rent/SqFt"]).toContain("NNN");
+    expect(card.fields["Rent/SqFt"]).toBe("$2.00 NNN");
     expect(card.fields["Land"]).toBe("238,709");
     expect(card.fields["Options/Rent Adj"]).toContain("WND");
     expect(card.fields["Trans. Date"]).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
     expect(card.fields["Yr Built"]).toBe("2025");
+  });
+
+  it("keeps comp dates and rent/SF display tidy", () => {
+    expect(normalizeCompDateValue("2/10/26")).toBe("2026-02-10");
+    expect(normalizeCompDateValue("20260210")).toBe("2026-02-10");
+    expect(normalizeCompDateValue("02/10/0026")).toBe("2026-02-10");
+
+    const record = normalizeLeaseCompRecord(
+      {
+        streetNumber1: "1",
+        streetName: "Main",
+        streetSuffix: "St",
+        transactionDate: "2/10/26",
+        rentPerSqFt: 1.335,
+        rentType: "NNN",
+      },
+      "Lease"
+    );
+    const card = buildLeaseReportCard(record);
+
+    expect(card.fields["Trans. Date"]).toBe("02/10/2026");
+    expect(card.fields["Rent/SqFt"]).toBe("$1.34 NNN");
   });
 
   it("joins two street numbers with a dash in the address", () => {

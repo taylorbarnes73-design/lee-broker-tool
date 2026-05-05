@@ -3521,6 +3521,13 @@ body {
   flex: 1;
   min-width: 0;
 }
+.cr-date-range-row {
+  gap: 8px;
+}
+.cr-date-range-row input {
+  flex: 1 1 142px;
+  min-width: 132px;
+}
 .cr-range-sep {
   font-size: 13px;
   color: var(--ink-400);
@@ -3810,6 +3817,12 @@ body {
   .cr-filters-grid {
     grid-template-columns: 1fr 1fr 1fr 1fr;
   }
+  .cr-date-range-row {
+    flex-wrap: wrap;
+  }
+  .cr-date-range-row input {
+    min-width: 140px;
+  }
   .cr-drawer {
     grid-template-columns: 1fr 1fr;
   }
@@ -3819,6 +3832,7 @@ body {
 }
 @media (max-width: 640px) {
   .cr-filters-grid { grid-template-columns: 1fr 1fr; }
+  .cr-date-range-row input { min-width: 0; }
   .cr-drawer { grid-template-columns: 1fr; }
 }
 

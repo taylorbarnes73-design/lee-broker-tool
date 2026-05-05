@@ -11,7 +11,7 @@ import {
   importCompWorkbookBuffer,
   searchCompRows,
 } from "../services/compData";
-import type { LeaseCompRecord, SaleCompRecord } from "../../shared/comp-data";
+import { normalizeCompDateValue, type LeaseCompRecord, type SaleCompRecord } from "../../shared/comp-data";
 
 const compTypeSchema = z.enum(["lease", "sale"]);
 
@@ -61,11 +61,7 @@ function numberValue(input: ManualRecordInput, key: string) {
 }
 
 function dateValue(input: ManualRecordInput, key: string) {
-  const raw = textValue(input, key);
-  if (!raw) return "";
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) return raw;
-  return parsed.toISOString().slice(0, 10);
+  return normalizeCompDateValue(input[key]);
 }
 
 function brokerSubmittedRecord(input: ManualRecordInput, user: { name: string | null; email: string | null }) {
