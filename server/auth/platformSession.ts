@@ -62,12 +62,18 @@ export async function resolvePlatformUserFromRequest(req: Request): Promise<Plat
   const tokenHash = hashSessionToken(token);
   const now = new Date();
 
-  const rows = await db
-    .select({ user: appUsers })
-    .from(appSessions)
-    .innerJoin(appUsers, eq(appUsers.id, appSessions.userId))
-    .where(and(eq(appSessions.tokenHash, tokenHash), gt(appSessions.expiresAt, now)))
-    .limit(1);
+  let rows: Array<{ user: typeof appUsers.$inferSelect }>;
+  try {
+    rows = await db
+      .select({ user: appUsers })
+      .from(appSessions)
+      .innerJoin(appUsers, eq(appUsers.id, appSessions.userId))
+      .where(and(eq(appSessions.tokenHash, tokenHash), gt(appSessions.expiresAt, now)))
+      .limit(1);
+  } catch (error) {
+    console.error("[auth.session] Could not resolve platform session:", error);
+    return null;
+  }
 
   const user = rows[0]?.user;
   if (!user) return null;

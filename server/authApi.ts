@@ -73,20 +73,31 @@ authApiRouter.post("/login", async (req, res) => {
     isBrokerDirectoryAdmin(brokerEntry);
   const role = isAdminIdentity ? "admin" : "user";
 
-  await upsertUser({
-    openId,
-    email,
-    name,
-    loginMethod: "local",
-    role,
-    lastSignedIn: new Date(),
-  });
+  let sessionToken: string;
+  try {
+    await upsertUser({
+      openId,
+      email,
+      name,
+      loginMethod: "local",
+      role,
+      lastSignedIn: new Date(),
+    });
+    sessionToken = await sdk.createSessionToken(openId, { name, email });
+  } catch (err) {
+    console.error("[auth.login] Sign-in failed:", err);
+    res.status(500).json({ success: false, error: "Could not complete sign-in. Please try again or contact support." });
+    return;
+  }
 
-  const sessionToken = await sdk.createSessionToken(openId, { name, email });
   const cookieOptions = getSessionCookieOptions(req);
   res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-  await linkPlatformSessionAfterLegacyLogin(req, res, email);
+  try {
+    await linkPlatformSessionAfterLegacyLogin(req, res, email);
+  } catch (linkErr) {
+    console.error("[auth.login] Platform session link failed (legacy session cookie is set):", linkErr);
+  }
 
   res.json({
     success: true,

@@ -85,9 +85,16 @@ export function useAuth(options?: UseAuthOptions) {
     if (meQuery.isLoading || logoutMutation.isPending) return;
     if (state.user) return;
     if (typeof window === "undefined") return;
-    if (window.location.pathname === redirectPath) return;
+    const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (currentPath === redirectPath || window.location.pathname === redirectPath) return;
 
-    window.location.href = redirectPath
+    const isInternalLogin = redirectPath === "/login" || redirectPath.startsWith("/login?");
+    const nextPath =
+      isInternalLogin && window.location.pathname !== "/login"
+        ? `/login?next=${encodeURIComponent(currentPath)}`
+        : redirectPath;
+
+    window.location.href = nextPath;
   }, [
     redirectOnUnauthenticated,
     redirectPath,

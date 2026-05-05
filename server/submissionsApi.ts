@@ -2,8 +2,8 @@ import { Router } from "express";
 import { z } from "zod/v4";
 import { getDb } from "./db";
 import { submissions } from "../drizzle/schema";
-import { desc, eq, sql } from "drizzle-orm";
-import { sdk } from "./_core/sdk";
+import { eq, sql } from "drizzle-orm";
+import { resolvePortalRequestUser } from "./auth/resolvePortalRequestUser";
 import { pushVoucherSubmissionToDealius, validateVoucherPayloadForDealiusPush } from "./services/dealiusPush";
 import { parseLeeVoucherExcelBuffer, submissionPayloadPatchFromParsedVoucher } from "./services/voucherExcel";
 
@@ -54,7 +54,12 @@ export const submissionsApiRouter = Router();
 
 submissionsApiRouter.use(async (req, res, next) => {
   try {
-    (req as any).user = await sdk.authenticateRequest(req);
+    const user = await resolvePortalRequestUser(req);
+    if (!user) {
+      res.status(401).json({ success: false, error: "Not authenticated" });
+      return;
+    }
+    (req as any).user = user;
     next();
   } catch {
     res.status(401).json({ success: false, error: "Not authenticated" });

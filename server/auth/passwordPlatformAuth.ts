@@ -32,6 +32,17 @@ export function isPlatformPasswordLoginBody(body: unknown): body is z.infer<type
 }
 
 export async function handlePlatformPasswordLogin(req: Request, res: Response): Promise<void> {
+  try {
+    await handlePlatformPasswordLoginUnsafe(req, res);
+  } catch (error) {
+    console.error("[auth.login] Platform password login failed:", error);
+    if (!res.headersSent) {
+      res.status(503).json({ error: "Sign-in service is temporarily unavailable." });
+    }
+  }
+}
+
+async function handlePlatformPasswordLoginUnsafe(req: Request, res: Response): Promise<void> {
   const ip = getRequestIp(req);
   if (isLoginRateLimited(ip)) {
     res.status(429).json({ error: "Too many login attempts. Try again later." });
@@ -96,12 +107,13 @@ export async function handlePlatformPasswordLogin(req: Request, res: Response): 
   }
 
   const { rawToken } = await createPlatformSession(db, user.id, req);
-  const cookieOptions = getSessionCookieOptions(req);
-  res.cookie(LBT_SESSION_COOKIE, rawToken, { ...cookieOptions, maxAge: LBT_SESSION_MAX_AGE_MS });
 
   await db.update(appUsers).set({ lastLoginAt: new Date() }).where(eq(appUsers.id, user.id));
 
   await writeAuditLog(user.id, "login.success", "user", user.id, {}, req);
+
+  const cookieOptions = getSessionCookieOptions(req);
+  res.cookie(LBT_SESSION_COOKIE, rawToken, { ...cookieOptions, maxAge: LBT_SESSION_MAX_AGE_MS });
 
   res.json({
     success: true,
