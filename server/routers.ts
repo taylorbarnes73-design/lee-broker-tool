@@ -5,7 +5,7 @@ import {
 } from "@shared/brokerDirectory";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { storagePut, storageGet } from "./storage";
 import { getDb, getUserByOpenId, upsertUser } from "./db";
 import { uploads } from "../drizzle/schema";
@@ -161,7 +161,7 @@ export const appRouter = router({
      * Upload a file to S3 and record metadata in the database.
      * The client sends the file as a base64-encoded string.
      */
-    upload: publicProcedure
+    upload: protectedProcedure
       .input(
         z.object({
           filename: z.string(),
@@ -209,7 +209,7 @@ export const appRouter = router({
     /**
      * Get a fresh download URL for a file by its key.
      */
-    getUrl: publicProcedure
+    getUrl: protectedProcedure
       .input(z.object({ fileKey: z.string() }))
       .query(async ({ input }) => {
         const { url } = await storageGet(input.fileKey);
@@ -219,7 +219,7 @@ export const appRouter = router({
     /**
      * List recent uploads, optionally filtered by category or reference.
      */
-    list: publicProcedure
+    list: protectedProcedure
       .input(
         z.object({
           category: z.string().optional(),
