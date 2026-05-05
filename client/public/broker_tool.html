@@ -34,15 +34,16 @@
         <div class="header-user-name" id="header-user-name">Not signed in</div>
         <div class="header-user-email" id="header-user-email"></div>
       </div>
-      <button type="button" class="submission-queue-button" onclick="switchTab('queue')">Submission Queue</button>
-      <a class="header-portal-link" href="/portal">Submissions portal</a>
-      <a class="header-portal-link" href="/login">Portal login</a>
-      <a id="header-admin-settings-link" class="header-admin-settings-link is-hidden" href="/portal/admin/settings">App settings</a>
+      <nav class="header-portal-actions" aria-label="Portal links">
+        <button type="button" class="submission-queue-button" onclick="switchTab('queue')">Queue</button>
+        <a class="header-portal-link" href="/portal">Portal</a>
+        <a class="header-portal-link" href="/login">Login</a>
+      </nav>
     </div>
-    <button class="admin-toggle is-hidden" onclick="toggleAdminMode()">
+    <a class="admin-toggle is-hidden" href="/portal/admin/settings" aria-label="Open admin settings">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-      <span id="admin-toggle-label">Admin Portal</span>
-    </button>
+      <span id="admin-toggle-label">Settings</span>
+    </a>
   </div><!-- /header-right -->
 </div><!-- /header -->
 
@@ -7368,7 +7369,8 @@ function adminQuickAction(tab) {
   try {
     if (document.body.classList.contains('admin-mode')) {
       document.body.classList.remove('admin-mode');
-      document.getElementById('admin-toggle-label').textContent = 'Admin Portal';
+      const label = document.getElementById('admin-toggle-label');
+      if (label) label.textContent = 'Settings';
     }
     if (typeof switchTab === 'function') switchTab(tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -7378,7 +7380,8 @@ function adminQuickAction(tab) {
 // Toggle admin mode
 async function toggleAdminMode() {
   const isAdmin = document.body.classList.toggle('admin-mode');
-  document.getElementById('admin-toggle-label').textContent = isAdmin ? 'Broker Tool' : 'Admin Portal';
+  const label = document.getElementById('admin-toggle-label');
+  if (label) label.textContent = isAdmin ? 'Tool workspace' : 'Settings';
   if (isAdmin) {
     await refreshAdminWorkspace();
   }
@@ -11030,7 +11033,7 @@ function setAdminAccessForUser(user) {
   if (!canUseAdmin && document.body.classList.contains('admin-mode')) {
     document.body.classList.remove('admin-mode');
     const label = document.getElementById('admin-toggle-label');
-    if (label) label.textContent = 'Admin Portal';
+    if (label) label.textContent = 'Settings';
   }
 }
 

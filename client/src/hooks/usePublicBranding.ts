@@ -10,7 +10,7 @@ export type PublicBranding = {
 const FALLBACK: PublicBranding = {
   company_name: "Broker Operations",
   logo_url: null,
-  primary_color: "#c32033",
+  primary_color: "#A6192E",
   support_email: "",
 };
 

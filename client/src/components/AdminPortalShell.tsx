@@ -101,7 +101,7 @@ export default function AdminPortalShell({
   const branding = usePublicBranding();
   const isAdmin = user?.role === "admin";
   const logoSrc = branding.logo_url?.trim() || "/lee-newport-beach-fullcolor.png";
-  const accent = branding.primary_color || "#c32033";
+  const accent = branding.primary_color || "#A6192E";
 
   const portalStyle = {
     ["--admin-accent" as string]: accent,
