@@ -124,6 +124,14 @@ export default function AdminPortalShell({
           <NavBlock items={mainNav.filter(i => !i.adminOnly || isAdmin)} active={section} accent={accent} />
         </nav>
 
+        <div className="admin-portal-nav-section-label">FORMS</div>
+        <nav className="admin-portal-sidebar-nav" aria-label="Broker HTML tool">
+          <a href="/tool" className="admin-portal-nav-item">
+            <span>Broker submission tool</span>
+            <small>Listings, comps, PDFs</small>
+          </a>
+        </nav>
+
         {isAdmin && (
           <>
             <div className="admin-portal-nav-section-label">PEOPLE</div>

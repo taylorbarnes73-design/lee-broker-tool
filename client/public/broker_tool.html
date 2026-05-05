@@ -35,6 +35,8 @@
         <div class="header-user-email" id="header-user-email"></div>
       </div>
       <button type="button" class="submission-queue-button" onclick="switchTab('queue')">Submission Queue</button>
+      <a class="header-portal-link" href="/portal">Submissions portal</a>
+      <a class="header-portal-link" href="/login">Portal login</a>
       <a id="header-admin-settings-link" class="header-admin-settings-link is-hidden" href="/portal/admin/settings">App settings</a>
     </div>
     <button class="admin-toggle is-hidden" onclick="toggleAdminMode()">
@@ -2795,6 +2797,43 @@ function toggleOptional(toggleEl) {
   }
 }
 
+const BROKER_TOOL_TAB_IDS = new Set(['listing', 'sign', 'voucher', 'comp', 'comp-reports', 'docs', 'contracts', 'queue']);
+
+function parseBrokerToolTabFromLocation() {
+  try {
+    const params = new URLSearchParams(window.location.search || '');
+    const fromQuery = params.get('tab');
+    if (fromQuery && BROKER_TOOL_TAB_IDS.has(fromQuery)) return fromQuery;
+    const raw = (window.location.hash || '').replace(/^#/, '').trim();
+    if (raw && BROKER_TOOL_TAB_IDS.has(raw)) return raw;
+  } catch (e) { /* no-op */ }
+  return null;
+}
+
+function syncBrokerToolUrlTab(name) {
+  try {
+    if (!BROKER_TOOL_TAB_IDS.has(name)) return;
+    const path = window.location.pathname;
+    const search = window.location.search || '';
+    const nextHash = name === 'listing' ? '' : '#' + name;
+    const nextUrl = path + search + nextHash;
+    const curUrl = path + search + (window.location.hash || '');
+    if (curUrl !== nextUrl) {
+      window.history.replaceState(null, '', nextUrl);
+    }
+  } catch (e) { /* no-op */ }
+}
+
+function applyBrokerToolInitialTabFromUrl() {
+  const desired = parseBrokerToolTabFromLocation();
+  if (!desired || typeof switchTab !== 'function') return;
+  try {
+    switchTab(desired);
+  } catch (e) {
+    console.warn('Initial tab from URL:', e && e.message ? e.message : e);
+  }
+}
+
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => {
     t.classList.toggle('active', t.dataset.tab === name);
@@ -2808,7 +2847,18 @@ function switchTab(name) {
     void initCompReports();
   }
   bootstrapStepFlowFor(name);
+  syncBrokerToolUrlTab(name);
 }
+
+window.addEventListener('hashchange', function () {
+  const bv = document.getElementById('broker-view');
+  if (!bv || bv.style.display === 'none') return;
+  const desired = parseBrokerToolTabFromLocation();
+  const next = desired || 'listing';
+  const cur = document.querySelector('.tab.active');
+  const curKey = cur && cur.getAttribute('data-tab');
+  if (curKey !== next) switchTab(next);
+});
 
 // Ensure step flows are initialized after the first view of each tab
 function bootstrapStepFlowFor(name) {
@@ -6362,6 +6412,7 @@ function showBrokerTool(user) {
     updateHeaderUserDisplay(user);
   }
   void refreshBrokerQueue();
+  window.queueMicrotask(applyBrokerToolInitialTabFromUrl);
 }
 
 async function handleToolSignIn(event) {

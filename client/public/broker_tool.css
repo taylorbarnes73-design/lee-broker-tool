@@ -1662,7 +1662,8 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   border-color: #dfb8bf;
   color: var(--red);
 }
-.header-admin-settings-link {
+.header-admin-settings-link,
+.header-portal-link {
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
@@ -1678,7 +1679,8 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
   text-decoration: none;
   white-space: nowrap;
 }
-.header-admin-settings-link:hover {
+.header-admin-settings-link:hover,
+.header-portal-link:hover {
   background: #fff5f6;
   border-color: #dfb8bf;
   color: var(--red);
