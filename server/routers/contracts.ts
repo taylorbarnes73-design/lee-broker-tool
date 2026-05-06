@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 import { publicProcedure, router } from "../_core/trpc";
 import { invokeLLM, type Message } from "../_core/llm";
 import { execSync } from "child_process";
@@ -226,20 +226,33 @@ Return JSON with these fields (omit any that are blank):
 }`;
 
       try {
+        // Fetch the PDF server-side and extract its text — file_url is not a supported
+        // content type in the OpenAI/Gemini chat API; send extracted text instead.
+        const pdfResp = await fetch(input.pdfUrl, { signal: AbortSignal.timeout(30_000) });
+        if (!pdfResp.ok) {
+          return {
+            success: false,
+            error: `Could not fetch PDF: ${pdfResp.status} ${pdfResp.statusText}`,
+            data: null,
+          };
+        }
+        const pdfBuffer = Buffer.from(await pdfResp.arrayBuffer());
+        let pdfText = "";
+        try {
+          const mod = await import("pdf-parse");
+          const parse = (mod as any).default ?? (mod as any);
+          const pdfParsed = await parse(pdfBuffer);
+          pdfText = (pdfParsed.text || "").replace(/\s+/g, " ").trim().slice(0, 40_000);
+        } catch (parseErr: unknown) {
+          const msg = parseErr instanceof Error ? parseErr.message : String(parseErr);
+          pdfText = `[PDF text extraction failed: ${msg}. Return empty JSON if no data is available.]`;
+        }
+
         const messages: Message[] = [
           { role: "system", content: systemPrompt },
           {
             role: "user",
-            content: [
-              { type: "text", text: userPrompt },
-              {
-                type: "file_url",
-                file_url: {
-                  url: input.pdfUrl,
-                  mime_type: "application/pdf",
-                },
-              },
-            ],
+            content: `${userPrompt}\n\nDocument text (extracted from PDF):\n${pdfText}`,
           },
         ];
         const response = await invokeLLM({
