@@ -74,6 +74,30 @@ function normalizePropertyType(raw: string): string {
   return "Industrial";
 }
 
+function suiteLabel(raw: unknown): string {
+  const value = String(raw ?? "").trim().replace(/\s+/g, " ");
+  if (!value) return "";
+  if (/^(suite|ste\.?|unit|#)\b/i.test(value)) return value.replace(/^ste\.?\b/i, "Ste");
+  return `Ste ${value}`;
+}
+
+function propertyNameFromAddressSuite(address: unknown, suite: unknown): string {
+  const cleanAddress = String(address ?? "").trim();
+  const cleanSuite = suiteLabel(suite);
+  if (!cleanAddress) return cleanSuite;
+  if (!cleanSuite) return cleanAddress;
+  const normalizedAddress = cleanAddress.toLowerCase().replace(/[.,]/g, "").replace(/\s+/g, " ");
+  const normalizedSuite = cleanSuite.toLowerCase().replace(/[.,]/g, "").replace(/\s+/g, " ");
+  const suiteNumber = normalizedSuite.replace(/^(suite|ste|unit|#)\s*/, "").trim();
+  if (
+    normalizedAddress.includes(normalizedSuite) ||
+    (suiteNumber && new RegExp(`(^|\\s|#)${suiteNumber.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\s|$)`).test(normalizedAddress))
+  ) {
+    return cleanAddress;
+  }
+  return `${cleanAddress}, ${cleanSuite}`;
+}
+
 function g(rows: unknown[][], r: number, c: number): string {
   const row = rows[r];
   if (!row || row[c] == null) return "";
@@ -191,32 +215,35 @@ function parseLeeVoucherGridInternal(rows: unknown[][], ws: WorkSheet | null, la
   const isSale = txRaw.includes("sale") || txRaw.includes("sold");
 
   const listingHouse = (
-    (v431 && ws ? cellStrAtRC(ws, 84, 1) || cellStrAtRC(ws, 84, 2) : "") ||
-    (v431 ? g(rows, 84, 1) || g(rows, 84, 2) : g(rows, 84, 2))
+    (v431 && ws ? cellStrAtRC(ws, 84, 2) : "") ||
+    (v431 ? g(rows, 84, 2) : g(rows, 84, 2))
   ).toLowerCase();
   const procuringHouse = (
-    (v431 && ws ? cellStrAtRC(ws, 84, 9) || cellStrAtRC(ws, 84, 10) : "") ||
-    (v431 ? g(rows, 84, 9) || g(rows, 84, 10) : g(rows, 84, 10))
+    (v431 && ws ? cellStrAtRC(ws, 84, 10) : "") ||
+    (v431 ? g(rows, 84, 10) : g(rows, 84, 10))
   ).toLowerCase();
   const ourKeywords = ["newport", "lee & assoc", "lee and assoc"];
   const isListing = ourKeywords.some(k => listingHouse.includes(k));
   const isProcuring = ourKeywords.some(k => procuringHouse.includes(k));
 
   let fallbackSide = "";
+  let hasListingBroker = false;
+  let hasProcuringBroker = false;
   const brokerScanEnd = v431 ? 132 : 129;
   for (let r = 122; r <= brokerScanEnd; r++) {
     const side = g(rows, r, 3).toLowerCase();
     if (side.includes("listing")) {
-      fallbackSide = "listing";
-      break;
+      hasListingBroker = true;
+      if (!fallbackSide) fallbackSide = "listing";
     }
     if (side.includes("procur")) {
-      fallbackSide = "procuring";
-      break;
+      hasProcuringBroker = true;
+      if (!fallbackSide) fallbackSide = "procuring";
     }
   }
 
-  const onListingSide = isListing || (!isProcuring && fallbackSide === "listing");
+  const representedBothSides = (isListing && isProcuring) || (hasListingBroker && hasProcuringBroker);
+  const onListingSide = representedBothSides || isListing || (!isProcuring && fallbackSide === "listing");
   let repTypeID: number;
   if (isLease) repTypeID = onListingSide ? 4 : 3;
   else repTypeID = onListingSide ? 2 : 1;
@@ -320,7 +347,7 @@ function parseLeeVoucherGridInternal(rows: unknown[][], ws: WorkSheet | null, la
   if (eN && eA != null) outsideBrokers.push({ name: eN, amt: eA });
 
   const txWord = isSale ? "Sold" : "Leased";
-  const dealName = txWord + ": " + address + (suite ? ", Ste " + suite : "");
+  const dealName = txWord + ": " + propertyNameFromAddressSuite(address, suite);
 
   const clientContact = onListingSide ? lessorContact : lesseeContact;
   const oppositeContact = onListingSide ? lesseeContact : lessorContact;
@@ -372,6 +399,9 @@ function parseLeeVoucherGridInternal(rows: unknown[][], ws: WorkSheet | null, la
       procuringHouse,
       isListing,
       isProcuring,
+      hasListingBroker,
+      hasProcuringBroker,
+      representedBothSides,
       fallbackSide,
       onListingSide,
       txRaw,

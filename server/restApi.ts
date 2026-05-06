@@ -14,6 +14,7 @@ import { desc, eq } from "drizzle-orm";
 import { storagePut, storageGet } from "./storage";
 import { nanoid } from "nanoid";
 import { DealiusClient } from "./services/dealiusClient";
+import { authenticateConfiguredDealius } from "./services/dealiusAuth";
 
 export const restApiRouter = Router();
 
@@ -490,7 +491,7 @@ restApiRouter.post("/docusign/completed", async (req: Request, res: Response) =>
     const dealiusListingId = body.dealiusListingId != null ? String(body.dealiusListingId).trim() : "";
 
     const client = new DealiusClient();
-    const token = await client.authenticate();
+    const token = await authenticateConfiguredDealius(client);
 
     const documentType = body.documentType != null ? String(body.documentType).trim() : null;
     const results: any = { stored: { fileKey: key, url }, attached: {} as any };

@@ -1,11 +1,17 @@
 import { Router } from "express";
 import { z } from "zod/v4";
+import { nanoid } from "nanoid";
 import { getDb } from "./db";
-import { submissions } from "../drizzle/schema";
+import { submissions, uploads } from "../drizzle/schema";
 import { eq, sql } from "drizzle-orm";
 import { resolvePortalRequestUser } from "./auth/resolvePortalRequestUser";
 import { pushVoucherSubmissionToDealius, validateVoucherPayloadForDealiusPush } from "./services/dealiusPush";
+import { pushDealEntryToDealius, pushListingEntryToDealius, validateListingEntryForDealiusPush } from "./services/dealiusEntry";
 import { parseLeeVoucherExcelBuffer, submissionPayloadPatchFromParsedVoucher } from "./services/voucherExcel";
+import { listingFormPatchFromParsed, parseListingFormPdfBuffer } from "./services/listingFormPdf";
+import { DealiusClient } from "./services/dealiusClient";
+import { authenticateConfiguredDealius } from "./services/dealiusAuth";
+import { storagePut } from "./storage";
 
 const ACTIVE_QUEUE_STATUSES = ["pending", "in_review"] as const;
 type ActiveQueueStatus = (typeof ACTIVE_QUEUE_STATUSES)[number];
@@ -48,6 +54,37 @@ const updateSchema = z.object({
 const importVoucherExcelBody = z.object({
   base64Data: z.string().min(1),
   filename: z.string().trim().min(1).max(255),
+});
+
+const importListingPdfBody = z.object({
+  base64Data: z.string().min(1),
+  filename: z.string().trim().min(1).max(255),
+});
+
+const pushDealiusBody = z.object({
+  entryMode: z.enum(["deal", "listing"]).optional(),
+  entry: z.record(z.string(), z.unknown()).optional(),
+  overrides: z
+    .object({
+      feePercent: z.union([z.number(), z.string(), z.null()]).optional(),
+    })
+    .optional(),
+});
+
+const dealiusDocumentBody = z.object({
+  entityType: z.enum(["deal", "listing"]),
+  entityId: z.union([z.string(), z.number()]).transform(v => String(v).trim()).pipe(z.string().min(1).max(64)),
+  files: z
+    .array(
+      z.object({
+        filename: z.string().trim().min(1).max(255),
+        mimeType: z.string().trim().min(1).max(128).default("application/octet-stream"),
+        base64Data: z.string().min(1),
+        documentType: z.string().trim().max(128).optional().nullable(),
+      })
+    )
+    .min(1)
+    .max(10),
 });
 
 export const submissionsApiRouter = Router();
@@ -325,24 +362,44 @@ submissionsApiRouter.post("/:id/push-dealius", async (req, res) => {
   }
 
   try {
-    if (row.formType !== "voucher") {
-      res.status(400).json({ success: false, error: `Dealius push not implemented for formType "${row.formType}" yet.` });
+    const parsedBody = pushDealiusBody.safeParse(req.body ?? {});
+    if (!parsedBody.success) {
+      res.status(400).json({ success: false, error: parsedBody.error.issues[0]?.message ?? "Invalid body" });
       return;
     }
 
-    const overrides = (req.body && typeof req.body === "object" ? (req.body as any).overrides : null) as any;
+    const overrides = parsedBody.data.overrides;
     const feePercentOverrideRaw = overrides?.feePercent;
     const feePercentOverride =
       feePercentOverrideRaw === null || feePercentOverrideRaw === undefined || feePercentOverrideRaw === ""
         ? null
         : Number(feePercentOverrideRaw);
 
-    const pushPayload =
-      feePercentOverride != null && Number.isFinite(feePercentOverride) && feePercentOverride > 0
-        ? { ...payload, feePercent: feePercentOverride }
-        : payload;
+    const requestedMode =
+      parsedBody.data.entryMode ??
+      (row.formType === "listing" ? "listing" : row.formType === "voucher" ? "deal" : undefined);
 
-    const validation = validateVoucherPayloadForDealiusPush(pushPayload);
+    if (!requestedMode) {
+      res.status(400).json({ success: false, error: `Dealius push not implemented for formType "${row.formType}" yet.` });
+      return;
+    }
+
+    const bodyEntry = parsedBody.data.entry;
+    const pushPayload =
+      bodyEntry && typeof bodyEntry === "object"
+        ? { ...bodyEntry }
+        : feePercentOverride != null && Number.isFinite(feePercentOverride) && feePercentOverride > 0
+          ? { ...payload, feePercent: feePercentOverride }
+          : payload;
+
+    if (requestedMode === "deal" && feePercentOverride != null && Number.isFinite(feePercentOverride) && feePercentOverride > 0) {
+      (pushPayload as any).feePercent = feePercentOverride;
+    }
+
+    const validation =
+      requestedMode === "listing"
+        ? validateListingEntryForDealiusPush(pushPayload)
+        : validateVoucherPayloadForDealiusPush(pushPayload);
     if (!validation.ok) {
       res.status(400).json({
         success: false,
@@ -352,13 +409,21 @@ submissionsApiRouter.post("/:id/push-dealius", async (req, res) => {
       return;
     }
 
-    const result = await pushVoucherSubmissionToDealius({ payload: pushPayload });
+    const result =
+      requestedMode === "listing"
+        ? await pushListingEntryToDealius({ entry: pushPayload })
+        : bodyEntry
+          ? await pushDealEntryToDealius({ entry: pushPayload })
+          : await pushVoucherSubmissionToDealius({ payload: pushPayload });
+
     const nextPayload = {
       ...payload,
       dealiusPush: {
-        pushedAt: new Date().toISOString(),
-        feePercentOverride: feePercentOverride ?? null,
         ...result,
+        pushedAt: new Date().toISOString(),
+        entryMode: requestedMode,
+        submittedEntry: pushPayload,
+        feePercentOverride: feePercentOverride ?? null,
       },
     };
 
@@ -376,6 +441,139 @@ submissionsApiRouter.post("/:id/push-dealius", async (req, res) => {
     const msg = err instanceof Error ? err.message : String(err);
     res.status(500).json({ success: false, error: msg });
   }
+});
+
+submissionsApiRouter.post("/:id/dealius-documents", async (req, res) => {
+  const user = (req as any).user as { openId: string; role: string; name?: string | null };
+  if (user.role !== "admin") {
+    res.status(403).json({ success: false, error: "Admin access required" });
+    return;
+  }
+
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id) || id <= 0) {
+    res.status(400).json({ success: false, error: "Invalid id" });
+    return;
+  }
+
+  const parsedBody = dealiusDocumentBody.safeParse(req.body ?? {});
+  if (!parsedBody.success) {
+    res.status(400).json({ success: false, error: parsedBody.error.issues[0]?.message ?? "Invalid body" });
+    return;
+  }
+
+  const db = await getDb();
+  if (!db) {
+    res.status(503).json({ success: false, error: "Database unavailable" });
+    return;
+  }
+
+  const rows = await db.select().from(submissions).where(eq(submissions.id, id)).limit(1);
+  const row = rows[0];
+  if (!row) {
+    res.status(404).json({ success: false, error: "Not found" });
+    return;
+  }
+
+  let payload: any = {};
+  try {
+    payload = JSON.parse(row.payload ?? "{}");
+  } catch {
+    payload = {};
+  }
+
+  const client = new DealiusClient();
+  let token: string;
+  try {
+    token = await authenticateConfiguredDealius(client);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ success: false, error: msg });
+    return;
+  }
+
+  const { entityType, entityId, files } = parsedBody.data;
+  const maxBytes = 25 * 1024 * 1024;
+  const results: any[] = [];
+
+  for (const file of files) {
+    const safeFilename = file.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+    let buffer: Buffer;
+    try {
+      buffer = Buffer.from(file.base64Data, "base64");
+    } catch {
+      results.push({ filename: file.filename, success: false, error: "Invalid base64 data" });
+      continue;
+    }
+    if (!buffer.length) {
+      results.push({ filename: file.filename, success: false, error: "Empty file" });
+      continue;
+    }
+    if (buffer.length > maxBytes) {
+      results.push({ filename: file.filename, success: false, error: "File too large (max 25MB)" });
+      continue;
+    }
+
+    const fileKey = `broker-docs/submissions/dealius/${id}/${nanoid(10)}-${safeFilename}`;
+    const stored = await storagePut(fileKey, buffer, file.mimeType);
+    await db.insert(uploads).values({
+      fileKey,
+      url: stored.url,
+      filename: file.filename,
+      mimeType: file.mimeType,
+      fileSize: buffer.length,
+      category: "dealius-document",
+      reference: `submission:${id}`,
+      uploaderName: user.name ?? "Admin",
+      uploaderOpenId: user.openId,
+    });
+
+    const uploaded = await client.uploadDocument({
+      token,
+      entityType,
+      entityId,
+      filename: file.filename,
+      mimeType: file.mimeType,
+      buffer,
+      documentType: file.documentType ?? null,
+    });
+    const success = uploaded.status >= 200 && uploaded.status < 300;
+    results.push({
+      filename: file.filename,
+      success,
+      status: uploaded.status,
+      response: uploaded.text.slice(0, 500),
+      fileKey,
+      url: stored.url,
+      documentType: file.documentType ?? null,
+    });
+  }
+
+  const previous = Array.isArray(payload.dealiusDocuments) ? payload.dealiusDocuments : [];
+  const nextPayload = {
+    ...payload,
+    dealiusDocuments: [
+      ...previous,
+      ...results.map(r => ({
+        uploadedAt: new Date().toISOString(),
+        entityType,
+        entityId,
+        ...r,
+      })),
+    ],
+  };
+
+  await db
+    .update(submissions)
+    .set({ payload: JSON.stringify(nextPayload), updatedAt: new Date() })
+    .where(eq(submissions.id, id));
+
+  const failed = results.filter(r => !r.success);
+  res.status(failed.length ? 207 : 200).json({
+    success: failed.length === 0,
+    data: { entityType, entityId, results },
+    error: failed.length ? `${failed.length} document(s) failed to attach to Dealius.` : undefined,
+  });
 });
 
 /** Admin: merge Lee voucher Excel (.xlsx / .xlsm) into submission payload (same grid as legacy tool). */
@@ -477,6 +675,115 @@ submissionsApiRouter.post("/:id/import-voucher-excel", async (req, res) => {
         feePercent: patch.feePercent ?? null,
         rentRowCount: Array.isArray(parsed.rentRows) ? parsed.rentRows.length : 0,
         brokerCount: Array.isArray(parsed.brokers) ? parsed.brokers.length : 0,
+      },
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    res.status(400).json({ success: false, error: msg });
+  }
+});
+
+submissionsApiRouter.post("/:id/import-listing-pdf", async (req, res) => {
+  const user = (req as any).user as { openId: string; role: string };
+  if (user.role !== "admin") {
+    res.status(403).json({ success: false, error: "Admin access required" });
+    return;
+  }
+
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id) || id <= 0) {
+    res.status(400).json({ success: false, error: "Invalid id" });
+    return;
+  }
+
+  const parsedBody = importListingPdfBody.safeParse(req.body);
+  if (!parsedBody.success) {
+    res.status(400).json({ success: false, error: parsedBody.error.issues[0]?.message ?? "Invalid body" });
+    return;
+  }
+
+  const filename = parsedBody.data.filename.toLowerCase();
+  if (!filename.endsWith(".pdf")) {
+    res.status(400).json({ success: false, error: "filename must end in .pdf" });
+    return;
+  }
+
+  const db = await getDb();
+  if (!db) {
+    res.status(503).json({ success: false, error: "Database unavailable" });
+    return;
+  }
+
+  const rows = await db.select().from(submissions).where(eq(submissions.id, id)).limit(1);
+  const row = rows[0];
+  if (!row) {
+    res.status(404).json({ success: false, error: "Not found" });
+    return;
+  }
+
+  if (row.formType !== "listing") {
+    res.status(400).json({ success: false, error: "Listing PDF import is only supported for listing submissions." });
+    return;
+  }
+
+  let payload: any = {};
+  try {
+    payload = JSON.parse(row.payload ?? "{}");
+  } catch {
+    payload = {};
+  }
+
+  let buffer: Buffer;
+  try {
+    buffer = Buffer.from(parsedBody.data.base64Data, "base64");
+  } catch {
+    res.status(400).json({ success: false, error: "Invalid base64 data" });
+    return;
+  }
+  if (!buffer.length) {
+    res.status(400).json({ success: false, error: "Empty file" });
+    return;
+  }
+  const maxBytes = 25 * 1024 * 1024;
+  if (buffer.length > maxBytes) {
+    res.status(400).json({ success: false, error: "File too large (max 25MB)" });
+    return;
+  }
+
+  try {
+    const parsed = await parseListingFormPdfBuffer(buffer);
+    if (!parsed.address && !parsed.city && parsed.spaces.length === 0) {
+      throw new Error("No filled listing input form fields were found in this PDF.");
+    }
+    const patch = listingFormPatchFromParsed(parsed);
+    const prevImport = (patch.listingFormImport && typeof patch.listingFormImport === "object" ? patch.listingFormImport : {}) as Record<
+      string,
+      unknown
+    >;
+    patch.listingFormImport = { ...prevImport, filename: parsedBody.data.filename };
+
+    const nextPayload = { ...payload, ...patch };
+
+    await db
+      .update(submissions)
+      .set({
+        payload: JSON.stringify(nextPayload),
+        updatedAt: new Date(),
+      })
+      .where(eq(submissions.id, id));
+
+    res.json({
+      success: true,
+      data: {
+        listingName: parsed.listingName,
+        address: parsed.address,
+        city: parsed.city,
+        zip: parsed.zip,
+        propertyType: parsed.propertyType,
+        transactionType: parsed.transactionType,
+        spaceCount: parsed.spaces.length,
+        totalBldgSF: parsed.totalBldgSF,
+        sqft: parsed.sqft,
       },
     });
   } catch (err: unknown) {

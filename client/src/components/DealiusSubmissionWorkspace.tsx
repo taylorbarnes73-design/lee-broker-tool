@@ -1,0 +1,1026 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+import { ExternalLink, FileSearch, FileUp, Plus, Send, Trash2 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import { mergeVoucherFromContractExtraction } from "@shared/contractIntake";
+import { Badge, Button, Field, Input, Select } from "../design/index.jsx";
+
+type SubmissionDetail = {
+  id: number;
+  formType: string;
+  status: string;
+  reference: string | null;
+  submittedBy: string | null;
+  submittedByEmail: string | null;
+  createdAt: string;
+  updatedAt: string;
+  payload: any;
+};
+
+type EntryMode = "deal" | "listing";
+type RentRow = { months: number | string; monthly: number | string; free: boolean };
+type ListingSpaceRow = { suite: string; sqft: number | string; askingRate?: number | string; availableDate?: string; comments?: string };
+type BrokerRow = { name: string; side?: string; pct: number | string; lead?: boolean };
+
+type DealiusEntry = {
+  entryMode: EntryMode;
+  dealName: string;
+  listingName: string;
+  repTypeID: string;
+  transactionType: string;
+  listingTransaction: string;
+  address: string;
+  city: string;
+  zip: string;
+  suite: string;
+  propertyType: string;
+  sqft: number | string;
+  totalBldgSF: number | string;
+  yearBuilt: number | string;
+  clientCo: string;
+  oppositeCo: string;
+  ownerCompany: string;
+  startDate: string;
+  endDate: string;
+  occupancyDate: string;
+  term: number | string;
+  askingRate: number | string;
+  totalConsideration: number | string;
+  feePercent: number | string;
+  listingStartDate: string;
+  listingExpiryDate: string;
+  listingAvailableDate: string;
+  listingStatus: string;
+  listingSource: string;
+  listingNotes: string;
+  rentRows: RentRow[];
+  spaces: ListingSpaceRow[];
+  brokers: BrokerRow[];
+};
+
+type DocRow = {
+  file: File;
+  documentType: string;
+};
+
+const DOC_TYPES = [
+  { label: "Select type", value: "" },
+  { label: "Listing Agreement", value: "Listing Agreement" },
+  { label: "Lease / Sublease", value: "Lease" },
+  { label: "Voucher / Deal Sheet", value: "Voucher" },
+  { label: "Agency Disclosure", value: "Agency Disclosure" },
+  { label: "LOI", value: "LOI" },
+  { label: "Commission Agreement", value: "Commission Agreement" },
+  { label: "Purchase Agreement", value: "Purchase Agreement" },
+  { label: "Other", value: "Other" },
+];
+
+function str(raw: unknown): string {
+  return String(raw ?? "").trim();
+}
+
+function num(raw: unknown): number | null {
+  if (raw === null || raw === undefined || raw === "") return null;
+  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+  const parsed = Number(String(raw).replace(/[$,%]/g, "").replace(/,/g, "").trim());
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function compactNumber(raw: unknown): string {
+  const n = num(raw);
+  return n == null ? "" : String(n);
+}
+
+function normalizeLabel(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function fieldFromSections(payload: any, labels: string[]): string {
+  const wanted = new Set(labels.map(normalizeLabel));
+  const sections = Array.isArray(payload?.sections) ? payload.sections : [];
+  for (const section of sections) {
+    const fields = Array.isArray(section?.fields) ? section.fields : [];
+    for (const field of fields) {
+      if (wanted.has(normalizeLabel(str(field?.label)))) return str(field?.value);
+    }
+  }
+  return "";
+}
+
+function inferTransactionType(raw: unknown) {
+  const value = str(raw).toLowerCase();
+  if (value.includes("consult")) return "Consulting";
+  if (value.includes("renew")) return "Renewal";
+  if (value.includes("sale") || value.includes("sold")) return "Sale";
+  return "Lease";
+}
+
+function suiteLabel(raw: unknown): string {
+  const value = str(raw).replace(/\s+/g, " ");
+  if (!value) return "";
+  if (/^(suite|ste\.?|unit|#)\b/i.test(value)) return value.replace(/^ste\.?\b/i, "Ste");
+  return `Ste ${value}`;
+}
+
+function propertyNameFromAddressSuite(address: unknown, suite: unknown): string {
+  const cleanAddress = str(address);
+  const cleanSuite = suiteLabel(suite);
+  if (!cleanAddress) return cleanSuite;
+  if (!cleanSuite) return cleanAddress;
+  const normalizedAddress = cleanAddress.toLowerCase().replace(/[.,]/g, "").replace(/\s+/g, " ");
+  const normalizedSuite = cleanSuite.toLowerCase().replace(/[.,]/g, "").replace(/\s+/g, " ");
+  const suiteNumber = normalizedSuite.replace(/^(suite|ste|unit|#)\s*/, "").trim();
+  if (
+    normalizedAddress.includes(normalizedSuite) ||
+    (suiteNumber && new RegExp(`(^|\\s|#)${suiteNumber.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\s|$)`).test(normalizedAddress))
+  ) {
+    return cleanAddress;
+  }
+  return `${cleanAddress}, ${cleanSuite}`;
+}
+
+function dealNamePrefixFromTransaction(raw: unknown): string {
+  const value = str(raw).toLowerCase();
+  if (value.includes("consult")) return "Consulting";
+  if (value.includes("renew")) return "Renewed";
+  if (value.includes("sale") || value.includes("sold") || value.includes("purchase")) return "Sold";
+  return "Leased";
+}
+
+function canonicalDealName(transactionType: unknown, address: unknown, suite: unknown): string {
+  return `${dealNamePrefixFromTransaction(transactionType)}: ${propertyNameFromAddressSuite(address, suite) || "New Deal"}`;
+}
+
+function isLeaseTransaction(raw: unknown) {
+  const value = str(raw).toLowerCase();
+  return value.includes("lease") || value.includes("renew");
+}
+
+function feePercentFrom(raw: unknown): string {
+  const n = num(raw);
+  if (n == null || n <= 0) return "";
+  return String(n <= 1 ? n * 100 : n);
+}
+
+function asRentRows(raw: unknown, fallbackMonths?: unknown, fallbackRate?: unknown, fallbackSqft?: unknown): RentRow[] {
+  if (Array.isArray(raw) && raw.length) {
+    return raw
+      .map((row: any) => ({
+        months: compactNumber(row?.months),
+        monthly: compactNumber(row?.monthly),
+        free: Boolean(row?.free) || (num(row?.monthly) ?? 0) === 0,
+      }))
+      .filter(row => num(row.months) != null && Number(row.months) > 0);
+  }
+
+  const months = num(fallbackMonths);
+  const rate = num(fallbackRate);
+  const sqft = num(fallbackSqft);
+  if (months && months > 0 && rate && sqft) {
+    return [{ months: String(months), monthly: String(Math.round(rate * sqft * 100) / 100), free: false }];
+  }
+  return [];
+}
+
+function asListingSpaces(raw: unknown, fallbackSuite: unknown, fallbackSqft: unknown, fallbackRate: unknown): ListingSpaceRow[] {
+  if (Array.isArray(raw) && raw.length) {
+    return raw
+      .map((row: any) => ({
+        suite: str(row?.suite || row?.name),
+        sqft: compactNumber(row?.sqft),
+        askingRate: compactNumber(row?.askingRate),
+        availableDate: str(row?.availableDate).slice(0, 10),
+        comments: str(row?.comments),
+      }))
+      .filter(row => row.suite || num(row.sqft) != null || num(row.askingRate) != null || row.comments);
+  }
+
+  const suite = str(fallbackSuite);
+  const sqft = compactNumber(fallbackSqft);
+  if (suite || sqft) {
+    return [{ suite, sqft, askingRate: compactNumber(fallbackRate), availableDate: "", comments: "" }];
+  }
+  return [];
+}
+
+function asBrokerRows(raw: unknown, fallbacks: unknown[]): BrokerRow[] {
+  if (Array.isArray(raw) && raw.length) {
+    return raw
+      .map((row: any, index) => ({
+        name: str(row?.name || row?.brokerName || row?.fullName),
+        side: str(row?.side),
+        pct: compactNumber(row?.pct ?? row?.percent ?? row?.commissionPct),
+        lead: Boolean(row?.lead) || index === 0,
+      }))
+      .filter(row => row.name);
+  }
+
+  const seen = new Set<string>();
+  return fallbacks
+    .map(name => str(name))
+    .filter(Boolean)
+    .filter(name => {
+      const key = name.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((name, index, list) => ({
+      name,
+      pct: list.length === 1 ? "100" : "50",
+      lead: index === 0,
+    }));
+}
+
+function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
+  const payload = submission.payload ?? {};
+  const voucherData = payload.voucherData && typeof payload.voucherData === "object" ? payload.voucherData : {};
+  const p = { ...payload, ...voucherData };
+  const formType = submission.formType.toLowerCase();
+  const isListing = formType === "listing";
+
+  const address = str(p.address) || fieldFromSections(payload, ["Address", "Property Address"]) || str(payload.propertyAddress || submission.reference);
+  const city = str(p.city) || fieldFromSections(payload, ["City"]);
+  const zip = str(p.zip || p.zipCode) || fieldFromSections(payload, ["Zip", "ZIP"]);
+  const suite = str(p.suite || p.unit || fieldFromSections(payload, ["Suite", "Unit"]));
+  const propertyType =
+    str(p.propertyType || p.propType) ||
+    fieldFromSections(payload, ["Property Type"]) ||
+    "Industrial";
+  const transactionType =
+    inferTransactionType(p.transactionType || p.txnType || fieldFromSections(payload, ["Transaction Type"]));
+  const listingTransaction = str(p.listingTransaction || p.transactionType || p.txnType).toLowerCase();
+  const sqft =
+    compactNumber(p.sqft || p.dealSF || p.lDealSF || p.sizeSF) ||
+    compactNumber(fieldFromSections(payload, ["Building SF", "Suite SF", "Deal SF", "Space SF"]));
+  const bldgSF =
+    compactNumber(p.totalBldgSF || p.bldgSF || p.buildingSF) ||
+    compactNumber(fieldFromSections(payload, ["Building SF"]));
+  const leaseRate = p.lRate || p.leaseRate || fieldFromSections(payload, ["Rate ($/SF/Mo)", "Base Rent ($/SF/Mo)"]);
+  const fee =
+    feePercentFrom(p.feePercent || p.commissionRate || p.lCommRate || p.sCommPct || p.saleCommPct) ||
+    feePercentFrom(fieldFromSections(payload, ["Total Commission %", "Commission (%)"]));
+
+  const brokers = asBrokerRows(p.brokers || p.agents, [
+    p.listingAgentName,
+    p.procuringAgentName,
+    p.laName,
+    p.paName,
+    fieldFromSections(payload, ["Agent 1 Name", "Listing Agent"]),
+    fieldFromSections(payload, ["Agent 2 Name", "Procuring Agent"]),
+    submission.submittedBy,
+  ]);
+
+  return {
+    entryMode: isListing ? "listing" : "deal",
+    dealName: canonicalDealName(transactionType, address, suite),
+    listingName: str(p.listingName || p.dealName) || `${transactionType === "Sale" ? "For Sale" : "For Lease"}: ${address || "New Listing"}`,
+    repTypeID: str(p.repTypeID || p.repType) || (transactionType === "Sale" ? "2" : "4"),
+    transactionType,
+    listingTransaction: listingTransaction || transactionType.toLowerCase(),
+    address,
+    city,
+    zip,
+    suite,
+    propertyType,
+    sqft,
+    totalBldgSF: bldgSF || sqft,
+    yearBuilt: compactNumber(p.yearBuilt || fieldFromSections(payload, ["Year Built"])),
+    clientCo: str(p.clientCo || p.lessorName || p.sellerName || p.lsCompany) || fieldFromSections(payload, ["Lessor / Seller", "Seller / Client Co."]),
+    oppositeCo: str(p.oppositeCo || p.lesseeName || p.buyerName || p.lbCompany) || fieldFromSections(payload, ["Lessee / Buyer", "Buyer / Opposite Co."]),
+    ownerCompany: str(p.ownerCompany || p.owner || p.clientCo) || fieldFromSections(payload, ["Owner Name", "Owner / Sublessor Company"]),
+    startDate: str(p.startDate || p.lStart || p.leaseStart || fieldFromSections(payload, ["Commencement Date"])).slice(0, 10),
+    endDate: str(p.endDate || p.lEnd || p.leaseEnd || fieldFromSections(payload, ["Expiration Date"])).slice(0, 10),
+    occupancyDate: str(p.occupancyDate || p.lOcc).slice(0, 10),
+    term: compactNumber(p.term || p.lTerm || p.leaseTerm || fieldFromSections(payload, ["Lease Term", "Lease Term (months)"])),
+    askingRate: compactNumber(p.askingRate || p.lAskingRate || leaseRate),
+    totalConsideration: compactNumber(p.totalConsideration || p.sPrice || p.salePrice || fieldFromSections(payload, ["Total Consideration", "Asking Price"])),
+    feePercent: fee,
+    listingStartDate: str(p.listingStartDate || p.listingStart || p.submittedAt || submission.createdAt).slice(0, 10),
+    listingExpiryDate: str(p.listingExpiryDate || p.listingExpiration).slice(0, 10),
+    listingAvailableDate: str(p.listingAvailableDate || p.availableDate).slice(0, 10),
+    listingStatus: str(p.listingStatus || "active"),
+    listingSource: str(p.listingSource) || `Submission ${submission.id}`,
+    listingNotes: str(p.listingNotes || p.notes),
+    rentRows: asRentRows(p.rentRows || p.rentSchedule, p.lTerm || p.leaseTerm, leaseRate, sqft),
+    spaces: asListingSpaces(p.spaces || p.listingSpaces, suite, sqft, leaseRate),
+    brokers,
+  };
+}
+
+function fileToBase64(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result ?? "");
+      const comma = dataUrl.indexOf(",");
+      resolve(comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl);
+    };
+    reader.onerror = () => reject(new Error("Could not read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function latestTarget(entry: DealiusEntry, payload: any, result: any): { entityType: "deal" | "listing"; entityId: string } {
+  const push = payload?.dealiusPush ?? {};
+  const dealID = result?.dealID ?? push?.dealID;
+  const listingID = result?.listingID ?? push?.listingID;
+  if (entry.entryMode === "listing" && listingID) return { entityType: "listing", entityId: String(listingID) };
+  if (dealID) return { entityType: "deal", entityId: String(dealID) };
+  if (listingID) return { entityType: "listing", entityId: String(listingID) };
+  return { entityType: entry.entryMode === "listing" ? "listing" : "deal", entityId: "" };
+}
+
+export default function DealiusSubmissionWorkspace({
+  submission,
+  onRefresh,
+}: {
+  submission: SubmissionDetail;
+  onRefresh: () => Promise<void>;
+}) {
+  const [entry, setEntry] = useState<DealiusEntry>(() => buildInitialEntry(submission));
+  const [pushing, setPushing] = useState(false);
+  const [pushResult, setPushResult] = useState<any>(null);
+  const [pushError, setPushError] = useState<string | null>(null);
+  const [docRows, setDocRows] = useState<DocRow[]>([]);
+  const [docTargetType, setDocTargetType] = useState<"deal" | "listing">("deal");
+  const [docTargetId, setDocTargetId] = useState("");
+  const [uploadingDocs, setUploadingDocs] = useState(false);
+  const [contractType, setContractType] = useState("Lease Agreement");
+  const [extractingDoc, setExtractingDoc] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const extractFileRef = useRef<HTMLInputElement | null>(null);
+  const uploadFile = trpc.files.upload.useMutation();
+  const extractContract = trpc.contracts.extractContract.useMutation();
+
+  useEffect(() => {
+    const next = buildInitialEntry(submission);
+    setEntry(next);
+    const target = latestTarget(next, submission.payload, null);
+    setDocTargetType(target.entityType);
+    setDocTargetId(target.entityId);
+  }, [submission.id, submission.payload]);
+
+  const checklist = useMemo(() => {
+    const listingSqft = entry.entryMode === "listing" && entry.spaces.some(space => Boolean(num(space.sqft)));
+    const rows = [
+      { label: "Address", ok: Boolean(entry.address), detail: entry.address || "Missing" },
+      { label: "City", ok: Boolean(entry.city), detail: entry.city || "Missing" },
+      { label: "Zip", ok: Boolean(entry.zip), detail: entry.zip || "Missing" },
+      { label: "Square feet", ok: Boolean(num(entry.sqft)) || listingSqft, detail: entry.sqft ? `${entry.sqft}` : listingSqft ? "From spaces" : "Missing" },
+    ];
+    if (entry.entryMode === "deal") {
+      rows.push({ label: "Fee percent", ok: Boolean(num(entry.feePercent)), detail: entry.feePercent ? `${entry.feePercent}%` : "Missing" });
+      if (isLeaseTransaction(entry.transactionType)) {
+        rows.push({
+          label: "Rent schedule",
+          ok: entry.rentRows.some(row => Boolean(num(row.months))),
+          detail: `${entry.rentRows.length} row(s)`,
+        });
+      }
+    }
+    return rows;
+  }, [entry]);
+
+  const canPush = checklist.every(item => item.ok);
+
+  function patchEntry(patch: Partial<DealiusEntry>) {
+    setEntry(current => {
+      const next = { ...current, ...patch };
+      if (next.entryMode === "deal" && ("transactionType" in patch || "address" in patch || "suite" in patch || "entryMode" in patch)) {
+        next.dealName = canonicalDealName(next.transactionType, next.address, next.suite);
+      }
+      return next;
+    });
+  }
+
+  function patchRent(index: number, patch: Partial<RentRow>) {
+    setEntry(current => ({
+      ...current,
+      rentRows: current.rentRows.map((row, i) => (i === index ? { ...row, ...patch } : row)),
+    }));
+  }
+
+  function patchSpace(index: number, patch: Partial<ListingSpaceRow>) {
+    setEntry(current => ({
+      ...current,
+      spaces: current.spaces.map((row, i) => (i === index ? { ...row, ...patch } : row)),
+    }));
+  }
+
+  function patchBroker(index: number, patch: Partial<BrokerRow>) {
+    setEntry(current => ({
+      ...current,
+      brokers: current.brokers.map((row, i) => (i === index ? { ...row, ...patch } : row)),
+    }));
+  }
+
+  async function handlePush() {
+    setPushing(true);
+    setPushError(null);
+    try {
+      const response = await fetch(`/api/submissions/${submission.id}/push-dealius`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entryMode: entry.entryMode, entry }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const detail = Array.isArray(body?.errors) ? body.errors.join(" ") : body?.error;
+        throw new Error(detail || "Push failed");
+      }
+      setPushResult(body?.data ?? null);
+      const target = latestTarget(entry, submission.payload, body?.data);
+      setDocTargetType(target.entityType);
+      setDocTargetId(target.entityId);
+      toast.success(entry.entryMode === "listing" ? "Listing pushed to Dealius." : "Deal pushed to Dealius.");
+      await onRefresh();
+    } catch (error: any) {
+      const message = error?.message ?? "Push failed";
+      setPushError(message);
+      toast.error(message);
+    } finally {
+      setPushing(false);
+    }
+  }
+
+  async function handleExtractDocument(file: File) {
+    setExtractingDoc(true);
+    try {
+      const base64Data = await fileToBase64(file);
+      if (entry.entryMode === "listing") {
+        const response = await fetch(`/api/submissions/${submission.id}/import-listing-pdf`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ base64Data, filename: file.name }),
+        });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body?.error ?? "Listing PDF import failed");
+        toast.success(
+          `Listing form scraped: ${body?.data?.address ?? "property"} (${body?.data?.spaceCount ?? 0} space(s)).`
+        );
+        await onRefresh();
+        return;
+      }
+
+      const uploaded = await uploadFile.mutateAsync({
+        filename: file.name,
+        mimeType: file.type || "application/pdf",
+        base64Data,
+        category: "submissions/contracts",
+        reference: submission.reference || String(submission.id),
+        uploaderName: "Admin Portal",
+      });
+      if (!uploaded?.success || !uploaded?.url) throw new Error("Upload failed");
+
+      const extracted = await extractContract.mutateAsync({ pdfUrl: uploaded.url, contractType });
+      if (!extracted?.success || !extracted?.data) throw new Error(extracted?.error || "Document extraction failed");
+
+      const nextPayload = mergeVoucherFromContractExtraction({
+        payload: submission.payload,
+        contract: extracted.data,
+        pdf: { url: uploaded.url, fileKey: uploaded.fileKey, filename: uploaded.filename },
+        contractType,
+      });
+
+      const response = await fetch(`/api/submissions/${submission.id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payload: nextPayload }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body?.error ?? "Failed to save extracted fields");
+
+      setEntry(buildInitialEntry({ ...submission, payload: nextPayload }));
+      toast.success("Document scraped and fields refreshed.");
+      await onRefresh();
+    } catch (error: any) {
+      toast.error(error?.message ?? "Document extraction failed");
+    } finally {
+      setExtractingDoc(false);
+    }
+  }
+
+  async function uploadDocuments() {
+    if (!docTargetId || docRows.length === 0) return;
+    setUploadingDocs(true);
+    try {
+      const files = await Promise.all(
+        docRows.map(async row => ({
+          filename: row.file.name,
+          mimeType: row.file.type || "application/octet-stream",
+          base64Data: await fileToBase64(row.file),
+          documentType: row.documentType || null,
+        }))
+      );
+      const response = await fetch(`/api/submissions/${submission.id}/dealius-documents`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entityType: docTargetType, entityId: docTargetId, files }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok && response.status !== 207) throw new Error(body?.error ?? "Document upload failed");
+      if (body?.success === false) toast.warning(body?.error ?? "Some documents failed to attach.");
+      else toast.success("Documents attached to Dealius.");
+      setDocRows([]);
+      await onRefresh();
+    } catch (error: any) {
+      toast.error(error?.message ?? "Document upload failed");
+    } finally {
+      setUploadingDocs(false);
+    }
+  }
+
+  const target = latestTarget(entry, submission.payload, pushResult);
+  const dealID = pushResult?.dealID ?? submission.payload?.dealiusPush?.dealID;
+  const listingID = pushResult?.listingID ?? submission.payload?.dealiusPush?.listingID;
+  const propertyName = propertyNameFromAddressSuite(entry.address, entry.suite);
+  const todayLabel = new Date().toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  const extractedDocs = Array.isArray(submission.payload?.contractRevisions)
+    ? submission.payload.contractRevisions.length
+    : submission.payload?.contractExtraction
+      ? 1
+      : 0;
+
+  return (
+    <div className="dealius-workspace">
+      <section className="dealius-flow-panel">
+        <div>
+          <div className="dealius-flow-kicker">Submission tool</div>
+          <div className="dealius-flow-title">Document intake to Dealius</div>
+        </div>
+        <div className="dealius-flow-steps">
+          <div className={extractedDocs > 0 ? "complete" : ""}>
+            <span>Scrape</span>
+            <strong>{extractedDocs > 0 ? `${extractedDocs} saved` : "Ready"}</strong>
+          </div>
+          <div className={canPush ? "complete" : ""}>
+            <span>Push</span>
+            <strong>{canPush ? "Ready" : "Review"}</strong>
+          </div>
+          <div className={target.entityId ? "complete" : ""}>
+            <span>Attach</span>
+            <strong>{target.entityId ? `${target.entityType} ${target.entityId}` : "After push"}</strong>
+          </div>
+        </div>
+      </section>
+
+      <div className="dealius-toolbar">
+        <div className="dealius-mode-control" aria-label="Dealius entry mode">
+          <button
+            type="button"
+            className={entry.entryMode === "deal" ? "active" : ""}
+            onClick={() => patchEntry({ entryMode: "deal" })}
+          >
+            Deal
+          </button>
+          <button
+            type="button"
+            className={entry.entryMode === "listing" ? "active" : ""}
+            onClick={() => patchEntry({ entryMode: "listing" })}
+          >
+            Listing
+          </button>
+        </div>
+        <div className="dealius-toolbar-status">
+          <Badge tone={canPush ? "success" : "warn"}>{canPush ? "Ready" : "Needs review"}</Badge>
+          {dealID && (
+            <a href={`https://leenewportbeach.dealius.com/deals/${dealID}`} target="_blank" rel="noreferrer">
+              Deal {dealID} <ExternalLink size={12} />
+            </a>
+          )}
+          {listingID && (
+            <a href={`https://leenewportbeach.dealius.com/listings/${listingID}`} target="_blank" rel="noreferrer">
+              Listing {listingID} <ExternalLink size={12} />
+            </a>
+          )}
+        </div>
+      </div>
+
+      <section className="dealius-panel dealius-intake-panel">
+        <div>
+          <div className="dealius-section-title">Document intake</div>
+          <div className="dealius-doc-target-row">
+            <Select
+              value={contractType}
+              onChange={(e: any) => setContractType(e.target.value)}
+              options={["Lease Agreement", "Purchase & Sale Agreement", "AIR CRE Contract", "Commission Agreement"]}
+            />
+            <Button type="button" variant="secondary" icon={<FileSearch size={14} />} disabled={extractingDoc} onClick={() => extractFileRef.current?.click()}>
+              {extractingDoc ? "Scraping..." : "Scrape PDF"}
+            </Button>
+          </div>
+          <input
+            ref={extractFileRef}
+            type="file"
+            accept="application/pdf"
+            style={{ display: "none" }}
+            onChange={e => {
+              const file = e.target.files?.[0];
+              if (file) void handleExtractDocument(file);
+              e.target.value = "";
+            }}
+          />
+        </div>
+        <div className="dealius-rule-stack">
+          <div>
+            <span>Deal name</span>
+            <strong>{entry.entryMode === "deal" ? entry.dealName : entry.listingName || "Listing"}</strong>
+          </div>
+          <div>
+            <span>Property name</span>
+            <strong>{propertyName || "Address required"}</strong>
+          </div>
+          {entry.entryMode === "deal" && (
+            <div>
+              <span>Estimated close</span>
+              <strong>{todayLabel}</strong>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="dealius-panel">
+        <div className="dealius-section-title">{entry.entryMode === "listing" ? "Listing setup" : "Deal setup"}</div>
+        <div className="dealius-form-grid">
+          {entry.entryMode === "listing" ? (
+            <>
+              <Field label="Listing name" span={2}>
+                <Input value={entry.listingName} onChange={(e: any) => patchEntry({ listingName: e.target.value })} />
+              </Field>
+              <Field label="Listing transaction">
+                <Select
+                  value={entry.listingTransaction}
+                  onChange={(e: any) => patchEntry({ listingTransaction: e.target.value, transactionType: e.target.value === "sale" ? "Sale" : "Lease" })}
+                  options={[
+                    { label: "Lease listing", value: "lease" },
+                    { label: "Sale listing", value: "sale" },
+                    { label: "Sale or lease", value: "sale or lease" },
+                    { label: "Sublease", value: "sublease" },
+                  ]}
+                />
+              </Field>
+              <Field label="Owner company">
+                <Input value={entry.ownerCompany} onChange={(e: any) => patchEntry({ ownerCompany: e.target.value })} />
+              </Field>
+            </>
+          ) : (
+            <>
+              <Field label="Deal name" span={2}>
+                <Input value={entry.dealName} auto />
+              </Field>
+              <Field label="Representation">
+                <Select
+                  value={entry.repTypeID}
+                  onChange={(e: any) => patchEntry({ repTypeID: e.target.value })}
+                  options={[
+                    { label: "Landlord Rep", value: "4" },
+                    { label: "Tenant Rep", value: "3" },
+                    { label: "Seller Rep", value: "2" },
+                    { label: "Buyer Rep", value: "1" },
+                  ]}
+                />
+              </Field>
+              <Field label="Transaction">
+                <Select
+                  value={entry.transactionType}
+                  onChange={(e: any) => patchEntry({ transactionType: e.target.value })}
+                  options={["Lease", "Sale", "Consulting", "Renewal"]}
+                />
+              </Field>
+            </>
+          )}
+        </div>
+      </section>
+
+      <section className="dealius-panel">
+        <div className="dealius-section-title">Property</div>
+        <div className="dealius-form-grid">
+          <Field label="Address" span={2}>
+            <Input value={entry.address} onChange={(e: any) => patchEntry({ address: e.target.value })} />
+          </Field>
+          <Field label="Suite">
+            <Input value={entry.suite} onChange={(e: any) => patchEntry({ suite: e.target.value })} />
+          </Field>
+          <Field label="City">
+            <Input value={entry.city} onChange={(e: any) => patchEntry({ city: e.target.value })} />
+          </Field>
+          <Field label="Zip">
+            <Input value={entry.zip} onChange={(e: any) => patchEntry({ zip: e.target.value })} />
+          </Field>
+          <Field label="Property type">
+            <Select
+              value={entry.propertyType}
+              onChange={(e: any) => patchEntry({ propertyType: e.target.value })}
+              options={["Industrial", "Office", "Retail", "Land", "Multi-Family", "Medical"]}
+            />
+          </Field>
+          <Field label="Deal / space SF">
+            <Input type="number" value={entry.sqft} onChange={(e: any) => patchEntry({ sqft: e.target.value })} />
+          </Field>
+          <Field label="Building SF">
+            <Input type="number" value={entry.totalBldgSF} onChange={(e: any) => patchEntry({ totalBldgSF: e.target.value })} />
+          </Field>
+          <Field label="Year built">
+            <Input type="number" value={entry.yearBuilt} onChange={(e: any) => patchEntry({ yearBuilt: e.target.value })} />
+          </Field>
+        </div>
+      </section>
+
+      {entry.entryMode === "deal" && (
+        <section className="dealius-panel">
+          <div className="dealius-section-title">Parties and economics</div>
+          <div className="dealius-form-grid">
+            <Field label="Client company">
+              <Input value={entry.clientCo} onChange={(e: any) => patchEntry({ clientCo: e.target.value })} />
+            </Field>
+            <Field label="Opposite company">
+              <Input value={entry.oppositeCo} onChange={(e: any) => patchEntry({ oppositeCo: e.target.value })} />
+            </Field>
+            <Field label="Start date">
+              <Input type="date" value={entry.startDate} onChange={(e: any) => patchEntry({ startDate: e.target.value })} />
+            </Field>
+            <Field label="End date">
+              <Input type="date" value={entry.endDate} onChange={(e: any) => patchEntry({ endDate: e.target.value })} />
+            </Field>
+            <Field label="Term months">
+              <Input type="number" value={entry.term} onChange={(e: any) => patchEntry({ term: e.target.value })} />
+            </Field>
+            <Field label="Fee percent">
+              <Input type="number" step="0.01" value={entry.feePercent} onChange={(e: any) => patchEntry({ feePercent: e.target.value })} suffix="%" />
+            </Field>
+            <Field label={entry.transactionType === "Sale" ? "Sale price" : "Asking rate"}>
+              <Input
+                type="number"
+                step="0.01"
+                value={entry.transactionType === "Sale" ? entry.totalConsideration : entry.askingRate}
+                onChange={(e: any) =>
+                  entry.transactionType === "Sale"
+                    ? patchEntry({ totalConsideration: e.target.value })
+                    : patchEntry({ askingRate: e.target.value })
+                }
+              />
+            </Field>
+          </div>
+        </section>
+      )}
+
+      {entry.entryMode === "listing" && (
+        <section className="dealius-panel">
+          <div className="dealius-section-title">Listing details</div>
+          <div className="dealius-form-grid">
+            <Field label="Listing start">
+              <Input type="date" value={entry.listingStartDate} onChange={(e: any) => patchEntry({ listingStartDate: e.target.value })} />
+            </Field>
+            <Field label="Listing expiration">
+              <Input type="date" value={entry.listingExpiryDate} onChange={(e: any) => patchEntry({ listingExpiryDate: e.target.value })} />
+            </Field>
+            <Field label="Available date">
+              <Input type="date" value={entry.listingAvailableDate} onChange={(e: any) => patchEntry({ listingAvailableDate: e.target.value })} />
+            </Field>
+            <Field label="Status">
+              <Select
+                value={entry.listingStatus}
+                onChange={(e: any) => patchEntry({ listingStatus: e.target.value })}
+                options={["active", "pending", "draft"]}
+              />
+            </Field>
+            <Field label="Asking rate">
+              <Input type="number" step="0.01" value={entry.askingRate} onChange={(e: any) => patchEntry({ askingRate: e.target.value })} />
+            </Field>
+            <Field label="Commission">
+              <Input type="number" step="0.01" value={entry.feePercent} onChange={(e: any) => patchEntry({ feePercent: e.target.value })} suffix="%" />
+            </Field>
+          </div>
+        </section>
+      )}
+
+      {entry.entryMode === "listing" && (
+        <section className="dealius-panel">
+          <div className="dealius-section-heading-row">
+            <div className="dealius-section-title">Property spaces</div>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              icon={<Plus size={14} />}
+              onClick={() => patchEntry({ spaces: [...entry.spaces, { suite: "", sqft: "", askingRate: "", availableDate: "", comments: "" }] })}
+            >
+              Add space
+            </Button>
+          </div>
+          <div className="dealius-table">
+            <div className="dealius-table-head spaces">
+              <div>Suite</div>
+              <div>SF</div>
+              <div>Rate</div>
+              <div>Available</div>
+              <div>Comments</div>
+              <div />
+            </div>
+            {entry.spaces.map((row, index) => (
+              <div className="dealius-table-row spaces" key={index}>
+                <Input value={row.suite} onChange={(e: any) => patchSpace(index, { suite: e.target.value })} />
+                <Input type="number" value={row.sqft} onChange={(e: any) => patchSpace(index, { sqft: e.target.value })} />
+                <Input type="number" step="0.01" value={row.askingRate ?? ""} onChange={(e: any) => patchSpace(index, { askingRate: e.target.value })} />
+                <Input value={row.availableDate ?? ""} onChange={(e: any) => patchSpace(index, { availableDate: e.target.value })} />
+                <Input value={row.comments ?? ""} onChange={(e: any) => patchSpace(index, { comments: e.target.value })} />
+                <button
+                  type="button"
+                  className="dealius-icon-btn"
+                  onClick={() => patchEntry({ spaces: entry.spaces.filter((_, i) => i !== index) })}
+                  aria-label="Remove listing space"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {entry.entryMode === "deal" && entry.transactionType === "Lease" && (
+        <section className="dealius-panel">
+          <div className="dealius-section-heading-row">
+            <div className="dealius-section-title">Rent schedule</div>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              icon={<Plus size={14} />}
+              onClick={() => patchEntry({ rentRows: [...entry.rentRows, { months: "", monthly: "", free: false }] })}
+            >
+              Add row
+            </Button>
+          </div>
+          <div className="dealius-table">
+            <div className="dealius-table-head rent">
+              <div>Months</div>
+              <div>Monthly rent</div>
+              <div>Free</div>
+              <div />
+            </div>
+            {entry.rentRows.map((row, index) => (
+              <div className="dealius-table-row rent" key={index}>
+                <Input type="number" value={row.months} onChange={(e: any) => patchRent(index, { months: e.target.value })} />
+                <Input type="number" value={row.monthly} onChange={(e: any) => patchRent(index, { monthly: e.target.value })} />
+                <label className="dealius-checkbox">
+                  <input type="checkbox" checked={row.free} onChange={e => patchRent(index, { free: e.target.checked })} />
+                </label>
+                <button
+                  type="button"
+                  className="dealius-icon-btn"
+                  onClick={() => patchEntry({ rentRows: entry.rentRows.filter((_, i) => i !== index) })}
+                  aria-label="Remove rent row"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="dealius-panel">
+        <div className="dealius-section-heading-row">
+          <div className="dealius-section-title">{entry.entryMode === "listing" ? "Listing brokers" : "Deal brokers"}</div>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            icon={<Plus size={14} />}
+            onClick={() => patchEntry({ brokers: [...entry.brokers, { name: "", pct: "", lead: false }] })}
+          >
+            Add broker
+          </Button>
+        </div>
+        <div className="dealius-table">
+          <div className="dealius-table-head broker">
+            <div>Name</div>
+            <div>Commission</div>
+            <div>Lead</div>
+            <div />
+          </div>
+          {entry.brokers.map((row, index) => (
+            <div className="dealius-table-row broker" key={index}>
+              <Input value={row.name} onChange={(e: any) => patchBroker(index, { name: e.target.value })} />
+              <Input type="number" step="0.01" value={row.pct} onChange={(e: any) => patchBroker(index, { pct: e.target.value })} suffix="%" />
+              <label className="dealius-checkbox">
+                <input type="checkbox" checked={Boolean(row.lead)} onChange={e => patchBroker(index, { lead: e.target.checked })} />
+              </label>
+              <button
+                type="button"
+                className="dealius-icon-btn"
+                onClick={() => patchEntry({ brokers: entry.brokers.filter((_, i) => i !== index) })}
+                aria-label="Remove broker row"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="dealius-panel dealius-action-panel">
+        <div>
+          <div className="dealius-section-title">Pre-flight</div>
+          <div className="dealius-checklist">
+            {checklist.map(item => (
+              <div key={item.label} className={item.ok ? "ok" : "missing"}>
+                <span>{item.label}</span>
+                <strong>{item.detail}</strong>
+              </div>
+            ))}
+          </div>
+          {pushError && <div className="dealius-error">{pushError}</div>}
+        </div>
+        <Button
+          type="button"
+          variant="primary"
+          size="lg"
+          icon={<Send size={16} />}
+          disabled={pushing || !canPush}
+          onClick={() => void handlePush()}
+        >
+          {pushing ? "Pushing..." : entry.entryMode === "listing" ? "Push listing" : "Push deal"}
+        </Button>
+      </section>
+
+      <section className="dealius-panel">
+        <div className="dealius-section-heading-row">
+          <div>
+            <div className="dealius-section-title">Attach documents</div>
+            <div className="dealius-muted">Target: {target.entityType} {target.entityId || "not created yet"}</div>
+          </div>
+          <Button type="button" variant="secondary" size="sm" icon={<FileUp size={14} />} onClick={() => fileRef.current?.click()}>
+            Select files
+          </Button>
+        </div>
+        <input
+          ref={fileRef}
+          type="file"
+          multiple
+          style={{ display: "none" }}
+          onChange={e => {
+            const files = Array.from(e.target.files ?? []);
+            setDocRows(current => [...current, ...files.map(file => ({ file, documentType: "" }))]);
+            e.target.value = "";
+          }}
+        />
+        <div className="dealius-doc-target-row">
+          <Select
+            value={docTargetType}
+            onChange={(e: any) => setDocTargetType(e.target.value)}
+            options={[
+              { label: "Deal", value: "deal" },
+              { label: "Listing", value: "listing" },
+            ]}
+          />
+          <Input value={docTargetId} onChange={(e: any) => setDocTargetId(e.target.value)} placeholder="Dealius ID" />
+        </div>
+        {docRows.length > 0 && (
+          <div className="dealius-doc-list">
+            {docRows.map((row, index) => (
+              <div className="dealius-doc-row" key={`${row.file.name}-${index}`}>
+                <div>
+                  <strong>{row.file.name}</strong>
+                  <span>{Math.max(1, Math.round(row.file.size / 1024))} KB</span>
+                </div>
+                <Select
+                  value={row.documentType}
+                  onChange={(e: any) =>
+                    setDocRows(current => current.map((doc, i) => (i === index ? { ...doc, documentType: e.target.value } : doc)))
+                  }
+                  options={DOC_TYPES}
+                />
+                <button
+                  type="button"
+                  className="dealius-icon-btn"
+                  onClick={() => setDocRows(current => current.filter((_, i) => i !== index))}
+                  aria-label="Remove document"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="dealius-doc-actions">
+          <Button
+            type="button"
+            variant="primary"
+            icon={<FileUp size={14} />}
+            disabled={!docTargetId || docRows.length === 0 || uploadingDocs}
+            onClick={() => void uploadDocuments()}
+          >
+            {uploadingDocs ? "Uploading..." : "Attach to Dealius"}
+          </Button>
+        </div>
+      </section>
+    </div>
+  );
+}

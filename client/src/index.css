@@ -570,6 +570,351 @@
   border-top: 1px solid var(--ink-150);
 }
 
+.dealius-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dealius-flow-panel {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(300px, 1.4fr);
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid rgba(155, 13, 42, 0.18);
+  border-radius: var(--r-12);
+  background: linear-gradient(135deg, var(--ink-0) 0%, var(--lee-crimson-wash) 100%);
+}
+
+.dealius-flow-kicker {
+  color: var(--lee-crimson);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dealius-flow-title {
+  margin-top: 3px;
+  color: var(--ink-900);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.dealius-flow-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dealius-flow-steps > div {
+  display: grid;
+  gap: 2px;
+  min-height: 58px;
+  padding: 10px 12px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-8);
+  background: var(--ink-0);
+}
+
+.dealius-flow-steps > div.complete {
+  border-color: rgba(15, 122, 63, 0.24);
+  background: var(--ok-100);
+}
+
+.dealius-flow-steps span,
+.dealius-rule-stack span {
+  color: var(--ink-500);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dealius-flow-steps strong,
+.dealius-rule-stack strong {
+  color: var(--ink-900);
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.dealius-toolbar,
+.dealius-section-heading-row,
+.dealius-action-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dealius-mode-control {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(96px, 1fr));
+  padding: 4px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-8);
+  background: var(--ink-100);
+}
+
+.dealius-mode-control button {
+  min-height: 34px;
+  border: 1px solid transparent;
+  border-radius: var(--r-6);
+  background: transparent;
+  color: var(--ink-600);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dealius-mode-control button.active {
+  background: var(--ink-0);
+  border-color: rgba(155, 13, 42, 0.18);
+  color: var(--lee-crimson);
+  box-shadow: var(--shadow-sm);
+}
+
+.dealius-toolbar-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dealius-toolbar-status a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--lee-crimson);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.dealius-panel {
+  padding: 14px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-12);
+  background: var(--ink-0);
+}
+
+.dealius-intake-panel {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.85fr) minmax(320px, 1.15fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.dealius-rule-stack {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dealius-rule-stack > div {
+  display: grid;
+  gap: 3px;
+  min-height: 58px;
+  padding: 10px 12px;
+  border: 1px solid var(--ink-150);
+  border-radius: var(--r-8);
+  background: var(--ink-50);
+}
+
+.dealius-section-title {
+  margin-bottom: 10px;
+  color: var(--ink-800);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dealius-section-heading-row .dealius-section-title {
+  margin-bottom: 0;
+}
+
+.dealius-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dealius-table {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-8);
+}
+
+.dealius-table-head,
+.dealius-table-row {
+  display: grid;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+}
+
+.dealius-table-head {
+  background: var(--ink-50);
+  color: var(--ink-500);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dealius-table-row {
+  border-top: 1px solid var(--ink-150);
+  background: var(--ink-0);
+}
+
+.dealius-table-head.rent,
+.dealius-table-row.rent {
+  grid-template-columns: minmax(90px, 0.7fr) minmax(130px, 1fr) minmax(64px, 0.4fr) 36px;
+}
+
+.dealius-table-head.broker,
+.dealius-table-row.broker {
+  grid-template-columns: minmax(170px, 1.5fr) minmax(120px, 0.8fr) minmax(64px, 0.4fr) 36px;
+}
+
+.dealius-table-head.spaces,
+.dealius-table-row.spaces {
+  grid-template-columns: minmax(90px, 0.7fr) minmax(90px, 0.6fr) minmax(90px, 0.6fr) minmax(110px, 0.8fr) minmax(170px, 1.2fr) 36px;
+}
+
+.dealius-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dealius-checkbox input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--lee-crimson);
+}
+
+.dealius-icon-btn {
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-6);
+  background: var(--ink-0);
+  color: var(--ink-500);
+}
+
+.dealius-icon-btn:hover {
+  background: var(--err-100);
+  border-color: var(--err-200);
+  color: var(--err-700);
+}
+
+.dealius-checklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  min-width: min(680px, 100%);
+}
+
+.dealius-checklist > div {
+  display: grid;
+  gap: 2px;
+  padding: 9px 10px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-8);
+  background: var(--ink-50);
+}
+
+.dealius-checklist > div.ok {
+  border-color: rgba(15, 122, 63, 0.24);
+  background: var(--ok-100);
+}
+
+.dealius-checklist > div.missing {
+  border-color: rgba(180, 35, 24, 0.24);
+  background: var(--err-100);
+}
+
+.dealius-checklist span {
+  color: var(--ink-500);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dealius-checklist strong {
+  color: var(--ink-800);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.dealius-error {
+  margin-top: 8px;
+  color: var(--err-700);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dealius-muted {
+  color: var(--ink-500);
+  font-size: 12px;
+}
+
+.dealius-doc-target-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 180px) minmax(180px, 1fr);
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.dealius-doc-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.dealius-doc-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(190px, 260px) 36px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--ink-150);
+  border-radius: var(--r-8);
+  background: var(--ink-50);
+}
+
+.dealius-doc-row strong {
+  display: block;
+  color: var(--ink-800);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dealius-doc-row span {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-500);
+  font-size: 11px;
+}
+
+.dealius-doc-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
 .portal-loading {
   display: grid;
   min-height: 100vh;
@@ -617,6 +962,15 @@
   .admin-detail-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .dealius-flow-panel,
+  .dealius-intake-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .dealius-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 560px) {
@@ -634,6 +988,23 @@
   }
 
   .admin-detail-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dealius-form-grid,
+  .dealius-flow-steps,
+  .dealius-rule-stack,
+  .dealius-doc-target-row,
+  .dealius-doc-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dealius-table-head.rent,
+  .dealius-table-row.rent,
+  .dealius-table-head.spaces,
+  .dealius-table-row.spaces,
+  .dealius-table-head.broker,
+  .dealius-table-row.broker {
     grid-template-columns: 1fr;
   }
 }
