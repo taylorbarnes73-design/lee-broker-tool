@@ -3,7 +3,14 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { ENV } from "./_core/env";
 
 function getS3Client() {
-  return new S3Client({ region: ENV.awsS3Region || ENV.awsRegion });
+  const config: import("@aws-sdk/client-s3").S3ClientConfig = { region: ENV.awsS3Region || ENV.awsRegion };
+  if (ENV.awsAccessKeyId && ENV.awsSecretAccessKey) {
+    config.credentials = {
+      accessKeyId: ENV.awsAccessKeyId,
+      secretAccessKey: ENV.awsSecretAccessKey,
+    };
+  }
+  return new S3Client(config);
 }
 
 async function streamToBuffer(stream: unknown): Promise<Buffer> {

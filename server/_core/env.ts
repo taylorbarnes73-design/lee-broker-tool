@@ -38,6 +38,8 @@ export const ENV = {
     // AWS storage placeholders for future direct-S3 integration
     awsS3Bucket: process.env.AWS_S3_BUCKET ?? "",
     awsS3Region: process.env.AWS_S3_REGION ?? process.env.AWS_REGION ?? "",
+    awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "",
+    awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? "",
 
     // Admin
     adminEmail: process.env.ADMIN_EMAIL ?? "",

@@ -64,6 +64,32 @@ async function startServer() {
     res.status(200).send("OK");
   });
 
+  // TEMPORARY: Seed the database for AWS
+  app.get("/api/seed-prod", async (req, res) => {
+    try {
+      const db = (await import("../db")).getDb;
+      const connection = await db();
+      if (!connection) {
+        res.status(503).json({ error: "DB offline" });
+        return;
+      }
+      const fs = require("fs");
+      const path = require("path");
+      const { sql } = require("drizzle-orm");
+      const sqlContent = fs.readFileSync(path.resolve(process.cwd(), "drizzle/seed_app_users_and_settings.sql"), "utf-8");
+      const statements = sqlContent.split(";").map((s: string) => s.trim()).filter((s: string) => s.length > 0);
+      for (const statement of statements) {
+        if (statement.toUpperCase().startsWith("SET ") || statement.toUpperCase().startsWith("INSERT ")) {
+          await connection.execute(sql.raw(statement));
+        }
+      }
+      res.json({ success: true, count: statements.length });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
   // Make the broker surface a single-purpose tool while allowing the
   // integrated React admin portal to own /portal and /login.
   app.get(["/", "/beta", "/beta/*", "/404"], (req, res) => {
