@@ -15,7 +15,6 @@ import {
   listUsers,
   patchUser,
   reactivateUser,
-  resetUserPassword,
   softDeleteUser,
 } from "./adminUsers/userService";
 import type { Request, Response, NextFunction } from "express";
@@ -149,23 +148,7 @@ adminUsersRouter.patch(
   })
 );
 
-adminUsersRouter.post(
-  "/:id/reset-password",
-  asyncAdmin(async (req, res) => {
-    const idParsed = uuidParamSchema.safeParse(req.params.id);
-    if (!idParsed.success) {
-      sendAdminError(res, 400, "VALIDATION_ERROR", "Invalid user id.", "id");
-      return;
-    }
-    const db = await getDb();
-    if (!db) {
-      sendAdminError(res, 503, "NO_DATABASE", "Database is not available.");
-      return;
-    }
-    const out = await resetUserPassword(db, idParsed.data, req.user!, loginBaseUrl(req), req);
-    res.json(out);
-  })
-);
+
 
 adminUsersRouter.delete(
   "/:id",

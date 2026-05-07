@@ -32,6 +32,9 @@ Parameters:
     Type: String
     NoEcho: true
     Default: ''
+  DatabaseUrlSecretArn:
+    Type: String
+    Default: ''
   DatabaseSslMode:
     Type: String
     Default: require
@@ -101,6 +104,7 @@ Parameters:
 
 Conditions:
   HasCertificate: !Not [!Equals [!Ref CertificateArn, '']]
+  HasDatabaseUrlSecretArn: !Not [!Equals [!Ref DatabaseUrlSecretArn, '']]
 
 Resources:
   Cluster:
@@ -126,6 +130,23 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  # ECS injects DATABASE_URL from Secrets Manager at task start; the execution role
+  # must be allowed to call GetSecretValue (AmazonECSTaskExecutionRolePolicy does not).
+  ExecutionRoleDatabaseUrlSecretPolicy:
+    Type: AWS::IAM::Policy
+    Condition: HasDatabaseUrlSecretArn
+    Properties:
+      PolicyName: !Sub '${ServiceName}-exec-database-url-secret'
+      Roles:
+        - !Ref ExecutionRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource: !Ref DatabaseUrlSecretArn
 
   TaskRole:
     Type: AWS::IAM::Role
@@ -248,8 +269,6 @@ Resources:
               Value: !Sub '${AppPort}'
             - Name: NODE_ENV
               Value: production
-            - Name: DATABASE_URL
-              Value: !Ref DatabaseUrl
             - Name: DATABASE_SSL_MODE
               Value: !Ref DatabaseSslMode
             - Name: DATABASE_SSL_REJECT_UNAUTHORIZED
@@ -292,6 +311,11 @@ Resources:
               Value: !Ref AwsS3Bucket
             - Name: AWS_S3_REGION
               Value: !Ref AwsS3Region
+          Secrets: !If
+            - HasDatabaseUrlSecretArn
+            - - Name: DATABASE_URL
+                ValueFrom: !Ref DatabaseUrlSecretArn
+            - !Ref AWS::NoValue
 
   Service:
     Type: AWS::ECS::Service

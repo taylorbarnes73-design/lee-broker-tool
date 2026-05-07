@@ -42,9 +42,7 @@ export type SettingKey =
   | "integrations.dealius.password"
   | "integrations.dealius.last_test_at"
   | "integrations.dealius.last_test_result"
-  | "security.session_timeout_hours"
-  | "security.password_min_length"
-  | "security.require_password_change_days";
+  | "security.session_timeout_hours";
 
 export const SETTING_KEYS = [
   "branding.company_name",
@@ -68,8 +66,6 @@ export const SETTING_KEYS = [
   "integrations.dealius.last_test_at",
   "integrations.dealius.last_test_result",
   "security.session_timeout_hours",
-  "security.password_min_length",
-  "security.require_password_change_days",
 ] as const satisfies readonly SettingKey[];
 
 export type SettingKeyConst = (typeof SETTING_KEYS)[number];
@@ -234,20 +230,7 @@ const defs: SettingDef[] = [
     valueSchema: z.coerce.number().int().min(1).max(72),
     defaultValue: 12,
   },
-  {
-    key: "security.password_min_length",
-    category: "security",
-    sensitive: false,
-    valueSchema: z.coerce.number().int().min(8).max(32),
-    defaultValue: 12,
-  },
-  {
-    key: "security.require_password_change_days",
-    category: "security",
-    sensitive: false,
-    valueSchema: z.coerce.number().int().min(0).max(365),
-    defaultValue: 0,
-  },
+
 ];
 
 export const SETTINGS_BY_KEY = Object.fromEntries(defs.map(d => [d.key, d])) as Record<SettingKey, SettingDef>;

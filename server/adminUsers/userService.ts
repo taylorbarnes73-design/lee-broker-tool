@@ -213,15 +213,7 @@ async function countActiveAdmins(db: AppDb): Promise<number> {
   return Number(r?.c ?? 0);
 }
 
-function generateTempPassword(): string {
-  const chars = "abcdefghjkmnpqrstuvwxyz23456789";
-  const bytes = randomBytes(16);
-  let s = "";
-  for (let i = 0; i < 16; i++) {
-    s += chars[bytes[i]! % chars.length]!;
-  }
-  return s;
-}
+
 
 export async function createUser(
   db: AppDb,
@@ -242,8 +234,7 @@ export async function createUser(
     throw new AdminUserError(409, "DUPLICATE_USERNAME", "That username is already taken.", "username");
   }
 
-  const temp = generateTempPassword();
-  const passwordHash = await hash(temp, 10);
+  const passwordHash = await hash(crypto.randomUUID(), 10);
   const id = crypto.randomUUID();
 
   try {
@@ -274,13 +265,12 @@ export async function createUser(
     const r = await sendUserInviteEmail({
       to: email,
       username,
-      tempPassword: temp,
       loginUrl: `${loginBaseUrl.replace(/\/$/, "")}/login`,
     });
     emailSent = r.ok;
     if (!r.ok) note = r.error;
   } else if (body.send_invite && !isAdminInviteSmtpConfigured()) {
-    note = "Email not configured — share this password securely with the user.";
+    note = "Email not configured — you can inform the user to login with their email.";
   }
 
   await writeAuditLog(
@@ -316,10 +306,8 @@ export async function createUser(
   if (!withCreator) {
     throw new AdminUserError(500, "CREATE_FAILED", "User was created but could not be reloaded.");
   }
-
   return {
     user: publicUser(withCreator),
-    temporary_password: !emailSent ? temp : undefined,
     email_sent: emailSent,
     note,
   };
@@ -456,71 +444,7 @@ export async function patchUser(db: AppDb, id: string, body: PatchUserBody, acto
   return publicUser(withCreator!);
 }
 
-export async function resetUserPassword(
-  db: AppDb,
-  id: string,
-  actor: PlatformAuthUser,
-  loginBaseUrl: string,
-  req: Request
-) {
-  const [current] = await db.select().from(appUsers).where(eq(appUsers.id, id)).limit(1);
-  if (!current) {
-    throw new AdminUserError(404, "NOT_FOUND", "User not found.");
-  }
 
-  const temp = generateTempPassword();
-  const passwordHash = await hash(temp, 10);
-
-  await db
-    .update(appUsers)
-    .set({ passwordHash, forcePasswordChangeNextLogin: true })
-    .where(eq(appUsers.id, id));
-
-  let emailSent = false;
-  let note: string | undefined;
-  if (isAdminInviteSmtpConfigured()) {
-    const r = await sendUserInviteEmail({
-      to: current.email,
-      username: current.username,
-      tempPassword: temp,
-      loginUrl: `${loginBaseUrl.replace(/\/$/, "")}/login`,
-    });
-    emailSent = r.ok;
-    if (!r.ok) note = r.error;
-  } else {
-    note = "Email not configured — share this password securely with the user.";
-  }
-
-  await writeAuditLog(actor.id, "user.password_reset", "user", id, {}, req);
-
-  const creator = alias(appUsers, "creator");
-  const [withCreator] = await db
-    .select({
-      id: appUsers.id,
-      email: appUsers.email,
-      username: appUsers.username,
-      fullName: appUsers.fullName,
-      role: appUsers.role,
-      office: appUsers.office,
-      phone: appUsers.phone,
-      isActive: appUsers.isActive,
-      lastLoginAt: appUsers.lastLoginAt,
-      createdAt: appUsers.createdAt,
-      createdByName: creator.fullName,
-      forcePasswordChangeNextLogin: appUsers.forcePasswordChangeNextLogin,
-    })
-    .from(appUsers)
-    .leftJoin(creator, eq(appUsers.createdBy, creator.id))
-    .where(eq(appUsers.id, id))
-    .limit(1);
-
-  return {
-    user: publicUser(withCreator!),
-    temporary_password: !emailSent ? temp : undefined,
-    email_sent: emailSent,
-    note,
-  };
-}
 
 export async function softDeleteUser(db: AppDb, id: string, actor: PlatformAuthUser, req: Request) {
   if (actor.id === id) {

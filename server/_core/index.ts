@@ -21,6 +21,7 @@ import { adminUsersRouter } from "../adminUsersApi";
 import { adminSettingsRouter } from "../adminSettingsApi";
 import { publicSettingsRouter } from "../publicSettingsApi";
 import { adminAuditLogRouter } from "../adminAuditLogApi";
+import { dealiusAdminApiRouter } from "../dealiusAdminApi";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -68,6 +69,7 @@ async function startServer() {
   // Auth + submissions REST API for the SPA portal
   app.use("/api/auth", authApiRouter);
   app.use("/api/submissions", submissionsApiRouter);
+  app.use("/api/dealius", dealiusAdminApiRouter);
   app.use("/api/broker-admin", brokerAdminApiRouter);
   app.use("/api/admin/users", adminUsersRouter);
   app.use("/api/admin/settings", adminSettingsRouter);

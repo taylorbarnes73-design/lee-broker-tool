@@ -75,15 +75,34 @@ authApiRouter.post("/login", async (req, res) => {
 
   let sessionToken: string;
   try {
-    await upsertUser({
-      openId,
-      email,
-      name,
-      loginMethod: "local",
-      role,
-      lastSignedIn: new Date(),
-    });
-    sessionToken = await sdk.createSessionToken(openId, { name, email });
+    try {
+      await upsertUser({
+        openId,
+        email,
+        name,
+        loginMethod: "local",
+        role,
+        lastSignedIn: new Date(),
+      });
+    } catch (dbErr) {
+      console.error("[auth.login] Database write failed:", dbErr);
+      res.status(500).json({ success: false, error: "Could not complete sign-in (database error). Please try again or contact support." });
+      return;
+    }
+
+    try {
+      sessionToken = await sdk.createSessionToken(openId, { name, email });
+    } catch (sessionErr) {
+      const secretSet = Boolean(String(ENV.cookieSecret ?? "").trim());
+      console.error("[auth.login] Session token signing failed:", { secretSet, err: sessionErr });
+      res.status(500).json({
+        success: false,
+        error: secretSet
+          ? "Could not complete sign-in (session error). Please try again or contact support."
+          : "Broker sign-in is not configured (missing JWT_SECRET). Set JWT_SECRET in the server environment and redeploy.",
+      });
+      return;
+    }
   } catch (err) {
     console.error("[auth.login] Sign-in failed:", err);
     res.status(500).json({ success: false, error: "Could not complete sign-in. Please try again or contact support." });

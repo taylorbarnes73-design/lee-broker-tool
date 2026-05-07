@@ -24,7 +24,6 @@ export default function Login() {
   const branding = usePublicBranding();
 
   const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,8 +53,7 @@ export default function Login() {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          username_or_email: normalizedIdentifier,
-          password,
+          email: normalizedIdentifier,
         }),
       });
       const j = await r.json().catch(() => ({}));
@@ -159,18 +157,6 @@ export default function Login() {
               />
             </div>
 
-            <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>Password</label>
-              <Input
-                type="password"
-                prefix={<Icons.Lock size={15} />}
-                value={password}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-                placeholder="Enter your password"
-              />
-            </div>
 
             <Button type="submit" variant="primary" size="lg" disabled={submitting || loading} style={{ marginTop: 8 }}>
               {submitting ? "Signing in..." : "Continue to Portal"}

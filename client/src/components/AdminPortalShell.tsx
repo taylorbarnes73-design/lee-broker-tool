@@ -18,6 +18,7 @@ type AdminPortalSection =
   | "broker-admin"
   | "users"
   | "settings"
+  | "dealius-tools"
   | "audit-log"
   | "account"
   | "detail";
@@ -52,6 +53,7 @@ const peopleNav: ReadonlyArray<NavItem> = [
 
 const settingsNav: ReadonlyArray<NavItem> = [
   { section: "settings", label: "Settings", subhead: "Branding & workflow", href: "/portal/admin/settings", adminOnly: true },
+  { section: "dealius-tools", label: "Dealius tools", subhead: "Push & attachments", href: "/portal/admin/dealius-tools", adminOnly: true },
   { section: "audit-log", label: "Audit log", subhead: "Security events", href: "/portal/admin/audit-log", adminOnly: true },
 ];
 

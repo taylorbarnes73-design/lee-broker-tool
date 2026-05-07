@@ -6,7 +6,13 @@ param(
     [string] $ServiceName = "lee-broker-tool",
     [string] $DbInstanceIdentifier = "lee-broker-tool-db",
     [string] $CertificateArn = "",
-    [string] $AwsProfile = "TaylorBarnes"
+    [string] $AwsProfile = "TaylorBarnes",
+    [switch] $SkipDocker,
+    [switch] $UseRdsSecret,
+    [string] $RdsPasswordSecretId = "lee-broker-tool/RDS_MASTER_PASSWORD",
+    # Optional legacy switch; DATABASE_URL is always synced to Secrets Manager for ECS deploys.
+    [switch] $UseDatabaseUrlSecret,
+    [string] $DatabaseUrlSecretName = "lee-broker-tool/DATABASE_URL"
 )
 
 $ErrorActionPreference = "Stop"
@@ -44,8 +50,64 @@ function Get-AwsAccountId([string] $region) {
     return $accountId
 }
 
+function Get-CfnStackStatus([string] $Region, [string] $StackName) {
+    if ($script:AwsProfile) {
+        $output = & aws --profile $script:AwsProfile cloudformation describe-stacks --region $Region --stack-name $StackName --query "Stacks[0].StackStatus" --output text 2>$null
+    }
+    else {
+        $output = & aws cloudformation describe-stacks --region $Region --stack-name $StackName --query "Stacks[0].StackStatus" --output text 2>$null
+    }
+
+    if ($LASTEXITCODE -ne 0) {
+        return $null
+    }
+
+    return ($output | Out-String).Trim()
+}
+
+function Wait-CfnStackIdleBeforeDeploy([string] $Region, [string] $StackName) {
+    $status = Get-CfnStackStatus -Region $Region -StackName $StackName
+    if (-not $status) {
+        return
+    }
+
+    if ($status -eq "UPDATE_IN_PROGRESS" -or $status -eq "UPDATE_COMPLETE_CLEANUP_IN_PROGRESS") {
+        Write-Host "CloudFormation stack '$StackName' is busy ($status); waiting for UPDATE_COMPLETE..." -ForegroundColor Yellow
+        Invoke-Aws cloudformation wait stack-update-complete --region $Region --stack-name $StackName
+        Write-Host "CloudFormation stack update finished." -ForegroundColor Green
+        return
+    }
+
+    if ($status -eq "CREATE_IN_PROGRESS") {
+        Write-Host "CloudFormation stack '$StackName' is being created; waiting for CREATE_COMPLETE..." -ForegroundColor Yellow
+        Invoke-Aws cloudformation wait stack-create-complete --region $Region --stack-name $StackName
+        Write-Host "CloudFormation stack create finished." -ForegroundColor Green
+        return
+    }
+
+    if ($status -eq "UPDATE_ROLLBACK_IN_PROGRESS" -or $status -eq "UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS") {
+        Write-Host "CloudFormation stack '$StackName' update rollback in progress ($status); waiting..." -ForegroundColor Yellow
+        Invoke-Aws cloudformation wait stack-update-rollback-complete --region $Region --stack-name $StackName
+        Write-Host "CloudFormation update rollback finished." -ForegroundColor Green
+        return
+    }
+
+    if ($status -eq "ROLLBACK_IN_PROGRESS") {
+        Write-Host "CloudFormation stack '$StackName' create rollback in progress; waiting..." -ForegroundColor Yellow
+        Invoke-Aws cloudformation wait stack-rollback-complete --region $Region --stack-name $StackName
+        Write-Host "CloudFormation create rollback finished." -ForegroundColor Green
+        return
+    }
+
+    if ($status -eq "DELETE_IN_PROGRESS") {
+        throw "CloudFormation stack '$StackName' is DELETE_IN_PROGRESS. Wait until deletion completes or choose another stack name."
+    }
+}
+
 Require-Command "aws" "Install AWS CLI v2 and make sure it is on PATH."
-Require-Command "docker" "Install Docker Desktop and make sure the daemon is running."
+if (-not $SkipDocker) {
+    Require-Command "docker" "Install Docker Desktop and make sure the daemon is running."
+}
 
 $script:AwsProfile = $AwsProfile.Trim()
 
@@ -106,17 +168,22 @@ if (-not $repoExists) {
     Invoke-Aws ecr create-repository --repository-name $RepositoryName --region $Region | Out-Null
 }
 
-Write-Host "Logging Docker into ECR" -ForegroundColor Yellow
-Invoke-Aws ecr get-login-password --region $Region | docker login --username AWS --password-stdin $ecrUri
+if ($SkipDocker) {
+    Write-Host "Skipping Docker build/push (using existing image tag '$ImageTag')." -ForegroundColor Yellow
+}
+else {
+    Write-Host "Logging Docker into ECR" -ForegroundColor Yellow
+    Invoke-Aws ecr get-login-password --region $Region | docker login --username AWS --password-stdin $ecrUri
 
-Write-Host "Building Docker image" -ForegroundColor Yellow
-docker build -t "${RepositoryName}:${ImageTag}" .
+    Write-Host "Building Docker image" -ForegroundColor Yellow
+    docker build -t "${RepositoryName}:${ImageTag}" .
 
-Write-Host "Tagging Docker image for ECR" -ForegroundColor Yellow
-docker tag "${RepositoryName}:${ImageTag}" $imageUri
+    Write-Host "Tagging Docker image for ECR" -ForegroundColor Yellow
+    docker tag "${RepositoryName}:${ImageTag}" $imageUri
 
-Write-Host "Pushing image to ECR" -ForegroundColor Yellow
-docker push $imageUri
+    Write-Host "Pushing image to ECR" -ForegroundColor Yellow
+    docker push $imageUri
+}
 
 $envVars = Get-Content ".env" | Where-Object {
     $_ -and -not $_.TrimStart().StartsWith("#") -and $_.Contains("=")
@@ -128,6 +195,84 @@ foreach ($line in $envVars) {
     $paramMap[$name.Trim()] = $value
 }
 
+$rdsEndpoint = $null
+try {
+    $rdsEndpoint = Invoke-Aws rds describe-db-instances `
+        --region $Region `
+        --db-instance-identifier $DbInstanceIdentifier `
+        --query "DBInstances[0].Endpoint.Address" `
+        --output text
+}
+catch {
+    $rdsEndpoint = $null
+}
+
+$databaseUrlFromEnv = $paramMap["DATABASE_URL"]
+$shouldOverrideDatabaseUrl = $false
+if ($UseRdsSecret) {
+    $shouldOverrideDatabaseUrl = $true
+}
+elseif (-not $databaseUrlFromEnv) {
+    $shouldOverrideDatabaseUrl = $true
+}
+elseif ($databaseUrlFromEnv -match "127\.0\.0\.1|localhost") {
+    $shouldOverrideDatabaseUrl = $true
+}
+
+if ($shouldOverrideDatabaseUrl) {
+    if (-not $rdsEndpoint -or $rdsEndpoint -eq "None") {
+        throw "Cannot override DATABASE_URL because RDS endpoint for '$DbInstanceIdentifier' could not be resolved."
+    }
+    Write-Host "Resolving RDS password from Secrets Manager for ECS deploy" -ForegroundColor Yellow
+    $dbpw = Invoke-Aws secretsmanager get-secret-value `
+        --region $Region `
+        --secret-id $RdsPasswordSecretId `
+        --query SecretString `
+        --output text
+    if (-not $dbpw) {
+        throw "Secrets Manager returned an empty secret for '$RdsPasswordSecretId'."
+    }
+
+    $encodedUser = [System.Uri]::EscapeDataString("leeadmin")
+    $encodedPassword = [System.Uri]::EscapeDataString($dbpw)
+    $databaseUrlFromEnv = "mysql://${encodedUser}:${encodedPassword}@${rdsEndpoint}:3306/lee_broker_tool"
+}
+
+# The ECS template only injects DATABASE_URL from Secrets Manager (no plain env).
+# Whenever we have a resolved URL (from .env, from -UseRdsSecret, or -UseDatabaseUrlSecret),
+# upsert the well-known secret and pass its ARN to CloudFormation.
+$databaseUrlSecretArn = ""
+if (-not $databaseUrlFromEnv -or $databaseUrlFromEnv.Trim() -eq "") {
+    throw "DATABASE_URL is required for ECS deploy (set it in .env or use -UseRdsSecret to build it from RDS)."
+}
+
+Write-Host "Ensuring Secrets Manager secret '$DatabaseUrlSecretName' matches deploy DATABASE_URL" -ForegroundColor Yellow
+try {
+    $databaseUrlSecretArn = Invoke-Aws secretsmanager describe-secret `
+        --region $Region `
+        --secret-id $DatabaseUrlSecretName `
+        --query ARN `
+        --output text
+}
+catch {
+    $databaseUrlSecretArn = $null
+}
+
+if (-not $databaseUrlSecretArn -or $databaseUrlSecretArn -eq "None") {
+    $databaseUrlSecretArn = Invoke-Aws secretsmanager create-secret `
+        --region $Region `
+        --name $DatabaseUrlSecretName `
+        --secret-string $databaseUrlFromEnv `
+        --query ARN `
+        --output text
+}
+else {
+    Invoke-Aws secretsmanager put-secret-value `
+        --region $Region `
+        --secret-id $DatabaseUrlSecretName `
+        --secret-string $databaseUrlFromEnv | Out-Null
+}
+
 $parameterOverrides = @(
     "ServiceName=$ServiceName",
     "VpcId=$vpcId",
@@ -135,7 +280,8 @@ $parameterOverrides = @(
     "ContainerImageUri=$imageUri",
     "CertificateArn=$CertificateArn",
     "DatabaseSecurityGroupId=$dbSecurityGroupId",
-    "DatabaseUrl=$($paramMap["DATABASE_URL"])",
+    "DatabaseUrl=",
+    "DatabaseUrlSecretArn=$databaseUrlSecretArn",
     "DatabaseSslMode=$($paramMap["DATABASE_SSL_MODE"])",
     "DatabaseSslRejectUnauthorized=$($paramMap["DATABASE_SSL_REJECT_UNAUTHORIZED"])",
     "JwtSecret=$($paramMap["JWT_SECRET"])",
@@ -162,6 +308,8 @@ $parameterOverrides = @(
 Write-Host "Using VPC: $vpcId" -ForegroundColor Green
 Write-Host "Using subnets: $subnetParam" -ForegroundColor Green
 Write-Host "Using DB security group: $dbSecurityGroupId" -ForegroundColor Green
+
+Wait-CfnStackIdleBeforeDeploy -Region $Region -StackName $StackName
 
 Write-Host "Deploying ECS stack '$StackName'" -ForegroundColor Yellow
 $deployArgs = [System.Collections.Generic.List[string]]::new()

@@ -163,8 +163,6 @@ export default function PortalAdminUsers() {
   const [addOpen, setAddOpen] = useState(false);
   const [editUser, setEditUser] = useState<AppUserRow | null>(null);
   const [deactivateUser, setDeactivateUser] = useState<AppUserRow | null>(null);
-  const [resetUser, setResetUser] = useState<AppUserRow | null>(null);
-  const [resetResult, setResetResult] = useState<{ password: string } | null>(null);
 
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
@@ -428,7 +426,6 @@ export default function PortalAdminUsers() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="min-w-[180px]">
                               <DropdownMenuItem onClick={() => setEditUser(u)}>Edit</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setResetUser(u)}>Reset Password</DropdownMenuItem>
                               {u.is_active ? (
                                 <DropdownMenuItem
                                   className="text-destructive focus:text-destructive"
@@ -541,19 +538,7 @@ export default function PortalAdminUsers() {
         }}
       />
 
-      <ResetPasswordDialog
-        user={resetUser}
-        inviteEmailOk={inviteEmailOk}
-        result={resetResult}
-        onClose={() => {
-          setResetUser(null);
-          setResetResult(null);
-        }}
-        onResult={setResetResult}
-        onComplete={async () => {
-          await loadList();
-        }}
-      />
+
     </AdminPortalShell>
   );
 }
@@ -626,7 +611,7 @@ function UserFormDialog({
     setSubmitting(true);
     try {
       if (mode === "add") {
-        const r = await adminFetch<{ user: AppUserRow; temporary_password?: string }>("/api/admin/users", {
+        const r = await adminFetch<{ user: AppUserRow }>("/api/admin/users", {
           method: "POST",
           body: JSON.stringify({
             full_name: fullName.trim(),
@@ -643,9 +628,6 @@ function UserFormDialog({
           if (r.error.field) setFieldErrors({ [r.error.field]: r.error.message });
           else setFormError(r.error.message);
           return;
-        }
-        if (r.data.temporary_password) {
-          toast.info("Copy the temporary password shown in the dialog — it won't be emailed.", { duration: 6000 });
         }
         onSuccess?.(r.data.user.id, r.data.user.full_name);
         return;
@@ -774,8 +756,7 @@ function UserFormDialog({
           )}
           {mode === "add" && !inviteEmailOk && (
             <div style={{ fontSize: 12, color: "var(--ink-500)" }}>
-              Outbound email is not configured on the server, so login instructions cannot be sent automatically. You will receive a temporary password to copy
-              after the user is created.
+              Outbound email is not configured on the server, so login instructions cannot be sent automatically.
             </div>
           )}
 
@@ -847,128 +828,4 @@ function DeactivateDialog({
   );
 }
 
-function ResetPasswordDialog({
-  user,
-  inviteEmailOk,
-  result,
-  onClose,
-  onResult,
-  onComplete,
-}: {
-  user: AppUserRow | null;
-  inviteEmailOk: boolean;
-  result: { password: string } | null;
-  onClose: () => void;
-  onResult: (v: { password: string } | null) => void;
-  onComplete: () => Promise<void>;
-}) {
-  const [busy, setBusy] = useState(false);
-  const open = Boolean(user) || Boolean(result);
 
-  const submit = async () => {
-    if (!user) return;
-    setBusy(true);
-    const r = await adminFetch<{ temporary_password?: string; email_sent?: boolean }>(`/api/admin/users/${user.id}/reset-password`, {
-      method: "POST",
-    });
-    setBusy(false);
-    if (!r.ok) {
-      toast.error(r.error.message, { duration: TOAST_MS });
-      return;
-    }
-    if (r.data.temporary_password) {
-      onResult({ password: r.data.temporary_password });
-    } else {
-      toast.success("Password reset. The new temporary password was emailed.", { duration: TOAST_MS });
-      await onComplete();
-      onClose();
-    }
-  };
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={o => {
-        if (!o) {
-          onResult(null);
-          onClose();
-        }
-      }}
-    >
-      <DialogContent className="sm:max-w-[440px]" style={{ fontFamily: "var(--font-sans)" }}>
-        {result ? (
-          <>
-            <DialogHeader>
-              <DialogTitle>Temporary password</DialogTitle>
-              <DialogDescription>
-                Save this — it won&apos;t be shown again. They&apos;ll be required to change it on next login.
-              </DialogDescription>
-            </DialogHeader>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: 12,
-                borderRadius: 8,
-                background: "var(--ink-50)",
-                border: "1px solid var(--ink-200)",
-                fontFamily: "var(--font-mono)",
-                fontSize: 14,
-                wordBreak: "break-all",
-              }}
-            >
-              <span style={{ flex: 1 }}>{result.password}</span>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                icon={<Icons.Copy size={14} />}
-                onClick={() => {
-                  void navigator.clipboard.writeText(result.password);
-                  toast.success("Copied to clipboard.", { duration: 2000 });
-                }}
-              >
-                Copy
-              </Button>
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="primary"
-                onClick={async () => {
-                  await onComplete();
-                  onResult(null);
-                  onClose();
-                }}
-              >
-                Done
-              </Button>
-            </DialogFooter>
-          </>
-        ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle>Reset password for {user?.full_name ?? "user"}?</DialogTitle>
-              <DialogDescription>
-                A new temporary password will be generated.{" "}
-                {inviteEmailOk
-                  ? "It will be emailed to them."
-                  : "You'll see the new password on the next screen — copy it and share it securely."}{" "}
-                They&apos;ll be required to change it on next login.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter style={{ gap: 8 }}>
-              <Button type="button" variant="secondary" disabled={busy} onClick={onClose}>
-                Cancel
-              </Button>
-              <Button type="button" variant="primary" disabled={busy} onClick={() => void submit()}>
-                {busy ? "Resetting…" : "Reset Password"}
-              </Button>
-            </DialogFooter>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}

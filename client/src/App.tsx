@@ -12,6 +12,7 @@ import PortalBrokerAdminRequests from "./pages/PortalBrokerAdminRequests";
 import PortalAdminAuditLog from "./pages/PortalAdminAuditLog";
 import PortalAdminUsers from "./pages/PortalAdminUsers";
 import PortalAdminSettings from "./pages/PortalAdminSettings";
+import PortalAdminDealiusTools from "./pages/PortalAdminDealiusTools";
 import PortalAccount from "./pages/PortalAccount";
 import PortalDashboard from "./pages/PortalDashboard";
 import PortalSubmissionDetail from "./pages/PortalSubmissionDetail";
@@ -124,6 +125,11 @@ function Router() {
       <Route path="/portal/admin/settings">
         <AdminPortalRoute>
           <PortalAdminSettings />
+        </AdminPortalRoute>
+      </Route>
+      <Route path="/portal/admin/dealius-tools">
+        <AdminPortalRoute>
+          <PortalAdminDealiusTools />
         </AdminPortalRoute>
       </Route>
       <Route path="/admin/settings">

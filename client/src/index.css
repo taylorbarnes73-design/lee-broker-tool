@@ -650,6 +650,20 @@
   flex-wrap: wrap;
 }
 
+.dealius-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dealius-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .dealius-mode-control {
   display: inline-grid;
   grid-template-columns: repeat(2, minmax(96px, 1fr));

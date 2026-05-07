@@ -104,19 +104,43 @@ export const appRouter = router({
         }
 
         try {
-          await upsertUser({
-            openId,
-            name: resolvedName,
-            email,
-            loginMethod: "local",
-            role,
-            lastSignedIn: new Date(),
-          });
+          try {
+            await upsertUser({
+              openId,
+              name: resolvedName,
+              email,
+              loginMethod: "local",
+              role,
+              lastSignedIn: new Date(),
+            });
+          } catch (dbErr) {
+            console.error("[auth.login] Database write failed:", dbErr);
+            return {
+              success: false as const,
+              error:
+                "Could not complete sign-in (database error). Please try again or contact support.",
+            };
+          }
 
-          const sessionToken = await sdk.createSessionToken(openId, {
-            name: resolvedName,
-            email,
-          });
+          let sessionToken: string;
+          try {
+            sessionToken = await sdk.createSessionToken(openId, {
+              name: resolvedName,
+              email,
+            });
+          } catch (sessionErr) {
+            const secretSet = Boolean(String(ENV.cookieSecret ?? "").trim());
+            console.error("[auth.login] Session token signing failed:", {
+              secretSet,
+              err: sessionErr,
+            });
+            return {
+              success: false as const,
+              error: secretSet
+                ? "Could not complete sign-in (session error). Please try again or contact support."
+                : "Broker sign-in is not configured (missing JWT_SECRET). Set JWT_SECRET in the server environment and redeploy.",
+            };
+          }
 
           const cookieOptions = getSessionCookieOptions(ctx.req);
           ctx.res.cookie(COOKIE_NAME, sessionToken, {

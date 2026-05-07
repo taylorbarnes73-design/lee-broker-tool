@@ -9,7 +9,6 @@ export function isAdminInviteSmtpConfigured(): boolean {
 export async function sendUserInviteEmail(params: {
   to: string;
   username: string;
-  tempPassword: string;
   loginUrl: string;
 }): Promise<{ ok: boolean; error?: string }> {
   if (!isAdminInviteSmtpConfigured()) {
@@ -22,11 +21,8 @@ export async function sendUserInviteEmail(params: {
     `An administrator created an account for you on the ${companyName} Broker Tool.`,
     "",
     `Username: ${params.username}`,
-    `Temporary password: ${params.tempPassword}`,
     "",
     `Sign in: ${params.loginUrl}`,
-    "",
-    "Change your password after first sign-in if prompted.",
     "",
     `— ${companyName}`,
   ].join("\n");

@@ -1093,7 +1093,7 @@ export default function PortalAdminSettings() {
               {category === "security" && (
                 <div>
                   <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: "var(--ink-900)" }}>Security</h2>
-                  <div style={rowGrid}>
+                  <div style={{ ...rowGrid, borderBottom: "none" }}>
                     <div>
                       <div style={{ fontWeight: 600, fontSize: 14 }}>Session timeout</div>
                       <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 4 }}>Platform sign-in sessions expire after this many hours.</div>
@@ -1115,51 +1115,7 @@ export default function PortalAdminSettings() {
                       <SaveHint k="security.session_timeout_hours" />
                     </div>
                   </div>
-                  <div style={rowGrid}>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>Minimum password length</div>
-                      <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 4 }}>Applies to broker and admin platform passwords.</div>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <Input
-                        type="number"
-                        value={String(s.password_min_length ?? 12)}
-                        onChange={e => {
-                          const v = Number(e.target.value);
-                          setGrouped(g =>
-                            g ? { ...g, security: { ...g.security, password_min_length: v } } : g
-                          );
-                          schedulePatch("security.password_min_length", v, 800);
-                        }}
-                        onBlur={() => void patchKey("security.password_min_length", Number(s.password_min_length ?? 12))}
-                      />
-                      <SaveHint k="security.password_min_length" />
-                    </div>
-                  </div>
-                  <div style={{ ...rowGrid, borderBottom: "none" }}>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>Require password change every</div>
-                      <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 4 }}>Set to 0 to disable scheduled password rotation.</div>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <Input
-                        type="number"
-                        value={String(s.require_password_change_days ?? 0)}
-                        onChange={e => {
-                          const v = Number(e.target.value);
-                          setGrouped(g =>
-                            g ? { ...g, security: { ...g.security, require_password_change_days: v } } : g
-                          );
-                          schedulePatch("security.require_password_change_days", v, 800);
-                        }}
-                        onBlur={() =>
-                          void patchKey("security.require_password_change_days", Number(s.require_password_change_days ?? 0))
-                        }
-                        suffix={<span style={{ fontSize: 13, color: "var(--ink-500)" }}>days (0 = off)</span>}
-                      />
-                      <SaveHint k="security.require_password_change_days" />
-                    </div>
-                  </div>
+
 
                   <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--ink-150)" }}>
                     <Button type="button" variant="danger" icon={<Icons.Lock size={14} />} onClick={() => setRevokeOpen(true)}>
