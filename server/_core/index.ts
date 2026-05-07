@@ -4,6 +4,8 @@ if (!globalThis.crypto) {
   globalThis.crypto = webcrypto as any;
 }
 import express from "express";
+import fs from "node:fs";
+import path from "node:path";
 
 process.on("unhandledRejection", (reason, promise) => {
   console.error("[Node] Unhandled Rejection at:", promise, "reason:", reason);
@@ -73,9 +75,7 @@ async function startServer() {
         res.status(503).json({ error: "DB offline" });
         return;
       }
-      const fs = require("fs");
-      const path = require("path");
-      const { sql } = require("drizzle-orm");
+      const { sql } = await import("drizzle-orm");
       const sqlContent = fs.readFileSync(path.resolve(process.cwd(), "drizzle/seed_app_users_and_settings.sql"), "utf-8");
       const statements = sqlContent.split(";").map((s: string) => s.trim()).filter((s: string) => s.length > 0);
       for (const statement of statements) {
