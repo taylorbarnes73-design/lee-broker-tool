@@ -4,6 +4,11 @@ if (!globalThis.crypto) {
   globalThis.crypto = webcrypto as any;
 }
 import express from "express";
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("[Node] Unhandled Rejection at:", promise, "reason:", reason);
+});
+
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
