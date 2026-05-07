@@ -22,6 +22,23 @@ import { contractsRouter } from "./contracts";
 
 // ── Helpers ──
 
+const mockPdfBuffer = Buffer.from("%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF");
+
+global.fetch = vi.fn().mockImplementation(async (url: string) => {
+  if (url === "https://example.com/test.pdf") {
+    return {
+      ok: true,
+      status: 200,
+      arrayBuffer: async () => mockPdfBuffer.buffer,
+    };
+  }
+  return {
+    ok: false,
+    status: 404,
+    statusText: "Not Found",
+  };
+});
+
 /** Call a tRPC mutation directly (no HTTP) */
 async function callMutation(procedure: string, input: unknown) {
   const parts = procedure.split(".");

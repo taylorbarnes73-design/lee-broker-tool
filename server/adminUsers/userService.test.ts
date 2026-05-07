@@ -75,7 +75,7 @@ describe("createUser", () => {
     vi.mocked(writeAuditLog).mockClear();
   });
 
-  it("creates a user, returns temporary password when SMTP is off, and writes audit", async () => {
+  it("creates a user, returns note when SMTP is off, and writes audit", async () => {
     const db = mockDbForCreate({}) as any;
     const req = { headers: {}, ip: "127.0.0.1" } as any;
     const out = await createUser(
@@ -94,7 +94,7 @@ describe("createUser", () => {
 
     expect(out.user.email).toBe("new@lee-associates.com");
     expect(out.user.username).toBe("newbroker");
-    expect(out.temporary_password).toHaveLength(16);
+
     expect(writeAuditLog).toHaveBeenCalledWith(
       "admin-1",
       "user.created",

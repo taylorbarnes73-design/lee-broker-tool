@@ -8,13 +8,13 @@ import {
 import { getSessionCookieOptions } from "./_core/cookies";
 import { localAuth, sdk } from "./_core/sdk";
 import { ENV } from "./_core/env";
-import { upsertUser } from "./db";
+import { getDb, upsertUser } from "./db";
 import {
   handlePlatformPasswordLogin,
   handlePlatformLogout,
   isPlatformPasswordLoginBody,
 } from "./auth/passwordPlatformAuth";
-import { resolvePlatformUserFromRequest } from "./auth/platformSession";
+import { resolvePlatformUserFromRequest, findAppUserByUsernameOrEmail } from "./auth/platformSession";
 import { linkPlatformSessionAfterLegacyLogin } from "./auth/linkPlatformSessionAfterLegacyLogin";
 
 const loginSchema = z.object({
@@ -59,19 +59,35 @@ authApiRouter.post("/login", async (req, res) => {
     return;
   }
 
-  const brokerEntry = findBrokerDirectoryEntry(email);
-  if (!brokerEntry) {
+  let brokerEntry = findBrokerDirectoryEntry(email);
+  let name = parsed.data.name?.trim() || email;
+  let role = "user";
+  let isFromDb = false;
+
+  const db = await getDb();
+  if (db) {
+    const appUser = await findAppUserByUsernameOrEmail(db, email);
+    if (appUser && appUser.isActive) {
+      isFromDb = true;
+      name = appUser.fullName || name;
+      role = appUser.role === "admin" ? "admin" : "user";
+    }
+  }
+
+  if (!brokerEntry && !isFromDb) {
     res.status(400).json({ success: false, error: "Email not recognized. Use your @lee-associates.com email." });
     return;
   }
 
   const openId = localAuth.toLocalOpenId(email);
-  const name = brokerEntry.name || parsed.data.name?.trim() || email;
-  const isAdminIdentity =
-    ENV.localAdminEmails.includes(email) ||
-    ENV.localAdminNames.includes(name.trim().toLowerCase()) ||
-    isBrokerDirectoryAdmin(brokerEntry);
-  const role = isAdminIdentity ? "admin" : "user";
+  if (!isFromDb) {
+    name = brokerEntry?.name || name;
+    const isAdminIdentity =
+      ENV.localAdminEmails.includes(email) ||
+      ENV.localAdminNames.includes(name.trim().toLowerCase()) ||
+      (brokerEntry && isBrokerDirectoryAdmin(brokerEntry));
+    role = isAdminIdentity ? "admin" : "user";
+  }
 
   let sessionToken: string;
   try {
@@ -126,7 +142,7 @@ authApiRouter.post("/login", async (req, res) => {
         name,
         email,
         role: role === "admin" ? "ADMIN" : "AGENT",
-        office: brokerEntry.office,
+        office: brokerEntry?.office,
       },
     },
   });

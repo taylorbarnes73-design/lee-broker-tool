@@ -37,7 +37,6 @@
       <nav class="header-portal-actions" aria-label="Portal links">
         <button type="button" class="submission-queue-button" onclick="switchTab('queue')">Queue</button>
         <a class="header-portal-link" href="/portal">Portal</a>
-        <a class="header-portal-link" href="/login">Login</a>
       </nav>
     </div>
     <a class="admin-toggle is-hidden" href="/portal/admin/settings" aria-label="Open admin settings">
@@ -47,22 +46,7 @@
   </div><!-- /header-right -->
 </div><!-- /header -->
 
-<!-- ═══ SIGN-IN GATE ═══ -->
-<div id="tool-sign-in" class="tool-sign-in">
-  <div class="tool-sign-in-card">
-    <img src="lee-newport-beach-fullcolor.png" alt="Broker Tool" class="tool-sign-in-logo" id="tool-sign-in-logo">
-    <h1 class="tool-sign-in-title">Broker Workspace</h1>
-    <p class="tool-sign-in-sub">Type your Lee username or email to open the tool. No password required.</p>
-    <form id="tool-sign-in-form" onsubmit="handleToolSignIn(event)" autocomplete="on">
-      <div class="field">
-        <label for="tool-sign-in-email">Lee Username or Email</label>
-        <input id="tool-sign-in-email" type="text" name="email" placeholder="tbarnes" required autocomplete="email" onblur="normalizeToolSignInEmail()">
-      </div>
-      <div id="tool-sign-in-error" class="tool-sign-in-error"></div>
-      <button type="submit" class="btn btn-red tool-sign-in-btn" id="tool-sign-in-btn">Continue</button>
-    </form>
-  </div>
-</div>
+<!-- Sign-in removed: redirecting to centralized React login -->
 
 <div id="broker-view" style="display:none">
 
@@ -2853,6 +2837,7 @@ function switchTab(name) {
   });
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
+  window.scrollTo(0, 0);
   if (name === 'queue') {
     void refreshBrokerQueue();
   }
@@ -6408,15 +6393,7 @@ const BROKER_EMAIL_MAP = {
 
 function showBrokerTool(user) {
   setAdminAccessForUser(user || null);
-  const signInEl = document.getElementById('tool-sign-in');
   const brokerViewEl = document.getElementById('broker-view');
-
-  if (signInEl) {
-    signInEl.classList.add('is-exiting');
-    window.setTimeout(() => {
-      signInEl.style.display = 'none';
-    }, 180);
-  }
   if (brokerViewEl) {
     brokerViewEl.style.display = '';
     brokerViewEl.classList.remove('is-ready');
@@ -6431,47 +6408,7 @@ function showBrokerTool(user) {
   window.queueMicrotask(applyBrokerToolInitialTabFromUrl);
 }
 
-async function handleToolSignIn(event) {
-  event.preventDefault();
-  const inputEl = document.getElementById('tool-sign-in-email');
-  const email = normalizeToolSignInEmail();
-  inputEl.value = email;
-  const errorEl = document.getElementById('tool-sign-in-error');
-  const btn = document.getElementById('tool-sign-in-btn');
-  errorEl.textContent = '';
-
-  const brokerName = BROKER_EMAIL_MAP[email];
-  if (!brokerName) {
-    errorEl.textContent = 'Email not recognized. Use your @lee-associates.com email.';
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = 'Signing in…';
-  try {
-    const result = await callTrpc('auth.login', { name: brokerName, email });
-    if (result?.success) {
-      showBrokerTool(result.user);
-    } else {
-      errorEl.textContent = result?.error || 'Sign in failed. Please try again.';
-    }
-  } catch (e) {
-    errorEl.textContent = (e && e.message) ? e.message : 'Sign in failed. Please try again.';
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Continue';
-  }
-}
-
-function normalizeToolSignInEmail() {
-  const inputEl = document.getElementById('tool-sign-in-email');
-  const value = (inputEl?.value || '').trim().toLowerCase();
-  const email = value.includes('@') || !value ? value : `${value}@lee-associates.com`;
-  if (inputEl) inputEl.value = email;
-  return email;
-}
-
-window.normalizeToolSignInEmail = normalizeToolSignInEmail;
+// Sign-in functions removed, handled by React login.
 
 async function initBrokerToolAuth() {
   try {
@@ -6484,7 +6421,7 @@ async function initBrokerToolAuth() {
     console.warn('Auth check on load:', e && e.message ? e.message : e);
   }
   setAdminAccessForUser(null);
-  // Not signed in — keep sign-in screen visible
+  window.location.href = '/login?next=/tool';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
