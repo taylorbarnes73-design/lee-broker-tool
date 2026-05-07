@@ -62,7 +62,8 @@ async function startServer() {
   // Make the broker surface a single-purpose tool while allowing the
   // integrated React admin portal to own /portal and /login.
   app.get(["/", "/beta", "/beta/*", "/404"], (req, res) => {
-    if (req.headers["user-agent"]?.includes("ELB-HealthChecker")) {
+    const ua = req.headers["user-agent"] || "";
+    if (ua.toLowerCase().includes("elb-healthchecker")) {
       res.status(200).send("OK");
       return;
     }

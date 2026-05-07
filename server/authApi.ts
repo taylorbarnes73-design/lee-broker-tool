@@ -64,14 +64,19 @@ authApiRouter.post("/login", async (req, res) => {
   let role: "admin" | "user" = "user";
   let isFromDb = false;
 
-  const db = await getDb();
-  if (db) {
-    const appUser = await findAppUserByUsernameOrEmail(db, email);
-    if (appUser && appUser.isActive) {
-      isFromDb = true;
-      name = appUser.fullName || name;
-      role = appUser.role === "admin" ? "admin" : "user";
+  let db: Awaited<ReturnType<typeof getDb>> = null;
+  try {
+    db = await getDb();
+    if (db) {
+      const appUser = await findAppUserByUsernameOrEmail(db, email);
+      if (appUser && appUser.isActive) {
+        isFromDb = true;
+        name = appUser.fullName || name;
+        role = appUser.role === "admin" ? "admin" : "user";
+      }
     }
+  } catch (err) {
+    console.error("[auth.login] Database query failed (fallback to hardcoded directory):", err);
   }
 
   if (!brokerEntry && !isFromDb) {
