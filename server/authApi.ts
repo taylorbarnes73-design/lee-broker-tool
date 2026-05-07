@@ -61,7 +61,7 @@ authApiRouter.post("/login", async (req, res) => {
 
   let brokerEntry = findBrokerDirectoryEntry(email);
   let name = parsed.data.name?.trim() || email;
-  let role = "user";
+  let role: "admin" | "user" = "user";
   let isFromDb = false;
 
   const db = await getDb();
