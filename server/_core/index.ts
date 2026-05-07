@@ -54,9 +54,18 @@ async function startServer() {
     res.redirect(301, "/tool");
   });
 
+  // Health check endpoint for AWS Application Load Balancer
+  app.get(["/health", "/api/health"], (_req, res) => {
+    res.status(200).send("OK");
+  });
+
   // Make the broker surface a single-purpose tool while allowing the
   // integrated React admin portal to own /portal and /login.
-  app.get(["/", "/beta", "/beta/*", "/404"], (_req, res) => {
+  app.get(["/", "/beta", "/beta/*", "/404"], (req, res) => {
+    if (req.headers["user-agent"]?.includes("ELB-HealthChecker")) {
+      res.status(200).send("OK");
+      return;
+    }
     res.redirect(302, "/tool");
   });
 
