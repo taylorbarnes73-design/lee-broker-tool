@@ -493,7 +493,7 @@ submissionsApiRouter.post("/:id/dealius-documents", async (req, res) => {
   }
 
   const { entityType, entityId, files } = parsedBody.data;
-  const maxBytes = 25 * 1024 * 1024;
+  const maxBytes = 100 * 1024 * 1024;
   const results: any[] = [];
 
   for (const file of files) {
@@ -510,7 +510,7 @@ submissionsApiRouter.post("/:id/dealius-documents", async (req, res) => {
       continue;
     }
     if (buffer.length > maxBytes) {
-      results.push({ filename: file.filename, success: false, error: "File too large (max 25MB)" });
+      results.push({ filename: file.filename, success: false, error: "File too large (max 100MB)" });
       continue;
     }
 
@@ -638,9 +638,9 @@ submissionsApiRouter.post("/:id/import-voucher-excel", async (req, res) => {
     res.status(400).json({ success: false, error: "Empty file" });
     return;
   }
-  const maxBytes = 25 * 1024 * 1024;
+  const maxBytes = 100 * 1024 * 1024;
   if (buffer.length > maxBytes) {
-    res.status(400).json({ success: false, error: "File too large (max 25MB)" });
+    res.status(400).json({ success: false, error: "File too large (max 100MB)" });
     return;
   }
 
@@ -744,9 +744,9 @@ submissionsApiRouter.post("/:id/import-listing-pdf", async (req, res) => {
     res.status(400).json({ success: false, error: "Empty file" });
     return;
   }
-  const maxBytes = 25 * 1024 * 1024;
+  const maxBytes = 100 * 1024 * 1024;
   if (buffer.length > maxBytes) {
-    res.status(400).json({ success: false, error: "File too large (max 25MB)" });
+    res.status(400).json({ success: false, error: "File too large (max 100MB)" });
     return;
   }
 

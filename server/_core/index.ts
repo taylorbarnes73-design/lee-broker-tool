@@ -53,8 +53,8 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
   // Configure body parser with larger size limit for file uploads
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  app.use(express.json({ limit: "250mb" }));
+  app.use(express.urlencoded({ limit: "250mb", extended: true }));
 
   // Redirect legacy URL to canonical clean URL
   app.get("/broker_tool.html", (_req, res) => {

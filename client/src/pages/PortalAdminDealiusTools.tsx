@@ -487,6 +487,74 @@ export default function PortalAdminDealiusTools() {
           </div>
         </section>
 
+        {entry.entryMode === "deal" && (
+          <section className="dealius-panel">
+            <div className="dealius-section-title">Parties and economics</div>
+            <div className="dealius-form-grid">
+              <Field label="Client company">
+                <Input value={entry.clientCo} onChange={(e: any) => patchEntry({ clientCo: e.target.value })} />
+              </Field>
+              <Field label="Opposite company">
+                <Input value={entry.oppositeCo} onChange={(e: any) => patchEntry({ oppositeCo: e.target.value })} />
+              </Field>
+              <Field label="Start date">
+                <Input type="date" value={entry.startDate} onChange={(e: any) => patchEntry({ startDate: e.target.value })} />
+              </Field>
+              <Field label="End date">
+                <Input type="date" value={entry.endDate} onChange={(e: any) => patchEntry({ endDate: e.target.value })} />
+              </Field>
+              <Field label="Term months">
+                <Input type="number" value={entry.term} onChange={(e: any) => patchEntry({ term: e.target.value })} />
+              </Field>
+              <Field label="Fee percent">
+                <Input type="number" step="0.01" value={entry.feePercent} onChange={(e: any) => patchEntry({ feePercent: e.target.value })} suffix="%" />
+              </Field>
+              <Field label={entry.transactionType === "Sale" ? "Sale price" : "Asking rate"}>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={entry.transactionType === "Sale" ? entry.totalConsideration : entry.askingRate}
+                  onChange={(e: any) =>
+                    entry.transactionType === "Sale"
+                      ? patchEntry({ totalConsideration: e.target.value })
+                      : patchEntry({ askingRate: e.target.value })
+                  }
+                />
+              </Field>
+            </div>
+          </section>
+        )}
+
+        {entry.entryMode === "listing" && (
+          <section className="dealius-panel">
+            <div className="dealius-section-title">Listing details</div>
+            <div className="dealius-form-grid">
+              <Field label="Listing start">
+                <Input type="date" value={entry.listingStartDate} onChange={(e: any) => patchEntry({ listingStartDate: e.target.value })} />
+              </Field>
+              <Field label="Listing expiration">
+                <Input type="date" value={entry.listingExpiryDate} onChange={(e: any) => patchEntry({ listingExpiryDate: e.target.value })} />
+              </Field>
+              <Field label="Available date">
+                <Input type="date" value={entry.listingAvailableDate} onChange={(e: any) => patchEntry({ listingAvailableDate: e.target.value })} />
+              </Field>
+              <Field label="Status">
+                <Select
+                  value={entry.listingStatus}
+                  onChange={(e: any) => patchEntry({ listingStatus: e.target.value })}
+                  options={["active", "pending", "draft"]}
+                />
+              </Field>
+              <Field label="Asking rate">
+                <Input type="number" step="0.01" value={entry.askingRate} onChange={(e: any) => patchEntry({ askingRate: e.target.value })} />
+              </Field>
+              <Field label="Commission">
+                <Input type="number" step="0.01" value={entry.feePercent} onChange={(e: any) => patchEntry({ feePercent: e.target.value })} suffix="%" />
+              </Field>
+            </div>
+          </section>
+        )}
+
         <section className="dealius-panel dealius-action-panel">
           <div>
             <div className="dealius-section-title">Pre-flight</div>
