@@ -774,10 +774,11 @@ async function buildDocumentUserContent(
       type: "text",
       text: await (async () => {
         try {
-          const mod = await import("pdf-parse");
-          const parse = (mod as any).default ?? (mod as any);
-          const parsed = await parse(fileBuffer);
-          const cleaned = normalizeWhitespace(parsed.text || "");
+          const { PDFParse } = await import("pdf-parse");
+          const parser = new PDFParse({ data: fileBuffer });
+          const textResult = await parser.getText();
+          await parser.destroy?.();
+          const cleaned = normalizeWhitespace(textResult.text || "");
           const trimmed = cleaned.slice(0, 40_000);
           return `${promptText}\n\nDocument text (extracted):\n${trimmed}`;
         } catch (e: any) {

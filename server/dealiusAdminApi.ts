@@ -250,33 +250,143 @@ dealiusAdminApiRouter.post("/scrape", async (req: Request, res: Response) => {
     if (lower.endsWith(".pdf")) {
       const warnings: string[] = [];
       let patch: Record<string, unknown> = {};
-      let source: "listing_form_pdf" | "listing_pdf_text" = "listing_pdf_text";
+      let source: "listing_form_pdf" | "listing_pdf_text" | "listing_llm" = "listing_pdf_text";
 
+      // Step 1: Try structured form fields (AcroForm)
       try {
         const parsedListing = await parseListingFormPdfBuffer(buffer);
         patch = listingFormPatchFromParsed(parsedListing);
         source = "listing_form_pdf";
       } catch {
-        warnings.push("No usable PDF form fields found; filled gaps from document text where possible.");
+        // No form fields – expected for flat PDFs / listing agreements.
       }
 
-      const plain = await extractPdfPlainText(buffer);
-      const { patch: textPatch, hints } = heuristicsFromPdfText(plain);
-      patch = mergeScrapePatches(patch, textPatch);
+      // Step 2: Extract raw text for regex heuristics and LLM input
+      let plain = "";
+      try {
+        plain = await extractPdfPlainText(buffer);
+      } catch {
+        warnings.push("Could not extract text from PDF.");
+      }
 
+      // Step 3: LLM-powered smart extraction (multi-space aware)
+      if (plain.length > 50) {
+        try {
+          const { invokeLLM } = await import("../_core/llm");
+          const { getSetting } = await import("../settings/getSetting");
+          const company = String(await getSetting("branding.company_name").catch(() => "Lee & Associates"));
+          const trimmedText = plain.slice(0, 40_000);
+
+          const llmResponse = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: `You are a commercial real estate listing data extraction specialist for ${company}.
+Extract structured data from a listing agreement, exclusive right to represent, or property marketing document.
+
+CRITICAL RULES:
+- Return ONLY a valid JSON object. No markdown fences, no explanation.
+- Extract ONLY values you can identify with HIGH CONFIDENCE.
+- For "spaces": extract ALL suites/units/spaces mentioned with their individual SF and asking rates.
+- Monetary values: numeric strings, no $ or commas. "$1.25/SF/Mo" → "1.25".
+- SF values: numeric strings without commas. "12,500 SF" → "12500".
+- Dates: YYYY-MM-DD format.
+- Property type: exactly Industrial, Office, Retail, Land, or Other.
+- Transaction type: exactly Lease, Sale, Sublease, or "Sale or Lease".
+- Commission: numeric percentage as string. "6%" → "6".
+- Owner/lessor: the property owner or landlord company name ONLY, not random words.
+- Address: street address only (no city/state/zip).
+- State: two-letter abbreviation.
+- Broker names: full name only. If multiple brokers listed, separate with semicolons.`
+              },
+              {
+                role: "user",
+                content: `Extract listing data from this document. Return JSON with these fields:
+
+{
+  "address": "street address",
+  "city": "city name",
+  "state": "two-letter state",
+  "zip": "5-digit zip",
+  "propertyType": "Industrial|Office|Retail|Land|Other",
+  "transactionType": "Lease|Sale|Sublease|Sale or Lease",
+  "ownerCompany": "property owner / landlord company name",
+  "lessorName": "lessor name if different from owner",
+  "totalBldgSF": "total building square footage",
+  "yearBuilt": "year built if mentioned",
+  "askingRate": "asking lease rate per SF",
+  "askingPrice": "asking sale price if applicable",
+  "feePercent": "commission percentage",
+  "listingAgentName": "broker name(s), semicolon separated",
+  "listingStartDate": "listing start date YYYY-MM-DD",
+  "listingExpiryDate": "listing expiry date YYYY-MM-DD",
+  "listingNotes": "key property features or notes, brief",
+  "spaces": [
+    {
+      "suite": "suite/unit name or number",
+      "sqft": "available square footage for this space",
+      "askingRate": "asking rate for this space if different",
+      "availableDate": "available date YYYY-MM-DD if mentioned",
+      "comments": "any notes specific to this space"
+    }
+  ]
+}
+
+Document text:
+${trimmedText}`
+              }
+            ],
+            maxTokens: 2048,
+          });
+
+          const raw = llmResponse.choices?.[0]?.message?.content;
+          if (typeof raw === "string" && raw.trim()) {
+            const cleaned = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+            const llmData = JSON.parse(cleaned);
+            if (llmData && typeof llmData === "object") {
+              // Merge LLM results into patch, preferring LLM for empty fields
+              for (const [key, value] of Object.entries(llmData)) {
+                if (key === "spaces" && Array.isArray(value) && value.length > 0) {
+                  // Only use LLM spaces if we don't already have form-scraped ones
+                  const existingSpaces = Array.isArray(patch.spaces) ? patch.spaces as any[] : [];
+                  if (!existingSpaces.length || existingSpaces.every((s: any) => !s.suite && !s.sqft)) {
+                    patch.spaces = value;
+                  }
+                } else if (value !== null && value !== undefined && String(value).trim() !== "") {
+                  const existing = patch[key];
+                  const isEmpty = existing === undefined || existing === null || String(existing).trim() === "";
+                  if (isEmpty) {
+                    patch[key] = value;
+                  }
+                }
+              }
+              source = "listing_llm";
+            }
+          }
+        } catch (llmErr: unknown) {
+          const llmMsg = llmErr instanceof Error ? llmErr.message : String(llmErr);
+          warnings.push(`LLM extraction skipped: ${llmMsg.slice(0, 120)}`);
+        }
+      }
+
+      // Step 4: Regex heuristics as fallback for anything the LLM missed
+      if (plain.length > 0) {
+        const { patch: textPatch, hints } = heuristicsFromPdfText(plain);
+        patch = mergeScrapePatches(patch, textPatch);
+        (patch as any)._hints = hints;
+      }
+
+      // Step 5: Derive missing fields
       const addr = String(patch.address ?? "").trim();
-      const city = String(patch.city ?? "").trim();
-      if (source === "listing_form_pdf" && !addr && !city) {
-        warnings.push("Form fields were empty; merged text heuristics for address and parties.");
-      }
-
-      if (!String(patch.ownerCompany ?? "").trim() && String(patch.lessorName ?? "").trim()) {
-        patch.ownerCompany = patch.lessorName;
-      }
+      const suite = String(patch.suite ?? "").trim();
       if (!String(patch.listingName ?? "").trim() && addr) {
-        patch.listingName = addr;
+        patch.listingName = suite ? `${addr}, Ste ${suite}` : addr;
       }
-
+      if (!String(patch.ownerCompany ?? "").trim() && String(patch.lessorName ?? "").trim()) {
+        // Only copy if it looks like a real name (more than 2 chars, not just "and")
+        const lessor = String(patch.lessorName).trim();
+        if (lessor.length > 2) patch.ownerCompany = lessor;
+      }
       if (String(patch.commission ?? "").trim() === "" && patch.feePercent != null) {
         patch.commission = patch.feePercent;
       }
@@ -289,7 +399,6 @@ dealiusAdminApiRouter.post("/scrape", async (req: Request, res: Response) => {
           mimeType: normalizedMimeType,
           filename,
           patch,
-          hints,
           warnings,
         },
       });
