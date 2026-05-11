@@ -41,7 +41,10 @@ function str(raw: unknown): string {
 function num(raw: unknown): number | null {
   const value = str(raw);
   if (!value) return null;
-  const parsed = Number(value.replace(/[$,%]/g, "").replace(/,/g, "").match(/-?\d+(?:\.\d+)?/)?.[0] ?? "");
+  const clean = value.replace(/[$,%]/g, "").replace(/,/g, "");
+  const match = clean.match(/\d+(?:\.\d+)?/);
+  if (!match) return null;
+  const parsed = Number(match[0]);
   return Number.isFinite(parsed) ? parsed : null;
 }
 
@@ -130,7 +133,11 @@ export function parseListingFormFields(fields: FieldMap, text = ""): ParsedListi
   const suite = spaces.map(space => space.suite).filter(Boolean).join(", ");
   const askingRate = cleanMoneyOrRate(first(fields, ["SF", "LeaseMo"]));
   const askingPrice = cleanMoneyOrRate(first(fields, ["Sale Price"]));
-  const listingAgentName = [first(fields, ["Listing Agents 1"]), first(fields, ["Listing Agents 2"])].filter(Boolean).join("; ");
+  const rawAgents = [first(fields, ["Listing Agents 1"]), first(fields, ["Listing Agents 2"])];
+  const listingAgentName = rawAgents
+    .filter(Boolean)
+    .filter(name => !name.toLowerCase().includes("lee & assoc") && !name.toLowerCase().includes("lee and assoc"))
+    .join("; ");
   const listingNotes = [first(fields, ["Description"]), first(fields, ["Comments"])]
     .filter(Boolean)
     .join("\n\n");

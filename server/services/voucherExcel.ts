@@ -58,6 +58,7 @@ function repLabelFromId(id: number): string {
     2: "Seller Rep",
     3: "Tenant Rep",
     4: "Landlord Rep",
+    5: "Other / Referred Rep",
   };
   return map[id] ?? "Landlord Rep";
 }
@@ -211,8 +212,9 @@ function parseLeeVoucherGridInternal(rows: unknown[][], ws: WorkSheet | null, la
   const v431 = layout === "v431";
 
   const txRaw = (v431 && ws ? txRawFrom431(ws, rows) : (g(rows, 3, 3) || g(rows, 4, 1) || g(rows, 3, 1) || "")).toLowerCase();
-  const isLease = txRaw.includes("lease") || txRaw === "";
-  const isSale = txRaw.includes("sale") || txRaw.includes("sold");
+  const isReferral = txRaw.includes("referral") || txRaw.includes("referred") || txRaw.includes("referr");
+  const isLease = !isReferral && (txRaw.includes("lease") || txRaw === "");
+  const isSale = !isReferral && (txRaw.includes("sale") || txRaw.includes("sold"));
 
   const listingHouse = (
     (v431 && ws ? cellStrAtRC(ws, 84, 2) : "") ||
@@ -245,7 +247,8 @@ function parseLeeVoucherGridInternal(rows: unknown[][], ws: WorkSheet | null, la
   const representedBothSides = (isListing && isProcuring) || (hasListingBroker && hasProcuringBroker);
   const onListingSide = representedBothSides || isListing || (!isProcuring && fallbackSide === "listing");
   let repTypeID: number;
-  if (isLease) repTypeID = onListingSide ? 4 : 3;
+  if (isReferral) repTypeID = 5;
+  else if (isLease) repTypeID = onListingSide ? 4 : 3;
   else repTypeID = onListingSide ? 2 : 1;
 
   const address = ws ? cellStrAtRC(ws, 8, 1) || g(rows, 8, 1) : g(rows, 8, 1);
@@ -346,7 +349,7 @@ function parseLeeVoucherGridInternal(rows: unknown[][], ws: WorkSheet | null, la
   if (pN && pA != null) outsideBrokers.push({ name: pN, amt: pA });
   if (eN && eA != null) outsideBrokers.push({ name: eN, amt: eA });
 
-  const txWord = isSale ? "Sold" : "Leased";
+  const txWord = isReferral ? "Referred" : isSale ? "Sold" : "Leased";
   const dealName = txWord + ": " + propertyNameFromAddressSuite(address, suite);
 
   const clientContact = onListingSide ? lessorContact : lesseeContact;
@@ -361,7 +364,7 @@ function parseLeeVoucherGridInternal(rows: unknown[][], ws: WorkSheet | null, la
     repTypeID,
     isLease,
     isSale,
-    transactionType: isLease ? "Lease" : "Sale",
+    transactionType: isReferral ? "Referral" : isLease ? "Lease" : "Sale",
     representationType: repLabelFromId(repTypeID),
     address,
     city,
