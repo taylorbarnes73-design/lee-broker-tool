@@ -171,13 +171,14 @@ export default function PortalAdminDealiusTools() {
 
   const checklist = useMemo(() => {
     const listingSqft = entry.entryMode === "listing" && entry.spaces.some(space => Boolean(num(space.sqft)));
+    const isReferred = String(entry.repTypeID) === "5";
     const rows = [
       { label: "Address", ok: Boolean(entry.address), detail: entry.address || "Missing" },
       { label: "City", ok: Boolean(entry.city), detail: entry.city || "Missing" },
       { label: "Zip", ok: Boolean(entry.zip), detail: entry.zip || "Missing" },
       { label: "Square feet", ok: Boolean(num(entry.sqft)) || listingSqft, detail: entry.sqft ? `${entry.sqft}` : listingSqft ? "From spaces" : "Missing" },
     ];
-    if (entry.entryMode === "deal") {
+    if (entry.entryMode === "deal" && !isReferred) {
       rows.push({ label: "Fee percent", ok: Boolean(num(entry.feePercent)), detail: entry.feePercent ? `${entry.feePercent}%` : "Missing" });
     }
     return rows;

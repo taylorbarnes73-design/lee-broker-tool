@@ -268,8 +268,6 @@ function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
     feePercentFrom(p.feePercent || p.commissionRate || p.lCommRate || p.sCommPct || p.saleCommPct) ||
     feePercentFrom(fieldFromSections(payload, ["Total Commission %", "Commission (%)"]));
 
-    feePercentFrom(fieldFromSections(payload, ["Total Commission %", "Commission (%)"]));
-
   const repTypeID = str(p.repTypeID || p.repType) || (transactionType === "Sale" ? "2" : "4");
   const clientCo = str(p.clientCo || p.lessorName || p.sellerName || p.lsCompany) || fieldFromSections(payload, ["Lessor / Seller", "Seller / Client Co."]);
   const clientContactName = str(p.clientContactName || p.clientContact || p.lsContact);
@@ -379,13 +377,14 @@ export default function DealiusSubmissionWorkspace({
 
   const checklist = useMemo(() => {
     const listingSqft = entry.entryMode === "listing" && entry.spaces.some(space => Boolean(num(space.sqft)));
+    const isReferred = String(entry.repTypeID) === "5";
     const rows = [
       { label: "Address", ok: Boolean(entry.address), detail: entry.address || "Missing" },
       { label: "City", ok: Boolean(entry.city), detail: entry.city || "Missing" },
       { label: "Zip", ok: Boolean(entry.zip), detail: entry.zip || "Missing" },
       { label: "Square feet", ok: Boolean(num(entry.sqft)) || listingSqft, detail: entry.sqft ? `${entry.sqft}` : listingSqft ? "From spaces" : "Missing" },
     ];
-    if (entry.entryMode === "deal") {
+    if (entry.entryMode === "deal" && !isReferred) {
       rows.push({ label: "Fee percent", ok: Boolean(num(entry.feePercent)), detail: entry.feePercent ? `${entry.feePercent}%` : "Missing" });
       if (isLeaseTransaction(entry.transactionType)) {
         rows.push({

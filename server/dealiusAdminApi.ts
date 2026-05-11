@@ -104,7 +104,7 @@ dealiusAdminApiRouter.post("/documents", async (req: Request, res: Response) => 
   }
 
   const { entityType, entityId, files } = parsed.data;
-  const maxBytes = 25 * 1024 * 1024;
+  const maxBytes = 100 * 1024 * 1024;
 
   const client = new DealiusClient();
   let token: string;
@@ -133,7 +133,7 @@ dealiusAdminApiRouter.post("/documents", async (req: Request, res: Response) => 
       continue;
     }
     if (buffer.length > maxBytes) {
-      results.push({ filename: file.filename, success: false, error: "File too large (max 25MB)" });
+      results.push({ filename: file.filename, success: false, error: "File too large (max 100MB)" });
       continue;
     }
 
@@ -204,7 +204,7 @@ dealiusAdminApiRouter.post("/scrape", async (req: Request, res: Response) => {
     return;
   }
 
-  const maxBytes = 25 * 1024 * 1024;
+  const maxBytes = 100 * 1024 * 1024;
   const { filename, base64Data } = parsed.data;
   const normalizedMimeType =
     parsed.data.mimeType && parsed.data.mimeType !== "application/octet-stream"
@@ -223,7 +223,7 @@ dealiusAdminApiRouter.post("/scrape", async (req: Request, res: Response) => {
     return;
   }
   if (buffer.length > maxBytes) {
-    jsonErr(res, 400, "File too large (max 25MB)");
+    jsonErr(res, 400, "File too large (max 100MB)");
     return;
   }
 

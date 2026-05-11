@@ -188,6 +188,7 @@ function repTypeIdFrom(raw: unknown): number {
   if (v.includes("landlord")) return 4;
   if (v.includes("buyer")) return 1;
   if (v.includes("seller")) return 2;
+  if (v.includes("referr") || v.includes("other")) return 5;
   return positiveInt(raw) ?? 4;
 }
 
@@ -450,8 +451,11 @@ export function validateDealEntryForDealiusPush(entry: Record<string, unknown>):
   if (!d.city) errors.push("Missing city.");
   if (!d.zip) errors.push("Missing zip.");
   if (!d.dealName) errors.push("Missing deal name.");
-  if (d.feePercent == null || d.feePercent <= 0) errors.push("Missing fee percent.");
-  if (d.isLease && d.rentRows.length === 0) errors.push("Lease-like deal requires at least one rent schedule row.");
+  // Referred / other deals (repTypeID 5) do not require a fee percent or rent schedule.
+  if (d.repTypeID !== 5) {
+    if (d.feePercent == null || d.feePercent <= 0) errors.push("Missing fee percent.");
+    if (d.isLease && d.rentRows.length === 0) errors.push("Lease-like deal requires at least one rent schedule row.");
+  }
   if (errors.length) return { ok: false, errors };
   return { ok: true };
 }
