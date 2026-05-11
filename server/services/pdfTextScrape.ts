@@ -17,11 +17,16 @@ function num(raw: unknown): number | null {
 }
 
 export async function extractPdfPlainText(buffer: Buffer, maxChars = 80_000): Promise<string> {
-  const mod = await import("pdf-parse");
-  const parse = (mod as { default?: (b: Buffer) => Promise<{ text?: string }> }).default ?? (mod as any);
-  const result = await parse(buffer);
-  const text = str(result?.text).replace(/\s+/g, " ");
-  return text.slice(0, maxChars);
+  const { PDFParse } = await import("pdf-parse");
+  const parser = new PDFParse({ data: buffer });
+  try {
+    await (parser as any).load();
+    const textResult = await parser.getText();
+    const text = str(textResult?.text ?? "").replace(/\s+/g, " ");
+    return text.slice(0, maxChars);
+  } finally {
+    await (parser as any).destroy?.();
+  }
 }
 
 /**
