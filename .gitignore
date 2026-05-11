@@ -114,3 +114,6 @@ temp/
 # Build / export artifacts
 *.zip
 Lee\ Broker\ Tool*/
+
+# Test files (sample PDFs, vouchers, etc.)
+test-files/
