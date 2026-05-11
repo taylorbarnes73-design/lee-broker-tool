@@ -301,38 +301,45 @@ CRITICAL RULES:
               },
               {
                 role: "user",
-                content: `Extract listing data from this document. Return JSON with these fields:
+                content: `Extract listing data from the document below. Return JSON matching this schema:
 
 {
-  "address": "street address",
+  "address": "street address only",
   "city": "city name",
   "state": "two-letter state",
   "zip": "5-digit zip",
   "propertyType": "Industrial|Office|Retail|Land|Other",
   "transactionType": "Lease|Sale|Sublease|Sale or Lease",
-  "ownerCompany": "property owner / landlord company name",
-  "lessorName": "lessor name if different from owner",
-  "totalBldgSF": "total building square footage",
-  "yearBuilt": "year built if mentioned",
-  "askingRate": "asking lease rate per SF",
-  "askingPrice": "asking sale price if applicable",
+  "ownerCompany": "property owner / landlord company",
+  "lessorName": "lessor if different from owner",
+  "totalBldgSF": "total building SF as number string",
+  "yearBuilt": "year built",
+  "askingRate": "lease rate per SF",
+  "askingPrice": "sale price",
   "feePercent": "commission percentage",
   "listingAgentName": "broker name(s), semicolon separated",
-  "listingStartDate": "listing start date YYYY-MM-DD",
-  "listingExpiryDate": "listing expiry date YYYY-MM-DD",
-  "listingNotes": "key property features or notes, brief",
-  "spaces": [
-    {
-      "suite": "suite/unit name or number",
-      "sqft": "available square footage for this space",
-      "askingRate": "asking rate for this space if different",
-      "availableDate": "available date YYYY-MM-DD if mentioned",
-      "comments": "any notes specific to this space"
-    }
-  ]
+  "listingStartDate": "YYYY-MM-DD",
+  "listingExpiryDate": "YYYY-MM-DD",
+  "listingNotes": "key property features, brief",
+  "spaces": [{ "suite": "", "sqft": "", "askingRate": "", "availableDate": "", "comments": "" }]
 }
 
-Document text:
+=== EXAMPLE 1: Multi-space lease listing ===
+INPUT: "EXCLUSIVE LISTING AGREEMENT ... Owner: Pacific Industrial Partners LLC ... Property: 8400 Central Ave, Rancho Cucamonga, CA 91730 ... Total Building: 45,000 SF ... Year Built: 2005 ... Suite 100 - 12,000 SF - $1.15/SF/Mo NNN - Available Now ... Suite 210 - 8,500 SF - $1.25/SF/Mo NNN - Available 07/01/2026 ... Suite 305 - 6,200 SF - $1.10/SF/Mo NNN ... Commission: 5% of aggregate lease value ... Listing Agent: John Smith, Lee & Associates ... Term: 12 months from 05/01/2026 to 04/30/2027"
+OUTPUT:
+{"address":"8400 Central Ave","city":"Rancho Cucamonga","state":"CA","zip":"91730","propertyType":"Industrial","transactionType":"Lease","ownerCompany":"Pacific Industrial Partners LLC","totalBldgSF":"45000","yearBuilt":"2005","feePercent":"5","listingAgentName":"John Smith","listingStartDate":"2026-05-01","listingExpiryDate":"2027-04-30","spaces":[{"suite":"100","sqft":"12000","askingRate":"1.15","comments":"NNN"},{"suite":"210","sqft":"8500","askingRate":"1.25","availableDate":"2026-07-01","comments":"NNN"},{"suite":"305","sqft":"6200","askingRate":"1.10","comments":"NNN"}]}
+
+=== EXAMPLE 2: Sale or lease with single space ===
+INPUT: "EXCLUSIVE RIGHT TO SELL OR LEASE ... 2200 E Orangewood Ave, Anaheim, CA 92806 ... Owner/Lessor: Westgate Properties Inc and Westgate Holdings ... Industrial warehouse, 22,400 SF on 1.2 acres ... Built 1998 ... Asking: $4,250,000 for sale or $1.35/SF/Mo NNN for lease ... Commission to listing broker: 4% sale / 6% lease ... Listing Brokers: Jane Doe; Mike Johnson ... Agreement dated 03/15/2026, expires 09/15/2026"
+OUTPUT:
+{"address":"2200 E Orangewood Ave","city":"Anaheim","state":"CA","zip":"92806","propertyType":"Industrial","transactionType":"Sale or Lease","ownerCompany":"Westgate Properties Inc","totalBldgSF":"22400","yearBuilt":"1998","askingRate":"1.35","askingPrice":"4250000","feePercent":"4","listingAgentName":"Jane Doe; Mike Johnson","listingStartDate":"2026-03-15","listingExpiryDate":"2026-09-15","listingNotes":"1.2 acres, NNN lease terms","spaces":[{"suite":"","sqft":"22400","askingRate":"1.35","comments":"NNN"}]}
+
+=== EXAMPLE 3: Owner representation with property details ===
+INPUT: "EXCLUSIVE AGENCY LISTING AGREEMENT ... this agreement between Diamond Realty Group (Owner) and Lee & Associates ... property located at 11330 Diamond Back Way, Grass Valley, CA 95945 ... industrial/flex building ... Commission shall be six percent (6%) ... Broker: Taylor Barnes"
+OUTPUT:
+{"address":"11330 Diamond Back Way","city":"Grass Valley","state":"CA","zip":"95945","propertyType":"Industrial","transactionType":"Lease","ownerCompany":"Diamond Realty Group","feePercent":"6","listingAgentName":"Taylor Barnes"}
+
+=== NOW EXTRACT FROM THIS DOCUMENT ===
 ${trimmedText}`
               }
             ],
