@@ -285,7 +285,7 @@ function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
   return {
     entryMode: isListing ? "listing" : "deal",
     dealName: canonicalDealName(transactionType, address, suite, repTypeID, clientCo, clientContactName),
-    listingName: str(p.listingName || p.dealName) || `${transactionType === "Sale" ? "For Sale" : "For Lease"}: ${address || "New Listing"}`,
+    listingName: str(p.listingName || p.dealName) || address || "New Listing",
     repTypeID,
     transactionType,
     listingTransaction: listingTransaction || transactionType.toLowerCase(),

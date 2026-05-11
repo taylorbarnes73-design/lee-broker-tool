@@ -274,11 +274,7 @@ dealiusAdminApiRouter.post("/scrape", async (req: Request, res: Response) => {
         patch.ownerCompany = patch.lessorName;
       }
       if (!String(patch.listingName ?? "").trim() && addr) {
-        const tx = String(patch.listingTransaction ?? "lease").toLowerCase();
-        if (tx === "sale") patch.listingName = `For Sale: ${addr}`;
-        else if (tx === "sublease") patch.listingName = `For Sublease: ${addr}`;
-        else if (tx === "sale or lease") patch.listingName = `For Sale or Lease: ${addr}`;
-        else patch.listingName = `For Lease: ${addr}`;
+        patch.listingName = addr;
       }
 
       if (String(patch.commission ?? "").trim() === "" && patch.feePercent != null) {

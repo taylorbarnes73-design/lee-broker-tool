@@ -91,12 +91,8 @@ function inferLeaseType(fields: FieldMap): string | undefined {
   return picked === "G" ? "Gross" : picked;
 }
 
-function listingNameFor(transactionType: string, address: string) {
-  const lower = transactionType.toLowerCase();
-  if (lower.includes("sale") && lower.includes("lease")) return `For Sale or Lease: ${address || "New Listing"}`;
-  if (lower.includes("sale")) return `For Sale: ${address || "New Listing"}`;
-  if (lower.includes("sublease")) return `For Sublease: ${address || "New Listing"}`;
-  return `For Lease: ${address || "New Listing"}`;
+function listingNameFor(_transactionType: string, address: string) {
+  return address || "New Listing";
 }
 
 function collectSpaces(fields: FieldMap, propertyType: string): ListingFormSpace[] {

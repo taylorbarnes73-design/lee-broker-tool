@@ -412,7 +412,7 @@ function normalizeListingEntry(entry: Record<string, unknown>) {
   const brokers = asBrokers(entry.brokers || entry.agents || entry.listingAgents);
 
   return {
-    listingName: str(entry.listingName || entry.dealName) || `${isSale ? "For Sale" : "For Lease"}: ${address || "New Listing"}`,
+    listingName: str(entry.listingName || entry.dealName) || propertyName || address || "New Listing",
     transactionType: isSale ? "Sale" : transaction.includes("sublease") ? "Sublease" : transaction.includes("sale or lease") ? "Sale or Lease" : "Lease",
     address,
     city,
