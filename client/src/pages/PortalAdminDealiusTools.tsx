@@ -34,6 +34,9 @@ type DealiusEntry = {
   askingRate: number | string;
   totalConsideration: number | string;
   feePercent: number | string;
+  paymentDate: string;
+  paymentAmount: number | string;
+  clientContactName: string;
   listingStartDate: string;
   listingExpiryDate: string;
   listingAvailableDate: string;
@@ -89,6 +92,7 @@ function emptyEntry(mode: EntryMode): DealiusEntry {
     clientCo: "",
     oppositeCo: "",
     ownerCompany: "",
+    clientContactName: "",
     startDate: "",
     endDate: "",
     occupancyDate: "",
@@ -96,6 +100,8 @@ function emptyEntry(mode: EntryMode): DealiusEntry {
     askingRate: "",
     totalConsideration: "",
     feePercent: "",
+    paymentDate: "",
+    paymentAmount: "",
     listingStartDate: today,
     listingExpiryDate: "",
     listingAvailableDate: "",
@@ -438,6 +444,7 @@ export default function PortalAdminDealiusTools() {
                       { label: "Tenant Rep", value: "3" },
                       { label: "Seller Rep", value: "2" },
                       { label: "Buyer Rep", value: "1" },
+                      { label: "Other / Referred Rep", value: "5" },
                     ]}
                   />
                 </Field>
@@ -497,6 +504,9 @@ export default function PortalAdminDealiusTools() {
               <Field label="Opposite company">
                 <Input value={entry.oppositeCo} onChange={(e: any) => patchEntry({ oppositeCo: e.target.value })} />
               </Field>
+              <Field label="Client contact">
+                <Input value={entry.clientContactName} onChange={(e: any) => patchEntry({ clientContactName: e.target.value })} />
+              </Field>
               <Field label="Start date">
                 <Input type="date" value={entry.startDate} onChange={(e: any) => patchEntry({ startDate: e.target.value })} />
               </Field>
@@ -509,6 +519,16 @@ export default function PortalAdminDealiusTools() {
               <Field label="Fee percent">
                 <Input type="number" step="0.01" value={entry.feePercent} onChange={(e: any) => patchEntry({ feePercent: e.target.value })} suffix="%" />
               </Field>
+              {String(entry.repTypeID) === "5" && (
+                <>
+                  <Field label="Payment amount">
+                    <Input type="number" step="0.01" value={entry.paymentAmount} onChange={(e: any) => patchEntry({ paymentAmount: e.target.value })} prefix="$" />
+                  </Field>
+                  <Field label="Payment date">
+                    <Input type="date" value={entry.paymentDate} onChange={(e: any) => patchEntry({ paymentDate: e.target.value })} />
+                  </Field>
+                </>
+              )}
               <Field label={entry.transactionType === "Sale" ? "Sale price" : "Asking rate"}>
                 <Input
                   type="number"
@@ -521,6 +541,35 @@ export default function PortalAdminDealiusTools() {
                   }
                 />
               </Field>
+            </div>
+          </section>
+        )}
+
+        {entry.entryMode === "deal" && (
+          <section className="dealius-panel">
+            <div className="dealius-section-title">Brokers</div>
+            <div className="dealius-form-grid" style={{ gridTemplateColumns: "1fr" }}>
+              {entry.brokers.map((broker, i) => (
+                <div key={i} style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                   <Input value={broker.name} onChange={(e: any) => {
+                     const brokers = [...entry.brokers];
+                     brokers[i].name = e.target.value;
+                     patchEntry({ brokers });
+                   }} placeholder="Broker Name" style={{ flex: 1 }} />
+                   <Input type="number" value={broker.pct} onChange={(e: any) => {
+                     const brokers = [...entry.brokers];
+                     brokers[i].pct = e.target.value;
+                     patchEntry({ brokers });
+                   }} placeholder="%" suffix="%" style={{ width: 100 }} />
+                   <Button variant="secondary" onClick={() => {
+                     const brokers = entry.brokers.filter((_, idx) => idx !== i);
+                     patchEntry({ brokers });
+                   }} aria-label="Remove"><Trash2 size={14}/></Button>
+                </div>
+              ))}
+              <Button type="button" variant="secondary" onClick={() => {
+                 patchEntry({ brokers: [...entry.brokers, { name: "", pct: "", lead: false }] });
+              }}>Add Broker</Button>
             </div>
           </section>
         )}

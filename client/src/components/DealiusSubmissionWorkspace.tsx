@@ -47,6 +47,9 @@ type DealiusEntry = {
   askingRate: number | string;
   totalConsideration: number | string;
   feePercent: number | string;
+  paymentDate: string;
+  paymentAmount: number | string;
+  clientContactName: string;
   listingStartDate: string;
   listingExpiryDate: string;
   listingAvailableDate: string;
@@ -147,8 +150,12 @@ function dealNamePrefixFromTransaction(raw: unknown): string {
   return "Leased";
 }
 
-function canonicalDealName(transactionType: unknown, address: unknown, suite: unknown): string {
-  return `${dealNamePrefixFromTransaction(transactionType)}: ${propertyNameFromAddressSuite(address, suite) || "New Deal"}`;
+function canonicalDealName(transactionType: unknown, address: unknown, suite: unknown, repTypeID?: unknown, clientCo?: unknown, clientContactName?: unknown): string {
+  const propertyName = propertyNameFromAddressSuite(address, suite) || "New Deal";
+  if (String(repTypeID) === "5") {
+    return `Referred: ${propertyName} ${str(clientCo)} ${str(clientContactName)}`.replace(/\s+/g, " ").trim();
+  }
+  return `${dealNamePrefixFromTransaction(transactionType)}: ${propertyName}`;
 }
 
 function isLeaseTransaction(raw: unknown) {
@@ -261,6 +268,12 @@ function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
     feePercentFrom(p.feePercent || p.commissionRate || p.lCommRate || p.sCommPct || p.saleCommPct) ||
     feePercentFrom(fieldFromSections(payload, ["Total Commission %", "Commission (%)"]));
 
+    feePercentFrom(fieldFromSections(payload, ["Total Commission %", "Commission (%)"]));
+
+  const repTypeID = str(p.repTypeID || p.repType) || (transactionType === "Sale" ? "2" : "4");
+  const clientCo = str(p.clientCo || p.lessorName || p.sellerName || p.lsCompany) || fieldFromSections(payload, ["Lessor / Seller", "Seller / Client Co."]);
+  const clientContactName = str(p.clientContactName || p.clientContact || p.lsContact);
+
   const brokers = asBrokerRows(p.brokers || p.agents, [
     p.listingAgentName,
     p.procuringAgentName,
@@ -273,9 +286,9 @@ function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
 
   return {
     entryMode: isListing ? "listing" : "deal",
-    dealName: canonicalDealName(transactionType, address, suite),
+    dealName: canonicalDealName(transactionType, address, suite, repTypeID, clientCo, clientContactName),
     listingName: str(p.listingName || p.dealName) || `${transactionType === "Sale" ? "For Sale" : "For Lease"}: ${address || "New Listing"}`,
-    repTypeID: str(p.repTypeID || p.repType) || (transactionType === "Sale" ? "2" : "4"),
+    repTypeID,
     transactionType,
     listingTransaction: listingTransaction || transactionType.toLowerCase(),
     address,
@@ -286,9 +299,10 @@ function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
     sqft,
     totalBldgSF: bldgSF || sqft,
     yearBuilt: compactNumber(p.yearBuilt || fieldFromSections(payload, ["Year Built"])),
-    clientCo: str(p.clientCo || p.lessorName || p.sellerName || p.lsCompany) || fieldFromSections(payload, ["Lessor / Seller", "Seller / Client Co."]),
+    clientCo,
     oppositeCo: str(p.oppositeCo || p.lesseeName || p.buyerName || p.lbCompany) || fieldFromSections(payload, ["Lessee / Buyer", "Buyer / Opposite Co."]),
     ownerCompany: str(p.ownerCompany || p.owner || p.clientCo) || fieldFromSections(payload, ["Owner Name", "Owner / Sublessor Company"]),
+    clientContactName,
     startDate: str(p.startDate || p.lStart || p.leaseStart || fieldFromSections(payload, ["Commencement Date"])).slice(0, 10),
     endDate: str(p.endDate || p.lEnd || p.leaseEnd || fieldFromSections(payload, ["Expiration Date"])).slice(0, 10),
     occupancyDate: str(p.occupancyDate || p.lOcc).slice(0, 10),
@@ -296,6 +310,8 @@ function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
     askingRate: compactNumber(p.askingRate || p.lAskingRate || leaseRate),
     totalConsideration: compactNumber(p.totalConsideration || p.sPrice || p.salePrice || fieldFromSections(payload, ["Total Consideration", "Asking Price"])),
     feePercent: fee,
+    paymentDate: str(p.paymentDate).slice(0, 10),
+    paymentAmount: compactNumber(p.paymentAmount),
     listingStartDate: str(p.listingStartDate || p.listingStart || p.submittedAt || submission.createdAt).slice(0, 10),
     listingExpiryDate: str(p.listingExpiryDate || p.listingExpiration).slice(0, 10),
     listingAvailableDate: str(p.listingAvailableDate || p.availableDate).slice(0, 10),
@@ -387,8 +403,8 @@ export default function DealiusSubmissionWorkspace({
   function patchEntry(patch: Partial<DealiusEntry>) {
     setEntry(current => {
       const next = { ...current, ...patch };
-      if (next.entryMode === "deal" && ("transactionType" in patch || "address" in patch || "suite" in patch || "entryMode" in patch)) {
-        next.dealName = canonicalDealName(next.transactionType, next.address, next.suite);
+      if (next.entryMode === "deal" && ("transactionType" in patch || "address" in patch || "suite" in patch || "entryMode" in patch || "repTypeID" in patch || "clientCo" in patch || "clientContactName" in patch)) {
+        next.dealName = canonicalDealName(next.transactionType, next.address, next.suite, next.repTypeID, next.clientCo, next.clientContactName);
       }
       return next;
     });
@@ -682,6 +698,7 @@ export default function DealiusSubmissionWorkspace({
                     { label: "Tenant Rep", value: "3" },
                     { label: "Seller Rep", value: "2" },
                     { label: "Buyer Rep", value: "1" },
+                    { label: "Other / Referred Rep", value: "5" },
                   ]}
                 />
               </Field>
@@ -741,6 +758,9 @@ export default function DealiusSubmissionWorkspace({
             <Field label="Opposite company">
               <Input value={entry.oppositeCo} onChange={(e: any) => patchEntry({ oppositeCo: e.target.value })} />
             </Field>
+            <Field label="Client contact">
+              <Input value={entry.clientContactName} onChange={(e: any) => patchEntry({ clientContactName: e.target.value })} />
+            </Field>
             <Field label="Start date">
               <Input type="date" value={entry.startDate} onChange={(e: any) => patchEntry({ startDate: e.target.value })} />
             </Field>
@@ -753,6 +773,16 @@ export default function DealiusSubmissionWorkspace({
             <Field label="Fee percent">
               <Input type="number" step="0.01" value={entry.feePercent} onChange={(e: any) => patchEntry({ feePercent: e.target.value })} suffix="%" />
             </Field>
+            {String(entry.repTypeID) === "5" && (
+              <>
+                <Field label="Payment amount">
+                  <Input type="number" step="0.01" value={entry.paymentAmount} onChange={(e: any) => patchEntry({ paymentAmount: e.target.value })} prefix="$" />
+                </Field>
+                <Field label="Payment date">
+                  <Input type="date" value={entry.paymentDate} onChange={(e: any) => patchEntry({ paymentDate: e.target.value })} />
+                </Field>
+              </>
+            )}
             <Field label={entry.transactionType === "Sale" ? "Sale price" : "Asking rate"}>
               <Input
                 type="number"
@@ -765,6 +795,27 @@ export default function DealiusSubmissionWorkspace({
                 }
               />
             </Field>
+          </div>
+        </section>
+      )}
+
+      {entry.entryMode === "deal" && (
+        <section className="dealius-panel">
+          <div className="dealius-section-title">Brokers</div>
+          <div className="dealius-form-grid" style={{ gridTemplateColumns: "1fr" }}>
+            {entry.brokers.map((broker, i) => (
+              <div key={i} style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                 <Input value={broker.name} onChange={(e: any) => patchBroker(i, { name: e.target.value })} placeholder="Broker Name" style={{ flex: 1 }} />
+                 <Input type="number" value={broker.pct} onChange={(e: any) => patchBroker(i, { pct: e.target.value })} placeholder="%" suffix="%" style={{ width: 100 }} />
+                 <Button variant="secondary" onClick={() => {
+                   const brokers = entry.brokers.filter((_, idx) => idx !== i);
+                   patchEntry({ brokers });
+                 }} aria-label="Remove"><Trash2 size={14}/></Button>
+              </div>
+            ))}
+            <Button type="button" variant="secondary" onClick={() => {
+               patchEntry({ brokers: [...entry.brokers, { name: "", pct: "", lead: false }] });
+            }}>Add Broker</Button>
           </div>
         </section>
       )}

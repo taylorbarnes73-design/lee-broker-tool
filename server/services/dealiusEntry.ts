@@ -204,13 +204,23 @@ function isLeaseLike(p: Record<string, unknown>): boolean {
 }
 
 function idFrom(data: unknown, keys: string[]): number | null {
-  if (typeof data === "number" && Number.isFinite(data)) return data;
-  if (!data || typeof data !== "object") return null;
-  for (const key of keys) {
-    const value = (data as Record<string, unknown>)[key];
-    const id = positiveInt(value);
-    if (id != null) return id;
+  const asInt = positiveInt(data);
+  if (asInt != null) return asInt;
+
+  if (data && typeof data === "object") {
+    const target = "Data" in data ? (data as any).Data : data;
+    const targetInt = positiveInt(target);
+    if (targetInt != null) return targetInt;
+
+    if (target && typeof target === "object") {
+      for (const key of keys) {
+        const value = (target as Record<string, unknown>)[key];
+        const id = positiveInt(value);
+        if (id != null) return id;
+      }
+    }
   }
+
   return null;
 }
 
@@ -298,8 +308,8 @@ function normalizeDealEntry(entry: Record<string, unknown>) {
   const totalBldgSF = positiveInt(entry.totalBldgSF || entry.bldgSF || entry.buildingSF || entry.buildingSizeSf);
   const suite = str(entry.suite || entry.unit);
   const propertyName = propertyNameFromAddressSuite(address, suite);
-  const dealName = `${dealNamePrefixFromTransaction(entry, isSale)}: ${propertyName || "New Deal"}`;
-
+  const clientCo = str(entry.clientCo || entry.lessorName || entry.sellerName || entry.lsCompany);
+  const clientContactName = str(entry.clientContactName || entry.clientContact || entry.lsContact);
   const brokersRaw = asBrokers(entry.brokers || entry.internalBrokers || entry.commissionBrokers);
   const fallbackBrokers = uniqNames([
     entry.listingAgentName,
@@ -315,6 +325,11 @@ function normalizeDealEntry(entry: Record<string, unknown>) {
     boolish(entry.representedBothSides || entry.bothSides || entry.brokerRepresentedBothSides) ||
     (brokerSides.some(side => side.includes("listing")) && brokerSides.some(side => side.includes("procur")));
   const repTypeID = isLease && representedBothSides ? 4 : (positiveInt(entry.repTypeID || entry.repType) ?? repTypeIdFrom(entry.representationType));
+
+  let dealName = `${dealNamePrefixFromTransaction(entry, isSale)}: ${propertyName || "New Deal"}`;
+  if (repTypeID === 5) {
+    dealName = `Referred: ${propertyName || "New Deal"} ${clientCo} ${clientContactName}`.replace(/\s+/g, " ").trim();
+  }
 
   return {
     dealName,
@@ -365,6 +380,8 @@ function normalizeDealEntry(entry: Record<string, unknown>) {
     escalation: num(entry.escalation || entry.lEscalations),
     totalConsideration: num(entry.totalConsideration || entry.sPrice || entry.lConsideration || entry.salePrice),
     feePercent: firstFeePercent(entry),
+    paymentDate: entry.paymentDate,
+    paymentAmount: num(entry.paymentAmount),
     rentRows: asRentRows(entry.rentRows || entry.rentSchedule),
     brokers: brokersRaw.length ? brokersRaw : fallbackBrokers,
   };
@@ -753,6 +770,8 @@ export async function pushDealEntryToDealius(params: { entry: Record<string, unk
           SalePurchasePriceAmount: d.totalConsideration,
         })
       : {}),
+    PaymentDate: isoDate(d.paymentDate),
+    PaymentAmount: d.paymentAmount ?? undefined,
   });
 
   const dealRes = await client.request<any>({ token, method: "POST", path: "/deals", data: dealPayload });
@@ -803,6 +822,8 @@ export async function pushDealEntryToDealius(params: { entry: Record<string, unk
     LeaseAvgEscalationType: d.escalation != null ? 2 : undefined,
     SaleAskingPriceAmount: d.isSale ? d.totalConsideration ?? undefined : undefined,
     SalePurchasePriceAmount: d.isSale ? d.totalConsideration ?? undefined : undefined,
+    PaymentDate: isoDate(d.paymentDate),
+    PaymentAmount: d.paymentAmount ?? undefined,
   });
   const put = await client.request<any>({ token, method: "PUT", path: "/deals", data: financialPayload });
   if (put.status < 200 || put.status >= 300) {
