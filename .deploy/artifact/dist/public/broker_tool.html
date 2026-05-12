@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#A9223B">
-<title>Lee &amp; Associates Newport Beach &mdash; Broker Tool</title>
+<title>Broker Tool</title>
 <link rel="icon" type="image/png" href="lee-newport-beach-fullcolor.png">
 <link rel="apple-touch-icon" href="lee-newport-beach-fullcolor.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,42 +20,33 @@
 
 <div class="header">
   <div class="header-main">
-    <img class="header-logo" src="lee-newport-beach-fullcolor.png" alt="Lee &amp; Associates Newport Beach">
+    <img class="header-logo" id="header-logo" src="lee-newport-beach-fullcolor.png" alt="Broker Tool">
     <div class="header-copy">
-    <div class="header-kicker">Lee &amp; Associates Newport Beach</div>
+    <div class="header-kicker" id="header-kicker">Broker Workspace</div>
     <h1>Broker Submission Tool</h1>
     <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher &bull; Comp Input &bull; Comp Reports &bull; Documents &bull; Contracts</div>
     </div>
   </div>
   <div class="header-actions">
-    <div class="header-user" id="header-user">
-      <div class="header-user-label">Signed In</div>
-      <div class="header-user-name" id="header-user-name">Not signed in</div>
-      <div class="header-user-email" id="header-user-email"></div>
+    <div class="header-account">
+      <div class="header-user" id="header-user">
+        <div class="header-user-label">Signed In</div>
+        <div class="header-user-name" id="header-user-name">Not signed in</div>
+        <div class="header-user-email" id="header-user-email"></div>
+      </div>
+      <nav class="header-portal-actions" aria-label="Portal links">
+        <button type="button" class="submission-queue-button" onclick="switchTab('queue')">Queue</button>
+        <a class="header-portal-link" href="/portal">Portal</a>
+      </nav>
     </div>
-    <button class="admin-toggle" onclick="toggleAdminMode()">
+    <a class="admin-toggle is-hidden" href="/portal/admin/settings" aria-label="Open admin settings">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-      <span id="admin-toggle-label">Admin Portal</span>
-    </button>
+      <span id="admin-toggle-label">Settings</span>
+    </a>
   </div><!-- /header-right -->
 </div><!-- /header -->
 
-<!-- ═══ SIGN-IN GATE ═══ -->
-<div id="tool-sign-in" class="tool-sign-in">
-  <div class="tool-sign-in-card">
-    <img src="lee-newport-beach-fullcolor.png" alt="Lee &amp; Associates Newport Beach" class="tool-sign-in-logo">
-    <h1 class="tool-sign-in-title">Broker Workspace</h1>
-    <p class="tool-sign-in-sub">Enter your Lee email to sign in.</p>
-    <form id="tool-sign-in-form" onsubmit="handleToolSignIn(event)" autocomplete="on">
-      <div class="field">
-        <label for="tool-sign-in-email">Lee Email</label>
-        <input id="tool-sign-in-email" type="email" name="email" placeholder="jdoe@lee-associates.com" required autocomplete="email">
-      </div>
-      <div id="tool-sign-in-error" class="tool-sign-in-error"></div>
-      <button type="submit" class="btn btn-red tool-sign-in-btn" id="tool-sign-in-btn">Sign In</button>
-    </form>
-  </div>
-</div>
+<!-- Sign-in removed: redirecting to centralized React login -->
 
 <div id="broker-view" style="display:none">
 
@@ -86,7 +77,7 @@
 
     <div class="card required-section" data-lstep="1">
       <h2>Add Listing <span class="required-badge">Required</span></h2>
-      <div class="row c3">
+      <div class="row c4">
         <div class="field"><label class="req">Date Entered</label><input id="l-date-entered" type="date"></div>
         <div class="field"><label class="req">Property Type</label>
           <select id="l-prop-type" onchange="onPropTypeChange()">
@@ -102,12 +93,13 @@
             <option value="sale">Sale</option>
           </select>
         </div>
+        <div class="field"><label>Listing expiration</label><input id="l-listing-expiration" type="date" data-lbt-auto-expiry="1"><div class="field-hint">Defaults from Date Entered + office term</div></div>
       </div>
 
       <h3 class="section-heading-top">Upload Documents</h3>
 
       <div class="field field-stack-gap">
-        <label class="inline-flex-label">Property Brochure <span class="inline-badge">AI Scrape</span></label>
+        <label class="inline-flex-label">Property Brochure <span class="inline-badge">Auto-Fill from Document</span></label>
         <div class="brochure-zone" id="brochure-zone" onclick="document.getElementById('l-brochure-file').click()">
           <input type="file" id="l-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" onchange="onBrochureSelected(this)">
           <div class="brochure-zone-inner">
@@ -373,6 +365,7 @@
         <div class="deal-eyebrow">Listing at a Glance</div>
         <div class="deal-title" id="lg-title">New listing</div>
         <div class="deal-subtitle" id="lg-subtitle">Fill Step 1 to begin</div>
+        <div class="micro-copy micro-copy-top" id="lg-autosave" aria-live="polite"></div>
         <div class="deal-chips" id="lg-chips"></div>
         <dl class="deal-kv">
           <div><dt>Property</dt><dd id="lg-address">—</dd></div>
@@ -652,16 +645,14 @@
       </ol>
     </div>
     <div class="deal-actions">
-      <button class="btn btn-gray" onclick="exportSignPdf()">Review (PDF)</button>
-      <button class="btn btn-red" onclick="openEmailModal('sign')">Submit Sign Request</button>
-      <button class="btn btn-green" onclick="openSendToAdminModal('sign')">Send to Admin</button>
+      <button class="btn btn-gray" onclick="exportSignPdf()">Download PDF</button>
+      <button class="btn btn-red" onclick="openSendToAdminModal('sign')">Submit Sign Request</button>
     </div>
   </aside>
   </div><!-- /deal-shell -->
   <div class="btn-bar btn-bar-top-md">
-    <button class="btn btn-gray" onclick="exportSignPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
-    <button class="btn btn-red" onclick="openEmailModal('sign')">Submit Sign Request</button>
-    <button class="btn btn-green" id="btn-sign-send-admin" onclick="openSendToAdminModal('sign')"><span class="btn-spinner"></span><span class="btn-label">Send to Admin</span></button>
+    <button class="btn btn-gray" onclick="exportSignPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
+    <button class="btn btn-red" onclick="openSendToAdminModal('sign')">Send Sign Order to Admin</button>
     <button class="btn btn-gray" onclick="clearSign()">Clear Form</button>
   </div>
 </div>
@@ -675,7 +666,7 @@
 
   <!-- AI Auto-fill (optional shortcut, sits above Step 1) -->
   <div class="card ai-shortcut-card">
-    <h2>Auto-fill from Document <span class="inline-badge">AI Scrape</span></h2>
+    <h2>Auto-fill from Document <span class="inline-badge">Auto-Fill from Document</span></h2>
     <p class="micro-copy">Optional. Upload a deal brochure, OM, or commission agreement and the AI will pre-fill as many voucher fields as it can. You can still edit every value in the steps below.</p>
     <div class="brochure-zone" id="v-brochure-zone" onclick="document.getElementById('v-brochure-file').click()">
       <input type="file" id="v-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" onchange="onVoucherBrochureSelected(this)">
@@ -693,6 +684,7 @@
 
   <div class="card required-section" id="vstep-1" data-vstep="1">
     <h2>Step 1 — Transaction Type <span class="required-badge">Required</span></h2>
+    <div class="tip is-hidden top-gap-sm" id="voucher-confidential-warning"></div>
     <div class="row c4">
       <div class="field"><label class="req">Representation Type</label>
         <select id="v-rep-type">
@@ -965,6 +957,7 @@
   <div class="card" id="vstep-8" data-vstep="8">
     <h2>Step 8 — Upload Documents &amp; Commission Distribution</h2>
     <h3>Compliance Documents</h3>
+    <div id="voucher-attachment-required-msg" class="tip text-error is-hidden" role="alert"></div>
 
     <div class="row c2">
       <div class="field">
@@ -1085,7 +1078,7 @@
   </div>
 
   <div class="btn-bar">
-    <button class="btn btn-gray" onclick="exportVoucherPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
+    <button class="btn btn-gray" onclick="exportVoucherPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
     <button class="btn btn-red" onclick="openEmailModal('voucher')">Submit Voucher</button>
     <button class="btn btn-green" id="btn-voucher-send-admin" onclick="openSendToAdminModal('voucher')"><span class="btn-spinner"></span><span class="btn-label">Send to Admin</span></button>
     <button class="btn btn-outline" onclick="notifyMLS()">Notify MLS</button>
@@ -1102,6 +1095,7 @@
       <div class="deal-eyebrow">Deal at a Glance</div>
       <div class="deal-title" id="dg-title">New voucher</div>
       <div class="deal-subtitle" id="dg-subtitle">Fill Step 1 to begin</div>
+      <div class="micro-copy micro-copy-top" id="dg-autosave" aria-live="polite"></div>
       <div class="deal-chips" id="dg-chips"></div>
       <dl class="deal-kv">
         <div><dt>Property</dt><dd id="dg-address">—</dd></div>
@@ -1142,7 +1136,7 @@
     </div>
 
     <div class="deal-actions">
-      <button class="btn btn-gray" onclick="exportVoucherPdf()">Review (PDF)</button>
+      <button class="btn btn-gray" onclick="exportVoucherPdf()">Download PDF</button>
       <button class="btn btn-red" onclick="openEmailModal('voucher')">Submit Voucher</button>
       <button class="btn btn-green" onclick="openSendToAdminModal('voucher')">Send to Admin</button>
     </div>
@@ -1211,7 +1205,7 @@
         <div class="field"><label class="req">Space Leased / Leased SF</label><input id="c-leased-sf" type="text" placeholder="e.g. 25,000"></div>
         <div class="field"><label class="req">Rent/SqFt / Start Rate</label><input id="c-rent-sf" type="text" placeholder="e.g. $1.25"></div>
         <div class="field"><label>Rent Type</label>
-          <select id="c-rent-type"><option value="">—</option><option>NNN</option><option>G</option></select>
+          <select id="c-rent-type"><option value="">—</option><option>G</option><option>IG</option><option>MG</option><option>NNN</option><option>FS</option><option>FSG</option><option>Modified Gross</option><option>Industrial Gross</option><option>Full Service Gross</option></select>
         </div>
       </div>
       <div class="row c3">
@@ -1224,18 +1218,26 @@
         <div class="field"><label>Lessee / Tenant</label><input id="c-lessee" list="comp-party-options"><div class="field-hint">Tenant name</div></div>
         <div class="field"><label>Lessor / Landlord</label><input id="c-lessor" list="comp-party-options"><div class="field-hint">Landlord name</div></div>
       </div>
+      <div class="row comp-lease-only" style="margin-top:8px;">
+        <div class="field">
+          <label><input type="checkbox" id="c-sublease-party-labels"> Sublease — PDF labels use Sublessor / Sublessee</label>
+        </div>
+      </div>
     </div>
 
     <div class="comp-sale-only">
       <h3 class="section-heading-top">Key Sale Terms</h3>
       <div class="row c3">
         <div class="field"><label class="req">Building SF</label><input id="cs-bldg-sf" type="text" placeholder="e.g. 50,000"></div>
-        <div class="field"><label class="req">Selling Price</label><input id="cs-sell-price" type="text" placeholder="e.g. $5,000,000"></div>
-        <div class="field"><label class="req">Transaction Date</label><input id="cs-txn-date" type="date"></div>
+        <div class="field"><label class="req">Selling Price</label><input id="cs-sell-price" type="text" placeholder="e.g. $5,000,000" autocomplete="off"></div>
+        <div class="field"><label>Sale $/SF <span class="field-hint">auto</span></label><input id="cs-psf-calc" type="text" readonly tabindex="-1" placeholder="—" title="Calculated from selling price ÷ building SF"></div>
       </div>
       <div class="row c3">
+        <div class="field"><label class="req">Transaction Date</label><input id="cs-txn-date" type="date"></div>
         <div class="field"><label>Seller</label><input id="cs-seller" list="comp-party-options"><div class="field-hint">Seller name</div></div>
         <div class="field"><label>Buyer</label><input id="cs-buyer" list="comp-party-options"><div class="field-hint">Buyer name</div></div>
+      </div>
+      <div class="row c3">
         <div class="field"><label>Year Built</label><input id="cs-year-built" type="text" placeholder="e.g. 1998"></div>
       </div>
     </div>
@@ -1280,8 +1282,9 @@
         <select id="c-ti"><option value="">—</option><option>As-Is</option><option>Paint &amp; Carpet</option><option>Standard</option><option>Not Disclosed</option><option>See comments</option></select>
       </div>
       <div class="field"><label>NNN Charges</label><input id="c-nnn" type="text" placeholder="e.g. $0.45"></div>
-      <div class="field"><label>Rent Adj / Escalations</label><input id="c-escalations" type="text" placeholder="e.g. 3% annually"></div>
+      <div class="field"><label>Rent Adj / Escalations</label><input id="c-escalations" type="text" placeholder="e.g. 3% annually or 0.03"></div>
     </div>
+    <p class="field-hint comp-lease-only" id="c-eff-nnn-hint" style="margin-top:6px;"></p>
     <div class="row c2">
       <div class="field"><label>Options</label>
         <select id="c-options"><option value="">—</option><option>1, 3-year</option><option>1, 5-year</option><option>2, 5-year</option><option>1, 10-year</option><option>Not Disclosed</option><option>See Comments</option><option>None</option><option>NA</option></select>
@@ -1294,7 +1297,14 @@
     <div class="row c3">
       <div class="field"><label>Office SF</label><input id="cs-office-sf" type="text" placeholder="e.g. 2,500"></div>
       <div class="field"><label>Land / Lot Size (SF)</label><input id="cs-land-sf" type="text" placeholder="e.g. 40,000"></div>
-      <div class="field"><label>Transaction Type</label><input id="cs-txn-type" type="text"></div>
+      <div class="field"><label>Transaction Type</label><input id="cs-txn-type" type="text" list="sale-txn-type-list" placeholder="User or Investment" autocomplete="off"></div>
+      <datalist id="sale-txn-type-list">
+        <option value="User"></option>
+        <option value="Investment"></option>
+        <option value="Developer"></option>
+        <option value="Sale-Leaseback"></option>
+        <option value="Partial Interest"></option>
+      </datalist>
     </div>
     <div class="row c3">
       <div class="field"><label>Parking Ratio</label><input id="cs-parking" type="text" placeholder="e.g. 2/1000"></div>
@@ -1399,7 +1409,7 @@
   </div><!-- end optional-wrapper -->
 
   <div class="btn-bar btn-bar-top-md">
-    <button class="btn btn-gray" onclick="exportCompPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Review (PDF)</span></button>
+    <button class="btn btn-gray" onclick="exportCompPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
     <button class="btn btn-red" onclick="submitCompDirect()">Submit Comp</button>
     <button class="btn btn-outline" onclick="switchTab('comp-reports')">Open Comp Reports</button>
     <button class="btn btn-gray" onclick="clearComp()">Clear Form</button>
@@ -1474,20 +1484,20 @@
             <label>Property Type</label>
             <div id="cr-property-type" class="cr-dd"></div>
           </div>
-          <div class="field">
+          <div class="field cr-span-2">
             <label>SF Range</label>
             <div class="cr-range-row">
-              <input id="cr-sf-min" type="number" min="0" placeholder="Min SF">
+              <input id="cr-sf-min" type="text" inputmode="numeric" placeholder="Min SF">
               <span class="cr-range-sep">–</span>
-              <input id="cr-sf-max" type="number" min="0" placeholder="Max SF">
+              <input id="cr-sf-max" type="text" inputmode="numeric" placeholder="Max SF">
             </div>
           </div>
-          <div class="field">
+          <div class="field cr-span-2 cr-date-range-field">
             <label>Date Range</label>
-            <div class="cr-range-row">
-              <input id="cr-date-from" type="date" style="min-width:0;">
+            <div class="cr-range-row cr-date-range-row">
+              <input id="cr-date-from" type="text" inputmode="numeric" placeholder="From MM/DD/YYYY">
               <span class="cr-range-sep">–</span>
-              <input id="cr-date-to" type="date" style="min-width:0;">
+              <input id="cr-date-to" type="text" inputmode="numeric" placeholder="To MM/DD/YYYY">
             </div>
           </div>
         </div>
@@ -1892,6 +1902,9 @@
       <option value="commission-lease">Commission Agreement — Lease</option>
       <option value="commission-sale">Commission Agreement — Sale</option>
     </select>
+    <div class="ci-type-hint" id="ci-type-hint">
+      Tip: choose <b>Upload PDF</b> if the broker already completed the form in Adobe.
+    </div>
   </div>
 
   <div id="ci-path-chooser" class="is-hidden">
@@ -1931,6 +1944,9 @@
 
     <div class="ci-section">
       <h3>1. Basic Provisions</h3>
+      <div class="ci-required-note">
+        Required: <b>Agreement Date</b>, <b>Party 1 Name</b>, <b>Property Address</b>, <b>City</b>, <b>Commencement</b>, <b>Expiration</b>
+      </div>
       <div class="row">
         <div class="field"><label class="req">Agreement Date</label><input id="ci-date" type="date"></div>
         <div class="field"><label>Reference Date Only</label><select id="ci-date-ref"><option value="yes">Yes — for reference only</option><option value="no">No</option></select></div>
@@ -1976,9 +1992,16 @@
         <div class="field"><label>Zip</label><input id="ci-prop-zip"></div>
       </div>
       <div class="row">
-        <div class="field"><label>County</label><input id="ci-prop-county"></div>
+        <div class="field"><label>County</label><input id="ci-prop-county" list="ci-county-options" placeholder="Start typing…"></div>
         <div class="field flex-2"><label>Property Description</label><input id="ci-prop-desc"></div>
       </div>
+      <datalist id="ci-county-options">
+        <option value="Orange County"></option>
+        <option value="Los Angeles County"></option>
+        <option value="Riverside County"></option>
+        <option value="San Bernardino County"></option>
+        <option value="San Diego County"></option>
+      </datalist>
       <div id="ci-master-lease-block" class="is-hidden">
         <h4>Master Lease</h4>
         <div class="row">
@@ -2043,14 +2066,56 @@
       </div>
     </div>
 
+    <div class="ci-section">
+      <h3>Admin Notes (Optional)</h3>
+      <p class="ci-hint">Anything the admin should know before entering this into AIR CRE (missing signatures, special handling, questions, etc.).</p>
+      <div class="field">
+        <label>Notes to Admin</label>
+        <textarea id="ci-notes" rows="3" placeholder="Example: Client will sign tomorrow; please prepare data sheet now."></textarea>
+      </div>
+    </div>
+
     <div class="btn-bar btn-bar-top-lg">
-      <button class="btn btn-green" id="btn-ci-send" onclick="ciSubmitToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Submit to Admin</span></button>
-      <button class="btn btn-outline" onclick="ciDownloadDataSheet()" title="Download a formatted AIR CRE Data Sheet as a text file">Download Data Sheet</button>
+      <button class="btn btn-green" id="btn-ci-send" onclick="ciSubmitToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Send Contract to Admin</span></button>
+      <button class="btn btn-outline" onclick="ciDownloadDataSheet()" title="Download a formatted AIR CRE Data Sheet as a text file">Download AIR CRE Data Sheet</button>
       <button class="btn btn-gray" onclick="ciReset()">Clear Form</button>
     </div>
     <div id="ci-submit-status" class="status-copy"></div>
   </div>
 </div><!-- /tab-contracts -->
+
+<div id="tab-queue" class="panel">
+  <div class="queue-shell">
+    <div class="queue-header">
+      <div>
+        <div class="admin-page-eyebrow">Broker Desk</div>
+        <h2>Submission Queue</h2>
+        <p>See your active submissions and where each one sits in the shared processing queue. Full submission details remain available to admins in the Admin Portal.</p>
+      </div>
+      <button type="button" class="btn btn-outline" id="btn-broker-queue-refresh" onclick="refreshBrokerQueue()"><span class="btn-spinner"></span><span class="btn-label">Refresh Queue</span></button>
+    </div>
+
+    <div class="stat-grid queue-stat-grid">
+      <div class="stat-card">
+        <div class="stat-header"><span class="stat-label">Your Active Requests</span></div>
+        <div class="stat-value" id="queue-stat-yours">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header"><span class="stat-label">Total Active Queue</span></div>
+        <div class="stat-value" id="queue-stat-total">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header"><span class="stat-label">Next Position</span></div>
+        <div class="stat-value" id="queue-stat-next">&mdash;</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="broker-queue-status" class="queue-status">Loading queue&hellip;</div>
+      <div id="broker-queue-list" class="queue-list"></div>
+    </div>
+  </div>
+</div><!-- /tab-queue -->
 
 </div><!-- /broker-view -->
 
@@ -2100,26 +2165,37 @@
             <p class="page-desc">Review broker work, monitor request status, and open stored submission files from one clean operating surface.</p>
           </div>
           <div class="admin-page-actions">
-            <a class="admin-page-link" href="/">Home / Sign In</a>
-            <button type="button" class="btn btn-outline" onclick="switchAdminPage('submissions')">Open Submission Queue</button>
+            <a class="admin-page-link" href="/">← Back to Broker Tool</a>
+            <button type="button" class="btn btn-outline" onclick="switchAdminPage('submissions')">View All Submissions</button>
+          </div>
+        </div>
+
+        <div class="admin-welcome" id="admin-welcome" style="display:none"></div>
+
+        <div class="admin-microbar">
+          <div class="admin-last-updated" id="admin-last-updated"></div>
+          <div class="admin-quick-actions">
+            <button type="button" class="btn btn-outline btn-sm" onclick="adminQuickAction('voucher')">+ New Voucher</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="adminQuickAction('listing')">+ New Listing</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="adminQuickAction('sign')">+ Sign Request</button>
           </div>
         </div>
 
         <div class="stat-grid">
           <div class="stat-card">
-            <div class="stat-header"><span class="stat-label">Total Requests</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2d3339" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div class="stat-header"><span class="stat-label">Total Requests</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2d3339" stroke-width="2" title="Total submissions received"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
             <div class="stat-value" id="stat-total">8</div>
           </div>
           <div class="stat-card">
-            <div class="stat-header"><span class="stat-label">Pending</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#a56c0b" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="stat-header"><span class="stat-label">Pending</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#a56c0b" stroke-width="2" title="Waiting for admin review"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
             <div class="stat-value" id="stat-pending">3</div>
           </div>
           <div class="stat-card">
-            <div class="stat-header"><span class="stat-label">In Review</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#5c636b" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+            <div class="stat-header"><span class="stat-label">In Review</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#5c636b" stroke-width="2" title="Currently being reviewed"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
             <div class="stat-value" id="stat-review">1</div>
           </div>
           <div class="stat-card">
-            <div class="stat-header"><span class="stat-label">Approved</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1e7e34" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+            <div class="stat-header"><span class="stat-label">Approved</span><svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1e7e34" stroke-width="2" title="Processed and complete"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
             <div class="stat-value" id="stat-approved">3</div>
           </div>
         </div>
@@ -2132,7 +2208,7 @@
               <div class="admin-section-copy">The newest broker requests appear here as they are received and archived.</div>
               <div class="admin-section-meta" id="dashboard-meta"></div>
             </div>
-            <a class="admin-page-link" href="#" onclick="switchAdminPage('submissions');return false;">View Full Queue</a>
+            <!-- Removed redundant "View Full Queue" link (duplicate navigation) -->
           </div>
           <div class="admin-table-wrap">
             <table class="admin-table">
@@ -2153,7 +2229,7 @@
             <p class="page-desc">Inspect every request record, open the stored submission PDF, and update status without leaving the queue.</p>
           </div>
           <div class="admin-page-actions">
-            <button type="button" class="btn btn-outline" onclick="refreshAdminWorkspace()">Refresh Queue</button>
+            <button type="button" class="btn btn-outline" id="btn-admin-refresh" onclick="refreshAdminWorkspace()"><span class="btn-spinner"></span><span class="btn-label">Refresh Queue</span></button>
           </div>
         </div>
 
@@ -2186,7 +2262,7 @@
           </div>
           <div class="admin-table-wrap">
             <table class="admin-table">
-              <thead><tr><th>ID</th><th>Type</th><th>Address</th><th>Broker</th><th>Office</th><th>Status</th><th>Submitted</th></tr></thead>
+              <thead><tr><th>Type</th><th>Address</th><th>Broker</th><th>Submitted</th><th>Status</th><th>Ref #</th><th class="th-chevron"></th></tr></thead>
               <tbody id="submissions-tbody">
                 <tr><td colspan="7">
                   <div class="empty-state">
@@ -2221,20 +2297,10 @@
               <span class="dx-header-tag">Lee &amp; Associates &middot; Listings and Deals</span>
             </div>
           </div>
-          <span class="dx-version-badge">v16</span>
+          <span class="dx-version-badge">Up to date ✓</span>
         </div>
 
-        <div class="dx-cors-note" id="dxCorsNote">
-          <strong>One-time setup:</strong> This tool must be run from a local web server to call the Dealius API (browser CORS restriction).<br><br>
-          <strong>Easiest — CORS extension:</strong> Install
-          <a href="https://chrome.google.com/webstore/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf" target="_blank">Allow CORS for Chrome</a>
-          and enable it while using this tool.<br><br>
-          <strong>Alternative — local server:</strong> Open Terminal, <code>cd ~/Downloads</code>, run
-          <code>python3 -m http.server 8080</code>, then open
-          <a href="http://localhost:8080">localhost:8080</a>.
-        </div>
-
-        <div class="dx-card">
+        <div class="dx-card dx-setup-card">
           <div class="dx-card-title">Dealius Credentials</div>
           <div class="dx-cred-grid">
             <div class="dx-field"><label>Dealius Email</label><input type="email" id="demail" class="mono" autocomplete="off" oninput="dxSaveCreds()"/><span class="dx-saved-badge" id="demailSaved">&check; Saved</span></div>
@@ -2245,8 +2311,8 @@
         <div class="dx-drop" id="dxDz">
           <input type="file" id="dxFi" accept=".xlsm,.xlsx"/>
           <span class="dx-drop-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></span>
-          <h3>Drop Voucher Here</h3>
-          <p>.xlsm or .xlsx — Lee &amp; Associates commission voucher</p>
+          <h3>Drop Voucher File Here (Excel)</h3>
+          <p>Drag it here or click to choose your Lee &amp; Associates commission voucher.</p>
         </div>
 
         <div class="dx-status" id="dxSt"><div class="dx-spin" id="dxSp"></div><span id="dxSm"></span></div>
@@ -2566,37 +2632,49 @@ const LEE_API_BASE = leeResolveApiBase();
 // DEALIUS USER ROSTER
 // ═══════════════════════════════════════════════════════════════════════════════
 const DX_USERS = [
-  { id: '1047', name: 'Tom West', role: 'Broker', email: 'twest@lee-associates.com' },
-  { id: '1051', name: 'Gary McArdell', role: 'Broker', email: 'gmcardell@lee-associates.com' },
-  { id: '1052', name: 'Chris Barnett', role: 'Broker', email: '' },
-  { id: '1054', name: 'Matt Durkin', role: 'Broker', email: 'mdurkin@lee-associates.com' },
-  { id: '1056', name: 'Judd Hietbrink', role: 'Broker', email: 'jhietbrink@lee-associates.com' },
-  { id: '1060', name: 'David Bolt', role: 'Broker', email: 'dbolt@lee-associates.com' },
-  { id: '1063', name: 'Brian Barson', role: 'Broker', email: 'bbarson@lee-associates.com' },
-  { id: '1067', name: 'Tim Walker', role: 'Broker', email: 'timwalker@lee-associates.com' },
-  { id: '1071', name: 'Brad Schneider', role: 'Broker', email: 'bschneider@lee-associates.com' },
-  { id: '1076', name: 'Rick Turner', role: 'Broker, Manager', email: 'rturner@lee-associates.com' },
-  { id: '1078', name: 'Jonathan Mejia', role: 'Broker', email: 'jmejia@lee-associates.com' },
-  { id: '1080', name: 'Matt Christensen', role: 'Broker', email: 'mchristensen@lee-associates.com' },
-  { id: '1083', name: 'David Kluver', role: 'Broker', email: 'dkluver@lee-associates.com' },
-  { id: '1092', name: 'Carter Harrington', role: 'Broker', email: 'charrington@lee-associates.com' },
-  { id: '1095', name: 'Alejandro Sherratt', role: 'Broker', email: 'asherratt@lee-associates.com' },
-  { id: '1099', name: 'Charlie Winn', role: 'Broker', email: 'cwinn@lee-associates.com' },
-  { id: '1102', name: 'Eva Abrego', role: 'Office Admin', email: 'eabrego@lee-associates.com' },
-  { id: '1105', name: 'Kelsey Morris', role: 'Office Admin', email: 'kmorris@lee-associates.com' },
-  { id: '1108', name: 'Hayden Toland', role: 'Broker', email: 'htoland@lee-associates.com' },
-  { id: '1109', name: 'Miles Toland', role: 'Broker', email: 'mtoland@lee-associates.com' },
-  { id: '1110', name: 'Matt Biggs', role: 'Broker', email: 'mbiggs@lee-associates.com' },
-  { id: '1112', name: 'Matt Lawer', role: 'Broker', email: 'mlawer@lee-associates.com' },
-  { id: '1113', name: 'Brendan Smith', role: 'Broker', email: 'bsmith@lee-associates.com' },
-  { id: '1114', name: 'Nick Dumke', role: 'Broker', email: 'ndumke@lee-associates.com' },
-  { id: '1116', name: 'John Gessford', role: 'Broker', email: 'jgessford@lee-associates.com' },
-  { id: '1118', name: 'Stephen Madigan', role: 'Broker', email: 'smadigan@lee-associates.com' },
-  { id: '1119', name: 'Jessica O\'Brien', role: 'Admin Assistant', email: 'jobrien@lee-associates.com' },
-  { id: '1121', name: 'Erissa Kat', role: 'Office Admin', email: 'ekat@lee-associates.com' },
-  { id: '1123', name: 'Pitzer Gills', role: 'Broker', email: 'pgills@lee-associates.com' },
-  { id: '1124', name: 'Taylor Barnes', role: 'Office Admin', email: 'tbarnes@lee-associates.com' },
-  { id: '1125', name: 'Libby Gessford', role: 'Broker', email: 'lgessford@lee-associates.com' }
+  { id: '1001', name: 'Eva Abrego', role: 'Office Admin', email: 'eabrego@lee-associates.com' },
+  { id: '1002', name: 'Frank Adler', role: 'Broker', email: 'fadler@lee-associates.com' },
+  { id: '1003', name: 'Sean Ahern', role: 'Broker', email: 'sahern@lee-associates.com' },
+  { id: '1004', name: 'Tim Arguello', role: 'Broker', email: 'targuello@lee-associates.com' },
+  { id: '1005', name: 'Taylor Barnes', role: 'Office Admin', email: 'tbarnes@lee-associates.com' },
+  { id: '1006', name: 'Chris Barnett', role: 'Broker', email: 'cbarnett@lee-associates.com' },
+  { id: '1007', name: 'Brian Barson', role: 'Broker', email: 'bbarson@lee-associates.com' },
+  { id: '1008', name: 'David Bolt', role: 'Broker', email: 'dbolt@lee-associates.com' },
+  { id: '1009', name: 'Matt Christensen', role: 'Broker', email: 'mchristensen@lee-associates.com' },
+  { id: '1010', name: 'Ethan Davidson', role: 'Broker', email: 'edavidson@lee-associates.com' },
+  { id: '1011', name: 'Nick Dumke', role: 'Broker', email: 'ndumke@lee-associates.com' },
+  { id: '1012', name: 'Matt Durkin', role: 'Broker', email: 'mdurkin@lee-associates.com' },
+  { id: '1013', name: 'Brian Garbutt', role: 'Broker', email: 'bgarbutt@lee-associates.com' },
+  { id: '1014', name: 'John Gessford', role: 'Broker', email: 'jgessford@lee-associates.com' },
+  { id: '1015', name: 'Libby Gessford', role: 'Broker', email: 'lgessford@lee-associates.com' },
+  { id: '1016', name: 'Pitzer Gills', role: 'Broker', email: 'pgills@lee-associates.com' },
+  { id: '1017', name: 'Ken Gould', role: 'Broker', email: 'kgould@lee-associates.com' },
+  { id: '1018', name: 'Bob Griffin', role: 'Broker', email: 'bgriffin@lee-associates.com' },
+  { id: '1019', name: 'Jeff Grijalva', role: 'Broker', email: 'jgrijalva@lee-associates.com' },
+  { id: '1020', name: 'Carter Harrington', role: 'Broker', email: 'charrington@lee-associates.com' },
+  { id: '1021', name: 'Judd Hietbrink', role: 'Broker', email: 'jhietbrink@lee-associates.com' },
+  { id: '1022', name: 'Jeff Hirsch', role: 'Broker', email: 'jhirsch@lee-associates.com' },
+  { id: '1023', name: 'Jack Hogan', role: 'Broker', email: 'jhogan@lee-associates.com' },
+  { id: '1024', name: 'David Kluver', role: 'Broker', email: 'dkluver@lee-associates.com' },
+  { id: '1025', name: 'Matt Lawer', role: 'Broker', email: 'mlawer@lee-associates.com' },
+  { id: '1026', name: 'Mike Long', role: 'Broker', email: 'mlong@lee-associates.com' },
+  { id: '1027', name: 'Steve Madigan', role: 'Broker', email: 'smadigan@lee-associates.com' },
+  { id: '1028', name: 'Gary McArdell', role: 'Broker', email: 'gmcardell@lee-associates.com' },
+  { id: '1029', name: 'Jonathan Mejia', role: 'Broker', email: 'jmejia@lee-associates.com' },
+  { id: '1030', name: 'Frank Perkins', role: 'Broker', email: 'fperkins@lee-associates.com' },
+  { id: '1031', name: 'Brad Schneider', role: 'Broker', email: 'bschneider@lee-associates.com' },
+  { id: '1032', name: 'Alejandro Sherratt', role: 'Broker', email: 'asherratt@lee-associates.com' },
+  { id: '1033', name: 'Brendan Smith', role: 'Broker', email: 'bsmith@lee-associates.com' },
+  { id: '1034', name: 'Hayden Toland', role: 'Broker', email: 'htoland@lee-associates.com' },
+  { id: '1035', name: 'Miles Toland', role: 'Broker', email: 'mtoland@lee-associates.com' },
+  { id: '1036', name: 'Rick Turner', role: 'Office Admin', email: 'rturner@lee-associates.com' },
+  { id: '1037', name: 'Tim Walker', role: 'Broker', email: 'timwalker@lee-associates.com' },
+  { id: '1038', name: 'Tom West', role: 'Broker', email: 'twest@lee-associates.com' },
+  { id: '1039', name: 'Charlie Winn', role: 'Broker', email: 'cwinn@lee-associates.com' },
+  { id: '1040', name: 'Maddie Zacher', role: 'Broker', email: 'mzacher@lee-associates.com' },
+  { id: '1041', name: 'Shannon Zacher', role: 'Broker', email: 'szacher@lee-associates.com' },
+  { id: '1042', name: 'Errissa Kat', role: 'Office Admin', email: 'ekat@lee-associates.com' },
+  { id: '1043', name: 'Kelsey Morris', role: 'Office Admin', email: 'kmorris@lee-associates.com' }
 ];
 
 // Separate brokers for the primary dropdown (show brokers first, then admins)
@@ -2716,17 +2794,69 @@ function toggleOptional(toggleEl) {
   }
 }
 
+const BROKER_TOOL_TAB_IDS = new Set(['listing', 'sign', 'voucher', 'comp', 'comp-reports', 'docs', 'contracts', 'queue']);
+
+function parseBrokerToolTabFromLocation() {
+  try {
+    const params = new URLSearchParams(window.location.search || '');
+    const fromQuery = params.get('tab');
+    if (fromQuery && BROKER_TOOL_TAB_IDS.has(fromQuery)) return fromQuery;
+    const raw = (window.location.hash || '').replace(/^#/, '').trim();
+    if (raw && BROKER_TOOL_TAB_IDS.has(raw)) return raw;
+  } catch (e) { /* no-op */ }
+  return null;
+}
+
+function syncBrokerToolUrlTab(name) {
+  try {
+    if (!BROKER_TOOL_TAB_IDS.has(name)) return;
+    const path = window.location.pathname;
+    const search = window.location.search || '';
+    const nextHash = name === 'listing' ? '' : '#' + name;
+    const nextUrl = path + search + nextHash;
+    const curUrl = path + search + (window.location.hash || '');
+    if (curUrl !== nextUrl) {
+      window.history.replaceState(null, '', nextUrl);
+    }
+  } catch (e) { /* no-op */ }
+}
+
+function applyBrokerToolInitialTabFromUrl() {
+  const desired = parseBrokerToolTabFromLocation();
+  if (!desired || typeof switchTab !== 'function') return;
+  try {
+    switchTab(desired);
+  } catch (e) {
+    console.warn('Initial tab from URL:', e && e.message ? e.message : e);
+  }
+}
+
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => {
     t.classList.toggle('active', t.dataset.tab === name);
   });
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+  if (name === 'queue') {
+    void refreshBrokerQueue();
+  }
   if (name === 'comp-reports') {
     void initCompReports();
   }
   bootstrapStepFlowFor(name);
+  syncBrokerToolUrlTab(name);
 }
+
+window.addEventListener('hashchange', function () {
+  const bv = document.getElementById('broker-view');
+  if (!bv || bv.style.display === 'none') return;
+  const desired = parseBrokerToolTabFromLocation();
+  const next = desired || 'listing';
+  const cur = document.querySelector('.tab.active');
+  const curKey = cur && cur.getAttribute('data-tab');
+  if (curKey !== next) switchTab(next);
+});
 
 // Ensure step flows are initialized after the first view of each tab
 function bootstrapStepFlowFor(name) {
@@ -3245,6 +3375,7 @@ function notifyMLS() {
 // ═══════════════════════════════════════════════════════════════════════════════
 function addSuiteRow(type) {
   const body = document.getElementById(type + '-suite-body');
+  if (!body) return;
   const isOffice = type === 'office';
   const tr = document.createElement('tr');
   tr.innerHTML = (isOffice ? '<td><input placeholder="Flr"></td>' : '') +
@@ -3780,11 +3911,26 @@ function voucherZipAutofill(zip) {
       if (stateEl) stateEl.value = place['state abbreviation'] || 'CA';
     })
     .catch(() => {});
+
+  // Also suggest market/submarket based on ZIP
+  try { applyZipMarketSubmarket(z); } catch (e) { /* no-op */ }
 }
 
 function getSideChipClass(side) {
   const map = { 'Listing': 'listing', 'Procuring': 'procuring', 'Both': 'both', 'Referring': 'referral', 'Other': 'other' };
   return map[side] || 'other';
+}
+
+function workflowCommissionSplitMustSum100() {
+  const wf = LBT_PUBLIC_SETTINGS && LBT_PUBLIC_SETTINGS.workflow;
+  if (!wf || typeof wf.commission_split_must_sum_100 === 'undefined') return true;
+  return Boolean(wf.commission_split_must_sum_100);
+}
+
+function workflowRequireVoucherAttachment() {
+  const wf = LBT_PUBLIC_SETTINGS && LBT_PUBLIC_SETTINGS.workflow;
+  if (!wf || typeof wf.require_voucher_attachment === 'undefined') return true;
+  return Boolean(wf.require_voucher_attachment);
 }
 
 function updateDistChips() {
@@ -3800,12 +3946,18 @@ function updateDistChips() {
 }
 
 function updateDistPctTotal() {
+  let indicator = document.getElementById('dist-pct-total');
+  if (!workflowCommissionSplitMustSum100()) {
+    if (indicator) indicator.classList.add('is-hidden');
+    return;
+  }
+  if (indicator) indicator.classList.remove('is-hidden');
+
   let total = 0;
   document.querySelectorAll('#v-dist-body tr').forEach(tr => {
     const pctInput = tr.querySelectorAll('input')[1];
     if (pctInput) total += parseFloat(pctInput.value) || 0;
   });
-  let indicator = document.getElementById('dist-pct-total');
   if (!indicator) {
     indicator = document.createElement('div');
     indicator.id = 'dist-pct-total';
@@ -4058,6 +4210,13 @@ function clearListing() {
   listingAgentCount = 0;
   addListingAgent(); // Add one empty row
   onPropTypeChange(); onTxnTypeChange();
+  const today = new Date().toISOString().split('T')[0];
+  const de = document.getElementById('l-date-entered');
+  if (de) de.value = today;
+  applyDefaultListingExpirationFromStart(true);
+  try { localStorage.removeItem(LBT_AUTOSAVE_KEYS.listing); } catch (e) {}
+  const au = document.getElementById('lg-autosave');
+  if (au) au.textContent = '';
 }
 
 function clearSign() {
@@ -4085,11 +4244,29 @@ function clearVoucher() {
   ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   rentRowCount = 0;
   onVoucherTxnChange();
+  try { localStorage.removeItem(LBT_AUTOSAVE_KEYS.voucher); } catch (e) {}
+  const au = document.getElementById('dg-autosave');
+  if (au) au.textContent = '';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PDF HELPERS — shared drawing primitives that replicate the original form look
 // ═══════════════════════════════════════════════════════════════════════════════
+function getPdfBrandRgb() {
+  const b = LBT_PUBLIC_SETTINGS || {};
+  const hex = String(b.primary_color || '').trim();
+  if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+    return { r: parseInt(hex.slice(1, 3), 16), g: parseInt(hex.slice(3, 5), 16), b: parseInt(hex.slice(5, 7), 16) };
+  }
+  return { r: 196, g: 18, b: 48 };
+}
+
+function getPdfCompanyHeadline() {
+  const b = LBT_PUBLIC_SETTINGS || {};
+  const name = String(b.company_name || '').trim();
+  return name ? name.toUpperCase() : 'LEE & ASSOCIATES — NEWPORT BEACH';
+}
+
 function pdfHelpers(doc) {
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
@@ -4106,7 +4283,8 @@ function pdfHelpers(doc) {
     doc.setFontSize(18); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
     doc.text(title, M + 12, 49);
     // Red SUBMIT box
-    doc.setFillColor(196, 18, 48);
+    const br = getPdfBrandRgb();
+    doc.setFillColor(br.r, br.g, br.b);
     doc.rect(M + cw * 0.62, 24, 60, 36, 'F');
     doc.setTextColor(255); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
     doc.text('SUBMIT', M + cw * 0.62 + 10, 46);
@@ -4197,6 +4375,8 @@ function drawReleaseAndAgent(p) {
   p.checkbox(release === 'date', 'Release to MLS and Website on', p.M, y);
   p.value(getVal('l-release-date') || '________', p.M + 210, y);
   p.value('(Date)', p.M + 270, y); y += 20;
+  p.fieldWithLine('Listing expiration:', getVal('l-listing-expiration'), p.M, y, p.cw * 0.55);
+  y += 18;
   // MLS Notification
   p.label('Notify the Multiple Listing Services?', p.M, y); y += 16;
   const agentNotify = getVal('l-agent-notify');
@@ -4560,14 +4740,15 @@ function exportSignPdf() {
   const W = doc.internal.pageSize.getWidth();
   let y = 40;
   const margin = 36;
+  const br = getPdfBrandRgb();
 
   // Header — Lee logo area (left) and Cimarron area (right)
-  doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(196, 18, 48);
-  doc.text('LEE & ASSOCIATES', margin, 40);
+  doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(br.r, br.g, br.b);
+  doc.text(getPdfCompanyHeadline(), margin, 40);
   doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(100);
   doc.text('COMMERCIAL REAL ESTATE SERVICES', margin, 50);
   doc.text('NEWPORT BEACH', margin, 60);
-  doc.setTextColor(196, 18, 48); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+  doc.setTextColor(br.r, br.g, br.b); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
   doc.text('949.724.1000', margin, 74);
 
   // Title
@@ -4710,26 +4891,27 @@ function exportVoucherPdf() {
   const margin = 36;
   const cw = W - margin * 2;
   let y = 30;
+  const br = getPdfBrandRgb();
 
   // Header — Lee & Associates style
-  doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(196, 18, 48);
-  doc.text('LEE & ASSOCIATES — NEWPORT BEACH', margin, y);
+  doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(br.r, br.g, br.b);
+  doc.text(getPdfCompanyHeadline(), margin, y);
   doc.setFontSize(16); doc.setTextColor(0);
   y += 22;
   doc.text('LEASE/SALE COMMISSION & COMP VOUCHER', margin, y);
   doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(100);
   doc.text('Date: ' + (getVal('v-date-filled') || new Date().toLocaleDateString()), W - margin, y, { align: 'right' });
   y += 8;
-  doc.setDrawColor(196, 18, 48); doc.setLineWidth(2); doc.line(margin, y, W - margin, y);
+  doc.setDrawColor(br.r, br.g, br.b); doc.setLineWidth(2); doc.line(margin, y, W - margin, y);
   y += 16;
   doc.setTextColor(0, 0, 0);
 
   function vSection(title) {
     if (y > 700) { doc.addPage(); y = 40; }
     doc.setFontSize(10); doc.setFont('helvetica', 'bold');
-    doc.setTextColor(196, 18, 48);
+    doc.setTextColor(br.r, br.g, br.b);
     doc.text(title, margin, y); y += 4;
-    doc.setDrawColor(196, 18, 48); doc.setLineWidth(0.75); doc.line(margin, y, W - margin, y); y += 12;
+    doc.setDrawColor(br.r, br.g, br.b); doc.setLineWidth(0.75); doc.line(margin, y, W - margin, y); y += 12;
     doc.setTextColor(0, 0, 0); doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
   }
 
@@ -5078,6 +5260,66 @@ function _cgv(id) {
   return el.value || '';
 }
 
+function formatCompPdfMmDdYyyy(val) {
+  const v = String(val ?? '').trim();
+  if (!v) return '';
+  const iso = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[2]}/${iso[3]}/${iso[1]}`;
+  const md = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (md) {
+    const mm = String(Number(md[1])).padStart(2, '0');
+    const dd = String(Number(md[2])).padStart(2, '0');
+    return `${mm}/${dd}/${md[3]}`;
+  }
+  return v;
+}
+
+function formatCompPdfTxnTypeDisplay(val) {
+  const t = String(val ?? '').trim();
+  if (!t) return '';
+  const compact = t.toLowerCase().replace(/[\s/_-]+/g, '');
+  if (compact.includes('owner') && compact.includes('user')) return 'User';
+  if (compact === 'investor' || compact === 'investment') return 'Investment';
+  if (compact === 'developer') return 'Developer';
+  if (compact.includes('saleleaseback')) return 'Sale-Leaseback';
+  if (compact.includes('partial')) return 'Partial Interest';
+  return t;
+}
+
+function formatCompPdfRentAdjDisplay(val) {
+  const t = String(val ?? '').trim();
+  if (!t) return '';
+  const onlyNum = t.replace(/,/g, '').replace(/%/g, '').trim();
+  const n = Number(onlyNum);
+  if (Number.isFinite(n) && n > 0 && n < 1 && !/%/.test(t)) {
+    return (n * 100).toFixed(1) + '%';
+  }
+  return t.replace(/\b0\.\d+\b/g, function (match) {
+    const v = Number(match);
+    if (!Number.isFinite(v) || v <= 0 || v >= 1) return match;
+    return (v * 100).toFixed(1) + '%';
+  });
+}
+
+function formatCompPdfParkingDisplay(val) {
+  const t = String(val ?? '').trim();
+  if (!t) return '';
+  const norm = t.replace(/\s+/g, '');
+  const m = norm.match(/^(\d+(?:\.\d+)?)[:/](\d+(?:,\d{3})*|\d+)$/);
+  if (!m) return t;
+  const left = parseFloat(m[1]);
+  const right = parseFloat(String(m[2]).replace(/,/g, ''));
+  if (!Number.isFinite(left) || !Number.isFinite(right)) return t;
+  return left.toFixed(1) + ':' + right.toLocaleString('en-US');
+}
+
+function formatCompPdfYearBuilt(val) {
+  const s = String(val ?? '').replace(/,/g, '').trim();
+  if (!s) return '';
+  const n = parseInt(s, 10);
+  return Number.isFinite(n) ? String(n) : s;
+}
+
 let compPropertyPhotoDataUrl = '';
 let compPropertyPhotoFilename = '';
 let compPropertyPhotoStorageUrl = '';
@@ -5249,11 +5491,12 @@ function exportLeaseCompPdf() {
   doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(60);
   doc.text('Date:', M + 4, y + 11);
   doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
-  doc.text(gv('c-date'), M + 32, y + 11);
+  doc.text(formatCompPdfMmDdYyyy(gv('c-date')), M + 32, y + 11);
   y += LH + 10;
 
   /* ── LEFT: Location  |  RIGHT: Property Features ── */
   const blockY = y;
+  const subleasePartyLabels = document.getElementById('c-sublease-party-labels')?.checked;
 
   // LEFT column — Location
   leftHeader('Location:'); y += HDR;
@@ -5277,16 +5520,16 @@ function exportLeaseCompPdf() {
   leftCell('Space Leased / Leased SF:', gv('c-leased-sf')); y += LH;
   leftCell('Rent/SqFt / Start Rate:', gv('c-rent-sf')); y += LH;
   leftCell('Rent Type:', gv('c-rent-type')); y += LH;
-  leftCell('Trans. / Exec. Date:', gv('c-exec-date')); y += LH;
-  leftCell('Occ Date:', gv('c-occ-date')); y += LH;
-  leftCell('Expire Date:', gv('c-expire-date')); y += LH;
+  leftCell('Trans. / Exec. Date:', formatCompPdfMmDdYyyy(gv('c-exec-date'))); y += LH;
+  leftCell('Occ Date:', formatCompPdfMmDdYyyy(gv('c-occ-date'))); y += LH;
+  leftCell('Expire Date:', formatCompPdfMmDdYyyy(gv('c-expire-date'))); y += LH;
   leftCell('Term (Months):', gv('c-term')); y += LH;
   leftCell('Effective Rent:', gv('c-eff-rent')); y += LH;
   leftCell('Mos on Mrkt:', gv('c-mkt-months')); y += LH;
   leftCell('Free Rent:', gv('c-free-rent')); y += LH;
   leftCell('TI Allowance:', gv('c-ti')); y += LH;
   leftCell('NNN Charges:', gv('c-nnn')); y += LH;
-  leftCell('Rent Adj / Escalations:', gv('c-escalations')); y += LH;
+  leftCell('Rent Adj / Escalations:', formatCompPdfRentAdjDisplay(gv('c-escalations'))); y += LH;
   leftCell('Options:', gv('c-options')); y += LH;
   const leftEndY = y;
 
@@ -5295,12 +5538,12 @@ function exportLeaseCompPdf() {
   rightHeader('Property Features:'); y += HDR;
   rightCell('Building SF:', gv('c-bldg-sf')); y += LH;
   rightCell('Land / Lot Size (SF):', gv('c-land-sf')); y += LH;
-  rightCell('Yr Built / Year Built:', gv('c-year-built')); y += LH;
+  rightCell('Yr Built / Year Built:', formatCompPdfYearBuilt(gv('c-year-built'))); y += LH;
   rightCell('Office SF:', gv('c-office-sf')); y += LH;
   rightCell('DH (Dock-high Doors):', gv('c-dh')); y += LH;
   rightCell('GL (Grade Level Doors):', gv('c-gl')); y += LH;
   rightCell('Clear Height:', gv('c-clearance')); y += LH;
-  rightCell('Parking Ratio:', gv('c-parking')); y += LH;
+  rightCell('Parking Ratio:', formatCompPdfParkingDisplay(gv('c-parking'))); y += LH;
   rightCell('Amps / Power:', gv('c-amps')); y += LH;
   rightCell('Sprinklers:', gv('c-sprinklers')); y += LH;
   rightCell('Rail:', gv('c-rail')); y += LH;
@@ -5310,8 +5553,8 @@ function exportLeaseCompPdf() {
 
   // RIGHT column — Lessor/Tenant Info
   rightHeader('Lessor/Tenant Info:'); y += HDR;
-  rightCell('Lessor / Landlord:', gv('c-lessor')); y += LH;
-  rightCell('Lessee / Tenant:', gv('c-lessee')); y += LH;
+  rightCell(subleasePartyLabels ? 'Sublessor:' : 'Lessor / Landlord:', gv('c-lessor')); y += LH;
+  rightCell(subleasePartyLabels ? 'Sublessee:' : 'Lessee / Tenant:', gv('c-lessee')); y += LH;
   y += LH; // blank spacer
   rightCell('Listing Brokerage:', gv('c-list-brokerage')); y += LH;
   rightCell('Listing Agent 1:', gv('c-list-agent1')); y += LH;
@@ -5447,7 +5690,7 @@ function exportSaleCompPdf() {
   doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(60);
   doc.text('Date:', M + 4, y + 11);
   doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
-  doc.text(gv('c-date'), M + 32, y + 11);
+  doc.text(formatCompPdfMmDdYyyy(gv('c-date')), M + 32, y + 11);
   y += LH + 10;
 
   /* ── LEFT: Location  |  RIGHT: Property Features (continued) ── */
@@ -5473,11 +5716,13 @@ function exportSaleCompPdf() {
   leftCell('Building SF:', gv('cs-bldg-sf')); y += LH;
   leftCell('Office SF:', gv('cs-office-sf')); y += LH;
   leftCell('Land / Lot Size (SF):', gv('cs-land-sf')); y += LH;
-  leftCell('Transaction Date:', gv('cs-txn-date')); y += LH;
+  leftCell('Transaction Date:', formatCompPdfMmDdYyyy(gv('cs-txn-date'))); y += LH;
   leftCell('Selling Price:', gv('cs-sell-price')); y += LH;
-  leftCell('Year Built:', gv('cs-year-built')); y += LH;
-  leftCell('Transaction Type (User, Investor):', gv('cs-txn-type')); y += LH;
-  leftCell('Parking Ratio:', gv('cs-parking')); y += LH;
+  const salePsf = compSalePricePerSf();
+  leftCell('Sale $/SF (calc):', salePsf ? ('$' + Number(salePsf).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })) : ''); y += LH;
+  leftCell('Year Built:', formatCompPdfYearBuilt(gv('cs-year-built'))); y += LH;
+  leftCell('Transaction Type (User, Investment):', formatCompPdfTxnTypeDisplay(gv('cs-txn-type'))); y += LH;
+  leftCell('Parking Ratio:', formatCompPdfParkingDisplay(gv('cs-parking'))); y += LH;
   leftCell('Mos on Mrkt:', gv('cs-mkt-months')); y += LH;
   leftCell('Multi-Ten / Space Type (Y/N):', gv('cs-multi-ten')); y += LH;
   const leftEndY = y;
@@ -5750,7 +5995,6 @@ async function exportLeeCompReportPdf(compType, rows) {
     doc.setTextColor(120, 120, 120);
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(6.5);
-    doc.text('Metropolis — Industrial with Small Pictures', marginL, footerY + 28);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
@@ -6030,7 +6274,7 @@ document.getElementById('email-modal').addEventListener('click', function(e) {
 // COMP FORM SELECT POPULATION
 // ═══════════════════════════════════════════════════════════════════════════════
 function initCompFormSelects() {
-  const AGENTS = ['Frank Adler','Sean Ahern','Tim Arguello','Chris Barnett','Brian Garbutt','Ken Gould','Bob Griffin','Jeff Hirsch','Jack Hogan','Mike Long','Tom West','Gary McArdell','Matt Durkin','Judd Hietbrink','David Bolt','Brian Barson','Tim Walker','Brad Schneider','Rick Turner','Jonathan Mejia','Matt Christensen','David Kluver','Carter Harrington','Alejandro Sherratt','Charlie Winn','Hayden Toland','Miles Toland','Matt Biggs','Matt Lawer','Brendan Smith','Nick Dumke','John Gessford','Stephen Madigan','Pitzer Gills','Taylor Barnes','Libby Gessford'];
+  const AGENTS = ['Frank Adler','Sean Ahern','Tim Arguello','Chris Barnett','Brian Barson','David Bolt','Matt Christensen','Ethan Davidson','Nick Dumke','Matt Durkin','Brian Garbutt','John Gessford','Libby Gessford','Pitzer Gills','Ken Gould','Bob Griffin','Jeff Grijalva','Carter Harrington','Judd Hietbrink','Jeff Hirsch','Jack Hogan','David Kluver','Matt Lawer','Mike Long','Steve Madigan','Gary McArdell','Jonathan Mejia','Frank Perkins','Brad Schneider','Alejandro Sherratt','Brendan Smith','Hayden Toland','Miles Toland','Tim Walker','Tom West','Charlie Winn','Maddie Zacher','Shannon Zacher'];
   const BROKERAGES = ['Lee & Associates - Newport Beach','Lee & Associates - Irvine','Lee & Associates - Orange','Lee & Associates - Long Beach','CBRE','JLL','Cushman & Wakefield','Colliers','Newmark','Voit Real Estate Services','DAUM Commercial','Kidder Mathews','Avison Young','NAI Capital','Matthews Real Estate Investment Services','Owner Direct'];
   const CITIES = ['Anaheim','Buena Park','Costa Mesa','Cypress','Fullerton','Garden Grove','Huntington Beach','Irvine','Lake Forest','Laguna Hills','Laguna Niguel','Newport Beach','Orange','Santa Ana','Tustin','Westminster','National City','Cerritos'];
   const SF = ['1,000','2,500','5,000','10,000','15,000','20,000','25,000','50,000','75,000','100,000','150,000','250,000','500,000'];
@@ -6039,14 +6283,13 @@ function initCompFormSelects() {
   const YEARS = ['1960','1970','1980','1990','1995','2000','2005','2010','2015','2020','2025'];
   const DOORS = ['0','1','2','4','6','8','10','12','16','20'];
   const HEIGHTS = ["12'","14'","16'","18'","20'","22'","24'","28'","30'","32'","36'"];
-  const PARKING = ['1.0:1,000','1.5:1,000','2.0:1,000','2.5:1,000','3.0:1,000','4/1,000','5/1,000','Not Disclosed'];
+  const PARKING = ['1.0:1,000','1.5:1,000','2.0:1,000','2.5:1,000','3.0:1,000','4.0:1,000','5.0:1,000','Not Disclosed'];
   const POWER = ['100A','200A','400A','600A','800A','1,000A','1,200A','2,000A','120/208V','277/480V','Heavy power'];
   const MONTHS = ['0','1','3','6','9','12','18','24','36'];
   const FREE_RENT = ['None','1 month','2 months','3 months','4 months','6 months','Not Disclosed'];
   const NNN = ['$0.05','$0.10','$0.15','$0.20','$0.25','$0.30','$0.35','$0.40','Not Disclosed'];
   const ESCAL = ['3% annual','4% annual','5% annual','CPI','Fixed increases','None','Not Disclosed','See comments'];
   const SALE_PRICES = ['$1,000,000','$2,500,000','$5,000,000','$7,500,000','$10,000,000','$15,000,000','$25,000,000','$50,000,000'];
-  const SALE_TXN = ['Owner/User','Investor','Developer','Investment','Sale-Leaseback','Partial Interest'];
   const CAP_RATES = ['3.50%','4.00%','4.50%','5.00%','5.50%','6.00%','6.50%','7.00%','7.50%','8.00%','Not Disclosed'];
   const SPACE_TYPES = ['Direct Lease','Sublease','Renewal','Expansion','New Lease','Extension','Blend and Extend','Owner/User'];
   const PROJECTS = ['Airport Business Center','Irvine Business Complex','MacArthur Business Park','Orange County Commerce Center','South Coast Metro','Tustin Legacy','Warner Business Park'];
@@ -6073,7 +6316,6 @@ function initCompFormSelects() {
   fillSel('c-nnn', NNN);
   fillSel('c-escalations', ESCAL);
   fillSel('cs-sell-price', SALE_PRICES);
-  fillSel('cs-txn-type', SALE_TXN);
   fillSel('cs-cap-rate', CAP_RATES);
   fillSel('c-space-type', SPACE_TYPES);
   fillSel('c-project', PROJECTS);
@@ -6104,99 +6346,82 @@ async function submitCompDirect() {
 // BROKER TOOL AUTH GATE
 // ═══════════════════════════════════════════════════════════════════════════════
 const BROKER_EMAIL_MAP = {
+  'eabrego@lee-associates.com': 'Eva Abrego',
   'fadler@lee-associates.com': 'Frank Adler',
   'sahern@lee-associates.com': 'Sean Ahern',
   'targuello@lee-associates.com': 'Tim Arguello',
+  'tbarnes@lee-associates.com': 'Taylor Barnes',
   'cbarnett@lee-associates.com': 'Chris Barnett',
+  'bbarson@lee-associates.com': 'Brian Barson',
+  'dbolt@lee-associates.com': 'David Bolt',
+  'mchristensen@lee-associates.com': 'Matt Christensen',
+  'edavidson@lee-associates.com': 'Ethan Davidson',
+  'ndumke@lee-associates.com': 'Nick Dumke',
+  'mdurkin@lee-associates.com': 'Matt Durkin',
   'bgarbutt@lee-associates.com': 'Brian Garbutt',
+  'jgessford@lee-associates.com': 'John Gessford',
+  'lgessford@lee-associates.com': 'Libby Gessford',
+  'pgills@lee-associates.com': 'Pitzer Gills',
   'kgould@lee-associates.com': 'Ken Gould',
   'bgriffin@lee-associates.com': 'Bob Griffin',
+  'jgrijalva@lee-associates.com': 'Jeff Grijalva',
+  'charrington@lee-associates.com': 'Carter Harrington',
+  'jhietbrink@lee-associates.com': 'Judd Hietbrink',
   'jhirsch@lee-associates.com': 'Jeff Hirsch',
   'jhogan@lee-associates.com': 'Jack Hogan',
-  'mlong@lee-associates.com': 'Mike Long',
-  'twest@lee-associates.com': 'Tom West',
-  'gmcardell@lee-associates.com': 'Gary McArdell',
-  'mdurkin@lee-associates.com': 'Matt Durkin',
-  'jhietbrink@lee-associates.com': 'Judd Hietbrink',
-  'dbolt@lee-associates.com': 'David Bolt',
-  'bbarson@lee-associates.com': 'Brian Barson',
-  'timwalker@lee-associates.com': 'Tim Walker',
-  'bschneider@lee-associates.com': 'Brad Schneider',
-  'rturner@lee-associates.com': 'Rick Turner',
-  'jmejia@lee-associates.com': 'Jonathan Mejia',
-  'mchristensen@lee-associates.com': 'Matt Christensen',
   'dkluver@lee-associates.com': 'David Kluver',
-  'charrington@lee-associates.com': 'Carter Harrington',
-  'temporary@lee-associates.com': 'Alejandro Sherratt',
-  'cwinn@lee-associates.com': 'Charlie Winn',
-  'eabrego@lee-associates.com': 'Eva Abrego',
-  'kmorris@lee-associates.com': 'Kelsey Morris',
+  'mlawer@lee-associates.com': 'Matt Lawer',
+  'mlong@lee-associates.com': 'Mike Long',
+  'smadigan@lee-associates.com': 'Steve Madigan',
+  'gmcardell@lee-associates.com': 'Gary McArdell',
+  'jmejia@lee-associates.com': 'Jonathan Mejia',
+  'fperkins@lee-associates.com': 'Frank Perkins',
+  'bschneider@lee-associates.com': 'Brad Schneider',
+  'asherratt@lee-associates.com': 'Alejandro Sherratt',
+  'bsmith@lee-associates.com': 'Brendan Smith',
   'htoland@lee-associates.com': 'Hayden Toland',
   'mtoland@lee-associates.com': 'Miles Toland',
-  'mbiggs@lee-associates.com': 'Matt Biggs',
-  'mlawer@lee-associates.com': 'Matt Lawer',
-  'bsmith@lee-associates.com': 'Brendan Smith',
-  'ndumke@lee-associates.com': 'Nick Dumke',
-  'jgessford@lee-associates.com': 'John Gessford',
-  'smadigan@lee-associates.com': 'Stephen Madigan',
-  'jobrien@lee-associates.com': "Jessica O'Brien",
-  'ekat@lee-associates.com': 'Erissa Kat',
-  'pgills@lee-associates.com': 'Pitzer Gills',
-  'tbarnes@lee-associates.com': 'Taylor Barnes',
-  'lgessford@lee-associates.com': 'Libby Gessford',
+  'rturner@lee-associates.com': 'Rick Turner',
+  'timwalker@lee-associates.com': 'Tim Walker',
+  'twest@lee-associates.com': 'Tom West',
+  'cwinn@lee-associates.com': 'Charlie Winn',
+  'mzacher@lee-associates.com': 'Maddie Zacher',
+  'szacher@lee-associates.com': 'Shannon Zacher',
+  'ekat@lee-associates.com': 'Errissa Kat',
+  'kmorris@lee-associates.com': 'Kelsey Morris',
 };
 
 function showBrokerTool(user) {
-  document.getElementById('tool-sign-in').style.display = 'none';
-  document.getElementById('broker-view').style.display = '';
+  setAdminAccessForUser(user || null);
+  const brokerViewEl = document.getElementById('broker-view');
+  if (brokerViewEl) {
+    brokerViewEl.style.display = '';
+    brokerViewEl.classList.remove('is-ready');
+    requestAnimationFrame(() => brokerViewEl.classList.add('is-ready'));
+  }
   if (user) {
     applySharedBrokerIdentity(user);
     compReportsUser = user;
     updateHeaderUserDisplay(user);
   }
+  void refreshBrokerQueue();
+  window.queueMicrotask(applyBrokerToolInitialTabFromUrl);
 }
 
-async function handleToolSignIn(event) {
-  event.preventDefault();
-  const email = document.getElementById('tool-sign-in-email').value.trim().toLowerCase();
-  const errorEl = document.getElementById('tool-sign-in-error');
-  const btn = document.getElementById('tool-sign-in-btn');
-  errorEl.textContent = '';
-
-  const brokerName = BROKER_EMAIL_MAP[email];
-  if (!brokerName) {
-    errorEl.textContent = 'Email not recognized. Use your @lee-associates.com email.';
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = 'Signing in…';
-  try {
-    const result = await callTrpc('auth.login', { name: brokerName, email });
-    if (result?.success) {
-      showBrokerTool(result.user);
-    } else {
-      errorEl.textContent = result?.error || 'Sign in failed. Please try again.';
-    }
-  } catch (e) {
-    errorEl.textContent = (e && e.message) ? e.message : 'Sign in failed. Please try again.';
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Sign In';
-  }
-}
+// Sign-in functions removed, handled by React login.
 
 async function initBrokerToolAuth() {
   try {
     const me = await callTrpc('auth.me');
-    if (me) {
+    if (me && me.email) {
       showBrokerTool(me);
       return;
     }
   } catch (e) {
     console.warn('Auth check on load:', e && e.message ? e.message : e);
   }
-  // Not signed in — keep sign-in screen visible
+  setAdminAccessForUser(null);
+  window.location.href = '/login?next=/tool';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -6216,6 +6441,12 @@ function buildCrDropdown(containerId, options) {
 
   const panel = document.createElement('div');
   panel.className = 'cr-dd-panel';
+
+  const searchWrap = document.createElement('div');
+  searchWrap.className = 'cr-dd-search';
+  searchWrap.innerHTML = '<input type="text" class="cr-dd-search-input" placeholder="Type to filter…" autocomplete="off">';
+  const searchInput = searchWrap.querySelector('input');
+  panel.appendChild(searchWrap);
 
   const opts = document.createElement('div');
   opts.className = 'cr-dd-opts';
@@ -6243,6 +6474,26 @@ function buildCrDropdown(containerId, options) {
 
   panel.addEventListener('change', updateLabel);
 
+  // Allow dependent filters (e.g. Market -> City) to hide options.
+  container._updateCrLabel = updateLabel;
+  container._filterCrOptions = (allowed) => {
+    const allowedSet = allowed instanceof Set ? allowed : null;
+    const rows = Array.from(opts.querySelectorAll('.cr-dd-opt'));
+    rows.forEach(row => {
+      const cb = row.querySelector('input[type=checkbox]');
+      const value = cb ? cb.value : '';
+      const depHidden = allowedSet ? !allowedSet.has(value) : false;
+      row.dataset.crDepHidden = depHidden ? '1' : '0';
+      if (depHidden) {
+        row.style.display = 'none';
+        if (cb) cb.checked = false;
+      } else {
+        row.style.display = '';
+      }
+    });
+    updateLabel();
+  };
+
   btn.addEventListener('click', e => {
     e.stopPropagation();
     const isOpen = panel.classList.contains('open');
@@ -6254,6 +6505,14 @@ function buildCrDropdown(containerId, options) {
     panel.classList.toggle('open', !isOpen);
     btn.classList.toggle('open', !isOpen);
     _crOpenPanel = !isOpen ? panel : null;
+    if (!isOpen && searchInput) {
+      searchInput.value = '';
+      // Show all options when opening, except those hidden by dependent filters.
+      opts.querySelectorAll('.cr-dd-opt').forEach(el => {
+        el.style.display = el.dataset.crDepHidden === '1' ? 'none' : '';
+      });
+      requestAnimationFrame(() => searchInput.focus());
+    }
   });
 
   document.addEventListener('click', e => {
@@ -6264,9 +6523,44 @@ function buildCrDropdown(containerId, options) {
     }
   }, { capture: true, passive: true });
 
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      const q = String(searchInput.value || '').trim().toLowerCase();
+      const rows = Array.from(opts.querySelectorAll('.cr-dd-opt'));
+      if (!q) {
+        rows.forEach(el => (el.style.display = el.dataset.crDepHidden === '1' ? 'none' : ''));
+        return;
+      }
+      rows.forEach(el => {
+        if (el.dataset.crDepHidden === '1') { el.style.display = 'none'; return; }
+        const text = (el.textContent || '').trim().toLowerCase();
+        el.style.display = text.includes(q) ? '' : 'none';
+      });
+    });
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        // If a single visible option remains, toggle it.
+        const visible = Array.from(opts.querySelectorAll('.cr-dd-opt')).filter(el => el.style.display !== 'none');
+        if (visible.length === 1) {
+          const cb = visible[0].querySelector('input[type=checkbox]');
+          if (cb) cb.checked = !cb.checked;
+          updateLabel();
+        }
+      }
+    });
+  }
+
   container._getCrVals = () => {
     const vals = Array.from(panel.querySelectorAll('input[type=checkbox]:checked')).map(c => c.value);
     return vals.length ? vals : undefined;
+  };
+  container._setCrVals = (vals) => {
+    const set = new Set((Array.isArray(vals) ? vals : []).filter(Boolean));
+    panel.querySelectorAll('input[type=checkbox]').forEach(c => {
+      c.checked = set.has(c.value);
+    });
+    updateLabel();
   };
   container._resetCr = () => {
     panel.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = false);
@@ -6279,14 +6573,88 @@ function buildCrDropdown(containerId, options) {
 
 function initCompReportDropdowns() {
   const CITIES = ['Anaheim','Buena Park','Brea','Carson','Cerritos','Chino','Chino Hills','Corona','Costa Mesa','Cypress','El Segundo','Fontana','Fullerton','Garden Grove','Huntington Beach','Industry','Irvine','La Mirada','Lake Forest','Laguna Hills','Laguna Niguel','Long Beach','Los Angeles','National City','Newport Beach','Ontario','Orange','Perris','Placentia','Rancho Dominguez','Riverside','Santa Ana','Torrance','Tustin','Vernon','Westminster'];
-  const MARKETS = ['Los Angeles','Orange County','Inland Empire','San Diego'];
-  const SUBMARKETS = ['Airport Area','Anaheim','Brea/Fullerton','Cerritos','Chino/Chino Hills','Corona','Costa Mesa/Newport','Cypress','Fontana/Rialto','Huntington Beach','Industry','Irvine','La Mirada/Norwalk','Long Beach','Mira Loma','National City','Ontario','Orange/Tustin','Perris','Rancho Dominguez','Riverside','Santa Ana','South Bay','Torrance','Vernon/Commerce'];
-  const PROP_TYPES = ['Indust','Office','Retail','R&D/Flex','Land'];
+  // Normalize: treat "Orange" as "Orange County" everywhere.
+  const MARKETS = ['Orange County','Los Angeles','Inland Empire','Riverside','San Bernardino','San Diego'];
+  const SUBMARKETS = ['IBC','NOC','SOC','SAE','SCM','WC','NM','Mid Cities','Airport Area','IE East','IE West','Anaheim','Brea/Fullerton','Cerritos','Chino/Chino Hills','Corona','Costa Mesa/Newport','Cypress','Fontana/Rialto','Huntington Beach','Industry','Irvine','La Mirada/Norwalk','Long Beach','Mira Loma','National City','Ontario','Orange/Tustin','Perris','Rancho Dominguez','Riverside','Santa Ana','South Bay','Torrance','Vernon/Commerce'];
+  const PROP_TYPES = ['Industrial','Office','Retail','Land','Flex','R&D/Flex'];
 
   buildCrDropdown('cr-city', CITIES);
   buildCrDropdown('cr-market', MARKETS);
   buildCrDropdown('cr-submarket', SUBMARKETS);
   buildCrDropdown('cr-property-type', PROP_TYPES);
+
+  // Dependent filters: Market selection limits available cities.
+  const marketEl = document.getElementById('cr-market');
+  const cityEl = document.getElementById('cr-city');
+  if (marketEl && cityEl) {
+    const CITY_BY_MARKET = {
+      'Orange County': new Set(['Anaheim','Buena Park','Brea','Costa Mesa','Cypress','Fullerton','Garden Grove','Huntington Beach','Irvine','Lake Forest','Laguna Hills','Laguna Niguel','Newport Beach','Orange','Placentia','Santa Ana','Tustin','Westminster']),
+      'Los Angeles': new Set(['Carson','Cerritos','El Segundo','Long Beach','Los Angeles','Rancho Dominguez','Torrance','Vernon']),
+      'Inland Empire': new Set(['Chino','Chino Hills','Corona','Fontana','Ontario','Perris','Riverside']),
+      'Riverside': new Set(['Perris','Riverside']),
+      'San Bernardino': new Set(['Chino','Chino Hills','Fontana','Ontario']),
+      'San Diego': new Set(['National City']),
+    };
+
+    function updateCityOptions() {
+      const selectedMarkets = marketEl._getCrVals ? (marketEl._getCrVals() || []) : [];
+      const allowed = new Set();
+      if (!selectedMarkets.length) {
+        // No market filter: show all.
+        if (cityEl._filterCrOptions) cityEl._filterCrOptions(null);
+        return;
+      }
+      selectedMarkets.forEach(m => {
+        const set = CITY_BY_MARKET[m];
+        if (set) set.forEach(c => allowed.add(c));
+      });
+      if (cityEl._filterCrOptions) cityEl._filterCrOptions(allowed);
+    }
+
+    marketEl.addEventListener('change', updateCityOptions);
+    updateCityOptions();
+  }
+}
+
+function initCompReportRangeInputs() {
+  const sfIds = ['cr-sf-min', 'cr-sf-max'];
+  sfIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('blur', () => {
+      const raw = String(el.value || '').trim();
+      if (!raw) return;
+      const num = Number(raw.replace(/,/g, '').trim());
+      if (!Number.isFinite(num) || num <= 0) return;
+      el.value = Math.round(num).toLocaleString('en-US');
+    });
+  });
+
+  function fmtIsoToMdy(iso) {
+    const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return '';
+    return `${m[2]}/${m[3]}/${m[1]}`;
+  }
+
+  ['cr-date-from', 'cr-date-to'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('blur', () => {
+      const v = String(el.value || '').trim();
+      if (!v) return;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+        const out = fmtIsoToMdy(v);
+        if (out) el.value = out;
+        return;
+      }
+      const m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (!m) return;
+      const mm = String(Number(m[1])).padStart(2, '0');
+      const dd = String(Number(m[2])).padStart(2, '0');
+      const yyyy = m[3];
+      el.value = `${mm}/${dd}/${yyyy}`;
+    });
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -6298,19 +6666,194 @@ document.getElementById('s-date').value = new Date().toISOString().split('T')[0]
 document.getElementById('v-date-filled').value = new Date().toISOString().split('T')[0];
 document.getElementById('c-date').value = new Date().toISOString().split('T')[0];
 
+// Load public settings (branding + workflow + notifications) before wiring up setting-driven behaviors.
+let LBT_PUBLIC_SETTINGS = null;
+async function loadPublicToolSettings() {
+  try {
+    const r = await fetch('/api/settings/public', { credentials: 'include' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    LBT_PUBLIC_SETTINGS = j || {};
+  } catch (e) {
+    LBT_PUBLIC_SETTINGS = {};
+  }
+  return LBT_PUBLIC_SETTINGS;
+}
+
+function hexToRgb(hex) {
+  const v = String(hex || '').trim();
+  if (!/^#[0-9A-Fa-f]{6}$/.test(v)) return null;
+  const r = parseInt(v.slice(1, 3), 16);
+  const g = parseInt(v.slice(3, 5), 16);
+  const b = parseInt(v.slice(5, 7), 16);
+  return { r, g, b };
+}
+
+function applyBrandingFromSettings() {
+  const b = LBT_PUBLIC_SETTINGS || {};
+  const company = String(b.company_name || '').trim();
+  const logoUrl = b.logo_url ? String(b.logo_url).trim() : '';
+  const primary = String(b.primary_color || '').trim();
+
+  if (company) {
+    document.title = company + ' — Broker Tool';
+    const kicker = document.getElementById('header-kicker');
+    if (kicker) kicker.textContent = company;
+  }
+
+  if (logoUrl) {
+    const headerLogo = document.getElementById('header-logo');
+    const signInLogo = document.getElementById('tool-sign-in-logo');
+    if (headerLogo) headerLogo.src = logoUrl;
+    if (signInLogo) signInLogo.src = logoUrl;
+  }
+
+  if (primary && /^#[0-9A-Fa-f]{6}$/.test(primary)) {
+    const rgb = hexToRgb(primary);
+    document.documentElement.style.setProperty('--lee-crimson', primary);
+    document.documentElement.style.setProperty('--red', primary);
+    if (rgb) {
+      document.documentElement.style.setProperty('--lee-crimson-wash', 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.08)');
+      document.documentElement.style.setProperty('--lee-crimson-glow', 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.14)');
+      document.documentElement.style.setProperty('--shadow-focus', '0 0 0 4px rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.12)');
+    }
+  }
+}
+
+function applyVoucherConfidentialWarningFromSettings() {
+  const el = document.getElementById('voucher-confidential-warning');
+  if (!el) return;
+  const wf = (LBT_PUBLIC_SETTINGS && LBT_PUBLIC_SETTINGS.workflow) ? LBT_PUBLIC_SETTINGS.workflow : {};
+  const enabled = Boolean(wf.confidential_warning_enabled);
+  const text = String(wf.confidential_warning_text || '').trim();
+  if (!enabled || !text) {
+    el.classList.add('is-hidden');
+    el.textContent = '';
+    return;
+  }
+  el.textContent = text;
+  el.classList.remove('is-hidden');
+}
+
+function addCalendarMonthsIsoDate(iso, monthsToAdd) {
+  const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return '';
+  const y = Number(m[1]);
+  const mo = Number(m[2]) - 1;
+  const d = Number(m[3]);
+  const dt = new Date(y, mo, d);
+  dt.setMonth(dt.getMonth() + monthsToAdd);
+  const yyyy = dt.getFullYear();
+  const mm = String(dt.getMonth() + 1).padStart(2, '0');
+  const dd = String(dt.getDate()).padStart(2, '0');
+  return yyyy + '-' + mm + '-' + dd;
+}
+
+function applyDefaultListingExpirationFromStart(force) {
+  const exp = document.getElementById('l-listing-expiration');
+  const startEl = document.getElementById('l-date-entered');
+  if (!exp || !startEl) return;
+  const wf = (LBT_PUBLIC_SETTINGS && LBT_PUBLIC_SETTINGS.workflow) || {};
+  let months = Number(wf.default_listing_term_months);
+  if (!Number.isFinite(months) || months < 1) months = 12;
+  const start = String(startEl.value || '').trim();
+  if (!start) return;
+  const next = addCalendarMonthsIsoDate(start, months);
+  if (!next) return;
+  if (force || exp.getAttribute('data-lbt-auto-expiry') === '1' || !String(exp.value || '').trim()) {
+    exp.value = next;
+    exp.setAttribute('data-lbt-auto-expiry', '1');
+  }
+}
+
+function wireListingExpirationListeners() {
+  const start = document.getElementById('l-date-entered');
+  const exp = document.getElementById('l-listing-expiration');
+  if (exp && !exp.dataset.lbtExpiryWired) {
+    exp.dataset.lbtExpiryWired = '1';
+    exp.addEventListener('input', function() {
+      this.setAttribute('data-lbt-auto-expiry', '0');
+    });
+    exp.addEventListener('change', function() {
+      this.setAttribute('data-lbt-auto-expiry', '0');
+    });
+  }
+  if (start && !start.dataset.lbtExpiryWired) {
+    start.dataset.lbtExpiryWired = '1';
+    start.addEventListener('change', function() {
+      const ex = document.getElementById('l-listing-expiration');
+      if (ex && ex.getAttribute('data-lbt-auto-expiry') === '1') {
+        applyDefaultListingExpirationFromStart(true);
+      }
+    });
+  }
+}
+
+const LBT_AUTOSAVE_KEYS = { listing: 'lbt_autosave_listing_v1', voucher: 'lbt_autosave_voucher_v1' };
+
+function lbtCollectDraftFields(rootSel) {
+  const root = document.querySelector(rootSel);
+  if (!root) return {};
+  const out = {};
+  root.querySelectorAll('input[id], select[id], textarea[id]').forEach(function(el) {
+    const id = el.id;
+    const t = el.type;
+    if (t === 'file' || t === 'button' || t === 'submit' || t === 'hidden') return;
+    if (t === 'checkbox') {
+      out[id] = el.checked ? '1' : '';
+      return;
+    }
+    if (t === 'radio') {
+      if (el.checked) out[id] = el.value;
+      return;
+    }
+    out[id] = el.value;
+  });
+  return out;
+}
+
+function startWorkflowAutosaveTimer() {
+  const wf = (LBT_PUBLIC_SETTINGS && LBT_PUBLIC_SETTINGS.workflow) || {};
+  let sec = Number(wf.auto_save_interval_seconds);
+  if (!Number.isFinite(sec) || sec <= 0) return;
+  sec = Math.min(Math.max(sec, 15), 900);
+  function tick() {
+    try {
+      localStorage.setItem(LBT_AUTOSAVE_KEYS.listing, JSON.stringify({ savedAt: Date.now(), values: lbtCollectDraftFields('#listing-add-mode') }));
+      localStorage.setItem(LBT_AUTOSAVE_KEYS.voucher, JSON.stringify({ savedAt: Date.now(), values: lbtCollectDraftFields('#v-deal-shell') }));
+      const ts = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+      const msg = 'Draft autosaved at ' + ts;
+      const elL = document.getElementById('lg-autosave');
+      const elV = document.getElementById('dg-autosave');
+      if (elL) elL.textContent = msg;
+      if (elV) elV.textContent = msg;
+    } catch (e) { /* storage full or disabled */ }
+  }
+  setInterval(tick, sec * 1000);
+}
+
+void loadPublicToolSettings().then(function() {
+  applyBrandingFromSettings();
+  applyVoucherConfidentialWarningFromSettings();
+  applyDefaultListingExpirationFromStart(true);
+  wireListingExpirationListeners();
+  startWorkflowAutosaveTimer();
+  updateDistPctTotal();
+});
+
 // Initialize property type sections
 onPropTypeChange();
 onTxnTypeChange();
 onVoucherTxnChange();
 
-// Check auth and show sign-in gate or tool
-void initBrokerToolAuth();
+// Auth initialization runs after the shared API helper is declared later in the page.
 
 // Populate comp form dropdowns
 initCompFormSelects();
 
 // Build comp reports filter dropdowns
 initCompReportDropdowns();
+initCompReportRangeInputs();
 
 // Add initial suite rows
 addSuiteRow('office');
@@ -6767,10 +7310,30 @@ function fmtDate(iso) {
 
 function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
 
+function setBtnLoading(btn, loading, loadingLabel) {
+  if (!btn) return;
+  btn.classList.toggle('loading', Boolean(loading));
+  const label = btn.querySelector('.btn-label');
+  if (label && loadingLabel) label.textContent = loading ? loadingLabel : label.dataset.idle || label.textContent;
+}
+
+function adminQuickAction(tab) {
+  try {
+    if (document.body.classList.contains('admin-mode')) {
+      document.body.classList.remove('admin-mode');
+      const label = document.getElementById('admin-toggle-label');
+      if (label) label.textContent = 'Settings';
+    }
+    if (typeof switchTab === 'function') switchTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (e) { /* no-op */ }
+}
+
 // Toggle admin mode
 async function toggleAdminMode() {
   const isAdmin = document.body.classList.toggle('admin-mode');
-  document.getElementById('admin-toggle-label').textContent = isAdmin ? 'Broker Tool' : 'Admin Portal';
+  const label = document.getElementById('admin-toggle-label');
+  if (label) label.textContent = isAdmin ? 'Tool workspace' : 'Settings';
   if (isAdmin) {
     await refreshAdminWorkspace();
   }
@@ -6792,9 +7355,19 @@ function switchAdminPage(page) {
 }
 
 async function refreshAdminWorkspace() {
-  await refreshAdminSubmissions();
-  renderDashboard();
-  renderSubmissions();
+  const btn = document.getElementById('btn-admin-refresh');
+  if (btn) {
+    const label = btn.querySelector('.btn-label');
+    if (label && !label.dataset.idle) label.dataset.idle = label.textContent;
+    setBtnLoading(btn, true, 'Refreshing…');
+  }
+  try {
+    await refreshAdminSubmissions();
+    renderDashboard();
+    renderSubmissions();
+  } finally {
+    setBtnLoading(btn, false);
+  }
 }
 
 // Render dashboard
@@ -6807,6 +7380,22 @@ function renderDashboard() {
   document.getElementById('stat-pending').textContent = pending;
   document.getElementById('stat-review').textContent = review;
   document.getElementById('stat-approved').textContent = approved;
+
+  const welcome = document.getElementById('admin-welcome');
+  if (welcome) {
+    if (total === 0) {
+      welcome.style.display = '';
+      welcome.innerHTML = '<strong>Welcome.</strong> No submissions yet — brokers will start appearing here as soon as they submit their first request.';
+    } else {
+      welcome.style.display = 'none';
+      welcome.textContent = '';
+    }
+  }
+
+  const lastUpdated = document.getElementById('admin-last-updated');
+  if (lastUpdated) {
+    lastUpdated.textContent = 'Last updated: ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
 
   const recent = [...ADMIN_SUBMISSIONS].sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)).slice(0, 5);
   const tbody = document.getElementById('dashboard-recent');
@@ -6848,7 +7437,15 @@ function filterSubmissions() {
     return;
   }
   tbody.innerHTML = filtered.map(s =>
-    '<tr onclick="openSubmissionDetail(\'' + s.id + '\')"><td class="cell-mono-sm">' + s.id + '</td><td class="text-capitalize">' + s.type + '</td><td>' + ([s.address, s.city].filter(Boolean).join(', ') || '-') + '</td><td>' + (s.brokerName || '-') + '</td><td>' + (s.office || '-') + '</td><td>' + statusBadge(s.status) + '</td><td class="text-muted-sm">' + fmtDate(s.submittedAt) + '</td></tr>'
+    '<tr onclick="openSubmissionDetail(\'' + s.id + '\')">' +
+      '<td class="text-capitalize">' + s.type + '</td>' +
+      '<td>' + ([s.address, s.city].filter(Boolean).join(', ') || '-') + '</td>' +
+      '<td>' + (s.brokerName || '-') + (s.office ? '<div class="text-muted-sm">' + s.office + '</div>' : '') + '</td>' +
+      '<td class="text-muted-sm">' + fmtDate(s.submittedAt) + '</td>' +
+      '<td>' + statusBadge(s.status) + '</td>' +
+      '<td class="cell-mono-sm">' + s.id + '</td>' +
+      '<td class="cell-chevron">›</td>' +
+    '</tr>'
   ).join('');
 }
 
@@ -6901,7 +7498,12 @@ function openSubmissionDetail(id) {
     actions += '<button class="btn btn-blue" onclick="dxPushListing(\'' + s.id + '\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Push to Dealius</button>';
   }
   if (s.type === 'voucher') {
-    actions += '<button class="btn btn-blue btn-blue-red" onclick="dxPushVoucher(\'' + s.id + '\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Push to Dealius Deal</button>';
+    actions += '<button class="btn btn-green" data-action="push-dealius" onclick="adminPushSubmissionToDealius(\\\'' + s.id + '\\\')"><span class="btn-spinner"></span><span class="btn-label">Review & push to Dealius</span></button>';
+    actions += '<button class="btn btn-blue btn-blue-red" onclick="dxPushVoucher(\'' + s.id + '\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Prefill Dealius Entry</button>';
+  }
+  if (s.type === 'sign') {
+    const disabled = s.status !== 'approved' ? 'disabled' : '';
+    actions += '<button class="btn btn-green" ' + disabled + ' onclick="adminSendSignToCimarron(\\\'' + s.id + '\\\')"><span class="btn-label">Send to Cimarron (PO #)</span></button>';
   }
   actions += '<button class="btn btn-blue" ' + (s.status === 'in_review' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'in_review\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Review</button>';
   actions += '<button class="btn btn-green" ' + (s.status === 'approved' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'approved\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Approve</button>';
@@ -6909,6 +7511,84 @@ function openSubmissionDetail(id) {
   document.getElementById('adm-detail-actions').innerHTML = actions;
 
   document.getElementById('admin-detail-modal').classList.add('open');
+}
+
+function _applySignFormDataToDom(formData) {
+  if (!formData || typeof formData !== 'object') return;
+  Object.keys(formData).forEach(id => {
+    if (id === 'signAgents') return;
+    const el = document.getElementById(id);
+    if (!el) return;
+    const v = formData[id];
+    if (el.type === 'checkbox') el.checked = Boolean(v);
+    else el.value = String(v ?? '');
+  });
+  // Agents: rebuild from signAgents list if present
+  const agents = Array.isArray(formData.signAgents) ? formData.signAgents : [];
+  if (agents.length) {
+    try {
+      document.getElementById('sign-agent-body').innerHTML = '';
+      agents.forEach(a => {
+        addSignAgent();
+        const rows = document.querySelectorAll('#sign-agent-body tr');
+        const last = rows[rows.length - 1];
+        if (!last) return;
+        const inputs = last.querySelectorAll('input');
+        if (inputs[0]) inputs[0].value = String(a?.name ?? '');
+        if (inputs[1]) inputs[1].value = String(a?.pct ?? '');
+      });
+    } catch (e) { /* no-op */ }
+  }
+}
+
+async function adminSendSignToCimarron(id) {
+  const sub = ADMIN_SUBMISSIONS.find(s => s.id === id);
+  if (!sub || !sub.serverSubmissionId) {
+    alert('Missing server submission id.');
+    return;
+  }
+  if (sub.status !== 'approved') {
+    alert('Approve the sign request first.');
+    return;
+  }
+  const po = prompt('Enter PO # (required):');
+  if (!po || !String(po).trim()) return;
+
+  // Populate the sign tab DOM so we can regenerate the PDF with PO #.
+  const payload = sub.payload || {};
+  _applySignFormDataToDom(payload.formData || null);
+  const poEl = document.getElementById('s-po');
+  if (poEl) poEl.value = String(po).trim();
+
+  try {
+    const pdfAttachment = await (async () => {
+      const prevType = _staFormType;
+      _staFormType = 'sign';
+      const result = await buildSendToAdminPdfAttachment();
+      _staFormType = prevType;
+      return result;
+    })();
+
+    const resp = await fetch('/api/trpc/email.sendApprovedSignToCimarron', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        json: {
+          submissionId: sub.serverSubmissionId,
+          poNumber: String(po).trim(),
+          pdfAttachment,
+        }
+      })
+    });
+    const data = await resp.json().catch(() => ({}));
+    const result = data?.result?.data?.json;
+    if (!result?.success) throw new Error(result?.error || 'Send failed');
+    alert('✅ Sent to Cimarron. Broker was CC’d and PDF attached.');
+  } catch (e) {
+    console.warn('Send to Cimarron failed:', e && e.message ? e.message : e);
+    alert('❌ Send failed: ' + (e && e.message ? e.message : 'Unknown error'));
+  }
 }
 
 function closeAdminModal() {
@@ -6943,12 +7623,117 @@ function updateSubStatus(id, status) {
     });
 }
 
+// Server-side Dealius push (admin-only)
+async function adminPushSubmissionToDealius(id) {
+  const sub = ADMIN_SUBMISSIONS.find(s => s.id === id);
+  if (!sub || !sub.serverSubmissionId) {
+    alert('This submission is missing a server record ID — it cannot be pushed to Dealius.');
+    return;
+  }
+
+  const actionsEl = document.getElementById('adm-detail-actions');
+  const btn = actionsEl ? actionsEl.querySelector('[data-action="push-dealius"]') : null;
+  const setBtnLabel = label => {
+    if (!btn) return;
+    const lbl = btn.querySelector('.btn-label');
+    if (lbl) lbl.textContent = label;
+    btn.classList.toggle('loading', label.includes('Pushing'));
+    btn.disabled = label.includes('Pushing');
+  };
+
+  try {
+    setBtnLabel('Pushing…');
+    const res = await fetch('/api/submissions/' + sub.serverSubmissionId + '/push-dealius', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body && body.error ? body.error : ('HTTP ' + res.status));
+
+    await refreshAdminSubmissions();
+    renderDashboard();
+    renderSubmissions();
+    openSubmissionDetail(id);
+
+    const dealId = body && body.data ? body.data.dealID : null;
+    if (dealId) {
+      alert('✅ Pushed to Dealius. Deal #' + dealId + ' created.');
+    } else {
+      alert('✅ Pushed to Dealius successfully.');
+    }
+  } catch (e) {
+    console.warn('Dealius push failed:', e && e.message ? e.message : e);
+    alert('❌ Dealius push failed: ' + (e && e.message ? e.message : 'Unknown error'));
+  } finally {
+    setBtnLabel('Review & push to Dealius');
+  }
+}
+
 function dxParseNumberish(value) {
   if (value == null || value === '') return null;
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   const parsed = parseFloat(String(value).replace(/[^0-9.\-]/g, ''));
   return Number.isFinite(parsed) ? parsed : null;
 }
+
+function initCompSalePsfPreview() {
+  const price = document.getElementById('cs-sell-price');
+  const sf = document.getElementById('cs-bldg-sf');
+  const out = document.getElementById('cs-psf-calc');
+  if (!price || !sf || !out) return;
+  function tick() {
+    const salePrice = dxParseNumberish(price.value);
+    const buildingSf = dxParseNumberish(sf.value);
+    if (!salePrice || !buildingSf) {
+      out.value = '';
+      return;
+    }
+    const psf = salePrice / buildingSf;
+    out.value = '$' + psf.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '/SF';
+  }
+  price.addEventListener('input', tick);
+  price.addEventListener('change', tick);
+  sf.addEventListener('input', tick);
+  sf.addEventListener('change', tick);
+  tick();
+}
+
+function initCompLeaseDerivedHints() {
+  const rent = document.getElementById('c-rent-sf');
+  const nnn = document.getElementById('c-nnn');
+  const eff = document.getElementById('c-eff-rent');
+  const hint = document.getElementById('c-eff-nnn-hint');
+  if (!rent || !nnn || !hint) return;
+  function tick() {
+    const a = dxParseNumberish(String(rent.value || '').replace(/^\$/, ''));
+    const b = dxParseNumberish(String(nnn.value || '').replace(/^\$/, ''));
+    if (!a || !b) {
+      hint.textContent = '';
+      return;
+    }
+    const sum = a + b;
+    let msg = 'Base rent + NNN (reference): $' + sum.toFixed(2) + '/SF';
+    if (eff) {
+      const e = dxParseNumberish(String(eff.value || '').replace(/^\$/, ''));
+      if (e) msg += ' · Effective entered: $' + e.toFixed(2) + '/SF';
+    }
+    hint.textContent = msg;
+  }
+  rent.addEventListener('input', tick);
+  rent.addEventListener('change', tick);
+  nnn.addEventListener('input', tick);
+  nnn.addEventListener('change', tick);
+  if (eff) {
+    eff.addEventListener('input', tick);
+    eff.addEventListener('change', tick);
+  }
+  tick();
+}
+
+initCompSalePsfPreview();
+initCompLeaseDerivedHints();
 
 function dxNormalizeDateField(value) {
   if (!value) return '';
@@ -7458,7 +8243,6 @@ function dxLoadFile(file) {
       dxApplyEntryModeUI();
       dxRenderPreview(DX_P);
       dxStat('ok', 'Parsed: ' + DX_P.dealName);
-      setHiddenState(document.getElementById('dxCorsNote'), true);
       setHiddenState(document.getElementById('dxAib'), false);
       setHiddenState(document.getElementById('dxAiPanel'), true);
       document.getElementById('dxAiPanel').innerHTML = '';
@@ -8033,6 +8817,11 @@ async function dxSubmitDeal() {
     // Step 5: Create deal
     dxStepMark(5, 'active');
     dxStat('load', 'Step 5/7 — Creating deal…');
+    // Dealius validates rent schedules against deal fee %s.
+    // Keep "fee percent" as a percent value (e.g. 3 = 3%), not a fraction (0.03).
+    const rawCommInput = d.saleCommPct != null ? d.saleCommPct : null;
+    const feePct = rawCommInput != null ? (rawCommInput <= 1 ? rawCommInput * 100 : rawCommInput) : null;
+
     const createPayload = dxOmitNulls({
       DealName: d.dealName, RepresentationTypeID: d.repTypeID, SpaceTypeID: stid,
       EstimatedCloseDate: new Date().toISOString(),
@@ -8048,8 +8837,9 @@ async function dxSubmitDeal() {
       }) : {}),
       ...(d.isSale ? dxOmitNulls({
         SaleAskingPriceAmount: d.totalConsideration, SalePurchasePriceAmount: d.totalConsideration,
-        ClientRepFee: d.saleCommPct,
+        ClientRepFee: feePct,
       }) : {}),
+      ...(feePct != null ? { ClientRepFee: feePct, OppositeSideRepFee: feePct } : {}),
     });
     dxAddLog('info', 'POST /deals payload: ' + JSON.stringify(createPayload, null, 0).substring(0, 400));
     const dealRes = await dxCallAPI('POST', '/deals', H, createPayload);
@@ -8074,8 +8864,9 @@ async function dxSubmitDeal() {
       dxStat('load', 'Step 6/7 — Updating financial details…');
       const rentMonthTotal = d.rentRows && d.rentRows.length > 0 ? d.rentRows.reduce((s, r) => s + (r.months || 0), 0) : null;
       const effectiveTerm = rentMonthTotal || d.term || null;
+      // Dealius expects "fee percent" as a percent value (e.g. 3 = 3%).
       const rawComm = d.saleCommPct != null ? d.saleCommPct : null;
-      const commFee = rawComm != null ? (rawComm > 1 ? rawComm / 100 : rawComm) : null;
+      const commFeePct = rawComm != null ? (rawComm <= 1 ? rawComm * 100 : rawComm) : null;
       const finPayload = dxOmitNulls({
         DealID: dealID, DealName: d.dealName,
         ClientID: (clientID && clientID > 0) ? clientID : undefined,
@@ -8085,7 +8876,7 @@ async function dxSubmitDeal() {
         LeaseTypeID: DX_LEASE_TYPE_NEW,
         LeaseCurrentSquareFeetOccupied: d.sqft ? Math.round(d.sqft) : undefined,
         RequestedSpace: d.sqft ? Math.round(d.sqft) : undefined,
-        ...(commFee != null ? { ClientRepFee: commFee, OppositeSideRepFee: commFee } : {}),
+        ...(commFeePct != null ? { ClientRepFee: commFeePct, OppositeSideRepFee: commFeePct } : {}),
         ...(d.askingRate != null ? { LeaseAskingRatePerSf: d.askingRate, LeaseAskingRatePerSfType: DX_RATE_PER_YEAR } : {}),
         ...(d.totalNNN   != null ? { LeaseNNNPerSF: d.totalNNN, LeaseNNNPerSFType: DX_RATE_PER_YEAR } : {}),
         ...(d.propTaxes  != null ? { LeaseTaxes: d.propTaxes, LeaseTaxesType: DX_RATE_PER_YEAR } : {}),
@@ -8166,14 +8957,8 @@ async function dxSubmitDeal() {
     btn.classList.add('dx-btn-success');
   } catch (err) {
     const msg = err.message || '';
-    const isCors = msg.toLowerCase().includes('fetch') || msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('networkerror') || msg.toLowerCase().includes('cors');
-    if (isCors) {
-      dxAddLog('err', 'CORS/network error — enable the CORS extension or run via local server.');
-      dxStat('err', 'CORS/network error — see setup note');
-    } else {
-      dxAddLog('err', 'Error: ' + msg);
-      dxStat('err', msg);
-    }
+    dxAddLog('err', 'Error: ' + msg);
+    dxStat('err', msg);
     document.querySelectorAll('.dx-step.active').forEach(s => s.classList.replace('active', 'err'));
     btn.disabled = false;
     btn.classList.remove('loading');
@@ -8405,7 +9190,6 @@ function dxResetTool() {
   document.getElementById('dxLg').innerHTML = '';
   document.getElementById('dxFi').value = '';
   setHiddenState(document.getElementById('dxStepBar'), true);
-  setHiddenState(document.getElementById('dxCorsNote'), false);
   setHiddenState(document.getElementById('dxAiPanel'), true);
   document.getElementById('dxAiPanel').innerHTML = '';
   setHiddenState(document.getElementById('dxAib'), true);
@@ -8760,11 +9544,104 @@ document.addEventListener('blur', (e) => {
 .autocomplete-sub { font-size: 11px; color: var(--text2); }
 </style>
 <script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// HYBRID AUTOFILL: ZIP → MARKET / SUBMARKET (SoCal)
+// ═══════════════════════════════════════════════════════════════════════════════
+let _zipMarketSubmarketPromise = null;
+
+function _normalizeZip5(zip) {
+  const z = String(zip || '').trim();
+  const m = z.match(/^(\d{5})/);
+  return m ? m[1] : '';
+}
+
+async function _getZipMarketSubmarketMap() {
+  if (_zipMarketSubmarketPromise) return _zipMarketSubmarketPromise;
+  _zipMarketSubmarketPromise = (async () => {
+    try {
+      const res = await fetch('/zip_market_submarket.json', { cache: 'force-cache' });
+      if (!res.ok) throw new Error('zip_market_submarket.json HTTP ' + res.status);
+      const json = await res.json();
+      return (json && typeof json === 'object') ? json : {};
+    } catch (e) {
+      console.warn('ZIP market/submarket mapping load failed:', e && e.message ? e.message : e);
+      return {};
+    }
+  })();
+  return _zipMarketSubmarketPromise;
+}
+
+function _setSelectIfEmpty(id, value, fallbackValue) {
+  const el = document.getElementById(id);
+  if (!el || el.tagName !== 'SELECT') return;
+  if (el.value) return; // suggest-only
+  const desired = value || '';
+  const fallback = fallbackValue || '';
+  const has = (v) => Array.from(el.options || []).some(o => o.value === v || o.textContent === v);
+  const setVal = (v) => {
+    // prefer exact option.value match; otherwise try matching by option text
+    const opt = Array.from(el.options || []).find(o => o.value === v) || Array.from(el.options || []).find(o => (o.textContent || '').trim() === v);
+    if (opt) el.value = opt.value;
+  };
+  if (desired && has(desired)) setVal(desired);
+  else if (fallback && has(fallback)) setVal(fallback);
+}
+
+function _setCrDropdownIfEmpty(containerId, value) {
+  const container = document.getElementById(containerId);
+  if (!container || typeof container._getCrVals !== 'function' || typeof container._setCrVals !== 'function') return;
+  const existing = container._getCrVals();
+  if (existing && existing.length) return; // suggest-only
+  if (!value) return;
+  container._setCrVals([value]);
+}
+
+async function applyZipMarketSubmarket(zip) {
+  const z5 = _normalizeZip5(zip);
+  if (!z5) return;
+  const map = await _getZipMarketSubmarketMap();
+  const rec = map ? map[z5] : null;
+  if (!rec) return;
+
+  const market = rec.market || '';
+  const submarket = rec.submarket || '';
+
+  // Voucher: Submarket input (suggest-only)
+  if (submarket) {
+    const vSub = document.getElementById('v-submarket');
+    if (vSub && !String(vSub.value || '').trim()) vSub.value = submarket;
+  }
+
+  // Comp entry selects (suggest-only; only set if option exists)
+  // c-market options are a subset; provide a small fallback for common SoCal mappings.
+  const compMarketFallback =
+    market === 'Orange' ? 'Orange County' :
+    market === 'Inland Empire' ? 'Riverside' :
+    '';
+  _setSelectIfEmpty('c-market', market, compMarketFallback);
+  _setSelectIfEmpty('c-submarket', submarket);
+
+  // Comp report filters (suggest-only; only if nothing selected)
+  _setCrDropdownIfEmpty('cr-market', market);
+  _setCrDropdownIfEmpty('cr-submarket', submarket);
+}
+
+function initZipMarketSubmarketAutofill() {
+  const ids = ['l-zip', 'v-zip', 'v-ls-zip', 'v-lb-zip'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('blur', () => {
+      try { applyZipMarketSubmarket(el.value); } catch (e) { /* no-op */ }
+    });
+  });
+}
+
 function initFreeAutocomplete() {
   const addressFieldGroups = [
     { addr: 'l-address', city: 'l-city', zip: 'l-zip' },       // Listing
     { addr: 's-address', city: 's-city', zip: null },          // Sign Note: no specific zip field currently visible
-    { addr: 'v-address', city: null, zip: null },              // Voucher
+    { addr: 'v-address', city: 'v-city', zip: 'v-zip' },       // Voucher
     { addr: 'c-address', city: 'c-city', zip: null },          // Comp Input
     { addr: 'v-ls-address', city: 'v-ls-city', zip: 'v-ls-zip' }, // Voucher Lessor
     { addr: 'v-lb-address', city: 'v-lb-city', zip: 'v-lb-zip' }  // Voucher Lessee
@@ -8845,6 +9722,11 @@ function initFreeAutocomplete() {
                 const idPrefix = group.addr.substring(0, group.addr.lastIndexOf('-'));
                 const stateInput = document.getElementById(idPrefix + '-state');
                 if (stateInput && state) stateInput.value = state;
+
+                // Suggest market/submarket based on ZIP (exact ZIP match only)
+                if (zip) {
+                  try { applyZipMarketSubmarket(zip); } catch (e) { /* no-op */ }
+                }
                 
                 setHiddenState(dropdown, true);
               });
@@ -8880,7 +9762,10 @@ function initFreeAutocomplete() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', initFreeAutocomplete);
+document.addEventListener('DOMContentLoaded', () => {
+  initFreeAutocomplete();
+  initZipMarketSubmarketAutofill();
+});
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // S3 FILE UPLOAD — uploads files to backend /api/trpc/files.upload
@@ -9127,13 +10012,11 @@ async function scrapeBrochure() {
   btn.classList.add('loading');
   btn.textContent = 'Analyzing brochure...';
   try {
-    const resp = await fetch('/api/trpc/aiAssist.scrapeBrochure', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ json: { fileUrl: brochureFileUrl, mimeType: brochureMimeType } })
+    const result = await callTrpc('aiAssist.extractDocument', {
+      fileUrl: brochureFileUrl,
+      mimeType: brochureMimeType,
+      tab: 'listing'
     });
-    const data = await resp.json();
-    const result = data?.result?.data?.json;
     if (result && result.success) {
       const count = applyAiFields('listing', result.fields);
       status.textContent = `Extracted ${result.fieldCount || count} fields from brochure`;
@@ -9202,40 +10085,13 @@ async function scrapeVoucherBrochure() {
   btn.classList.add('loading');
   btn.textContent = 'Analyzing document...';
   try {
-    const resp = await fetch('/api/trpc/aiAssist.scrapeBrochure', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ json: { fileUrl: voucherBrochureFileUrl, mimeType: voucherBrochureMimeType } })
+    const result = await callTrpc('aiAssist.extractDocument', {
+      fileUrl: voucherBrochureFileUrl,
+      mimeType: voucherBrochureMimeType,
+      tab: 'voucher'
     });
-    const data = await resp.json();
-    const result = data?.result?.data?.json;
     if (result && result.success) {
-      // Map listing fields to voucher fields where they overlap
-      const voucherMapping = {
-        address: 'v-address',
-        city: 'v-city',
-        state: 'v-state',
-        zip: 'v-zip',
-        buildingSf: 'v-deal-sf',
-        suiteSf: 'v-deal-sf',
-        rateSfMo: 'v-base-rent',
-        askingPrice: 'v-total-consideration',
-        listingAgentName: 'v-listing-agent',
-        comments: 'v-notes',
-      };
-      let count = 0;
-      Object.entries(result.fields).forEach(([key, val]) => {
-        const elId = voucherMapping[key];
-        if (elId) {
-          const el = document.getElementById(elId);
-          if (el && !el.readOnly && !el.value) {
-            el.value = val;
-            el.classList.add('ai-filled');
-            addAiBadge(el);
-            count++;
-          }
-        }
-      });
+      const count = applyAiFields('voucher', result.fields || {});
       status.textContent = `Filled ${count} voucher field${count !== 1 ? 's' : ''} from document`;
       if (count > 0) showToast(`Filled ${count} voucher field${count !== 1 ? 's' : ''} from document`);
       else showToast('No matching voucher fields found in document', 'warn');
@@ -9271,6 +10127,7 @@ async function scrapeVoucherBrochure() {
   padding: 18px 32px;
   border-bottom: 1px solid var(--border);
   background: #fafafa;
+  flex-wrap: wrap;
 }
 .ci-type-label { font-size: 13px; font-weight: 600; color: var(--text2); white-space: nowrap; }
 .ci-type-bar select {
@@ -9281,6 +10138,15 @@ async function scrapeVoucherBrochure() {
   border-radius: 6px;
   font-size: 14px;
   background: #fff;
+}
+.ci-type-hint {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.4;
+  padding: 6px 10px;
+  border: 1px dashed rgba(195,32,51,.22);
+  border-radius: 8px;
+  background: #fff8f8;
 }
 
 .ci-path-cards {
@@ -9345,6 +10211,13 @@ async function scrapeVoucherBrochure() {
 }
 .ci-ai-icon { flex-shrink: 0; }
 
+.ci-required-note {
+  font-size: 12px;
+  color: var(--text2);
+  margin: -4px 0 12px;
+  line-height: 1.5;
+}
+
 .ci-section {
   padding: 20px 32px;
   border-bottom: 1px solid var(--border);
@@ -9401,6 +10274,13 @@ async function scrapeVoucherBrochure() {
 .ci-ai-field {
   border-color: var(--navy) !important;
   background: rgba(31,35,40,.04) !important;
+}
+
+/* Validation highlight */
+.ci-error-field {
+  border-color: var(--red) !important;
+  background: rgba(195,32,51,.06) !important;
+  box-shadow: 0 0 0 3px rgba(195,32,51,.10) !important;
 }
 </style>
 
@@ -9996,6 +10876,7 @@ function getCurrentFormState(tab) {
 const TRPC_QUERY_PROCEDURES = new Set([
   'auth.me',
   'submissions.adminList',
+  'submissions.queueMine',
   'compData.latest',
   'compData.search',
 ]);
@@ -10011,10 +10892,26 @@ async function callTrpc(procedure, input) {
     credentials: 'include',
     body: isQuery ? undefined : JSON.stringify({ json: input }),
   });
-  if (!res.ok) throw new Error('API error ' + res.status);
-  const data = await res.json();
+  const text = await res.text();
+  let data;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch (parseErr) {
+    if (!res.ok) throw new Error('API error ' + res.status);
+    throw new Error('Invalid JSON from API');
+  }
+  if (!res.ok) {
+    const block = Array.isArray(data) ? data[0] : data;
+    const inner = block && block.error ? (block.error.json || block.error) : null;
+    const msg = inner && (inner.message || inner.data) ? String(inner.message || inner.data).trim() : '';
+    throw new Error(msg || ('API error ' + res.status));
+  }
   if (data.error) throw new Error(data.error.message || 'AI error');
-  return data.result?.data?.json ?? data.result?.data;
+  const payload = data.result?.data;
+  if (payload && typeof payload === 'object' && Object.prototype.hasOwnProperty.call(payload, 'json')) {
+    return payload.json;
+  }
+  return payload;
 }
 
 const SHARED_AUTH_STORAGE_KEY = 'lee-broker-tool.auth';
@@ -10079,8 +10976,107 @@ function getSignedInBrokerIdentity() {
   return compReportsUser || readSharedBrokerIdentity();
 }
 
+function setAdminAccessForUser(user) {
+  const adminToggle = document.querySelector('.admin-toggle');
+  const settingsLink = document.getElementById('header-admin-settings-link');
+  const canUseAdmin = user && user.role === 'admin';
+  if (adminToggle) setHiddenState(adminToggle, !canUseAdmin);
+  if (settingsLink) setHiddenState(settingsLink, !canUseAdmin);
+  if (!canUseAdmin && document.body.classList.contains('admin-mode')) {
+    document.body.classList.remove('admin-mode');
+    const label = document.getElementById('admin-toggle-label');
+    if (label) label.textContent = 'Settings';
+  }
+}
+
+function escapeQueueHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
+
+function formatQueueFormType(type) {
+  const labels = { listing: 'Listing', voucher: 'Voucher', sign: 'Sign Request', 'sign-request': 'Sign Request', comp: 'Comp' };
+  return labels[type] || cap(String(type || 'Submission'));
+}
+
+function formatQueueDate(value) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function setQueueStatus(message, isError) {
+  const status = document.getElementById('broker-queue-status');
+  if (!status) return;
+  status.textContent = message || '';
+  status.classList.toggle('queue-error', !!isError);
+}
+
+function renderBrokerQueue(data) {
+  const requests = Array.isArray(data?.requests) ? data.requests : [];
+  const totalActive = Number(data?.totalActive ?? data?.totalPending ?? 0) || 0;
+  const positions = requests.map(item => Number(item.position)).filter(Number.isFinite);
+  const nextPosition = positions.length ? Math.min(...positions) : null;
+  const setText = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = String(value);
+  };
+  setText('queue-stat-yours', requests.length);
+  setText('queue-stat-total', totalActive);
+  setText('queue-stat-next', nextPosition ? '#' + nextPosition : '-');
+
+  const list = document.getElementById('broker-queue-list');
+  if (!list) return;
+  if (!requests.length) {
+    setQueueStatus('No active submissions in queue.');
+    list.innerHTML = '<div class="empty-state queue-empty"><div class="empty-icon"></div><h3>No active queue items</h3><p>Once you submit a listing, sign request, voucher, contract, or comp input, its queue position will appear here while it is pending or in review.</p></div>';
+    return;
+  }
+
+  setQueueStatus('Showing your active submissions. Admins can still review full submission detail in the Admin Portal.');
+  list.innerHTML = requests
+    .slice()
+    .sort((a, b) => Number(a.position || 0) - Number(b.position || 0))
+    .map(item => {
+      const position = Number(item.position) || 0;
+      const ahead = Number(item.aheadCount) || 0;
+      const reference = item.reference || item.payload?.address || item.payload?.propertyAddress || 'No property reference';
+      return '<div class="queue-item">' +
+        '<div class="queue-position"><span class="queue-number">#' + position + '</span><small class="queue-label">in line</small></div>' +
+        '<div class="queue-item-main">' +
+          '<div class="queue-item-top"><span class="badge badge-pending">' + escapeQueueHtml(formatQueueFormType(item.formType)) + '</span><span class="cell-mono-sm">SUB-' + escapeQueueHtml(String(item.id).padStart(4, '0')) + '</span><span>' + statusBadge(item.status || 'pending') + '</span></div>' +
+          '<div class="queue-item-title queue-title">' + escapeQueueHtml(reference) + '</div>' +
+          '<div class="queue-item-meta queue-detail">' + escapeQueueHtml(ahead + ' ahead of you') + ' &middot; Submitted ' + escapeQueueHtml(formatQueueDate(item.createdAt)) + '</div>' +
+        '</div>' +
+      '</div>';
+    })
+    .join('');
+}
+
+async function refreshBrokerQueue() {
+  const btn = document.getElementById('btn-broker-queue-refresh');
+  if (btn) {
+    const label = btn.querySelector('.btn-label');
+    if (label && !label.dataset.idle) label.dataset.idle = label.textContent;
+    setBtnLoading(btn, true, 'Refreshing…');
+  }
+  setQueueStatus('Loading queue...');
+  try {
+    await ensureSharedBrokerSession();
+    const data = await callTrpc('submissions.queueMine', { limit: 50 });
+    renderBrokerQueue(data);
+  } catch (error) {
+    setQueueStatus((error && error.message) ? error.message : 'Unable to load queue.', true);
+  } finally {
+    setBtnLoading(btn, false);
+  }
+}
+
 function applySharedBrokerIdentity(user) {
   updateHeaderUserDisplay(user);
+  setAdminAccessForUser(user);
   if (!user) return;
 
   writeSharedBrokerIdentity(user);
@@ -10114,7 +11110,7 @@ async function ensureSharedBrokerSession() {
   sharedBrokerSessionPromise = (async () => {
     try {
       const me = await callTrpc('auth.me');
-      if (me) {
+      if (me && me.email) {
         compReportsUser = me;
         applySharedBrokerIdentity(me);
         return me;
@@ -10589,18 +11585,62 @@ function compReportExportCsv() {
   URL.revokeObjectURL(url);
 }
 
+async function compReportFetchAllRowsForCurrentFilters() {
+  const base = compReportGetFilters();
+  const limit = 100; // server enforces max=100
+  const all = [];
+  let offset = 0;
+  let total = Infinity;
+
+  while (all.length < total) {
+    const data = await callTrpc('compData.search', { ...base, limit, offset });
+    const batch = Array.isArray(data?.results) ? data.results : [];
+    const info = data?.pageInfo;
+    if (typeof info?.total === 'number' && Number.isFinite(info.total)) total = info.total;
+
+    all.push(...batch);
+    if (!batch.length) break;
+    offset += limit;
+
+    // Safety guard against accidental infinite loops or runaway exports.
+    if (all.length >= 5000) break;
+    if (info && info.hasNext === false) break;
+  }
+
+  return all;
+}
+
 function compReportExportPdf() {
-  const rows = compReportSelectedRows();
-  if (!rows.length) {
-    alert((compReportsResultsCache || []).length ? 'Select at least one comp to export.' : 'Run a search first so there is something to export.');
-    return;
-  }
-  const compType = compReportsTypeCache || 'lease';
-  if (typeof exportLeeCompReportPdf === 'function') {
-    exportLeeCompReportPdf(compType, rows);
-  } else {
-    alert('PDF export is not available in this build.');
-  }
+  void (async () => {
+    const rows = compReportSelectedRows();
+    if (!rows.length) {
+      alert((compReportsResultsCache || []).length ? 'Select at least one comp to export.' : 'Run a search first so there is something to export.');
+      return;
+    }
+    const compType = compReportsTypeCache || 'lease';
+    if (typeof exportLeeCompReportPdf !== 'function') {
+      alert('PDF export is not available in this build.');
+      return;
+    }
+
+    // If the user has effectively selected "all rows" on the current page and
+    // there are more results than are currently loaded, export the full result set.
+    const selectedAllOnPage = compReportsResultsCache?.length && compReportsDeselected?.size === 0;
+    const total = Number(compReportsPageInfo?.total ?? compReportsResultsCache?.length ?? 0);
+    const moreThanLoaded = Number.isFinite(total) && total > (compReportsResultsCache?.length || 0);
+
+    let exportRows = rows;
+    if (selectedAllOnPage && moreThanLoaded) {
+      try {
+        exportRows = await compReportFetchAllRowsForCurrentFilters();
+      } catch (e) {
+        console.warn('Comp report export: unable to fetch full result set:', e?.message || e);
+        exportRows = rows; // fall back to current page selection
+      }
+    }
+
+    exportLeeCompReportPdf(compType, exportRows);
+  })();
 }
 
 function compReportGetFilters() {
@@ -10609,8 +11649,29 @@ function compReportGetFilters() {
     if (!el) return undefined;
     return el._getCrVals ? el._getCrVals() : undefined;
   }
-  const sfMinRaw = parseFloat(document.getElementById('cr-sf-min')?.value);
-  const sfMaxRaw = parseFloat(document.getElementById('cr-sf-max')?.value);
+  function crParseSf(value) {
+    const cleaned = String(value || '').replace(/,/g, '').trim();
+    const num = cleaned ? Number(cleaned) : NaN;
+    return Number.isFinite(num) && num > 0 ? num : undefined;
+  }
+  function crParseDateToIso(value) {
+    const v = String(value || '').trim();
+    if (!v) return undefined;
+    // Already ISO
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+    // MM/DD/YYYY (or M/D/YYYY)
+    const m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!m) return undefined;
+    const mm = Number(m[1]);
+    const dd = Number(m[2]);
+    const yyyy = Number(m[3]);
+    if (!(mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31 && yyyy >= 1900 && yyyy <= 2100)) return undefined;
+    const mm2 = String(mm).padStart(2, '0');
+    const dd2 = String(dd).padStart(2, '0');
+    return `${yyyy}-${mm2}-${dd2}`;
+  }
+  const sfMinRaw = document.getElementById('cr-sf-min')?.value;
+  const sfMaxRaw = document.getElementById('cr-sf-max')?.value;
   return {
     compType: document.getElementById('cr-comp-type')?.value || 'lease',
     query: document.getElementById('cr-query')?.value.trim() || undefined,
@@ -10618,10 +11679,10 @@ function compReportGetFilters() {
     markets: crVals('cr-market'),
     subMarkets: crVals('cr-submarket'),
     propertyTypes: crVals('cr-property-type'),
-    sfMin: Number.isFinite(sfMinRaw) && sfMinRaw > 0 ? sfMinRaw : undefined,
-    sfMax: Number.isFinite(sfMaxRaw) && sfMaxRaw > 0 ? sfMaxRaw : undefined,
-    dateFrom: document.getElementById('cr-date-from')?.value || undefined,
-    dateTo: document.getElementById('cr-date-to')?.value || undefined,
+    sfMin: crParseSf(sfMinRaw),
+    sfMax: crParseSf(sfMaxRaw),
+    dateFrom: crParseDateToIso(document.getElementById('cr-date-from')?.value),
+    dateTo: crParseDateToIso(document.getElementById('cr-date-to')?.value),
     limit: COMP_REPORT_PAGE_SIZE,
     offset: compReportsPageOffset
   };
@@ -10900,8 +11961,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let _staFormType = 'listing';
 
+function hasVoucherComplianceAttachment() {
+  const d = document.getElementById('v-doc-disclosure');
+  const a = document.getElementById('v-doc-agreement');
+  if ((d && d.files && d.files.length) || (a && a.files && a.files.length)) return true;
+  return Boolean(uploadedFiles['v-doc-disclosure'] || uploadedFiles['v-doc-agreement']);
+}
+
 function openSendToAdminModal(formType) {
   _staFormType = formType;
+  const attachErr = document.getElementById('voucher-attachment-required-msg');
+  if (attachErr) {
+    attachErr.classList.add('is-hidden');
+    attachErr.textContent = '';
+  }
+  if (formType === 'voucher' && workflowRequireVoucherAttachment() && !hasVoucherComplianceAttachment()) {
+    if (attachErr) {
+      attachErr.textContent = 'Upload at least one compliance document (Agency Disclosure or Exclusive Listing Agreement) before sending to admin.';
+      attachErr.classList.remove('is-hidden');
+    }
+    try {
+      document.getElementById('vstep-8')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (e) { /* ignore */ }
+    showToast('Add a voucher attachment before sending to admin.', 'error');
+    return;
+  }
   applySharedBrokerIdentity(getSignedInBrokerIdentity());
   void ensureSharedBrokerSession();
   const modal = document.getElementById('send-admin-modal');
@@ -10910,13 +11994,18 @@ function openSendToAdminModal(formType) {
   const status = document.getElementById('sta-status');
   const btn = document.getElementById('sta-send-btn');
   if (!modal) return;
-  const label = formType === 'listing' ? 'Listing Entry' : 'Commission Voucher';
-  title.textContent = `Send ${label} to Admin`;
-  desc.textContent = `This will email all filled ${label} fields to the office admin. You will be CC’d automatically.`;
+  const label =
+    formType === 'listing' ? 'Listing Entry' :
+    formType === 'voucher' ? 'Commission Voucher' :
+    'Sign Request';
+  title.textContent = formType === 'sign' ? `Submit ${label}` : `Send ${label} to Admin`;
+  desc.textContent = formType === 'sign'
+    ? 'This will submit the sign request into the admin submission queue. The admin will approve it, assign a PO #, and send it to Cimarron.'
+    : `This will email all filled ${label} fields to the office admin. You will be CC’d automatically.`;
   status.textContent = '';
   status.classList.remove('text-success', 'text-error', 'status-strong');
   btn.classList.remove('loading');
-  btn.querySelector('.btn-label').textContent = 'Send Email';
+  btn.querySelector('.btn-label').textContent = formType === 'sign' ? 'Submit to Queue' : 'Send Email';
   modal.classList.add('open');
 }
 
@@ -11189,6 +12278,11 @@ async function buildSendToAdminPdfAttachment() {
 async function submitSendToAdmin() {
   const btn = document.getElementById('sta-send-btn');
   const status = document.getElementById('sta-status');
+  if (_staFormType === 'voucher' && workflowRequireVoucherAttachment() && !hasVoucherComplianceAttachment()) {
+    status.textContent = 'Add at least one compliance document attachment before sending.';
+    status.classList.add('text-error', 'status-strong');
+    return;
+  }
   await ensureSharedBrokerSession();
   const authUser = getSignedInBrokerIdentity();
   const brokerName = ((document.getElementById('sta-broker-name')?.value || '').trim() || authUser?.name || '').trim();
@@ -11213,7 +12307,7 @@ async function submitSendToAdmin() {
 
   try {
     const pdfAttachment = await buildSendToAdminPdfAttachment();
-    btn.querySelector('.btn-label').textContent = 'Uploading & Sending...';
+    btn.querySelector('.btn-label').textContent = _staFormType === 'sign' ? 'Submitting…' : 'Uploading & Sending...';
 
     const resp = await fetch('/api/trpc/email.sendToAdmin', {
       method: 'POST',
@@ -11227,6 +12321,7 @@ async function submitSendToAdmin() {
           sections,
           senderEmail,
           pdfAttachment,
+          formData: _staFormType === 'sign' ? collectSignFormData() : undefined,
         }
       })
     });
@@ -11235,14 +12330,18 @@ async function submitSendToAdmin() {
     if (result?.success) {
       const sentWithAttachment = Boolean(result?.attachmentIncluded);
       const archivedLink = result?.archivedFile?.url;
-      status.textContent = sentWithAttachment
-        ? 'Email sent successfully with the PDF attached and archived.'
-        : archivedLink
-          ? 'Email sent successfully. The PDF was archived and included as a secure link.'
-          : 'Email sent successfully.';
+      status.textContent = _staFormType === 'sign'
+        ? 'Submitted to the admin queue successfully.'
+        : sentWithAttachment
+          ? 'Email sent successfully with the PDF attached and archived.'
+          : archivedLink
+            ? 'Email sent successfully. The PDF was archived and included as a secure link.'
+            : 'Email sent successfully.';
       status.classList.add('text-success', 'status-strong');
       btn.querySelector('.btn-label').textContent = 'Sent';
-      showToast(sentWithAttachment ? 'Submission emailed with PDF attached.' : 'Submission emailed and archived.');
+      showToast(_staFormType === 'sign'
+        ? 'Sign request submitted to queue.'
+        : (sentWithAttachment ? 'Submission emailed with PDF attached.' : 'Submission emailed and archived.'));
       setTimeout(closeSendToAdminModal, 2000);
     } else {
       const errMsg = result?.error || 'Unknown error';
@@ -11259,12 +12358,42 @@ async function submitSendToAdmin() {
   }
 }
 
+function collectSignFormData() {
+  const ids = [
+    's-date','s-order-type','s-address','s-city','s-cross',
+    's-4x8-qty','s-6x8-qty','s-other-size','s-other-qty',
+    's-banner-size','s-banner-qty','s-rider','s-access','s-access-contact','s-comments',
+    's-rider-toggle','s-placement-toggle',
+    's-support',
+    's-requested-by',
+  ];
+  const data = {};
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.type === 'checkbox') data[id] = Boolean(el.checked);
+    else data[id] = String(el.value ?? '');
+  });
+  // Sign agents table
+  data['signAgents'] = (function() {
+    const out = [];
+    document.querySelectorAll('#sign-agent-body tr').forEach(tr => {
+      const name = tr.querySelector('input[name="s-agent-name"]')?.value || tr.querySelector('.agent-name')?.textContent || '';
+      const pct = tr.querySelector('input[name="s-agent-pct"]')?.value || '';
+      if ((name || '').trim() || (pct || '').trim()) out.push({ name, pct });
+    });
+    return out;
+  })();
+  return data;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONTRACT INTAKE TAB JAVASCRIPT
 // ═══════════════════════════════════════════════════════════════════════════════
 
 let _ciCurrentPath = null; // 'fill' | 'upload'
 let _ciRedlineCount = 0;
+let _ciDraftSaveTimer = null;
 
 function ciOnContractTypeChange() {
   const type = document.getElementById('ci-contract-type').value;
@@ -11291,6 +12420,13 @@ function ciOnContractTypeChange() {
   setHiddenState(document.getElementById('ci-upload-path'), true);
   setHiddenState(document.getElementById('ci-form-area'), true);
   document.querySelectorAll('.ci-path-card').forEach(c => c.classList.remove('selected'));
+
+  if (type) {
+    // Most common flow is upload → extract → review. Default there to remove an extra click.
+    ciSelectPath('upload');
+    ciPrefillBrokerIdentity();
+    ciLoadDraft(type);
+  }
 }
 
 function ciSelectPath(path) {
@@ -11301,10 +12437,14 @@ function ciSelectPath(path) {
     setHiddenState(document.getElementById('ci-upload-path'), true);
     setHiddenState(document.getElementById('ci-form-area'), false);
     setHiddenState(document.getElementById('ci-ai-banner'), true);
+    ciAttachAutosave();
   } else {
     setHiddenState(document.getElementById('ci-upload-path'), false);
     setHiddenState(document.getElementById('ci-form-area'), true);
   }
+
+  const type = document.getElementById('ci-contract-type')?.value;
+  if (type) ciSaveDraft(type);
 }
 
 function ciHandleDrop(event) {
@@ -11328,8 +12468,14 @@ async function ciProcessPdf(file) {
   const zone = document.getElementById('ci-upload-zone');
   setHiddenState(statusEl, false);
   statusEl.innerHTML = '<span class="text-muted-sm status-strong">Uploading PDF...</span>';
+  zone.classList.add('upload-zone-active');
 
   try {
+    const contractType = document.getElementById('ci-contract-type').value;
+    if (!contractType) {
+      throw new Error('Please select a contract type first.');
+    }
+
     // 1. Read file as base64
     const base64 = await new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -11350,16 +12496,12 @@ async function ciProcessPdf(file) {
     if (!uploadRes || !uploadRes.url) throw new Error('Upload failed');
 
     // 3. Extract fields via AI
-    const contractType = document.getElementById('ci-contract-type').value;
     statusEl.innerHTML = '<span class="text-error status-strong">Reading the contract and extracting fields...</span>';
 
-    const extractResp = await fetch('/api/trpc/contracts.extractContract', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ json: { pdfUrl: uploadRes.url, contractType } })
+    const extractRes = await callTrpc('contracts.extractContract', {
+      pdfUrl: uploadRes.url,
+      contractType
     });
-    const extractData = await extractResp.json();
-    const extractRes = extractData?.result?.data?.json;
 
     if (!extractRes.success || !extractRes.data) {
       throw new Error(extractRes.error || 'AI extraction failed');
@@ -11378,10 +12520,96 @@ async function ciProcessPdf(file) {
     statusEl.innerHTML = '<span class="status-success">\u2713 Extraction complete — review the fields below</span>';
     zone.classList.add('upload-zone-success');
     zone.classList.remove('upload-zone-active');
+    ciAttachAutosave();
+    ciPrefillBrokerIdentity();
+    ciSaveDraft(contractType);
 
   } catch(err) {
     statusEl.innerHTML = '<span class="text-error status-strong">\u2717 ' + err.message + '</span>';
+    zone.classList.remove('upload-zone-active');
   }
+}
+
+function ciDraftKey(contractType) {
+  return `leeBrokerTool:contractIntakeDraft:${contractType}`;
+}
+
+function ciPrefillBrokerIdentity() {
+  try {
+    const authUser = getSignedInBrokerIdentity?.();
+    if (!authUser) return;
+    const setIfEmpty = (id, value) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (!el.value && value) el.value = value;
+    };
+    setIfEmpty('ci-agent-individual', authUser.name);
+    setIfEmpty('ci-agent-email', authUser.email);
+  } catch {}
+}
+
+function ciAttachAutosave() {
+  const root = document.getElementById('tab-contracts');
+  if (!root || root.dataset.ciAutosaveAttached === 'true') return;
+  root.dataset.ciAutosaveAttached = 'true';
+  root.addEventListener('input', () => {
+    const type = document.getElementById('ci-contract-type')?.value;
+    if (!type) return;
+    clearTimeout(_ciDraftSaveTimer);
+    _ciDraftSaveTimer = setTimeout(() => ciSaveDraft(type), 250);
+  }, { passive: true });
+  root.addEventListener('change', () => {
+    const type = document.getElementById('ci-contract-type')?.value;
+    if (!type) return;
+    ciSaveDraft(type);
+  }, { passive: true });
+}
+
+function ciSaveDraft(contractType) {
+  try {
+    const payload = {
+      version: 1,
+      contractType,
+      path: _ciCurrentPath,
+      form: ciCollectData(),
+      notes: (document.getElementById('ci-notes') || {}).value || '',
+      savedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(ciDraftKey(contractType), JSON.stringify(payload));
+  } catch {}
+}
+
+function ciLoadDraft(contractType) {
+  try {
+    const raw = localStorage.getItem(ciDraftKey(contractType));
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    const data = parsed?.form;
+    if (!data || typeof data !== 'object') return;
+    ciPopulateFromExtraction(data);
+    const notesEl = document.getElementById('ci-notes');
+    if (notesEl && parsed?.notes) notesEl.value = parsed.notes;
+  } catch {}
+}
+
+function ciClearValidation() {
+  document.querySelectorAll('#tab-contracts .ci-error-field').forEach(el => el.classList.remove('ci-error-field'));
+}
+
+function ciValidateRequired(contractData) {
+  const missing = [];
+  const req = [
+    ['ci-date', 'Agreement Date', contractData.agreementDate],
+    ['ci-party1-name', 'Party 1 Name', contractData.party1Name],
+    ['ci-prop-address', 'Property Address', contractData.propAddress],
+    ['ci-prop-city', 'City', contractData.propCity],
+    ['ci-term-start', 'Commencement Date', contractData.termStart],
+    ['ci-term-end', 'Expiration Date', contractData.termEnd],
+  ];
+  req.forEach(([id, label, value]) => {
+    if (!String(value || '').trim()) missing.push({ id, label });
+  });
+  return missing;
 }
 
 function ciPopulateFromExtraction(data) {
@@ -11538,11 +12766,35 @@ async function ciSubmitToAdmin() {
   const authUser = getSignedInBrokerIdentity();
 
   const contractData = ciCollectData();
-  const propAddr = [contractData.propAddress, contractData.propCity].filter(Boolean).join(', ');
+  const notes = (document.getElementById('ci-notes') || {}).value || '';
 
   if (!contractData.contractType || contractData.contractType === '\u2014 Select a contract type \u2014') {
     statusEl.textContent = '\u2717 Please select a contract type first.';
     statusEl.classList.add('text-error', 'status-strong');
+    return;
+  }
+
+  // Require either: (a) fill path OR (b) upload path completed into form area.
+  if (_ciCurrentPath !== 'fill' && _ciCurrentPath !== 'upload') {
+    statusEl.textContent = '\u2717 Please choose Fill Out Here or Upload PDF.';
+    statusEl.classList.add('text-error', 'status-strong');
+    return;
+  }
+
+  ciClearValidation();
+  const missing = ciValidateRequired(contractData);
+  if (missing.length) {
+    missing.forEach(m => {
+      const el = document.getElementById(m.id);
+      if (el) el.classList.add('ci-error-field');
+    });
+    statusEl.innerHTML =
+      '<span class="text-error status-strong">\u2717 Missing required fields:</span> ' +
+      missing.map(m => m.label).join(', ') +
+      '.';
+    statusEl.classList.add('text-error');
+    const first = document.getElementById(missing[0].id);
+    if (first && typeof first.scrollIntoView === 'function') first.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
 
@@ -11560,7 +12812,7 @@ async function ciSubmitToAdmin() {
           contractData,
           brokerName: authUser?.name || 'Broker',
           senderEmail: authUser?.email || '',
-          notes: '',
+          notes,
         }
       })
     });
@@ -11570,6 +12822,8 @@ async function ciSubmitToAdmin() {
     if (res && res.success) {
       statusEl.innerHTML = '<span class="status-success status-strong">\u2713 Contract submitted to admin successfully!</span>';
       btn.querySelector('.btn-label').textContent = '\u2713 Submitted!';
+      const contractType = document.getElementById('ci-contract-type')?.value;
+      if (contractType) ciSaveDraft(contractType);
       setTimeout(() => {
         btn.classList.remove('loading');
         btn.querySelector('.btn-label').textContent = '\u2709 Submit to Admin';
@@ -11681,6 +12935,7 @@ function ciDownloadDataSheet() {
 }
 
 function ciReset() {
+  if (!confirm('Clear the contract intake form? All entered data will be deleted.')) return;
   // Reset contract type
   document.getElementById('ci-contract-type').value = '';
   // Hide sections
@@ -11706,10 +12961,13 @@ function ciReset() {
   document.getElementById('ci-submit-status').textContent = '';
   _ciCurrentPath = null;
   document.querySelectorAll('.ci-path-card').forEach(c => c.classList.remove('selected'));
+  const notesEl = document.getElementById('ci-notes');
+  if (notesEl) notesEl.value = '';
+  ciClearValidation();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  void ensureSharedBrokerSession();
+  void initBrokerToolAuth();
 });
 </script>
 <script src="/broker_profiles.js"></script>
