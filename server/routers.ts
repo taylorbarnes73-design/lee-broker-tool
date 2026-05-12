@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import {
   findBrokerDirectoryEntry,
@@ -13,6 +14,7 @@ import { desc, eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { nanoid } from "nanoid";
 import { aiAssistRouter } from "./routers/aiAssist";
+import { listingImportRouter } from "./routers/listingImport";
 import { compDataRouter } from "./routers/compData";
 import { emailRouter } from "./routers/email";
 import { contractsRouter } from "./routers/contracts";
@@ -23,6 +25,10 @@ import { ENV } from "./_core/env";
 import { handlePlatformLogout } from "./auth/passwordPlatformAuth";
 import { linkPlatformSessionAfterLegacyLogin } from "./auth/linkPlatformSessionAfterLegacyLogin";
 
+const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
+const LISTING_BROCHURE_CATEGORY = "listing_brochure";
+const LISTING_BROCHURE_MIMES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
+
 function normalizeLeeLogin(raw: string) {
   const value = raw.trim().toLowerCase();
   if (!value || value.includes("@")) return localAuth.normalizeEmail(value);
@@ -32,6 +38,7 @@ function normalizeLeeLogin(raw: string) {
 export const appRouter = router({
   system: systemRouter,
   aiAssist: aiAssistRouter,
+  listingImport: listingImportRouter,
   compData: compDataRouter,
   email: emailRouter,
   contracts: contractsRouter,
@@ -202,6 +209,19 @@ export const appRouter = router({
         // Decode base64 to buffer
         const buffer = Buffer.from(base64Data, "base64");
         const fileSize = buffer.length;
+
+        if (fileSize > MAX_UPLOAD_BYTES) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `File exceeds maximum size of ${MAX_UPLOAD_BYTES / (1024 * 1024)} MB.`,
+          });
+        }
+        if (category === LISTING_BROCHURE_CATEGORY && !LISTING_BROCHURE_MIMES.has(mimeType)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Brochure uploads must be PDF, JPEG, PNG, or WebP.",
+          });
+        }
 
         // Build a unique S3 key with random suffix to prevent enumeration
         const ext = filename.split(".").pop() ?? "bin";
