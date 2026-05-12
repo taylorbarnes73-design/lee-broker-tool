@@ -494,9 +494,6 @@ body.admin-mode #broker-view { display: none; }
 body.admin-mode #admin-view { display: flex; min-height: calc(100vh - 52px); }
 body.admin-mode .header .sub { display: none; }
 
-.admin-toggle { margin-left: auto; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3); color: #fff; padding: 6px 14px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; display: flex; align-items: center; gap: 6px; }
-.admin-toggle:hover { background: rgba(255,255,255,.25); }
-.admin-toggle svg { width: 14px; height: 14px; }
 
 /* Admin sidebar */
 .admin-sidebar { width: 220px; background: #1a1a2e; color: #c5c1b9; display: flex; flex-direction: column; flex-shrink: 0; }
@@ -5219,6 +5216,7 @@ a:hover {
 
 .submission-queue-button,
 .header-portal-link,
+.header-sign-out-btn,
 .header-admin-settings-link,
 .admin-toggle {
   display: inline-flex;
@@ -5249,6 +5247,7 @@ a:hover {
 
 .submission-queue-button:hover,
 .header-portal-link:hover,
+.header-sign-out-btn:hover,
 .header-admin-settings-link:hover,
 .admin-toggle:hover {
   background: var(--ink-100);
@@ -5621,6 +5620,7 @@ a:hover {
   .header-portal-actions,
   .submission-queue-button,
   .header-portal-link,
+  .header-sign-out-btn,
   .header-admin-settings-link,
   .admin-toggle {
     width: 100%;
