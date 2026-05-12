@@ -1,0 +1,12 @@
+{
+  "Data": {
+    "PropertyID": 90423,
+    "Name": "8400 Central Ave",
+    "AddressLine1": "8400 Central Ave",
+    "City": "Rancho Cucamonga",
+    "StateID": 1004,
+    "Zip": "91730",
+    "PropertyTypeID": 3
+  },
+  "Message": "Property created."
+}

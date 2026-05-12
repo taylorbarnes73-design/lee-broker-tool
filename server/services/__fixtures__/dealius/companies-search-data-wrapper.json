@@ -1,0 +1,14 @@
+{
+  "Data": [
+    {
+      "CompanyID": 6620,
+      "Name": "Diamond Realty Group"
+    },
+    {
+      "CompanyID": 6621,
+      "Name": "Diamond Realty Capital Partners"
+    }
+  ],
+  "PageSize": 50,
+  "TotalCount": 2
+}

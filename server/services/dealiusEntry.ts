@@ -204,20 +204,40 @@ function isLeaseLike(p: Record<string, unknown>): boolean {
   return !value || value.includes("lease") || value.includes("leasing") || value.includes("renew") || rep.includes("tenant") || rep.includes("landlord");
 }
 
+/** Dealius / ASP.NET payloads often nest the entity under `Data` or camelCase `data`. */
+function unwrapDealiusEntity(data: unknown): unknown {
+  if (!data || typeof data !== "object" || Array.isArray(data)) return data;
+  const o = data as Record<string, unknown>;
+  if ("Data" in o && o.Data != null) return o.Data;
+  if ("data" in o && o.data != null) return o.data;
+  return data;
+}
+
 function idFrom(data: unknown, keys: string[]): number | null {
   const asInt = positiveInt(data);
   if (asInt != null) return asInt;
 
   if (data && typeof data === "object") {
-    const target = "Data" in data ? (data as any).Data : data;
-    const targetInt = positiveInt(target);
-    if (targetInt != null) return targetInt;
+    const unwrapped = unwrapDealiusEntity(data);
+    const unwrappedInt = positiveInt(unwrapped);
+    if (unwrappedInt != null) return unwrappedInt;
 
-    if (target && typeof target === "object") {
+    if (unwrapped && typeof unwrapped === "object" && !Array.isArray(unwrapped)) {
+      const target = unwrapped as Record<string, unknown>;
       for (const key of keys) {
-        const value = (target as Record<string, unknown>)[key];
-        const id = positiveInt(value);
+        const id = positiveInt(target[key]);
         if (id != null) return id;
+      }
+      const lowerToActual = new Map<string, string>();
+      for (const k of Object.keys(target)) {
+        lowerToActual.set(k.toLowerCase(), k);
+      }
+      for (const key of keys) {
+        const actual = lowerToActual.get(key.toLowerCase());
+        if (actual) {
+          const id = positiveInt(target[actual]);
+          if (id != null) return id;
+        }
       }
     }
   }
@@ -227,8 +247,42 @@ function idFrom(data: unknown, keys: string[]): number | null {
 
 function listFrom(data: unknown): any[] {
   if (Array.isArray(data)) return data;
-  if (data && typeof data === "object" && Array.isArray((data as any).Data)) return (data as any).Data;
+  if (data && typeof data === "object") {
+    const o = data as Record<string, unknown>;
+    if (Array.isArray(o.Data)) return o.Data as any[];
+    if (Array.isArray(o.data)) return o.data as any[];
+  }
   return [];
+}
+
+/** Best-effort message from Dealius JSON (including HTTP 200 error envelopes). */
+function dealiusErrorDetail(data: unknown): string {
+  if (data == null) return "";
+  if (typeof data === "string") return data.trim().slice(0, 400);
+  if (typeof data !== "object") return String(data).slice(0, 400);
+  const o = data as Record<string, unknown>;
+  const inner = unwrapDealiusEntity(data);
+  if (inner !== data) {
+    const nested = dealiusErrorDetail(inner);
+    if (nested) return nested;
+  }
+  const msg = str(o.Message ?? o.message ?? o.ErrorMessage ?? o.errorMessage ?? o.error ?? o.title);
+  if (msg) return msg.slice(0, 500);
+  const errs = o.Errors ?? o.errors;
+  if (errs && typeof errs === "object") {
+    try {
+      const s = JSON.stringify(errs);
+      if (s && s !== "{}") return s.slice(0, 500);
+    } catch {
+      /* ignore */
+    }
+  }
+  try {
+    const s = JSON.stringify(data);
+    return s.length > 400 ? s.slice(0, 400) + "…" : s;
+  } catch {
+    return "";
+  }
 }
 
 function omitEmpty<T extends Record<string, unknown>>(input: T): Record<string, unknown> {
@@ -625,7 +679,12 @@ async function createProperty(params: {
     }
   }
 
-  throw new Error(`Dealius property create failed (HTTP ${res.status}).`);
+  const detail = dealiusErrorDetail(res.data);
+  throw new Error(
+    detail
+      ? `Dealius property create failed (HTTP ${res.status}): ${detail}`
+      : `Dealius property create failed (HTTP ${res.status}).`
+  );
 }
 
 async function createSpace(params: {
@@ -837,7 +896,9 @@ export async function pushDealEntryToDealius(params: { entry: Record<string, unk
       OppositeSideRepFee: feeFraction ?? undefined,
     });
     const retry = await client.request<any>({ token, method: "PUT", path: "/deals", data: retryPayload });
-    if (retry.status < 200 || retry.status >= 300) log.warnings.push(`Financial update returned HTTP ${put.status}.`);
+    if (retry.status < 200 || retry.status >= 300) {
+      log.warnings.push(`Financial update returned HTTP ${put.status} (retry HTTP ${retry.status}).`);
+    }
   }
   log.steps.push({ key: "financials", ok: true });
 
@@ -851,7 +912,9 @@ export async function pushDealEntryToDealius(params: { entry: Record<string, unk
     if (primary.status < 200 || primary.status >= 300) {
       const fallback = rents.map(r => ({ ...r, MonthlyRatePerSf: r.MonthlyRatePerSf == null ? 0 : r.MonthlyRatePerSf }));
       const retry = await client.request<any>({ token, method: "POST", path: "/deals/rents", data: { DealID: dealID, Rents: fallback } });
-      if (retry.status < 200 || retry.status >= 300) log.warnings.push(`Rent schedule returned HTTP ${primary.status}.`);
+      if (retry.status < 200 || retry.status >= 300) {
+        log.warnings.push(`Rent schedule returned HTTP ${primary.status} (retry HTTP ${retry.status}).`);
+      }
     }
   }
   log.steps.push({ key: "rent", ok: !d.isLease || d.rentRows.length > 0, detail: `${d.rentRows.length} row(s)` });
@@ -881,7 +944,9 @@ export async function pushDealEntryToDealius(params: { entry: Record<string, unk
           path: "/deals/brokers",
           data: { DealID: dealID, DealBrokers: rows.map(r => ({ ...r, Commission: r.Commission / 100 })) },
         });
-        if (retry.status < 200 || retry.status >= 300) log.warnings.push(`Broker assignment returned HTTP ${primary.status}.`);
+        if (retry.status < 200 || retry.status >= 300) {
+          log.warnings.push(`Broker assignment returned HTTP ${primary.status} (retry HTTP ${retry.status}).`);
+        }
       }
     }
   }
@@ -1025,3 +1090,24 @@ export async function pushListingEntryToDealius(params: { entry: Record<string, 
     steps: log.steps,
   };
 }
+
+/**
+ * Internal helpers exported for tests only. Treat as unstable; consumers should
+ * use the high-level `pushDealEntryToDealius` / `pushListingEntryToDealius` /
+ * `validate*` entry points.
+ */
+export const __dealiusInternals = {
+  idFrom,
+  listFrom,
+  unwrapDealiusEntity,
+  dealiusErrorDetail,
+  normalizeDealEntry,
+  normalizeListingEntry,
+  propertyTypeIdFrom,
+  repTypeIdFrom,
+  firstFeePercent,
+  createProperty,
+  createSpace,
+  resolveCompanyId,
+  resolveContactId,
+};

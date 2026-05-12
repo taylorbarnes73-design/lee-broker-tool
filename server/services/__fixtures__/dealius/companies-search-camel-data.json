@@ -1,0 +1,14 @@
+{
+  "data": [
+    {
+      "companyId": 7700,
+      "name": "Westgate Properties Inc"
+    },
+    {
+      "companyId": 7701,
+      "name": "Westgate Holdings"
+    }
+  ],
+  "pageSize": 50,
+  "totalCount": 2
+}

@@ -12,6 +12,8 @@ import type { Request, Response } from "express";
 import { parseLeeVoucherExcelBuffer, submissionPayloadPatchFromParsedVoucher } from "./services/voucherExcel";
 import { listingFormPatchFromParsed, parseListingFormPdfBuffer } from "./services/listingFormPdf";
 import { extractPdfPlainText, heuristicsFromPdfText, mergeScrapePatches } from "./services/pdfTextScrape";
+import { invokeLLM } from "./_core/llm";
+import { getSetting } from "./settings/getSetting";
 
 function jsonErr(res: Response, status: number, error: string, extra?: Record<string, unknown>) {
   res.status(status).json({ success: false, error, ...extra });
@@ -272,8 +274,6 @@ dealiusAdminApiRouter.post("/scrape", async (req: Request, res: Response) => {
       // Step 3: LLM-powered smart extraction (multi-space aware)
       if (plain.length > 50) {
         try {
-          const { invokeLLM } = await import("../_core/llm");
-          const { getSetting } = await import("../settings/getSetting");
           const company = String(await getSetting("branding.company_name").catch(() => "Lee & Associates"));
           const trimmedText = plain.slice(0, 40_000);
 

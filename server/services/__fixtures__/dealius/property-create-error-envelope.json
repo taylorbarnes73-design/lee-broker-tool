@@ -1,0 +1,8 @@
+{
+  "Message": "Property could not be created.",
+  "Errors": {
+    "AddressLine1": ["The AddressLine1 field is required."],
+    "Zip": ["Zip is not a valid US postal code."]
+  },
+  "Success": false
+}

@@ -8757,10 +8757,19 @@ async function dxSubmitDeal() {
     });
     dxAddLog('info', 'POST /properties payload: ' + JSON.stringify(propPayload, null, 0).substring(0, 300));
     const propRes = await dxCallAPI('POST', '/properties', H, propPayload);
-    if (!propRes || (!propRes.PropertyID && !propRes.ID)) {
+    const propEntity =
+      propRes && typeof propRes === 'object' && (propRes.Data != null || propRes.data != null)
+        ? propRes.Data ?? propRes.data
+        : propRes;
+    const propertyID =
+      propEntity && typeof propEntity === 'object'
+        ? propEntity.PropertyID ?? propEntity.propertyId ?? propEntity.PropertyId ?? propEntity.ID ?? propEntity.id ?? null
+        : typeof propEntity === 'number' && propEntity > 0
+          ? propEntity
+          : null;
+    if (!propertyID) {
       dxAddLog('warn', 'Property creation failed or returned no ID');
     }
-    const propertyID = propRes?.PropertyID || propRes?.ID || null;
     if (propertyID) dxAddLog('ok', 'Property created — ID: ' + propertyID);
     dxStepMark(1, propertyID ? 'done' : 'warn');
 

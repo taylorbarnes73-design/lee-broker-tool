@@ -1,0 +1,8 @@
+{
+  "data": null,
+  "errorMessage": "Duplicate property exists.",
+  "errors": {
+    "addressLine1": ["Already on file."]
+  },
+  "success": false
+}

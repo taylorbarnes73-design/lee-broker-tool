@@ -1,0 +1,14 @@
+[
+  {
+    "ContactID": 88001,
+    "ContactName": "Tim Arguello",
+    "Email": "targuello@lee-associates.com",
+    "CompanyID": 5511
+  },
+  {
+    "ContactID": 88002,
+    "FullName": "Timothy Arguello",
+    "Email": "tim@example.com",
+    "CompanyID": 5511
+  }
+]
