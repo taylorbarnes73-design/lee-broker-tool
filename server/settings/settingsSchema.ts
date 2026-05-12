@@ -42,6 +42,11 @@ export type SettingKey =
   | "integrations.dealius.password"
   | "integrations.dealius.last_test_at"
   | "integrations.dealius.last_test_result"
+  | "integrations.buildout.api_key"
+  | "integrations.buildout.api_base_url"
+  | "integrations.buildout.default_company_id"
+  | "integrations.buildout.last_test_at"
+  | "integrations.buildout.last_test_result"
   | "security.session_timeout_hours";
 
 export const SETTING_KEYS = [
@@ -65,6 +70,11 @@ export const SETTING_KEYS = [
   "integrations.dealius.password",
   "integrations.dealius.last_test_at",
   "integrations.dealius.last_test_result",
+  "integrations.buildout.api_key",
+  "integrations.buildout.api_base_url",
+  "integrations.buildout.default_company_id",
+  "integrations.buildout.last_test_at",
+  "integrations.buildout.last_test_result",
   "security.session_timeout_hours",
 ] as const satisfies readonly SettingKey[];
 
@@ -218,6 +228,47 @@ const defs: SettingDef[] = [
   },
   {
     key: "integrations.dealius.last_test_result",
+    category: "integrations",
+    sensitive: false,
+    valueSchema: testResultSchema,
+    defaultValue: null,
+  },
+  {
+    key: "integrations.buildout.api_key",
+    category: "integrations",
+    sensitive: true,
+    valueSchema: z.string().max(256),
+    defaultValue: "",
+    description: "Buildout API key (URL path token)",
+  },
+  {
+    key: "integrations.buildout.api_base_url",
+    category: "integrations",
+    sensitive: false,
+    valueSchema: optionalUrl,
+    defaultValue: null,
+    description: "Optional Buildout API base (default https://buildout.com/api/v1)",
+  },
+  {
+    key: "integrations.buildout.default_company_id",
+    category: "integrations",
+    sensitive: false,
+    valueSchema: z.preprocess(
+      v => (v === "" || v === undefined ? null : v),
+      z.union([z.null(), z.coerce.number().int().positive()])
+    ),
+    defaultValue: null,
+    description: "Optional company_id filter when sampling properties from Buildout",
+  },
+  {
+    key: "integrations.buildout.last_test_at",
+    category: "integrations",
+    sensitive: false,
+    valueSchema: z.union([z.string().min(4), z.null()]),
+    defaultValue: null,
+  },
+  {
+    key: "integrations.buildout.last_test_result",
     category: "integrations",
     sensitive: false,
     valueSchema: testResultSchema,

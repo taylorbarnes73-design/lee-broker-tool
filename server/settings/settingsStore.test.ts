@@ -36,10 +36,12 @@ describe("buildGrouped masking", () => {
     }
     merged.set("integrations.dealius.username", "alice");
     merged.set("integrations.dealius.password", "hunter2");
+    merged.set("integrations.buildout.api_key", "secret-buildout-key");
 
     const grouped = buildGrouped(merged, true);
     expect(grouped.integrations.dealius.username).toMatch(/••••/);
     expect(grouped.integrations.dealius.password).toMatch(/••••/);
+    expect((grouped.integrations as { buildout?: { api_key?: unknown } }).buildout?.api_key).toMatch(/••••/);
     expect(grouped.branding.company_name).toBe("Lee & Associates Newport Beach");
   });
 });

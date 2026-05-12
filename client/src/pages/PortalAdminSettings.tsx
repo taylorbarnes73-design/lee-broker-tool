@@ -31,13 +31,17 @@ const MASKED_SECRET = "•••••••• (set)";
 
 type SettingsCategory = "branding" | "workflow" | "notifications" | "integrations" | "security";
 
+/** Sidebar includes Website update (Buildout); data still lives under `integrations` in the API. */
+type SettingsSidebarId = SettingsCategory | "website_update";
+
 type GroupedSettings = Record<SettingsCategory, Record<string, unknown>>;
 
-const SIDEBAR: ReadonlyArray<{ id: SettingsCategory; label: string }> = [
+const SIDEBAR: ReadonlyArray<{ id: SettingsSidebarId; label: string }> = [
   { id: "branding", label: "Branding" },
   { id: "workflow", label: "Workflow" },
   { id: "notifications", label: "Notifications" },
   { id: "integrations", label: "Integrations" },
+  { id: "website_update", label: "Website update" },
   { id: "security", label: "Security" },
 ];
 
@@ -46,7 +50,6 @@ const COMING_SOON: ReadonlyArray<{ name: string }> = [
   { name: "CoStar / CARETS" },
   { name: "LoopNet" },
   { name: "CREXi" },
-  { name: "Buildout" },
   { name: "Outlook / Microsoft 365" },
 ];
 
@@ -95,6 +98,11 @@ function hasDealiusCredentials(integrations: Record<string, unknown>): boolean {
   return has(u) || has(p);
 }
 
+function hasBuildoutCredentials(integrations: Record<string, unknown>): boolean {
+  const k = getDeep(integrations, ["buildout", "api_key"]);
+  return k === MASKED_SECRET || (typeof k === "string" && k.trim().length > 0 && k !== "null");
+}
+
 type FieldSaveState = "idle" | "saving" | "saved" | "error";
 
 export default function PortalAdminSettings() {
@@ -103,7 +111,7 @@ export default function PortalAdminSettings() {
   const [, setLocation] = useLocation();
   const uploadMutation = trpc.files.upload.useMutation();
 
-  const [category, setCategory] = useState<SettingsCategory>("branding");
+  const [category, setCategory] = useState<SettingsSidebarId>("branding");
   const [grouped, setGrouped] = useState<GroupedSettings | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadingSettings, setLoadingSettings] = useState(true);
@@ -124,6 +132,13 @@ export default function PortalAdminSettings() {
   const [dealiusPhase, setDealiusPhase] = useState<"verify" | "patch">("verify");
   const [disconnectOpen, setDisconnectOpen] = useState(false);
   const [testBusy, setTestBusy] = useState(false);
+
+  const [buildoutModal, setBuildoutModal] = useState(false);
+  const [buildoutKey, setBuildoutKey] = useState("");
+  const [buildoutBusy, setBuildoutBusy] = useState(false);
+  const [buildoutPhase, setBuildoutPhase] = useState<"verify" | "patch">("verify");
+  const [buildoutDisconnectOpen, setBuildoutDisconnectOpen] = useState(false);
+  const [buildoutTestBusy, setBuildoutTestBusy] = useState(false);
 
   const [uploadKey, setUploadKey] = useState<string | null>(null);
   const [uploadPct, setUploadPct] = useState(0);
@@ -223,6 +238,29 @@ export default function PortalAdminSettings() {
     return { tone: "neutral" as const, label: "Not Connected" };
   }, [dealiusConnected, dealius.last_test_result]);
 
+  const buildout = useMemo(() => {
+    const int = grouped?.integrations ?? {};
+    return {
+      api_key: getDeep(int, ["buildout", "api_key"]),
+      api_base_url: getDeep(int, ["buildout", "api_base_url"]),
+      default_company_id: getDeep(int, ["buildout", "default_company_id"]),
+      last_test_at: getDeep(int, ["buildout", "last_test_at"]),
+      last_test_result: getDeep(int, ["buildout", "last_test_result"]),
+    };
+  }, [grouped]);
+
+  const buildoutConnected = useMemo(() => {
+    if (!grouped?.integrations) return false;
+    return hasBuildoutCredentials(grouped.integrations as Record<string, unknown>);
+  }, [grouped]);
+
+  const buildoutStatus = useMemo(() => {
+    if (!buildoutConnected) return { tone: "neutral" as const, label: "Not Connected" };
+    if (buildout.last_test_result === "failed") return { tone: "danger" as const, label: "Error" };
+    if (buildout.last_test_result === "success") return { tone: "success" as const, label: "Connected" };
+    return { tone: "neutral" as const, label: "Not Connected" };
+  }, [buildoutConnected, buildout.last_test_result]);
+
   const runTestConnection = async () => {
     setTestBusy(true);
     const r = await adminJson<{ success: boolean; message: string; tested_at: string }>(
@@ -287,6 +325,89 @@ export default function PortalAdminSettings() {
     }
     setGrouped(r.data);
     toast.success("Dealius disconnected.", { duration: TOAST_MS });
+  };
+
+  const runBuildoutTestConnection = async () => {
+    setBuildoutTestBusy(true);
+    const r = await adminJson<{ success: boolean; message: string; tested_at: string }>(
+      "/api/admin/settings/integrations/buildout/test",
+      { method: "POST" }
+    );
+    setBuildoutTestBusy(false);
+    if (!r.ok) {
+      toast.error(r.error.message, { duration: TOAST_MS });
+      return;
+    }
+    toast[r.data.success ? "success" : "error"](r.data.message, { duration: TOAST_MS });
+    await loadAll();
+  };
+
+  const saveBuildoutModal = async () => {
+    setBuildoutBusy(true);
+    setBuildoutPhase("verify");
+    const baseUrl =
+      buildout.api_base_url === null || buildout.api_base_url === undefined
+        ? null
+        : String(buildout.api_base_url).trim() || null;
+    const companyRaw = buildout.default_company_id;
+    const companyId =
+      companyRaw === null || companyRaw === undefined || companyRaw === ""
+        ? null
+        : Number(companyRaw);
+    const v = await adminJson<{
+      success: boolean;
+      message: string;
+      sample?: { first_property_name: string | null };
+    }>("/api/admin/settings/integrations/buildout/verify", {
+      method: "POST",
+      body: JSON.stringify({
+        api_key: buildoutKey.trim(),
+        api_base_url: baseUrl,
+        default_company_id: companyId != null && Number.isFinite(companyId) ? companyId : null,
+      }),
+    });
+    if (!v.ok || !v.data.success) {
+      setBuildoutBusy(false);
+      toast.error(v.ok ? v.data.message : v.error.message, { duration: TOAST_MS });
+      return;
+    }
+    setBuildoutPhase("patch");
+    const p = await adminJson<GroupedSettings>("/api/admin/settings", {
+      method: "PATCH",
+      body: JSON.stringify({
+        "integrations.buildout.api_key": buildoutKey.trim(),
+      }),
+    });
+    setBuildoutBusy(false);
+    if (!p.ok) {
+      toast.error(p.error.message, { duration: TOAST_MS });
+      await loadAll();
+      return;
+    }
+    setGrouped(p.data);
+    setBuildoutModal(false);
+    setBuildoutKey("");
+    toast.success("Buildout API key saved.", { duration: TOAST_MS });
+    await adminJson("/api/admin/settings/integrations/buildout/test", { method: "POST" });
+    await loadAll();
+  };
+
+  const disconnectBuildout = async () => {
+    setBuildoutDisconnectOpen(false);
+    const r = await adminJson<GroupedSettings>("/api/admin/settings", {
+      method: "PATCH",
+      body: JSON.stringify({
+        "integrations.buildout.api_key": "",
+        "integrations.buildout.api_base_url": null,
+        "integrations.buildout.default_company_id": null,
+      }),
+    });
+    if (!r.ok) {
+      toast.error(r.error.message, { duration: TOAST_MS });
+      return;
+    }
+    setGrouped(r.data);
+    toast.success("Buildout disconnected.", { duration: TOAST_MS });
   };
 
   const uploadToSetting = async (key: string, file: File, categoryFolder: string) => {
@@ -1081,6 +1202,296 @@ export default function PortalAdminSettings() {
                         <AlertDialogAction
                           className="bg-[var(--err-600)] text-white hover:bg-[#9A1A10]"
                           onClick={() => void disconnectDealius()}
+                        >
+                          Disconnect
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              )}
+
+              {category === "website_update" && (
+                <div>
+                  <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: "var(--ink-900)" }}>Website update</h2>
+                  <p style={{ fontSize: 13, color: "var(--ink-600)", marginBottom: 16, maxWidth: 640, lineHeight: 1.5 }}>
+                    Public property listings on your marketing site are sourced from{" "}
+                    <a href="https://buildout.com" target="_blank" rel="noreferrer" style={{ color: "var(--lee-crimson)", fontWeight: 600 }}>
+                      Buildout
+                    </a>
+                    . Configure the API key here so the brokerage can sync or validate listings against Buildout&apos;s data model (companies, brokers,
+                    properties, lease spaces, and photos). Automated full-site sync is not wired yet; use Test connection to confirm credentials and load a
+                    small property sample.
+                  </p>
+                  <div
+                    style={{
+                      marginBottom: 20,
+                      padding: 14,
+                      borderRadius: 10,
+                      background: "var(--ink-50)",
+                      border: "1px solid var(--ink-200)",
+                      fontSize: 13,
+                      color: "var(--ink-700)",
+                      maxWidth: 640,
+                    }}
+                  >
+                    <div style={{ fontWeight: 700, marginBottom: 6 }}>How this maps to your site</div>
+                    <div style={{ lineHeight: 1.5 }}>
+                      Buildout organizes listings as <strong>Company</strong> → <strong>Broker</strong> → <strong>Property</strong> →{" "}
+                      <strong>Lease space</strong> / <strong>Photos</strong>. Optional filters below limit API samples to a single company when you have
+                      multiple Buildout companies.
+                    </div>
+                  </div>
+
+                  <div style={rowGrid}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>API base URL</div>
+                      <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 4 }}>
+                        Leave blank to use <span className="lee-mono text-xs">https://buildout.com/api/v1</span>. Only change this if Buildout support gave
+                        you a different API host.
+                      </div>
+                    </div>
+                    <div>
+                      <Input
+                        className="mono"
+                        placeholder="https://buildout.com/api/v1"
+                        value={
+                          buildout.api_base_url === null || buildout.api_base_url === undefined
+                            ? ""
+                            : String(buildout.api_base_url)
+                        }
+                        onChange={e => {
+                          const v = e.target.value;
+                          setGrouped(g => {
+                            if (!g) return g;
+                            const integ = g.integrations as Record<string, unknown>;
+                            const prevBo = (integ.buildout as Record<string, unknown> | undefined) ?? {};
+                            return {
+                              ...g,
+                              integrations: {
+                                ...integ,
+                                buildout: { ...prevBo, api_base_url: v },
+                              },
+                            };
+                          });
+                          const toSave = v.trim() === "" ? null : v.trim();
+                          schedulePatch("integrations.buildout.api_base_url", toSave, 800);
+                        }}
+                        onBlur={() => {
+                          const raw = buildout.api_base_url;
+                          const toSave =
+                            raw === null || raw === undefined || String(raw).trim() === "" ? null : String(raw).trim();
+                          void patchKey("integrations.buildout.api_base_url", toSave);
+                        }}
+                      />
+                      <div style={{ marginTop: 6 }}>
+                        <SaveHint k="integrations.buildout.api_base_url" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ ...rowGrid, borderBottom: "none" }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>Default company ID</div>
+                      <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 4 }}>
+                        Optional <span className="lee-mono text-xs">company_id</span> sent to Buildout when sampling properties (matches Buildout&apos;s
+                        company filter).
+                      </div>
+                    </div>
+                    <div>
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        placeholder="e.g. 12345"
+                        value={
+                          buildout.default_company_id === null || buildout.default_company_id === undefined
+                            ? ""
+                            : String(buildout.default_company_id)
+                        }
+                        onChange={e => {
+                          const raw = e.target.value;
+                          setGrouped(g => {
+                            if (!g) return g;
+                            const integ = g.integrations as Record<string, unknown>;
+                            const prevBo = (integ.buildout as Record<string, unknown> | undefined) ?? {};
+                            const nextVal = raw.trim() === "" ? null : Number(raw);
+                            return {
+                              ...g,
+                              integrations: {
+                                ...integ,
+                                buildout: {
+                                  ...prevBo,
+                                  default_company_id: raw.trim() === "" ? null : nextVal,
+                                },
+                              },
+                            };
+                          });
+                          if (raw.trim() === "") {
+                            schedulePatch("integrations.buildout.default_company_id", null, 600);
+                          } else {
+                            const n = Number(raw);
+                            if (Number.isFinite(n) && n > 0) schedulePatch("integrations.buildout.default_company_id", n, 600);
+                          }
+                        }}
+                        onBlur={() => {
+                          const raw = buildout.default_company_id;
+                          if (raw === null || raw === undefined || raw === "") {
+                            void patchKey("integrations.buildout.default_company_id", null);
+                            return;
+                          }
+                          const n = Number(raw);
+                          void patchKey(
+                            "integrations.buildout.default_company_id",
+                            Number.isFinite(n) && n > 0 ? n : null
+                          );
+                        }}
+                      />
+                      <div style={{ marginTop: 6 }}>
+                        <SaveHint k="integrations.buildout.default_company_id" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      border: "1px solid var(--ink-200)",
+                      borderRadius: 12,
+                      padding: 20,
+                      marginTop: 8,
+                      marginBottom: 20,
+                      background: "var(--ink-0)",
+                    }}
+                  >
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "flex-start", justifyContent: "space-between" }}>
+                      <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+                        <div
+                          style={{
+                            width: 48,
+                            height: 48,
+                            borderRadius: 10,
+                            background: "var(--lee-slate-wash)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "var(--lee-slate)",
+                            fontWeight: 800,
+                            fontSize: 13,
+                          }}
+                        >
+                          BO
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 16 }}>Buildout</div>
+                          <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 2 }}>
+                            API key is stored encrypted server-side and never returned to the browser after save.
+                          </div>
+                          <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+                            <BadgeIntegration tone={buildoutStatus.tone} label={buildoutStatus.label} />
+                            {buildout.last_test_at ? (
+                              <span style={{ fontSize: 12, color: "var(--ink-500)" }}>
+                                Last tested: {new Date(String(buildout.last_test_at)).toLocaleString()}
+                              </span>
+                            ) : (
+                              <span style={{ fontSize: 12, color: "var(--ink-500)" }}>Last tested: —</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        <Button type="button" variant="secondary" size="sm" icon={<Icons.Lock size={14} />} onClick={() => setBuildoutModal(true)}>
+                          Configure API key
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          disabled={buildoutTestBusy || !buildoutConnected}
+                          onClick={() => void runBuildoutTestConnection()}
+                        >
+                          {buildoutTestBusy ? (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                              <span
+                                className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent"
+                                aria-hidden
+                              />
+                              Testing…
+                            </span>
+                          ) : (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                              <Icons.CheckCircle size={14} />
+                              Test connection
+                            </span>
+                          )}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="danger"
+                          size="sm"
+                          icon={<Icons.X size={14} />}
+                          disabled={!buildoutConnected}
+                          onClick={() => setBuildoutDisconnectOpen(true)}
+                        >
+                          Disconnect
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Dialog open={buildoutModal} onOpenChange={setBuildoutModal}>
+                    <DialogContent className="sm:max-w-md" style={{ fontFamily: "var(--font-sans)" }}>
+                      <DialogHeader>
+                        <DialogTitle>Configure Buildout</DialogTitle>
+                        <DialogDescription>
+                          Paste the API key from your Buildout admin. It is sent to Buildout in the request URL path per their API v1 documentation.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <Field label="API key">
+                        <Input
+                          className="mono"
+                          value={buildoutKey}
+                          onChange={e => setBuildoutKey(e.target.value)}
+                          placeholder="Your Buildout API key"
+                          autoComplete="off"
+                        />
+                      </Field>
+                      <DialogFooter style={{ gap: 8 }}>
+                        <Button type="button" variant="secondary" onClick={() => setBuildoutModal(false)}>
+                          Cancel
+                        </Button>
+                        <Button type="button" variant="primary" disabled={buildoutBusy} onClick={() => void saveBuildoutModal()}>
+                          {buildoutBusy ? (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                              <span
+                                className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent"
+                                aria-hidden
+                              />
+                              {buildoutPhase === "patch" ? "Saving…" : "Verifying…"}
+                            </span>
+                          ) : (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                              <Icons.CheckCircle size={14} />
+                              Test & Save
+                            </span>
+                          )}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+
+                  <AlertDialog open={buildoutDisconnectOpen} onOpenChange={setBuildoutDisconnectOpen}>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Disconnect Buildout?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Removes the stored API key and optional URL/company filters. Website listing sync features will stay disabled until you configure
+                          Buildout again.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-[var(--err-600)] text-white hover:bg-[#9A1A10]"
+                          onClick={() => void disconnectBuildout()}
                         >
                           Disconnect
                         </AlertDialogAction>

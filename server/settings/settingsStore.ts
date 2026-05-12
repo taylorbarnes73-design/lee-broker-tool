@@ -13,6 +13,7 @@ import {
 } from "./settingsSchema";
 import { decryptSettingEnvelope, encryptSettingPlaintext, isEncryptedEnvelope } from "./settingsEncryption";
 import { DealiusClient } from "../services/dealiusClient";
+import { fetchBuildoutPropertiesSample } from "../services/buildoutClient";
 import { AdminUserError } from "../adminUsers/adminErrors";
 
 type AppDb = NonNullable<Awaited<ReturnType<typeof getDb>>>;
@@ -355,6 +356,131 @@ export async function verifyDealiusCredentials(username: string, password: strin
   } catch (e: unknown) {
     return { success: false, message: e instanceof Error ? e.message : String(e) };
   }
+}
+
+export type BuildoutVerifyResult = {
+  success: boolean;
+  message: string;
+  sample?: { total_count: number; returned: number; first_property_id: number | null; first_property_name: string | null };
+};
+
+export async function verifyBuildoutCredentials(
+  apiKey: string,
+  apiBaseUrl: string | null | undefined,
+  defaultCompanyId: number | null | undefined
+): Promise<BuildoutVerifyResult> {
+  const key = apiKey.trim();
+  if (process.env.SETTINGS_BUILDOUT_TEST_STUB === "fail") {
+    return { success: false, message: "Stub failure (SETTINGS_BUILDOUT_TEST_STUB=fail)." };
+  }
+  if (!key) {
+    return { success: false, message: "Buildout API key is required." };
+  }
+  try {
+    const { sample } = await fetchBuildoutPropertiesSample({
+      apiKey: key,
+      apiBaseUrl: apiBaseUrl ?? null,
+      defaultCompanyId: defaultCompanyId ?? null,
+      limit: 3,
+    });
+    const detail =
+      sample.returned > 0
+        ? ` Retrieved ${sample.returned} sample propert${sample.returned === 1 ? "y" : "ies"} (${sample.total_count} total in account filter).`
+        : ` No properties returned in this sample (${sample.total_count} total count).`;
+    return {
+      success: true,
+      message: `Buildout API responded successfully.${detail}`,
+      sample: {
+        total_count: sample.total_count,
+        returned: sample.returned,
+        first_property_id: sample.first_property_id,
+        first_property_name: sample.first_property_name,
+      },
+    };
+  } catch (e: unknown) {
+    return { success: false, message: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+export async function runBuildoutSettingsTest(
+  db: AppDb,
+  actorId: string,
+  req: Request
+): Promise<{ success: boolean; message: string; tested_at: string }> {
+  const merged = await ensureSettingsCache();
+  const apiKey = (merged.get("integrations.buildout.api_key") as string) ?? "";
+  const baseUrl = (merged.get("integrations.buildout.api_base_url") as string | null) ?? null;
+  const companyId = (merged.get("integrations.buildout.default_company_id") as number | null) ?? null;
+
+  let success = false;
+  let message = "";
+
+  if (process.env.SETTINGS_BUILDOUT_TEST_STUB === "fail") {
+    success = false;
+    message = "Stub failure (SETTINGS_BUILDOUT_TEST_STUB=fail).";
+  } else if (!apiKey.trim()) {
+    success = false;
+    message = "Buildout API key is not configured in settings.";
+  } else {
+    const v = await verifyBuildoutCredentials(apiKey, baseUrl, companyId);
+    success = v.success;
+    message = v.message;
+  }
+
+  const testedAt = new Date().toISOString();
+  const result = success ? "success" : "failed";
+
+  const defAt = SETTINGS_BY_KEY["integrations.buildout.last_test_at"];
+  const defRes = SETTINGS_BY_KEY["integrations.buildout.last_test_result"];
+
+  await db
+    .insert(appSettings)
+    .values({
+      key: "integrations.buildout.last_test_at",
+      value: testedAt as any,
+      category: "integrations",
+      description: defAt.description ?? null,
+      updatedAt: new Date(),
+      updatedBy: actorId,
+    })
+    .onDuplicateKeyUpdate({
+      set: {
+        value: testedAt as any,
+        updatedAt: new Date(),
+        updatedBy: actorId,
+      },
+    });
+
+  await db
+    .insert(appSettings)
+    .values({
+      key: "integrations.buildout.last_test_result",
+      value: result as any,
+      category: "integrations",
+      description: defRes.description ?? null,
+      updatedAt: new Date(),
+      updatedBy: actorId,
+    })
+    .onDuplicateKeyUpdate({
+      set: {
+        value: result as any,
+        updatedAt: new Date(),
+        updatedBy: actorId,
+      },
+    });
+
+  await writeAuditLog(
+    actorId,
+    "settings.updated",
+    "setting",
+    "integrations.buildout.test",
+    { category: "integrations", before_redacted: "(test)", after_redacted: result },
+    req
+  );
+
+  invalidateSettingsCache();
+
+  return { success, message, tested_at: testedAt };
 }
 
 export async function getSetting(key: string): Promise<unknown> {

@@ -13,7 +13,9 @@ import {
   getGroupedCategory,
   getGroupedSettings,
   patchSettings,
+  runBuildoutSettingsTest,
   runDealiusSettingsTest,
+  verifyBuildoutCredentials,
   verifyDealiusCredentials,
 } from "./settings/settingsStore";
 
@@ -99,6 +101,43 @@ adminSettingsRouter.post(
       return;
     }
     const result = await runDealiusSettingsTest(db, req.user!.id, req);
+    res.json(result);
+  })
+);
+
+const buildoutVerifyBodySchema = z.object({
+  api_key: z.string().trim().min(1).max(256),
+  api_base_url: z.union([z.string().url(), z.literal(""), z.null()]).optional(),
+  default_company_id: z.union([z.coerce.number().int().positive(), z.null()]).optional(),
+});
+
+adminSettingsRouter.post(
+  "/integrations/buildout/verify",
+  asyncAdmin(async (req, res) => {
+    const parsed = buildoutVerifyBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0];
+      sendAdminError(res, 400, "VALIDATION_ERROR", issue?.message ?? "Invalid body.", issue?.path?.join("."));
+      return;
+    }
+    const baseRaw = parsed.data.api_base_url;
+    const apiBaseUrl = baseRaw === "" || baseRaw === undefined || baseRaw === null ? null : baseRaw;
+    const companyId =
+      parsed.data.default_company_id === undefined ? null : parsed.data.default_company_id;
+    const result = await verifyBuildoutCredentials(parsed.data.api_key, apiBaseUrl, companyId);
+    res.json(result);
+  })
+);
+
+adminSettingsRouter.post(
+  "/integrations/buildout/test",
+  asyncAdmin(async (req, res) => {
+    const db = await getDb();
+    if (!db) {
+      sendAdminError(res, 503, "NO_DATABASE", "Database is not available.");
+      return;
+    }
+    const result = await runBuildoutSettingsTest(db, req.user!.id, req);
     res.json(result);
   })
 );
