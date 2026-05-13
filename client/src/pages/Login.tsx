@@ -131,14 +131,14 @@ export default function Login() {
             style={{ height: 64, width: 'auto', display: 'inline-block' }}
           />
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-500)', marginTop: 14, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-            Admin Portal
+            Broker portal
           </div>
         </div>
 
         <Card padding="lg">
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
             <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--ink-900)' }}>Sign In</h1>
-            <p style={{ fontSize: 14, color: 'var(--ink-500)', marginTop: 8 }}>Use your Lee Broker Tool account to manage submissions, settings, and users.</p>
+            <p style={{ fontSize: 14, color: 'var(--ink-500)', marginTop: 8 }}>Use your Lee Broker Tool account. Brokers use the portal and submission queue; administrators have additional tools after sign-in.</p>
           </div>
 
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
