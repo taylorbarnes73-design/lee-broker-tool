@@ -4,7 +4,6 @@ import { eq } from "drizzle-orm";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import {
   findBrokerDirectoryEntry,
-  isBrokerDirectoryAdmin,
 } from "@shared/brokerDirectory";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { localAuth, sdk } from "./_core/sdk";
@@ -18,6 +17,7 @@ import {
 } from "./auth/passwordPlatformAuth";
 import { resolvePlatformUserFromRequest, findAppUserByUsernameOrEmail } from "./auth/platformSession";
 import { linkPlatformSessionAfterLegacyLogin } from "./auth/linkPlatformSessionAfterLegacyLogin";
+import { isAdminByPolicy } from "./auth/isAdminByPolicy";
 
 const loginSchema = z.object({
   email: z.string().trim().min(1).max(320),
@@ -92,15 +92,11 @@ authApiRouter.post("/login", async (req, res) => {
     name = brokerEntry?.name || name;
   }
 
-  // Apply ENV admin overrides regardless of whether the user was found in app_users.
-  // This lets LOCAL_ADMIN_EMAILS / LOCAL_ADMIN_NAMES / broker-directory admin flags
-  // grant admin access even if app_users.role was set incorrectly.
-  if (role !== "admin") {
-    const isAdminIdentity =
-      ENV.localAdminEmails.includes(email) ||
-      ENV.localAdminNames.includes(name.trim().toLowerCase()) ||
-      (brokerEntry && isBrokerDirectoryAdmin(brokerEntry));
-    if (isAdminIdentity) role = "admin";
+  // Apply policy-based admin override regardless of whether the user was found in
+  // app_users. This lets LOCAL_ADMIN_EMAILS / LOCAL_ADMIN_NAMES / broker-directory
+  // admin flags grant admin access even if app_users.role was set incorrectly.
+  if (role !== "admin" && isAdminByPolicy(email, name)) {
+    role = "admin";
   }
 
   // Auto-fix app_users.role when the resolved role is higher than what's stored.

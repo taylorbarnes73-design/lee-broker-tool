@@ -2,25 +2,15 @@ import type { RequestHandler } from "express";
 import { resolvePlatformUserFromRequest, findAppUserByUsernameOrEmail } from "../auth/platformSession";
 import type { PlatformAuthUser, PlatformRole } from "../auth/platformAuthTypes";
 import { sdk } from "../_core/sdk";
-import { ENV } from "../_core/env";
 import { getDb } from "../db";
-
-function isEnvAdmin(email: string | null | undefined, fullName: string | null | undefined): boolean {
-  const emailLower = (email ?? "").trim().toLowerCase();
-  const nameLower = (fullName ?? "").trim().toLowerCase();
-  return (
-    (emailLower.length > 0 && ENV.localAdminEmails.includes(emailLower)) ||
-    (nameLower.length > 0 && ENV.localAdminNames.includes(nameLower))
-  );
-}
+import { isAdminByPolicy } from "../auth/isAdminByPolicy";
 
 export const requireAuth: RequestHandler = async (req, res, next) => {
   // 1. Try platform session (lbt_session cookie)
   const platformUser = await resolvePlatformUserFromRequest(req);
   if (platformUser) {
-    // Upgrade role to admin if ENV overrides apply.
     const role: PlatformRole =
-      platformUser.role === "admin" || isEnvAdmin(platformUser.email, platformUser.fullName)
+      platformUser.role === "admin" || isAdminByPolicy(platformUser.email, platformUser.fullName)
         ? "admin"
         : platformUser.role;
     req.user = { ...platformUser, role };
@@ -35,7 +25,7 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
     const email = legacyUser.email ?? "";
     const appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
     const grantedRole: PlatformRole =
-      legacyUser.role === "admin" || isEnvAdmin(legacyUser.email, legacyUser.name)
+      legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name)
         ? "admin"
         : "broker";
     req.user = {
