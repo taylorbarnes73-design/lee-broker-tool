@@ -2,8 +2,18 @@ import type { RequestHandler } from "express";
 import { resolvePlatformUserFromRequest, findAppUserByUsernameOrEmail } from "../auth/platformSession";
 import { sendAdminError } from "./adminErrors";
 import { sdk } from "../_core/sdk";
+import { ENV } from "../_core/env";
 import { getDb } from "../db";
 import type { PlatformAuthUser } from "../auth/platformAuthTypes";
+
+function isEnvAdmin(email: string | null | undefined, fullName: string | null | undefined): boolean {
+  const emailLower = (email ?? "").trim().toLowerCase();
+  const nameLower = (fullName ?? "").trim().toLowerCase();
+  return (
+    (emailLower.length > 0 && ENV.localAdminEmails.includes(emailLower)) ||
+    (nameLower.length > 0 && ENV.localAdminNames.includes(nameLower))
+  );
+}
 
 /** Admin REST API: 401/403 use `{ error: { code, message } }` shape. */
 export const requirePlatformAdmin: RequestHandler = async (req, res, next) => {
@@ -13,8 +23,9 @@ export const requirePlatformAdmin: RequestHandler = async (req, res, next) => {
   const platformUser = await resolvePlatformUserFromRequest(req);
   if (platformUser) {
     isAuthenticated = true;
-    if (platformUser.role === "admin") {
-      req.user = platformUser;
+    // Accept if app_users.role is admin OR email/name is in the ENV admin override list.
+    if (platformUser.role === "admin" || isEnvAdmin(platformUser.email, platformUser.fullName)) {
+      req.user = { ...platformUser, role: "admin" };
       next();
       return;
     }
@@ -25,7 +36,7 @@ export const requirePlatformAdmin: RequestHandler = async (req, res, next) => {
   try {
     const legacyUser = await sdk.authenticateRequest(req);
     isAuthenticated = true;
-    if (legacyUser.role === "admin") {
+    if (legacyUser.role === "admin" || isEnvAdmin(legacyUser.email, legacyUser.name)) {
       const db = await getDb();
       const email = legacyUser.email ?? "";
       const appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;

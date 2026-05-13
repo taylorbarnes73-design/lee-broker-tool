@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod/v4";
+import { eq } from "drizzle-orm";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import {
   findBrokerDirectoryEntry,
@@ -9,6 +10,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { localAuth, sdk } from "./_core/sdk";
 import { ENV } from "./_core/env";
 import { getDb, upsertUser } from "./db";
+import { appUsers } from "../drizzle/schema";
 import {
   handlePlatformPasswordLogin,
   handlePlatformLogout,
@@ -65,14 +67,15 @@ authApiRouter.post("/login", async (req, res) => {
   let isFromDb = false;
 
   let db: Awaited<ReturnType<typeof getDb>> = null;
+  let appUserRecord: Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>> = undefined;
   try {
     db = await getDb();
     if (db) {
-      const appUser = await findAppUserByUsernameOrEmail(db, email);
-      if (appUser && appUser.isActive) {
+      appUserRecord = await findAppUserByUsernameOrEmail(db, email);
+      if (appUserRecord && appUserRecord.isActive) {
         isFromDb = true;
-        name = appUser.fullName || name;
-        role = appUser.role === "admin" ? "admin" : "user";
+        name = appUserRecord.fullName || name;
+        role = appUserRecord.role === "admin" ? "admin" : "user";
       }
     }
   } catch (err) {
@@ -87,11 +90,26 @@ authApiRouter.post("/login", async (req, res) => {
   const openId = localAuth.toLocalOpenId(email);
   if (!isFromDb) {
     name = brokerEntry?.name || name;
+  }
+
+  // Apply ENV admin overrides regardless of whether the user was found in app_users.
+  // This lets LOCAL_ADMIN_EMAILS / LOCAL_ADMIN_NAMES / broker-directory admin flags
+  // grant admin access even if app_users.role was set incorrectly.
+  if (role !== "admin") {
     const isAdminIdentity =
       ENV.localAdminEmails.includes(email) ||
       ENV.localAdminNames.includes(name.trim().toLowerCase()) ||
       (brokerEntry && isBrokerDirectoryAdmin(brokerEntry));
-    role = isAdminIdentity ? "admin" : "user";
+    if (isAdminIdentity) role = "admin";
+  }
+
+  // Auto-fix app_users.role when the resolved role is higher than what's stored.
+  if (role === "admin" && db && appUserRecord && appUserRecord.role !== "admin") {
+    try {
+      await db.update(appUsers).set({ role: "admin" }).where(eq(appUsers.id, appUserRecord.id));
+    } catch (upgradeErr) {
+      console.error("[auth.login] Could not upgrade app_users role to admin:", upgradeErr);
+    }
   }
 
   let sessionToken: string;
