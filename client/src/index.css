@@ -748,6 +748,19 @@
   text-transform: uppercase;
 }
 
+.dealius-subsection-title {
+  margin: 16px 0 10px;
+  color: var(--ink-500);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dealius-subsection-title:first-of-type {
+  margin-top: 0;
+}
+
 .dealius-section-heading-row .dealius-section-title {
   margin-bottom: 0;
 }
@@ -789,12 +802,12 @@
 
 .dealius-table-head.rent,
 .dealius-table-row.rent {
-  grid-template-columns: minmax(90px, 0.7fr) minmax(130px, 1fr) minmax(64px, 0.4fr) 36px;
+  grid-template-columns: minmax(90px, 0.7fr) minmax(130px, 1fr) minmax(64px, 0.4fr) minmax(110px, 0.6fr) 36px;
 }
 
 .dealius-table-head.broker,
 .dealius-table-row.broker {
-  grid-template-columns: minmax(170px, 1.5fr) minmax(120px, 0.8fr) minmax(64px, 0.4fr) 36px;
+  grid-template-columns: minmax(170px, 1.5fr) minmax(120px, 0.8fr) minmax(120px, 0.8fr) minmax(64px, 0.4fr) 36px;
 }
 
 .dealius-table-head.spaces,
@@ -829,6 +842,13 @@
   background: var(--err-100);
   border-color: var(--err-200);
   color: var(--err-700);
+}
+
+.dealius-derived-value {
+  color: var(--ink-500);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .dealius-checklist {

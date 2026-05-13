@@ -192,6 +192,15 @@ function repTypeIdFrom(raw: unknown): number {
   return positiveInt(raw) ?? 4;
 }
 
+function dealTypeIdFrom(raw: unknown, params: { isSale: boolean; isReferral: boolean }): number {
+  const direct = positiveInt(raw);
+  if (direct != null) return direct;
+  const value = str(raw).toLowerCase();
+  if (value.includes("sale") || value.includes("sold") || params.isSale) return 2;
+  if (value.includes("referr") || value.includes("other") || params.isReferral) return 3;
+  return 1;
+}
+
 function isSaleLike(p: Record<string, unknown>): boolean {
   const value = str(p.transactionType ?? p.txnType ?? p.listingTransaction ?? "").toLowerCase();
   return value.includes("sale") || value.includes("sold");
@@ -380,15 +389,24 @@ function normalizeDealEntry(entry: Record<string, unknown>) {
     boolish(entry.representedBothSides || entry.bothSides || entry.brokerRepresentedBothSides) ||
     (brokerSides.some(side => side.includes("listing")) && brokerSides.some(side => side.includes("procur")));
   const repTypeID = isLease && representedBothSides ? 4 : (positiveInt(entry.repTypeID || entry.repType) ?? repTypeIdFrom(entry.representationType));
+  const isReferral = repTypeID === 5;
 
   let dealName = `${dealNamePrefixFromTransaction(entry, isSale)}: ${propertyName || "New Deal"}`;
-  if (repTypeID === 5) {
-    dealName = `Referred: ${propertyName || "New Deal"} ${clientCo} ${clientContactName}`.replace(/\s+/g, " ").trim();
+  if (isReferral) {
+    dealName = `Referred: ${propertyName || "New Deal"}`.replace(/\s+/g, " ").trim();
   }
+  const feePercent = firstFeePercent(entry);
 
   return {
     dealName,
     repTypeID,
+    isReferral,
+    dealTypeID: dealTypeIdFrom(entry.dealTypeID || entry.dealType || entry.transactionType || entry.txnType, {
+      isSale,
+      isReferral,
+    }),
+    dealStatusID: positiveInt(entry.dealStatusID || entry.statusID || entry.dealStatus) ?? 1,
+    probability: num(entry.probability || entry.dealProbability) ?? 100,
     representedBothSides,
     isLease,
     isSale,
@@ -434,9 +452,9 @@ function normalizeDealEntry(entry: Record<string, unknown>) {
     tiPerSF: num(entry.tiPerSF || entry.lTiSF),
     escalation: num(entry.escalation || entry.lEscalations),
     totalConsideration: num(entry.totalConsideration || entry.sPrice || entry.lConsideration || entry.salePrice),
-    feePercent: firstFeePercent(entry),
+    feePercent: isReferral ? feePercent ?? 100 : feePercent,
     paymentDate: entry.paymentDate,
-    paymentAmount: num(entry.paymentAmount),
+    paymentAmount: num(entry.paymentAmount || entry.commissionAmount || entry.referralFee || entry.totalInvoice || entry.invoiceAmount),
     rentRows: asRentRows(entry.rentRows || entry.rentSchedule),
     brokers: brokersRaw.length ? brokersRaw : fallbackBrokers,
   };
@@ -505,6 +523,10 @@ export function validateDealEntryForDealiusPush(entry: Record<string, unknown>):
   if (!d.city) errors.push("Missing city.");
   if (!d.zip) errors.push("Missing zip.");
   if (!d.dealName) errors.push("Missing deal name.");
+  if (!d.clientCo) errors.push("Missing client company.");
+  if (!d.dealTypeID) errors.push("Missing deal type.");
+  if (!d.dealStatusID) errors.push("Missing deal status.");
+  if (d.probability == null) errors.push("Missing probability.");
   // Referred / other deals (repTypeID 5) do not require a fee percent or rent schedule.
   if (d.repTypeID !== 5) {
     if (d.feePercent == null || d.feePercent <= 0) errors.push("Missing fee percent.");
@@ -808,11 +830,15 @@ export async function pushDealEntryToDealius(params: { entry: Record<string, unk
   const dealPayload = omitEmpty({
     DealName: d.dealName,
     RepresentationTypeID: d.repTypeID,
+    DealTypeID: d.dealTypeID,
+    DealStatusID: d.dealStatusID,
+    Probability: d.probability,
     SpaceTypeID: d.propertyTypeID,
     EstimatedCloseDate: estimatedCloseDate,
     PropertyID: propertyID,
     PropertySpaceID: propertySpaceID || undefined,
     ClientID: clientID || undefined,
+    Client: d.clientCo || undefined,
     OppositeSideID: oppositeID || undefined,
     ClientRepFee: d.feePercent ?? undefined,
     OppositeSideRepFee: d.feePercent ?? undefined,

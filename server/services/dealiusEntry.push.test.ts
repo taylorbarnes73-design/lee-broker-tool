@@ -398,6 +398,14 @@ describe("pushDealEntryToDealius — financial PUT failure reporting", () => {
       reply: () => ({ status: 200, data: { PropertySpaceID: 4444 } }),
     });
     currentClient.routes.push({
+      match: c => c.method === "GET" && c.path.startsWith("/companies?"),
+      reply: () => ({ status: 200, data: { Data: [] } }),
+    });
+    currentClient.routes.push({
+      match: c => c.method === "POST" && c.path === "/companies",
+      reply: () => ({ status: 200, data: { CompanyID: 5511 } }),
+    });
+    currentClient.routes.push({
       match: c => c.method === "POST" && c.path === "/deals",
       reply: () => ({ status: 200, data: { DealID: 333111 } }),
     });
@@ -415,6 +423,7 @@ describe("pushDealEntryToDealius — financial PUT failure reporting", () => {
         zip: "92618",
         transactionType: "Sale",
         representationType: "Seller Rep",
+        clientCo: "Client LLC",
         feePercent: 3,
         sqft: 1000,
       },
@@ -428,6 +437,81 @@ describe("pushDealEntryToDealius — financial PUT failure reporting", () => {
 // pushListingEntryToDealius — sanity end-to-end happy path.
 // Confirms that the camelCase `data: { listingId }` wrapper resolves to a real id.
 // ──────────────────────────────────────────────────────────────────────────────
+describe("pushDealEntryToDealius - referral deals", () => {
+  it("canonicalizes referral name and sends flat commission amount with 100% internal fee", async () => {
+    currentClient.routes.push({
+      match: c => c.method === "POST" && c.path === "/properties",
+      reply: () => ({ status: 200, data: { PropertyID: 90421 } }),
+    });
+    currentClient.routes.push({
+      match: c => c.method === "POST" && /\/properties\/\d+\/spaces/.test(c.path),
+      reply: () => ({ status: 200, data: { PropertySpaceID: 4444 } }),
+    });
+    currentClient.routes.push({
+      match: c => c.method === "GET" && c.path.startsWith("/companies?"),
+      reply: () => ({ status: 200, data: { Data: [] } }),
+    });
+    currentClient.routes.push({
+      match: c => c.method === "POST" && c.path === "/companies",
+      reply: () => ({ status: 200, data: { CompanyID: 5511 } }),
+    });
+    currentClient.routes.push({
+      match: c => c.method === "POST" && c.path === "/deals",
+      reply: () => ({ status: 200, data: { DealID: 333111 } }),
+    });
+    currentClient.routes.push({
+      match: c => c.method === "PUT" && c.path === "/deals",
+      reply: () => ({ status: 200, data: { Success: true } }),
+    });
+    currentClient.routes.push({
+      match: c => c.method === "POST" && c.path === "/deals/brokers",
+      reply: () => ({ status: 200, data: { Success: true } }),
+    });
+
+    const result = await pushDealEntryToDealius({
+      entry: {
+        dealName: "Referred: 1652 Deere Ave. SEBCO Extra",
+        address: "1652 Deere Ave.",
+        city: "Irvine",
+        zip: "92606",
+        transactionType: "Referral",
+        repTypeID: 5,
+        clientCo: "SEBCO",
+        sqft: 15802,
+        paymentAmount: 10307.88,
+        brokers: [{ name: "WEST, THOMAS", pct: 1, lead: true }],
+      },
+    });
+
+    expect(result.dealName).toBe("Referred: 1652 Deere Ave.");
+
+    const createPayload = currentClient.calls.find(c => c.method === "POST" && c.path === "/deals")?.data as any;
+    expect(createPayload).toMatchObject({
+      DealName: "Referred: 1652 Deere Ave.",
+      RepresentationTypeID: 5,
+      DealTypeID: 3,
+      DealStatusID: 1,
+      Probability: 100,
+      ClientID: 5511,
+      Client: "SEBCO",
+      ClientRepFee: 100,
+      OppositeSideRepFee: 100,
+      PaymentAmount: 10307.88,
+    });
+
+    const financialPayload = currentClient.calls.find(c => c.method === "PUT" && c.path === "/deals")?.data as any;
+    expect(financialPayload).toMatchObject({
+      DealName: "Referred: 1652 Deere Ave.",
+      ClientRepFee: 100,
+      OppositeSideRepFee: 100,
+      PaymentAmount: 10307.88,
+    });
+
+    const brokerPayload = currentClient.calls.find(c => c.method === "POST" && c.path === "/deals/brokers")?.data as any;
+    expect(brokerPayload.DealBrokers[0]).toMatchObject({ Commission: 100 });
+  });
+});
+
 describe("pushListingEntryToDealius — end-to-end happy path", () => {
   it("creates property, spaces, and listing; resolves listingId from camelCase wrapper", async () => {
     currentClient.routes.push({

@@ -46,6 +46,8 @@ export type ParsedLeeVoucherExcel = {
   totalConsideration?: number | null;
   /** Commission % from voucher (same cell as legacy `saleCommPct` — used for lease + sale). */
   saleCommPct: number | null;
+  /** Flat commission / referral amount from voucher financials. */
+  paymentAmount?: number | null;
   rentRows: VoucherExcelRentRow[];
   brokers: VoucherExcelBrokerRow[];
   outsideBrokers: Array<{ name: string; amt: number }>;
@@ -182,6 +184,13 @@ function saleCommPctFrom431(ws: WorkSheet, rows: unknown[][]): number | null {
   return null;
 }
 
+function firstPositiveNumber(values: Array<number | null | undefined>): number | null {
+  for (const n of values) {
+    if (n != null && n > 0) return n;
+  }
+  return null;
+}
+
 /** Parse first worksheet as row matrix (same as legacy `sheet_to_json(..., { header: 1 })`). */
 export function readVoucherRowsFromExcelBuffer(buffer: Buffer): unknown[][] {
   const wb = XLSX.read(buffer, { type: "buffer", cellDates: true });
@@ -307,13 +316,18 @@ function parseLeeVoucherGridInternal(rows: unknown[][], ws: WorkSheet | null, la
   const totalConsideration = v431
     ? gn(rows, 35, 12) ?? gn(rows, 35, 13) ?? (ws ? readWorksheetCellNum(ws, "M36") : null)
     : gn(rows, 35, 12);
-  const saleCommPct = v431 && ws ? saleCommPctFrom431(ws, rows) : gn(rows, 42, 12);
 
   const rentRows: VoucherExcelRentRow[] = [];
+  const leaseCommissionRates: number[] = [];
   const rentEnd = v431 ? 70 : 66;
   for (let r = 52; r <= rentEnd; r++) {
+    const rateLabel = g(rows, r, 10).toLowerCase();
+    if (rateLabel.includes("comm due")) continue;
+
     const monthly = gn(rows, r, 0);
     let months = gn(rows, r, 3);
+    const commissionRate = gn(rows, r, 10);
+    if (commissionRate != null && commissionRate > 0) leaseCommissionRates.push(commissionRate);
     if (v431 && ws && monthly != null && monthly > 0 && (months == null || months <= 0)) {
       const fromCell = readWorksheetCellNum(ws, XLSX.utils.encode_cell({ r, c: 3 }));
       if (fromCell != null && fromCell > 0) months = fromCell;
@@ -325,6 +339,21 @@ function parseLeeVoucherGridInternal(rows: unknown[][], ws: WorkSheet | null, la
   }
   const rentMonthSum = rentRows.reduce((s, r) => s + (r.months || 0), 0);
   const term = termRaw || (rentMonthSum > 0 ? rentMonthSum : null);
+  const saleCommPct =
+    firstPositiveNumber([
+      v431 && ws ? saleCommPctFrom431(ws, rows) : gn(rows, 42, 12),
+      ...leaseCommissionRates,
+    ]) ?? null;
+  const paymentAmount =
+    isReferral
+      ? firstPositiveNumber([
+          gn(rows, 73, 11), // Consulting/Referral flat fee.
+          gn(rows, 75, 11), // TOTAL INVOICE.
+          gn(rows, 117, 11), // Commission distribution invoice total.
+          gn(rows, 119, 11), // Gross dollars to distribute.
+          gn(rows, 136, 1), // Summary invoice amount.
+        ])
+      : null;
 
   const brokers: VoucherExcelBrokerRow[] = [];
   for (let r = 123; r <= 129; r++) {
@@ -393,6 +422,7 @@ function parseLeeVoucherGridInternal(rows: unknown[][], ws: WorkSheet | null, la
     term,
     totalConsideration: totalConsideration ?? undefined,
     saleCommPct,
+    paymentAmount,
     rentRows,
     brokers,
     outsideBrokers,
@@ -420,6 +450,7 @@ export function parseLeeVoucherGrid(rows: unknown[][]): ParsedLeeVoucherExcel {
 /** Maps parsed voucher grid into submission / Dealius-push payload fields. */
 export function submissionPayloadPatchFromParsedVoucher(parsed: ParsedLeeVoucherExcel): Record<string, unknown> {
   const fee = parsed.saleCommPct != null && parsed.saleCommPct > 0 ? parsed.saleCommPct : null;
+  const isReferral = parsed.repTypeID === 5;
   const brokersForApi = parsed.brokers.map(b => ({
     name: b.name,
     pct: b.pct,
@@ -459,9 +490,12 @@ export function submissionPayloadPatchFromParsedVoucher(parsed: ParsedLeeVoucher
     occupancyDate: parsed.occupancyDate,
     term: parsed.term,
     totalConsideration: parsed.totalConsideration,
+    paymentAmount: parsed.paymentAmount,
+    commissionAmount: parsed.paymentAmount,
     saleCommPct: parsed.saleCommPct,
     commissionRate: fee != null ? String(fee) : undefined,
-    feePercent: fee ?? undefined,
+    feePercent: isReferral ? 100 : fee ?? undefined,
+    internalFeePercent: isReferral ? 100 : fee ?? undefined,
     rentRows: parsed.rentRows,
     brokers: brokersForApi,
     outsideBrokers: parsed.outsideBrokers,
