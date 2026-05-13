@@ -5,7 +5,7 @@ import { sdk } from "../_core/sdk";
 import { getDb } from "../db";
 
 export const requireAuth: RequestHandler = async (req, res, next) => {
-  // Try platform session first (lbt_session cookie)
+  // 1. Try platform session (lbt_session cookie)
   const platformUser = await resolvePlatformUserFromRequest(req);
   if (platformUser) {
     req.user = platformUser;
@@ -13,7 +13,8 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
     return;
   }
 
-  // Fall back to legacy JWT session (broker-directory login without an app_users record)
+  // 2. Try legacy JWT session (app_session_id cookie) — covers users who logged in
+  //    via the email-only form and have no app_users record, or whose lbt_session expired.
   try {
     const legacyUser = await sdk.authenticateRequest(req);
     const db = await getDb();
@@ -30,7 +31,7 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
     next();
     return;
   } catch {
-    // JWT auth also failed — fall through to 401
+    // JWT auth failed or cookie not present
   }
 
   res.status(401).json({ error: "Not authenticated" });
