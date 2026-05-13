@@ -26,9 +26,6 @@ type DealiusEntry = {
   entryMode: EntryMode;
   dealName: string;
   listingName: string;
-  dealTypeID: number | string;
-  dealStatusID: number | string;
-  probability: number | string;
   repTypeID: string;
   transactionType: string;
   listingTransaction: string;
@@ -177,6 +174,17 @@ function canonicalDealName(transactionType: unknown, address: unknown, suite: un
   return `${dealNamePrefixFromTransaction(transactionType)}: ${propertyName}`;
 }
 
+function representationLabelFromId(raw: unknown): string {
+  const map: Record<string, string> = {
+    "1": "Buyer Rep",
+    "2": "Seller Rep",
+    "3": "Tenant Rep",
+    "4": "Landlord Rep",
+    "5": "Other / Referred Rep",
+  };
+  return (map[str(raw)] ?? str(raw)) || "Missing";
+}
+
 function isLeaseTransaction(raw: unknown) {
   const value = str(raw).toLowerCase();
   return value.includes("lease") || value.includes("renew");
@@ -305,9 +313,6 @@ function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
     entryMode: isListing ? "listing" : "deal",
     dealName: canonicalDealName(transactionType, address, suite, repTypeID),
     listingName: str(p.listingName || p.dealName) || address || "New Listing",
-    dealTypeID: compactNumber(p.dealTypeID || p.dealType) || (transactionType === "Sale" ? "2" : String(repTypeID) === "5" ? "3" : "1"),
-    dealStatusID: compactNumber(p.dealStatusID || p.statusID || p.dealStatus) || "1",
-    probability: compactNumber(p.probability || p.dealProbability) || "100",
     repTypeID,
     transactionType,
     listingTransaction: listingTransaction || transactionType.toLowerCase(),
@@ -424,9 +429,8 @@ export default function DealiusSubmissionWorkspace({
     ];
     if (entry.entryMode === "deal") {
       rows.push({ label: "Client company", ok: Boolean(entry.clientCo), detail: entry.clientCo || "Missing" });
-      rows.push({ label: "Deal type", ok: Boolean(num(entry.dealTypeID)), detail: entry.dealTypeID ? `${entry.dealTypeID}` : "Missing" });
-      rows.push({ label: "Deal status", ok: Boolean(num(entry.dealStatusID)), detail: entry.dealStatusID ? `${entry.dealStatusID}` : "Missing" });
-      rows.push({ label: "Probability", ok: num(entry.probability) != null, detail: entry.probability ? `${entry.probability}%` : "Missing" });
+      rows.push({ label: "Representation", ok: Boolean(entry.repTypeID), detail: representationLabelFromId(entry.repTypeID) });
+      rows.push({ label: "Transaction", ok: Boolean(entry.transactionType), detail: entry.transactionType || "Missing" });
       if (isReferred) {
         rows.push({
           label: "Commission amount",
@@ -456,9 +460,6 @@ export default function DealiusSubmissionWorkspace({
       if (next.entryMode === "deal" && ("transactionType" in patch || "address" in patch || "suite" in patch || "entryMode" in patch || "repTypeID" in patch || "clientCo" in patch || "clientContactName" in patch)) {
         next.dealName = canonicalDealName(next.transactionType, next.address, next.suite, next.repTypeID);
         if (String(next.repTypeID) === "5" && !num(next.feePercent)) next.feePercent = "100";
-        if ("transactionType" in patch || "repTypeID" in patch) {
-          next.dealTypeID = next.transactionType === "Sale" ? "2" : String(next.repTypeID) === "5" ? "3" : "1";
-        }
       }
       return next;
     });
@@ -762,15 +763,6 @@ export default function DealiusSubmissionWorkspace({
                   onChange={(e: any) => patchEntry({ transactionType: e.target.value })}
                   options={["Lease", "Sale", "Consulting", "Renewal"]}
                 />
-              </Field>
-              <Field label="Deal type ID">
-                <Input type="number" value={entry.dealTypeID} onChange={(e: any) => patchEntry({ dealTypeID: e.target.value })} />
-              </Field>
-              <Field label="Deal status ID">
-                <Input type="number" value={entry.dealStatusID} onChange={(e: any) => patchEntry({ dealStatusID: e.target.value })} />
-              </Field>
-              <Field label="Probability">
-                <Input type="number" value={entry.probability} onChange={(e: any) => patchEntry({ probability: e.target.value })} suffix="%" />
               </Field>
             </>
           )}

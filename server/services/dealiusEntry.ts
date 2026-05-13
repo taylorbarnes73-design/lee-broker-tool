@@ -406,7 +406,7 @@ function normalizeDealEntry(entry: Record<string, unknown>) {
       isReferral,
     }),
     dealStatusID: positiveInt(entry.dealStatusID || entry.statusID || entry.dealStatus) ?? 1,
-    probability: num(entry.probability || entry.dealProbability) ?? 100,
+    probability: 100,
     representedBothSides,
     isLease,
     isSale,
@@ -524,9 +524,6 @@ export function validateDealEntryForDealiusPush(entry: Record<string, unknown>):
   if (!d.zip) errors.push("Missing zip.");
   if (!d.dealName) errors.push("Missing deal name.");
   if (!d.clientCo) errors.push("Missing client company.");
-  if (!d.dealTypeID) errors.push("Missing deal type.");
-  if (!d.dealStatusID) errors.push("Missing deal status.");
-  if (d.probability == null) errors.push("Missing probability.");
   // Referred / other deals (repTypeID 5) do not require a fee percent or rent schedule.
   if (d.repTypeID !== 5) {
     if (d.feePercent == null || d.feePercent <= 0) errors.push("Missing fee percent.");

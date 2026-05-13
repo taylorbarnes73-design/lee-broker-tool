@@ -13,9 +13,6 @@ type DealiusEntry = {
   entryMode: EntryMode;
   dealName: string;
   listingName: string;
-  dealTypeID: number | string;
-  dealStatusID: number | string;
-  probability: number | string;
   repTypeID: string;
   transactionType: string;
   listingTransaction: string;
@@ -139,15 +136,23 @@ function canonicalDealName(transactionType: unknown, address: unknown, suite: un
   return `${dealNamePrefixFromTransaction(transactionType)}: ${propertyName}`;
 }
 
+function representationLabelFromId(raw: unknown): string {
+  const map: Record<string, string> = {
+    "1": "Buyer Rep",
+    "2": "Seller Rep",
+    "3": "Tenant Rep",
+    "4": "Landlord Rep",
+    "5": "Other / Referred Rep",
+  };
+  return (map[str(raw)] ?? str(raw)) || "Missing";
+}
+
 function emptyEntry(mode: EntryMode): DealiusEntry {
   const today = new Date().toISOString().slice(0, 10);
   return {
     entryMode: mode,
     dealName: "New Deal",
     listingName: "New Listing",
-    dealTypeID: mode === "deal" ? "1" : "",
-    dealStatusID: mode === "deal" ? "1" : "",
-    probability: mode === "deal" ? "100" : "",
     repTypeID: "4",
     transactionType: "Lease",
     listingTransaction: "lease",
@@ -266,9 +271,8 @@ export default function PortalAdminDealiusTools() {
     ];
     if (entry.entryMode === "deal") {
       rows.push({ label: "Client company", ok: Boolean(entry.clientCo), detail: entry.clientCo || "Missing" });
-      rows.push({ label: "Deal type", ok: Boolean(num(entry.dealTypeID)), detail: entry.dealTypeID ? `${entry.dealTypeID}` : "Missing" });
-      rows.push({ label: "Deal status", ok: Boolean(num(entry.dealStatusID)), detail: entry.dealStatusID ? `${entry.dealStatusID}` : "Missing" });
-      rows.push({ label: "Probability", ok: num(entry.probability) != null, detail: entry.probability ? `${entry.probability}%` : "Missing" });
+      rows.push({ label: "Representation", ok: Boolean(entry.repTypeID), detail: representationLabelFromId(entry.repTypeID) });
+      rows.push({ label: "Transaction", ok: Boolean(entry.transactionType), detail: entry.transactionType || "Missing" });
       if (isReferred) {
         rows.push({
           label: "Commission amount",
@@ -304,9 +308,6 @@ export default function PortalAdminDealiusTools() {
       ) {
         next.dealName = canonicalDealName(next.transactionType, next.address, next.suite, next.repTypeID);
         if (String(next.repTypeID) === "5" && !num(next.feePercent)) next.feePercent = "100";
-        if ("transactionType" in patch || "repTypeID" in patch) {
-          next.dealTypeID = next.transactionType === "Sale" ? "2" : String(next.repTypeID) === "5" ? "3" : "1";
-        }
       }
       return next;
     });
@@ -359,7 +360,6 @@ export default function PortalAdminDealiusTools() {
       if (Array.isArray(patch.brokers)) next.brokers = normalizeBrokers(patch.brokers);
       if (Array.isArray(patch.spaces)) next.spaces = patch.spaces as ListingSpaceRow[];
       if (next.entryMode === "deal") {
-        next.dealTypeID = next.transactionType === "Sale" ? "2" : String(next.repTypeID) === "5" ? "3" : "1";
         if (String(next.repTypeID) === "5" && !num(next.feePercent)) next.feePercent = "100";
       }
       next = syncListingTransactionFields(next);
@@ -600,15 +600,6 @@ export default function PortalAdminDealiusTools() {
                     onChange={(e: any) => patchEntry({ transactionType: e.target.value })}
                     options={["Lease", "Sale", "Consulting", "Renewal"]}
                   />
-                </Field>
-                <Field label="Deal type ID">
-                  <Input type="number" value={entry.dealTypeID} onChange={(e: any) => patchEntry({ dealTypeID: e.target.value })} />
-                </Field>
-                <Field label="Deal status ID">
-                  <Input type="number" value={entry.dealStatusID} onChange={(e: any) => patchEntry({ dealStatusID: e.target.value })} />
-                </Field>
-                <Field label="Probability">
-                  <Input type="number" value={entry.probability} onChange={(e: any) => patchEntry({ probability: e.target.value })} suffix="%" />
                 </Field>
               </>
             )}
