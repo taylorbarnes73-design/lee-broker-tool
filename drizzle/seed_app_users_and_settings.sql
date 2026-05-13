@@ -69,7 +69,6 @@ ON DUPLICATE KEY UPDATE
   `username` = VALUES(`username`),
   `full_name` = VALUES(`full_name`),
   `role` = VALUES(`role`),
-  `password_hash` = VALUES(`password_hash`),
   `is_active` = VALUES(`is_active`),
   `updated_at` = UTC_TIMESTAMP(3);
 
