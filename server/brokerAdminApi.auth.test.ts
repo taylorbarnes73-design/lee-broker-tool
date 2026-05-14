@@ -54,7 +54,7 @@ describe("broker admin REST auth", () => {
     expect(res.body).toMatchObject({ success: false, error: "Database unavailable" });
   });
 
-  it("allows office admins whose legacy session resolves to a Lee username", async () => {
+  it("allows username-based admins through legacy sessions", async () => {
     vi.mocked(sdk.authenticateRequest).mockResolvedValue({
       id: 1,
       openId: "local:tbarnes@external.test",
