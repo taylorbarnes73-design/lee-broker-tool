@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod/v4";
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { getDb } from "./db";
 import { brokerAdminRequests, uploads } from "../drizzle/schema";
 import { requireAuth, requireRole } from "./middleware/requireAuth";
@@ -19,9 +19,22 @@ brokerAdminApiRouter.get("/requests", async (req, res) => {
   const q = String(req.query.q ?? "").trim().toLowerCase();
 
   let rows = await db
-    .select()
+    .select({
+      id: brokerAdminRequests.id,
+      title: brokerAdminRequests.title,
+      status: brokerAdminRequests.status,
+      owner: brokerAdminRequests.owner,
+      category: brokerAdminRequests.category,
+      confidential: brokerAdminRequests.confidential,
+      fromEmail: brokerAdminRequests.fromEmail,
+      receivedAt: brokerAdminRequests.receivedAt,
+      reference: brokerAdminRequests.reference,
+      createdAt: brokerAdminRequests.createdAt,
+      updatedAt: brokerAdminRequests.updatedAt,
+      attachmentsSummary: brokerAdminRequests.attachmentsSummary,
+    })
     .from(brokerAdminRequests)
-    .orderBy(desc(brokerAdminRequests.createdAt))
+    .orderBy(desc(brokerAdminRequests.id))
     .limit(limit);
 
   if (status) rows = rows.filter(r => r.status === status);
@@ -47,26 +60,27 @@ brokerAdminApiRouter.get("/stats", async (req, res) => {
   const staleMs = staleDays * 24 * 60 * 60 * 1000;
   const staleBefore = new Date(Date.now() - staleMs);
 
-  const counts = await db
-    .select({
-      status: brokerAdminRequests.status,
-      count: sql<number>`count(*)`,
-    })
-    .from(brokerAdminRequests)
-    .groupBy(brokerAdminRequests.status);
-
-  const stale = await db
+  const recent = await db
     .select({
       id: brokerAdminRequests.id,
-      title: brokerAdminRequests.title,
       status: brokerAdminRequests.status,
       owner: brokerAdminRequests.owner,
       createdAt: brokerAdminRequests.createdAt,
+      updatedAt: brokerAdminRequests.updatedAt,
+      title: brokerAdminRequests.title,
     })
     .from(brokerAdminRequests)
-    .where(sql`${brokerAdminRequests.updatedAt} < ${staleBefore}`)
-    .orderBy(desc(brokerAdminRequests.updatedAt))
-    .limit(50);
+    .orderBy(desc(brokerAdminRequests.id))
+    .limit(500);
+
+  const countsByStatus = new Map<string, number>();
+  for (const row of recent) {
+    countsByStatus.set(row.status, (countsByStatus.get(row.status) ?? 0) + 1);
+  }
+  const counts = [...countsByStatus.entries()].map(([status, count]) => ({ status, count }));
+  const stale = recent
+    .filter(row => row.updatedAt && new Date(row.updatedAt).getTime() < staleBefore.getTime())
+    .slice(0, 50);
 
   res.json({
     success: true,

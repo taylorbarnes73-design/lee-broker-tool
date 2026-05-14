@@ -1,15 +1,53 @@
 import type { RequestHandler } from "express";
-import { resolvePlatformUserFromRequest } from "../auth/platformSession";
+import { resolvePlatformUserFromRequest, findAppUserByUsernameOrEmail } from "../auth/platformSession";
 import type { PlatformAuthUser, PlatformRole } from "../auth/platformAuthTypes";
+import { sdk } from "../_core/sdk";
+import { getDb } from "../db";
+import { isAdminByPolicy } from "../auth/isAdminByPolicy";
 
 export const requireAuth: RequestHandler = async (req, res, next) => {
-  const user = await resolvePlatformUserFromRequest(req);
-  if (!user) {
-    res.status(401).json({ error: "Not authenticated" });
+  // 1. Try platform session (lbt_session cookie)
+  const platformUser = await resolvePlatformUserFromRequest(req);
+  if (platformUser) {
+    const role: PlatformRole =
+      platformUser.role === "admin" || isAdminByPolicy(platformUser.email, platformUser.fullName, platformUser.username)
+        ? "admin"
+        : platformUser.role;
+    req.user = { ...platformUser, role };
+    next();
     return;
   }
-  req.user = user;
-  next();
+
+  // 2. Try legacy JWT session (app_session_id cookie)
+  try {
+    const legacyUser = await sdk.authenticateRequest(req);
+    const email = legacyUser.email ?? "";
+    let appUser: Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>> | null = null;
+    try {
+      const db = await getDb();
+      appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
+    } catch (error) {
+      console.error("[requireAuth] Could not resolve platform user for legacy session:", error);
+    }
+    const grantedRole: PlatformRole =
+      legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name, appUser?.username)
+        ? "admin"
+        : "broker";
+    req.user = {
+      id: appUser?.id ?? String(legacyUser.id),
+      email,
+      username: appUser?.username ?? email,
+      fullName: appUser?.fullName ?? legacyUser.name ?? "",
+      role: grantedRole,
+      office: appUser?.office ?? null,
+    };
+    next();
+    return;
+  } catch {
+    // JWT auth failed or cookie not present
+  }
+
+  res.status(401).json({ error: "Not authenticated" });
 };
 
 export function requireRole(...allowedRoles: PlatformRole[]): RequestHandler {

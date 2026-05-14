@@ -8,6 +8,7 @@ describe("validateVoucherPayloadForDealiusPush", () => {
       address: "1 Main",
       city: "Irvine",
       zip: "92618",
+      clientCo: "Client LLC",
       representationType: "Tenant Rep",
       feePercent: 6,
       rentRows: [{ months: 12, monthly: 1000, free: false }],
@@ -20,6 +21,7 @@ describe("validateVoucherPayloadForDealiusPush", () => {
       address: "1 Main",
       city: "Irvine",
       zip: "92618",
+      clientCo: "Client LLC",
       representationType: "Tenant Rep",
       rentRows: [{ months: 12, monthly: 1000, free: false }],
     });
@@ -32,6 +34,7 @@ describe("validateVoucherPayloadForDealiusPush", () => {
       address: "1 Main",
       city: "Irvine",
       zip: "92618",
+      clientCo: "Client LLC",
       transactionType: "Lease",
       feePercent: 5,
       rentRows: [],
@@ -45,6 +48,7 @@ describe("validateVoucherPayloadForDealiusPush", () => {
       address: "1 Main",
       city: "Irvine",
       zip: "92618",
+      clientCo: "Client LLC",
       transactionType: "Sale",
       representationType: "Seller Rep",
       feePercent: 3,
@@ -58,11 +62,26 @@ describe("validateDealEntryForDealiusPush", () => {
     const r = validateDealEntryForDealiusPush({
       dealName: "Leased: 1 Main St",
       address: "1 Main St, Irvine CA 92618",
+      clientCo: "Client LLC",
       transactionType: "Lease",
       feePercent: "6",
       rentRows: [{ months: "12", monthly: "1000", free: false }],
     });
 
+    expect(r).toEqual({ ok: true });
+  });
+
+  it("accepts referred deals without rent rows and uses the referral amount path", () => {
+    const r = validateVoucherPayloadForDealiusPush({
+      address: "1652 Deere Ave.",
+      city: "Irvine",
+      zip: "92606",
+      clientCo: "SEBCO",
+      transactionType: "Referral",
+      repTypeID: 5,
+      sqft: 15802,
+      paymentAmount: 10307.88,
+    });
     expect(r).toEqual({ ok: true });
   });
 });

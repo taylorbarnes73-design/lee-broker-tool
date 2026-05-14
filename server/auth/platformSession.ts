@@ -7,6 +7,7 @@ import { parse as parseCookieHeader } from "cookie";
 import type { PlatformAuthUser, PlatformRole } from "./platformAuthTypes";
 import { LBT_SESSION_COOKIE, LBT_SESSION_MAX_AGE_MS } from "./constants";
 import { getRequestIp } from "./requestIp";
+import { isAdminByPolicy } from "./isAdminByPolicy";
 
 type AppDb = NonNullable<Awaited<ReturnType<typeof getDb>>>;
 
@@ -39,12 +40,17 @@ export async function findAppUserByUsernameOrEmail(
 }
 
 export function toPlatformAuthUser(row: typeof appUsers.$inferSelect): PlatformAuthUser {
+  const role: PlatformRole =
+    row.role === "admin" || isAdminByPolicy(row.email, row.fullName, row.username)
+      ? "admin"
+      : (row.role as PlatformRole);
+
   return {
     id: row.id,
     email: row.email,
     username: row.username,
     fullName: row.fullName,
-    role: row.role as PlatformRole,
+    role,
     office: row.office ?? null,
   };
 }

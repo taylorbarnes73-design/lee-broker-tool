@@ -19,9 +19,11 @@ export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>;
 export type CreateUserBody = z.infer<typeof createUserBodySchema>;
 export type PatchUserBody = z.infer<typeof patchUserBodySchema>;
 
-function iso(d: Date | null | undefined): string | null {
+function iso(d: Date | string | number | null | undefined): string | null {
   if (!d) return null;
-  return d.toISOString();
+  if (d instanceof Date) return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  const parsed = new Date(d);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
 
 function publicUser(row: {
@@ -34,7 +36,7 @@ function publicUser(row: {
   phone: string | null;
   isActive: boolean;
   lastLoginAt: Date | null;
-  createdAt: Date;
+  createdAt: Date | string | number;
   createdByName: string | null;
   forcePasswordChangeNextLogin?: boolean;
 }) {

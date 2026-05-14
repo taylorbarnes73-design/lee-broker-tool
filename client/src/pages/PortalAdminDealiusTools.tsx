@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ExternalLink, FileUp, Send, Trash2 } from "lucide-react";
+import { ExternalLink, FileUp, Plus, Send, Trash2 } from "lucide-react";
 import AdminPortalShell from "@/components/AdminPortalShell";
 import { Badge, Button, Field, Input, Select } from "../design/index.jsx";
 
@@ -24,6 +24,10 @@ type DealiusEntry = {
   sqft: number | string;
   totalBldgSF: number | string;
   yearBuilt: number | string;
+  clearHeight: number | string;
+  dhDoors: number | string;
+  glDoors: number | string;
+  numParkingSpaces: number | string;
   clientCo: string;
   oppositeCo: string;
   ownerCompany: string;
@@ -37,6 +41,18 @@ type DealiusEntry = {
   paymentDate: string;
   paymentAmount: number | string;
   clientContactName: string;
+  clientContactEmail: string;
+  clientContactPhone: string;
+  oppositeContactName: string;
+  oppositeContactEmail: string;
+  oppositeContactPhone: string;
+  totalNNN: number | string;
+  propTaxes: number | string;
+  insurance: number | string;
+  opex: number | string;
+  cams: number | string;
+  tiPerSF: number | string;
+  escalation: number | string;
   listingStartDate: string;
   listingExpiryDate: string;
   listingAvailableDate: string;
@@ -72,6 +88,65 @@ function num(raw: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function str(raw: unknown): string {
+  return String(raw ?? "").trim();
+}
+
+function feePercentFrom(raw: unknown): string {
+  const n = num(raw);
+  if (n == null || n <= 0) return "";
+  return String(n <= 1 ? n * 100 : n);
+}
+
+function suiteLabel(raw: unknown): string {
+  const value = str(raw).replace(/\s+/g, " ");
+  if (!value) return "";
+  if (/^(suite|ste\.?|unit|#)\b/i.test(value)) return value.replace(/^ste\.?\b/i, "Ste");
+  return `Ste ${value}`;
+}
+
+function propertyNameFromAddressSuite(address: unknown, suite: unknown): string {
+  const cleanAddress = str(address);
+  const cleanSuite = suiteLabel(suite);
+  if (!cleanAddress) return cleanSuite;
+  if (!cleanSuite) return cleanAddress;
+  const normalizedAddress = cleanAddress.toLowerCase().replace(/[.,]/g, "").replace(/\s+/g, " ");
+  const normalizedSuite = cleanSuite.toLowerCase().replace(/[.,]/g, "").replace(/\s+/g, " ");
+  const suiteNumber = normalizedSuite.replace(/^(suite|ste|unit|#)\s*/, "").trim();
+  if (
+    normalizedAddress.includes(normalizedSuite) ||
+    (suiteNumber && new RegExp(`(^|\\s|#)${suiteNumber.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\s|$)`).test(normalizedAddress))
+  ) {
+    return cleanAddress;
+  }
+  return `${cleanAddress}, ${cleanSuite}`;
+}
+
+function dealNamePrefixFromTransaction(raw: unknown): string {
+  const value = str(raw).toLowerCase();
+  if (value.includes("consult")) return "Consulting";
+  if (value.includes("renew")) return "Renewed";
+  if (value.includes("sale") || value.includes("sold") || value.includes("purchase")) return "Sold";
+  return "Leased";
+}
+
+function canonicalDealName(transactionType: unknown, address: unknown, suite: unknown, repTypeID?: unknown): string {
+  const propertyName = propertyNameFromAddressSuite(address, suite) || "New Deal";
+  if (String(repTypeID) === "5") return `Referred: ${propertyName}`;
+  return `${dealNamePrefixFromTransaction(transactionType)}: ${propertyName}`;
+}
+
+function representationLabelFromId(raw: unknown): string {
+  const map: Record<string, string> = {
+    "1": "Buyer Rep",
+    "2": "Seller Rep",
+    "3": "Tenant Rep",
+    "4": "Landlord Rep",
+    "5": "Other / Referred Rep",
+  };
+  return (map[str(raw)] ?? str(raw)) || "Missing";
+}
+
 function emptyEntry(mode: EntryMode): DealiusEntry {
   const today = new Date().toISOString().slice(0, 10);
   return {
@@ -89,10 +164,19 @@ function emptyEntry(mode: EntryMode): DealiusEntry {
     sqft: "",
     totalBldgSF: "",
     yearBuilt: "",
+    clearHeight: "",
+    dhDoors: "",
+    glDoors: "",
+    numParkingSpaces: "",
     clientCo: "",
     oppositeCo: "",
     ownerCompany: "",
     clientContactName: "",
+    clientContactEmail: "",
+    clientContactPhone: "",
+    oppositeContactName: "",
+    oppositeContactEmail: "",
+    oppositeContactPhone: "",
     startDate: "",
     endDate: "",
     occupancyDate: "",
@@ -102,6 +186,13 @@ function emptyEntry(mode: EntryMode): DealiusEntry {
     feePercent: "",
     paymentDate: "",
     paymentAmount: "",
+    totalNNN: "",
+    propTaxes: "",
+    insurance: "",
+    opex: "",
+    cams: "",
+    tiPerSF: "",
+    escalation: "",
     listingStartDate: today,
     listingExpiryDate: "",
     listingAvailableDate: "",
@@ -119,7 +210,7 @@ function normalizeBrokers(raw: unknown): BrokerRow[] {
   return raw.map((b: Record<string, unknown>, index: number) => ({
     name: String(b?.name ?? ""),
     side: b?.side ? String(b.side) : undefined,
-    pct: b?.pct != null && b?.pct !== "" ? String(b.pct) : "",
+    pct: feePercentFrom(b?.pct ?? b?.percent ?? b?.commissionPct),
     lead: Boolean(b?.lead) || index === 0,
   }));
 }
@@ -178,8 +269,27 @@ export default function PortalAdminDealiusTools() {
       { label: "Zip", ok: Boolean(entry.zip), detail: entry.zip || "Missing" },
       { label: "Square feet", ok: Boolean(num(entry.sqft)) || listingSqft, detail: entry.sqft ? `${entry.sqft}` : listingSqft ? "From spaces" : "Missing" },
     ];
-    if (entry.entryMode === "deal" && !isReferred) {
-      rows.push({ label: "Fee percent", ok: Boolean(num(entry.feePercent)), detail: entry.feePercent ? `${entry.feePercent}%` : "Missing" });
+    if (entry.entryMode === "deal") {
+      rows.push({ label: "Client company", ok: Boolean(entry.clientCo), detail: entry.clientCo || "Missing" });
+      rows.push({ label: "Representation", ok: Boolean(entry.repTypeID), detail: representationLabelFromId(entry.repTypeID) });
+      rows.push({ label: "Transaction", ok: Boolean(entry.transactionType), detail: entry.transactionType || "Missing" });
+      if (isReferred) {
+        rows.push({
+          label: "Commission amount",
+          ok: Boolean(num(entry.paymentAmount)),
+          detail: entry.paymentAmount ? `$${entry.paymentAmount}` : "Missing",
+        });
+        rows.push({ label: "Internal fee", ok: Boolean(num(entry.feePercent)), detail: entry.feePercent ? `${entry.feePercent}%` : "Missing" });
+      } else {
+        rows.push({ label: "Fee percent", ok: Boolean(num(entry.feePercent)), detail: entry.feePercent ? `${entry.feePercent}%` : "Missing" });
+      }
+      if (!isReferred && entry.transactionType === "Lease") {
+        rows.push({
+          label: "Rent schedule",
+          ok: entry.rentRows.some(row => Boolean(num(row.months))),
+          detail: `${entry.rentRows.length} row(s)`,
+        });
+      }
     }
     return rows;
   }, [entry]);
@@ -189,7 +299,39 @@ export default function PortalAdminDealiusTools() {
   const listingID = pushResult?.listingID;
 
   function patchEntry(patch: Partial<DealiusEntry>) {
-    setEntry(current => ({ ...current, ...patch }));
+    setEntry(current => {
+      const next = { ...current, ...patch };
+      if (
+        next.entryMode === "deal" &&
+        !("dealName" in patch) &&
+        ("transactionType" in patch || "address" in patch || "suite" in patch || "repTypeID" in patch || "entryMode" in patch)
+      ) {
+        next.dealName = canonicalDealName(next.transactionType, next.address, next.suite, next.repTypeID);
+        if (String(next.repTypeID) === "5" && !num(next.feePercent)) next.feePercent = "100";
+      }
+      return next;
+    });
+  }
+
+  function patchRent(index: number, patch: Partial<RentRow>) {
+    setEntry(current => ({
+      ...current,
+      rentRows: current.rentRows.map((row, i) => (i === index ? { ...row, ...patch } : row)),
+    }));
+  }
+
+  function patchSpace(index: number, patch: Partial<ListingSpaceRow>) {
+    setEntry(current => ({
+      ...current,
+      spaces: current.spaces.map((row, i) => (i === index ? { ...row, ...patch } : row)),
+    }));
+  }
+
+  function patchBroker(index: number, patch: Partial<BrokerRow>) {
+    setEntry(current => ({
+      ...current,
+      brokers: current.brokers.map((row, i) => (i === index ? { ...row, ...patch } : row)),
+    }));
   }
 
   async function scrapeFromFile(file: File) {
@@ -217,6 +359,9 @@ export default function PortalAdminDealiusTools() {
       if (Array.isArray(patch.rentRows)) next.rentRows = patch.rentRows as RentRow[];
       if (Array.isArray(patch.brokers)) next.brokers = normalizeBrokers(patch.brokers);
       if (Array.isArray(patch.spaces)) next.spaces = patch.spaces as ListingSpaceRow[];
+      if (next.entryMode === "deal") {
+        if (String(next.repTypeID) === "5" && !num(next.feePercent)) next.feePercent = "100";
+      }
       next = syncListingTransactionFields(next);
 
       setEntry(next);
@@ -492,12 +637,25 @@ export default function PortalAdminDealiusTools() {
             <Field label="Year built">
               <Input type="number" value={entry.yearBuilt} onChange={(e: any) => patchEntry({ yearBuilt: e.target.value })} />
             </Field>
+            <Field label="Clear height">
+              <Input type="number" value={entry.clearHeight} onChange={(e: any) => patchEntry({ clearHeight: e.target.value })} />
+            </Field>
+            <Field label="DH doors">
+              <Input type="number" value={entry.dhDoors} onChange={(e: any) => patchEntry({ dhDoors: e.target.value })} />
+            </Field>
+            <Field label="GL doors">
+              <Input type="number" value={entry.glDoors} onChange={(e: any) => patchEntry({ glDoors: e.target.value })} />
+            </Field>
+            <Field label="Parking spaces">
+              <Input type="number" value={entry.numParkingSpaces} onChange={(e: any) => patchEntry({ numParkingSpaces: e.target.value })} />
+            </Field>
           </div>
         </section>
 
         {entry.entryMode === "deal" && (
           <section className="dealius-panel">
             <div className="dealius-section-title">Parties and economics</div>
+            <div className="dealius-subsection-title">Parties</div>
             <div className="dealius-form-grid">
               <Field label="Client company">
                 <Input value={entry.clientCo} onChange={(e: any) => patchEntry({ clientCo: e.target.value })} />
@@ -508,6 +666,25 @@ export default function PortalAdminDealiusTools() {
               <Field label="Client contact">
                 <Input value={entry.clientContactName} onChange={(e: any) => patchEntry({ clientContactName: e.target.value })} />
               </Field>
+              <Field label="Client contact email">
+                <Input type="email" value={entry.clientContactEmail} onChange={(e: any) => patchEntry({ clientContactEmail: e.target.value })} />
+              </Field>
+              <Field label="Client contact phone">
+                <Input value={entry.clientContactPhone} onChange={(e: any) => patchEntry({ clientContactPhone: e.target.value })} />
+              </Field>
+              <Field label="Opposite contact">
+                <Input value={entry.oppositeContactName} onChange={(e: any) => patchEntry({ oppositeContactName: e.target.value })} />
+              </Field>
+              <Field label="Opposite contact email">
+                <Input type="email" value={entry.oppositeContactEmail} onChange={(e: any) => patchEntry({ oppositeContactEmail: e.target.value })} />
+              </Field>
+              <Field label="Opposite contact phone">
+                <Input value={entry.oppositeContactPhone} onChange={(e: any) => patchEntry({ oppositeContactPhone: e.target.value })} />
+              </Field>
+            </div>
+
+            <div className="dealius-subsection-title">Dates</div>
+            <div className="dealius-form-grid">
               <Field label="Start date">
                 <Input type="date" value={entry.startDate} onChange={(e: any) => patchEntry({ startDate: e.target.value })} />
               </Field>
@@ -517,12 +694,19 @@ export default function PortalAdminDealiusTools() {
               <Field label="Term months">
                 <Input type="number" value={entry.term} onChange={(e: any) => patchEntry({ term: e.target.value })} />
               </Field>
-              <Field label="Fee percent">
+              <Field label="Occupancy date">
+                <Input type="date" value={entry.occupancyDate} onChange={(e: any) => patchEntry({ occupancyDate: e.target.value })} />
+              </Field>
+            </div>
+
+            <div className="dealius-subsection-title">Financials</div>
+            <div className="dealius-form-grid">
+              <Field label={String(entry.repTypeID) === "5" ? "Internal fee" : "Fee percent (from voucher)"}>
                 <Input type="number" step="0.01" value={entry.feePercent} onChange={(e: any) => patchEntry({ feePercent: e.target.value })} suffix="%" />
               </Field>
               {String(entry.repTypeID) === "5" && (
                 <>
-                  <Field label="Payment amount">
+                  <Field label="Commission amount">
                     <Input type="number" step="0.01" value={entry.paymentAmount} onChange={(e: any) => patchEntry({ paymentAmount: e.target.value })} prefix="$" />
                   </Field>
                   <Field label="Payment date">
@@ -542,35 +726,27 @@ export default function PortalAdminDealiusTools() {
                   }
                 />
               </Field>
-            </div>
-          </section>
-        )}
-
-        {entry.entryMode === "deal" && (
-          <section className="dealius-panel">
-            <div className="dealius-section-title">Brokers</div>
-            <div className="dealius-form-grid" style={{ gridTemplateColumns: "1fr" }}>
-              {entry.brokers.map((broker, i) => (
-                <div key={i} style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                   <Input value={broker.name} onChange={(e: any) => {
-                     const brokers = [...entry.brokers];
-                     brokers[i].name = e.target.value;
-                     patchEntry({ brokers });
-                   }} placeholder="Broker Name" style={{ flex: 1 }} />
-                   <Input type="number" value={broker.pct} onChange={(e: any) => {
-                     const brokers = [...entry.brokers];
-                     brokers[i].pct = e.target.value;
-                     patchEntry({ brokers });
-                   }} placeholder="%" suffix="%" style={{ width: 100 }} />
-                   <Button variant="secondary" onClick={() => {
-                     const brokers = entry.brokers.filter((_, idx) => idx !== i);
-                     patchEntry({ brokers });
-                   }} aria-label="Remove"><Trash2 size={14}/></Button>
-                </div>
-              ))}
-              <Button type="button" variant="secondary" onClick={() => {
-                 patchEntry({ brokers: [...entry.brokers, { name: "", pct: "", lead: false }] });
-              }}>Add Broker</Button>
+              <Field label="NNN ($/SF/yr)">
+                <Input type="number" step="0.01" value={entry.totalNNN} onChange={(e: any) => patchEntry({ totalNNN: e.target.value })} />
+              </Field>
+              <Field label="Avg escalation">
+                <Input type="number" step="0.01" value={entry.escalation} onChange={(e: any) => patchEntry({ escalation: e.target.value })} suffix="%" />
+              </Field>
+              <Field label="Prop taxes">
+                <Input type="number" step="0.01" value={entry.propTaxes} onChange={(e: any) => patchEntry({ propTaxes: e.target.value })} />
+              </Field>
+              <Field label="Insurance">
+                <Input type="number" step="0.01" value={entry.insurance} onChange={(e: any) => patchEntry({ insurance: e.target.value })} />
+              </Field>
+              <Field label="OPEX">
+                <Input type="number" step="0.01" value={entry.opex} onChange={(e: any) => patchEntry({ opex: e.target.value })} suffix="%" />
+              </Field>
+              <Field label="CAMs">
+                <Input type="number" step="0.01" value={entry.cams} onChange={(e: any) => patchEntry({ cams: e.target.value })} />
+              </Field>
+              <Field label="TI allowance">
+                <Input type="number" step="0.01" value={entry.tiPerSF} onChange={(e: any) => patchEntry({ tiPerSF: e.target.value })} />
+              </Field>
             </div>
           </section>
         )}
@@ -604,6 +780,150 @@ export default function PortalAdminDealiusTools() {
             </div>
           </section>
         )}
+
+        {entry.entryMode === "listing" && (
+          <section className="dealius-panel">
+            <div className="dealius-section-heading-row">
+              <div className="dealius-section-title">Property spaces</div>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                icon={<Plus size={14} />}
+                onClick={() => patchEntry({ spaces: [...entry.spaces, { suite: "", sqft: "", askingRate: "", availableDate: "", comments: "" }] })}
+              >
+                Add space
+              </Button>
+            </div>
+            <div className="dealius-table">
+              <div className="dealius-table-head spaces">
+                <div>Suite</div>
+                <div>SF</div>
+                <div>Rate</div>
+                <div>Available</div>
+                <div>Comments</div>
+                <div />
+              </div>
+              {entry.spaces.map((row, index) => (
+                <div className="dealius-table-row spaces" key={index}>
+                  <Input value={row.suite} onChange={(e: any) => patchSpace(index, { suite: e.target.value })} />
+                  <Input type="number" value={row.sqft} onChange={(e: any) => patchSpace(index, { sqft: e.target.value })} />
+                  <Input type="number" step="0.01" value={row.askingRate ?? ""} onChange={(e: any) => patchSpace(index, { askingRate: e.target.value })} />
+                  <Input value={row.availableDate ?? ""} onChange={(e: any) => patchSpace(index, { availableDate: e.target.value })} />
+                  <Input value={row.comments ?? ""} onChange={(e: any) => patchSpace(index, { comments: e.target.value })} />
+                  <button
+                    type="button"
+                    className="dealius-icon-btn"
+                    onClick={() => patchEntry({ spaces: entry.spaces.filter((_, i) => i !== index) })}
+                    aria-label="Remove listing space"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {entry.entryMode === "deal" && entry.transactionType === "Lease" && String(entry.repTypeID) !== "5" && (
+          <section className="dealius-panel">
+            <div className="dealius-section-heading-row">
+              <div className="dealius-section-title">Rent schedule</div>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                icon={<Plus size={14} />}
+                onClick={() => patchEntry({ rentRows: [...entry.rentRows, { months: "", monthly: "", free: false }] })}
+              >
+                Add row
+              </Button>
+            </div>
+            <div className="dealius-table">
+              <div className="dealius-table-head rent">
+                <div>Months</div>
+                <div>Monthly rent</div>
+                <div>Free</div>
+                <div>Monthly $/SF</div>
+                <div />
+              </div>
+              {entry.rentRows.map((row, index) => (
+                <div className="dealius-table-row rent" key={index}>
+                  <Input type="number" value={row.months} onChange={(e: any) => patchRent(index, { months: e.target.value })} />
+                  <Input type="number" value={row.monthly} onChange={(e: any) => patchRent(index, { monthly: e.target.value })} />
+                  <label className="dealius-checkbox">
+                    <input type="checkbox" checked={row.free} onChange={e => patchRent(index, { free: e.target.checked })} />
+                  </label>
+                  <div className="dealius-derived-value">
+                    {row.free || !num(row.monthly) || !num(entry.sqft)
+                      ? "Free"
+                      : `$${((num(row.monthly) ?? 0) / Math.max(1, num(entry.sqft) ?? 1)).toFixed(4)}`}
+                  </div>
+                  <button
+                    type="button"
+                    className="dealius-icon-btn"
+                    onClick={() => patchEntry({ rentRows: entry.rentRows.filter((_, i) => i !== index) })}
+                    aria-label="Remove rent row"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section className="dealius-panel">
+          <div className="dealius-section-heading-row">
+            <div className="dealius-section-title">{entry.entryMode === "listing" ? "Listing brokers" : "Deal brokers"}</div>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              icon={<Plus size={14} />}
+              onClick={() => patchEntry({ brokers: [...entry.brokers, { name: "", side: "", pct: "", lead: false }] })}
+            >
+              Add broker
+            </Button>
+          </div>
+          <div className="dealius-table">
+            <div className="dealius-table-head broker">
+              <div>Name</div>
+              <div>Side</div>
+              <div>Commission</div>
+              <div>Lead</div>
+              <div />
+            </div>
+            {entry.brokers.map((row, index) => (
+              <div className="dealius-table-row broker" key={index}>
+                <Input value={row.name} onChange={(e: any) => patchBroker(index, { name: e.target.value })} />
+                <Select
+                  value={row.side ?? ""}
+                  onChange={(e: any) => patchBroker(index, { side: e.target.value })}
+                  options={[
+                    { label: "Unspecified", value: "" },
+                    { label: "Listing", value: "Listing" },
+                    { label: "Procuring", value: "Procuring" },
+                    { label: "Both", value: "Both" },
+                    { label: "Referral", value: "Referral" },
+                  ]}
+                />
+                <Input type="number" step="0.01" value={row.pct} onChange={(e: any) => patchBroker(index, { pct: e.target.value })} suffix="%" />
+                <label className="dealius-checkbox">
+                  <input type="checkbox" checked={Boolean(row.lead)} onChange={e => patchBroker(index, { lead: e.target.checked })} />
+                </label>
+                <button
+                  type="button"
+                  className="dealius-icon-btn"
+                  onClick={() => patchEntry({ brokers: entry.brokers.filter((_, i) => i !== index) })}
+                  aria-label="Remove broker row"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
 
         <section className="dealius-panel dealius-action-panel">
           <div>
@@ -706,4 +1026,3 @@ export default function PortalAdminDealiusTools() {
     </AdminPortalShell>
   );
 }
-

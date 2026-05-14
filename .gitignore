@@ -18,6 +18,7 @@ build/
 .vscode/
 .idea/
 .claude/settings.local.json
+.claude/worktrees/
 *.swp
 *.swo
 *~

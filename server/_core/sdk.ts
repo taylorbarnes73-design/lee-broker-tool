@@ -8,6 +8,7 @@ import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
+import { isAdminByPolicy } from "../auth/isAdminByPolicy";
 import type {
   ExchangeTokenRequest,
   ExchangeTokenResponse,
@@ -39,11 +40,6 @@ const isLocalOpenId = (openId: string) => openId.startsWith(LOCAL_OPEN_ID_PREFIX
 
 const emailFromLocalOpenId = (openId: string) =>
   isLocalOpenId(openId) ? openId.slice(LOCAL_OPEN_ID_PREFIX.length) : null;
-
-function isAdminName(name: string | null | undefined) {
-  const normalized = String(name ?? "").trim().toLowerCase();
-  return normalized === "errissa kat" || normalized === "taylor barnes";
-}
 
 class OAuthService {
   constructor(private client: ReturnType<typeof axios.create>) {
@@ -301,7 +297,7 @@ class SDKServer {
           email: email ?? null,
           loginMethod: "local",
           lastSignedIn: signedInAt,
-          role: isAdminName(session.name) ? "admin" : "user",
+          role: isAdminByPolicy(email, session.name) ? "admin" : "user",
         });
         user = await db.getUserByOpenId(sessionUserId);
       }
@@ -310,22 +306,23 @@ class SDKServer {
         throw ForbiddenError("Local user not found");
       }
 
+      const resolvedName = session.name || user.name;
       await db.upsertUser({
         openId: user.openId,
-        name: session.name || user.name,
+        name: resolvedName,
         email: email ?? user.email,
         loginMethod: "local",
         lastSignedIn: signedInAt,
-        role: isAdminName(session.name || user.name) ? "admin" : "user",
+        role: isAdminByPolicy(email, resolvedName) ? "admin" : "user",
       });
 
       return {
         ...user,
-        name: session.name || user.name,
+        name: resolvedName,
         email: email ?? user.email,
         loginMethod: "local",
         lastSignedIn: signedInAt,
-        role: isAdminName(session.name || user.name) ? "admin" : "user",
+        role: isAdminByPolicy(email, resolvedName) ? "admin" : "user",
       };
     }
 
@@ -354,12 +351,12 @@ class SDKServer {
     await db.upsertUser({
       openId: user.openId,
       lastSignedIn: signedInAt,
-      role: isAdminName(user.name) ? "admin" : "user",
+      role: isAdminByPolicy(user.email, user.name) ? "admin" : "user",
     });
 
     return {
       ...user,
-      role: isAdminName(user.name) ? "admin" : "user",
+      role: isAdminByPolicy(user.email, user.name) ? "admin" : "user",
     };
   }
 }

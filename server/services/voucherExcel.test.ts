@@ -93,6 +93,70 @@ describe("parseLeeVoucherGrid", () => {
     expect(patch.excelImport).toMatchObject({ parser: "lee_voucher_excel_v431" });
   });
 
+  it("uses v431 rent-row commission percent and skips the summary rent row", () => {
+    const ws: XLSX.WorkSheet = {};
+    ws["A34"] = { v: "LEASE TRANSACTION DETAILS", t: "s" };
+    ws["B5"] = { v: "Lease", t: "s" };
+    ws["B9"] = { v: "430 32nd Street", t: "s" };
+    ws["K9"] = { v: "Newport Beach", t: "s" };
+    ws["N9"] = { v: "92663", t: "s" };
+    ws["C12"] = { v: "Owner Co", t: "s" };
+    ws["K12"] = { v: "Tenant Co", t: "s" };
+    ws["C36"] = { v: 2300, t: "n" };
+    ws["A53"] = { v: 9200, t: "n" };
+    ws["D53"] = { v: 9, t: "n" };
+    ws["K53"] = { v: "2.00%", t: "s" };
+    ws["A54"] = { v: 0, t: "n" };
+    ws["D54"] = { v: 3, t: "n" };
+    ws["K54"] = { v: "0.00%", t: "s" };
+    ws["A68"] = { v: 38777.47, t: "n" };
+    ws["D68"] = { v: 12, t: "n" };
+    ws["K68"] = { v: "Comm Due", t: "s" };
+    ws["!ref"] = "A1:P140";
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+    const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+
+    const p = parseLeeVoucherExcelBuffer(buf);
+    expect(p.saleCommPct).toBe(2);
+    expect(p.rentRows).toEqual([
+      { monthly: 9200, months: 9, free: false },
+      { monthly: 0, months: 3, free: true },
+    ]);
+    expect(p.term).toBe(12);
+  });
+
+  it("maps referral vouchers to Other Rep with flat commission amount and 100% internal fee", () => {
+    const ws: XLSX.WorkSheet = {};
+    ws["A34"] = { v: "LEASE TRANSACTION DETAILS", t: "s" };
+    ws["B5"] = { v: "Referral", t: "s" };
+    ws["B9"] = { v: "1652 Deere Ave.", t: "s" };
+    ws["K9"] = { v: "Irvine", t: "s" };
+    ws["N9"] = { v: "92606", t: "s" };
+    ws["C12"] = { v: "SEBCO", t: "s" };
+    ws["K12"] = { v: "MAEDA EN USA", t: "s" };
+    ws["C36"] = { v: 15802, t: "n" };
+    ws["L74"] = { v: 10307.88, t: "n" };
+    ws["A124"] = { v: "WEST, THOMAS", t: "s" };
+    ws["D124"] = { v: "Listing", t: "s" };
+    ws["E124"] = { v: "100.00%", t: "s" };
+    ws["!ref"] = "A1:P140";
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+    const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+
+    const p = parseLeeVoucherExcelBuffer(buf);
+    expect(p.dealName).toBe("Referred: 1652 Deere Ave.");
+    expect(p.repTypeID).toBe(5);
+    expect(p.paymentAmount).toBe(10307.88);
+
+    const patch = submissionPayloadPatchFromParsedVoucher(p);
+    expect(patch.transactionType).toBe("Referral");
+    expect(patch.feePercent).toBe(100);
+    expect(patch.internalFeePercent).toBe(100);
+    expect(patch.paymentAmount).toBe(10307.88);
+  });
+
   it("enters Lee both-side lease vouchers as Landlord Rep", () => {
     const ws: XLSX.WorkSheet = {};
     ws["A34"] = { v: "LEASE TRANSACTION DETAILS", t: "s" };

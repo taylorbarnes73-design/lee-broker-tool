@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Route, Switch } from "wouter";
+import { Link, Route, Switch } from "wouter";
 import { useEffect, type ReactNode } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -20,6 +20,78 @@ import PortalSubmissionDetail from "./pages/PortalSubmissionDetail";
 import PortalSubmissions from "./pages/PortalSubmissions";
 
 /**
+ * Public landing for `/` - avoids sending everyone through `/tool` -> `/login`,
+ * which felt like an admin-only entry. Broker HTML tool stays at `/tool`.
+ */
+function PublicHome() {
+  return (
+    <div
+      className="lee-page-flow"
+      style={{
+        display: "flex",
+        width: "100vw",
+        minHeight: "100vh",
+        background: "var(--ink-50)",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+        fontFamily: "Inter, system-ui, sans-serif",
+      }}
+    >
+      <div style={{ maxWidth: 440, textAlign: "center" }}>
+        <img
+          src="/lee-newport-beach-fullcolor.png"
+          alt="Lee & Associates"
+          style={{ height: 64, width: "auto", display: "inline-block" }}
+        />
+        <h1 style={{ fontSize: 26, fontWeight: 700, color: "var(--ink-900)", marginTop: 24, marginBottom: 8 }}>
+          Lee Broker Tool
+        </h1>
+        <p style={{ fontSize: 15, color: "var(--ink-600)", lineHeight: 1.5, marginBottom: 28 }}>
+          Sign in for the broker portal and submission queue, or open the listing and forms workspace.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <Link
+            href="/login"
+            style={{
+              display: "block",
+              padding: "14px 20px",
+              borderRadius: 10,
+              background: "var(--brand-600, #A9223B)",
+              color: "#fff",
+              fontWeight: 600,
+              textDecoration: "none",
+            }}
+          >
+            Sign in
+          </Link>
+          <a
+            href="/tool"
+            style={{
+              display: "block",
+              padding: "14px 20px",
+              borderRadius: 10,
+              border: "1px solid var(--ink-200)",
+              background: "#fff",
+              color: "var(--ink-800)",
+              fontWeight: 600,
+              textDecoration: "none",
+            }}
+          >
+            Open broker forms workspace
+          </a>
+        </div>
+        <p style={{ marginTop: 28, fontSize: 13, color: "var(--ink-500)" }}>
+          <Link href="/portal/admin/login" style={{ color: "var(--ink-700)", fontWeight: 600 }}>
+            Administrator sign-in
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
  * Full-screen redirect to the legacy broker workflow HTML app.
  *
  * Broker-facing workflows still live in broker_tool.html while the admin portal
@@ -31,7 +103,19 @@ function BrokerToolRedirect() {
   }, []);
   return (
     <div style={{ display: "flex", width: "100vw", height: "100vh", alignItems: "center", justifyContent: "center", color: "#6b7280", fontFamily: "Inter, system-ui, sans-serif" }}>
-      Opening Broker Tool…
+      Opening Broker Tool...
+    </div>
+  );
+}
+
+/** Bookmark-friendly alias: same login as `/login`, default return to admin queue after sign-in. */
+function AdminLoginEntry() {
+  useEffect(() => {
+    window.location.replace("/login?next=" + encodeURIComponent("/portal/admin/submissions"));
+  }, []);
+  return (
+    <div className="portal-loading">
+      <div className="portal-loading-card">Opening sign-in...</div>
     </div>
   );
 }
@@ -45,7 +129,7 @@ function PortalRoute({ children }: { children: ReactNode }) {
   if (loading || !isAuthenticated) {
     return (
       <div className="portal-loading">
-        <div className="portal-loading-card">Opening admin portal...</div>
+        <div className="portal-loading-card">Opening portal...</div>
       </div>
     );
   }
@@ -81,8 +165,9 @@ function AdminPortalRoute({ children }: { children: ReactNode }) {
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={BrokerToolRedirect} />
+      <Route path="/" component={PublicHome} />
       <Route path="/login" component={Login} />
+      <Route path="/portal/admin/login" component={AdminLoginEntry} />
       <Route path="/portal">
         <PortalRoute>
           <PortalDashboard />

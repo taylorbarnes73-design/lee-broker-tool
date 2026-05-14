@@ -1,9 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
-import {
-  findBrokerDirectoryEntry,
-  isBrokerDirectoryAdmin,
-} from "@shared/brokerDirectory";
+import { findBrokerDirectoryEntry } from "@shared/brokerDirectory";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
@@ -24,6 +21,7 @@ import { localAuth, sdk } from "./_core/sdk";
 import { ENV } from "./_core/env";
 import { handlePlatformLogout } from "./auth/passwordPlatformAuth";
 import { linkPlatformSessionAfterLegacyLogin } from "./auth/linkPlatformSessionAfterLegacyLogin";
+import { isAdminByPolicy } from "./auth/isAdminByPolicy";
 
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 const LISTING_BROCHURE_CATEGORY = "listing_brochure";
@@ -95,11 +93,7 @@ export const appRouter = router({
         }
         const resolvedName = brokerEntry?.name || enteredName;
         const openId = localAuth.toLocalOpenId(email);
-        const isAdminIdentity =
-          ENV.localAdminEmails.includes(email) ||
-          ENV.localAdminNames.includes(resolvedName.trim().toLowerCase()) ||
-          isBrokerDirectoryAdmin(brokerEntry);
-        const role = isAdminIdentity ? "admin" : "user";
+        const role = isAdminByPolicy(email, resolvedName) ? "admin" : "user";
 
         if (ENV.isProduction && !String(ENV.cookieSecret ?? "").trim()) {
           console.error("[auth.login] JWT_SECRET is not set; cannot sign session cookies.");

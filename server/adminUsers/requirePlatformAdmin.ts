@@ -1,18 +1,58 @@
 import type { RequestHandler } from "express";
-import { resolvePlatformUserFromRequest } from "../auth/platformSession";
+import { resolvePlatformUserFromRequest, findAppUserByUsernameOrEmail } from "../auth/platformSession";
 import { sendAdminError } from "./adminErrors";
+import { sdk } from "../_core/sdk";
+import { getDb } from "../db";
+import { isAdminByPolicy } from "../auth/isAdminByPolicy";
+import type { PlatformAuthUser } from "../auth/platformAuthTypes";
 
 /** Admin REST API: 401/403 use `{ error: { code, message } }` shape. */
 export const requirePlatformAdmin: RequestHandler = async (req, res, next) => {
-  const user = await resolvePlatformUserFromRequest(req);
-  if (!user) {
-    sendAdminError(res, 401, "UNAUTHORIZED", "Authentication required.");
-    return;
+  let isAuthenticated = false;
+
+  // 1. Try platform session (lbt_session cookie)
+  const platformUser = await resolvePlatformUserFromRequest(req);
+  if (platformUser) {
+    isAuthenticated = true;
+    if (platformUser.role === "admin" || isAdminByPolicy(platformUser.email, platformUser.fullName, platformUser.username)) {
+      req.user = { ...platformUser, role: "admin" };
+      next();
+      return;
+    }
   }
-  if (user.role !== "admin") {
+
+  // 2. Try legacy JWT session (app_session_id cookie) — covers admins without an
+  //    app_users record and the 12-hour lbt_session expiry window.
+  try {
+    const legacyUser = await sdk.authenticateRequest(req);
+    isAuthenticated = true;
+    const email = legacyUser.email ?? "";
+    let appUser: Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>> | null = null;
+    try {
+      const db = await getDb();
+      appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
+    } catch (error) {
+      console.error("[requirePlatformAdmin] Could not resolve platform user for legacy session:", error);
+    }
+    if (legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name, appUser?.username)) {
+      req.user = {
+        id: appUser?.id ?? String(legacyUser.id),
+        email,
+        username: appUser?.username ?? email,
+        fullName: appUser?.fullName ?? legacyUser.name ?? "",
+        role: "admin" as PlatformAuthUser["role"],
+        office: appUser?.office ?? null,
+      };
+      next();
+      return;
+    }
+  } catch {
+    // JWT auth failed or cookie not present
+  }
+
+  if (isAuthenticated) {
     sendAdminError(res, 403, "FORBIDDEN", "Administrator access is required for this resource.");
-    return;
+  } else {
+    sendAdminError(res, 401, "UNAUTHORIZED", "Authentication required.");
   }
-  req.user = user;
-  next();
 };

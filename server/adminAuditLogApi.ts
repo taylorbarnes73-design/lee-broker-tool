@@ -17,6 +17,18 @@ function stripLikeWildcards(s: string): string {
   return s.replace(/[%_\\]/g, "").trim().slice(0, 200);
 }
 
+function jsonSafe(value: unknown): unknown {
+  if (typeof value === "bigint") return Number(value);
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value.toISOString();
+  if (Array.isArray(value)) return value.map(jsonSafe);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, jsonSafe(v)])
+    );
+  }
+  return value;
+}
+
 function asyncHandler(
   fn: (req: Request, res: Response) => Promise<void>
 ): (req: Request, res: Response, next: NextFunction) => void {
@@ -127,7 +139,7 @@ adminAuditLogRouter.get(
       page,
       page_size: PAGE_SIZE,
       total,
-      rows,
+      rows: jsonSafe(rows),
     });
   })
 );
