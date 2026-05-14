@@ -1,4 +1,6 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
+import { parse as parseCookieHeader } from "cookie";
+import { COOKIE_NAME } from "@shared/const";
 import type { User } from "../../drizzle/schema";
 import { findAppUserByUsernameOrEmail, resolvePlatformUserFromRequest } from "../auth/platformSession";
 import { getDb, getUserByOpenId, upsertUser } from "../db";
@@ -10,6 +12,34 @@ export type TrpcContext = {
   res: CreateExpressContextOptions["res"];
   user: User | null;
 };
+
+function emailFromLocalOpenId(openId: string): string | null {
+  return openId.startsWith("local:") ? openId.slice("local:".length) : null;
+}
+
+async function resolveSignedLegacyCookie(
+  req: CreateExpressContextOptions["req"]
+): Promise<User | null> {
+  const cookies = parseCookieHeader(req.headers.cookie ?? "");
+  const session = await sdk.verifySession(cookies[COOKIE_NAME]);
+  if (!session) return null;
+
+  const now = new Date();
+  const email = session.email ?? emailFromLocalOpenId(session.openId);
+  const name = session.name || email || "Broker";
+
+  return {
+    id: 0,
+    openId: session.openId,
+    name,
+    email: email ?? null,
+    loginMethod: "local",
+    role: isAdminByPolicy(email, name) ? "admin" : "user",
+    createdAt: now,
+    updatedAt: now,
+    lastSignedIn: now,
+  };
+}
 
 export async function createContext(
   opts: CreateExpressContextOptions
@@ -46,8 +76,13 @@ export async function createContext(
     try {
       const legacyUser = await sdk.authenticateRequest(opts.req);
       const email = legacyUser.email ?? "";
-      const db = await getDb();
-      const appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
+      let appUser: Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>> | null = null;
+      try {
+        const db = await getDb();
+        appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
+      } catch (error) {
+        console.error("[trpc.context] Could not resolve platform user for legacy session:", error);
+      }
       user = {
         ...legacyUser,
         role:
@@ -56,7 +91,7 @@ export async function createContext(
             : "user",
       };
     } catch {
-      user = null;
+      user = await resolveSignedLegacyCookie(opts.req);
     }
   }
 
