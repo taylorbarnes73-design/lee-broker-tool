@@ -91,4 +91,28 @@ describe("broker admin REST auth", () => {
     expect(res.status).toBe(503);
     expect(res.body).toMatchObject({ success: false, error: "Database unavailable" });
   });
+
+  it("keeps valid legacy sessions when the app_users lookup fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.mocked(sdk.authenticateRequest).mockResolvedValue({
+      id: 1,
+      openId: "local:tbarnes@lee-associates.com",
+      name: "Taylor Barnes",
+      email: "tbarnes@lee-associates.com",
+      loginMethod: "local",
+      role: "admin",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+    });
+    vi.mocked(getDb)
+      .mockResolvedValueOnce({} as Awaited<ReturnType<typeof getDb>>)
+      .mockResolvedValueOnce(null);
+    vi.mocked(findAppUserByUsernameOrEmail).mockRejectedValue(new Error("app_users query failed"));
+
+    const res = await request(buildApp()).get("/api/broker-admin/requests");
+
+    expect(res.status).toBe(503);
+    expect(res.body).toMatchObject({ success: false, error: "Database unavailable" });
+  });
 });

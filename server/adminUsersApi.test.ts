@@ -117,6 +117,31 @@ describe("GET /api/admin/users", () => {
     expect(res.body.error.code).toBe("NO_DATABASE");
   });
 
+  it("keeps valid legacy admin sessions when the app_users lookup fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.mocked(sdk.authenticateRequest).mockResolvedValue({
+      id: 1,
+      openId: "local:tbarnes@lee-associates.com",
+      name: "Taylor Barnes",
+      email: "tbarnes@lee-associates.com",
+      loginMethod: "local",
+      role: "admin",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+    });
+    vi.mocked(getDb)
+      .mockResolvedValueOnce({} as Awaited<ReturnType<typeof getDb>>)
+      .mockResolvedValueOnce(null);
+    vi.mocked(findAppUserByUsernameOrEmail).mockRejectedValue(new Error("app_users query failed"));
+
+    const app = buildApp();
+    const res = await request(app).get("/api/admin/users");
+
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe("NO_DATABASE");
+  });
+
   it("returns 503 when database is unavailable", async () => {
     vi.mocked(resolvePlatformUserFromRequest).mockResolvedValue({
       id: "a1",

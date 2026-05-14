@@ -21,9 +21,14 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
   // 2. Try legacy JWT session (app_session_id cookie)
   try {
     const legacyUser = await sdk.authenticateRequest(req);
-    const db = await getDb();
     const email = legacyUser.email ?? "";
-    const appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
+    let appUser: Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>> | null = null;
+    try {
+      const db = await getDb();
+      appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
+    } catch (error) {
+      console.error("[requireAuth] Could not resolve platform user for legacy session:", error);
+    }
     const grantedRole: PlatformRole =
       legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name, appUser?.username)
         ? "admin"

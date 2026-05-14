@@ -26,9 +26,14 @@ export const requirePlatformAdmin: RequestHandler = async (req, res, next) => {
   try {
     const legacyUser = await sdk.authenticateRequest(req);
     isAuthenticated = true;
-    const db = await getDb();
     const email = legacyUser.email ?? "";
-    const appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
+    let appUser: Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>> | null = null;
+    try {
+      const db = await getDb();
+      appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
+    } catch (error) {
+      console.error("[requirePlatformAdmin] Could not resolve platform user for legacy session:", error);
+    }
     if (legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name, appUser?.username)) {
       req.user = {
         id: appUser?.id ?? String(legacyUser.id),
