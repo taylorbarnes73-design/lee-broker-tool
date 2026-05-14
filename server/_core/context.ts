@@ -1,7 +1,7 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import type { User } from "../../drizzle/schema";
-import { resolvePlatformUserFromRequest } from "../auth/platformSession";
-import { getUserByOpenId, upsertUser } from "../db";
+import { findAppUserByUsernameOrEmail, resolvePlatformUserFromRequest } from "../auth/platformSession";
+import { getDb, getUserByOpenId, upsertUser } from "../db";
 import { sdk, localAuth } from "./sdk";
 import { isAdminByPolicy } from "../auth/isAdminByPolicy";
 
@@ -44,7 +44,17 @@ export async function createContext(
 
   if (!user) {
     try {
-      user = await sdk.authenticateRequest(opts.req);
+      const legacyUser = await sdk.authenticateRequest(opts.req);
+      const email = legacyUser.email ?? "";
+      const db = await getDb();
+      const appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
+      user = {
+        ...legacyUser,
+        role:
+          legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name, appUser?.username)
+            ? "admin"
+            : "user",
+      };
     } catch {
       user = null;
     }

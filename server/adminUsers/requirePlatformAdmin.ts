@@ -26,10 +26,10 @@ export const requirePlatformAdmin: RequestHandler = async (req, res, next) => {
   try {
     const legacyUser = await sdk.authenticateRequest(req);
     isAuthenticated = true;
-    if (legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name)) {
-      const db = await getDb();
-      const email = legacyUser.email ?? "";
-      const appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
+    const db = await getDb();
+    const email = legacyUser.email ?? "";
+    const appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
+    if (legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name, appUser?.username)) {
       req.user = {
         id: appUser?.id ?? String(legacyUser.id),
         email,

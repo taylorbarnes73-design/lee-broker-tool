@@ -18,7 +18,7 @@ vi.mock("./db", () => ({
   getDb: vi.fn(),
 }));
 
-import { resolvePlatformUserFromRequest } from "./auth/platformSession";
+import { findAppUserByUsernameOrEmail, resolvePlatformUserFromRequest } from "./auth/platformSession";
 import { sdk } from "./_core/sdk";
 import { getDb } from "./db";
 
@@ -33,6 +33,7 @@ describe("broker admin REST auth", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(resolvePlatformUserFromRequest).mockResolvedValue(null);
+    vi.mocked(findAppUserByUsernameOrEmail).mockResolvedValue(undefined);
     vi.mocked(sdk.authenticateRequest).mockRejectedValue(new Error("no legacy session"));
     vi.mocked(getDb).mockResolvedValue(null);
   });
@@ -45,6 +46,44 @@ describe("broker admin REST auth", () => {
       fullName: "Taylor Barnes",
       role: "broker",
       office: null,
+    });
+
+    const res = await request(buildApp()).get("/api/broker-admin/requests");
+
+    expect(res.status).toBe(503);
+    expect(res.body).toMatchObject({ success: false, error: "Database unavailable" });
+  });
+
+  it("allows username-based admins through legacy sessions", async () => {
+    vi.mocked(sdk.authenticateRequest).mockResolvedValue({
+      id: 1,
+      openId: "local:tbarnes@external.test",
+      name: "Taylor Barnes",
+      email: "tbarnes@external.test",
+      loginMethod: "local",
+      role: "user",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+    });
+    vi.mocked(getDb)
+      .mockResolvedValueOnce({} as Awaited<ReturnType<typeof getDb>>)
+      .mockResolvedValueOnce(null);
+    vi.mocked(findAppUserByUsernameOrEmail).mockResolvedValue({
+      id: "tbarnes-id",
+      username: "tbarnes",
+      email: "tbarnes@external.test",
+      fullName: "Taylor Barnes",
+      role: "broker",
+      office: null,
+      isActive: true,
+      inviteToken: null,
+      inviteAcceptedAt: null,
+      invitedByUserId: null,
+      lastLoginAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      passwordHash: null,
     });
 
     const res = await request(buildApp()).get("/api/broker-admin/requests");
