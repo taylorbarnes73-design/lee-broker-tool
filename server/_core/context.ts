@@ -1,9 +1,9 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import type { User } from "../../drizzle/schema";
-import { resolvePlatformUserFromRequest } from "../auth/platformSession";
-import { getUserByOpenId, upsertUser } from "../db";
+import { findAppUserByUsernameOrEmail, resolvePlatformUserFromRequest } from "../auth/platformSession";
+import { getDb, getUserByOpenId, upsertUser } from "../db";
 import { sdk, localAuth } from "./sdk";
-import { isAdminByPolicy } from "../auth/isAdminByPolicy";
+import { getTrustedAdminPolicyName, isAdminByPolicy } from "../auth/isAdminByPolicy";
 
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
@@ -45,6 +45,17 @@ export async function createContext(
   if (!user) {
     try {
       user = await sdk.authenticateRequest(opts.req);
+      const email = user.email ?? "";
+      const db = await getDb();
+      const appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
+      if (appUser && !appUser.isActive) {
+        user = null;
+      } else {
+        const trustedAdminPolicyName = getTrustedAdminPolicyName(email, appUser?.fullName);
+        const resolvedAdmin =
+          user.role === "admin" || appUser?.role === "admin" || isAdminByPolicy(email, trustedAdminPolicyName);
+        user = { ...user, role: resolvedAdmin ? "admin" : "user" };
+      }
     } catch {
       user = null;
     }

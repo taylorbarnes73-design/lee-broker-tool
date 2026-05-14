@@ -3,7 +3,7 @@ import { resolvePlatformUserFromRequest, findAppUserByUsernameOrEmail } from "..
 import { sendAdminError } from "./adminErrors";
 import { sdk } from "../_core/sdk";
 import { getDb } from "../db";
-import { isAdminByPolicy } from "../auth/isAdminByPolicy";
+import { getTrustedAdminPolicyName, isAdminByPolicy } from "../auth/isAdminByPolicy";
 import type { PlatformAuthUser } from "../auth/platformAuthTypes";
 
 /** Admin REST API: 401/403 use `{ error: { code, message } }` shape. */
@@ -26,10 +26,19 @@ export const requirePlatformAdmin: RequestHandler = async (req, res, next) => {
   try {
     const legacyUser = await sdk.authenticateRequest(req);
     isAuthenticated = true;
-    if (legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name)) {
-      const db = await getDb();
-      const email = legacyUser.email ?? "";
-      const appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
+    const db = await getDb();
+    const email = legacyUser.email ?? "";
+    const appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
+    if (appUser && !appUser.isActive) {
+      sendAdminError(res, 401, "UNAUTHORIZED", "Authentication required.");
+      return;
+    }
+    const trustedAdminPolicyName = getTrustedAdminPolicyName(email, appUser?.fullName);
+    if (
+      legacyUser.role === "admin" ||
+      appUser?.role === "admin" ||
+      isAdminByPolicy(email, trustedAdminPolicyName)
+    ) {
       req.user = {
         id: appUser?.id ?? String(legacyUser.id),
         email,

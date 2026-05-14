@@ -15,6 +15,7 @@ import type {
   GetUserInfoWithJwtRequest,
   GetUserInfoWithJwtResponse,
 } from "./types/authTypes";
+import { getTrustedAdminPolicyName, isAdminByPolicy } from "../auth/isAdminByPolicy";
 // Utility function
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0;
@@ -40,9 +41,8 @@ const isLocalOpenId = (openId: string) => openId.startsWith(LOCAL_OPEN_ID_PREFIX
 const emailFromLocalOpenId = (openId: string) =>
   isLocalOpenId(openId) ? openId.slice(LOCAL_OPEN_ID_PREFIX.length) : null;
 
-function isAdminName(name: string | null | undefined) {
-  const normalized = String(name ?? "").trim().toLowerCase();
-  return normalized === "errissa kat" || normalized === "taylor barnes";
+function resolveTrustedPolicyRole(email: string | null | undefined): "admin" | "user" {
+  return isAdminByPolicy(email, getTrustedAdminPolicyName(email, undefined)) ? "admin" : "user";
 }
 
 class OAuthService {
@@ -293,6 +293,7 @@ class SDKServer {
 
     if (isLocalOpenId(sessionUserId)) {
       const email = session.email ?? emailFromLocalOpenId(sessionUserId);
+      const role = resolveTrustedPolicyRole(email);
 
       if (!user) {
         await db.upsertUser({
@@ -301,7 +302,7 @@ class SDKServer {
           email: email ?? null,
           loginMethod: "local",
           lastSignedIn: signedInAt,
-          role: isAdminName(session.name) ? "admin" : "user",
+          role,
         });
         user = await db.getUserByOpenId(sessionUserId);
       }
@@ -316,7 +317,7 @@ class SDKServer {
         email: email ?? user.email,
         loginMethod: "local",
         lastSignedIn: signedInAt,
-        role: isAdminName(session.name || user.name) ? "admin" : "user",
+        role,
       });
 
       return {
@@ -325,7 +326,7 @@ class SDKServer {
         email: email ?? user.email,
         loginMethod: "local",
         lastSignedIn: signedInAt,
-        role: isAdminName(session.name || user.name) ? "admin" : "user",
+        role,
       };
     }
 
@@ -354,12 +355,12 @@ class SDKServer {
     await db.upsertUser({
       openId: user.openId,
       lastSignedIn: signedInAt,
-      role: isAdminName(user.name) ? "admin" : "user",
+      role: resolveTrustedPolicyRole(user.email),
     });
 
     return {
       ...user,
-      role: isAdminName(user.name) ? "admin" : "user",
+      role: resolveTrustedPolicyRole(user.email),
     };
   }
 }

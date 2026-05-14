@@ -17,7 +17,7 @@ import {
 } from "./auth/passwordPlatformAuth";
 import { resolvePlatformUserFromRequest, findAppUserByUsernameOrEmail } from "./auth/platformSession";
 import { linkPlatformSessionAfterLegacyLogin } from "./auth/linkPlatformSessionAfterLegacyLogin";
-import { isAdminByPolicy } from "./auth/isAdminByPolicy";
+import { getTrustedAdminPolicyName, isAdminByPolicy } from "./auth/isAdminByPolicy";
 
 const loginSchema = z.object({
   email: z.string().trim().min(1).max(320),
@@ -74,7 +74,7 @@ authApiRouter.post("/login", async (req, res) => {
       appUserRecord = await findAppUserByUsernameOrEmail(db, email);
       if (appUserRecord && appUserRecord.isActive) {
         isFromDb = true;
-        name = appUserRecord.fullName || name;
+        name = appUserRecord.fullName.trim() || email;
         role = appUserRecord.role === "admin" ? "admin" : "user";
       }
     }
@@ -95,7 +95,11 @@ authApiRouter.post("/login", async (req, res) => {
   // Apply policy-based admin override regardless of whether the user was found in
   // app_users. This lets LOCAL_ADMIN_EMAILS / LOCAL_ADMIN_NAMES / broker-directory
   // admin flags grant admin access even if app_users.role was set incorrectly.
-  if (role !== "admin" && isAdminByPolicy(email, name)) {
+  const trustedAdminPolicyName = getTrustedAdminPolicyName(
+    email,
+    isFromDb ? appUserRecord?.fullName : brokerEntry?.name
+  );
+  if (role !== "admin" && isAdminByPolicy(email, trustedAdminPolicyName)) {
     role = "admin";
   }
 

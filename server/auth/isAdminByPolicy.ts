@@ -24,3 +24,16 @@ export function isAdminByPolicy(
 
   return false;
 }
+
+export function getTrustedAdminPolicyName(
+  email: string | null | undefined,
+  storedName: string | null | undefined
+): string | undefined {
+  const normalizedStoredName = (storedName ?? "").trim();
+  if (normalizedStoredName) return normalizedStoredName;
+
+  const emailLower = (email ?? "").trim().toLowerCase();
+  if (!emailLower) return undefined;
+
+  return findBrokerDirectoryEntry(emailLower)?.name;
+}
