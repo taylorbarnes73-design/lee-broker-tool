@@ -19,6 +19,10 @@ vi.mock("./db", () => ({
   upsertUser: vi.fn(),
 }));
 
+vi.mock("./auth/linkPlatformSessionAfterLegacyLogin", () => ({
+  linkPlatformSessionAfterLegacyLogin: vi.fn(),
+}));
+
 import { getDb, upsertUser } from "./db";
 
 function buildApp() {
