@@ -2,6 +2,7 @@ import type { Request } from "express";
 import type { PlatformRole } from "./platformAuthTypes";
 import { resolvePlatformUserFromRequest } from "./platformSession";
 import { localAuth, sdk } from "../_core/sdk";
+import { isAdminByPolicy } from "./isAdminByPolicy";
 
 export type PortalRequestUser = {
   openId: string;
@@ -19,9 +20,11 @@ export type PortalRequestUser = {
 export async function resolvePortalRequestUser(req: Request): Promise<PortalRequestUser | null> {
   const platformUser = await resolvePlatformUserFromRequest(req);
   if (platformUser) {
+    const isAdmin =
+      platformUser.role === "admin" || isAdminByPolicy(platformUser.email, platformUser.fullName);
     return {
       openId: localAuth.toLocalOpenId(platformUser.email),
-      role: platformUser.role === "admin" ? "admin" : "user",
+      role: isAdmin ? "admin" : "user",
       email: platformUser.email,
       name: platformUser.fullName,
       platformUserId: platformUser.id,
@@ -31,9 +34,11 @@ export async function resolvePortalRequestUser(req: Request): Promise<PortalRequ
 
   try {
     const legacyUser = await sdk.authenticateRequest(req);
+    const isAdmin =
+      legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name);
     return {
       openId: legacyUser.openId,
-      role: legacyUser.role === "admin" ? "admin" : "user",
+      role: isAdmin ? "admin" : "user",
       email: legacyUser.email ?? null,
       name: legacyUser.name ?? null,
     };
