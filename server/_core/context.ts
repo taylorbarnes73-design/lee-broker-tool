@@ -20,7 +20,7 @@ export async function createContext(
   if (platformUser) {
     const openId = localAuth.toLocalOpenId(platformUser.email);
     const resolvedAdmin =
-      platformUser.role === "admin" || isAdminByPolicy(platformUser.email, platformUser.fullName);
+      platformUser.role === "admin" || isAdminByPolicy(platformUser.email, platformUser.fullName, platformUser.username);
     const legacyRole: "admin" | "user" = resolvedAdmin ? "admin" : "user";
     await upsertUser({
       openId,

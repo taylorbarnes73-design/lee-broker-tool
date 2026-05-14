@@ -49,6 +49,24 @@ describe("GET /api/admin/users", () => {
     expect(res.body.error.code).toBe("FORBIDDEN");
   });
 
+  it("allows office admins whose platform session is identified by Lee username", async () => {
+    vi.mocked(resolvePlatformUserFromRequest).mockResolvedValue({
+      id: "tbarnes-id",
+      email: "tbarnes",
+      username: "tbarnes",
+      fullName: "Taylor Barnes",
+      role: "broker",
+      office: null,
+    });
+    vi.mocked(getDb).mockResolvedValue(null);
+
+    const app = buildApp();
+    const res = await request(app).get("/api/admin/users");
+
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe("NO_DATABASE");
+  });
+
   it("returns 503 when database is unavailable", async () => {
     vi.mocked(resolvePlatformUserFromRequest).mockResolvedValue({
       id: "a1",

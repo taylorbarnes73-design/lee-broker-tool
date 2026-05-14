@@ -21,7 +21,7 @@ export async function resolvePortalRequestUser(req: Request): Promise<PortalRequ
   const platformUser = await resolvePlatformUserFromRequest(req);
   if (platformUser) {
     const isAdmin =
-      platformUser.role === "admin" || isAdminByPolicy(platformUser.email, platformUser.fullName);
+      platformUser.role === "admin" || isAdminByPolicy(platformUser.email, platformUser.fullName, platformUser.username);
     return {
       openId: localAuth.toLocalOpenId(platformUser.email),
       role: isAdmin ? "admin" : "user",

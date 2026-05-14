@@ -10,7 +10,7 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
   const platformUser = await resolvePlatformUserFromRequest(req);
   if (platformUser) {
     const role: PlatformRole =
-      platformUser.role === "admin" || isAdminByPolicy(platformUser.email, platformUser.fullName)
+      platformUser.role === "admin" || isAdminByPolicy(platformUser.email, platformUser.fullName, platformUser.username)
         ? "admin"
         : platformUser.role;
     req.user = { ...platformUser, role };

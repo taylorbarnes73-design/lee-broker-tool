@@ -95,7 +95,7 @@ authApiRouter.post("/login", async (req, res) => {
   // Apply policy-based admin override regardless of whether the user was found in
   // app_users. This lets LOCAL_ADMIN_EMAILS / LOCAL_ADMIN_NAMES / broker-directory
   // admin flags grant admin access even if app_users.role was set incorrectly.
-  if (role !== "admin" && isAdminByPolicy(email, name)) {
+  if (role !== "admin" && isAdminByPolicy(email, name, appUserRecord?.username)) {
     role = "admin";
   }
 

@@ -14,7 +14,7 @@ export const requirePlatformAdmin: RequestHandler = async (req, res, next) => {
   const platformUser = await resolvePlatformUserFromRequest(req);
   if (platformUser) {
     isAuthenticated = true;
-    if (platformUser.role === "admin" || isAdminByPolicy(platformUser.email, platformUser.fullName)) {
+    if (platformUser.role === "admin" || isAdminByPolicy(platformUser.email, platformUser.fullName, platformUser.username)) {
       req.user = { ...platformUser, role: "admin" };
       next();
       return;

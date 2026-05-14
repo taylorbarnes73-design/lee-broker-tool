@@ -14,6 +14,7 @@ import {
 } from "./platformSession";
 import { writeAuditLog } from "./writeAuditLog";
 import { getRequestIp } from "./requestIp";
+import { isAdminByPolicy } from "./isAdminByPolicy";
 
 const passwordLoginBody = z.object({
   username_or_email: z.string().trim().min(1).max(320),
@@ -106,9 +107,20 @@ async function handlePlatformPasswordLoginUnsafe(req: Request, res: Response): P
     return;
   }
 
+  const resolvedRole =
+    user.role === "admin" || isAdminByPolicy(user.email, user.fullName, user.username)
+      ? "admin"
+      : user.role;
+
   const { rawToken } = await createPlatformSession(db, user.id, req);
 
-  await db.update(appUsers).set({ lastLoginAt: new Date() }).where(eq(appUsers.id, user.id));
+  await db
+    .update(appUsers)
+    .set({
+      lastLoginAt: new Date(),
+      ...(resolvedRole === "admin" && user.role !== "admin" ? { role: "admin" as const } : {}),
+    })
+    .where(eq(appUsers.id, user.id));
 
   await writeAuditLog(user.id, "login.success", "user", user.id, {}, req);
 
@@ -121,7 +133,7 @@ async function handlePlatformPasswordLoginUnsafe(req: Request, res: Response): P
     email: user.email,
     username: user.username,
     full_name: user.fullName,
-    role: user.role,
+    role: resolvedRole,
     office: user.office ?? null,
   });
 }
