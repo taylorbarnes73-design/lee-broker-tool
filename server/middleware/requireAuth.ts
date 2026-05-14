@@ -25,7 +25,7 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
     const email = legacyUser.email ?? "";
     const appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
     const grantedRole: PlatformRole =
-      legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name)
+      legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name, appUser?.username)
         ? "admin"
         : "broker";
     req.user = {
