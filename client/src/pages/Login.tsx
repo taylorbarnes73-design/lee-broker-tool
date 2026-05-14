@@ -11,6 +11,28 @@ function normalizeLoginIdentifier(raw: string) {
   return raw.trim().toLowerCase();
 }
 
+export function buildLoginRequestBody(identifier: string, password: string) {
+  const normalizedIdentifier = normalizeLoginIdentifier(identifier);
+  const trimmedPassword = password.trim();
+
+  if (trimmedPassword) {
+    return {
+      normalizedIdentifier,
+      requestBody: {
+        username_or_email: normalizedIdentifier,
+        password: trimmedPassword,
+      },
+    };
+  }
+
+  return {
+    normalizedIdentifier,
+    requestBody: {
+      email: normalizedIdentifier,
+    },
+  };
+}
+
 function getSafeNextPath() {
   if (typeof window === "undefined") return "/portal";
   const next = new URLSearchParams(window.location.search).get("next");
@@ -24,6 +46,7 @@ export default function Login() {
   const branding = usePublicBranding();
 
   const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,7 +67,7 @@ export default function Login() {
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
-    const normalizedIdentifier = normalizeLoginIdentifier(identifier);
+    const { normalizedIdentifier, requestBody } = buildLoginRequestBody(identifier, password);
     if (normalizedIdentifier !== identifier) setIdentifier(normalizedIdentifier);
     setSubmitting(true);
     try {
@@ -52,13 +75,12 @@ export default function Login() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: normalizedIdentifier,
-        }),
+        body: JSON.stringify(requestBody),
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || j?.success === false) {
-        setError(j?.error?.message ?? j?.error ?? "Sign in failed.");
+        const message = j?.error?.message ?? j?.error ?? "Sign in failed.";
+        setError(message === "Local auth is disabled." && !password.trim() ? "Enter your password to sign in." : message);
         return;
       }
       await refresh();
@@ -157,6 +179,16 @@ export default function Login() {
               />
             </div>
 
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>Password</label>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                placeholder="Enter password if your account uses one"
+              />
+            </div>
 
             <Button type="submit" variant="primary" size="lg" disabled={submitting || loading} style={{ marginTop: 8 }}>
               {submitting ? "Signing in..." : "Continue to Portal"}
