@@ -1,25 +1,14 @@
 import "dotenv/config";
 import { webcrypto } from "node:crypto";
-if (!globalThis.crypto) {
-  globalThis.crypto = webcrypto as any;
-}
-import express from "express";
-import fs from "node:fs";
-import path from "node:path";
-
-process.on("unhandledRejection", (reason, promise) => {
-  console.error("[Node] Unhandled Rejection at:", promise, "reason:", reason);
-});
-
 import { createServer } from "http";
 import net from "net";
+import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { restApiRouter } from "../restApi";
-import { sdk } from "./sdk";
 import { authApiRouter } from "../authApi";
 import { submissionsApiRouter } from "../submissionsApi";
 import { brokerAdminApiRouter } from "../brokerAdminApi";
@@ -29,6 +18,14 @@ import { adminSettingsRouter } from "../adminSettingsApi";
 import { publicSettingsRouter } from "../publicSettingsApi";
 import { adminAuditLogRouter } from "../adminAuditLogApi";
 import { dealiusAdminApiRouter } from "../dealiusAdminApi";
+
+if (!globalThis.crypto) {
+  globalThis.crypto = webcrypto as any;
+}
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("[Node] Unhandled Rejection at:", promise, "reason:", reason);
+});
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -64,30 +61,6 @@ async function startServer() {
   // Health check endpoint for AWS Application Load Balancer
   app.get(["/health", "/api/health"], (_req, res) => {
     res.status(200).send("OK");
-  });
-
-  // TEMPORARY: Seed the database for AWS
-  app.get("/api/seed-prod", async (req, res) => {
-    try {
-      const db = (await import("../db")).getDb;
-      const connection = await db();
-      if (!connection) {
-        res.status(503).json({ error: "DB offline" });
-        return;
-      }
-      const { sql } = await import("drizzle-orm");
-      const sqlContent = fs.readFileSync(path.resolve(process.cwd(), "drizzle/seed_app_users_and_settings.sql"), "utf-8");
-      const statements = sqlContent.split(";").map((s: string) => s.trim()).filter((s: string) => s.length > 0);
-      for (const statement of statements) {
-        if (statement.toUpperCase().startsWith("SET ") || statement.toUpperCase().startsWith("INSERT ")) {
-          await connection.execute(sql.raw(statement));
-        }
-      }
-      res.json({ success: true, count: statements.length });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: String(err) });
-    }
   });
 
   // Legacy broker HTML entry points (not the marketing / SPA root).
