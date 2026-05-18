@@ -1,119 +1,163 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useEffect, useState } from "react";
-import { Link } from "wouter";
 import AdminPortalShell from "@/components/AdminPortalShell";
-import { Button, Card, Input } from "../design/index.jsx";
+import LinkButton from "@/components/ui/LinkButton";
+import { Card } from "../design/index.jsx";
+
+type SubmissionRow = {
+  id: number;
+  status: string;
+  queuePosition: number | null;
+};
+
+type DashboardStats = {
+  pending: number;
+  inReview: number;
+  active: number;
+};
+
+function StatCard({
+  label,
+  value,
+  hint,
+  loading,
+}: {
+  label: string;
+  value: number | string;
+  hint?: string;
+  loading?: boolean;
+}) {
+  return (
+    <Card padding="lg">
+      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-500)", letterSpacing: "0.02em", textTransform: "uppercase" }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 30, fontWeight: 700, color: "var(--ink-900)", marginTop: 6, lineHeight: 1.1 }}>
+        {loading ? (
+          <span
+            aria-hidden
+            style={{
+              display: "inline-block",
+              width: 56,
+              height: 28,
+              background: "var(--ink-100)",
+              borderRadius: 6,
+            }}
+          />
+        ) : (
+          value
+        )}
+      </div>
+      {hint && (
+        <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 6 }}>
+          {hint}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function firstNameFrom(user: { name?: string | null; email?: string | null } | null | undefined): string {
+  const name = (user?.name ?? "").trim();
+  if (name) {
+    const parts = name.split(/\s+/);
+    if (parts[0]) return parts[0];
+  }
+  const email = (user?.email ?? "").trim();
+  if (email) {
+    const prefix = email.split("@")[0] ?? "";
+    if (prefix) return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+  }
+  return "there";
+}
 
 export default function PortalDashboard() {
   const { user } = useAuth();
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [status, setStatus] = useState<string | null>(null);
-  const [queueSummary, setQueueSummary] = useState<{ position: number; totalActive: number } | null>(null);
+  const isAdmin = user?.role === "admin";
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
-    setQueueSummary(null);
-    fetch("/api/submissions?limit=100&includeQueue=1", { credentials: "include" })
+    setLoading(true);
+    fetch("/api/submissions?limit=200&includeQueue=1", { credentials: "include" })
       .then(r => r.json().then(b => ({ ok: r.ok, b })))
-      .then(async ({ ok, b }) => {
+      .then(({ ok, b }) => {
         if (!alive) return;
-        if (!ok) return;
-        const items = (b?.data ?? []) as Array<{ id: number; queuePosition: number | null }>;
-        const active = items.filter(i => typeof i.queuePosition === "number") as Array<{ id: number; queuePosition: number }>;
-        if (active.length === 0) return;
-        active.sort((a, b) => a.queuePosition - b.queuePosition);
-        const top = active[0];
-        const r2 = await fetch(`/api/submissions/${top.id}/queue`, { credentials: "include" });
-        const b2 = await r2.json().catch(() => ({}));
-        if (!alive) return;
-        const pos = Number(b2?.data?.position);
-        const total = Number(b2?.data?.totalActive);
-        if (Number.isFinite(pos) && Number.isFinite(total)) setQueueSummary({ position: pos, totalActive: total });
+        if (!ok) throw new Error(b?.error ?? "Failed to load");
+        const rows = (b?.data ?? []) as SubmissionRow[];
+        const pending = rows.filter(r => r.status === "pending").length;
+        const inReview = rows.filter(r => r.status === "in_review").length;
+        const active = rows.filter(r => typeof r.queuePosition === "number").length;
+        setStats({ pending, inReview, active });
+        setError(null);
       })
-      .catch(() => {
-        // ignore
+      .catch((e: any) => {
+        if (!alive) return;
+        setError(e?.message ?? "Could not load queue summary.");
+        setStats({ pending: 0, inReview: 0, active: 0 });
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
       });
     return () => {
       alive = false;
     };
   }, []);
 
-  const createSubmission = async () => {
-    setStatus(null);
-    const res = await fetch("/api/submissions", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ title, body }),
-    });
-    const respBody = await res.json().catch(() => null);
-    if (!res.ok) {
-      throw new Error(respBody?.error ?? "Failed to create submission");
-    }
-    setStatus(`Created submission #${respBody?.data?.id ?? "?"}`);
-  };
+  const welcome = isAdmin ? "Submission Operations" : `Welcome, ${firstNameFrom(user)}`;
+  const description = isAdmin
+    ? "Track broker submissions, triage incoming requests, and push approved deals to Dealius."
+    : "Build a submission in the broker tool, then send it to admin for review. Track its status here.";
+
+  const brokerQueueHref = "/portal/submissions";
+  const adminQueueHref = "/portal/admin/submissions";
 
   return (
     <AdminPortalShell
       section="dashboard"
-      eyebrow="Admin Portal"
-      title="Submission Operations"
-      description={`Signed in as ${user?.name ?? "Lee user"}${user?.email ? ` (${user.email})` : ""} - ${user?.role === "admin" ? "Admin" : "Agent"}`}
+      eyebrow={isAdmin ? "Admin Portal" : "Broker Portal"}
+      title={welcome}
+      description={description}
     >
-
-      <div style={{ display: "flex", gap: 12, marginTop: 18, flexWrap: "wrap" }}>
-        <Link href="/portal/submissions">
-          <Button variant="primary">My submissions</Button>
-        </Link>
-        {user?.role === "admin" && (
-          <Link href="/portal/admin/submissions">
-            <Button variant="secondary">Admin: all submissions</Button>
-          </Link>
-        )}
+      <div
+        style={{
+          marginTop: 18,
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: 12,
+        }}
+      >
+        <StatCard label="Pending" value={stats?.pending ?? 0} loading={loading} hint="Awaiting first review." />
+        <StatCard label="In review" value={stats?.inReview ?? 0} loading={loading} hint="Being processed now." />
+        <StatCard label="Active in queue" value={stats?.active ?? 0} loading={loading} hint="Pending + in review combined." />
       </div>
 
-      {user?.role !== "admin" && queueSummary && (
-        <div style={{ marginTop: 14 }}>
-          <Card padding="lg">
-            <div style={{ fontSize: 14, color: "var(--ink-700)" }}>
-              You are <b>#{queueSummary.position}</b> of <b>{queueSummary.totalActive}</b> in the active queue.
-            </div>
-          </Card>
-        </div>
+      {error && (
+        <div style={{ marginTop: 12, fontSize: 13, color: "var(--err-700)" }}>{error}</div>
       )}
 
       <div style={{ marginTop: 18 }}>
         <Card padding="lg">
-          <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink-900)" }}>Create a submission</div>
-          <div style={{ fontSize: 13, color: "var(--ink-500)", marginTop: 6 }}>
-            Create a title + body submission stored server-side and scoped to your user.
+          <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink-900)" }}>
+            How submissions reach admin
           </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 14 }}>
-            <div>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 6 }}>
-                Title
-              </label>
-              <Input value={title} onChange={(e: any) => setTitle(e.target.value)} placeholder="Short title" />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 6 }}>
-                Body
-              </label>
-              <Input value={body} onChange={(e: any) => setBody(e.target.value)} placeholder="Write something…" />
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 12 }}>
-            <Button variant="primary" onClick={() => createSubmission().catch(e => setStatus(e.message))}>
-              Create
-            </Button>
-            {status && <div style={{ fontSize: 13, color: status.startsWith("Created") ? "var(--ok-700)" : "var(--err-700)" }}>{status}</div>}
+          <p style={{ fontSize: 13, color: "var(--ink-600)", lineHeight: 1.55, marginTop: 8 }}>
+            Brokers complete a voucher, listing, or sign request in the broker tool and choose <b>Send to admin</b>.
+            The submission is added to the queue, where admin reviews it, attaches documents, and pushes the deal to
+            Dealius once it's ready. You can always come back here to check the latest status.
+          </p>
+          <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
+            <LinkButton href="/" variant="primary">
+              Open broker tool
+            </LinkButton>
+            <LinkButton href={isAdmin ? adminQueueHref : brokerQueueHref} variant="secondary">
+              View submissions
+            </LinkButton>
           </div>
         </Card>
       </div>
     </AdminPortalShell>
   );
 }
-

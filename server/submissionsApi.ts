@@ -118,14 +118,18 @@ submissionsApiRouter.get("/", async (req, res) => {
     String(req.query.includeQueue ?? "").trim().toLowerCase() === "true";
 
   const statusFilter = String(req.query.status ?? "").trim();
+  const formTypeFilter = String(req.query.formType ?? "").trim();
   const submittedByOpenIdFilter = String(req.query.submittedByOpenId ?? "").trim();
   const submittedByEmailFilter = String(req.query.submittedByEmail ?? "").trim();
 
   const whereClauses: any[] = [];
   if (!isAdmin) {
     whereClauses.push(sql`${submissions.submittedByOpenId} = ${user.openId}`);
+    if (statusFilter) whereClauses.push(sql`${submissions.status} = ${statusFilter}`);
+    if (formTypeFilter) whereClauses.push(sql`${submissions.formType} = ${formTypeFilter}`);
   } else {
     if (statusFilter) whereClauses.push(sql`${submissions.status} = ${statusFilter}`);
+    if (formTypeFilter) whereClauses.push(sql`${submissions.formType} = ${formTypeFilter}`);
     if (submittedByOpenIdFilter) whereClauses.push(sql`${submissions.submittedByOpenId} = ${submittedByOpenIdFilter}`);
     if (submittedByEmailFilter) whereClauses.push(sql`${submissions.submittedByEmail} = ${submittedByEmailFilter}`);
   }

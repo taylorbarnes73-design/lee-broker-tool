@@ -1,11 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useRoute } from "wouter";
+import { useRoute } from "wouter";
 import { Button, Card } from "../design/index.jsx";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import AdminPortalShell from "@/components/AdminPortalShell";
 import DealiusSubmissionWorkspace from "@/components/DealiusSubmissionWorkspace";
+import LinkButton from "@/components/ui/LinkButton";
+import StatusBadge from "@/components/ui/StatusBadge";
+import {
+  formatFormType,
+  formatSubmissionStatus,
+  submissionStatusTone,
+} from "@/lib/format";
 import { mergeVoucherFromContractExtraction } from "@shared/contractIntake";
 
 type SubmissionDetail = {
@@ -173,7 +180,7 @@ export default function PortalSubmissionDetail() {
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body?.error ?? "Status update failed");
       setItem({ ...item, status, updatedAt: new Date().toISOString() });
-      toast.success(`Submission marked ${status.replace("_", " ")}.`);
+      toast.success(`Submission marked ${formatSubmissionStatus(status).toLowerCase()}.`);
     } catch (e: any) {
       toast.error(e?.message ?? "Status update failed");
     } finally {
@@ -263,30 +270,52 @@ export default function PortalSubmissionDetail() {
     <AdminPortalShell
       section="detail"
       title={`Submission #${Number.isFinite(id) ? id : ""}`}
-      description={item ? `${item.reference || "(untitled)"} - ${item.formType} - ${item.status}` : "Loading submission detail workspace."}
+      description={
+        item
+          ? `${item.reference || "(untitled)"} · ${formatFormType(item.formType)} · ${formatSubmissionStatus(item.status)}`
+          : "Loading submission detail workspace."
+      }
       actions={
-        <Link href={user?.role === "admin" ? "/portal/admin/submissions" : "/portal/submissions"}>
-          <Button variant="secondary">Back to queue</Button>
-        </Link>
+        <LinkButton href={user?.role === "admin" ? "/portal/admin/submissions" : "/portal/submissions"} variant="secondary">
+          Back to queue
+        </LinkButton>
       }
     >
       <Card padding="lg">
         {error ? (
           <div style={{ color: "var(--err-700)", fontSize: 13 }}>{error}</div>
         ) : !item ? (
-          <div style={{ color: "var(--ink-500)", fontSize: 13 }}>Loading...</div>
+          <div
+            aria-hidden
+            style={{
+              height: 120,
+              borderRadius: 10,
+              background: "var(--ink-100)",
+              border: "1px solid var(--ink-200)",
+            }}
+          />
         ) : (
           <>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
               <div>
                 <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>{item.reference || "(untitled)"}</div>
-                <div style={{ fontSize: 13, color: "var(--ink-500)", marginTop: 2 }}>status: {item.status}</div>
-                {queueMeta?.position !== null && queueMeta?.position !== undefined && (
-                  <div style={{ fontSize: 13, color: "var(--ink-500)", marginTop: 2 }}>
-                    queue: #{queueMeta.position} of {queueMeta.totalActive}
-                    {typeof queueMeta.aheadOfYou === "number" ? ` (ahead: ${queueMeta.aheadOfYou})` : ""}
-                  </div>
-                )}
+                <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6, flexWrap: "wrap" }}>
+                  <StatusBadge tone={submissionStatusTone(item.status)} size="sm">
+                    {formatSubmissionStatus(item.status)}
+                  </StatusBadge>
+                  <StatusBadge
+                    tone={{ bg: "var(--ink-100)", fg: "var(--ink-700)", border: "var(--ink-200)" }}
+                    size="sm"
+                  >
+                    {formatFormType(item.formType)}
+                  </StatusBadge>
+                  {queueMeta?.position !== null && queueMeta?.position !== undefined && (
+                    <span style={{ fontSize: 12, color: "var(--ink-500)" }}>
+                      Queue #{queueMeta.position} of {queueMeta.totalActive}
+                      {typeof queueMeta.aheadOfYou === "number" ? ` · ${queueMeta.aheadOfYou} ahead` : ""}
+                    </span>
+                  )}
+                </div>
               </div>
               <div style={{ fontSize: 12, color: "var(--ink-500)" }}>
                 Created: {new Date(item.createdAt).toLocaleString()}
@@ -318,11 +347,11 @@ export default function PortalSubmissionDetail() {
                   </div>
                   <div>
                     <span>Type</span>
-                    <strong>{item.formType}</strong>
+                    <strong>{formatFormType(item.formType)}</strong>
                   </div>
                   <div>
                     <span>Status</span>
-                    <strong>{item.status}</strong>
+                    <strong>{formatSubmissionStatus(item.status)}</strong>
                   </div>
                   <div>
                     <span>Submitted by</span>
@@ -355,7 +384,7 @@ export default function PortalSubmissionDetail() {
                         disabled={updatingStatus !== null || item.status === status}
                         onClick={() => updateStatus(status)}
                       >
-                        {updatingStatus === status ? "Updating..." : status.replace("_", " ")}
+                        {updatingStatus === status ? "Updating…" : formatSubmissionStatus(status)}
                       </Button>
                     ))}
                   </div>
@@ -395,7 +424,7 @@ export default function PortalSubmissionDetail() {
                     }}
                   />
                   <Button variant="secondary" disabled={!item || importingExcel} onClick={() => excelFileInputRef.current?.click()}>
-                    {importingExcel ? "Importing..." : "Upload .xlsx / .xlsm voucher"}
+                    {importingExcel ? "Importing…" : "Upload .xlsx / .xlsm voucher"}
                   </Button>
                   <span style={{ fontSize: 12, color: "var(--ink-500)" }}>
                     Uses the same cell layout as the legacy commission voucher workbook.
@@ -442,7 +471,7 @@ export default function PortalSubmissionDetail() {
                     }}
                   />
                   <Button variant="secondary" disabled={!item || extracting} onClick={() => fileInputRef.current?.click()}>
-                    {extracting ? "Extracting..." : "Upload PDF and extract"}
+                    {extracting ? "Extracting…" : "Upload PDF and extract"}
                   </Button>
                   <span style={{ fontSize: 12, color: "var(--ink-500)" }}>
                     Fills address, parties, term dates, and fee percent when found.

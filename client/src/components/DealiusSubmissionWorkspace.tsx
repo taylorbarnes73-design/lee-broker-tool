@@ -1109,7 +1109,7 @@ export default function DealiusSubmissionWorkspace({
           disabled={pushing || !canPush}
           onClick={() => void handlePush()}
         >
-          {pushing ? "Pushing..." : entry.entryMode === "listing" ? "Push listing" : "Push deal"}
+          {pushing ? "Pushing…" : entry.entryMode === "listing" ? "Push listing" : "Push deal"}
         </Button>
       </section>
 
@@ -1180,7 +1180,7 @@ export default function DealiusSubmissionWorkspace({
             disabled={!docTargetId || docRows.length === 0 || uploadingDocs}
             onClick={() => void uploadDocuments()}
           >
-            {uploadingDocs ? "Uploading..." : "Attach to Dealius"}
+            {uploadingDocs ? "Uploading…" : "Attach to Dealius"}
           </Button>
         </div>
       </section>

@@ -382,7 +382,7 @@ export default function PortalAdminListingImport() {
                   <p>{sourceFile ? `${sourceFile.mimeType} - ${formatBytes(sourceFile.size)}` : "PDF, JPG, PNG, or WebP up to 20 MB."}</p>
                 </div>
                 <Button type="button" variant="primary" disabled={busy} onClick={() => fileInputRef.current?.click()}>
-                  {extract.isPending ? "Extracting..." : sourceFile ? "Replace file" : "Choose file"}
+                  {extract.isPending ? "Extracting…" : sourceFile ? "Replace file" : "Choose file"}
                 </Button>
                 <input
                   ref={fileInputRef}
@@ -605,7 +605,7 @@ export default function PortalAdminListingImport() {
                 onClick={() => void runPush()}
                 style={{ width: "100%", justifyContent: "center", marginTop: 14 }}
               >
-                {push.isPending ? "Pushing..." : mode === "create" ? "Create in Buildout" : "Update Buildout"}
+                {push.isPending ? "Pushing…" : mode === "create" ? "Create in Buildout" : "Update Buildout"}
               </Button>
             </section>
 

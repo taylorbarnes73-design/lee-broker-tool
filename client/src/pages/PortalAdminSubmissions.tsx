@@ -1,8 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { Button, Card } from "../design/index.jsx";
 import { useAuth } from "@/_core/hooks/useAuth";
 import AdminPortalShell from "@/components/AdminPortalShell";
+import LinkButton from "@/components/ui/LinkButton";
+import StatusBadge from "@/components/ui/StatusBadge";
+import {
+  formatFormType,
+  formatSubmissionStatus,
+  submissionStatusTone,
+} from "@/lib/format";
 
 type SubmissionSummary = {
   id: number;
@@ -15,34 +22,87 @@ type SubmissionSummary = {
   queuePosition: number | null;
 };
 
+const INPUT_STYLE = {
+  padding: "10px 12px",
+  borderRadius: 10,
+  border: "1px solid var(--ink-200)",
+  background: "white",
+  fontSize: 13,
+  color: "var(--ink-900)",
+} as const;
+
+function LoadingSkeleton() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {[0, 1, 2, 3].map(i => (
+        <div
+          key={i}
+          aria-hidden
+          style={{
+            height: 72,
+            borderRadius: 10,
+            background: "var(--ink-100)",
+            border: "1px solid var(--ink-200)",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function PortalAdminSubmissions() {
   const { user } = useAuth();
   const [items, setItems] = useState<SubmissionSummary[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
+  const [formTypeFilter, setFormTypeFilter] = useState<string>("");
   const [sortByQueue, setSortByQueue] = useState(false);
 
   useEffect(() => {
     if (user?.role !== "admin") return;
     let alive = true;
+    setLoading(true);
     const params = new URLSearchParams({ limit: "200", includeQueue: "1" });
     if (statusFilter) params.set("status", statusFilter);
+    if (formTypeFilter) params.set("formType", formTypeFilter);
     fetch(`/api/submissions?${params.toString()}`, { credentials: "include" })
       .then(r => r.json().then(b => ({ ok: r.ok, b })))
       .then(({ ok, b }) => {
         if (!alive) return;
         if (!ok) throw new Error(b?.error ?? "Failed to load submissions");
         setItems(b?.data ?? []);
+        setError(null);
       })
       .catch(e => {
         if (!alive) return;
-        setError(e.message ?? "Failed to load");
+        setError(e?.message ?? "Failed to load");
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
       });
     return () => {
       alive = false;
     };
-  }, [user?.role, statusFilter]);
+  }, [user?.role, statusFilter, formTypeFilter]);
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const filtered = !q
+      ? items
+      : items.filter(s =>
+          `${s.submittedBy ?? ""} ${s.submittedByEmail ?? ""} ${s.reference ?? ""}`
+            .toLowerCase()
+            .includes(q)
+        );
+    if (!sortByQueue) return filtered;
+    return [...filtered].sort((a, b) => {
+      const ap = a.queuePosition ?? Number.POSITIVE_INFINITY;
+      const bp = b.queuePosition ?? Number.POSITIVE_INFINITY;
+      return ap - bp;
+    });
+  }, [items, query, sortByQueue]);
 
   if (user?.role !== "admin") {
     return (
@@ -51,9 +111,9 @@ export default function PortalAdminSubmissions() {
         title="Admin Queue"
         description="Admin access is required to review all broker submissions."
         actions={
-          <Link href="/portal">
-            <Button variant="secondary">Back to dashboard</Button>
-          </Link>
+          <LinkButton href="/portal" variant="secondary">
+            Back to dashboard
+          </LinkButton>
         }
       >
         <Card padding="lg">
@@ -66,116 +126,140 @@ export default function PortalAdminSubmissions() {
   return (
     <AdminPortalShell
       section="admin-submissions"
-      title="Admin Queue"
+      title="Admin queue"
       description="Review broker submissions, filter the queue, and open a detail workspace for deal submission."
       actions={
-        <Link href="/portal">
-          <Button variant="secondary">Back to dashboard</Button>
-        </Link>
+        <LinkButton href="/portal" variant="secondary">
+          Back to dashboard
+        </LinkButton>
       }
     >
-
       <div style={{ marginTop: 14 }}>
         <Card padding="lg">
-          <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 10,
+              alignItems: "center",
+              marginBottom: 12,
+              flexWrap: "wrap",
+            }}
+          >
             <input
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="Filter by user name or email…"
+              placeholder="Filter by name, email, or reference…"
               style={{
+                ...INPUT_STYLE,
                 width: 340,
                 maxWidth: "100%",
-                padding: "10px 12px",
-                borderRadius: 10,
-                border: "1px solid var(--ink-200)",
-                background: "white",
-                fontSize: 13,
               }}
             />
-            <select
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={INPUT_STYLE}>
+              <option value="">All statuses</option>
+              <option value="pending">Pending</option>
+              <option value="in_review">In review</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <select value={formTypeFilter} onChange={e => setFormTypeFilter(e.target.value)} style={INPUT_STYLE}>
+              <option value="">All types</option>
+              <option value="voucher">Commission voucher</option>
+              <option value="listing">Listing</option>
+              <option value="sign">Sign request</option>
+              <option value="lease">Lease</option>
+              <option value="sale">Sale</option>
+            </select>
+            <Button
+              variant={sortByQueue ? "primary" : "secondary"}
+              onClick={() => setSortByQueue(v => !v)}
+            >
+              Sort by queue
+            </Button>
+            <div style={{ fontSize: 12, color: "var(--ink-500)", marginLeft: "auto" }}>
+              Showing {visible.length} of {items.length}
+            </div>
+          </div>
+
+          {loading ? (
+            <LoadingSkeleton />
+          ) : error ? (
+            <div style={{ color: "var(--err-700)", fontSize: 13 }}>{error}</div>
+          ) : items.length === 0 ? (
+            <div
               style={{
-                padding: "10px 12px",
-                borderRadius: 10,
-                border: "1px solid var(--ink-200)",
-                background: "white",
+                padding: 24,
+                borderRadius: 12,
+                border: "1px dashed var(--ink-300)",
+                background: "var(--ink-50)",
+                textAlign: "center",
+                color: "var(--ink-600)",
                 fontSize: 13,
               }}
             >
-              <option value="">All statuses</option>
-              <option value="pending">pending</option>
-              <option value="in_review">in_review</option>
-              <option value="approved">approved</option>
-              <option value="rejected">rejected</option>
-            </select>
-            <Button variant={sortByQueue ? "primary" : "secondary"} onClick={() => setSortByQueue(v => !v)}>
-              Sort by queue
-            </Button>
-            <div style={{ fontSize: 12, color: "var(--ink-500)" }}>
-              Showing {items.filter(s => {
-                const q = query.trim().toLowerCase();
-                if (!q) return true;
-                return `${s.submittedBy ?? ""} ${s.submittedByEmail ?? ""}`.toLowerCase().includes(q);
-              }).length} of {items.length}
+              No submissions match the current filters.
             </div>
-          </div>
-          {error ? (
-            <div style={{ color: "var(--err-700)", fontSize: 13 }}>{error}</div>
-          ) : items.length === 0 ? (
-            <div style={{ color: "var(--ink-500)", fontSize: 13 }}>No submissions found.</div>
+          ) : visible.length === 0 ? (
+            <div
+              style={{
+                padding: 24,
+                borderRadius: 12,
+                border: "1px dashed var(--ink-300)",
+                background: "var(--ink-50)",
+                textAlign: "center",
+                color: "var(--ink-600)",
+                fontSize: 13,
+              }}
+            >
+              No submissions match the current search.
+            </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {items
-                .filter(s => {
-                  const q = query.trim().toLowerCase();
-                  if (!q) return true;
-                  return `${s.submittedBy ?? ""} ${s.submittedByEmail ?? ""}`.toLowerCase().includes(q);
-                })
-                .slice()
-                .sort((a, b) => {
-                  if (!sortByQueue) return 0;
-                  const ap = a.queuePosition ?? Number.POSITIVE_INFINITY;
-                  const bp = b.queuePosition ?? Number.POSITIVE_INFINITY;
-                  return ap - bp;
-                })
-                .map(s => (
-                  <Link
-                    key={s.id}
-                    href={`/portal/submissions/${s.id}`}
-                    style={{
-                      textDecoration: "none",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: 12,
-                      padding: 12,
-                      borderRadius: 10,
-                      border: "1px solid var(--ink-200)",
-                      background: "white",
-                      color: "inherit",
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>
-                        #{s.id} · {s.reference || "(untitled)"}
-                      </div>
-                      <div style={{ fontSize: 13, color: "var(--ink-500)", marginTop: 2 }}>
-                        status: {s.status}
-                      </div>
+              {visible.map(s => (
+                <Link
+                  key={s.id}
+                  href={`/portal/submissions/${s.id}`}
+                  style={{
+                    textDecoration: "none",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 12,
+                    padding: 12,
+                    borderRadius: 10,
+                    border: "1px solid var(--ink-200)",
+                    background: "white",
+                    color: "inherit",
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>
+                      #{s.id} · {s.reference || "(untitled)"}
+                    </div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6, flexWrap: "wrap" }}>
+                      <StatusBadge tone={submissionStatusTone(s.status)} size="sm">
+                        {formatSubmissionStatus(s.status)}
+                      </StatusBadge>
+                      <StatusBadge
+                        tone={{ bg: "var(--ink-100)", fg: "var(--ink-700)", border: "var(--ink-200)" }}
+                        size="sm"
+                      >
+                        {formatFormType(s.formType)}
+                      </StatusBadge>
                       {s.queuePosition !== null && (
-                        <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 2 }}>
-                          queue: #{s.queuePosition}
-                        </div>
+                        <span style={{ fontSize: 12, color: "var(--ink-500)" }}>
+                          Queue position #{s.queuePosition}
+                        </span>
                       )}
-                      <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 2 }}>
-                        {s.submittedBy || "(unknown)"} {s.submittedByEmail ? `· ${s.submittedByEmail}` : ""}
-                      </div>
                     </div>
-                    <div style={{ fontSize: 12, color: "var(--ink-500)" }}>
-                      {new Date(s.createdAt).toLocaleString()}
+                    <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 6 }}>
+                      {s.submittedBy || "(unknown)"} {s.submittedByEmail ? `· ${s.submittedByEmail}` : ""}
                     </div>
-                  </Link>
-                ))}
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>
+                    {new Date(s.createdAt).toLocaleString()}
+                  </div>
+                </Link>
+              ))}
             </div>
           )}
         </Card>
@@ -183,4 +267,3 @@ export default function PortalAdminSubmissions() {
     </AdminPortalShell>
   );
 }
-

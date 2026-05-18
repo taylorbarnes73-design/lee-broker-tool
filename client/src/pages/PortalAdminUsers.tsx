@@ -321,9 +321,32 @@ export default function PortalAdminUsers() {
           )}
 
           {listLoading && !list ? (
-            <div style={{ color: "var(--ink-500)", fontSize: 13 }}>Loading users…</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[0, 1, 2, 3].map(i => (
+                <div
+                  key={i}
+                  aria-hidden
+                  style={{
+                    height: 48,
+                    borderRadius: 8,
+                    background: "var(--ink-100)",
+                    border: "1px solid var(--ink-200)",
+                  }}
+                />
+              ))}
+            </div>
           ) : list && list.users.length === 0 ? (
-            <div style={{ fontSize: 14, color: "var(--ink-600)" }}>
+            <div
+              style={{
+                padding: 24,
+                borderRadius: 12,
+                border: "1px dashed var(--ink-300)",
+                background: "var(--ink-50)",
+                textAlign: "center",
+                fontSize: 13,
+                color: "var(--ink-600)",
+              }}
+            >
               No users match your filters.{" "}
               <button
                 type="button"

@@ -129,7 +129,23 @@ export default function PortalAdminAuditLog() {
 
         {loading && <div style={{ color: "var(--ink-500)", fontSize: 14 }}>Loading…</div>}
 
-        {!loading && data && (
+        {!loading && data && data.rows.length === 0 && (
+          <div
+            style={{
+              padding: 24,
+              borderRadius: 12,
+              border: "1px dashed var(--ink-300)",
+              background: "var(--ink-50)",
+              color: "var(--ink-600)",
+              fontSize: 13,
+              textAlign: "center",
+            }}
+          >
+            No audit events match the current filters.
+          </div>
+        )}
+
+        {!loading && data && data.rows.length > 0 && (
           <>
             <div style={{ fontSize: 13, color: "var(--ink-500)", marginBottom: 12 }}>
               {data.total} event{data.total === 1 ? "" : "s"} · page {data.page} of {totalPages}

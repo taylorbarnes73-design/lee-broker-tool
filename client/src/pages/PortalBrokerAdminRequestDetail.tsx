@@ -1,8 +1,11 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import AdminPortalShell from "@/components/AdminPortalShell";
-import { Button, Card } from "../design/index.jsx";
-import { Link, useRoute } from "wouter";
+import LinkButton from "@/components/ui/LinkButton";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { Card } from "../design/index.jsx";
+import { useRoute } from "wouter";
 import { useEffect, useMemo, useState } from "react";
+import { brokerAdminStatusTone, formatBrokerAdminStatus } from "@/lib/format";
 
 type Attachment = {
   id: number;
@@ -16,28 +19,39 @@ type Attachment = {
 
 type RequestRecord = any;
 
+const CONFIDENTIAL_TONE = { bg: "#FDECEC", fg: "#9A1A10", border: "#F4C7C2" };
+
 export default function PortalBrokerAdminRequestDetail() {
   const { user } = useAuth();
   const [, params] = useRoute("/portal/admin/broker-admin/:id");
   const id = Number(params?.id);
   const [data, setData] = useState<{ request: RequestRecord; attachments: Attachment[] } | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user?.role !== "admin") return;
-    if (!Number.isFinite(id) || id <= 0) return;
+    if (!Number.isFinite(id) || id <= 0) {
+      setLoading(false);
+      return;
+    }
 
     let alive = true;
+    setLoading(true);
     fetch(`/api/broker-admin/requests/${id}`, { credentials: "include" })
       .then(r => r.json().then(b => ({ ok: r.ok, b })))
       .then(({ ok, b }) => {
         if (!alive) return;
         if (!ok) throw new Error(b?.error ?? "Failed to load request");
         setData(b?.data ?? null);
+        setError(null);
       })
       .catch(e => {
         if (!alive) return;
-        setError(e.message ?? "Failed to load");
+        setError(e?.message ?? "Failed to load");
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
       });
     return () => {
       alive = false;
@@ -56,9 +70,9 @@ export default function PortalBrokerAdminRequestDetail() {
         title="Broker Admin"
         description="Admin access is required."
         actions={
-          <Link href="/portal">
-            <Button variant="secondary">Back to dashboard</Button>
-          </Link>
+          <LinkButton href="/portal" variant="secondary">
+            Back to dashboard
+          </LinkButton>
         }
       >
         <Card padding="lg">
@@ -75,23 +89,42 @@ export default function PortalBrokerAdminRequestDetail() {
       description="View the stored email metadata and attachments captured from the shared mailbox."
       actions={
         <div style={{ display: "flex", gap: 10 }}>
-          <Link href="/portal/admin/broker-admin">
-            <Button variant="secondary">Back</Button>
-          </Link>
+          <LinkButton href="/portal/admin/broker-admin" variant="secondary">
+            Back
+          </LinkButton>
         </div>
       }
     >
       <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
         <Card padding="lg">
-          {error ? (
+          {loading ? (
+            <div
+              aria-hidden
+              style={{
+                height: 96,
+                borderRadius: 10,
+                background: "var(--ink-100)",
+                border: "1px solid var(--ink-200)",
+              }}
+            />
+          ) : error ? (
             <div style={{ color: "var(--err-700)", fontSize: 13 }}>{error}</div>
           ) : !data ? (
-            <div style={{ color: "var(--ink-500)", fontSize: 13 }}>Loading…</div>
+            <div style={{ color: "var(--ink-500)", fontSize: 13 }}>Request not found.</div>
           ) : (
-            <div style={{ display: "grid", gap: 8 }}>
-              <div style={{ fontSize: 13, color: "var(--ink-700)" }}>
-                <b>Status</b>: {data.request.status} {data.request.owner ? `· owner: ${data.request.owner}` : ""}
-                {data.request.confidential ? " · confidential" : ""}
+            <div style={{ display: "grid", gap: 10 }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <StatusBadge tone={brokerAdminStatusTone(data.request.status)}>
+                  {formatBrokerAdminStatus(data.request.status)}
+                </StatusBadge>
+                {data.request.owner && (
+                  <span style={{ fontSize: 13, color: "var(--ink-700)" }}>
+                    Owner: <b>{data.request.owner}</b>
+                  </span>
+                )}
+                {data.request.confidential ? (
+                  <StatusBadge tone={CONFIDENTIAL_TONE}>Confidential</StatusBadge>
+                ) : null}
               </div>
               <div style={{ fontSize: 13, color: "var(--ink-700)" }}>
                 <b>From</b>: {data.request.fromEmail || "(unknown)"}
@@ -116,10 +149,30 @@ export default function PortalBrokerAdminRequestDetail() {
 
         <Card padding="lg">
           <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink-900)", marginBottom: 10 }}>Attachments</div>
-          {!data ? (
-            <div style={{ color: "var(--ink-500)", fontSize: 13 }}>Loading…</div>
-          ) : data.attachments.length === 0 ? (
-            <div style={{ color: "var(--ink-500)", fontSize: 13 }}>No attachments stored for this request.</div>
+          {loading ? (
+            <div
+              aria-hidden
+              style={{
+                height: 72,
+                borderRadius: 10,
+                background: "var(--ink-100)",
+                border: "1px solid var(--ink-200)",
+              }}
+            />
+          ) : !data ? null : data.attachments.length === 0 ? (
+            <div
+              style={{
+                padding: 18,
+                borderRadius: 10,
+                border: "1px dashed var(--ink-300)",
+                background: "var(--ink-50)",
+                color: "var(--ink-600)",
+                fontSize: 13,
+                textAlign: "center",
+              }}
+            >
+              No attachments stored for this request.
+            </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {data.attachments.map(a => (
@@ -152,4 +205,3 @@ export default function PortalBrokerAdminRequestDetail() {
     </AdminPortalShell>
   );
 }
-

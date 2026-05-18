@@ -549,7 +549,20 @@ export default function PortalAdminSettings() {
           )}
           {loadingSettings || !grouped ? (
             <Card padding="lg">
-              <div style={{ color: "var(--ink-500)", fontSize: 13 }}>Loading settings…</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {[0, 1, 2, 3].map(i => (
+                  <div
+                    key={i}
+                    aria-hidden
+                    style={{
+                      height: 56,
+                      borderRadius: 10,
+                      background: "var(--ink-100)",
+                      border: "1px solid var(--ink-200)",
+                    }}
+                  />
+                ))}
+              </div>
             </Card>
           ) : (
             <Card padding="lg">

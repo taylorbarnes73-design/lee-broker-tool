@@ -115,7 +115,7 @@ function AdminLoginEntry() {
   }, []);
   return (
     <div className="portal-loading">
-      <div className="portal-loading-card">Opening sign-in...</div>
+      <div className="portal-loading-card">Opening sign-in…</div>
     </div>
   );
 }
@@ -129,12 +129,100 @@ function PortalRoute({ children }: { children: ReactNode }) {
   if (loading || !isAuthenticated) {
     return (
       <div className="portal-loading">
-        <div className="portal-loading-card">Opening portal...</div>
+        <div className="portal-loading-card">Opening portal…</div>
       </div>
     );
   }
 
   return <>{children}</>;
+}
+
+function AdminAccessRequired() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        width: "100vw",
+        minHeight: "100vh",
+        background: "var(--ink-50)",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+        fontFamily: "Inter, system-ui, sans-serif",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 460,
+          width: "100%",
+          background: "white",
+          borderRadius: 16,
+          border: "1px solid var(--ink-200)",
+          padding: 28,
+          boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+          textAlign: "center",
+        }}
+      >
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 48,
+            height: 48,
+            borderRadius: 999,
+            background: "var(--ink-100)",
+            color: "var(--ink-700)",
+            marginBottom: 14,
+            fontSize: 22,
+            fontWeight: 700,
+          }}
+        >
+          ·
+        </div>
+        <h1 style={{ fontSize: 20, fontWeight: 700, color: "var(--ink-900)", margin: 0 }}>
+          Administrator access required
+        </h1>
+        <p style={{ fontSize: 14, color: "var(--ink-600)", lineHeight: 1.55, marginTop: 8, marginBottom: 22 }}>
+          This area is restricted to platform administrators. You can still continue with the broker dashboard
+          or open the broker tool to build a new submission.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <Link
+            href="/portal/dashboard"
+            style={{
+              display: "block",
+              padding: "12px 18px",
+              borderRadius: 10,
+              background: "var(--brand-600, #A9223B)",
+              color: "#fff",
+              fontWeight: 600,
+              textDecoration: "none",
+              fontSize: 14,
+            }}
+          >
+            Broker dashboard
+          </Link>
+          <a
+            href="/tool"
+            style={{
+              display: "block",
+              padding: "12px 18px",
+              borderRadius: 10,
+              border: "1px solid var(--ink-200)",
+              background: "#fff",
+              color: "var(--ink-800)",
+              fontWeight: 600,
+              textDecoration: "none",
+              fontSize: 14,
+            }}
+          >
+            Open broker tool
+          </a>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function AdminPortalRoute({ children }: { children: ReactNode }) {
@@ -146,17 +234,13 @@ function AdminPortalRoute({ children }: { children: ReactNode }) {
   if (loading || !isAuthenticated) {
     return (
       <div className="portal-loading">
-        <div className="portal-loading-card">Opening admin portal...</div>
+        <div className="portal-loading-card">Opening admin portal…</div>
       </div>
     );
   }
 
   if (user?.role !== "admin") {
-    return (
-      <div className="portal-loading">
-        <div className="portal-loading-card">Administrator access required.</div>
-      </div>
-    );
+    return <AdminAccessRequired />;
   }
 
   return <>{children}</>;
@@ -169,6 +253,11 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/portal/admin/login" component={AdminLoginEntry} />
       <Route path="/portal">
+        <PortalRoute>
+          <PortalDashboard />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/dashboard">
         <PortalRoute>
           <PortalDashboard />
         </PortalRoute>

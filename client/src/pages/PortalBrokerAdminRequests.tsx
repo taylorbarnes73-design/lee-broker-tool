@@ -1,8 +1,11 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import AdminPortalShell from "@/components/AdminPortalShell";
-import { Button, Card } from "../design/index.jsx";
+import LinkButton from "@/components/ui/LinkButton";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { Card } from "../design/index.jsx";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
+import { brokerAdminStatusTone, formatBrokerAdminStatus } from "@/lib/format";
 
 type BrokerAdminRequestRow = {
   id: number;
@@ -19,18 +22,54 @@ type BrokerAdminRequestRow = {
   attachmentsSummary: string | null;
 };
 
+const INPUT_STYLE = {
+  padding: "10px 12px",
+  borderRadius: 10,
+  border: "1px solid var(--ink-200)",
+  background: "white",
+  fontSize: 13,
+  color: "var(--ink-900)",
+} as const;
+
+const CONFIDENTIAL_TONE = { bg: "#FDECEC", fg: "#9A1A10", border: "#F4C7C2" };
+
+function LoadingSkeleton() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {[0, 1, 2, 3].map(i => (
+        <div
+          key={i}
+          aria-hidden
+          style={{
+            height: 72,
+            borderRadius: 10,
+            background: "var(--ink-100)",
+            border: "1px solid var(--ink-200)",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function PortalBrokerAdminRequests() {
   const { user } = useAuth();
   const [items, setItems] = useState<BrokerAdminRequestRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [ownerFilter, setOwnerFilter] = useState("");
-  const [stats, setStats] = useState<{ counts: Array<{ status: string; count: number }>; staleCount: number; staleDays: number } | null>(null);
+  const [stats, setStats] = useState<{
+    counts: Array<{ status: string; count: number }>;
+    staleCount: number;
+    staleDays: number;
+  } | null>(null);
 
   useEffect(() => {
     if (user?.role !== "admin") return;
     let alive = true;
+    setLoading(true);
     const params = new URLSearchParams({ limit: "200" });
     if (statusFilter) params.set("status", statusFilter);
     if (ownerFilter) params.set("owner", ownerFilter);
@@ -42,10 +81,14 @@ export default function PortalBrokerAdminRequests() {
         if (!alive) return;
         if (!ok) throw new Error(b?.error ?? "Failed to load Broker Admin requests");
         setItems(b?.data ?? []);
+        setError(null);
       })
       .catch(e => {
         if (!alive) return;
-        setError(e.message ?? "Failed to load");
+        setError(e?.message ?? "Failed to load");
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
       });
 
     fetch(`/api/broker-admin/stats?staleDays=3`, { credentials: "include" })
@@ -74,6 +117,14 @@ export default function PortalBrokerAdminRequests() {
     return items.filter(r => `${r.title ?? ""} ${r.fromEmail ?? ""} ${r.reference ?? ""}`.toLowerCase().includes(needle));
   }, [items, q]);
 
+  const ownerOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const row of items) {
+      if (row.owner && row.owner.trim()) set.add(row.owner.trim());
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [items]);
+
   if (user?.role !== "admin") {
     return (
       <AdminPortalShell
@@ -81,9 +132,9 @@ export default function PortalBrokerAdminRequests() {
         title="Broker Admin"
         description="Admin access is required to view broker admin inbox requests."
         actions={
-          <Link href="/portal">
-            <Button variant="secondary">Back to dashboard</Button>
-          </Link>
+          <LinkButton href="/portal" variant="secondary">
+            Back to dashboard
+          </LinkButton>
         }
       >
         <Card padding="lg">
@@ -99,108 +150,104 @@ export default function PortalBrokerAdminRequests() {
       title="Broker Admin"
       description="Shared inbox requests captured from email. Triage, track, and open detail to view attachments."
       actions={
-        <Link href="/portal">
-          <Button variant="secondary">Back to dashboard</Button>
-        </Link>
+        <LinkButton href="/portal" variant="secondary">
+          Back to dashboard
+        </LinkButton>
       }
     >
       <div style={{ marginTop: 14 }}>
         <Card padding="lg">
           {stats && (
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
               {stats.counts
                 .slice()
                 .sort((a, b) => (a.status > b.status ? 1 : -1))
                 .map(c => (
-                  <div
-                    key={c.status}
-                    style={{
-                      padding: "8px 10px",
-                      borderRadius: 999,
-                      border: "1px solid var(--ink-200)",
-                      background: "white",
-                      fontSize: 12,
-                      color: "var(--ink-700)",
-                    }}
-                  >
-                    <b>{c.status}</b>: {c.count}
-                  </div>
+                  <StatusBadge key={c.status} tone={brokerAdminStatusTone(c.status)}>
+                    {formatBrokerAdminStatus(c.status)}: {c.count}
+                  </StatusBadge>
                 ))}
-              <div
-                style={{
-                  padding: "8px 10px",
-                  borderRadius: 999,
-                  border: "1px solid var(--ink-200)",
-                  background: "white",
-                  fontSize: 12,
-                  color: "var(--ink-700)",
-                }}
-              >
-                <b>stale</b> ({stats.staleDays}d): {stats.staleCount}
-              </div>
+              <StatusBadge tone={{ bg: "var(--ink-100)", fg: "var(--ink-700)", border: "var(--ink-200)" }}>
+                Stale ({stats.staleDays}d): {stats.staleCount}
+              </StatusBadge>
             </div>
           )}
 
-          <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 10,
+              alignItems: "center",
+              marginBottom: 12,
+              flexWrap: "wrap",
+            }}
+          >
             <input
               value={q}
               onChange={e => setQ(e.target.value)}
               placeholder="Search title, from, reference…"
               style={{
+                ...INPUT_STYLE,
                 width: 340,
                 maxWidth: "100%",
-                padding: "10px 12px",
-                borderRadius: 10,
-                border: "1px solid var(--ink-200)",
-                background: "white",
-                fontSize: 13,
               }}
             />
-            <select
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
-              style={{
-                padding: "10px 12px",
-                borderRadius: 10,
-                border: "1px solid var(--ink-200)",
-                background: "white",
-                fontSize: 13,
-              }}
-            >
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={INPUT_STYLE}>
               <option value="">All statuses</option>
-              <option value="new">new</option>
-              <option value="triaged">triaged</option>
-              <option value="in_progress">in_progress</option>
-              <option value="waiting_on_broker">waiting_on_broker</option>
-              <option value="waiting_on_vendor">waiting_on_vendor</option>
-              <option value="done">done</option>
-              <option value="cancelled">cancelled</option>
+              <option value="new">New</option>
+              <option value="triaged">Triaged</option>
+              <option value="in_progress">In progress</option>
+              <option value="waiting_on_broker">Waiting on broker</option>
+              <option value="waiting_on_vendor">Waiting on vendor</option>
+              <option value="done">Done</option>
+              <option value="cancelled">Cancelled</option>
             </select>
-            <select
-              value={ownerFilter}
-              onChange={e => setOwnerFilter(e.target.value)}
-              style={{
-                padding: "10px 12px",
-                borderRadius: 10,
-                border: "1px solid var(--ink-200)",
-                background: "white",
-                fontSize: 13,
-              }}
-            >
+            <select value={ownerFilter} onChange={e => setOwnerFilter(e.target.value)} style={INPUT_STYLE}>
               <option value="">All owners</option>
-              <option value="Taylor">Taylor</option>
-              <option value="Errissa">Errissa</option>
+              {ownerOptions.map(o => (
+                <option key={o} value={o}>
+                  {o}
+                </option>
+              ))}
               <option value="Unassigned">Unassigned</option>
             </select>
-            <div style={{ fontSize: 12, color: "var(--ink-500)" }}>
+            <div style={{ fontSize: 12, color: "var(--ink-500)", marginLeft: "auto" }}>
               Showing {visible.length} of {items.length}
             </div>
           </div>
 
-          {error ? (
+          {loading ? (
+            <LoadingSkeleton />
+          ) : error ? (
             <div style={{ color: "var(--err-700)", fontSize: 13 }}>{error}</div>
+          ) : items.length === 0 ? (
+            <div
+              style={{
+                padding: 24,
+                borderRadius: 12,
+                border: "1px dashed var(--ink-300)",
+                background: "var(--ink-50)",
+                textAlign: "center",
+                color: "var(--ink-600)",
+                fontSize: 13,
+              }}
+            >
+              No broker admin requests captured yet.
+            </div>
           ) : visible.length === 0 ? (
-            <div style={{ color: "var(--ink-500)", fontSize: 13 }}>No broker admin requests found.</div>
+            <div
+              style={{
+                padding: 24,
+                borderRadius: 12,
+                border: "1px dashed var(--ink-300)",
+                background: "var(--ink-50)",
+                textAlign: "center",
+                color: "var(--ink-600)",
+                fontSize: 13,
+              }}
+            >
+              No requests match the current filters.
+            </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {visible.map(r => (
@@ -223,11 +270,20 @@ export default function PortalBrokerAdminRequests() {
                     <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>
                       #{r.id} · {r.title || r.reference || "(untitled)"}
                     </div>
-                    <div style={{ fontSize: 13, color: "var(--ink-500)", marginTop: 2 }}>
-                      status: {r.status} {r.owner ? `· owner: ${r.owner}` : ""}
-                      {r.confidential ? " · confidential" : ""}
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6, flexWrap: "wrap" }}>
+                      <StatusBadge tone={brokerAdminStatusTone(r.status)} size="sm">
+                        {formatBrokerAdminStatus(r.status)}
+                      </StatusBadge>
+                      {r.owner && (
+                        <span style={{ fontSize: 12, color: "var(--ink-500)" }}>Owner: {r.owner}</span>
+                      )}
+                      {r.confidential ? (
+                        <StatusBadge tone={CONFIDENTIAL_TONE} size="sm">
+                          Confidential
+                        </StatusBadge>
+                      ) : null}
                     </div>
-                    <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 2 }}>
+                    <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 6 }}>
                       {r.fromEmail || "(unknown sender)"}
                     </div>
                   </div>
@@ -243,4 +299,3 @@ export default function PortalBrokerAdminRequests() {
     </AdminPortalShell>
   );
 }
-
