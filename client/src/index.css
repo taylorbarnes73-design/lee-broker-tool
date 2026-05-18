@@ -279,7 +279,7 @@
   display: none;
 }
 
-.admin-portal-sidebar-mobile {
+.admin-portal-sidebar.admin-portal-sidebar-mobile {
   display: none;
 }
 
@@ -315,7 +315,7 @@
   .admin-portal-mobile-trigger {
     display: inline-flex;
   }
-  .admin-portal-sidebar-mobile {
+  .admin-portal-sidebar.admin-portal-sidebar-mobile {
     display: flex;
     position: fixed;
     top: 0;
@@ -329,7 +329,7 @@
     box-shadow: 0 30px 60px rgba(15, 23, 42, 0.18);
     border-right: 1px solid var(--ink-200);
   }
-  .admin-portal-sidebar-mobile.open {
+  .admin-portal-sidebar.admin-portal-sidebar-mobile.open {
     transform: translateX(0);
   }
   .admin-portal-mobile-overlay {
