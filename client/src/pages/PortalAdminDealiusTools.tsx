@@ -1,8 +1,14 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ExternalLink, FileUp, Plus, Send, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ExternalLink, FileUp, Plus, Send, Trash2 } from "lucide-react";
 import AdminPortalShell from "@/components/AdminPortalShell";
 import { Badge, Button, Field, Input, Select } from "../design/index.jsx";
+
+type DealiusStatus =
+  | { state: "loading" }
+  | { state: "ok"; message: string }
+  | { state: "mock"; message: string }
+  | { state: "error"; message: string };
 
 type EntryMode = "deal" | "listing";
 type RentRow = { months: number | string; monthly: number | string; free: boolean };
@@ -257,8 +263,43 @@ export default function PortalAdminDealiusTools() {
   const [docTargetType, setDocTargetType] = useState<"deal" | "listing">("deal");
   const [docTargetId, setDocTargetId] = useState("");
   const [uploadingDocs, setUploadingDocs] = useState(false);
+  const [dealiusStatus, setDealiusStatus] = useState<DealiusStatus>({ state: "loading" });
   const fileRef = useRef<HTMLInputElement | null>(null);
   const scrapeFileRef = useRef<HTMLInputElement | null>(null);
+
+  // Check Dealius authentication on mount so admins see right away whether a
+  // push will actually reach Dealius or get silently mocked.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch(`/api/dealius/status`, { credentials: "include" });
+        const body = await response.json().catch(() => ({}));
+        if (cancelled) return;
+        if (!response.ok || body?.success === false) {
+          setDealiusStatus({ state: "error", message: body?.error ?? "Could not verify Dealius connection." });
+          return;
+        }
+        const data = body?.data ?? {};
+        if (data.mockMode) {
+          setDealiusStatus({
+            state: "mock",
+            message: data.message ?? "Dealius credentials are not configured — pushes will be mocked.",
+          });
+        } else if (data.authenticated) {
+          setDealiusStatus({ state: "ok", message: data.message ?? "Authenticated to Dealius." });
+        } else {
+          setDealiusStatus({ state: "error", message: data.message ?? "Dealius authentication failed." });
+        }
+      } catch (err: any) {
+        if (cancelled) return;
+        setDealiusStatus({ state: "error", message: err?.message ?? "Could not verify Dealius connection." });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const checklist = useMemo(() => {
     const listingSqft = entry.entryMode === "listing" && entry.spaces.some(space => Boolean(num(space.sqft)));
@@ -452,6 +493,73 @@ export default function PortalAdminDealiusTools() {
       description="Create and push Dealius entries without starting from a submission. Admin-only."
     >
       <div className="dealius-workspace">
+        {dealiusStatus.state === "mock" && (
+          <div
+            role="status"
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 10,
+              padding: "12px 14px",
+              borderRadius: 8,
+              background: "#fff7ed",
+              border: "1px solid #fed7aa",
+              color: "#9a3412",
+              fontSize: 13,
+              lineHeight: 1.4,
+            }}
+          >
+            <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+            <div>
+              <strong>Dealius is in mock mode.</strong>{" "}
+              {dealiusStatus.message ?? "No real credentials are configured, so pushes won’t reach Dealius."}{" "}
+              Set <code>DEALIUS_USERNAME</code> and <code>DEALIUS_PASSWORD</code> in the server environment to enable live pushes.
+            </div>
+          </div>
+        )}
+        {dealiusStatus.state === "error" && (
+          <div
+            role="alert"
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 10,
+              padding: "12px 14px",
+              borderRadius: 8,
+              background: "#fef2f2",
+              border: "1px solid #fecaca",
+              color: "#991b1b",
+              fontSize: 13,
+              lineHeight: 1.4,
+            }}
+          >
+            <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+            <div>
+              <strong>Dealius connection failed.</strong>{" "}
+              {dealiusStatus.message ?? "Could not authenticate to Dealius."}
+            </div>
+          </div>
+        )}
+        {dealiusStatus.state === "ok" && (
+          <div
+            role="status"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "6px 12px",
+              borderRadius: 999,
+              background: "#ecfdf5",
+              border: "1px solid #bbf7d0",
+              color: "#166534",
+              fontSize: 12,
+              alignSelf: "flex-start",
+            }}
+          >
+            <CheckCircle2 size={14} />
+            <span>Connected to Dealius</span>
+          </div>
+        )}
         <section className="dealius-flow-panel">
           <div>
             <div className="dealius-flow-kicker">Admin tool</div>
@@ -937,6 +1045,29 @@ export default function PortalAdminDealiusTools() {
               ))}
             </div>
             {pushError && <div className="dealius-error">{pushError}</div>}
+            {pushResult?.mockMode && (
+              <div
+                role="status"
+                style={{
+                  marginTop: 10,
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 8,
+                  padding: "10px 12px",
+                  borderRadius: 8,
+                  background: "#fff7ed",
+                  border: "1px solid #fed7aa",
+                  color: "#9a3412",
+                  fontSize: 12,
+                  lineHeight: 1.4,
+                }}
+              >
+                <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+                <div>
+                  This push was simulated — no data was sent to Dealius because credentials are missing.
+                </div>
+              </div>
+            )}
           </div>
           <Button
             type="button"

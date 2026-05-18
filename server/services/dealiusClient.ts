@@ -38,18 +38,40 @@ export class DealiusClient {
     const password = (params?.password ?? ENV.dealiusPassword).trim();
 
     if (!email || !password) {
+      // In dev/test environments we still allow a dummy token so unit tests can
+      // exercise the push pipeline without real credentials. In production we
+      // refuse to silently mock – it has caused admins to think a push
+      // succeeded when nothing actually reached Dealius.
+      if (process.env.NODE_ENV === "production") {
+        throw new Error(
+          "Dealius credentials are not configured. Open Admin → Settings → Integrations and save a Dealius username and password before pushing."
+        );
+      }
       console.warn("[DealiusClient] Credentials not configured. Using dummy mode.");
       return "dummy-token";
     }
 
-    const res = await this.http.post<DealiusAuthResponse>("/api/account/authenticate", {
-      Email: email,
-      Password: password,
-    });
+    try {
+      const res = await this.http.post<DealiusAuthResponse>("/api/account/authenticate", {
+        Email: email,
+        Password: password,
+      });
 
-    const token = res.data?.Token ?? res.data?.token;
-    if (!token) throw new Error("Dealius auth succeeded but returned no Token.");
-    return token;
+      const token = res.data?.Token ?? res.data?.token;
+      if (!token) {
+        throw new Error("Dealius authentication succeeded but the server returned no token. Verify the credentials are correct.");
+      }
+      return token;
+    } catch (err: unknown) {
+      // Re-throw with a friendlier message that surfaces in the admin push UI.
+      const status = (err as any)?.response?.status;
+      if (status === 401 || status === 403) {
+        throw new Error("Dealius rejected the configured credentials (HTTP 401). Re-enter the Dealius username and password in Admin → Settings.");
+      }
+      if (err instanceof Error && err.message.includes("Dealius authentication")) throw err;
+      const detail = err instanceof Error ? err.message : String(err);
+      throw new Error(`Could not authenticate to Dealius: ${detail}`);
+    }
   }
 
   private apiUrl(path: string, token: string) {

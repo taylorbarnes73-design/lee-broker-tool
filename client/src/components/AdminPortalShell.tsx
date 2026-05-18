@@ -8,8 +8,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link, useLocation } from "wouter";
-import type { CSSProperties, ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { ChevronDown, Menu, X } from "lucide-react";
 
 type AdminPortalSection =
   | "dashboard"
@@ -112,58 +112,109 @@ export default function AdminPortalShell({
   const isAdmin = user?.role === "admin";
   const logoSrc = branding.logo_url?.trim() || "/lee-newport-beach-fullcolor.png";
   const accent = branding.primary_color || "#A6192E";
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  // Close the mobile drawer whenever the route (section prop) changes.
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [section]);
+
+  // Lock the page scroll while the mobile drawer is open.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = mobileNavOpen ? "hidden" : previous;
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [mobileNavOpen]);
 
   const portalStyle = {
     ["--admin-accent" as string]: accent,
   } as CSSProperties;
 
-  const roleLabel = user?.role === "admin" ? "Admin" : "Agent";
+  const sidebarContents = (
+    <>
+      <div className="admin-portal-sidebar-brand">
+        <img src={logoSrc} alt={branding.company_name} />
+        <div>
+          <div className="admin-portal-kicker">{branding.company_name}</div>
+          <div className="admin-portal-brand-title">Broker Operations</div>
+        </div>
+      </div>
+
+      <nav className="admin-portal-sidebar-nav" aria-label="Primary">
+        <NavBlock items={mainNav.filter(i => !i.adminOnly || isAdmin)} active={section} accent={accent} />
+      </nav>
+
+      <div className="admin-portal-nav-section-label">FORMS</div>
+      <nav className="admin-portal-sidebar-nav" aria-label="Broker HTML tool">
+        <a href="/tool" className="admin-portal-nav-item">
+          <span>Broker submission tool</span>
+          <small>Listings, comps, PDFs</small>
+        </a>
+      </nav>
+
+      {isAdmin && (
+        <>
+          <div className="admin-portal-nav-section-label">PEOPLE</div>
+          <nav className="admin-portal-sidebar-nav" aria-label="People">
+            <NavBlock items={peopleNav} active={section} accent={accent} />
+          </nav>
+
+          <div className="admin-portal-nav-section-label">ADMIN TOOLS</div>
+          <nav className="admin-portal-sidebar-nav" aria-label="Admin tools">
+            <NavBlock items={settingsNav} active={section} accent={accent} />
+          </nav>
+        </>
+      )}
+    </>
+  );
 
   return (
     <div className="admin-portal" style={portalStyle}>
       <aside className="admin-portal-sidebar" aria-label="Portal navigation">
-        <div className="admin-portal-sidebar-brand">
-          <img src={logoSrc} alt={branding.company_name} />
-          <div>
-            <div className="admin-portal-kicker">{branding.company_name}</div>
-            <div className="admin-portal-brand-title">Broker Operations</div>
-          </div>
-        </div>
+        {sidebarContents}
+      </aside>
 
-        <nav className="admin-portal-sidebar-nav" aria-label="Primary">
-          <NavBlock items={mainNav.filter(i => !i.adminOnly || isAdmin)} active={section} accent={accent} />
-        </nav>
-
-        <div className="admin-portal-nav-section-label">FORMS</div>
-        <nav className="admin-portal-sidebar-nav" aria-label="Broker HTML tool">
-          <a href="/tool" className="admin-portal-nav-item">
-            <span>Broker submission tool</span>
-            <small>Listings, comps, PDFs</small>
-          </a>
-        </nav>
-
-        {isAdmin && (
-          <>
-            <div className="admin-portal-nav-section-label">PEOPLE</div>
-            <nav className="admin-portal-sidebar-nav" aria-label="People">
-              <NavBlock items={peopleNav} active={section} accent={accent} />
-            </nav>
-
-            <div className="admin-portal-nav-section-label">SETTINGS</div>
-            <nav className="admin-portal-sidebar-nav" aria-label="Settings">
-              <NavBlock items={settingsNav} active={section} accent={accent} />
-            </nav>
-          </>
-        )}
+      {mobileNavOpen && (
+        <div
+          className="admin-portal-mobile-overlay"
+          role="presentation"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      )}
+      <aside
+        className={`admin-portal-sidebar admin-portal-sidebar-mobile ${mobileNavOpen ? "open" : ""}`}
+        aria-label="Portal navigation (mobile)"
+        aria-hidden={!mobileNavOpen}
+      >
+        <button
+          type="button"
+          className="admin-portal-mobile-close"
+          onClick={() => setMobileNavOpen(false)}
+          aria-label="Close navigation"
+        >
+          <X size={16} aria-hidden />
+        </button>
+        {sidebarContents}
       </aside>
 
       <div className="admin-portal-body">
         <header className="admin-portal-header">
+          <button
+            type="button"
+            className="admin-portal-mobile-trigger"
+            onClick={() => setMobileNavOpen(true)}
+            aria-label="Open navigation"
+          >
+            <Menu size={18} aria-hidden />
+          </button>
           <div className="admin-portal-header-spacer" />
           <div className="admin-portal-session">
             <span className="admin-portal-session-text">
-              Logged in as <strong>{user?.name ?? "User"}</strong>
-              {user?.role === "admin" ? " (Admin)" : user ? " (Agent)" : ""}
+              Signed in as <strong>{user?.name ?? "User"}</strong>
+              {user?.role === "admin" ? " · Admin" : user ? " · Agent" : ""}
             </span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -172,7 +223,7 @@ export default function AdminPortalShell({
                   <ChevronDown size={14} aria-hidden />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[160px]">
+              <DropdownMenuContent align="end" className="min-w-[180px]">
                 <DropdownMenuItem onSelect={() => setLocation("/portal/account")}>Profile</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -189,7 +240,7 @@ export default function AdminPortalShell({
 
         <main className="admin-portal-main">
           <section className="admin-portal-hero">
-            <div>
+            <div className="admin-portal-hero-text">
               <div className="admin-portal-eyebrow">{eyebrow}</div>
               <h1>{title}</h1>
               {description && <p>{description}</p>}

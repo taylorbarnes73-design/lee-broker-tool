@@ -862,7 +862,14 @@ export async function pushDealEntryToDealius(params: { entry: Record<string, unk
 
   const dealRes = await client.request<any>({ token, method: "POST", path: "/deals", data: dealPayload });
   const dealID = idFrom(dealRes.data, ["DealID", "ID", "id"]);
-  if (!dealID) throw new Error(`Dealius deal create failed (HTTP ${dealRes.status}).`);
+  if (!dealID) {
+    const detail = dealiusErrorDetail(dealRes.data);
+    throw new Error(
+      detail
+        ? `Dealius deal create failed (HTTP ${dealRes.status}): ${detail}`
+        : `Dealius deal create failed (HTTP ${dealRes.status}).`
+    );
+  }
   log.steps.push({ key: "deal", ok: true, detail: String(dealID) });
 
   for (const contactID of [clientContactID, oppositeContactID].filter(Boolean) as number[]) {
@@ -985,6 +992,7 @@ export async function pushDealEntryToDealius(params: { entry: Record<string, unk
     propertySpaceID,
     warnings: log.warnings,
     steps: log.steps,
+    mockMode: token === "dummy-token",
   };
 }
 
@@ -1061,7 +1069,12 @@ export async function pushListingEntryToDealius(params: { entry: Record<string, 
   if (listingRes.status === 404) {
     log.warnings.push("/listings endpoint returned 404. Property and spaces were created, but listing shell was not.");
   } else if (listingRes.status < 200 || listingRes.status >= 300 || !listingID) {
-    log.warnings.push(`Listing create returned HTTP ${listingRes.status}.`);
+    const detail = dealiusErrorDetail(listingRes.data);
+    log.warnings.push(
+      detail
+        ? `Listing create returned HTTP ${listingRes.status}: ${detail}`
+        : `Listing create returned HTTP ${listingRes.status}.`
+    );
   }
   log.steps.push({ key: "listing", ok: Boolean(listingID), detail: listingID ? String(listingID) : "Not created" });
 
@@ -1111,6 +1124,7 @@ export async function pushListingEntryToDealius(params: { entry: Record<string, 
     propertySpaceIDs,
     warnings: log.warnings,
     steps: log.steps,
+    mockMode: token === "dummy-token",
   };
 }
 

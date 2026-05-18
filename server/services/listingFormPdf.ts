@@ -178,18 +178,41 @@ function setField(fields: FieldMap, key: string, raw: unknown) {
 }
 
 export async function parseListingFormPdfBuffer(buffer: Buffer): Promise<ParsedListingFormPdf> {
+  if (!buffer || buffer.length === 0) {
+    throw new Error("PDF buffer is empty.");
+  }
+  // Verify the buffer actually looks like a PDF before we hand it to the parser –
+  // many "PDF" uploads from browsers are actually HTML error pages or zero-byte files
+  // and the underlying parser raises an unhelpful generic exception.
+  const header = buffer.slice(0, 5).toString("latin1");
+  if (!header.startsWith("%PDF-")) {
+    throw new Error("File does not appear to be a valid PDF (missing %PDF header).");
+  }
+
   const parser = new PDFParse({ data: buffer });
   try {
-    await (parser as any).load();
+    // getText() internally calls load(); by awaiting it first we don't have to
+    // touch the parser's private members. The returned text is also passed to the
+    // form-field parser for property-type inference.
     const textResult = await parser.getText();
     const fields: FieldMap = {};
-    const doc = (parser as any).doc;
+    // The pdfjs PDFDocumentProxy lives on the (private) `doc` field. We only read
+    // it here, after getText() guarantees it is populated.
+    const doc = (parser as unknown as { doc?: { numPages: number; getPage: (n: number) => Promise<unknown> } }).doc;
 
-    for (let pageNumber = 1; pageNumber <= doc.numPages; pageNumber++) {
-      const page = await doc.getPage(pageNumber);
-      const annotations = await page.getAnnotations({ intent: "display" });
-      for (const annotation of annotations as any[]) {
-        setField(fields, annotation.fieldName, annotation.fieldValue);
+    if (doc && typeof doc.numPages === "number") {
+      for (let pageNumber = 1; pageNumber <= doc.numPages; pageNumber++) {
+        try {
+          const page = (await doc.getPage(pageNumber)) as { getAnnotations: (o: { intent: string }) => Promise<unknown[]> };
+          const annotations = await page.getAnnotations({ intent: "display" });
+          for (const annotation of annotations as Array<{ fieldName?: string; fieldValue?: unknown }>) {
+            if (annotation && annotation.fieldName) {
+              setField(fields, annotation.fieldName, annotation.fieldValue);
+            }
+          }
+        } catch {
+          // Skip pages we can't read annotations from rather than aborting the whole parse.
+        }
       }
     }
 

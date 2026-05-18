@@ -377,12 +377,53 @@ function sanitizeAiFields(tab: FormTab, parsed: Record<string, unknown>) {
   ) as Record<string, string>;
 }
 
-function parseJsonObject(raw: unknown) {
-  try {
-    return JSON.parse(typeof raw === "string" ? raw : "{}") as Record<string, unknown>;
-  } catch {
-    return {};
+function parseJsonObject(raw: unknown): Record<string, unknown> {
+  // Flatten multipart content (string | TextContent[])
+  let text = "";
+  if (typeof raw === "string") {
+    text = raw;
+  } else if (Array.isArray(raw)) {
+    text = raw
+      .map(part => (part && typeof part === "object" && "text" in part ? String((part as { text?: unknown }).text ?? "") : ""))
+      .join("");
   }
+  text = text.trim();
+  if (!text) return {};
+
+  // Strip Markdown fences emitted by some models
+  text = text
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/```\s*$/i, "")
+    .trim();
+
+  // Some models include prose before / after the JSON object; slice to the
+  // outer braces if we can spot them.
+  const first = text.indexOf("{");
+  const last = text.lastIndexOf("}");
+  if (first >= 0 && last > first) {
+    text = text.slice(first, last + 1);
+  }
+
+  const attempt = (candidate: string) => {
+    try {
+      const parsed = JSON.parse(candidate);
+      return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const direct = attempt(text);
+  if (direct) return direct;
+
+  const normalized = text
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/,\s*([}\]])/g, "$1");
+  const normalizedResult = attempt(normalized);
+  if (normalizedResult) return normalizedResult;
+
+  return {};
 }
 
 function parseAddressParts(raw: string) {
@@ -725,9 +766,12 @@ CRITICAL RULES — follow exactly:
 // ── Shared JSON schema builder ──
 
 function buildJsonSchema(name: string, fieldNames: string[]) {
+  // NOTE: We intentionally do NOT set strict: true here. OpenAI's strict mode
+  // requires every property to appear in `required`, but we want the model to
+  // omit fields it cannot confidently extract from a brochure or PDF. With an
+  // empty `required` array, strict mode would reject the request.
   return {
     name,
-    strict: true,
     schema: {
       type: "object",
       properties: Object.fromEntries(fieldNames.map((k) => [k, { type: "string" }])),

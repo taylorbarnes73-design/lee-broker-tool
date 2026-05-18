@@ -19,6 +19,55 @@ function jsonErr(res: Response, status: number, error: string, extra?: Record<st
   res.status(status).json({ success: false, error, ...extra });
 }
 
+/**
+ * Robust JSON parser that handles common LLM quirks:
+ *   - Markdown code fences (```json ... ```)
+ *   - Leading/trailing prose around the JSON object
+ *   - Smart quotes substituted for straight quotes
+ *   - Trailing commas before } or ]
+ * Returns null if no parseable JSON object can be recovered.
+ */
+function parseLooseJson(raw: string): Record<string, unknown> | null {
+  if (typeof raw !== "string") return null;
+  let text = raw.trim();
+  if (!text) return null;
+
+  // Strip ```json or ``` fences
+  text = text
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/```\s*$/i, "")
+    .trim();
+
+  // Slice from the first `{` to the last `}` to ignore any prose around the JSON
+  const first = text.indexOf("{");
+  const last = text.lastIndexOf("}");
+  if (first >= 0 && last > first) {
+    text = text.slice(first, last + 1);
+  }
+
+  const attempt = (candidate: string) => {
+    try {
+      const parsed = JSON.parse(candidate);
+      return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const direct = attempt(text);
+  if (direct) return direct;
+
+  // Normalize curly/smart quotes and remove trailing commas
+  const normalized = text
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/,\s*([}\]])/g, "$1");
+  const normalizedResult = attempt(normalized);
+  if (normalizedResult) return normalizedResult;
+
+  return null;
+}
+
 function inferMimeType(filename: string): string | null {
   const lower = filename.trim().toLowerCase();
   if (lower.endsWith(".pdf")) return "application/pdf";
@@ -250,6 +299,15 @@ dealiusAdminApiRouter.post("/scrape", async (req: Request, res: Response) => {
     }
 
     if (lower.endsWith(".pdf")) {
+      // Pre-validate that the uploaded file is actually a PDF before kicking off
+      // expensive downstream parsing. A surprising number of upload errors come
+      // from browsers handing us a base64-encoded HTML page or a zero-byte file.
+      const header = buffer.slice(0, 5).toString("latin1");
+      if (!header.startsWith("%PDF-")) {
+        jsonErr(res, 400, "File does not appear to be a valid PDF. Please re-upload the original PDF document.");
+        return;
+      }
+
       const warnings: string[] = [];
       let patch: Record<string, unknown> = {};
       let source: "listing_form_pdf" | "listing_pdf_text" | "listing_llm" = "listing_pdf_text";
@@ -259,8 +317,12 @@ dealiusAdminApiRouter.post("/scrape", async (req: Request, res: Response) => {
         const parsedListing = await parseListingFormPdfBuffer(buffer);
         patch = listingFormPatchFromParsed(parsedListing);
         source = "listing_form_pdf";
-      } catch {
+      } catch (formErr: unknown) {
         // No form fields – expected for flat PDFs / listing agreements.
+        const msg = formErr instanceof Error ? formErr.message : String(formErr);
+        if (msg && !/no form|annotation|acro/i.test(msg)) {
+          warnings.push(`Form field extraction skipped: ${msg.slice(0, 160)}`);
+        }
       }
 
       // Step 2: Extract raw text for regex heuristics and LLM input
@@ -278,6 +340,8 @@ dealiusAdminApiRouter.post("/scrape", async (req: Request, res: Response) => {
           const trimmedText = plain.slice(0, 40_000);
 
           const llmResponse = await invokeLLM({
+            response_format: { type: "json_object" },
+            maxTokens: 4096,
             messages: [
               {
                 role: "system",
@@ -343,13 +407,17 @@ OUTPUT:
 ${trimmedText}`
               }
             ],
-            maxTokens: 2048,
           });
 
-          const raw = llmResponse.choices?.[0]?.message?.content;
-          if (typeof raw === "string" && raw.trim()) {
-            const cleaned = raw.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
-            const llmData = JSON.parse(cleaned);
+          const rawRaw = llmResponse.choices?.[0]?.message?.content;
+          // Some providers return content as a string; vision/multipart can return an array.
+          const raw = typeof rawRaw === "string"
+            ? rawRaw
+            : Array.isArray(rawRaw)
+              ? rawRaw.map(part => (part && typeof part === "object" && "text" in part ? String((part as { text?: unknown }).text ?? "") : "")).join("")
+              : "";
+          if (raw.trim()) {
+            const llmData = parseLooseJson(raw);
             if (llmData && typeof llmData === "object") {
               // Merge LLM results into patch, preferring LLM for empty fields
               for (const [key, value] of Object.entries(llmData)) {
@@ -419,13 +487,25 @@ ${trimmedText}`
   }
 });
 
-// ── Optional: quick health check for configured creds ──
+// ── Health check for configured creds ──
+// Returns an `authenticated` flag and – critically – distinguishes "mock mode"
+// (no creds configured) from "real auth succeeded" so the admin UI can warn
+// before the user thinks a push will actually reach Dealius.
 dealiusAdminApiRouter.get("/status", async (_req: Request, res: Response) => {
   try {
     const client = new DealiusClient();
     const token = await authenticateConfiguredDealius(client);
-    // Avoid leaking token; just validate auth succeeded.
-    res.json({ success: true, data: { authenticated: Boolean(token) } });
+    const mockMode = token === "dummy-token";
+    res.json({
+      success: true,
+      data: {
+        authenticated: Boolean(token) && !mockMode,
+        mockMode,
+        message: mockMode
+          ? "No Dealius credentials configured. Pushes will be mocked. Save credentials in Admin → Settings → Integrations."
+          : "Authenticated to Dealius successfully.",
+      },
+    });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     jsonErr(res, 500, msg);

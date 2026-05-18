@@ -17,6 +17,14 @@ function num(raw: unknown): number | null {
 }
 
 export async function extractPdfPlainText(buffer: Buffer, maxChars = 80_000): Promise<string> {
+  if (!buffer || buffer.length === 0) {
+    throw new Error("PDF buffer is empty.");
+  }
+  const header = buffer.slice(0, 5).toString("latin1");
+  if (!header.startsWith("%PDF-")) {
+    throw new Error("File does not appear to be a valid PDF (missing %PDF header).");
+  }
+
   const { PDFParse } = await import("pdf-parse");
   const parser = new PDFParse({ data: buffer });
   try {
