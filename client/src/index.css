@@ -128,9 +128,12 @@
   * {
     @apply border-border outline-ring/50;
   }
-  html {
-    scroll-behavior: smooth;
-  }
+  /*
+   * Intentionally NOT setting `scroll-behavior: smooth` globally.
+   * Smooth-scroll on every navigation, focus change, and programmatic
+   * scroll made the admin pages feel like they were auto-scrolling on
+   * their own. Default "auto" jumps are crisp and predictable.
+   */
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);

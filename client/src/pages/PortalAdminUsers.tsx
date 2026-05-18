@@ -239,7 +239,9 @@ export default function PortalAdminUsers() {
   useEffect(() => {
     if (!highlightId) return;
     const row = rowRefs.current[highlightId];
-    row?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    // Use "auto" (instant) instead of smooth so the page doesn’t appear to
+    // scroll on its own after an edit — it just lands on the row.
+    row?.scrollIntoView({ block: "nearest", behavior: "auto" });
     const t = window.setTimeout(() => setHighlightId(null), 2600);
     return () => window.clearTimeout(t);
   }, [highlightId, list?.users]);
