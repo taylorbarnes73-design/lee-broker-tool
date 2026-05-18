@@ -228,6 +228,14 @@ export const submissions = mysqlTable("submissions", {
   pdfFileKey: varchar("pdfFileKey", { length: 512 }),
   /** Archived submission PDF URL */
   pdfUrl: text("pdfUrl"),
+  /** Where the submission came from: "tool" (default), "email_ingest", "email_ingest_backfill", or "manual". */
+  source: varchar("source", { length: 32 }).notNull().default("tool"),
+  /** Graph/Outlook message id when source is an email ingest. */
+  sourceEmailMessageId: varchar("source_email_message_id", { length: 512 }),
+  /** Outlook deep link when source is an email ingest. */
+  sourceEmailWebLink: text("source_email_web_link"),
+  /** Smart-parsed structured fields when source is an email ingest. */
+  parsedFields: json("parsed_fields"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => ({
@@ -241,6 +249,9 @@ export const submissions = mysqlTable("submissions", {
     table.status,
     table.createdAt,
     table.id
+  ),
+  sourceEmailMessageIdIdx: index("submissions_source_email_message_id_idx").on(
+    table.sourceEmailMessageId
   ),
 }));
 
@@ -388,3 +399,53 @@ export const saleComps = mysqlTable("saleComps", {
 
 export type SaleComp = typeof saleComps.$inferSelect;
 export type InsertSaleComp = typeof saleComps.$inferInsert;
+
+/**
+ * Dedupe + observability log for the BrokerAdmin email ingest pipeline.
+ * Each Graph message processed yields one row; submission_id is null if filtered out.
+ */
+export const emailIngestLog = mysqlTable(
+  "email_ingest_log",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    messageId: varchar("message_id", { length: 512 }).notNull(),
+    internetMessageId: varchar("internet_message_id", { length: 512 }),
+    threadId: varchar("thread_id", { length: 512 }),
+    receivedAt: datetime("received_at", { mode: "date", fsp: 3 }),
+    fromEmail: varchar("from_email", { length: 320 }),
+    toEmails: json("to_emails"),
+    ccEmails: json("cc_emails"),
+    subject: varchar("subject", { length: 1024 }),
+    submissionId: int("submission_id"),
+    ingestStatus: varchar("ingest_status", { length: 32 }).notNull().default("imported"),
+    errorMessage: text("error_message"),
+    createdAt: datetime("created_at", { mode: "date", fsp: 3 })
+      .notNull()
+      .default(sql`(UTC_TIMESTAMP(3))`),
+  },
+  table => ({
+    messageIdUnique: uniqueIndex("email_ingest_log_message_id_unique").on(table.messageId),
+    internetMessageIdUnique: uniqueIndex("email_ingest_log_internet_message_id_unique").on(
+      table.internetMessageId
+    ),
+    receivedAtIdx: index("eil_received_at_idx").on(table.receivedAt),
+    ingestStatusIdx: index("eil_ingest_status_idx").on(table.ingestStatus),
+  })
+);
+
+export type EmailIngestLogRow = typeof emailIngestLog.$inferSelect;
+export type InsertEmailIngestLogRow = typeof emailIngestLog.$inferInsert;
+
+/**
+ * Small key/value scratchpad for non-setting state (e.g. last poll timestamp).
+ */
+export const kvState = mysqlTable("kv_state", {
+  key: varchar("key", { length: 255 }).notNull().primaryKey(),
+  value: json("value").notNull(),
+  updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
+    .notNull()
+    .default(sql`(UTC_TIMESTAMP(3))`),
+});
+
+export type KvStateRow = typeof kvState.$inferSelect;
+export type InsertKvStateRow = typeof kvState.$inferInsert;

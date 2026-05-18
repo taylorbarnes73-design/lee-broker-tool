@@ -47,6 +47,13 @@ export type SettingKey =
   | "integrations.buildout.default_company_id"
   | "integrations.buildout.last_test_at"
   | "integrations.buildout.last_test_result"
+  | "integrations.broker_admin_ingest.enabled"
+  | "integrations.broker_admin_ingest.mailbox"
+  | "integrations.broker_admin_ingest.tenant_id"
+  | "integrations.broker_admin_ingest.client_id"
+  | "integrations.broker_admin_ingest.client_secret"
+  | "integrations.broker_admin_ingest.last_test_at"
+  | "integrations.broker_admin_ingest.last_test_result"
   | "security.session_timeout_hours";
 
 export const SETTING_KEYS = [
@@ -75,6 +82,13 @@ export const SETTING_KEYS = [
   "integrations.buildout.default_company_id",
   "integrations.buildout.last_test_at",
   "integrations.buildout.last_test_result",
+  "integrations.broker_admin_ingest.enabled",
+  "integrations.broker_admin_ingest.mailbox",
+  "integrations.broker_admin_ingest.tenant_id",
+  "integrations.broker_admin_ingest.client_id",
+  "integrations.broker_admin_ingest.client_secret",
+  "integrations.broker_admin_ingest.last_test_at",
+  "integrations.broker_admin_ingest.last_test_result",
   "security.session_timeout_hours",
 ] as const satisfies readonly SettingKey[];
 
@@ -269,6 +283,60 @@ const defs: SettingDef[] = [
   },
   {
     key: "integrations.buildout.last_test_result",
+    category: "integrations",
+    sensitive: false,
+    valueSchema: testResultSchema,
+    defaultValue: null,
+  },
+  {
+    key: "integrations.broker_admin_ingest.enabled",
+    category: "integrations",
+    sensitive: false,
+    valueSchema: z.boolean(),
+    defaultValue: false,
+    description: "Enable 5-minute polling of the BrokerAdmin shared mailbox via Microsoft Graph.",
+  },
+  {
+    key: "integrations.broker_admin_ingest.mailbox",
+    category: "integrations",
+    sensitive: false,
+    valueSchema: z.string().trim().max(320),
+    defaultValue: "_NewportBeach-BrokerAdmin@lee-associates.com",
+    description: "Shared mailbox UPN polled for inbound submissions.",
+  },
+  {
+    key: "integrations.broker_admin_ingest.tenant_id",
+    category: "integrations",
+    sensitive: false,
+    valueSchema: z.string().trim().max(128),
+    defaultValue: "",
+    description: "Azure AD tenant id (Directory ID).",
+  },
+  {
+    key: "integrations.broker_admin_ingest.client_id",
+    category: "integrations",
+    sensitive: false,
+    valueSchema: z.string().trim().max(128),
+    defaultValue: "",
+    description: "Azure AD app (client) id.",
+  },
+  {
+    key: "integrations.broker_admin_ingest.client_secret",
+    category: "integrations",
+    sensitive: true,
+    valueSchema: z.string().max(512),
+    defaultValue: "",
+    description: "Azure AD app client secret value.",
+  },
+  {
+    key: "integrations.broker_admin_ingest.last_test_at",
+    category: "integrations",
+    sensitive: false,
+    valueSchema: z.union([z.string().min(4), z.null()]),
+    defaultValue: null,
+  },
+  {
+    key: "integrations.broker_admin_ingest.last_test_result",
     category: "integrations",
     sensitive: false,
     valueSchema: testResultSchema,

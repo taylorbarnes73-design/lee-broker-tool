@@ -20,6 +20,8 @@ type SubmissionSummary = {
   submittedByEmail: string | null;
   createdAt: string;
   queuePosition: number | null;
+  source?: string | null;
+  sourceEmailWebLink?: string | null;
 };
 
 const INPUT_STYLE = {
@@ -245,6 +247,31 @@ export default function PortalAdminSubmissions() {
                       >
                         {formatFormType(s.formType)}
                       </StatusBadge>
+                      {(s.source === "email_ingest" || s.source === "email_ingest_backfill") && (
+                        <span
+                          title={s.source === "email_ingest_backfill" ? "Imported from backfill" : "Imported from BrokerAdmin email"}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            padding: "2px 8px",
+                            borderRadius: 999,
+                            border: "1px solid #BCD6EF",
+                            background: "#E6F0FA",
+                            color: "#1F4F8B",
+                            fontSize: 11,
+                            fontWeight: 600,
+                          }}
+                          onClick={e => {
+                            if (s.sourceEmailWebLink) {
+                              e.preventDefault();
+                              window.open(s.sourceEmailWebLink, "_blank", "noopener");
+                            }
+                          }}
+                        >
+                          ✉ Email
+                        </span>
+                      )}
                       {s.queuePosition !== null && (
                         <span style={{ fontSize: 12, color: "var(--ink-500)" }}>
                           Queue position #{s.queuePosition}

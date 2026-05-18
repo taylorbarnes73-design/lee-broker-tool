@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
+import BrokerAdminIngestPanel from "@/components/BrokerAdminIngestPanel";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -1131,6 +1132,11 @@ export default function PortalAdminSettings() {
                       </div>
                     </div>
                   </div>
+
+                  <BrokerAdminIngestPanel
+                    grouped={grouped}
+                    onSavedRefresh={loadAll}
+                  />
 
                   <div className="lee-eyebrow" style={{ marginBottom: 10 }}>
                     Coming soon (read-only)

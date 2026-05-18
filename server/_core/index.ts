@@ -29,6 +29,8 @@ import { adminSettingsRouter } from "../adminSettingsApi";
 import { publicSettingsRouter } from "../publicSettingsApi";
 import { adminAuditLogRouter } from "../adminAuditLogApi";
 import { dealiusAdminApiRouter } from "../dealiusAdminApi";
+import { brokerAdminIngestRouter } from "../brokerAdminIngestApi";
+import { startBrokerAdminIngestScheduler } from "../jobs/ingestBrokerAdminEmails";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -114,6 +116,7 @@ async function startServer() {
   app.use("/api/broker-admin", brokerAdminApiRouter);
   app.use("/api/admin/users", adminUsersRouter);
   app.use("/api/admin/settings", adminSettingsRouter);
+  app.use("/api/admin/ingest/brokerAdmin", brokerAdminIngestRouter);
   app.use("/api/admin/audit-log", adminAuditLogRouter);
   app.use("/api/settings", publicSettingsRouter);
 
@@ -142,6 +145,11 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
   });
+
+  // BrokerAdmin email ingest poller — only schedules if Graph credentials are configured.
+  startBrokerAdminIngestScheduler().catch(err =>
+    console.error("[brokerAdminIngest] scheduler init failed:", err)
+  );
 }
 
 startServer().catch(console.error);

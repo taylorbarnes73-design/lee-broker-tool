@@ -1,3 +1,6 @@
+# Local-only email backfill snapshots (contain real customer email content).
+brokeradmin_backfill*.json
+
 # Dependencies
 **/node_modules
 .pnpm-store/

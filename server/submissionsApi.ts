@@ -176,6 +176,8 @@ submissionsApiRouter.get("/", async (req, res) => {
       createdAt: r.createdAt,
       updatedAt: r.updatedAt,
       queuePosition: includeQueue ? (r as any).queuePosition ?? null : null,
+      source: (r as any).source ?? "tool",
+      sourceEmailWebLink: (r as any).source_email_web_link ?? (r as any).sourceEmailWebLink ?? null,
     })),
   });
 });
@@ -250,6 +252,10 @@ submissionsApiRouter.get("/:id", async (req, res) => {
       submittedByOpenId: row.submittedByOpenId,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
+      source: (row as any).source ?? "tool",
+      sourceEmailMessageId: (row as any).sourceEmailMessageId ?? null,
+      sourceEmailWebLink: (row as any).sourceEmailWebLink ?? null,
+      parsedFields: (row as any).parsedFields ?? null,
       payload: (() => {
         try {
           return JSON.parse(row.payload ?? "{}");

@@ -26,6 +26,16 @@ type SubmissionDetail = {
   updatedAt: string;
   payload: unknown;
   queuePosition?: number | null;
+  source?: string | null;
+  sourceEmailMessageId?: string | null;
+  sourceEmailWebLink?: string | null;
+  parsedFields?: {
+    formType?: string;
+    propertyAddress?: string | null;
+    dollarAmounts?: string[];
+    contacts?: string[];
+    summary?: string;
+  } | null;
 };
 
 type QueueMeta = {
@@ -340,6 +350,50 @@ export default function PortalSubmissionDetail() {
 
             {activeTab === "summary" && (
               <section className="admin-detail-panel">
+                {(item.source === "email_ingest" || item.source === "email_ingest_backfill") && (
+                  <div
+                    style={{
+                      marginBottom: 14,
+                      padding: 14,
+                      borderRadius: 10,
+                      border: "1px solid #BCD6EF",
+                      background: "#E6F0FA",
+                      color: "#1F4F8B",
+                    }}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>
+                      ✉ Imported from {item.source === "email_ingest_backfill" ? "BrokerAdmin backfill" : "BrokerAdmin email"}
+                    </div>
+                    <div style={{ fontSize: 12, lineHeight: 1.5 }}>
+                      Sender: <strong>{item.submittedByEmail ?? "(unknown)"}</strong> · Received{" "}
+                      <strong>{new Date(item.createdAt).toLocaleString()}</strong>
+                      {item.sourceEmailWebLink && (
+                        <>
+                          {" · "}
+                          <a href={item.sourceEmailWebLink} target="_blank" rel="noreferrer" style={{ color: "#1F4F8B", fontWeight: 700 }}>
+                            Open in Outlook ↗
+                          </a>
+                        </>
+                      )}
+                    </div>
+                    {item.parsedFields && (
+                      <div style={{ marginTop: 10, fontSize: 12, lineHeight: 1.6 }}>
+                        {item.parsedFields.propertyAddress && (
+                          <div>Address: <strong>{item.parsedFields.propertyAddress}</strong></div>
+                        )}
+                        {item.parsedFields.dollarAmounts && item.parsedFields.dollarAmounts.length > 0 && (
+                          <div>Amounts: <strong>{item.parsedFields.dollarAmounts.join(", ")}</strong></div>
+                        )}
+                        {item.parsedFields.contacts && item.parsedFields.contacts.length > 0 && (
+                          <div>Contacts: <strong>{item.parsedFields.contacts.join(", ")}</strong></div>
+                        )}
+                        {item.parsedFields.summary && (
+                          <div style={{ marginTop: 4 }}>Summary: {item.parsedFields.summary}</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="admin-detail-summary-grid">
                   <div>
                     <span>Reference</span>

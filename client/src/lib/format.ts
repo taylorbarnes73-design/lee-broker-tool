@@ -53,6 +53,12 @@ const FORM_TYPE_LABELS: Record<string, string> = {
   lease: "Lease",
   sale: "Sale",
   item: "Item",
+  psa: "Purchase & sale",
+  price_change: "Price change",
+  amendment: "Amendment",
+  docusign: "DocuSign",
+  invoice: "Invoice",
+  general: "General",
 };
 
 export function formatFormType(type: string | null | undefined): string {
