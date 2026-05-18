@@ -54,6 +54,11 @@ export type SettingKey =
   | "integrations.broker_admin_ingest.client_secret"
   | "integrations.broker_admin_ingest.last_test_at"
   | "integrations.broker_admin_ingest.last_test_result"
+  | "integrations.dealius_api.enabled"
+  | "integrations.dealius_api.base_url"
+  | "integrations.dealius_api.api_key"
+  | "integrations.dealius_api.last_test_at"
+  | "integrations.dealius_api.last_test_result"
   | "security.session_timeout_hours";
 
 export const SETTING_KEYS = [
@@ -89,6 +94,11 @@ export const SETTING_KEYS = [
   "integrations.broker_admin_ingest.client_secret",
   "integrations.broker_admin_ingest.last_test_at",
   "integrations.broker_admin_ingest.last_test_result",
+  "integrations.dealius_api.enabled",
+  "integrations.dealius_api.base_url",
+  "integrations.dealius_api.api_key",
+  "integrations.dealius_api.last_test_at",
+  "integrations.dealius_api.last_test_result",
   "security.session_timeout_hours",
 ] as const satisfies readonly SettingKey[];
 
@@ -337,6 +347,44 @@ const defs: SettingDef[] = [
   },
   {
     key: "integrations.broker_admin_ingest.last_test_result",
+    category: "integrations",
+    sensitive: false,
+    valueSchema: testResultSchema,
+    defaultValue: null,
+  },
+  {
+    key: "integrations.dealius_api.enabled",
+    category: "integrations",
+    sensitive: false,
+    valueSchema: z.boolean(),
+    defaultValue: false,
+    description: "Enable Dealius REST API integration (separate from legacy username/password session flow).",
+  },
+  {
+    key: "integrations.dealius_api.base_url",
+    category: "integrations",
+    sensitive: false,
+    valueSchema: z.string().trim().min(1).max(512),
+    defaultValue: "https://leenewportbeach.dealius.com",
+    description: "Dealius tenant base URL (no trailing slash).",
+  },
+  {
+    key: "integrations.dealius_api.api_key",
+    category: "integrations",
+    sensitive: true,
+    valueSchema: z.string().max(512),
+    defaultValue: "",
+    description: "Dealius API key (sent as X-API-KEY header).",
+  },
+  {
+    key: "integrations.dealius_api.last_test_at",
+    category: "integrations",
+    sensitive: false,
+    valueSchema: z.union([z.string().min(4), z.null()]),
+    defaultValue: null,
+  },
+  {
+    key: "integrations.dealius_api.last_test_result",
     category: "integrations",
     sensitive: false,
     valueSchema: testResultSchema,

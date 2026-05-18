@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import BrokerAdminIngestPanel from "@/components/BrokerAdminIngestPanel";
+import DealiusApiPanel from "@/components/DealiusApiPanel";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -1134,6 +1135,11 @@ export default function PortalAdminSettings() {
                   </div>
 
                   <BrokerAdminIngestPanel
+                    grouped={grouped}
+                    onSavedRefresh={loadAll}
+                  />
+
+                  <DealiusApiPanel
                     grouped={grouped}
                     onSavedRefresh={loadAll}
                   />

@@ -30,6 +30,7 @@ import { publicSettingsRouter } from "../publicSettingsApi";
 import { adminAuditLogRouter } from "../adminAuditLogApi";
 import { dealiusAdminApiRouter } from "../dealiusAdminApi";
 import { brokerAdminIngestRouter } from "../brokerAdminIngestApi";
+import { dealiusApiAdminRouter } from "../dealiusApiAdmin";
 import { startBrokerAdminIngestScheduler } from "../jobs/ingestBrokerAdminEmails";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -117,6 +118,7 @@ async function startServer() {
   app.use("/api/admin/users", adminUsersRouter);
   app.use("/api/admin/settings", adminSettingsRouter);
   app.use("/api/admin/ingest/brokerAdmin", brokerAdminIngestRouter);
+  app.use("/api/admin/dealius", dealiusApiAdminRouter);
   app.use("/api/admin/audit-log", adminAuditLogRouter);
   app.use("/api/settings", publicSettingsRouter);
 
