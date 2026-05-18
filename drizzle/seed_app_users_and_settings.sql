@@ -68,9 +68,6 @@ ON DUPLICATE KEY UPDATE
   `email` = VALUES(`email`),
   `username` = VALUES(`username`),
   `full_name` = VALUES(`full_name`),
-  `role` = VALUES(`role`),
-  `password_hash` = VALUES(`password_hash`),
-  `is_active` = VALUES(`is_active`),
   `updated_at` = UTC_TIMESTAMP(3);
 
 INSERT INTO `app_settings` (`key`, `value`, `description`, `category`, `updated_at`, `updated_by`) VALUES
