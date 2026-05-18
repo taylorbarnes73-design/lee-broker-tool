@@ -77,21 +77,21 @@ function NavBlock({
   return (
     <>
       {items.map(item => (
-        <Link key={item.section} href={item.href}>
-          <a
-            className={`admin-portal-nav-item ${active === item.section ? "active" : ""}`}
-            style={
-              active === item.section
-                ? ({
-                    borderColor: `${accent}33`,
-                    color: accent,
-                  } as CSSProperties)
-                : undefined
-            }
-          >
-            <span>{item.label}</span>
-            <small>{item.subhead}</small>
-          </a>
+        <Link
+          key={item.section}
+          href={item.href}
+          className={`admin-portal-nav-item ${active === item.section ? "active" : ""}`}
+          style={
+            active === item.section
+              ? ({
+                  borderColor: `${accent}33`,
+                  color: accent,
+                } as CSSProperties)
+              : undefined
+          }
+        >
+          <span>{item.label}</span>
+          <small>{item.subhead}</small>
         </Link>
       ))}
     </>

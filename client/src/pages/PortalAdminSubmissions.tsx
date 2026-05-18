@@ -140,40 +140,40 @@ export default function PortalAdminSubmissions() {
                   return ap - bp;
                 })
                 .map(s => (
-                  <Link key={s.id} href={`/portal/submissions/${s.id}`}>
-                    <a style={{ textDecoration: "none" }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          gap: 12,
-                          padding: 12,
-                          borderRadius: 10,
-                          border: "1px solid var(--ink-200)",
-                          background: "white",
-                        }}
-                      >
-                        <div>
-                          <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>
-                            #{s.id} · {s.reference || "(untitled)"}
-                          </div>
-                          <div style={{ fontSize: 13, color: "var(--ink-500)", marginTop: 2 }}>
-                            status: {s.status}
-                          </div>
-                          {s.queuePosition !== null && (
-                            <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 2 }}>
-                              queue: #{s.queuePosition}
-                            </div>
-                          )}
-                          <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 2 }}>
-                            {s.submittedBy || "(unknown)"} {s.submittedByEmail ? `· ${s.submittedByEmail}` : ""}
-                          </div>
-                        </div>
-                        <div style={{ fontSize: 12, color: "var(--ink-500)" }}>
-                          {new Date(s.createdAt).toLocaleString()}
-                        </div>
+                  <Link
+                    key={s.id}
+                    href={`/portal/submissions/${s.id}`}
+                    style={{
+                      textDecoration: "none",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      padding: 12,
+                      borderRadius: 10,
+                      border: "1px solid var(--ink-200)",
+                      background: "white",
+                      color: "inherit",
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>
+                        #{s.id} · {s.reference || "(untitled)"}
                       </div>
-                    </a>
+                      <div style={{ fontSize: 13, color: "var(--ink-500)", marginTop: 2 }}>
+                        status: {s.status}
+                      </div>
+                      {s.queuePosition !== null && (
+                        <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 2 }}>
+                          queue: #{s.queuePosition}
+                        </div>
+                      )}
+                      <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 2 }}>
+                        {s.submittedBy || "(unknown)"} {s.submittedByEmail ? `· ${s.submittedByEmail}` : ""}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--ink-500)" }}>
+                      {new Date(s.createdAt).toLocaleString()}
+                    </div>
                   </Link>
                 ))}
             </div>

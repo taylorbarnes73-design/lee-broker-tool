@@ -204,36 +204,36 @@ export default function PortalBrokerAdminRequests() {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {visible.map(r => (
-                <Link key={r.id} href={`/portal/admin/broker-admin/${r.id}`}>
-                  <a style={{ textDecoration: "none" }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        gap: 12,
-                        padding: 12,
-                        borderRadius: 10,
-                        border: "1px solid var(--ink-200)",
-                        background: "white",
-                      }}
-                    >
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>
-                          #{r.id} · {r.title || r.reference || "(untitled)"}
-                        </div>
-                        <div style={{ fontSize: 13, color: "var(--ink-500)", marginTop: 2 }}>
-                          status: {r.status} {r.owner ? `· owner: ${r.owner}` : ""}
-                          {r.confidential ? " · confidential" : ""}
-                        </div>
-                        <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 2 }}>
-                          {r.fromEmail || "(unknown sender)"}
-                        </div>
-                      </div>
-                      <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>
-                        {new Date(r.createdAt).toLocaleString()}
-                      </div>
+                <Link
+                  key={r.id}
+                  href={`/portal/admin/broker-admin/${r.id}`}
+                  style={{
+                    textDecoration: "none",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 12,
+                    padding: 12,
+                    borderRadius: 10,
+                    border: "1px solid var(--ink-200)",
+                    background: "white",
+                    color: "inherit",
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>
+                      #{r.id} · {r.title || r.reference || "(untitled)"}
                     </div>
-                  </a>
+                    <div style={{ fontSize: 13, color: "var(--ink-500)", marginTop: 2 }}>
+                      status: {r.status} {r.owner ? `· owner: ${r.owner}` : ""}
+                      {r.confidential ? " · confidential" : ""}
+                    </div>
+                    <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 2 }}>
+                      {r.fromEmail || "(unknown sender)"}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>
+                    {new Date(r.createdAt).toLocaleString()}
+                  </div>
                 </Link>
               ))}
             </div>

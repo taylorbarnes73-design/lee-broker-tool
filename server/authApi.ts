@@ -190,6 +190,23 @@ authApiRouter.get("/me", async (req, res) => {
 
   try {
     const user = await sdk.authenticateRequest(req);
+    // Apply policy-based admin override even when the user came in via the
+    // legacy JWT path, so admins recognized by LOCAL_ADMIN_EMAILS,
+    // LOCAL_ADMIN_NAMES, or the broker directory aren’t silently downgraded
+    // to AGENT here.
+    let appUserRecord: Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>> = undefined;
+    try {
+      const db = await getDb();
+      if (db && user.email) {
+        appUserRecord = await findAppUserByUsernameOrEmail(db, user.email);
+      }
+    } catch (err) {
+      console.error("[auth.me] Could not resolve app user for legacy session:", err);
+    }
+    const resolvedRole: "admin" | "user" =
+      user.role === "admin" || isAdminByPolicy(user.email, user.name, appUserRecord?.username)
+        ? "admin"
+        : "user";
     res.json({
       success: true,
       data: {
@@ -197,7 +214,7 @@ authApiRouter.get("/me", async (req, res) => {
           openId: user.openId,
           name: user.name,
           email: user.email,
-          role: user.role === "admin" ? "ADMIN" : "AGENT",
+          role: resolvedRole === "admin" ? "ADMIN" : "AGENT",
         },
       },
     });
