@@ -121,24 +121,27 @@ export default function PortalDashboard() {
       title={welcome}
       description={description}
     >
-      <div
-        style={{
-          marginTop: 18,
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: 12,
-        }}
-      >
-        <StatCard label="Pending" value={stats?.pending ?? 0} loading={loading} hint="Awaiting first review." />
-        <StatCard label="In review" value={stats?.inReview ?? 0} loading={loading} hint="Being processed now." />
-        <StatCard label="Active in queue" value={stats?.active ?? 0} loading={loading} hint="Pending + in review combined." />
+      <div className="admin-portal-card">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+            gap: 16,
+          }}
+        >
+          <StatCard label="Pending" value={stats?.pending ?? 0} loading={loading} hint="Awaiting first review." />
+          <StatCard label="In review" value={stats?.inReview ?? 0} loading={loading} hint="Being processed now." />
+          <StatCard label="Active in queue" value={stats?.active ?? 0} loading={loading} hint="Pending + in review combined." />
+        </div>
       </div>
 
       {error && (
-        <div style={{ marginTop: 12, fontSize: 13, color: "var(--err-700)" }}>{error}</div>
+        <div className="admin-portal-card" style={{ fontSize: 13, color: "var(--err-700)" }}>
+          {error}
+        </div>
       )}
 
-      <div style={{ marginTop: 18 }}>
+      <div className="admin-portal-card">
         <Card padding="lg">
           <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink-900)" }}>
             How submissions reach admin
