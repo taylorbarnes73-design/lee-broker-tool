@@ -100,7 +100,7 @@ describe("broker admin REST auth", () => {
     expect(res.body).toMatchObject({ error: "Forbidden" });
   });
 
-  it("denies legacy sessions when the app_users lookup fails", async () => {
+  it("denies legacy sessions for managed app users", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     vi.mocked(sdk.authenticateRequest).mockResolvedValue({
       id: 1,
@@ -113,12 +113,25 @@ describe("broker admin REST auth", () => {
       updatedAt: new Date(),
       lastSignedIn: new Date(),
     });
-    vi.mocked(getDb)
-      .mockResolvedValueOnce({} as Awaited<ReturnType<typeof getDb>>)
-      .mockResolvedValueOnce(null);
-    vi.mocked(findAppUserByUsernameOrEmail).mockRejectedValue(
-      new Error("app_users query failed")
+    vi.mocked(getDb).mockResolvedValueOnce(
+      {} as Awaited<ReturnType<typeof getDb>>
     );
+    vi.mocked(findAppUserByUsernameOrEmail).mockResolvedValue({
+      id: "tbarnes-id",
+      username: "tbarnes",
+      email: "tbarnes@lee-associates.com",
+      fullName: "Taylor Barnes",
+      role: "admin",
+      office: null,
+      isActive: true,
+      inviteToken: null,
+      inviteAcceptedAt: null,
+      invitedByUserId: null,
+      lastLoginAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      passwordHash: "hash",
+    });
 
     const res = await request(buildApp()).get("/api/broker-admin/requests");
 

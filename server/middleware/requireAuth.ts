@@ -45,6 +45,10 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
       res.status(401).json({ error: "Not authenticated" });
       return;
     }
+    if (appUser) {
+      res.status(401).json({ error: "Not authenticated" });
+      return;
+    }
     const grantedRole: PlatformRole =
       legacyUser.role === "admin" ? "admin" : "broker";
     req.user = {

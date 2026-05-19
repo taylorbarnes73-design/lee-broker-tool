@@ -122,7 +122,7 @@ describe("GET /api/admin/users", () => {
     expect(res.body.error.code).toBe("FORBIDDEN");
   });
 
-  it("denies legacy admin sessions when the app_users lookup fails", async () => {
+  it("denies legacy admin sessions for managed app users", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     vi.mocked(sdk.authenticateRequest).mockResolvedValue({
       id: 1,
@@ -135,12 +135,25 @@ describe("GET /api/admin/users", () => {
       updatedAt: new Date(),
       lastSignedIn: new Date(),
     });
-    vi.mocked(getDb)
-      .mockResolvedValueOnce({} as Awaited<ReturnType<typeof getDb>>)
-      .mockResolvedValueOnce(null);
-    vi.mocked(findAppUserByUsernameOrEmail).mockRejectedValue(
-      new Error("app_users query failed")
+    vi.mocked(getDb).mockResolvedValueOnce(
+      {} as Awaited<ReturnType<typeof getDb>>
     );
+    vi.mocked(findAppUserByUsernameOrEmail).mockResolvedValue({
+      id: "tbarnes-id",
+      username: "tbarnes",
+      email: "tbarnes@lee-associates.com",
+      fullName: "Taylor Barnes",
+      role: "admin",
+      office: null,
+      isActive: true,
+      inviteToken: null,
+      inviteAcceptedAt: null,
+      invitedByUserId: null,
+      lastLoginAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      passwordHash: "hash",
+    });
 
     const app = buildApp();
     const res = await request(app).get("/api/admin/users");

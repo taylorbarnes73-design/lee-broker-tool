@@ -52,7 +52,7 @@ export const requirePlatformAdmin: RequestHandler = async (req, res, next) => {
       );
       legacyLookupFailed = true;
     }
-    if (!legacyLookupFailed && legacyUser.role === "admin") {
+    if (!legacyLookupFailed && !appUser && legacyUser.role === "admin") {
       req.user = {
         id: appUser?.id ?? String(legacyUser.id),
         email,
