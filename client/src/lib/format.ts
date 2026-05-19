@@ -58,6 +58,9 @@ const FORM_TYPE_LABELS: Record<string, string> = {
   amendment: "Amendment",
   docusign: "DocuSign",
   invoice: "Invoice",
+  offer: "Offer",
+  comp_request: "Comp request",
+  activity_report: "Activity report",
   general: "General",
 };
 

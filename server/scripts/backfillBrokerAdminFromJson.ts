@@ -22,7 +22,19 @@ type BackfillEntry = {
 };
 
 async function main() {
-  const argPath = process.argv[2] || "brokeradmin_backfill.json";
+  const argv = process.argv.slice(2);
+  let status = "pending";
+  const positional: string[] = [];
+  for (const a of argv) {
+    const m = a.match(/^--status(?:=(.+))?$/);
+    if (m) {
+      const next = m[1] ?? argv[argv.indexOf(a) + 1];
+      if (next) status = next;
+      continue;
+    }
+    if (!a.startsWith("--")) positional.push(a);
+  }
+  const argPath = positional[0] || "brokeradmin_backfill.json";
   const filePath = path.isAbsolute(argPath) ? argPath : path.resolve(process.cwd(), argPath);
   if (!fs.existsSync(filePath)) {
     console.error(`Backfill JSON not found at ${filePath}`);
@@ -93,7 +105,7 @@ async function main() {
 
       const [insertResult] = await db.insert(submissions).values({
         formType: parsed.formType,
-        status: "pending",
+        status,
         payload: JSON.stringify(payload),
         reference: reference ? reference.slice(0, 511) : null,
         submittedBy: entry.from ?? null,

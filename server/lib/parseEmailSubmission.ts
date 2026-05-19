@@ -8,6 +8,9 @@ export type FormType =
   | "amendment"
   | "docusign"
   | "invoice"
+  | "offer"
+  | "comp_request"
+  | "activity_report"
   | "general";
 
 export type ParsedEmail = {
