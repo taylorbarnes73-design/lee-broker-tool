@@ -69,30 +69,33 @@ export function formatFormType(type: string | null | undefined): string {
   return FORM_TYPE_LABELS[type] ?? titleize(type);
 }
 
-// Nexus muted tone palette: status pills stay legible without ever feeling
-// alarming. "Red" is now a muted plum; "green" and "blue" are de-saturated.
-const TONE_GREEN: StatusTone = { bg: "#E6EDDB", fg: "#3C6E1F", border: "#C9DABA" };
-const TONE_RED: StatusTone = { bg: "#F6E8EE", fg: "#7C2257", border: "#E6CFDC" };
-const TONE_BLUE: StatusTone = { bg: "#E2EAF0", fg: "#2F4A66", border: "#C4D1DE" };
+// Lee brand status pills — refined, semantic, never a scattered red dot.
+// Pending/in-review use slate, approved uses navy, completed uses Lee green,
+// rejected uses Lee bright-red (always with a text label).
+const TONE_GREEN: StatusTone = { bg: "rgba(138, 148, 30, 0.12)", fg: "#6B7517", border: "rgba(138, 148, 30, 0.30)" };
+const TONE_RED: StatusTone = { bg: "rgba(205, 20, 66, 0.10)", fg: "#A1102F", border: "rgba(205, 20, 66, 0.28)" };
+const TONE_BLUE: StatusTone = { bg: "rgba(0, 49, 70, 0.10)", fg: "#003146", border: "rgba(0, 49, 70, 0.22)" };
+const TONE_SLATE: StatusTone = { bg: "rgba(126, 128, 131, 0.10)", fg: "#303C42", border: "rgba(126, 128, 131, 0.26)" };
 const TONE_AMBER: StatusTone = { bg: "#FAEFDC", fg: "#6F4514", border: "#E8D9B6" };
 const TONE_PURPLE: StatusTone = { bg: "#ECE6F3", fg: "#4B3A75", border: "#D4C9E3" };
 const TONE_GRAY: StatusTone = { bg: "var(--ink-100)", fg: "var(--ink-700)", border: "var(--ink-200)" };
 
 export function submissionStatusTone(status: string | null | undefined): StatusTone {
   switch (status) {
-    case "approved":
     case "closed":
       return TONE_GREEN;
+    case "approved":
+      return TONE_BLUE;
     case "rejected":
     case "cancelled":
       return TONE_RED;
     case "in_review":
-      return TONE_BLUE;
+      return TONE_SLATE;
     case "waiting_on_broker":
     case "waiting_on_admin":
       return TONE_AMBER;
     case "pending":
-      return TONE_GRAY;
+      return TONE_SLATE;
     default:
       return TONE_GRAY;
   }
@@ -105,7 +108,7 @@ export function brokerAdminStatusTone(status: string | null | undefined): Status
     case "cancelled":
       return TONE_RED;
     case "in_progress":
-      return TONE_BLUE;
+      return TONE_SLATE;
     case "waiting_on_broker":
     case "waiting_on_vendor":
       return TONE_AMBER;

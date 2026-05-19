@@ -1,81 +1,114 @@
 /* Lee & Associates Broker Tool — Design Tokens
  *
- * Refreshed to the Nexus palette: a quiet editorial neutral with a single
- * deep-teal accent. The old `--lee-crimson*` variable names are preserved so
- * that the dozens of `var(--lee-crimson)` references throughout the codebase
- * continue to resolve — but they now resolve to teal, not red.
+ * Tokens follow the official Lee & Associates Brand Standards (Feb 2021).
+ * Primary brand color is RED PMS 202 (#98002E). Body text is CHARCOAL.
+ * Supporting palette covers slate, navy, sky, frost, plus accent merlot,
+ * bright-red, green and mint for status/infographics.
+ *
+ * Backwards-compatible aliases (e.g. `--lee-crimson`, `--lee-crimson-wash`)
+ * are kept so the dozens of existing var() references continue to resolve,
+ * but they now point back at brand red rather than the prior teal pass.
  */
 
 :root {
-  /* ── Brand palette (Nexus teal) ──
-   * Names preserved for backwards compatibility — the values are the new
-   * Nexus accent. Use sparingly: for primary CTAs, links, and the single
-   * active state per screen. */
-  --lee-crimson: #01696F;      /* Primary accent — deep teal */
-  --lee-crimson-ink: #0C4E54;  /* Darker, for hover/pressed */
-  --lee-crimson-wash: #E5EEEE; /* Subtle teal tint for backgrounds */
-  --lee-crimson-glow: rgba(1, 105, 111, 0.14);
+  /* ── Lee & Associates official palette ── */
+  /* Primary */
+  --lee-red: #98002E;          /* PMS 202 — primary brand */
+  --lee-red-hover: #7A0024;    /* Deepened red for hover/pressed */
+  --lee-red-wash: #F4E3E8;     /* Subtle red tint for backgrounds */
+  --lee-red-glow: rgba(152, 0, 46, 0.14);
+  --lee-slate: #7E8083;        /* PMS 424 — secondary text, muted UI */
+  --lee-charcoal: #303C42;     /* PMS 425 — primary body text */
+  --lee-white: #FFFFFF;
 
-  --lee-slate: #575A74;        /* Secondary accent */
-  --lee-slate-wash: #EEEFF3;
+  /* Secondary */
+  --lee-navy: #003146;         /* PMS 3035 */
+  --lee-sky: #009AD9;          /* PMS 2925 */
+  --lee-frost: #A9C3CB;        /* PMS 7542 */
 
-  /* Nexus-named aliases (use these going forward) */
-  --nexus-bg: #F7F6F2;
-  --nexus-surface: #F9F8F5;
+  /* Accent (use sparingly) */
+  --lee-merlot: #4E131E;       /* PMS 1817 */
+  --lee-bright-red: #CD1442;   /* PMS 200 */
+  --lee-green: #8A941E;        /* PMS 384 */
+  --lee-green-deep: #6B7517;
+  --lee-mint: #6FC9C4;         /* PMS 7472 */
+
+  /* Brand gradient (red → merlot). Use only on a single hero strip / splash. */
+  --lee-approved-gradient: linear-gradient(135deg, #98002E 0%, #4E131E 100%);
+
+  /* ── Backwards-compatible aliases ──
+   * Existing components reference these names. They now resolve to the
+   * brand red and slate values above.
+   */
+  --lee-crimson: var(--lee-red);
+  --lee-crimson-ink: var(--lee-red-hover);
+  --lee-crimson-wash: var(--lee-red-wash);
+  --lee-crimson-glow: var(--lee-red-glow);
+  --lee-slate-wash: #EFEFF0;
+
+  /* App-surface aliases (nexus-* names retained for compatibility) */
+  --nexus-bg: #F8F7F4;
+  --nexus-surface: #FFFFFF;
   --nexus-surface-alt: #FBFBF9;
   --nexus-border: #D4D1CA;
-  --nexus-text: #28251D;
-  --nexus-muted: #7A7974;
-  --nexus-faint: #BAB9B4;
-  --nexus-primary: #01696F;
-  --nexus-primary-hover: #0C4E54;
-  --nexus-error: #A12C7B;
-  --nexus-warning: #964219;
-  --nexus-success: #437A22;
+  --nexus-text: #303C42;
+  --nexus-muted: #7E8083;
+  --nexus-faint: #A8AAAD;
+  --nexus-primary: var(--lee-red);
+  --nexus-primary-hover: var(--lee-red-hover);
+  --nexus-error: var(--lee-bright-red);
+  --nexus-warning: #B5651D;
+  --nexus-success: var(--lee-green-deep);
 
-  /* ── Neutrals (ink scale) ── retoned to Nexus warm-neutrals */
-  --ink-900: #28251D;
-  --ink-800: #353128;
-  --ink-700: #4A4744;
-  --ink-600: #5E5B57;
-  --ink-500: #7A7974;
-  --ink-400: #9C9A93;
-  --ink-300: #BAB9B4;
-  --ink-200: #D4D1CA;
+  /* ── Neutrals (ink scale) ──
+   * Centered on Lee charcoal/slate for body text and slate for muted UI.
+   * Light end is a warm neutral background.
+   */
+  --ink-900: #303C42;          /* charcoal — body text */
+  --ink-800: #3A4A52;
+  --ink-700: #4A5A63;
+  --ink-600: #5E6A71;
+  --ink-500: #7E8083;          /* slate — muted text */
+  --ink-400: #9C9FA1;
+  --ink-300: #A8AAAD;          /* faint */
+  --ink-200: #D4D1CA;          /* default border */
   --ink-150: #DFDDD6;
-  --ink-100: #EFEDE6;
-  --ink-50:  #F9F8F5;
-  --ink-0:   #FBFBF9;
+  --ink-100: #E2E1DD;          /* soft border / subtle fill */
+  --ink-50:  #F8F7F4;          /* page background (warm neutral) */
+  --ink-0:   #FFFFFF;          /* card / surface */
 
   /* ── Functional ── */
-  /* Success — muted Nexus teal-green */
-  --ok-700: #2F5A18;
-  --ok-600: #3C6E1F;
-  --ok-500: #437A22;
-  --ok-200: #C9DABA;
-  --ok-100: #E6EDDB;
+  /* Success — Lee green PMS 384 */
+  --ok-700: #5A6213;
+  --ok-600: #6B7517;
+  --ok-500: var(--lee-green);
+  --ok-200: #D2D7A8;
+  --ok-100: rgba(138, 148, 30, 0.12);
 
-  /* Warning — muted Nexus burnt-amber */
+  /* Warning — burnt amber (kept neutral, not aggressive) */
   --warn-700: #6F311A;
   --warn-600: #86411C;
-  --warn-500: #964219;
+  --warn-500: #B5651D;
   --warn-100: #FAEFDC;
 
-  /* Error — muted Nexus plum (never alarm-red) */
-  --err-700: #7C2257;
-  --err-600: #8E2768;
-  --err-200: #E6CFDC;
-  --err-100: #F6E8EE;
-  --err-50:  #FAF1F5;
+  /* Error — Lee bright red PMS 200, refined */
+  --err-700: #A1102F;
+  --err-600: var(--lee-bright-red);
+  --err-200: #F0BCC9;
+  --err-100: rgba(205, 20, 66, 0.10);
+  --err-50:  #FBEEF1;
 
-  --ai-500: #6E3FD9;       /* AI / intelligence accent — violet */
+  --ai-500: #6E3FD9;
   --ai-400: #8B5FF0;
   --ai-100: #F1ECFB;
-  --ai-gradient: linear-gradient(135deg, #8B5FF0 0%, #5784B3 60%, #01696F 100%);
+  --ai-gradient: linear-gradient(135deg, #8B5FF0 0%, #5784B3 60%, #003146 100%);
 
-  /* ── Type ── */
-  --font-sans: 'Manrope', 'Avenir Next', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-serif: 'Source Serif 4', 'Cormorant Garamond', Georgia, serif;
+  /* ── Type ──
+   * Brand-approved web alternative to Avenir Next is Nunito Sans.
+   * Minion Pro is the brand serif; Source Serif 4 is the free alternative.
+   */
+  --font-sans: 'Nunito Sans', 'Avenir Next', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-serif: 'Source Serif 4', 'Minion Pro', Georgia, serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
 
   /* Type scale */
@@ -113,12 +146,12 @@
   --r-12: 12px;
   --r-16: 16px;
 
-  /* ── Shadows ── refined to be barely-there */
-  --shadow-sm: 0 1px 2px rgba(40, 37, 29, .04);
-  --shadow-md: 0 1px 2px rgba(40, 37, 29, .05);
-  --shadow-lg: 0 4px 12px rgba(40, 37, 29, .06), 0 1px 2px rgba(40, 37, 29, .04);
-  --shadow-xl: 0 12px 28px rgba(40, 37, 29, .10), 0 2px 6px rgba(40, 37, 29, .04);
-  --ring-crimson: 0 0 0 3px var(--lee-crimson-glow);
+  /* ── Shadows ── kept barely-there */
+  --shadow-sm: 0 1px 2px rgba(48, 60, 66, .04);
+  --shadow-md: 0 1px 2px rgba(48, 60, 66, .05);
+  --shadow-lg: 0 4px 12px rgba(48, 60, 66, .06), 0 1px 2px rgba(48, 60, 66, .04);
+  --shadow-xl: 0 12px 28px rgba(48, 60, 66, .10), 0 2px 6px rgba(48, 60, 66, .04);
+  --ring-crimson: 0 0 0 3px var(--lee-red-glow);
   --ring-ai: 0 0 0 3px rgba(139, 95, 240, 0.18);
 
   /* ── Motion ── */
@@ -134,13 +167,14 @@
   font-family: var(--font-sans);
   color: var(--ink-900);
   background: var(--nexus-bg);
-  font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.005em;
 }
 /* Tabular numerals everywhere — KPIs, currency, dates align cleanly */
-.lee-app [data-numeric], .lee-app .lee-tabular { font-variant-numeric: tabular-nums; }
+.lee-app [data-numeric], .lee-app .lee-tabular {
+  font-variant-numeric: tabular-nums lining-nums;
+}
 .lee-app button { font-family: inherit; }
 .lee-app input, .lee-app select, .lee-app textarea {
   font-family: inherit;
@@ -148,15 +182,15 @@
 }
 .lee-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .lee-serif { font-family: var(--font-serif); }
-.lee-tabular { font-variant-numeric: tabular-nums; }
+.lee-tabular { font-variant-numeric: tabular-nums lining-nums; }
 
-/* Section header convention */
+/* Section header convention — brand book uses all-caps tracking for short labels */
 .lee-eyebrow {
   font-size: var(--fs-11);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-500);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* Scrollbar reset inside artboards */

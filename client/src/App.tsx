@@ -35,17 +35,17 @@ function PublicHome() {
         alignItems: "center",
         justifyContent: "center",
         padding: 24,
-        fontFamily: "Inter, system-ui, sans-serif",
+        fontFamily: "'Nunito Sans', 'Avenir Next', Inter, system-ui, sans-serif",
       }}
     >
       <div style={{ maxWidth: 440, textAlign: "center" }}>
         <img
           src="/lee-newport-beach-fullcolor.png"
-          alt="Lee & Associates"
+          alt="Lee & Associates Newport Beach"
           style={{ height: 64, width: "auto", display: "inline-block" }}
         />
-        <h1 style={{ fontSize: 26, fontWeight: 700, color: "var(--ink-900)", marginTop: 24, marginBottom: 8 }}>
-          Lee Broker Tool
+        <h1 style={{ fontSize: 26, fontWeight: 700, color: "var(--ink-900)", marginTop: 24, marginBottom: 8, letterSpacing: "-0.01em" }}>
+          Broker Tool
         </h1>
         <p style={{ fontSize: 15, color: "var(--ink-600)", lineHeight: 1.5, marginBottom: 28 }}>
           Sign in for the broker portal and submission queue, or open the listing and forms workspace.
@@ -57,10 +57,11 @@ function PublicHome() {
               display: "block",
               padding: "14px 20px",
               borderRadius: 10,
-              background: "var(--brand-600, #A9223B)",
+              background: "var(--lee-red, #98002E)",
               color: "#fff",
-              fontWeight: 600,
+              fontWeight: 700,
               textDecoration: "none",
+              letterSpacing: "0.02em",
             }}
           >
             Sign in

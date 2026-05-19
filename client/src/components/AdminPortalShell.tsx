@@ -8,8 +8,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link, useLocation } from "wouter";
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { ChevronDown, HelpCircle, Menu, X } from "lucide-react";
+import HelpPanel from "@/components/HelpPanel";
+import { getHelpForRoute } from "@/lib/helpContent";
 
 type AdminPortalSection =
   | "dashboard"
@@ -107,12 +109,15 @@ export default function AdminPortalShell({
   children,
 }: AdminPortalShellProps) {
   const { user, logout } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const branding = usePublicBranding();
   const isAdmin = user?.role === "admin";
   const logoSrc = branding.logo_url?.trim() || "/lee-newport-beach-fullcolor.png";
-  const accent = branding.primary_color || "#01696F";
+  const accent = branding.primary_color || "#98002E";
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const helpTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const helpEntry = getHelpForRoute(location);
 
   // Close the mobile drawer whenever the route (section prop) changes.
   useEffect(() => {
@@ -136,11 +141,13 @@ export default function AdminPortalShell({
   const sidebarContents = (
     <>
       <div className="admin-portal-sidebar-brand">
-        <img src={logoSrc} alt={branding.company_name} />
-        <div>
-          <div className="admin-portal-kicker">{branding.company_name}</div>
-          <div className="admin-portal-brand-title">Broker Operations</div>
-        </div>
+        <img
+          src={logoSrc}
+          alt="Lee & Associates Newport Beach"
+          className="admin-portal-sidebar-logo"
+        />
+        <div className="admin-portal-sidebar-rule" aria-hidden />
+        <div className="admin-portal-sidebar-subtitle">BROKER TOOL</div>
       </div>
 
       <nav className="admin-portal-sidebar-nav" aria-label="Primary">
@@ -211,6 +218,15 @@ export default function AdminPortalShell({
             <Menu size={18} aria-hidden />
           </button>
           <div className="admin-portal-header-spacer" />
+          <button
+            ref={helpTriggerRef}
+            type="button"
+            className="admin-portal-help-trigger"
+            onClick={() => setHelpOpen(true)}
+            aria-label="Help for this page"
+          >
+            <HelpCircle size={18} aria-hidden />
+          </button>
           <div className="admin-portal-session">
             <span className="admin-portal-session-text">
               Signed in as <strong>{user?.name ?? "User"}</strong>
@@ -250,6 +266,13 @@ export default function AdminPortalShell({
           {children}
         </main>
       </div>
+
+      <HelpPanel
+        open={helpOpen}
+        onClose={() => setHelpOpen(false)}
+        entry={helpEntry}
+        returnFocusTo={helpTriggerRef.current}
+      />
     </div>
   );
 }
