@@ -42,6 +42,8 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
         "[requireAuth] Could not resolve platform user for legacy session:",
         error
       );
+      res.status(401).json({ error: "Not authenticated" });
+      return;
     }
     const grantedRole: PlatformRole =
       legacyUser.role === "admin" ? "admin" : "broker";

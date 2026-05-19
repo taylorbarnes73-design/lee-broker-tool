@@ -101,6 +101,7 @@ export async function createContext(
           "[trpc.context] Could not resolve platform user for legacy session:",
           error
         );
+        return { req: opts.req, res: opts.res, user: null };
       }
       if (appUser) {
         user = null;

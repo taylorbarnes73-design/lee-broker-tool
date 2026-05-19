@@ -40,6 +40,7 @@ export const requirePlatformAdmin: RequestHandler = async (req, res, next) => {
     let appUser: Awaited<
       ReturnType<typeof findAppUserByUsernameOrEmail>
     > | null = null;
+    let legacyLookupFailed = false;
     try {
       const db = await getDb();
       appUser =
@@ -49,8 +50,9 @@ export const requirePlatformAdmin: RequestHandler = async (req, res, next) => {
         "[requirePlatformAdmin] Could not resolve platform user for legacy session:",
         error
       );
+      legacyLookupFailed = true;
     }
-    if (legacyUser.role === "admin") {
+    if (!legacyLookupFailed && legacyUser.role === "admin") {
       req.user = {
         id: appUser?.id ?? String(legacyUser.id),
         email,
