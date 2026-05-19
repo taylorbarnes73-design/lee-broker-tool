@@ -54,12 +54,12 @@ export const requirePlatformAdmin: RequestHandler = async (req, res, next) => {
     }
     if (!legacyLookupFailed && !appUser && legacyUser.role === "admin") {
       req.user = {
-        id: appUser?.id ?? String(legacyUser.id),
+        id: String(legacyUser.id),
         email,
-        username: appUser?.username ?? email,
-        fullName: appUser?.fullName ?? legacyUser.name ?? "",
+        username: email,
+        fullName: legacyUser.name ?? "",
         role: "admin" as PlatformAuthUser["role"],
-        office: appUser?.office ?? null,
+        office: null,
       };
       next();
       return;

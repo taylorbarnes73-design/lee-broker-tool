@@ -52,12 +52,12 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
     const grantedRole: PlatformRole =
       legacyUser.role === "admin" ? "admin" : "broker";
     req.user = {
-      id: appUser?.id ?? String(legacyUser.id),
+      id: String(legacyUser.id),
       email,
-      username: appUser?.username ?? email,
-      fullName: appUser?.fullName ?? legacyUser.name ?? "",
+      username: email,
+      fullName: legacyUser.name ?? "",
       role: grantedRole,
-      office: appUser?.office ?? null,
+      office: null,
     };
     next();
     return;

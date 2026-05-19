@@ -130,7 +130,7 @@ describe("GET /api/admin/users", () => {
       name: "Taylor Barnes",
       email: "tbarnes@lee-associates.com",
       loginMethod: "local",
-      role: "admin",
+      role: "user",
       createdAt: new Date(),
       updatedAt: new Date(),
       lastSignedIn: new Date(),
