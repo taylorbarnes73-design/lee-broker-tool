@@ -96,8 +96,8 @@ describe("broker admin REST auth", () => {
 
     const res = await request(buildApp()).get("/api/broker-admin/requests");
 
-    expect(res.status).toBe(403);
-    expect(res.body).toMatchObject({ error: "Forbidden" });
+    expect(res.status).toBe(401);
+    expect(res.body).toMatchObject({ error: "Not authenticated" });
   });
 
   it("denies legacy sessions for managed app users", async () => {
