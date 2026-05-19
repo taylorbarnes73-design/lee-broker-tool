@@ -34,7 +34,7 @@ function buildApp() {
 
 describe("broker admin REST auth", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     vi.mocked(resolvePlatformUserFromRequest).mockResolvedValue(null);
     vi.mocked(findAppUserByUsernameOrEmail).mockResolvedValue(undefined);
     vi.mocked(sdk.authenticateRequest).mockRejectedValue(
@@ -96,8 +96,8 @@ describe("broker admin REST auth", () => {
 
     const res = await request(buildApp()).get("/api/broker-admin/requests");
 
-    expect(res.status).toBe(401);
-    expect(res.body).toMatchObject({ error: "Not authenticated" });
+    expect(res.status).toBe(403);
+    expect(res.body).toMatchObject({ error: "Forbidden" });
   });
 
   it("denies legacy sessions for managed app users", async () => {

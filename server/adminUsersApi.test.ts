@@ -34,7 +34,7 @@ function buildApp() {
 
 describe("GET /api/admin/users", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     vi.mocked(resolvePlatformUserFromRequest).mockResolvedValue(null);
     vi.mocked(findAppUserByUsernameOrEmail).mockResolvedValue(undefined);
     vi.mocked(sdk.authenticateRequest).mockRejectedValue(
