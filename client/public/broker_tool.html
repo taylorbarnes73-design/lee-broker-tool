@@ -3607,7 +3607,10 @@ function initStepFlow(opts) {
       });
       this.renderSummaries();
       this.renderNav();
-      main.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Auto-scroll suppressed for Sign Request and Commission Voucher per user request.
+      if (opts.mainId !== 'sign-main' && opts.mainId !== 'voucher-main') {
+        main.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
       if (typeof opts.onStep === 'function') opts.onStep(i, cards[i]);
     },
     next() { this.go(this.current + 1); },
@@ -11993,9 +11996,6 @@ function openSendToAdminModal(formType) {
       attachErr.textContent = 'Upload at least one compliance document (Agency Disclosure or Exclusive Listing Agreement) before sending to admin.';
       attachErr.classList.remove('is-hidden');
     }
-    try {
-      document.getElementById('vstep-8')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    } catch (e) { /* ignore */ }
     showToast('Add a voucher attachment before sending to admin.', 'error');
     return;
   }
@@ -12018,6 +12018,7 @@ function openSendToAdminModal(formType) {
   status.textContent = '';
   status.classList.remove('text-success', 'text-error', 'status-strong');
   btn.classList.remove('loading');
+  btn.disabled = false;
   btn.querySelector('.btn-label').textContent = formType === 'sign' ? 'Submit to Queue' : 'Send Email';
   modal.classList.add('open');
 }
@@ -12291,6 +12292,7 @@ async function buildSendToAdminPdfAttachment() {
 async function submitSendToAdmin() {
   const btn = document.getElementById('sta-send-btn');
   const status = document.getElementById('sta-status');
+  if (btn && btn.disabled) return;
   if (_staFormType === 'voucher' && workflowRequireVoucherAttachment() && !hasVoucherComplianceAttachment()) {
     status.textContent = 'Add at least one compliance document attachment before sending.';
     status.classList.add('text-error', 'status-strong');
@@ -12303,6 +12305,7 @@ async function submitSendToAdmin() {
   const notes = (document.getElementById('sta-notes')?.value || '').trim();
 
   btn.classList.add('loading');
+  btn.disabled = true;
   btn.querySelector('.btn-label').textContent = 'Preparing PDF...';
   status.textContent = '';
   status.classList.remove('text-success', 'text-error', 'status-strong');
@@ -12361,12 +12364,14 @@ async function submitSendToAdmin() {
       status.textContent = 'Failed to send: ' + errMsg;
       status.classList.add('text-error', 'status-strong');
       btn.classList.remove('loading');
+      btn.disabled = false;
       btn.querySelector('.btn-label').textContent = 'Send Email';
     }
   } catch(err) {
     status.textContent = 'Error: ' + err.message;
     status.classList.add('text-error', 'status-strong');
     btn.classList.remove('loading');
+    btn.disabled = false;
     btn.querySelector('.btn-label').textContent = 'Send Email';
   }
 }
