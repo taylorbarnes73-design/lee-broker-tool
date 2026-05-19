@@ -1,54 +1,77 @@
-/* Lee & Associates Broker Tool — Design Tokens */
+/* Lee & Associates Broker Tool — Design Tokens
+ *
+ * Refreshed to the Nexus palette: a quiet editorial neutral with a single
+ * deep-teal accent. The old `--lee-crimson*` variable names are preserved so
+ * that the dozens of `var(--lee-crimson)` references throughout the codebase
+ * continue to resolve — but they now resolve to teal, not red.
+ */
 
 :root {
-  /* ── Brand palette ── */
-  --lee-crimson: #9B0D2A;      /* Primary accent — use sparingly */
-  --lee-crimson-ink: #7A0A20;  /* Darker, for hover/pressed */
-  --lee-crimson-wash: #FBEAEE; /* 8% tint for backgrounds */
-  --lee-crimson-glow: rgba(155, 13, 42, 0.12);
+  /* ── Brand palette (Nexus teal) ──
+   * Names preserved for backwards compatibility — the values are the new
+   * Nexus accent. Use sparingly: for primary CTAs, links, and the single
+   * active state per screen. */
+  --lee-crimson: #01696F;      /* Primary accent — deep teal */
+  --lee-crimson-ink: #0C4E54;  /* Darker, for hover/pressed */
+  --lee-crimson-wash: #E5EEEE; /* Subtle teal tint for backgrounds */
+  --lee-crimson-glow: rgba(1, 105, 111, 0.14);
 
   --lee-slate: #575A74;        /* Secondary accent */
   --lee-slate-wash: #EEEFF3;
 
-  /* ── Neutrals (ink scale) ── */
-  --ink-900: #0A0A0B;
-  --ink-800: #17181B;
-  --ink-700: #2A2B30;
-  --ink-600: #4A4C54;
-  --ink-500: #6B6D78;
-  --ink-400: #9A9CA5;
-  --ink-300: #C8CAD0;
-  --ink-200: #E4E5E9;
-  --ink-150: #EEEFF1;
-  --ink-100: #F5F5F7;
-  --ink-50:  #FAFAF7;  /* paper */
-  --ink-0:   #FFFFFF;
+  /* Nexus-named aliases (use these going forward) */
+  --nexus-bg: #F7F6F2;
+  --nexus-surface: #F9F8F5;
+  --nexus-surface-alt: #FBFBF9;
+  --nexus-border: #D4D1CA;
+  --nexus-text: #28251D;
+  --nexus-muted: #7A7974;
+  --nexus-faint: #BAB9B4;
+  --nexus-primary: #01696F;
+  --nexus-primary-hover: #0C4E54;
+  --nexus-error: #A12C7B;
+  --nexus-warning: #964219;
+  --nexus-success: #437A22;
+
+  /* ── Neutrals (ink scale) ── retoned to Nexus warm-neutrals */
+  --ink-900: #28251D;
+  --ink-800: #353128;
+  --ink-700: #4A4744;
+  --ink-600: #5E5B57;
+  --ink-500: #7A7974;
+  --ink-400: #9C9A93;
+  --ink-300: #BAB9B4;
+  --ink-200: #D4D1CA;
+  --ink-150: #DFDDD6;
+  --ink-100: #EFEDE6;
+  --ink-50:  #F9F8F5;
+  --ink-0:   #FBFBF9;
 
   /* ── Functional ── */
-  /* Success */
-  --ok-700: #0B5E31;
-  --ok-600: #0F7A3F;
-  --ok-500: #14924D;
-  --ok-200: #CDEBDA;
-  --ok-100: #E8F5EE;
+  /* Success — muted Nexus teal-green */
+  --ok-700: #2F5A18;
+  --ok-600: #3C6E1F;
+  --ok-500: #437A22;
+  --ok-200: #C9DABA;
+  --ok-100: #E6EDDB;
 
-  /* Warning */
-  --warn-700: #8A4D00;
-  --warn-600: #B36B00;
-  --warn-500: #D48806;
-  --warn-100: #FDF3E1;
+  /* Warning — muted Nexus burnt-amber */
+  --warn-700: #6F311A;
+  --warn-600: #86411C;
+  --warn-500: #964219;
+  --warn-100: #FAEFDC;
 
-  /* Error */
-  --err-700: #8A1F17;
-  --err-600: #B42318;
-  --err-200: #F9C6C4;
-  --err-100: #FEE8E7;
-  --err-50:  #FFF3F2;
+  /* Error — muted Nexus plum (never alarm-red) */
+  --err-700: #7C2257;
+  --err-600: #8E2768;
+  --err-200: #E6CFDC;
+  --err-100: #F6E8EE;
+  --err-50:  #FAF1F5;
 
   --ai-500: #6E3FD9;       /* AI / intelligence accent — violet */
   --ai-400: #8B5FF0;
   --ai-100: #F1ECFB;
-  --ai-gradient: linear-gradient(135deg, #8B5FF0 0%, #D94F7A 60%, #9B0D2A 100%);
+  --ai-gradient: linear-gradient(135deg, #8B5FF0 0%, #5784B3 60%, #01696F 100%);
 
   /* ── Type ── */
   --font-sans: 'Manrope', 'Avenir Next', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
@@ -90,11 +113,11 @@
   --r-12: 12px;
   --r-16: 16px;
 
-  /* ── Shadows ── */
-  --shadow-sm: 0 1px 2px rgba(10,10,11,.05);
-  --shadow-md: 0 2px 8px rgba(10,10,11,.06), 0 1px 2px rgba(10,10,11,.04);
-  --shadow-lg: 0 12px 32px rgba(10,10,11,.08), 0 2px 6px rgba(10,10,11,.04);
-  --shadow-xl: 0 24px 60px rgba(10,10,11,.14), 0 4px 12px rgba(10,10,11,.06);
+  /* ── Shadows ── refined to be barely-there */
+  --shadow-sm: 0 1px 2px rgba(40, 37, 29, .04);
+  --shadow-md: 0 1px 2px rgba(40, 37, 29, .05);
+  --shadow-lg: 0 4px 12px rgba(40, 37, 29, .06), 0 1px 2px rgba(40, 37, 29, .04);
+  --shadow-xl: 0 12px 28px rgba(40, 37, 29, .10), 0 2px 6px rgba(40, 37, 29, .04);
   --ring-crimson: 0 0 0 3px var(--lee-crimson-glow);
   --ring-ai: 0 0 0 3px rgba(139, 95, 240, 0.18);
 
@@ -110,12 +133,14 @@
 .lee-app {
   font-family: var(--font-sans);
   color: var(--ink-900);
-  background: var(--ink-50);
+  background: var(--nexus-bg);
   font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.005em;
 }
+/* Tabular numerals everywhere — KPIs, currency, dates align cleanly */
+.lee-app [data-numeric], .lee-app .lee-tabular { font-variant-numeric: tabular-nums; }
 .lee-app button { font-family: inherit; }
 .lee-app input, .lee-app select, .lee-app textarea {
   font-family: inherit;

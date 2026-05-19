@@ -31,7 +31,7 @@ const INPUT_STYLE = {
   color: "var(--ink-900)",
 } as const;
 
-const CONFIDENTIAL_TONE = { bg: "#FDECEC", fg: "#9A1A10", border: "#F4C7C2" };
+const CONFIDENTIAL_TONE = { bg: "#F6E8EE", fg: "#7C2257", border: "#E6CFDC" };
 
 function LoadingSkeleton() {
   return (

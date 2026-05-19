@@ -69,11 +69,13 @@ export function formatFormType(type: string | null | undefined): string {
   return FORM_TYPE_LABELS[type] ?? titleize(type);
 }
 
-const TONE_GREEN: StatusTone = { bg: "#E8F5EC", fg: "#1F6E3C", border: "#BDE2C6" };
-const TONE_RED: StatusTone = { bg: "#FDECEC", fg: "#9A1A10", border: "#F4C7C2" };
-const TONE_BLUE: StatusTone = { bg: "#E6F0FA", fg: "#1F4F8B", border: "#BCD6EF" };
-const TONE_AMBER: StatusTone = { bg: "#FFF4E0", fg: "#8A5300", border: "#F2D898" };
-const TONE_PURPLE: StatusTone = { bg: "#F1E9FB", fg: "#5A2EA6", border: "#D8C4F0" };
+// Nexus muted tone palette: status pills stay legible without ever feeling
+// alarming. "Red" is now a muted plum; "green" and "blue" are de-saturated.
+const TONE_GREEN: StatusTone = { bg: "#E6EDDB", fg: "#3C6E1F", border: "#C9DABA" };
+const TONE_RED: StatusTone = { bg: "#F6E8EE", fg: "#7C2257", border: "#E6CFDC" };
+const TONE_BLUE: StatusTone = { bg: "#E2EAF0", fg: "#2F4A66", border: "#C4D1DE" };
+const TONE_AMBER: StatusTone = { bg: "#FAEFDC", fg: "#6F4514", border: "#E8D9B6" };
+const TONE_PURPLE: StatusTone = { bg: "#ECE6F3", fg: "#4B3A75", border: "#D4C9E3" };
 const TONE_GRAY: StatusTone = { bg: "var(--ink-100)", fg: "var(--ink-700)", border: "var(--ink-200)" };
 
 export function submissionStatusTone(status: string | null | undefined): StatusTone {

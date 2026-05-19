@@ -43,57 +43,59 @@
 }
 
 :root {
-  --font-sans: "Manrope", "Segoe UI", sans-serif;
+  --font-sans: "Manrope", "Inter", "Segoe UI", sans-serif;
   --font-serif: "Cormorant Garamond", Georgia, serif;
-  --lee-charcoal: #31343a;
-  --lee-charcoal-deep: #1f2227;
-  --lee-charcoal-soft: #636973;
-  --lee-red: #c32033;
-  --lee-red-deep: #9f1828;
-  --lee-fog: #f2f2ef;
-  --lee-cloud: #f8f8f6;
-  --lee-stone: #d8d7d2;
-  --lee-slate: #6b7078;
+  --lee-charcoal: #28251d;
+  --lee-charcoal-deep: #1c1a13;
+  --lee-charcoal-soft: #5e5b57;
+  /* `--lee-red` is preserved by name for callers but recolored to the Nexus
+   * teal accent. The brand no longer leans on saturated red. */
+  --lee-red: #01696f;
+  --lee-red-deep: #0c4e54;
+  --lee-fog: #f7f6f2;
+  --lee-cloud: #f9f8f5;
+  --lee-stone: #d4d1ca;
+  --lee-slate: #7a7974;
   --primary: var(--lee-red);
-  --primary-foreground: #fff8f6;
+  --primary-foreground: #f9f8f5;
   --sidebar-primary: var(--lee-charcoal);
-  --sidebar-primary-foreground: #fff8f6;
-  --chart-1: #c32033;
-  --chart-2: #9f1828;
-  --chart-3: #4f545c;
-  --chart-4: #747a83;
-  --chart-5: #b9bab6;
+  --sidebar-primary-foreground: #f9f8f5;
+  --chart-1: #01696f;
+  --chart-2: #0c4e54;
+  --chart-3: #5e5b57;
+  --chart-4: #7a7974;
+  --chart-5: #bab9b4;
   --radius: 0.65rem;
-  --background: #f2f2ef;
-  --foreground: #1f2328;
-  --card: #fffdfb;
-  --card-foreground: #1f2328;
-  --popover: #fffdfb;
-  --popover-foreground: #1f2328;
-  --secondary: #e7e6e1;
-  --secondary-foreground: #3d4249;
-  --muted: #ecece8;
-  --muted-foreground: #666c74;
-  --accent: #fbf0f2;
-  --accent-foreground: #52161d;
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: #d8d7d2;
-  --input: #d8d7d2;
-  --ring: rgba(195, 32, 51, 0.24);
-  --sidebar: #fcfcfa;
-  --sidebar-foreground: #1f2328;
-  --sidebar-accent: #ededea;
-  --sidebar-accent-foreground: #1f2328;
-  --sidebar-border: #d8d7d2;
-  --sidebar-ring: rgba(195, 32, 51, 0.24);
+  --background: #f7f6f2;
+  --foreground: #28251d;
+  --card: #fbfbf9;
+  --card-foreground: #28251d;
+  --popover: #fbfbf9;
+  --popover-foreground: #28251d;
+  --secondary: #efede6;
+  --secondary-foreground: #4a4744;
+  --muted: #efede6;
+  --muted-foreground: #7a7974;
+  --accent: #e5eeee;
+  --accent-foreground: #0c4e54;
+  --destructive: #a12c7b;
+  --destructive-foreground: #f9f8f5;
+  --border: #d4d1ca;
+  --input: #d4d1ca;
+  --ring: rgba(1, 105, 111, 0.24);
+  --sidebar: #fbfbf9;
+  --sidebar-foreground: #28251d;
+  --sidebar-accent: #efede6;
+  --sidebar-accent-foreground: #28251d;
+  --sidebar-border: #d4d1ca;
+  --sidebar-ring: rgba(1, 105, 111, 0.24);
 }
 
 .dark {
-  --primary: #cf3648;
-  --primary-foreground: #fff8f6;
+  --primary: #2a8a8f;
+  --primary-foreground: #f9f8f5;
   --sidebar-primary: #525862;
-  --sidebar-primary-foreground: #fff8f6;
+  --sidebar-primary-foreground: #f9f8f5;
   --background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.85 0.005 65);
   --card: oklch(0.21 0.006 285.885);
@@ -106,13 +108,13 @@
   --muted-foreground: oklch(0.705 0.015 286.067);
   --accent: oklch(0.274 0.006 286.033);
   --accent-foreground:  oklch(0.92 0.005 65);
-  --destructive: oklch(0.704 0.191 22.216);
+  --destructive: #c45598;
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: rgba(207, 54, 72, 0.35);
-  --chart-1: #cf3648;
-  --chart-2: #b82d3e;
+  --ring: rgba(42, 138, 143, 0.35);
+  --chart-1: #2a8a8f;
+  --chart-2: #1f6f73;
   --chart-3: #888d95;
   --chart-4: #717781;
   --chart-5: #5d636d;
@@ -137,10 +139,9 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
-    background-image:
-      radial-gradient(circle at top left, rgba(195, 32, 51, 0.08), transparent 28%),
-      linear-gradient(180deg, rgba(31, 35, 40, 0.04), transparent 30%);
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   img {
     display: block;
@@ -158,8 +159,8 @@
     @apply cursor-pointer;
   }
   ::selection {
-    background: rgba(195, 32, 51, 0.16);
-    color: #1f2328;
+    background: rgba(1, 105, 111, 0.18);
+    color: #28251d;
   }
 }
 
@@ -179,7 +180,7 @@
   .lee-card-flow:hover,
   .lee-card-flow:focus-within {
     transform: translateY(-1px);
-    box-shadow: 0 14px 30px rgba(31, 35, 40, 0.08);
+    box-shadow: 0 4px 12px rgba(40, 37, 29, 0.06);
   }
 
   .lee-control-flow {
@@ -262,7 +263,7 @@
 @import './design/tokens.css';
 
 .admin-portal {
-  --admin-accent: var(--lee-crimson, #c32033);
+  --admin-accent: var(--lee-crimson, #01696f);
   display: grid;
   grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
   min-height: 100vh;
@@ -520,8 +521,8 @@
 }
 
 .admin-portal-nav-item.active {
-  background: color-mix(in srgb, var(--admin-accent) 12%, var(--ink-0));
-  border-color: color-mix(in srgb, var(--admin-accent) 22%, var(--ink-200));
+  background: color-mix(in srgb, var(--admin-accent) 8%, var(--ink-0));
+  border-color: color-mix(in srgb, var(--admin-accent) 18%, var(--ink-200));
   color: var(--admin-accent);
 }
 
@@ -611,7 +612,7 @@
 
 .admin-detail-tabs button.active {
   background: var(--ink-0);
-  border-color: rgba(155, 13, 42, 0.18);
+  border-color: rgba(1, 105, 111, 0.20);
   color: var(--lee-crimson);
   box-shadow: var(--shadow-sm);
 }
@@ -686,9 +687,9 @@
   gap: 16px;
   align-items: center;
   padding: 16px;
-  border: 1px solid rgba(155, 13, 42, 0.18);
+  border: 1px solid var(--ink-200);
   border-radius: var(--r-12);
-  background: linear-gradient(135deg, var(--ink-0) 0%, var(--lee-crimson-wash) 100%);
+  background: var(--ink-50);
 }
 
 .dealius-flow-kicker {
@@ -791,7 +792,7 @@
 
 .dealius-mode-control button.active {
   background: var(--ink-0);
-  border-color: rgba(155, 13, 42, 0.18);
+  border-color: rgba(1, 105, 111, 0.20);
   color: var(--lee-crimson);
   box-shadow: var(--shadow-sm);
 }

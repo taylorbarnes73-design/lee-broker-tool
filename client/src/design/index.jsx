@@ -95,7 +95,7 @@ function Button({ variant = 'primary', size = 'md', icon, iconRight, children, s
     ghost: { bg: 'transparent', color: 'var(--ink-700)', border: 'transparent', hover: 'var(--ink-100)' },
     dark: { bg: 'var(--ink-900)', color: '#fff', border: 'var(--ink-900)', hover: 'var(--ink-800)' },
     ai: { bg: 'var(--ai-500)', color: '#fff', border: 'var(--ai-500)', hover: 'var(--ai-400)', gradient: true },
-    danger: { bg: 'var(--err-600)', color: '#fff', border: 'var(--err-600)', hover: '#9A1A10' },
+    danger: { bg: 'var(--err-600)', color: '#fff', border: 'var(--err-600)', hover: 'var(--err-700)' },
   };
   const v = variants[variant] || variants.primary;
   const [hover, setHover] = React.useState(false);
@@ -138,7 +138,7 @@ function Field({ label, required, optional, help, error, aiFilled, children, spa
             display: 'flex', alignItems: 'center', gap: 6,
           }}>
             {label}
-            {required && <span style={{ color: 'var(--lee-crimson)' }}>*</span>}
+            {required && <span aria-label="required" style={{ color: 'var(--ink-500)', fontWeight: 500, fontSize: 11, letterSpacing: '0.02em' }}>Required</span>}
             {optional && <span style={{ color: 'var(--ink-400)', fontWeight: 500, fontSize: 11 }}>Optional</span>}
           </label>
           {aiFilled && (
@@ -263,7 +263,7 @@ function Toggle({ on, onClick, size = 'md' }) {
 function Badge({ tone = 'neutral', children, icon, size = 'md', style }) {
   const tones = {
     neutral:  { bg: 'var(--ink-100)', color: 'var(--ink-700)', border: 'var(--ink-200)' },
-    crimson:  { bg: 'var(--lee-crimson-wash)', color: 'var(--lee-crimson-ink)', border: 'rgba(155,13,42,.2)' },
+    crimson:  { bg: 'var(--lee-crimson-wash)', color: 'var(--lee-crimson-ink)', border: 'rgba(1,105,111,.22)' },
     slate:    { bg: 'var(--lee-slate-wash)', color: 'var(--lee-slate)', border: 'rgba(87,90,116,.2)' },
     success:  { bg: 'var(--ok-100)', color: 'var(--ok-600)', border: 'rgba(15,122,63,.2)' },
     warn:     { bg: 'var(--warn-100)', color: 'var(--warn-600)', border: 'rgba(179,107,0,.2)' },
@@ -1060,7 +1060,7 @@ function SignRequestScreen() {
                     borderRadius: 10, cursor: 'pointer',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
                     transition: 'all .14s',
-                    boxShadow: active ? '0 2px 8px rgba(155,13,42,.12)' : 'none',
+                    boxShadow: active ? '0 2px 8px rgba(1,105,111,.14)' : 'none',
                     position: 'relative',
                   }}>
                     <div style={{ color: active ? 'var(--lee-crimson)' : 'var(--ink-500)' }}>{opt.icon}</div>
@@ -1090,7 +1090,7 @@ function SignRequestScreen() {
                     display: 'flex', alignItems: 'center', gap: 12,
                     padding: '12px 16px',
                     background: active ? 'var(--lee-crimson-wash)' : 'var(--ink-50)',
-                    border: `1px solid ${active ? 'rgba(155,13,42,.2)' : 'var(--ink-200)'}`,
+                    border: `1px solid ${active ? 'rgba(1,105,111,.22)' : 'var(--ink-200)'}`,
                     borderRadius: 8,
                   }}>
                     <div style={{ width: 90 }}>

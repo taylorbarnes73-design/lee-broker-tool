@@ -111,7 +111,7 @@ export default function AdminPortalShell({
   const branding = usePublicBranding();
   const isAdmin = user?.role === "admin";
   const logoSrc = branding.logo_url?.trim() || "/lee-newport-beach-fullcolor.png";
-  const accent = branding.primary_color || "#A6192E";
+  const accent = branding.primary_color || "#01696F";
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Close the mobile drawer whenever the route (section prop) changes.
