@@ -42,23 +42,19 @@ authApiRouter.post("/login", async (req, res) => {
 
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
-    res
-      .status(400)
-      .json({
-        success: false,
-        error: parsed.error.issues[0]?.message ?? "Invalid input",
-      });
+    res.status(400).json({
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input",
+    });
     return;
   }
 
   const email = normalizeLeeLogin(parsed.data.email);
   if (!z.string().email().safeParse(email).success) {
-    res
-      .status(400)
-      .json({
-        success: false,
-        error: "Enter your Lee username or email address.",
-      });
+    res.status(400).json({
+      success: false,
+      error: "Enter your Lee username or email address.",
+    });
     return;
   }
 
@@ -66,12 +62,10 @@ authApiRouter.post("/login", async (req, res) => {
     .trim()
     .toLowerCase();
   if (allowedDomain && !email.endsWith(`@${allowedDomain}`)) {
-    res
-      .status(400)
-      .json({
-        success: false,
-        error: `Use your ${allowedDomain} email address.`,
-      });
+    res.status(400).json({
+      success: false,
+      error: `Use your ${allowedDomain} email address.`,
+    });
     return;
   }
 
@@ -85,12 +79,10 @@ authApiRouter.post("/login", async (req, res) => {
       const appUserRecord = await findAppUserByUsernameOrEmail(db, email);
       if (appUserRecord) {
         if (!appUserRecord.isActive) {
-          res
-            .status(403)
-            .json({
-              success: false,
-              error: "This account has been deactivated. Contact your admin.",
-            });
+          res.status(403).json({
+            success: false,
+            error: "This account has been deactivated. Contact your admin.",
+          });
           return;
         }
         res
@@ -101,22 +93,18 @@ authApiRouter.post("/login", async (req, res) => {
     }
   } catch (err) {
     console.error("[auth.login] Database query failed:", err);
-    res
-      .status(503)
-      .json({
-        success: false,
-        error: "Sign-in service is temporarily unavailable.",
-      });
+    res.status(503).json({
+      success: false,
+      error: "Sign-in service is temporarily unavailable.",
+    });
     return;
   }
 
   if (!brokerEntry) {
-    res
-      .status(400)
-      .json({
-        success: false,
-        error: "Email not recognized. Use your @lee-associates.com email.",
-      });
+    res.status(400).json({
+      success: false,
+      error: "Email not recognized. Use your @lee-associates.com email.",
+    });
     return;
   }
 
@@ -136,13 +124,11 @@ authApiRouter.post("/login", async (req, res) => {
       });
     } catch (dbErr) {
       console.error("[auth.login] Database write failed:", dbErr);
-      res
-        .status(500)
-        .json({
-          success: false,
-          error:
-            "Could not complete sign-in (database error). Please try again or contact support.",
-        });
+      res.status(500).json({
+        success: false,
+        error:
+          "Could not complete sign-in (database error). Please try again or contact support.",
+      });
       return;
     }
 
@@ -164,13 +150,10 @@ authApiRouter.post("/login", async (req, res) => {
     }
   } catch (err) {
     console.error("[auth.login] Sign-in failed:", err);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error:
-          "Could not complete sign-in. Please try again or contact support.",
-      });
+    res.status(500).json({
+      success: false,
+      error: "Could not complete sign-in. Please try again or contact support.",
+    });
     return;
   }
 
@@ -187,7 +170,7 @@ authApiRouter.post("/login", async (req, res) => {
         openId,
         name,
         email,
-        role: role === "admin" ? "ADMIN" : "AGENT",
+        role: "AGENT",
         office: brokerEntry?.office,
       },
     },
