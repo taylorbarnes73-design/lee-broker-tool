@@ -17,11 +17,18 @@ export type PortalRequestUser = {
  * Resolves either the newer platform session or the legacy broker session into
  * the small user shape used by the submissions REST API.
  */
-export async function resolvePortalRequestUser(req: Request): Promise<PortalRequestUser | null> {
+export async function resolvePortalRequestUser(
+  req: Request
+): Promise<PortalRequestUser | null> {
   const platformUser = await resolvePlatformUserFromRequest(req);
   if (platformUser) {
     const isAdmin =
-      platformUser.role === "admin" || isAdminByPolicy(platformUser.email, platformUser.fullName, platformUser.username);
+      platformUser.role === "admin" ||
+      isAdminByPolicy(
+        platformUser.email,
+        platformUser.fullName,
+        platformUser.username
+      );
     return {
       openId: localAuth.toLocalOpenId(platformUser.email),
       role: isAdmin ? "admin" : "user",
@@ -34,8 +41,7 @@ export async function resolvePortalRequestUser(req: Request): Promise<PortalRequ
 
   try {
     const legacyUser = await sdk.authenticateRequest(req);
-    const isAdmin =
-      legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name);
+    const isAdmin = legacyUser.role === "admin";
     return {
       openId: legacyUser.openId,
       role: isAdmin ? "admin" : "user",

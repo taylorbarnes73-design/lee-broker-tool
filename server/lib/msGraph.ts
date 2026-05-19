@@ -58,11 +58,15 @@ function envOverride(key: string): string | undefined {
 export async function loadGraphConfig(): Promise<GraphConfig | null> {
   const merged = await ensureSettingsCache();
   const tenant =
-    (merged.get("integrations.broker_admin_ingest.tenant_id") as string)?.trim() ||
+    (
+      merged.get("integrations.broker_admin_ingest.tenant_id") as string
+    )?.trim() ||
     envOverride("MS_GRAPH_TENANT_ID") ||
     "";
   const client =
-    (merged.get("integrations.broker_admin_ingest.client_id") as string)?.trim() ||
+    (
+      merged.get("integrations.broker_admin_ingest.client_id") as string
+    )?.trim() ||
     envOverride("MS_GRAPH_CLIENT_ID") ||
     "";
   const secret =
@@ -75,7 +79,9 @@ export async function loadGraphConfig(): Promise<GraphConfig | null> {
 
 export async function loadMailboxAddress(): Promise<string> {
   const merged = await ensureSettingsCache();
-  const v = (merged.get("integrations.broker_admin_ingest.mailbox") as string)?.trim();
+  const v = (
+    merged.get("integrations.broker_admin_ingest.mailbox") as string
+  )?.trim();
   return v || "_NewportBeach-BrokerAdmin@lee-associates.com";
 }
 
@@ -91,7 +97,11 @@ export function clearGraphTokenCache(): void {
 async function fetchAccessToken(cfg: GraphConfig): Promise<string> {
   const key = `${cfg.tenantId}:${cfg.clientId}:${cfg.clientSecret.length}`;
   const now = Date.now();
-  if (tokenCache && tokenCache.key === key && tokenCache.expiresAt - 5 * 60 * 1000 > now) {
+  if (
+    tokenCache &&
+    tokenCache.key === key &&
+    tokenCache.expiresAt - 5 * 60 * 1000 > now
+  ) {
     return tokenCache.token;
   }
 
@@ -114,7 +124,10 @@ async function fetchAccessToken(cfg: GraphConfig): Promise<string> {
       res.status
     );
   }
-  const json = (await res.json()) as { access_token?: string; expires_in?: number };
+  const json = (await res.json()) as {
+    access_token?: string;
+    expires_in?: number;
+  };
   if (!json.access_token) {
     throw new GraphAuthError("Graph token response missing access_token.");
   }
@@ -174,7 +187,7 @@ export async function listSharedMailboxMessages(
   const params = new URLSearchParams();
   if (sinceIso) params.set("$filter", `receivedDateTime ge ${sinceIso}`);
   params.set("$top", String(top));
-  params.set("$orderby", "receivedDateTime desc");
+  params.set("$orderby", "receivedDateTime asc");
   params.set("$select", MESSAGE_SELECT);
   let url = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(opts.mailbox)}/messages?${params.toString()}`;
 
@@ -186,7 +199,10 @@ export async function listSharedMailboxMessages(
       collected.push(v);
       if (collected.length >= cap) break;
     }
-    url = typeof page?.["@odata.nextLink"] === "string" ? page["@odata.nextLink"] : "";
+    url =
+      typeof page?.["@odata.nextLink"] === "string"
+        ? page["@odata.nextLink"]
+        : "";
   }
   return collected;
 }
@@ -210,18 +226,32 @@ export async function listMessageAttachments(
 }
 
 /** Quick connectivity check used by the admin "Test connection" button. */
-export async function testGraphConnection(): Promise<{ success: boolean; message: string; sample?: { count: number; firstSubject: string | null } }> {
+export async function testGraphConnection(): Promise<{
+  success: boolean;
+  message: string;
+  sample?: { count: number; firstSubject: string | null };
+}> {
   const cfg = await loadGraphConfig();
   if (!cfg) {
-    return { success: false, message: "Tenant ID, Client ID, and Client Secret must all be set." };
+    return {
+      success: false,
+      message: "Tenant ID, Client ID, and Client Secret must all be set.",
+    };
   }
   const mailbox = await loadMailboxAddress();
   try {
-    const messages = await listSharedMailboxMessages(cfg, { mailbox, top: 1, maxResults: 1 });
+    const messages = await listSharedMailboxMessages(cfg, {
+      mailbox,
+      top: 1,
+      maxResults: 1,
+    });
     return {
       success: true,
       message: `Connected. Found ${messages.length} recent message(s) in ${mailbox}.`,
-      sample: { count: messages.length, firstSubject: messages[0]?.subject ?? null },
+      sample: {
+        count: messages.length,
+        firstSubject: messages[0]?.subject ?? null,
+      },
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

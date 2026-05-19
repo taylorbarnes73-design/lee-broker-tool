@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { desc, eq, gte, or, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { emailIngestLog, kvState, submissions } from "../../drizzle/schema";
 import { parseEmailSubmission } from "../lib/parseEmailSubmission";
@@ -52,7 +52,11 @@ function emailsFrom(list: GraphMessage["toRecipients"]): string[] {
 }
 
 async function loadLastPoll(db: AppDb): Promise<Date> {
-  const rows = await db.select().from(kvState).where(eq(kvState.key, LAST_POLL_KEY)).limit(1);
+  const rows = await db
+    .select()
+    .from(kvState)
+    .where(eq(kvState.key, LAST_POLL_KEY))
+    .limit(1);
   const raw = rows[0]?.value as { iso?: string } | null;
   if (raw && typeof raw === "object" && typeof raw.iso === "string") {
     const d = new Date(raw.iso);
@@ -64,8 +68,20 @@ async function loadLastPoll(db: AppDb): Promise<Date> {
 async function saveLastPoll(db: AppDb, iso: string): Promise<void> {
   await db
     .insert(kvState)
-    .values({ key: LAST_POLL_KEY, value: { iso } as any, updatedAt: new Date() })
-    .onDuplicateKeyUpdate({ set: { value: { iso } as any, updatedAt: new Date() } });
+    .values({
+      key: LAST_POLL_KEY,
+      value: { iso } as any,
+      updatedAt: new Date(),
+    })
+    .onDuplicateKeyUpdate({
+      set: { value: { iso } as any, updatedAt: new Date() },
+    });
+}
+
+function receivedAtDate(message: GraphMessage): Date | null {
+  if (!message.receivedDateTime) return null;
+  const d = new Date(message.receivedDateTime);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 export type RunIngestOptions = {
@@ -74,8 +90,16 @@ export type RunIngestOptions = {
   sourceLabel?: "email_ingest" | "email_ingest_backfill";
 };
 
-export async function runIngestOnce(options: RunIngestOptions = {}): Promise<IngestSummary> {
-  const summary: IngestSummary = { imported: 0, skipped: 0, errors: 0, lastPoll: null, errorMessages: [] };
+export async function runIngestOnce(
+  options: RunIngestOptions = {}
+): Promise<IngestSummary> {
+  const summary: IngestSummary = {
+    imported: 0,
+    skipped: 0,
+    errors: 0,
+    lastPoll: null,
+    errorMessages: [],
+  };
 
   const db = await getDb();
   if (!db) {
@@ -87,7 +111,9 @@ export async function runIngestOnce(options: RunIngestOptions = {}): Promise<Ing
   const cfg = await loadGraphConfig();
   if (!cfg) {
     summary.errors = 1;
-    summary.errorMessages.push("Graph credentials are not configured. Set Tenant ID, Client ID, and Client Secret in Settings.");
+    summary.errorMessages.push(
+      "Graph credentials are not configured. Set Tenant ID, Client ID, and Client Secret in Settings."
+    );
     return summary;
   }
   const mailbox = options.mailbox ?? (await loadMailboxAddress());
@@ -96,22 +122,37 @@ export async function runIngestOnce(options: RunIngestOptions = {}): Promise<Ing
   const since = options.since ?? (await loadLastPoll(db));
   let messages: GraphMessage[] = [];
   try {
-    messages = await listSharedMailboxMessages(cfg, { mailbox, since, top: 50, maxResults: 200 });
+    messages = await listSharedMailboxMessages(cfg, {
+      mailbox,
+      since,
+      top: 50,
+      maxResults: 200,
+    });
+    messages.sort(
+      (a, b) =>
+        (receivedAtDate(a)?.getTime() ?? 0) -
+        (receivedAtDate(b)?.getTime() ?? 0)
+    );
   } catch (err) {
     summary.errors += 1;
-    summary.errorMessages.push(err instanceof Error ? err.message : String(err));
+    summary.errorMessages.push(
+      err instanceof Error ? err.message : String(err)
+    );
     return summary;
   }
 
   let maxReceived: Date | null = null;
+  let blockedWatermark = false;
   for (const message of messages) {
+    const r = receivedAtDate(message);
     try {
       const result = await ingestOneMessage(db, message, mailbox, source);
       if (result === "imported") summary.imported += 1;
-      else if (result === "skipped_duplicate" || result === "skipped_no_match") summary.skipped += 1;
-      const r = message.receivedDateTime ? new Date(message.receivedDateTime) : null;
-      if (r && (!maxReceived || r > maxReceived)) maxReceived = r;
+      else if (result === "skipped_duplicate" || result === "skipped_no_match")
+        summary.skipped += 1;
+      if (!blockedWatermark && r) maxReceived = r;
     } catch (err) {
+      blockedWatermark = true;
       summary.errors += 1;
       const msg = err instanceof Error ? err.message : String(err);
       summary.errorMessages.push(`[${message.id}] ${msg}`);
@@ -120,7 +161,7 @@ export async function runIngestOnce(options: RunIngestOptions = {}): Promise<Ing
           messageId: message.id,
           internetMessageId: message.internetMessageId ?? null,
           threadId: message.conversationId ?? null,
-          receivedAt: message.receivedDateTime ? new Date(message.receivedDateTime) : null,
+          receivedAt: r,
           fromEmail: message.from?.emailAddress?.address?.toLowerCase() ?? null,
           toEmails: emailsFrom(message.toRecipients) as any,
           ccEmails: emailsFrom(message.ccRecipients) as any,
@@ -155,34 +196,38 @@ async function ingestOneMessage(
   source: "email_ingest" | "email_ingest_backfill"
 ): Promise<IngestOutcome> {
   const existing = await db
-    .select({ id: emailIngestLog.id })
+    .select({
+      id: emailIngestLog.id,
+      ingestStatus: emailIngestLog.ingestStatus,
+    })
     .from(emailIngestLog)
     .where(eq(emailIngestLog.messageId, message.id))
     .limit(1);
   if (existing.length > 0) {
-    return "skipped_duplicate";
+    if (existing[0]?.ingestStatus !== "error") return "skipped_duplicate";
+    await db
+      .delete(emailIngestLog)
+      .where(eq(emailIngestLog.messageId, message.id));
   }
   if (message.internetMessageId) {
     const existingByIm = await db
-      .select({ id: emailIngestLog.id })
+      .select({
+        id: emailIngestLog.id,
+        ingestStatus: emailIngestLog.ingestStatus,
+      })
       .from(emailIngestLog)
       .where(eq(emailIngestLog.internetMessageId, message.internetMessageId))
       .limit(1);
     if (existingByIm.length > 0) {
-      await db.insert(emailIngestLog).values({
-        messageId: message.id,
-        internetMessageId: message.internetMessageId,
-        threadId: message.conversationId ?? null,
-        receivedAt: message.receivedDateTime ? new Date(message.receivedDateTime) : null,
-        fromEmail: message.from?.emailAddress?.address?.toLowerCase() ?? null,
-        toEmails: emailsFrom(message.toRecipients) as any,
-        ccEmails: emailsFrom(message.ccRecipients) as any,
-        subject: message.subject?.slice(0, 1023) ?? null,
-        submissionId: null,
-        ingestStatus: "skipped_duplicate",
-        errorMessage: null,
-      });
-      return "skipped_duplicate";
+      if (existingByIm[0]?.ingestStatus !== "error") return "skipped_duplicate";
+      await db
+        .delete(emailIngestLog)
+        .where(
+          or(
+            eq(emailIngestLog.messageId, message.id),
+            eq(emailIngestLog.internetMessageId, message.internetMessageId)
+          )
+        );
     }
   }
 
@@ -239,7 +284,9 @@ async function ingestOneMessage(
     messageId: message.id,
     internetMessageId: message.internetMessageId ?? null,
     threadId: message.conversationId ?? null,
-    receivedAt: message.receivedDateTime ? new Date(message.receivedDateTime) : null,
+    receivedAt: message.receivedDateTime
+      ? new Date(message.receivedDateTime)
+      : null,
     fromEmail: fromEmail.toLowerCase() || null,
     toEmails: toEmails as any,
     ccEmails: ccEmails as any,
@@ -258,8 +305,19 @@ export async function getIngestStatus(): Promise<{
   mailbox: string;
   lastPoll: string | null;
   counts: { imported24h: number; duplicates24h: number; errors24h: number };
-  recentErrors: Array<{ id: number; createdAt: string; subject: string | null; error: string | null }>;
-  recent: Array<{ id: number; createdAt: string; subject: string | null; ingestStatus: string; submissionId: number | null }>;
+  recentErrors: Array<{
+    id: number;
+    createdAt: string;
+    subject: string | null;
+    error: string | null;
+  }>;
+  recent: Array<{
+    id: number;
+    createdAt: string;
+    subject: string | null;
+    ingestStatus: string;
+    submissionId: number | null;
+  }>;
 }> {
   const db = await getDb();
   const enabled = await loadIngestEnabled();
@@ -276,7 +334,11 @@ export async function getIngestStatus(): Promise<{
   };
   if (!db) return blank;
 
-  const lastPollRow = await db.select().from(kvState).where(eq(kvState.key, LAST_POLL_KEY)).limit(1);
+  const lastPollRow = await db
+    .select()
+    .from(kvState)
+    .where(eq(kvState.key, LAST_POLL_KEY))
+    .limit(1);
   const lastPollIso =
     (lastPollRow[0]?.value as { iso?: string } | null)?.iso ?? null;
 
@@ -325,13 +387,19 @@ export async function getIngestStatus(): Promise<{
     },
     recentErrors: recentErrors.map(r => ({
       id: r.id,
-      createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
+      createdAt:
+        r.createdAt instanceof Date
+          ? r.createdAt.toISOString()
+          : String(r.createdAt),
       subject: r.subject ?? null,
       error: r.error ?? null,
     })),
     recent: recent.map(r => ({
       id: r.id,
-      createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
+      createdAt:
+        r.createdAt instanceof Date
+          ? r.createdAt.toISOString()
+          : String(r.createdAt),
       subject: r.subject ?? null,
       ingestStatus: r.ingestStatus,
       submissionId: r.submissionId ?? null,
@@ -348,12 +416,6 @@ let running = false;
  */
 export async function startBrokerAdminIngestScheduler(): Promise<void> {
   if (intervalHandle) return;
-  const cfg = await loadGraphConfig();
-  const hasEnvHint = !!process.env.MS_GRAPH_TENANT_ID;
-  if (!cfg && !hasEnvHint) {
-    // No credentials anywhere — silently skip to avoid log spam.
-    return;
-  }
   const tick = async () => {
     if (running) return;
     running = true;
@@ -385,6 +447,3 @@ export function stopBrokerAdminIngestScheduler(): void {
     intervalHandle = null;
   }
 }
-
-// Suppress unused-import noise for `and` if not used:
-void and;

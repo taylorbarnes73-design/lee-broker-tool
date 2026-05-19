@@ -13,12 +13,24 @@ const failingDb = {
   }),
 };
 
+function dbWithAppUser(user: { isActive: boolean } | null) {
+  return {
+    select: () => ({
+      from: () => ({
+        where: () => ({
+          limit: () => Promise.resolve(user ? [user] : []),
+        }),
+      }),
+    }),
+  };
+}
+
 vi.mock("./db", () => ({
   getDb: vi.fn(),
   upsertUser: vi.fn(),
 }));
 
-import { getDb } from "./db";
+import { getDb, upsertUser } from "./db";
 
 function buildApp() {
   const app = express();
@@ -46,6 +58,44 @@ describe("password platform login", () => {
     });
 
     expect(res.status).toBe(503);
-    expect(res.body).toEqual({ error: "Sign-in service is temporarily unavailable." });
+    expect(res.body).toEqual({
+      error: "Sign-in service is temporarily unavailable.",
+    });
+  });
+
+  it("rejects email-only login for managed app users", async () => {
+    vi.mocked(getDb).mockResolvedValue(
+      dbWithAppUser({ isActive: true }) as never
+    );
+
+    const res = await request(buildApp())
+      .post("/api/auth/login")
+      .send({ email: "tbarnes" });
+
+    expect(res.status).toBe(401);
+    expect(res.body).toEqual({
+      success: false,
+      error: "Enter your password to sign in.",
+    });
+    expect(res.headers["set-cookie"]).toBeUndefined();
+    expect(upsertUser).not.toHaveBeenCalled();
+  });
+
+  it("rejects email-only login for deactivated app users", async () => {
+    vi.mocked(getDb).mockResolvedValue(
+      dbWithAppUser({ isActive: false }) as never
+    );
+
+    const res = await request(buildApp())
+      .post("/api/auth/login")
+      .send({ email: "tbarnes" });
+
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({
+      success: false,
+      error: "This account has been deactivated. Contact your admin.",
+    });
+    expect(res.headers["set-cookie"]).toBeUndefined();
+    expect(upsertUser).not.toHaveBeenCalled();
   });
 });

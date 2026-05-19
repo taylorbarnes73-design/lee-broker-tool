@@ -2,7 +2,10 @@ import type { CreateExpressContextOptions } from "@trpc/server/adapters/express"
 import { parse as parseCookieHeader } from "cookie";
 import { COOKIE_NAME } from "@shared/const";
 import type { User } from "../../drizzle/schema";
-import { findAppUserByUsernameOrEmail, resolvePlatformUserFromRequest } from "../auth/platformSession";
+import {
+  findAppUserByUsernameOrEmail,
+  resolvePlatformUserFromRequest,
+} from "../auth/platformSession";
 import { getDb, getUserByOpenId, upsertUser } from "../db";
 import { sdk, localAuth } from "./sdk";
 import { isAdminByPolicy } from "../auth/isAdminByPolicy";
@@ -27,6 +30,11 @@ async function resolveSignedLegacyCookie(
   const now = new Date();
   const email = session.email ?? emailFromLocalOpenId(session.openId);
   const name = session.name || email || "Broker";
+  const db = await getDb();
+  if (db && email) {
+    const appUser = await findAppUserByUsernameOrEmail(db, email);
+    if (appUser) return null;
+  }
 
   return {
     id: 0,
@@ -34,7 +42,7 @@ async function resolveSignedLegacyCookie(
     name,
     email: email ?? null,
     loginMethod: "local",
-    role: isAdminByPolicy(email, name) ? "admin" : "user",
+    role: "user",
     createdAt: now,
     updatedAt: now,
     lastSignedIn: now,
@@ -50,7 +58,12 @@ export async function createContext(
   if (platformUser) {
     const openId = localAuth.toLocalOpenId(platformUser.email);
     const resolvedAdmin =
-      platformUser.role === "admin" || isAdminByPolicy(platformUser.email, platformUser.fullName, platformUser.username);
+      platformUser.role === "admin" ||
+      isAdminByPolicy(
+        platformUser.email,
+        platformUser.fullName,
+        platformUser.username
+      );
     const legacyRole: "admin" | "user" = resolvedAdmin ? "admin" : "user";
     await upsertUser({
       openId,
@@ -76,20 +89,27 @@ export async function createContext(
     try {
       const legacyUser = await sdk.authenticateRequest(opts.req);
       const email = legacyUser.email ?? "";
-      let appUser: Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>> | null = null;
+      let appUser: Awaited<
+        ReturnType<typeof findAppUserByUsernameOrEmail>
+      > | null = null;
       try {
         const db = await getDb();
-        appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
+        appUser =
+          db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
       } catch (error) {
-        console.error("[trpc.context] Could not resolve platform user for legacy session:", error);
+        console.error(
+          "[trpc.context] Could not resolve platform user for legacy session:",
+          error
+        );
       }
-      user = {
-        ...legacyUser,
-        role:
-          legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name, appUser?.username)
-            ? "admin"
-            : "user",
-      };
+      if (appUser) {
+        user = null;
+      } else {
+        user = {
+          ...legacyUser,
+          role: "user",
+        };
+      }
     } catch {
       user = await resolveSignedLegacyCookie(opts.req);
     }

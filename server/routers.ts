@@ -20,12 +20,16 @@ import { brokersRouter } from "./routers/brokers";
 import { localAuth, sdk } from "./_core/sdk";
 import { ENV } from "./_core/env";
 import { handlePlatformLogout } from "./auth/passwordPlatformAuth";
-import { linkPlatformSessionAfterLegacyLogin } from "./auth/linkPlatformSessionAfterLegacyLogin";
-import { isAdminByPolicy } from "./auth/isAdminByPolicy";
+import { findAppUserByUsernameOrEmail } from "./auth/platformSession";
 
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 const LISTING_BROCHURE_CATEGORY = "listing_brochure";
-const LISTING_BROCHURE_MIMES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
+const LISTING_BROCHURE_MIMES = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
 
 function normalizeLeeLogin(raw: string) {
   const value = raw.trim().toLowerCase();
@@ -76,11 +80,34 @@ export const appRouter = router({
           };
         }
         const enteredName = input.name?.trim() || "";
-        const allowedDomain = (process.env.LOCAL_AUTH_EMAIL_DOMAIN ?? "").trim().toLowerCase();
+        const allowedDomain = (process.env.LOCAL_AUTH_EMAIL_DOMAIN ?? "")
+          .trim()
+          .toLowerCase();
         if (allowedDomain && !email.endsWith(`@${allowedDomain}`)) {
           return {
             success: false as const,
             error: `Use your ${allowedDomain} email address.`,
+          };
+        }
+
+        try {
+          const db = await getDb();
+          if (db) {
+            const appUserRecord = await findAppUserByUsernameOrEmail(db, email);
+            if (appUserRecord) {
+              return {
+                success: false as const,
+                error: appUserRecord.isActive
+                  ? "Enter your password to sign in."
+                  : "This account has been deactivated. Contact your admin.",
+              };
+            }
+          }
+        } catch (err) {
+          console.error("[auth.login] Database query failed:", err);
+          return {
+            success: false as const,
+            error: "Sign-in service is temporarily unavailable.",
           };
         }
 
@@ -93,10 +120,12 @@ export const appRouter = router({
         }
         const resolvedName = brokerEntry?.name || enteredName;
         const openId = localAuth.toLocalOpenId(email);
-        const role = isAdminByPolicy(email, resolvedName) ? "admin" : "user";
+        const role = "user";
 
         if (ENV.isProduction && !String(ENV.cookieSecret ?? "").trim()) {
-          console.error("[auth.login] JWT_SECRET is not set; cannot sign session cookies.");
+          console.error(
+            "[auth.login] JWT_SECRET is not set; cannot sign session cookies."
+          );
           return {
             success: false as const,
             error:
@@ -149,12 +178,6 @@ export const appRouter = router({
             maxAge: ONE_YEAR_MS,
           });
 
-          try {
-            await linkPlatformSessionAfterLegacyLogin(ctx.req, ctx.res, email);
-          } catch (linkErr) {
-            console.error("[auth.login] Platform session link failed (legacy session cookie is set):", linkErr);
-          }
-
           return {
             success: true as const,
             user: {
@@ -198,7 +221,14 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const { filename, mimeType, base64Data, category, reference, uploaderName } = input;
+        const {
+          filename,
+          mimeType,
+          base64Data,
+          category,
+          reference,
+          uploaderName,
+        } = input;
 
         // Decode base64 to buffer
         const buffer = Buffer.from(base64Data, "base64");
@@ -210,7 +240,10 @@ export const appRouter = router({
             message: `File exceeds maximum size of ${MAX_UPLOAD_BYTES / (1024 * 1024)} MB.`,
           });
         }
-        if (category === LISTING_BROCHURE_CATEGORY && !LISTING_BROCHURE_MIMES.has(mimeType)) {
+        if (
+          category === LISTING_BROCHURE_CATEGORY &&
+          !LISTING_BROCHURE_MIMES.has(mimeType)
+        ) {
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "Brochure uploads must be PDF, JPEG, PNG, or WebP.",

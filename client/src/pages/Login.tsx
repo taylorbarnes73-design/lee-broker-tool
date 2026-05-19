@@ -24,6 +24,7 @@ export default function Login() {
   const branding = usePublicBranding();
 
   const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,7 +46,8 @@ export default function Login() {
     event.preventDefault();
     setError(null);
     const normalizedIdentifier = normalizeLoginIdentifier(identifier);
-    if (normalizedIdentifier !== identifier) setIdentifier(normalizedIdentifier);
+    if (normalizedIdentifier !== identifier)
+      setIdentifier(normalizedIdentifier);
     setSubmitting(true);
     try {
       const r = await fetch("/api/auth/login", {
@@ -53,7 +55,8 @@ export default function Login() {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: normalizedIdentifier,
+          username_or_email: normalizedIdentifier,
+          password,
         }),
       });
       const j = await r.json().catch(() => ({}));
@@ -95,10 +98,18 @@ export default function Login() {
         <div style={{ width: 440 }}>
           <Card padding="lg">
             <div style={{ textAlign: "center" }}>
-              <h1 style={{ fontSize: 20, fontWeight: 700, color: "var(--ink-900)" }}>
+              <h1
+                style={{
+                  fontSize: 20,
+                  fontWeight: 700,
+                  color: "var(--ink-900)",
+                }}
+              >
                 Redirecting to sign in...
               </h1>
-              <p style={{ fontSize: 14, color: "var(--ink-500)", marginTop: 8 }}>
+              <p
+                style={{ fontSize: 14, color: "var(--ink-500)", marginTop: 8 }}
+              >
                 If you are not redirected automatically, use the button below.
               </p>
               <Button
@@ -122,55 +133,146 @@ export default function Login() {
   }
 
   return (
-    <div className="lee-page-flow" style={{ display: 'flex', width: '100vw', minHeight: '100vh', background: 'var(--ink-50)', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ width: 440, maxWidth: '100%' }}>
-        <div style={{ marginBottom: 32, textAlign: 'center' }}>
+    <div
+      className="lee-page-flow"
+      style={{
+        display: "flex",
+        width: "100vw",
+        minHeight: "100vh",
+        background: "var(--ink-50)",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 20,
+      }}
+    >
+      <div style={{ width: 440, maxWidth: "100%" }}>
+        <div style={{ marginBottom: 32, textAlign: "center" }}>
           <img
             src="/lee-newport-beach-fullcolor.png"
             alt={branding.company_name}
-            style={{ height: 64, width: 'auto', display: 'inline-block' }}
+            style={{ height: 64, width: "auto", display: "inline-block" }}
           />
-          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-500)', marginTop: 14, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: "var(--ink-500)",
+              marginTop: 14,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+            }}
+          >
             Broker portal
           </div>
         </div>
 
         <Card padding="lg">
-          <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--ink-900)' }}>Sign In</h1>
-            <p style={{ fontSize: 14, color: 'var(--ink-500)', marginTop: 8 }}>Use your Lee Broker Tool account. Brokers use the portal and submission queue; administrators have additional tools after sign-in.</p>
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            <h1
+              style={{ fontSize: 24, fontWeight: 700, color: "var(--ink-900)" }}
+            >
+              Sign In
+            </h1>
+            <p style={{ fontSize: 14, color: "var(--ink-500)", marginTop: 8 }}>
+              Use your Lee Broker Tool account. Brokers use the portal and
+              submission queue; administrators have additional tools after
+              sign-in.
+            </p>
           </div>
 
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <form
+            onSubmit={handleLogin}
+            style={{ display: "flex", flexDirection: "column", gap: 16 }}
+          >
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>Username or Email</label>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "var(--ink-700)",
+                  marginBottom: 6,
+                }}
+              >
+                Username or Email
+              </label>
               <Input
                 type="text"
                 inputMode="email"
                 prefix={<Icons.User size={15} />}
                 value={identifier}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setIdentifier(e.target.value)}
-                onBlur={() => setIdentifier(normalizeLoginIdentifier(identifier))}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setIdentifier(e.target.value)
+                }
+                onBlur={() =>
+                  setIdentifier(normalizeLoginIdentifier(identifier))
+                }
                 required
                 autoComplete="username"
                 placeholder="tbarnes"
               />
             </div>
 
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "var(--ink-700)",
+                  marginBottom: 6,
+                }}
+              >
+                Password
+              </label>
+              <Input
+                type="password"
+                prefix={<Icons.Lock size={15} />}
+                value={password}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setPassword(e.target.value)
+                }
+                required
+                autoComplete="current-password"
+                placeholder="Enter your password"
+              />
+            </div>
 
-            <Button type="submit" variant="primary" size="lg" disabled={submitting || loading} style={{ marginTop: 8 }}>
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              disabled={submitting || loading}
+              style={{ marginTop: 8 }}
+            >
               {submitting ? "Signing in..." : "Continue to Portal"}
             </Button>
 
             {error && (
-              <div style={{ padding: 12, background: 'var(--err-50)', color: 'var(--err-700)', borderRadius: 8, fontSize: 13, border: '1px solid var(--err-200)' }}>
+              <div
+                style={{
+                  padding: 12,
+                  background: "var(--err-50)",
+                  color: "var(--err-700)",
+                  borderRadius: 8,
+                  fontSize: 13,
+                  border: "1px solid var(--err-200)",
+                }}
+              >
                 {error}
               </div>
             )}
           </form>
         </Card>
 
-        <p style={{ textAlign: "center", marginTop: 20, fontSize: 13, color: "var(--ink-600)" }}>
+        <p
+          style={{
+            textAlign: "center",
+            marginTop: 20,
+            fontSize: 13,
+            color: "var(--ink-600)",
+          }}
+        >
           <a href="/tool" style={{ color: "var(--ink-800)", fontWeight: 600 }}>
             Open broker forms &amp; comp workspace
           </a>{" "}

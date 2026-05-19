@@ -1,23 +1,20 @@
 import { Router } from "express";
 import { z } from "zod/v4";
-import { eq } from "drizzle-orm";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
-import {
-  findBrokerDirectoryEntry,
-} from "@shared/brokerDirectory";
+import { findBrokerDirectoryEntry } from "@shared/brokerDirectory";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { localAuth, sdk } from "./_core/sdk";
 import { ENV } from "./_core/env";
 import { getDb, upsertUser } from "./db";
-import { appUsers } from "../drizzle/schema";
 import {
   handlePlatformPasswordLogin,
   handlePlatformLogout,
   isPlatformPasswordLoginBody,
 } from "./auth/passwordPlatformAuth";
-import { resolvePlatformUserFromRequest, findAppUserByUsernameOrEmail } from "./auth/platformSession";
-import { linkPlatformSessionAfterLegacyLogin } from "./auth/linkPlatformSessionAfterLegacyLogin";
-import { isAdminByPolicy } from "./auth/isAdminByPolicy";
+import {
+  resolvePlatformUserFromRequest,
+  findAppUserByUsernameOrEmail,
+} from "./auth/platformSession";
 
 const loginSchema = z.object({
   email: z.string().trim().min(1).max(320),
@@ -45,68 +42,86 @@ authApiRouter.post("/login", async (req, res) => {
 
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" });
+    res
+      .status(400)
+      .json({
+        success: false,
+        error: parsed.error.issues[0]?.message ?? "Invalid input",
+      });
     return;
   }
 
   const email = normalizeLeeLogin(parsed.data.email);
   if (!z.string().email().safeParse(email).success) {
-    res.status(400).json({ success: false, error: "Enter your Lee username or email address." });
+    res
+      .status(400)
+      .json({
+        success: false,
+        error: "Enter your Lee username or email address.",
+      });
     return;
   }
 
-  const allowedDomain = (process.env.LOCAL_AUTH_EMAIL_DOMAIN ?? "").trim().toLowerCase();
+  const allowedDomain = (process.env.LOCAL_AUTH_EMAIL_DOMAIN ?? "")
+    .trim()
+    .toLowerCase();
   if (allowedDomain && !email.endsWith(`@${allowedDomain}`)) {
-    res.status(400).json({ success: false, error: `Use your ${allowedDomain} email address.` });
+    res
+      .status(400)
+      .json({
+        success: false,
+        error: `Use your ${allowedDomain} email address.`,
+      });
     return;
   }
 
   let brokerEntry = findBrokerDirectoryEntry(email);
   let name = parsed.data.name?.trim() || email;
-  let role: "admin" | "user" = "user";
-  let isFromDb = false;
+  const role: "admin" | "user" = "user";
 
-  let db: Awaited<ReturnType<typeof getDb>> = null;
-  let appUserRecord: Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>> = undefined;
   try {
-    db = await getDb();
+    const db = await getDb();
     if (db) {
-      appUserRecord = await findAppUserByUsernameOrEmail(db, email);
-      if (appUserRecord && appUserRecord.isActive) {
-        isFromDb = true;
-        name = appUserRecord.fullName || name;
-        role = appUserRecord.role === "admin" ? "admin" : "user";
+      const appUserRecord = await findAppUserByUsernameOrEmail(db, email);
+      if (appUserRecord) {
+        if (!appUserRecord.isActive) {
+          res
+            .status(403)
+            .json({
+              success: false,
+              error: "This account has been deactivated. Contact your admin.",
+            });
+          return;
+        }
+        res
+          .status(401)
+          .json({ success: false, error: "Enter your password to sign in." });
+        return;
       }
     }
   } catch (err) {
-    console.error("[auth.login] Database query failed (fallback to hardcoded directory):", err);
+    console.error("[auth.login] Database query failed:", err);
+    res
+      .status(503)
+      .json({
+        success: false,
+        error: "Sign-in service is temporarily unavailable.",
+      });
+    return;
   }
 
-  if (!brokerEntry && !isFromDb) {
-    res.status(400).json({ success: false, error: "Email not recognized. Use your @lee-associates.com email." });
+  if (!brokerEntry) {
+    res
+      .status(400)
+      .json({
+        success: false,
+        error: "Email not recognized. Use your @lee-associates.com email.",
+      });
     return;
   }
 
   const openId = localAuth.toLocalOpenId(email);
-  if (!isFromDb) {
-    name = brokerEntry?.name || name;
-  }
-
-  // Apply policy-based admin override regardless of whether the user was found in
-  // app_users. This lets LOCAL_ADMIN_EMAILS / LOCAL_ADMIN_NAMES / broker-directory
-  // admin flags grant admin access even if app_users.role was set incorrectly.
-  if (role !== "admin" && isAdminByPolicy(email, name, appUserRecord?.username)) {
-    role = "admin";
-  }
-
-  // Auto-fix app_users.role when the resolved role is higher than what's stored.
-  if (role === "admin" && db && appUserRecord && appUserRecord.role !== "admin") {
-    try {
-      await db.update(appUsers).set({ role: "admin" }).where(eq(appUsers.id, appUserRecord.id));
-    } catch (upgradeErr) {
-      console.error("[auth.login] Could not upgrade app_users role to admin:", upgradeErr);
-    }
-  }
+  name = brokerEntry?.name || name;
 
   let sessionToken: string;
   try {
@@ -121,7 +136,13 @@ authApiRouter.post("/login", async (req, res) => {
       });
     } catch (dbErr) {
       console.error("[auth.login] Database write failed:", dbErr);
-      res.status(500).json({ success: false, error: "Could not complete sign-in (database error). Please try again or contact support." });
+      res
+        .status(500)
+        .json({
+          success: false,
+          error:
+            "Could not complete sign-in (database error). Please try again or contact support.",
+        });
       return;
     }
 
@@ -129,7 +150,10 @@ authApiRouter.post("/login", async (req, res) => {
       sessionToken = await sdk.createSessionToken(openId, { name, email });
     } catch (sessionErr) {
       const secretSet = Boolean(String(ENV.cookieSecret ?? "").trim());
-      console.error("[auth.login] Session token signing failed:", { secretSet, err: sessionErr });
+      console.error("[auth.login] Session token signing failed:", {
+        secretSet,
+        err: sessionErr,
+      });
       res.status(500).json({
         success: false,
         error: secretSet
@@ -140,18 +164,21 @@ authApiRouter.post("/login", async (req, res) => {
     }
   } catch (err) {
     console.error("[auth.login] Sign-in failed:", err);
-    res.status(500).json({ success: false, error: "Could not complete sign-in. Please try again or contact support." });
+    res
+      .status(500)
+      .json({
+        success: false,
+        error:
+          "Could not complete sign-in. Please try again or contact support.",
+      });
     return;
   }
 
   const cookieOptions = getSessionCookieOptions(req);
-  res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-
-  try {
-    await linkPlatformSessionAfterLegacyLogin(req, res, email);
-  } catch (linkErr) {
-    console.error("[auth.login] Platform session link failed (legacy session cookie is set):", linkErr);
-  }
+  res.cookie(COOKIE_NAME, sessionToken, {
+    ...cookieOptions,
+    maxAge: ONE_YEAR_MS,
+  });
 
   res.json({
     success: true,
@@ -190,23 +217,8 @@ authApiRouter.get("/me", async (req, res) => {
 
   try {
     const user = await sdk.authenticateRequest(req);
-    // Apply policy-based admin override even when the user came in via the
-    // legacy JWT path, so admins recognized by LOCAL_ADMIN_EMAILS,
-    // LOCAL_ADMIN_NAMES, or the broker directory aren’t silently downgraded
-    // to AGENT here.
-    let appUserRecord: Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>> = undefined;
-    try {
-      const db = await getDb();
-      if (db && user.email) {
-        appUserRecord = await findAppUserByUsernameOrEmail(db, user.email);
-      }
-    } catch (err) {
-      console.error("[auth.me] Could not resolve app user for legacy session:", err);
-    }
     const resolvedRole: "admin" | "user" =
-      user.role === "admin" || isAdminByPolicy(user.email, user.name, appUserRecord?.username)
-        ? "admin"
-        : "user";
+      user.role === "admin" ? "admin" : "user";
     res.json({
       success: true,
       data: {
@@ -222,4 +234,3 @@ authApiRouter.get("/me", async (req, res) => {
     res.status(401).json({ success: false, error: "Not authenticated" });
   }
 });
-

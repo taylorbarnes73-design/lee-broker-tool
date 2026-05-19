@@ -1,5 +1,8 @@
 import type { RequestHandler } from "express";
-import { resolvePlatformUserFromRequest, findAppUserByUsernameOrEmail } from "../auth/platformSession";
+import {
+  resolvePlatformUserFromRequest,
+  findAppUserByUsernameOrEmail,
+} from "../auth/platformSession";
 import { sendAdminError } from "./adminErrors";
 import { sdk } from "../_core/sdk";
 import { getDb } from "../db";
@@ -14,7 +17,14 @@ export const requirePlatformAdmin: RequestHandler = async (req, res, next) => {
   const platformUser = await resolvePlatformUserFromRequest(req);
   if (platformUser) {
     isAuthenticated = true;
-    if (platformUser.role === "admin" || isAdminByPolicy(platformUser.email, platformUser.fullName, platformUser.username)) {
+    if (
+      platformUser.role === "admin" ||
+      isAdminByPolicy(
+        platformUser.email,
+        platformUser.fullName,
+        platformUser.username
+      )
+    ) {
       req.user = { ...platformUser, role: "admin" };
       next();
       return;
@@ -27,14 +37,20 @@ export const requirePlatformAdmin: RequestHandler = async (req, res, next) => {
     const legacyUser = await sdk.authenticateRequest(req);
     isAuthenticated = true;
     const email = legacyUser.email ?? "";
-    let appUser: Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>> | null = null;
+    let appUser: Awaited<
+      ReturnType<typeof findAppUserByUsernameOrEmail>
+    > | null = null;
     try {
       const db = await getDb();
-      appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
+      appUser =
+        db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
     } catch (error) {
-      console.error("[requirePlatformAdmin] Could not resolve platform user for legacy session:", error);
+      console.error(
+        "[requirePlatformAdmin] Could not resolve platform user for legacy session:",
+        error
+      );
     }
-    if (legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name, appUser?.username)) {
+    if (legacyUser.role === "admin") {
       req.user = {
         id: appUser?.id ?? String(legacyUser.id),
         email,
@@ -51,7 +67,12 @@ export const requirePlatformAdmin: RequestHandler = async (req, res, next) => {
   }
 
   if (isAuthenticated) {
-    sendAdminError(res, 403, "FORBIDDEN", "Administrator access is required for this resource.");
+    sendAdminError(
+      res,
+      403,
+      "FORBIDDEN",
+      "Administrator access is required for this resource."
+    );
   } else {
     sendAdminError(res, 401, "UNAUTHORIZED", "Authentication required.");
   }

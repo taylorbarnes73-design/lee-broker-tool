@@ -46,11 +46,15 @@ export const appUsers = mysqlTable(
     email: varchar("email", { length: 320 }).notNull(),
     username: varchar("username", { length: 64 }).notNull(),
     fullName: varchar("full_name", { length: 255 }).notNull(),
-    role: mysqlEnum("role", ["admin", "broker", "readonly"]).notNull().default("broker"),
+    role: mysqlEnum("role", ["admin", "broker", "readonly"])
+      .notNull()
+      .default("broker"),
     office: varchar("office", { length: 255 }),
     phone: varchar("phone", { length: 64 }),
     passwordHash: varchar("password_hash", { length: 255 }),
-    forcePasswordChangeNextLogin: boolean("force_password_change_next_login").notNull().default(false),
+    forcePasswordChangeNextLogin: boolean("force_password_change_next_login")
+      .notNull()
+      .default(false),
     isActive: boolean("is_active").notNull().default(true),
     lastLoginAt: datetime("last_login_at", { mode: "date", fsp: 3 }),
     createdAt: datetime("created_at", { mode: "date", fsp: 3 })
@@ -70,8 +74,14 @@ export const appUsers = mysqlTable(
       foreignColumns: [table.id],
       name: "app_users_created_by_fk",
     }).onDelete("set null"),
-    emailLowerCheck: check("app_users_email_lowercase", sql`email = LOWER(email)`),
-    usernameLowerCheck: check("app_users_username_lowercase", sql`username = LOWER(username)`),
+    emailLowerCheck: check(
+      "app_users_email_lowercase",
+      sql`email = LOWER(email)`
+    ),
+    usernameLowerCheck: check(
+      "app_users_username_lowercase",
+      sql`username = LOWER(username)`
+    ),
   })
 );
 
@@ -208,52 +218,53 @@ export type InsertUpload = typeof uploads.$inferInsert;
  * Stores form submissions from all 4 broker tool tabs.
  * The full form payload is stored as JSON in the payload column.
  */
-export const submissions = mysqlTable("submissions", {
-  id: int("id").autoincrement().primaryKey(),
-  /** Which form was submitted: listing | voucher | sign-request | comp */
-  formType: varchar("formType", { length: 32 }).notNull(),
-  /** Workflow status used by the admin portal */
-  status: varchar("status", { length: 32 }).notNull().default("pending"),
-  /** Full JSON payload of the submitted form */
-  payload: text("payload"),
-  /** Property address or other reference string */
-  reference: varchar("reference", { length: 512 }),
-  /** Name of the submitting broker/agent */
-  submittedBy: varchar("submittedBy", { length: 128 }),
-  /** Stable owner identity used to scope broker access */
-  submittedByOpenId: varchar("submittedByOpenId", { length: 64 }),
-  /** Broker email snapshot for convenience */
-  submittedByEmail: varchar("submittedByEmail", { length: 320 }),
-  /** Archived submission PDF storage key */
-  pdfFileKey: varchar("pdfFileKey", { length: 512 }),
-  /** Archived submission PDF URL */
-  pdfUrl: text("pdfUrl"),
-  /** Where the submission came from: "tool" (default), "email_ingest", "email_ingest_backfill", or "manual". */
-  source: varchar("source", { length: 32 }).notNull().default("tool"),
-  /** Graph/Outlook message id when source is an email ingest. */
-  sourceEmailMessageId: varchar("source_email_message_id", { length: 512 }),
-  /** Outlook deep link when source is an email ingest. */
-  sourceEmailWebLink: text("source_email_web_link"),
-  /** Smart-parsed structured fields when source is an email ingest. */
-  parsedFields: json("parsed_fields"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-}, table => ({
-  statusCreatedAtIdIdx: index("submissions_status_createdAt_id_idx").on(
-    table.status,
-    table.createdAt,
-    table.id
-  ),
-  brokerStatusCreatedAtIdIdx: index("submissions_broker_status_createdAt_id_idx").on(
-    table.submittedByOpenId,
-    table.status,
-    table.createdAt,
-    table.id
-  ),
-  sourceEmailMessageIdIdx: index("submissions_source_email_message_id_idx").on(
-    table.sourceEmailMessageId
-  ),
-}));
+export const submissions = mysqlTable(
+  "submissions",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    /** Which form was submitted: listing | voucher | sign-request | comp */
+    formType: varchar("formType", { length: 32 }).notNull(),
+    /** Workflow status used by the admin portal */
+    status: varchar("status", { length: 32 }).notNull().default("pending"),
+    /** Full JSON payload of the submitted form */
+    payload: text("payload"),
+    /** Property address or other reference string */
+    reference: varchar("reference", { length: 512 }),
+    /** Name of the submitting broker/agent */
+    submittedBy: varchar("submittedBy", { length: 128 }),
+    /** Stable owner identity used to scope broker access */
+    submittedByOpenId: varchar("submittedByOpenId", { length: 64 }),
+    /** Broker email snapshot for convenience */
+    submittedByEmail: varchar("submittedByEmail", { length: 320 }),
+    /** Archived submission PDF storage key */
+    pdfFileKey: varchar("pdfFileKey", { length: 512 }),
+    /** Archived submission PDF URL */
+    pdfUrl: text("pdfUrl"),
+    /** Where the submission came from: "tool" (default), "email_ingest", "email_ingest_backfill", or "manual". */
+    source: varchar("source", { length: 32 }).notNull().default("tool"),
+    /** Graph/Outlook message id when source is an email ingest. */
+    sourceEmailMessageId: varchar("source_email_message_id", { length: 512 }),
+    /** Outlook deep link when source is an email ingest. */
+    sourceEmailWebLink: text("source_email_web_link"),
+    /** Smart-parsed structured fields when source is an email ingest. */
+    parsedFields: json("parsed_fields"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => ({
+    statusCreatedAtIdIdx: index("submissions_status_createdAt_id_idx").on(
+      table.status,
+      table.createdAt,
+      table.id
+    ),
+    brokerStatusCreatedAtIdIdx: index(
+      "submissions_broker_status_createdAt_id_idx"
+    ).on(table.submittedByOpenId, table.status, table.createdAt, table.id),
+    sourceEmailMessageIdIdx: uniqueIndex(
+      "submissions_source_email_message_id_unique"
+    ).on(table.sourceEmailMessageId),
+  })
+);
 
 export type Submission = typeof submissions.$inferSelect;
 export type InsertSubmission = typeof submissions.$inferInsert;
@@ -297,7 +308,9 @@ export const brokerAdminRequests = mysqlTable(
     dealiusDealId: varchar("dealiusDealId", { length: 64 }),
     dealiusListingId: varchar("dealiusListingId", { length: 64 }),
     docusignEnvelopeId: varchar("docusignEnvelopeId", { length: 128 }),
-    matchStatus: mysqlEnum("matchStatus", ["matched", "needs_match"]).default("matched").notNull(),
+    matchStatus: mysqlEnum("matchStatus", ["matched", "needs_match"])
+      .default("matched")
+      .notNull(),
 
     // Convenience
     reference: varchar("reference", { length: 512 }),
@@ -309,9 +322,15 @@ export const brokerAdminRequests = mysqlTable(
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
   table => ({
-    statusCreatedAtIdIdx: index("bar_status_createdAt_id_idx").on(table.status, table.createdAt, table.id),
+    statusCreatedAtIdIdx: index("bar_status_createdAt_id_idx").on(
+      table.status,
+      table.createdAt,
+      table.id
+    ),
     emailMessageIdIdx: index("bar_emailMessageId_idx").on(table.emailMessageId),
-    docusignEnvelopeIdIdx: index("bar_docusignEnvelopeId_idx").on(table.docusignEnvelopeId),
+    docusignEnvelopeIdIdx: index("bar_docusignEnvelopeId_idx").on(
+      table.docusignEnvelopeId
+    ),
   })
 );
 
@@ -328,11 +347,15 @@ export const compImports = mysqlTable("compImports", {
   sourceUrl: text("sourceUrl"),
   sourceFilename: varchar("sourceFilename", { length: 255 }),
   workbookName: varchar("workbookName", { length: 255 }).notNull(),
-  canonicalLeaseSheet: varchar("canonicalLeaseSheet", { length: 128 }).notNull(),
+  canonicalLeaseSheet: varchar("canonicalLeaseSheet", {
+    length: 128,
+  }).notNull(),
   canonicalSaleSheet: varchar("canonicalSaleSheet", { length: 128 }).notNull(),
   leaseCount: int("leaseCount").notNull().default(0),
   saleCount: int("saleCount").notNull().default(0),
-  status: mysqlEnum("status", ["active", "archived", "failed"]).notNull().default("active"),
+  status: mysqlEnum("status", ["active", "archived", "failed"])
+    .notNull()
+    .default("active"),
   importedByOpenId: varchar("importedByOpenId", { length: 64 }),
   importedByEmail: varchar("importedByEmail", { length: 320 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -359,10 +382,18 @@ export const leaseComps = mysqlTable("leaseComps", {
   subMarket: varchar("subMarket", { length: 128 }).notNull().default(""),
   projectName: varchar("projectName", { length: 255 }).notNull().default(""),
   propertyType: varchar("propertyType", { length: 128 }).notNull().default(""),
-  propertySubType: varchar("propertySubType", { length: 128 }).notNull().default(""),
-  transactionDate: varchar("transactionDate", { length: 32 }).notNull().default(""),
-  listingBroker: varchar("listingBroker", { length: 255 }).notNull().default(""),
-  procuringBroker: varchar("procuringBroker", { length: 255 }).notNull().default(""),
+  propertySubType: varchar("propertySubType", { length: 128 })
+    .notNull()
+    .default(""),
+  transactionDate: varchar("transactionDate", { length: 32 })
+    .notNull()
+    .default(""),
+  listingBroker: varchar("listingBroker", { length: 255 })
+    .notNull()
+    .default(""),
+  procuringBroker: varchar("procuringBroker", { length: 255 })
+    .notNull()
+    .default(""),
   source: varchar("source", { length: 128 }).notNull().default(""),
   rawPayload: text("rawPayload").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -388,10 +419,18 @@ export const saleComps = mysqlTable("saleComps", {
   subMarket: varchar("subMarket", { length: 128 }).notNull().default(""),
   projectName: varchar("projectName", { length: 255 }).notNull().default(""),
   propertyType: varchar("propertyType", { length: 128 }).notNull().default(""),
-  propertySubType: varchar("propertySubType", { length: 128 }).notNull().default(""),
-  transactionDate: varchar("transactionDate", { length: 32 }).notNull().default(""),
-  listingBroker: varchar("listingBroker", { length: 255 }).notNull().default(""),
-  procuringBroker: varchar("procuringBroker", { length: 255 }).notNull().default(""),
+  propertySubType: varchar("propertySubType", { length: 128 })
+    .notNull()
+    .default(""),
+  transactionDate: varchar("transactionDate", { length: 32 })
+    .notNull()
+    .default(""),
+  listingBroker: varchar("listingBroker", { length: 255 })
+    .notNull()
+    .default(""),
+  procuringBroker: varchar("procuringBroker", { length: 255 })
+    .notNull()
+    .default(""),
   source: varchar("source", { length: 128 }).notNull().default(""),
   rawPayload: text("rawPayload").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -417,17 +456,21 @@ export const emailIngestLog = mysqlTable(
     ccEmails: json("cc_emails"),
     subject: varchar("subject", { length: 1024 }),
     submissionId: int("submission_id"),
-    ingestStatus: varchar("ingest_status", { length: 32 }).notNull().default("imported"),
+    ingestStatus: varchar("ingest_status", { length: 32 })
+      .notNull()
+      .default("imported"),
     errorMessage: text("error_message"),
     createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .notNull()
       .default(sql`(UTC_TIMESTAMP(3))`),
   },
   table => ({
-    messageIdUnique: uniqueIndex("email_ingest_log_message_id_unique").on(table.messageId),
-    internetMessageIdUnique: uniqueIndex("email_ingest_log_internet_message_id_unique").on(
-      table.internetMessageId
+    messageIdUnique: uniqueIndex("email_ingest_log_message_id_unique").on(
+      table.messageId
     ),
+    internetMessageIdUnique: uniqueIndex(
+      "email_ingest_log_internet_message_id_unique"
+    ).on(table.internetMessageId),
     receivedAtIdx: index("eil_received_at_idx").on(table.receivedAt),
     ingestStatusIdx: index("eil_ingest_status_idx").on(table.ingestStatus),
   })

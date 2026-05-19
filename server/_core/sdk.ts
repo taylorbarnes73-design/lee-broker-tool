@@ -9,6 +9,7 @@ import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
 import { isAdminByPolicy } from "../auth/isAdminByPolicy";
+import { findAppUserByUsernameOrEmail } from "../auth/platformSession";
 import type {
   ExchangeTokenRequest,
   ExchangeTokenResponse,
@@ -34,9 +35,11 @@ const LOCAL_OPEN_ID_PREFIX = "local:";
 
 const normalizeEmail = (value: string) => value.trim().toLowerCase();
 
-const toLocalOpenId = (email: string) => `${LOCAL_OPEN_ID_PREFIX}${normalizeEmail(email)}`;
+const toLocalOpenId = (email: string) =>
+  `${LOCAL_OPEN_ID_PREFIX}${normalizeEmail(email)}`;
 
-const isLocalOpenId = (openId: string) => openId.startsWith(LOCAL_OPEN_ID_PREFIX);
+const isLocalOpenId = (openId: string) =>
+  openId.startsWith(LOCAL_OPEN_ID_PREFIX);
 
 const emailFromLocalOpenId = (openId: string) =>
   isLocalOpenId(openId) ? openId.slice(LOCAL_OPEN_ID_PREFIX.length) : null;
@@ -165,7 +168,8 @@ class SDKServer {
 
   private getSessionSecret() {
     const secret =
-      ENV.cookieSecret || (ENV.isProduction ? "" : "dev-local-broker-tool-secret");
+      ENV.cookieSecret ||
+      (ENV.isProduction ? "" : "dev-local-broker-tool-secret");
     return new TextEncoder().encode(secret);
   }
 
@@ -215,7 +219,12 @@ class SDKServer {
 
   async verifySession(
     cookieValue: string | undefined | null
-  ): Promise<{ openId: string; appId: string; name: string; email?: string } | null> {
+  ): Promise<{
+    openId: string;
+    appId: string;
+    name: string;
+    email?: string;
+  } | null> {
     if (!cookieValue) {
       console.warn("[Auth] Missing session cookie");
       return null;
@@ -289,6 +298,15 @@ class SDKServer {
 
     if (isLocalOpenId(sessionUserId)) {
       const email = session.email ?? emailFromLocalOpenId(sessionUserId);
+      const appDb = await db.getDb();
+      if (appDb && email) {
+        const appUser = await findAppUserByUsernameOrEmail(appDb, email);
+        if (appUser) {
+          throw ForbiddenError(
+            appUser.isActive ? "Use password login" : "Account deactivated"
+          );
+        }
+      }
 
       if (!user) {
         await db.upsertUser({
@@ -297,7 +315,7 @@ class SDKServer {
           email: email ?? null,
           loginMethod: "local",
           lastSignedIn: signedInAt,
-          role: isAdminByPolicy(email, session.name) ? "admin" : "user",
+          role: "user",
         });
         user = await db.getUserByOpenId(sessionUserId);
       }
@@ -313,7 +331,7 @@ class SDKServer {
         email: email ?? user.email,
         loginMethod: "local",
         lastSignedIn: signedInAt,
-        role: isAdminByPolicy(email, resolvedName) ? "admin" : "user",
+        role: "user",
       });
 
       return {
@@ -322,7 +340,7 @@ class SDKServer {
         email: email ?? user.email,
         loginMethod: "local",
         lastSignedIn: signedInAt,
-        role: isAdminByPolicy(email, resolvedName) ? "admin" : "user",
+        role: "user",
       };
     }
 
