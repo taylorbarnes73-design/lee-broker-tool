@@ -18,7 +18,10 @@ vi.mock("./db", () => ({
   getDb: vi.fn(),
 }));
 
-import { findAppUserByUsernameOrEmail, resolvePlatformUserFromRequest } from "./auth/platformSession";
+import {
+  findAppUserByUsernameOrEmail,
+  resolvePlatformUserFromRequest,
+} from "./auth/platformSession";
 import { sdk } from "./_core/sdk";
 import { getDb } from "./db";
 
@@ -34,7 +37,9 @@ describe("broker admin REST auth", () => {
     vi.clearAllMocks();
     vi.mocked(resolvePlatformUserFromRequest).mockResolvedValue(null);
     vi.mocked(findAppUserByUsernameOrEmail).mockResolvedValue(undefined);
-    vi.mocked(sdk.authenticateRequest).mockRejectedValue(new Error("no legacy session"));
+    vi.mocked(sdk.authenticateRequest).mockRejectedValue(
+      new Error("no legacy session")
+    );
     vi.mocked(getDb).mockResolvedValue(null);
   });
 
@@ -51,10 +56,13 @@ describe("broker admin REST auth", () => {
     const res = await request(buildApp()).get("/api/broker-admin/requests");
 
     expect(res.status).toBe(503);
-    expect(res.body).toMatchObject({ success: false, error: "Database unavailable" });
+    expect(res.body).toMatchObject({
+      success: false,
+      error: "Database unavailable",
+    });
   });
 
-  it("allows username-based admins through legacy sessions", async () => {
+  it("denies username-based admin policy through legacy sessions", async () => {
     vi.mocked(sdk.authenticateRequest).mockResolvedValue({
       id: 1,
       openId: "local:tbarnes@external.test",
@@ -88,11 +96,11 @@ describe("broker admin REST auth", () => {
 
     const res = await request(buildApp()).get("/api/broker-admin/requests");
 
-    expect(res.status).toBe(503);
-    expect(res.body).toMatchObject({ success: false, error: "Database unavailable" });
+    expect(res.status).toBe(403);
+    expect(res.body).toMatchObject({ error: "Forbidden" });
   });
 
-  it("keeps valid legacy sessions when the app_users lookup fails", async () => {
+  it("denies legacy sessions when the app_users lookup fails", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     vi.mocked(sdk.authenticateRequest).mockResolvedValue({
       id: 1,
@@ -108,11 +116,13 @@ describe("broker admin REST auth", () => {
     vi.mocked(getDb)
       .mockResolvedValueOnce({} as Awaited<ReturnType<typeof getDb>>)
       .mockResolvedValueOnce(null);
-    vi.mocked(findAppUserByUsernameOrEmail).mockRejectedValue(new Error("app_users query failed"));
+    vi.mocked(findAppUserByUsernameOrEmail).mockRejectedValue(
+      new Error("app_users query failed")
+    );
 
     const res = await request(buildApp()).get("/api/broker-admin/requests");
 
-    expect(res.status).toBe(503);
-    expect(res.body).toMatchObject({ success: false, error: "Database unavailable" });
+    expect(res.status).toBe(401);
+    expect(res.body).toMatchObject({ error: "Not authenticated" });
   });
 });

@@ -19,7 +19,11 @@ function createLoginContext(): { ctx: TrpcContext; cookies: CookieCall[] } {
       headers: {},
     } as TrpcContext["req"],
     res: {
-      cookie: (name: string, value: string, options: Record<string, unknown>) => {
+      cookie: (
+        name: string,
+        value: string,
+        options: Record<string, unknown>
+      ) => {
         cookies.push({ name, value, options });
       },
     } as TrpcContext["res"],
@@ -40,7 +44,7 @@ describe("auth.login", () => {
       user: {
         name: "Taylor Barnes",
         email: "tbarnes@lee-associates.com",
-        role: "admin",
+        role: "user",
       },
     });
     expect(cookies).toHaveLength(1);

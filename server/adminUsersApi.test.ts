@@ -18,7 +18,10 @@ vi.mock("./db", () => ({
   getDb: vi.fn(),
 }));
 
-import { findAppUserByUsernameOrEmail, resolvePlatformUserFromRequest } from "./auth/platformSession";
+import {
+  findAppUserByUsernameOrEmail,
+  resolvePlatformUserFromRequest,
+} from "./auth/platformSession";
 import { sdk } from "./_core/sdk";
 import { getDb } from "./db";
 
@@ -34,7 +37,9 @@ describe("GET /api/admin/users", () => {
     vi.clearAllMocks();
     vi.mocked(resolvePlatformUserFromRequest).mockResolvedValue(null);
     vi.mocked(findAppUserByUsernameOrEmail).mockResolvedValue(undefined);
-    vi.mocked(sdk.authenticateRequest).mockRejectedValue(new Error("no legacy session"));
+    vi.mocked(sdk.authenticateRequest).mockRejectedValue(
+      new Error("no legacy session")
+    );
   });
 
   it("returns 401 when not authenticated", async () => {
@@ -78,7 +83,7 @@ describe("GET /api/admin/users", () => {
     expect(res.body.error.code).toBe("NO_DATABASE");
   });
 
-  it("allows username-based admins through legacy sessions", async () => {
+  it("denies username-based admin policy through legacy sessions", async () => {
     vi.mocked(sdk.authenticateRequest).mockResolvedValue({
       id: 1,
       openId: "local:tbarnes@external.test",
@@ -113,11 +118,11 @@ describe("GET /api/admin/users", () => {
     const app = buildApp();
     const res = await request(app).get("/api/admin/users");
 
-    expect(res.status).toBe(503);
-    expect(res.body.error.code).toBe("NO_DATABASE");
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe("FORBIDDEN");
   });
 
-  it("keeps valid legacy admin sessions when the app_users lookup fails", async () => {
+  it("denies legacy admin sessions when the app_users lookup fails", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     vi.mocked(sdk.authenticateRequest).mockResolvedValue({
       id: 1,
@@ -133,13 +138,15 @@ describe("GET /api/admin/users", () => {
     vi.mocked(getDb)
       .mockResolvedValueOnce({} as Awaited<ReturnType<typeof getDb>>)
       .mockResolvedValueOnce(null);
-    vi.mocked(findAppUserByUsernameOrEmail).mockRejectedValue(new Error("app_users query failed"));
+    vi.mocked(findAppUserByUsernameOrEmail).mockRejectedValue(
+      new Error("app_users query failed")
+    );
 
     const app = buildApp();
     const res = await request(app).get("/api/admin/users");
 
-    expect(res.status).toBe(503);
-    expect(res.body.error.code).toBe("NO_DATABASE");
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe("FORBIDDEN");
   });
 
   it("returns 503 when database is unavailable", async () => {
