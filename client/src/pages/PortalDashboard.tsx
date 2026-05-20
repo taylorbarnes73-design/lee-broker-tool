@@ -116,7 +116,7 @@ export default function PortalDashboard() {
 
   return (
     <AdminPortalShell
-      section="dashboard"
+      section="submissions"
       eyebrow={isAdmin ? "Admin Portal" : "Broker Portal"}
       title={welcome}
       description={description}

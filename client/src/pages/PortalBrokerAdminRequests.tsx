@@ -128,7 +128,7 @@ export default function PortalBrokerAdminRequests() {
   if (user?.role !== "admin") {
     return (
       <AdminPortalShell
-        section="broker-admin"
+        section="submissions"
         title="Broker Admin"
         description="Admin access is required to view broker admin inbox requests."
         actions={
@@ -146,7 +146,7 @@ export default function PortalBrokerAdminRequests() {
 
   return (
     <AdminPortalShell
-      section="broker-admin"
+      section="submissions"
       title="Broker Admin"
       description="Shared inbox requests captured from email. Triage, track, and open detail to view attachments."
       actions={

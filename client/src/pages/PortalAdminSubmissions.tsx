@@ -109,7 +109,7 @@ export default function PortalAdminSubmissions() {
   if (user?.role !== "admin") {
     return (
       <AdminPortalShell
-        section="admin-submissions"
+        section="submissions"
         title="Admin Queue"
         description="Admin access is required to review all broker submissions."
         actions={
@@ -127,7 +127,7 @@ export default function PortalAdminSubmissions() {
 
   return (
     <AdminPortalShell
-      section="admin-submissions"
+      section="submissions"
       title="Admin queue"
       description="Review broker submissions, filter the queue, and open a detail workspace for deal submission."
       actions={

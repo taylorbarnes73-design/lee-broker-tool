@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Link, Route, Switch } from "wouter";
+import { Link, Route, Switch, useLocation } from "wouter";
 import { useEffect, type ReactNode } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -15,14 +15,19 @@ import PortalAdminSettings from "./pages/PortalAdminSettings";
 import PortalAdminDealiusTools from "./pages/PortalAdminDealiusTools";
 import PortalAdminListingImport from "./pages/PortalAdminListingImport";
 import PortalAccount from "./pages/PortalAccount";
-import PortalDashboard from "./pages/PortalDashboard";
 import PortalSubmissionDetail from "./pages/PortalSubmissionDetail";
 import PortalSubmissions from "./pages/PortalSubmissions";
-import { RequestHubLayout } from "./components/RequestHubLayout";
-import { RequestHubHome } from "./pages/RequestHubHome";
-import { RequestHubSubmit } from "./pages/RequestHubSubmit";
-import { RequestHubMyRequests } from "./pages/RequestHubMyRequests";
-import { RequestHubWorkflow } from "./pages/RequestHubWorkflow";
+
+/** Redirect component for renamed/merged routes */
+function Redirect({ to }: { to: string }) {
+  const [, setLocation] = useLocation();
+  useEffect(() => { setLocation(to); }, [to, setLocation]);
+  return (
+    <div className="portal-loading">
+      <div className="portal-loading-card">Redirecting…</div>
+    </div>
+  );
+}
 
 /**
  * Public landing for `/` - avoids sending everyone through `/tool` -> `/login`,
@@ -258,35 +263,39 @@ function Router() {
       <Route path="/" component={PublicHome} />
       <Route path="/login" component={Login} />
       <Route path="/portal/admin/login" component={AdminLoginEntry} />
-      <Route path="/portal/admin">
-        <AdminPortalRoute>
-          <PortalAdminSubmissions />
-        </AdminPortalRoute>
-      </Route>
-      <Route path="/portal">
-        <PortalRoute>
-          <PortalDashboard />
-        </PortalRoute>
-      </Route>
-      <Route path="/portal/dashboard">
-        <PortalRoute>
-          <PortalDashboard />
-        </PortalRoute>
-      </Route>
-      <Route path="/dashboard">
-        <PortalRoute>
-          <PortalDashboard />
-        </PortalRoute>
-      </Route>
+
+      {/* Primary submissions view (all users, replaces dashboard + separate queues) */}
       <Route path="/portal/submissions">
         <PortalRoute>
           <PortalSubmissions />
         </PortalRoute>
       </Route>
-      <Route path="/portal/account">
+      <Route path="/portal/submissions/:id">
         <PortalRoute>
-          <PortalAccount />
+          <PortalSubmissionDetail />
         </PortalRoute>
+      </Route>
+
+      {/* Legacy / alias routes → redirect to unified submissions */}
+      <Route path="/portal">
+        <PortalRoute>
+          <Redirect to="/portal/submissions" />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/dashboard">
+        <PortalRoute>
+          <Redirect to="/portal/submissions" />
+        </PortalRoute>
+      </Route>
+      <Route path="/dashboard">
+        <PortalRoute>
+          <Redirect to="/portal/submissions" />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/admin">
+        <AdminPortalRoute>
+          <Redirect to="/portal/submissions" />
+        </AdminPortalRoute>
       </Route>
       <Route path="/portal/admin/submissions">
         <AdminPortalRoute>
@@ -296,6 +305,30 @@ function Router() {
       <Route path="/portal/admin/broker-admin">
         <AdminPortalRoute>
           <PortalBrokerAdminRequests />
+        </AdminPortalRoute>
+      </Route>
+      <Route path="/portal/admin/broker-admin/:id">
+        <AdminPortalRoute>
+          <PortalBrokerAdminRequestDetail />
+        </AdminPortalRoute>
+      </Route>
+
+      {/* Account */}
+      <Route path="/portal/account">
+        <PortalRoute>
+          <PortalAccount />
+        </PortalRoute>
+      </Route>
+
+      {/* Settings group (Users + Audit Log grouped here in nav) */}
+      <Route path="/portal/admin/settings">
+        <AdminPortalRoute>
+          <PortalAdminSettings />
+        </AdminPortalRoute>
+      </Route>
+      <Route path="/admin/settings">
+        <AdminPortalRoute>
+          <PortalAdminSettings />
         </AdminPortalRoute>
       </Route>
       <Route path="/portal/admin/users">
@@ -308,11 +341,18 @@ function Router() {
           <PortalAdminUsers />
         </AdminPortalRoute>
       </Route>
-      <Route path="/portal/admin/settings">
+      <Route path="/portal/admin/audit-log">
         <AdminPortalRoute>
-          <PortalAdminSettings />
+          <PortalAdminAuditLog />
         </AdminPortalRoute>
       </Route>
+      <Route path="/admin/audit-log">
+        <AdminPortalRoute>
+          <PortalAdminAuditLog />
+        </AdminPortalRoute>
+      </Route>
+
+      {/* Tools group */}
       <Route path="/portal/admin/dealius-tools">
         <AdminPortalRoute>
           <PortalAdminDealiusTools />
@@ -328,59 +368,7 @@ function Router() {
           <PortalAdminListingImport />
         </AdminPortalRoute>
       </Route>
-      <Route path="/admin/settings">
-        <AdminPortalRoute>
-          <PortalAdminSettings />
-        </AdminPortalRoute>
-      </Route>
-      <Route path="/portal/admin/audit-log">
-        <AdminPortalRoute>
-          <PortalAdminAuditLog />
-        </AdminPortalRoute>
-      </Route>
-      <Route path="/admin/audit-log">
-        <AdminPortalRoute>
-          <PortalAdminAuditLog />
-        </AdminPortalRoute>
-      </Route>
-      <Route path="/portal/admin/broker-admin/:id">
-        <AdminPortalRoute>
-          <PortalBrokerAdminRequestDetail />
-        </AdminPortalRoute>
-      </Route>
-      <Route path="/portal/submissions/:id">
-        <PortalRoute>
-          <PortalSubmissionDetail />
-        </PortalRoute>
-      </Route>
-      <Route path="/portal/request-hub">
-        <PortalRoute>
-          <RequestHubLayout>
-            <RequestHubHome />
-          </RequestHubLayout>
-        </PortalRoute>
-      </Route>
-      <Route path="/portal/request-hub/submit">
-        <PortalRoute>
-          <RequestHubLayout>
-            <RequestHubSubmit />
-          </RequestHubLayout>
-        </PortalRoute>
-      </Route>
-      <Route path="/portal/request-hub/my-requests">
-        <PortalRoute>
-          <RequestHubLayout>
-            <RequestHubMyRequests />
-          </RequestHubLayout>
-        </PortalRoute>
-      </Route>
-      <Route path="/portal/request-hub/workflow">
-        <PortalRoute>
-          <RequestHubLayout>
-            <RequestHubWorkflow />
-          </RequestHubLayout>
-        </PortalRoute>
-      </Route>
+
       <Route component={BrokerToolRedirect} />
     </Switch>
   );

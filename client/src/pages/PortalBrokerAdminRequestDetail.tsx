@@ -66,7 +66,7 @@ export default function PortalBrokerAdminRequestDetail() {
   if (user?.role !== "admin") {
     return (
       <AdminPortalShell
-        section="broker-admin"
+        section="submissions"
         title="Broker Admin"
         description="Admin access is required."
         actions={
@@ -84,7 +84,7 @@ export default function PortalBrokerAdminRequestDetail() {
 
   return (
     <AdminPortalShell
-      section="broker-admin"
+      section="submissions"
       title={title}
       description="View the stored email metadata and attachments captured from the shared mailbox."
       actions={
