@@ -10137,7 +10137,7 @@ function initFreeAutocomplete() {
               
               dropdown.appendChild(item);
             });
-            setHiddenState(dropdown, results.length > 0 ? false : true);
+            setHiddenState(dropdown, results.length === 0);
           } else {
             setHiddenState(dropdown, true);
           }
@@ -10176,16 +10176,26 @@ document.addEventListener('DOMContentLoaded', () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // Store uploaded file metadata keyed by field id
+// uploadedFiles[fieldId] = Array<{ url, fileKey, filename }>
 const uploadedFiles = {};
 
+/**
+ * Upload a single File object to broker storage (used for brochures and
+ * specialised single-file flows such as property photos).
+ */
 async function uploadFileToBrokerStorage(file, category, fieldId, statusId, uploaderName) {
   const statusEl = document.getElementById(statusId);
   if (statusEl) {
     statusEl.innerHTML = '<span class="text-muted-sm">Uploading...</span>';
   }
 
+  const MAX_CLIENT_BYTES = 100 * 1024 * 1024; // 100 MB
+  if (file.size > MAX_CLIENT_BYTES) {
+    if (statusEl) statusEl.innerHTML = '<span class="text-error">File is too large (max 100 MB).</span>';
+    return;
+  }
+
   try {
-    // Read file as base64
     const base64Data = await new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result.split(',')[1]);
@@ -10213,37 +10223,130 @@ async function uploadFileToBrokerStorage(file, category, fieldId, statusId, uplo
     const result = data.result?.data?.json;
 
     if (result?.success) {
-      uploadedFiles[fieldId] = { url: result.url, fileKey: result.fileKey, filename: result.filename };
+      // Store as single-item array so downstream code can treat all fields uniformly
+      uploadedFiles[fieldId] = [{ url: result.url, fileKey: result.fileKey, filename: result.filename }];
       if (fieldId === 'c-property-photo') {
         compPropertyPhotoStorageUrl = result.url;
         if (!compPropertyPhotoFilename) compPropertyPhotoFilename = result.filename || file.name || 'Property photo';
         renderCompPhotoPreview();
       }
       if (statusEl) {
-        statusEl.innerHTML = `<span class="status-success">Stored: <a href="${result.url}" target="_blank" class="status-success">${result.filename}</a></span>
+        statusEl.innerHTML = `<span class="status-success">Stored: <a href="${result.url}" target="_blank" class="status-success">${escHtml(result.filename)}</a></span>
           <button onclick="clearUpload('${fieldId}','${statusId}')" class="upload-remove-btn">Remove</button>`;
       }
-      // Update zone appearance
       const zone = document.querySelector(`[data-field="${fieldId}"]`);
-      if (zone) {
-        zone.classList.add('upload-zone-success');
-        zone.classList.remove('upload-zone-active');
-      }
+      if (zone) { zone.classList.add('upload-zone-success'); zone.classList.remove('upload-zone-active'); }
     } else {
       throw new Error('Unexpected response');
     }
   } catch (err) {
     console.error('Upload error:', err);
-    if (fieldId === 'c-property-photo') {
-      compPropertyPhotoStorageUrl = '';
-      renderCompPhotoPreview();
-    }
-    if (statusEl) {
-      statusEl.innerHTML = '<span class="text-error">Upload failed. Try again.</span>';
-    }
+    if (fieldId === 'c-property-photo') { compPropertyPhotoStorageUrl = ''; renderCompPhotoPreview(); }
+    if (statusEl) statusEl.innerHTML = '<span class="text-error">Upload failed. Try again.</span>';
   }
 }
 
+/**
+ * Upload multiple File objects concurrently using files.uploadBatch.
+ * Used by upload zones that accept `multiple` files (documents, attachments).
+ */
+async function uploadFilesBatch(files, category, fieldId, statusId, uploaderName) {
+  const statusEl = document.getElementById(statusId);
+  if (!files || files.length === 0) return;
+
+  const MAX_CLIENT_BYTES = 100 * 1024 * 1024; // 100 MB per file
+  const MAX_FILES = 20;
+
+  // Build the valid list once; strip oversized files upfront
+  let validList = Array.from(files).slice(0, MAX_FILES);
+  const oversized = validList.filter(f => f.size > MAX_CLIENT_BYTES);
+  if (oversized.length > 0) {
+    if (statusEl) statusEl.innerHTML = `<span class="text-error">${oversized.length} file(s) exceed the 100 MB limit and were skipped.</span>`;
+    validList = validList.filter(f => f.size <= MAX_CLIENT_BYTES);
+    if (validList.length === 0) return;
+  }
+
+  if (statusEl) {
+    statusEl.innerHTML = `<span class="text-muted-sm">Uploading ${validList.length} file${validList.length > 1 ? 's' : ''}…</span>`;
+  }
+
+  try {
+    // Read all valid files as base64 in parallel
+    const filePayloads = await Promise.all(
+      validList.map(file =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve({
+            filename: file.name,
+            mimeType: file.type || 'application/octet-stream',
+            base64Data: reader.result.split(',')[1],
+            category,
+            reference: document.getElementById('v-address')?.value || document.getElementById('l-address')?.value || ''
+          });
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        })
+      )
+    );
+
+    const res = await fetch('/api/trpc/files.uploadBatch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ json: { files: filePayloads, uploaderName: uploaderName || '' } })
+    });
+
+    if (!res.ok) throw new Error('Batch upload failed: ' + res.statusText);
+    const data = await res.json();
+    const batchResult = data.result?.data?.json;
+
+    if (!batchResult || !Array.isArray(batchResult.results)) throw new Error('Unexpected batch response');
+
+    const succeeded = batchResult.results.filter(r => r.success);
+    const failed = batchResult.results.filter(r => !r.success);
+
+    // Merge into uploadedFiles array for this field
+    if (!Array.isArray(uploadedFiles[fieldId])) uploadedFiles[fieldId] = [];
+    succeeded.forEach(r => uploadedFiles[fieldId].push({ url: r.url, fileKey: r.fileKey, filename: r.filename }));
+
+    // Re-render the full status list
+    renderUploadStatus(fieldId, statusId);
+
+    if (failed.length > 0) {
+      const failMsg = document.createElement('div');
+      failMsg.className = 'text-error';
+      failMsg.style.fontSize = '12px';
+      failMsg.style.marginTop = '4px';
+      failMsg.textContent = failed.map(r => `${escHtml(r.filename)}: ${escHtml(r.error || 'failed')}`).join('; ');
+      if (statusEl) statusEl.appendChild(failMsg);
+    }
+
+    const zone = document.querySelector(`[data-field="${fieldId}"]`);
+    if (zone) {
+      if (succeeded.length > 0) { zone.classList.add('upload-zone-success'); }
+      zone.classList.remove('upload-zone-active');
+    }
+  } catch (err) {
+    console.error('Batch upload error:', err);
+    if (statusEl) statusEl.innerHTML = '<span class="text-error">Upload failed. Try again.</span>';
+  }
+}
+
+/** Render the list of uploaded files for a zone, with per-file remove buttons. */
+function renderUploadStatus(fieldId, statusId) {
+  const statusEl = document.getElementById(statusId);
+  if (!statusEl) return;
+  const files = uploadedFiles[fieldId];
+  if (!files || files.length === 0) { statusEl.innerHTML = ''; return; }
+  let html = '<div class="upload-file-list">';
+  files.forEach((f, i) => {
+    html += `<div class="upload-file-item"><a href="${f.url}" target="_blank" class="status-success upload-file-name">${escHtml(f.filename)}</a>` +
+      `<button class="upload-remove-btn" onclick="clearSingleUpload('${fieldId}','${statusId}',${i})">×</button></div>`;
+  });
+  html += '</div>';
+  statusEl.innerHTML = html;
+}
+
+/** Remove all files from an upload zone. */
 function clearUpload(fieldId, statusId) {
   delete uploadedFiles[fieldId];
   const statusEl = document.getElementById(statusId);
@@ -10251,14 +10354,22 @@ function clearUpload(fieldId, statusId) {
   const input = document.getElementById(fieldId);
   if (input) input.value = '';
   const zone = document.querySelector(`[data-field="${fieldId}"]`);
-  if (zone) {
-    zone.classList.remove('upload-zone-success');
-    zone.classList.remove('upload-zone-active');
+  if (zone) { zone.classList.remove('upload-zone-success', 'upload-zone-active'); }
+  if (fieldId === 'c-property-photo') { clearCompPhotoState(); renderCompPhotoPreview(); }
+}
+
+/** Remove a single file (by index) from a multi-file upload zone. */
+function clearSingleUpload(fieldId, statusId, index) {
+  if (!Array.isArray(uploadedFiles[fieldId])) return;
+  uploadedFiles[fieldId].splice(index, 1);
+  if (uploadedFiles[fieldId].length === 0) {
+    delete uploadedFiles[fieldId];
+    const zone = document.querySelector(`[data-field="${fieldId}"]`);
+    if (zone) zone.classList.remove('upload-zone-success');
+    const input = document.getElementById(fieldId);
+    if (input) input.value = '';
   }
-  if (fieldId === 'c-property-photo') {
-    clearCompPhotoState();
-    renderCompPhotoPreview();
-  }
+  renderUploadStatus(fieldId, statusId);
 }
 
 function initS3Uploads() {
@@ -10269,23 +10380,37 @@ function initS3Uploads() {
     const input = document.getElementById(fieldId);
     if (!input) return;
 
+    // Allow multiple file selection on all document upload zones (not the property-photo zone)
+    if (fieldId !== 'c-property-photo') {
+      input.setAttribute('multiple', 'multiple');
+    }
+
     input.addEventListener('change', () => {
-      const file = input.files[0];
-      if (!file) return;
-      if (fieldId === 'c-property-photo') loadCompPhotoPreview(file);
-      uploadFileToBrokerStorage(file, category, fieldId, statusId, '');
+      const files = input.files;
+      if (!files || files.length === 0) return;
+      if (fieldId === 'c-property-photo') {
+        // Single file, specialised preview handler
+        loadCompPhotoPreview(files[0]);
+        uploadFileToBrokerStorage(files[0], category, fieldId, statusId, '');
+      } else {
+        uploadFilesBatch(files, category, fieldId, statusId, '');
+      }
     });
 
-    // Drag & drop
+    // Drag & drop — accept all dropped files
     zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('upload-zone-active'); });
     zone.addEventListener('dragleave', () => { zone.classList.remove('upload-zone-active'); });
     zone.addEventListener('drop', e => {
       e.preventDefault();
       zone.classList.remove('upload-zone-active');
-      const file = e.dataTransfer.files[0];
-      if (!file) return;
-      if (fieldId === 'c-property-photo') loadCompPhotoPreview(file);
-      uploadFileToBrokerStorage(file, category, fieldId, statusId, '');
+      const files = e.dataTransfer?.files;
+      if (!files || files.length === 0) return;
+      if (fieldId === 'c-property-photo') {
+        loadCompPhotoPreview(files[0]);
+        uploadFileToBrokerStorage(files[0], category, fieldId, statusId, '');
+      } else {
+        uploadFilesBatch(files, category, fieldId, statusId, '');
+      }
     });
   });
 }
@@ -12369,7 +12494,7 @@ function hasVoucherComplianceAttachment() {
   const d = document.getElementById('v-doc-disclosure');
   const a = document.getElementById('v-doc-agreement');
   if ((d && d.files && d.files.length) || (a && a.files && a.files.length)) return true;
-  return Boolean(uploadedFiles['v-doc-disclosure'] || uploadedFiles['v-doc-agreement']);
+  return (uploadedFiles['v-doc-disclosure']?.length > 0) || (uploadedFiles['v-doc-agreement']?.length > 0);
 }
 
 function openSendToAdminModal(formType) {

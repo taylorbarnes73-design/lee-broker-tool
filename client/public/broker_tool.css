@@ -877,6 +877,14 @@ body.admin-mode .header .sub { display: none; }
 #dealius-tool .ai-btn-accept:hover { background: var(--red-dark); }
 #dealius-tool .ai-btn-dismiss { font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--stone); cursor: pointer; background: #fff; color: #6b7280; }
 #dealius-tool .ai-btn-dismiss:hover { border-color: var(--navy); color: var(--navy); }
+
+/* ── Voucher AI calculate panel ── */
+.ai-panel { background: #fcfcfa; border: 1px solid #e4e2dc; border-radius: 12px; padding: 16px 18px; }
+.ai-panel-header { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text2); margin-bottom: 12px; }
+.ai-calc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px 16px; }
+.ai-calc-row { display: flex; flex-direction: column; gap: 1px; }
+.ai-calc-label { font-size: 10px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+.ai-calc-val { font-size: 14px; font-weight: 700; color: var(--ink-800, var(--text)); }
 @media (max-width: 640px) {
   #dealius-tool .dx-cred-grid { grid-template-columns: 1fr; }
   #dealius-tool .dx-edit-grid, #dealius-tool .dx-edit-grid.dx-cols3 { grid-template-columns: 1fr 1fr; }
@@ -2926,6 +2934,34 @@ body.admin-mode #admin-view {
   background: none;
   border: none;
   cursor: pointer;
+}
+
+.upload-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 4px 0;
+}
+
+.upload-file-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.upload-file-name {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-file-item .upload-remove-btn {
+  flex-shrink: 0;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.6;
 }
 
 .status-strong {
