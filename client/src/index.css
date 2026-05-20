@@ -52,9 +52,9 @@
   /* Restored to the official Lee & Associates brand red (PMS 202). */
   --lee-red: #98002E;
   --lee-red-deep: #7A0024;
-  --lee-fog: #F8F7F4;
+  --lee-fog: #F9FAFB;
   --lee-cloud: #FFFFFF;
-  --lee-stone: #D4D1CA;
+  --lee-stone: #D1D5DB;
   --lee-slate: #7E8083;
   --primary: var(--lee-red);
   --primary-foreground: #FFFFFF;
@@ -66,28 +66,28 @@
   --chart-4: #8A941E;
   --chart-5: #A9C3CB;
   --radius: 0.65rem;
-  --background: #F8F7F4;
+  --background: #F9FAFB;
   --foreground: #303C42;
   --card: #FFFFFF;
   --card-foreground: #303C42;
   --popover: #FFFFFF;
   --popover-foreground: #303C42;
-  --secondary: #E2E1DD;
+  --secondary: #F0F2F4;
   --secondary-foreground: #303C42;
-  --muted: #E2E1DD;
+  --muted: #F0F2F4;
   --muted-foreground: #7E8083;
   --accent: #F4E3E8;
   --accent-foreground: #7A0024;
   --destructive: #CD1442;
   --destructive-foreground: #FFFFFF;
-  --border: #D4D1CA;
-  --input: #D4D1CA;
+  --border: #D1D5DB;
+  --input: #D1D5DB;
   --ring: rgba(152, 0, 46, 0.24);
   --sidebar: #FFFFFF;
   --sidebar-foreground: #303C42;
-  --sidebar-accent: #E2E1DD;
+  --sidebar-accent: #F0F2F4;
   --sidebar-accent-foreground: #303C42;
-  --sidebar-border: #D4D1CA;
+  --sidebar-border: #D1D5DB;
   --sidebar-ring: rgba(152, 0, 46, 0.24);
 }
 

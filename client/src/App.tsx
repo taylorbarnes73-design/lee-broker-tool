@@ -18,6 +18,11 @@ import PortalAccount from "./pages/PortalAccount";
 import PortalDashboard from "./pages/PortalDashboard";
 import PortalSubmissionDetail from "./pages/PortalSubmissionDetail";
 import PortalSubmissions from "./pages/PortalSubmissions";
+import { RequestHubLayout } from "./components/RequestHubLayout";
+import { RequestHubHome } from "./pages/RequestHubHome";
+import { RequestHubSubmit } from "./pages/RequestHubSubmit";
+import { RequestHubMyRequests } from "./pages/RequestHubMyRequests";
+import { RequestHubWorkflow } from "./pages/RequestHubWorkflow";
 
 /**
  * Public landing for `/` - avoids sending everyone through `/tool` -> `/login`,
@@ -346,6 +351,34 @@ function Router() {
       <Route path="/portal/submissions/:id">
         <PortalRoute>
           <PortalSubmissionDetail />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/request-hub">
+        <PortalRoute>
+          <RequestHubLayout>
+            <RequestHubHome />
+          </RequestHubLayout>
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/request-hub/submit">
+        <PortalRoute>
+          <RequestHubLayout>
+            <RequestHubSubmit />
+          </RequestHubLayout>
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/request-hub/my-requests">
+        <PortalRoute>
+          <RequestHubLayout>
+            <RequestHubMyRequests />
+          </RequestHubLayout>
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/request-hub/workflow">
+        <PortalRoute>
+          <RequestHubLayout>
+            <RequestHubWorkflow />
+          </RequestHubLayout>
         </PortalRoute>
       </Route>
       <Route component={BrokerToolRedirect} />
