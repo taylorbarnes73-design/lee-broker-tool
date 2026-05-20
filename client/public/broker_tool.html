@@ -3326,7 +3326,7 @@ function toggleLeaseTerm(val) {
 
 // ── Listing Review & Confirm Page ──
 function showListingReview() {
-  const formEl = document.getElementById('listing-add-mode');
+  const formShell = document.getElementById('l-deal-shell');
   const reviewPage = document.getElementById('listing-review-page');
   const postSubmit = document.getElementById('listing-post-submit');
   if (!reviewPage) return;
@@ -3375,24 +3375,19 @@ function showListingReview() {
 
   // Hide form, show review page
   const formActions = document.getElementById('listing-form-actions');
+  setHiddenState(formShell, true);
   setHiddenState(formActions, true);
-  // Hide all cards in listing-add-mode except the review page
-  const cards = document.querySelectorAll('#listing-add-mode > .card, #listing-add-mode > .optional-wrapper');
-  cards.forEach(c => { if (c.id !== 'listing-review-page') c.classList.add('is-hidden'); });
   setHiddenState(postSubmit, true);
   setHiddenState(reviewPage, false);
-  reviewPage.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function hideListingReview() {
+  const formShell = document.getElementById('l-deal-shell');
   const reviewPage = document.getElementById('listing-review-page');
   const formActions = document.getElementById('listing-form-actions');
   setHiddenState(reviewPage, true);
-  setHiddenState(formActions, false);
-  // Restore all cards
-  const cards = document.querySelectorAll('#listing-add-mode > .card, #listing-add-mode > .optional-wrapper');
-  cards.forEach(c => { c.classList.remove('is-hidden'); });
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  setHiddenState(formShell, false);
+  setHiddenState(formActions, true);
 }
 
 function submitListingToMLS(btn) {
@@ -3444,8 +3439,7 @@ function showListingSummary() {
         '<tr class="review-table-alt"><td class="summary-key-cell">MLS Pricing</td><td class="summary-value-cell">' + (reveal ? 'Visible' : 'Hidden') + '</td></tr>' +
       '</table>';
   }
-      setHiddenState(panel, false);
-  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setHiddenState(panel, false);
 }
 
 // ── Qty Stepper ──
@@ -3809,10 +3803,6 @@ function initStepFlow(opts) {
       this.renderStepper();
       this.renderSummaries();
       this.renderNav();
-      // Auto-scroll suppressed for Sign Request and Commission Voucher per user request.
-      if (opts.mainId !== 'sign-main' && opts.mainId !== 'voucher-main') {
-        main.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
       if (typeof opts.onStep === 'function') opts.onStep(i, cards[i]);
     },
     next() { this.go(this.current + 1); },
