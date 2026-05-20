@@ -36,6 +36,12 @@ type SubmissionDetail = {
     contacts?: string[];
     summary?: string;
   } | null;
+  // Assignment tracking (admin-only fields)
+  assignedTo?: string | null;
+  assignedToOpenId?: string | null;
+  assignedAt?: string | null;
+  completedBy?: string | null;
+  completedAt?: string | null;
 };
 
 type QueueMeta = {
@@ -286,7 +292,7 @@ export default function PortalSubmissionDetail() {
           : "Loading submission detail workspace."
       }
       actions={
-        <LinkButton href={user?.role === "admin" ? "/portal/admin/submissions" : "/portal/submissions"} variant="secondary">
+        <LinkButton href="/portal/submissions" variant="secondary">
           Back to queue
         </LinkButton>
       }
@@ -412,7 +418,7 @@ export default function PortalSubmissionDetail() {
                     <strong>{item.submittedBy || item.submittedByEmail || "Unknown"}</strong>
                   </div>
                   <div>
-                    <span>Created</span>
+                    <span>Submitted</span>
                     <strong>{new Date(item.createdAt).toLocaleString()}</strong>
                   </div>
                   <div>
@@ -428,19 +434,56 @@ export default function PortalSubmissionDetail() {
                       </strong>
                     </div>
                   )}
+                  {/* Assignment / completion info — only admins see who is working on what */}
+                  {user?.role === "admin" && item.assignedTo && (
+                    <div>
+                      <span>Assigned to</span>
+                      <strong>
+                        {item.assignedTo}
+                        {item.assignedAt ? ` · ${new Date(item.assignedAt).toLocaleDateString()}` : ""}
+                      </strong>
+                    </div>
+                  )}
+                  {user?.role === "admin" && item.completedBy && (
+                    <div>
+                      <span>Completed by</span>
+                      <strong>
+                        {item.completedBy}
+                        {item.completedAt ? ` · ${new Date(item.completedAt).toLocaleString()}` : ""}
+                      </strong>
+                    </div>
+                  )}
                 </div>
                 {user?.role === "admin" && (
                   <div className="admin-status-actions">
-                    {["pending", "in_review", "approved", "rejected"].map(status => (
-                      <Button
-                        key={status}
-                        variant={item.status === status ? "primary" : "secondary"}
-                        disabled={updatingStatus !== null || item.status === status}
-                        onClick={() => updateStatus(status)}
-                      >
-                        {updatingStatus === status ? "Updating…" : formatSubmissionStatus(status)}
-                      </Button>
-                    ))}
+                    <Button
+                      variant={item.status === "pending" ? "primary" : "secondary"}
+                      disabled={updatingStatus !== null || item.status === "pending"}
+                      onClick={() => updateStatus("pending")}
+                    >
+                      {updatingStatus === "pending" ? "Updating…" : "Requeue"}
+                    </Button>
+                    <Button
+                      variant={item.status === "in_review" ? "primary" : "secondary"}
+                      disabled={updatingStatus !== null || item.status === "in_review"}
+                      onClick={() => updateStatus("in_review")}
+                    >
+                      {updatingStatus === "in_review" ? "Updating…" : item.assignedTo ? "Reassign to me" : "Claim & start"}
+                    </Button>
+                    <Button
+                      variant={item.status === "approved" ? "primary" : "secondary"}
+                      disabled={updatingStatus !== null || item.status === "approved"}
+                      onClick={() => updateStatus("approved")}
+                    >
+                      {updatingStatus === "approved" ? "Updating…" : "Mark complete"}
+                    </Button>
+                    <Button
+                      variant={item.status === "rejected" ? "primary" : "secondary"}
+                      disabled={updatingStatus !== null || item.status === "rejected"}
+                      onClick={() => updateStatus("rejected")}
+                    >
+                      {updatingStatus === "rejected" ? "Updating…" : "Reject"}
+                    </Button>
                   </div>
                 )}
               </section>

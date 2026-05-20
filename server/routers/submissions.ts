@@ -486,12 +486,27 @@ export const submissionsRouter = router({
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
       }
 
+      // Fetch current status to compute assignment side-effects only on actual transitions
+      const existingRows = await db.select({ status: submissions.status }).from(submissions).where(eq(submissions.id, input.id)).limit(1);
+      const currentStatus = existingRows[0]?.status ?? "";
+
+      const now = new Date();
+      const adminName = ctx.user.name || ctx.user.email || ctx.user.openId;      const patch: Record<string, unknown> = { status: input.status, updatedAt: now };
+
+      if (input.status !== currentStatus) {
+        if (input.status === "in_review") {
+          patch.assignedTo = adminName;
+          patch.assignedToOpenId = ctx.user.openId;
+          patch.assignedAt = now;
+        } else if (input.status === "approved" || input.status === "closed") {
+          patch.completedBy = adminName;
+          patch.completedAt = now;
+        }
+      }
+
       await db
         .update(submissions)
-        .set({
-          status: input.status,
-          updatedAt: new Date(),
-        })
+        .set(patch as any)
         .where(eq(submissions.id, input.id));
 
       return { success: true as const };

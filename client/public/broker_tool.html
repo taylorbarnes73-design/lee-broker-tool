@@ -7760,7 +7760,7 @@ function collectVoucherData() {
 
 function statusBadge(status) {
   const map = { pending: 'badge-pending', approved: 'badge-approved', rejected: 'badge-rejected', in_review: 'badge-review' };
-  const labels = { pending: 'Pending', approved: 'Approved', rejected: 'Rejected', in_review: 'In Review' };
+  const labels = { pending: 'Pending', approved: 'Complete', rejected: 'Not accepted', in_review: 'In progress', closed: 'Closed', cancelled: 'Cancelled' };
   return '<span class="badge ' + (map[status]||'') + '">' + (labels[status]||status) + '</span>';
 }
 
@@ -11264,6 +11264,17 @@ input.ai-smart, select.ai-smart, textarea.ai-smart {
 }
 input.ai-filled, select.ai-filled, textarea.ai-filled { animation: ai-pulse 0.5s ease-out; }
 input.ai-smart, select.ai-smart, textarea.ai-smart { animation: ai-pulse-amber 0.5s ease-out; }
+
+/* ---- Broker queue progress pipeline ---- */
+.q-pipeline{display:flex;align-items:center;gap:0;margin:8px 0 6px}
+.q-step{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:60px}
+.q-dot{display:block;width:11px;height:11px;border-radius:50%;background:var(--ink-200);flex-shrink:0;transition:background .2s}
+.q-dot.q-dot-on{background:#98002E}
+.q-line{display:block;flex:1;height:2px;min-width:20px;max-width:44px;background:var(--ink-200);margin:0 2px 14px;transition:background .2s}
+.q-line.q-line-on{background:#98002E}
+.q-step-label{font-size:11px;font-weight:400;color:var(--ink-400);white-space:nowrap}
+.q-step-label.q-step-label-on{font-weight:700;color:var(--ink-900)}
+.q-rejected .q-not-accepted{font-size:11px;font-weight:700;color:#A1102F;padding:3px 8px;border-radius:999px;background:rgba(205,20,66,.08)}
 </style>
 
 <button class="ai-fab" id="ai-fab" title="AI Assist" onclick="toggleAiPanel()">
@@ -11656,15 +11667,38 @@ function renderBrokerQueue(data) {
     .slice()
     .sort((a, b) => Number(a.position || 0) - Number(b.position || 0))
     .map(item => {
-      const position = Number(item.position) || 0;
+      const status = item.status || 'pending';
       const ahead = Number(item.aheadCount) || 0;
       const reference = item.reference || item.payload?.address || item.payload?.propertyAddress || 'No property reference';
+      const isDone = status === 'approved' || status === 'closed';
+      const isInProgress = status === 'in_review';
+      const isRejected = status === 'rejected' || status === 'cancelled';
+      const step2 = isInProgress || isDone;
+      const step3 = isDone;
+      const dot = (on) => '<span class="q-dot' + (on ? ' q-dot-on' : '') + '"></span>';
+      const line = (on) => '<span class="q-line' + (on ? ' q-line-on' : '') + '"></span>';
+      const lbl = (label, on) => '<span class="q-step-label' + (on ? ' q-step-label-on' : '') + '">' + escapeQueueHtml(label) + '</span>';
+      let queueText;
+      if (isDone) queueText = 'Your submission is complete.';
+      else if (isInProgress) queueText = 'Your submission is being processed.';
+      else if (isRejected) queueText = 'Not accepted.';
+      else if (ahead === 0) queueText = "You're next in queue.";
+      else queueText = ahead + ' submission' + (ahead === 1 ? '' : 's') + ' ahead of yours.';
+      const pipelineHtml = isRejected
+        ? '<div class="q-pipeline q-rejected"><span class="q-not-accepted">Not accepted</span></div>'
+        : '<div class="q-pipeline">' +
+            '<div class="q-step">' + dot(true) + lbl('Submitted', true) + '</div>' +
+            line(step2) +
+            '<div class="q-step">' + dot(step2) + lbl('In progress', step2) + '</div>' +
+            line(step3) +
+            '<div class="q-step">' + dot(step3) + lbl('Complete', step3) + '</div>' +
+          '</div>';
       return '<div class="queue-item">' +
-        '<div class="queue-position"><span class="queue-number">#' + position + '</span><small class="queue-label">in line</small></div>' +
         '<div class="queue-item-main">' +
-          '<div class="queue-item-top"><span class="badge badge-pending">' + escapeQueueHtml(formatQueueFormType(item.formType)) + '</span><span class="cell-mono-sm">SUB-' + escapeQueueHtml(String(item.id).padStart(4, '0')) + '</span><span>' + statusBadge(item.status || 'pending') + '</span></div>' +
+          '<div class="queue-item-top"><span class="badge badge-pending">' + escapeQueueHtml(formatQueueFormType(item.formType)) + '</span><span class="cell-mono-sm">SUB-' + escapeQueueHtml(String(item.id).padStart(4, '0')) + '</span></div>' +
           '<div class="queue-item-title queue-title">' + escapeQueueHtml(reference) + '</div>' +
-          '<div class="queue-item-meta queue-detail">' + escapeQueueHtml(ahead + ' ahead of you') + ' &middot; Submitted ' + escapeQueueHtml(formatQueueDate(item.createdAt)) + '</div>' +
+          pipelineHtml +
+          '<div class="queue-item-meta queue-detail">' + escapeQueueHtml(queueText) + ' &middot; Submitted ' + escapeQueueHtml(formatQueueDate(item.createdAt)) + '</div>' +
         '</div>' +
       '</div>';
     })

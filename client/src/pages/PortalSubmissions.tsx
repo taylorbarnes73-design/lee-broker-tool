@@ -7,6 +7,7 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import { Button, Card } from "../design/index.jsx";
 import {
   brokerAdminStatusTone,
+  brokerQueueStatusText,
   formatBrokerAdminStatus,
   formatFormType,
   formatSubmissionStatus,
@@ -23,6 +24,16 @@ const INPUT_STYLE = {
   color: "var(--ink-900)",
 } as const;
 
+const ASSIGNEE_CHIP_STYLE = {
+  marginLeft: 8,
+  padding: "1px 7px",
+  borderRadius: 999,
+  background: "rgba(0,49,70,0.08)",
+  color: "var(--ink-700)",
+  fontSize: 11,
+  fontWeight: 600,
+} as const;
+
 /* ── types ────────────────────────────────────────────────────────── */
 type SubmissionRow = {
   id: number;
@@ -35,6 +46,11 @@ type SubmissionRow = {
   queuePosition: number | null;
   source?: string | null;
   sourceEmailWebLink?: string | null;
+  // Admin-only assignment fields
+  assignedTo?: string | null;
+  assignedAt?: string | null;
+  completedBy?: string | null;
+  completedAt?: string | null;
 };
 
 type BrokerAdminRow = {
@@ -82,6 +98,55 @@ function StatCard({ label, value, hint, loading }: { label: string; value: numbe
   );
 }
 
+/* ── progress pipeline (broker-facing) ────────────────────────────── */
+const PIPELINE_STEPS = ["Submitted", "In progress", "Complete"] as const;
+
+function stepIndexForStatus(status: string): number {
+  switch (status) {
+    case "pending": return 0;
+    case "in_review": return 1;
+    case "approved":
+    case "closed": return 2;
+    default: return 0;
+  }
+}
+
+function ProgressPipeline({ status, queuePosition }: { status: string; queuePosition: number | null }) {
+  const isRejected = status === "rejected" || status === "cancelled";
+  const activeStep = stepIndexForStatus(status);
+  const accent = "#98002E";
+  const dotGreen = "rgba(138, 148, 30, 0.9)";
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 0, marginTop: 8, marginBottom: 6 }}>
+        {PIPELINE_STEPS.map((label, idx) => {
+          const done = activeStep > idx;
+          const active = activeStep === idx && !isRejected;
+          const dotColor = done ? dotGreen : active ? accent : "var(--ink-200)";
+          const textColor = done || active ? "var(--ink-900)" : "var(--ink-400)";
+          return (
+            <div key={label} style={{ display: "flex", alignItems: "center", flexShrink: idx === 1 ? 1 : 0 }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, minWidth: 64 }}>
+                <div style={{ width: 12, height: 12, borderRadius: "50%", background: dotColor, flexShrink: 0, boxShadow: active ? `0 0 0 3px ${accent}22` : "none" }} />
+                <span style={{ fontSize: 11, fontWeight: done || active ? 700 : 400, color: textColor, whiteSpace: "nowrap" }}>{label}</span>
+              </div>
+              {idx < PIPELINE_STEPS.length - 1 && (
+                <div style={{ flex: 1, height: 2, minWidth: 24, maxWidth: 48, background: done ? dotGreen : "var(--ink-150)", margin: "0 2px", marginBottom: 14 }} />
+              )}
+            </div>
+          );
+        })}
+        {isRejected && (
+          <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 700, color: "#A1102F", marginBottom: 12 }}>Not accepted</span>
+        )}
+      </div>
+      <div style={{ fontSize: 12, color: "var(--ink-500)" }}>
+        {brokerQueueStatusText(status, queuePosition)}
+      </div>
+    </div>
+  );
+}
+
 /* ── broker view: own submissions ─────────────────────────────────── */
 function BrokerSubmissions() {
   const [items, setItems] = useState<SubmissionRow[]>([]);
@@ -120,16 +185,15 @@ function BrokerSubmissions() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {items.map(s => (
-        <Link key={s.id} href={`/portal/submissions/${s.id}`} style={{ textDecoration: "none", display: "flex", justifyContent: "space-between", gap: 12, padding: 12, borderRadius: 10, border: "1px solid var(--ink-200)", background: "white", color: "inherit" }}>
-          <div style={{ minWidth: 0 }}>
+        <Link key={s.id} href={`/portal/submissions/${s.id}`} style={{ textDecoration: "none", display: "flex", flexDirection: "column", gap: 4, padding: "12px 14px", borderRadius: 10, border: "1px solid var(--ink-200)", background: "white", color: "inherit" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
             <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>#{s.id} · {s.reference || "(untitled)"}</div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6, flexWrap: "wrap" }}>
-              <StatusBadge tone={submissionStatusTone(s.status)} size="sm">{formatSubmissionStatus(s.status)}</StatusBadge>
-              <span style={{ fontSize: 12, color: "var(--ink-500)" }}>{formatFormType(s.formType)}</span>
-              {s.queuePosition !== null && <span style={{ fontSize: 12, color: "var(--ink-500)" }}>Queue #{s.queuePosition}</span>}
-            </div>
+            <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>{new Date(s.createdAt).toLocaleString()}</div>
           </div>
-          <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>{new Date(s.createdAt).toLocaleString()}</div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <span style={{ fontSize: 12, color: "var(--ink-500)" }}>{formatFormType(s.formType)}</span>
+          </div>
+          <ProgressPipeline status={s.status} queuePosition={s.queuePosition} />
         </Link>
       ))}
     </div>
@@ -219,6 +283,11 @@ function AdminSubmissions() {
                 </div>
                 <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 5 }}>
                   {s.submittedBy || "(unknown)"}{s.submittedByEmail ? ` · ${s.submittedByEmail}` : ""}
+                  {s.assignedTo && (
+                    <span style={ASSIGNEE_CHIP_STYLE}>
+                      → {s.assignedTo}
+                    </span>
+                  )}
                 </div>
               </div>
               <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>{new Date(s.createdAt).toLocaleString()}</div>
@@ -412,8 +481,8 @@ export default function PortalSubmissions() {
       <div className="admin-portal-card">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 16 }}>
           <StatCard label="Pending" value={stats?.pending ?? 0} loading={statsLoading} hint="Awaiting first review." />
-          <StatCard label="In review" value={stats?.inReview ?? 0} loading={statsLoading} hint="Being processed now." />
-          <StatCard label="Active in queue" value={stats?.active ?? 0} loading={statsLoading} hint="Pending + in review combined." />
+          <StatCard label="In progress" value={stats?.inReview ?? 0} loading={statsLoading} hint="Claimed and being processed." />
+          <StatCard label="Active in queue" value={stats?.active ?? 0} loading={statsLoading} hint="Pending + in progress combined." />
         </div>
       </div>
 
