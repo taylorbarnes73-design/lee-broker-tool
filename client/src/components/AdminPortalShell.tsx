@@ -24,7 +24,8 @@ type AdminPortalSection =
   | "listing-import"
   | "audit-log"
   | "account"
-  | "detail";
+  | "detail"
+  | "request-hub";
 
 type AdminPortalShellProps = {
   section: AdminPortalSection;
@@ -160,6 +161,10 @@ export default function AdminPortalShell({
           <span>Broker submission tool</span>
           <small>Listings, comps, PDFs</small>
         </a>
+        <Link href="/portal/request-hub" className={`admin-portal-nav-item ${section === "request-hub" ? "active" : ""}`}>
+          <span>Request Hub</span>
+          <small>HR, IT, Facilities</small>
+        </Link>
       </nav>
 
       {isAdmin && (
