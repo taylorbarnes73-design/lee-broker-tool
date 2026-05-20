@@ -491,7 +491,8 @@ export const submissionsRouter = router({
       const currentStatus = existingRows[0]?.status ?? "";
 
       const now = new Date();
-      const adminName = ctx.user.name || ctx.user.email || ctx.user.openId;      const patch: Record<string, unknown> = { status: input.status, updatedAt: now };
+      const adminName = ctx.user.name || ctx.user.email || ctx.user.openId;
+      const patch: Record<string, unknown> = { status: input.status, updatedAt: now };
 
       if (input.status !== currentStatus) {
         if (input.status === "in_review") {
