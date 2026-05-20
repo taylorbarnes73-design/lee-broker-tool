@@ -6793,208 +6793,136 @@ body.broker-active .sub-tab-bar {
   }
 }
 
-/* ── Listing + voucher polish ───────────────────────────────────────── */
-.card-lead {
-  margin: 10px 0 0;
-  color: #5F6670;
-  font-size: 13px;
-  line-height: 1.6;
-  max-width: 70ch;
+/* ── Focused listing + voucher cleanup ─────────────────────────────── */
+#tab-listing .listing-type-field {
+  margin-bottom: 18px;
 }
 
-.form-slab,
-.table-slab,
-.agent-panel,
-#property-details-card .type-section.visible {
-  margin-top: 18px;
-  padding: 22px 22px 20px;
-  border: 1px solid #E8EAEE;
-  border-radius: 16px;
-  background: linear-gradient(180deg, #FFFFFF 0%, #FAFBFC 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+#tab-listing .listing-core-row {
+  align-items: end;
 }
 
-.form-slab:first-of-type,
-.table-slab:first-of-type,
-.agent-panel-grid:first-of-type {
+#tab-listing .listing-type-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+#tab-listing .listing-type-opt {
+  min-height: 116px;
+  justify-content: flex-start;
+}
+
+#tab-listing .listing-type-opt .lto-sub {
+  max-width: 28ch;
+}
+
+#tab-listing .suite-table,
+#tab-voucher .broker-table,
+#tab-voucher .suite-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #E7EAEE;
+  border-radius: 12px;
+  background: #fff;
+}
+
+#tab-listing .suite-table th,
+#tab-voucher .broker-table th,
+#tab-voucher .suite-table th {
+  background: #F5F7F9;
+  color: #55606C;
+}
+
+#tab-listing .suite-table td,
+#tab-voucher .broker-table td,
+#tab-voucher .suite-table td {
+  border-bottom-color: #ECEFF3;
+}
+
+#tab-listing .suite-table tbody tr:nth-child(even) td,
+#tab-voucher .broker-table tbody tr:nth-child(even) td,
+#tab-voucher .suite-table tbody tr:nth-child(even) td {
+  background: #FBFCFD;
+}
+
+#tab-listing .upload-zone,
+#tab-listing .brochure-zone,
+#tab-voucher .upload-zone {
+  background: #FBFCFD;
+}
+
+#tab-listing .upload-zone-inner:hover,
+#tab-listing .brochure-zone-inner:hover,
+#tab-voucher .upload-zone-inner:hover {
+  background: #F5F7F9;
+}
+
+#tab-voucher .section-divider {
   margin-top: 20px;
+  padding-top: 16px;
+  border-top-color: #E7EAEE;
 }
 
-.form-slab-compact {
+#tab-voucher .voucher-agent-grid,
+#tab-voucher .voucher-party-grid {
+  gap: 18px;
+}
+
+#tab-voucher .voucher-agent-grid > div,
+#tab-voucher .voucher-party-grid > div {
+  padding: 18px 18px 16px;
+  border: 1px solid #E7EAEE;
+  border-radius: 12px;
+  background: #fff;
+}
+
+#tab-voucher .voucher-subsection {
+  margin-top: 20px;
   padding-top: 18px;
-  padding-bottom: 18px;
+  border-top: 1px solid #E7EAEE;
 }
 
-.form-slab-accent {
-  background: linear-gradient(180deg, rgba(152, 0, 46, 0.045) 0%, #FFFFFF 100%);
+#tab-voucher .voucher-subsection.section-divider {
+  padding-top: 18px;
 }
 
-.form-slab-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 18px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid #ECEFF3;
-}
-
-.form-slab-kicker {
-  margin-bottom: 6px;
-  color: #8A9098;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.form-slab-title {
-  margin: 0;
-  color: #111827;
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: -0.015em;
-  line-height: 1.25;
-}
-
-.form-slab-copy {
-  margin: 0;
-  max-width: 360px;
-  color: #68707A;
-  font-size: 12.5px;
-  line-height: 1.55;
-}
-
-.form-slab > :first-child:is(.row, .field, .toggle-row),
-.table-slab > :first-child:is(table, .row),
-.agent-panel > :first-child:is(.field, .row) {
+#tab-voucher .voucher-subsection > h3:first-child {
   margin-top: 0;
 }
 
-.form-slab .sub-divider-label,
-.agent-panel .sub-divider-label {
-  margin-bottom: 14px;
-  color: #4B5563;
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
+#tab-voucher .voucher-upload-grid {
+  gap: 20px;
 }
 
-.table-slab .suite-table,
-.form-slab .suite-table,
-.form-slab .broker-table {
-  margin-top: 10px;
+#tab-voucher .voucher-summary-row .field {
+  padding: 14px;
+  border: 1px solid #E7EAEE;
+  border-radius: 10px;
+  background: #fff;
 }
 
-.table-slab .suite-table th,
-.form-slab .suite-table th,
-.form-slab .broker-table th {
-  background: #F4F6F8;
-  color: #4B5563;
-}
-
-.table-slab .suite-table td,
-.form-slab .suite-table td,
-.form-slab .broker-table td {
-  background: transparent;
-}
-
-.table-slab .suite-table tbody tr:nth-child(even) td,
-.form-slab .suite-table tbody tr:nth-child(even) td,
-.form-slab .broker-table tbody tr:nth-child(even) td {
-  background: rgba(248, 249, 251, 0.85);
-}
-
-.agent-panel-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-  margin-top: 18px;
-}
-
-.agent-panel {
-  margin-top: 0;
-}
-
-.agent-panel .agent-picker .agent-dd {
-  border-top: 1px solid #E5E7EB;
-}
-
-.form-slab .upload-zone,
-.form-slab .brochure-zone {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: #D8DDE5;
-}
-
-.form-slab .upload-zone:hover,
-.form-slab .brochure-zone:hover {
-  border-color: #98002E;
-}
-
-.form-slab .upload-zone-inner:hover,
-.form-slab .brochure-zone-inner:hover {
-  background: #F8F9FB;
-}
-
-.reference-card {
-  border: 1px solid #E8EAEE;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #FBFCFD 0%, #FFFFFF 100%);
-}
-
-.reference-card .reference-copy {
-  margin: 0;
-  color: #5F6670;
-  font-size: 12.5px;
-  line-height: 1.55;
-}
-
-#property-details-card .type-section.visible .row:first-of-type {
-  margin-top: 0;
-}
-
-#property-details-card .micro-copy-bottom {
-  margin-bottom: 18px;
-}
-
-#voucher-attachment-required-msg {
-  margin: 14px 0 0;
-}
-
-.branch-toggle-wrap + .branch-slab {
-  margin-top: 14px;
+#tab-voucher .reference-card {
+  background: #FBFCFD;
+  border-color: #DDE2E8;
 }
 
 @media (max-width: 960px) {
-  .form-slab-header {
-    flex-direction: column;
-  }
-
-  .form-slab-copy {
-    max-width: none;
-  }
-
-  .agent-panel-grid {
+  #tab-voucher .voucher-summary-row {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 720px) {
-  .form-slab,
-  .table-slab,
-  .agent-panel,
-  #property-details-card .type-section.visible {
-    padding: 18px 16px 16px;
-    border-radius: 14px;
+  #tab-listing .listing-type-opt {
+    min-height: 0;
   }
 
-  .form-slab-header {
-    gap: 12px;
-    margin-bottom: 14px;
-    padding-bottom: 12px;
+  #tab-voucher .voucher-agent-grid > div,
+  #tab-voucher .voucher-party-grid > div,
+  #tab-voucher .voucher-summary-row .field {
+    padding: 14px;
   }
 
-  .form-slab-title {
-    font-size: 15px;
+  #tab-voucher .voucher-subsection {
+    padding: 14px 0 0;
   }
 }
