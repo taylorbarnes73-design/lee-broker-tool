@@ -6507,3 +6507,288 @@ a:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* BROKER SIDEBAR LAYOUT                                                       */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* When broker view is active: hide header user/portal actions (moved to sidebar) */
+body.broker-active .header-account { display: none !important; }
+body.broker-active #header-admin-settings-link { display: none !important; }
+
+/* broker-view becomes a flex container: sidebar + content */
+body.broker-active #broker-view {
+  display: flex !important;
+  align-items: flex-start;
+  min-height: 100vh;
+}
+
+/* Hide the old top tab-bar — sidebar nav replaces it */
+body.broker-active #broker-view > .tab-bar {
+  display: none !important;
+}
+
+/* Active panel fills remaining width */
+body.broker-active #broker-view > .panel.active {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Fix sticky offset positions — header still visible above, just shrunken */
+body.broker-active .progress-bar-wrap {
+  top: 0;
+}
+body.broker-active .deal-aside {
+  top: 16px;
+  max-height: calc(100vh - 32px);
+}
+body.broker-active .sub-tab-bar {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+}
+
+/* ── Sidebar shell ──────────────────────────────────────────────────── */
+.broker-sidebar {
+  width: 236px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.97);
+  padding: 18px 14px 20px;
+  gap: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  z-index: 20;
+}
+
+.broker-sidebar-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 6px 14px;
+  margin-bottom: 6px;
+}
+
+.broker-sidebar-logo {
+  height: 30px;
+  width: auto;
+}
+
+.broker-sidebar-rule {
+  width: 100%;
+  height: 1px;
+  background: var(--text2);
+  opacity: 0.3;
+}
+
+.broker-sidebar-subtitle {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text2);
+}
+
+/* ── Sidebar nav items (share .tab class so switchTab auto-updates active) ── */
+.broker-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.broker-sidebar .tab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border-bottom: none !important;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b7178;
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s;
+  user-select: none;
+  white-space: nowrap;
+  margin-right: 0;
+}
+
+.broker-sidebar .tab:hover {
+  background: rgba(152, 0, 46, 0.07);
+  color: var(--red);
+}
+
+.broker-sidebar .tab.active {
+  background: rgba(152, 0, 46, 0.11);
+  color: var(--red);
+  border-bottom: none !important;
+  border-radius: 8px;
+}
+
+.broker-sidebar .tab svg {
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.broker-sidebar .tab.active svg {
+  opacity: 1;
+}
+
+/* ── User footer ────────────────────────────────────────────────────── */
+.broker-sidebar-spacer {
+  flex: 1;
+  min-height: 14px;
+}
+
+.broker-sidebar-user {
+  border-top: 1px solid var(--border);
+  padding: 14px 6px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.broker-sidebar-user-info {
+  padding: 0 2px;
+}
+
+.broker-sidebar-user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.broker-sidebar-user-email {
+  font-size: 11px;
+  color: var(--text2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.broker-sidebar-user-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.broker-sidebar-action {
+  display: block;
+  padding: 7px 10px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text2);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background 0.14s, color 0.14s;
+}
+
+.broker-sidebar-action:hover {
+  background: rgba(152, 0, 46, 0.07);
+  color: var(--red);
+}
+
+.broker-sidebar-action.is-hidden {
+  display: none !important;
+}
+
+/* ── Mobile: hamburger + slide-in ───────────────────────────────────── */
+.broker-hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.broker-hamburger:hover {
+  background: rgba(152, 0, 46, 0.06);
+  color: var(--red);
+}
+
+.broker-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 40;
+}
+
+.broker-sidebar-overlay.active {
+  display: block;
+}
+
+.broker-sidebar-close {
+  display: none;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+}
+
+@media (max-width: 880px) {
+  body.broker-active .broker-hamburger {
+    display: inline-flex;
+  }
+
+  .broker-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(86vw, 280px);
+    height: 100vh;
+    max-height: 100vh;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease-out;
+    z-index: 50;
+    box-shadow: 0 30px 60px rgba(15, 23, 42, 0.18);
+  }
+
+  .broker-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .broker-sidebar-close {
+    display: inline-flex;
+  }
+
+  body.broker-active #broker-view > .panel.active {
+    width: 100%;
+    flex: none;
+  }
+}
