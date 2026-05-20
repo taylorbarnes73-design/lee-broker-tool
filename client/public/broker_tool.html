@@ -71,13 +71,24 @@
     <button class="sub-tab" id="subtab-mod" onclick="switchListingMode('mod')">Listing Modification</button>
   </div>
 
+  <div class="page-head broker-page-head">
+    <div class="page-head-left">
+      <div class="page-eyebrow">Broker Submission</div>
+      <h1 class="page-h1">Listing Entry</h1>
+    </div>
+    <div class="page-head-right">
+      <div class="page-meta-chip"><span class="dot"></span>Draft saved locally</div>
+    </div>
+  </div>
+
   <div id="listing-add-mode">
-    <div class="tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections as needed.</div>
+    <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections as needed.</div>
 
     <div class="deal-shell" id="l-deal-shell">
     <div class="deal-main" id="listing-main">
+    <div class="stepper" data-stepper-for="listing-main"></div>
 
-    <div class="card required-section" data-lstep="1">
+    <div class="card required-section" data-lstep="1" data-step-label="Property Type" data-card-eyebrow="Step 1 of 4">
       <h2>Add Listing <span class="required-badge">Required</span></h2>
       <div class="row c4">
         <div class="field"><label class="req">Date Entered</label><input id="l-date-entered" type="date"></div>
@@ -255,7 +266,7 @@
       </div>
     </div><!-- end required-section -->
 
-    <div class="card" data-lstep="2">
+    <div class="card" data-lstep="2" data-step-label="Listing Agents" data-card-eyebrow="Step 2 of 4">
       <h2>Listing Agents</h2>
       <table class="suite-table" id="listing-agent-table">
         <thead><tr><th>Agent Name</th><th>Phone</th><th>Email</th><th class="table-col-wide">Shared Expenses %</th><th class="table-col-narrow"></th></tr></thead>
@@ -265,7 +276,7 @@
       <p class="micro-copy micro-copy-top">Shared Expenses: commission split / cost sharing between co-listing agents.</p>
     </div>
 
-    <div class="card" data-lstep="3">
+    <div class="card" data-lstep="3" data-step-label="Release" data-card-eyebrow="Step 3 of 4">
       <h2>Release Instructions</h2>
       <h3>Listing Release</h3>
       <div class="check-group">
@@ -281,7 +292,7 @@
       </div>
     </div>
 
-    <div class="card" id="property-details-card" data-lstep="4">
+    <div class="card" id="property-details-card" data-lstep="4" data-step-label="Property Details" data-card-eyebrow="Step 4 of 4">
       <h2>Property Details</h2>
     <p class="micro-copy micro-copy-bottom">Fields shown are specific to the selected property type.</p>
 
@@ -484,13 +495,23 @@
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="tab-sign" class="panel" data-pane="signs">
-  <div class="tip">Complete each step. Fields marked <span class="required-mark">*</span> are required.</div>
+  <div class="page-head broker-page-head">
+    <div class="page-head-left">
+      <div class="page-eyebrow">Broker Submission</div>
+      <h1 class="page-h1">Sign Request</h1>
+    </div>
+    <div class="page-head-right">
+      <div class="page-meta-chip"><span class="dot"></span>Step-by-step workflow</div>
+    </div>
+  </div>
+  <div class="tip pane-intro-tip">Complete each step. Fields marked <span class="required-mark">*</span> are required.</div>
 
   <div class="deal-shell" id="s-deal-shell">
   <div class="deal-main" id="sign-main">
+  <div class="stepper" data-stepper-for="sign-main"></div>
 
   <!-- STEP 1: Order Basics -->
-  <div class="card required-section" data-sstep="1">
+  <div class="card required-section" data-sstep="1" data-step-label="Order Basics" data-card-eyebrow="Step 1 of 4">
     <h2>Step 1 — Order Basics <span class="required-badge">Required</span></h2>
     <div class="row c2">
       <div class="field"><label>Date</label><input id="s-date" type="date"></div>
@@ -507,7 +528,7 @@
   </div>
 
   <!-- STEP 2: Sign Specifications -->
-  <div class="card" data-sstep="2">
+  <div class="card" data-sstep="2" data-step-label="Signs" data-card-eyebrow="Step 2 of 4">
     <h2>Step 2 — Sign Specifications</h2>
     <h3 class="section-heading-top">Configuration</h3>
     <div class="support-options">
@@ -561,7 +582,7 @@
   </div>
 
   <!-- STEP 3: Details & Placement -->
-  <div class="card" data-sstep="3">
+  <div class="card" data-sstep="3" data-step-label="Details" data-card-eyebrow="Step 3 of 4">
     <h2>Step 3 — Details</h2>
     <div class="row c2">
       <div class="field">
@@ -606,7 +627,7 @@
   </div>
 
   <!-- STEP 4: Requested By + Access -->
-  <div class="card" data-sstep="4">
+  <div class="card" data-sstep="4" data-step-label="Requested By" data-card-eyebrow="Step 4 of 4">
     <h2>Step 4 — Requested By &amp; Access</h2>
     <div class="field field-stack-gap-sm"><label class="req">Requested By</label>
       <div class="agent-picker" id="picker-s-requested-by">
@@ -678,7 +699,16 @@
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="tab-voucher" class="panel" data-pane="voucher">
-  <div class="tip">Required fields are marked with <span class="required-mark">*</span> — complete all steps in order for fastest processing.</div>
+  <div class="page-head broker-page-head">
+    <div class="page-head-left">
+      <div class="page-eyebrow">Broker Submission</div>
+      <h1 class="page-h1">Commission Voucher</h1>
+    </div>
+    <div class="page-head-right">
+      <div class="page-meta-chip"><span class="dot"></span>Guided submission</div>
+    </div>
+  </div>
+  <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete all steps in order for fastest processing.</div>
 
   <div class="deal-shell" id="v-deal-shell">
   <div class="deal-main" id="voucher-main">
@@ -701,7 +731,9 @@
     <button class="brochure-scrape-btn" id="v-brochure-scrape-btn" onclick="scrapeVoucherBrochure()">Scrape &amp; Fill Voucher Fields</button>
   </div>
 
-  <div class="card required-section" id="vstep-1" data-vstep="1">
+  <div class="stepper" data-stepper-for="voucher-main"></div>
+
+  <div class="card required-section" id="vstep-1" data-vstep="1" data-step-label="Deal Basics" data-card-eyebrow="Step 1 of 7">
     <h2>Step 1 — Transaction Type <span class="required-badge">Required</span></h2>
     <div class="tip is-hidden top-gap-sm" id="voucher-confidential-warning"></div>
     <div class="row c4">
@@ -753,7 +785,7 @@
     </div>
   </div>
 
-  <div class="card" id="vstep-2" data-vstep="2">
+  <div class="card" id="vstep-2" data-vstep="2" data-step-label="Brokers" data-card-eyebrow="Step 2 of 7">
     <h2>Step 2 — Broker Information</h2>
     <div class="row c2 micro-copy-bottom-sm">
       <div class="field"><label>Same Listing &amp; Procuring Agent?</label>
@@ -817,7 +849,7 @@
     </div>
   </div>
 
-  <div class="card" id="vstep-3" data-vstep="3">
+  <div class="card" id="vstep-3" data-vstep="3" data-step-label="Parties" data-card-eyebrow="Step 3 of 7">
     <h2>Step 3 — Client &amp; Property Info</h2>
     <div class="card reference-card" id="v-addr-ref">
       <p class="reference-copy">&#8593; Property address and Deal SF are entered in Step 1 above.</p>
@@ -876,7 +908,7 @@
     </div>
   </div>
 
-  <div class="card" id="vstep-4" data-vstep="4">
+  <div class="card" id="vstep-4" data-vstep="4" data-step-label="Commission Math" data-card-eyebrow="Step 4 of 7" data-card-control=".branch-toggle-wrap">
     <h2>Step 4 — Financial Details</h2>
     <div class="branch-toggle-wrap">
       <label class="branch-toggle-label">Deal Branch</label>
@@ -909,7 +941,7 @@
     </div>
   </div>
 
-  <div class="card" id="vstep-5" data-vstep="5">
+  <div class="card" id="vstep-5" data-vstep="5" data-step-label="Invoice" data-card-eyebrow="Step 5 of 7">
     <h2>Step 5 — Commission &amp; Invoice</h2>
     <div id="v-req-comm-lease">
       <div class="row c4">
@@ -964,7 +996,7 @@
     </div>
   </div>
 
-  <div id="vstep-6" class="card" data-vstep="6">
+  <div id="vstep-6" class="card" data-vstep="6" data-step-label="Rent Schedule" data-card-eyebrow="Step 6 of 7">
     <h2>Step 6 — Monthly &amp; Free Rent Schedule</h2>
     <p class="review-copy micro-copy-bottom-sm">Enter $0 for free rent months so effective rates calculate correctly.</p>
     <table class="rent-table" id="v-rent-table">
@@ -982,7 +1014,7 @@
     </div>
   </div>
 
-  <div class="card" id="vstep-8" data-vstep="8">
+  <div class="card" id="vstep-8" data-vstep="8" data-step-label="Distribution" data-card-eyebrow="Step 7 of 7">
     <h2>Step 8 — Upload Documents &amp; Commission Distribution</h2>
     <h3>Compliance Documents</h3>
     <div id="voucher-attachment-required-msg" class="tip text-error is-hidden" role="alert"></div>
@@ -1174,10 +1206,19 @@
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div id="tab-comp" class="panel" data-pane="comp-input">
-  <div class="tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections for additional detail.</div>
+  <div class="page-head broker-page-head">
+    <div class="page-head-left">
+      <div class="page-eyebrow">Broker Submission</div>
+      <h1 class="page-h1">Comp Input</h1>
+    </div>
+    <div class="page-head-right">
+      <div class="page-meta-chip"><span class="dot"></span>Single-screen entry</div>
+    </div>
+  </div>
+  <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections for additional detail.</div>
 
   <!-- ═══ REQUIRED SECTION ═══ -->
-  <div class="card required-section">
+  <div class="card required-section" data-card-eyebrow="Add a comp" data-card-control=".branch-toggle-wrap">
     <h2>Required Information <span class="required-badge">Required</span></h2>
     <div class="branch-toggle-wrap branch-toggle-wrap-top">
       <label class="branch-toggle-label">Comp Branch</label>
@@ -1482,13 +1523,19 @@
 
     <div class="cr-topbar">
       <div>
-        <div class="cr-eyebrow">Comp Reports</div>
-        <h2>Find report-ready comps and export a Lee &amp; Associates template.</h2>
+        <div class="cr-eyebrow">Broker Submission</div>
+        <h2>Comp Reports</h2>
       </div>
       <div class="cr-status" id="cr-user-status">Checking access</div>
     </div>
 
     <div class="cr-filters" id="cr-search-card">
+      <div class="card-head cr-card-head">
+        <div class="card-head-left">
+          <div class="card-eyebrow">Build a report</div>
+          <h2>Filters</h2>
+        </div>
+      </div>
       <form id="cr-search-form" onsubmit="event.preventDefault(); compReportRunSearch();">
         <div class="cr-filters-grid">
           <div class="field">
@@ -2889,7 +2936,8 @@ function switchTab(name) {
   if (name === 'comp-reports') {
     void initCompReports();
   }
-  bootstrapStepFlowFor(name);
+  const flow = bootstrapStepFlowFor(name);
+  if (flow && typeof flow.go === 'function') flow.go(0);
   syncBrokerToolUrlTab(name);
   if (typeof renderHelpPanel === 'function') renderHelpPanel();
 }
@@ -2906,30 +2954,40 @@ window.addEventListener('hashchange', function () {
 
 // Ensure step flows are initialized after the first view of each tab
 function bootstrapStepFlowFor(name) {
-  if (name === 'voucher' && !window.__stepFlows['voucher-main']) {
-    initStepFlow({
-      mainId: 'voucher-main',
-      stepAttr: 'data-vstep',
-      previewFor: voucherStepPreview,
-      onStep: () => { try { syncDealGlance(); } catch(e) {} }
-    });
+  if (name === 'voucher') {
+    if (!window.__stepFlows['voucher-main']) {
+      initStepFlow({
+        mainId: 'voucher-main',
+        stepAttr: 'data-vstep',
+        previewFor: voucherStepPreview,
+        onStep: () => { try { syncDealGlance(); } catch(e) {} }
+      });
+    }
+    return window.__stepFlows['voucher-main'] || null;
   }
-  if (name === 'listing' && !window.__stepFlows['listing-main']) {
-    initStepFlow({
-      mainId: 'listing-main',
-      stepAttr: 'data-lstep',
-      previewFor: listingStepPreview,
-      onStep: () => { try { syncListingGlance(); } catch(e) {} }
-    });
+  if (name === 'listing') {
+    if (!window.__stepFlows['listing-main']) {
+      initStepFlow({
+        mainId: 'listing-main',
+        stepAttr: 'data-lstep',
+        previewFor: listingStepPreview,
+        onStep: () => { try { syncListingGlance(); } catch(e) {} }
+      });
+    }
+    return window.__stepFlows['listing-main'] || null;
   }
-  if (name === 'sign' && !window.__stepFlows['sign-main']) {
-    initStepFlow({
-      mainId: 'sign-main',
-      stepAttr: 'data-sstep',
-      previewFor: signStepPreview,
-      onStep: () => { try { syncSignGlance(); } catch(e) {} }
-    });
+  if (name === 'sign') {
+    if (!window.__stepFlows['sign-main']) {
+      initStepFlow({
+        mainId: 'sign-main',
+        stepAttr: 'data-sstep',
+        previewFor: signStepPreview,
+        onStep: () => { try { syncSignGlance(); } catch(e) {} }
+      });
+    }
+    return window.__stepFlows['sign-main'] || null;
   }
+  return null;
 }
 
 // Sign Request previews for the step summary strips
@@ -2991,6 +3049,8 @@ function syncSignGlance() {
     steps.querySelectorAll('li').forEach((li, idx) => {
       li.classList.toggle('is-done', idx < flow.current);
       li.classList.toggle('is-active', idx === flow.current);
+      li.classList.toggle('done', idx < flow.current);
+      li.classList.toggle('current', idx === flow.current);
     });
   }
   if (flow && typeof flow.renderSummaries === 'function') flow.renderSummaries();
@@ -3086,6 +3146,8 @@ function syncListingGlance() {
     steps.querySelectorAll('li').forEach((li, idx) => {
       li.classList.toggle('is-done', idx < flow.current);
       li.classList.toggle('is-active', idx === flow.current);
+      li.classList.toggle('done', idx < flow.current);
+      li.classList.toggle('current', idx === flow.current);
     });
   }
   if (flow && typeof flow.renderSummaries === 'function') flow.renderSummaries();
@@ -3093,6 +3155,7 @@ function syncListingGlance() {
 
 // Live update glance on any input within listing-main
 document.addEventListener('DOMContentLoaded', function () {
+  decorateStaticBrokerCards();
   const panel = document.getElementById('tab-listing');
   if (panel) {
     const h = () => { try { syncListingGlance(); } catch(e) {} };
@@ -3639,6 +3702,84 @@ function vstepExpand(stepNum) {
   setHiddenState(summary, true);
 }
 
+function getBrokerCardHeading(card, fallback) {
+  const h2 = card && card.querySelector(':scope > h2');
+  const raw = (card?.dataset?.stepLabel || h2?.textContent || fallback || '').trim();
+  return raw.replace(/^Step\s*\d+\s*[—-]\s*/i, '').replace(/\s*Required\s*$/i, '').trim();
+}
+
+function decorateBrokerCard(card) {
+  if (!card || card.querySelector(':scope > .card-head')) return;
+  const h2 = card.querySelector(':scope > h2');
+  if (!h2) return;
+
+  const head = document.createElement('div');
+  head.className = 'card-head';
+  const left = document.createElement('div');
+  left.className = 'card-head-left';
+
+  const eyebrowText = (card.dataset.cardEyebrow || '').trim();
+  if (eyebrowText) {
+    const eyebrow = document.createElement('div');
+    eyebrow.className = 'card-eyebrow';
+    eyebrow.textContent = eyebrowText;
+    left.appendChild(eyebrow);
+  }
+
+  left.appendChild(h2);
+  head.appendChild(left);
+
+  const controlSelector = (card.dataset.cardControl || '').trim();
+  if (controlSelector) {
+    const control = card.querySelector(controlSelector);
+    if (control) {
+      control.classList.add('card-head-control');
+      head.appendChild(control);
+    }
+  }
+
+  card.insertBefore(head, card.firstChild);
+}
+
+function ensureBrokerStepper(flow) {
+  if (!flow || !flow.main) return;
+  const stepper = flow.main.querySelector(':scope > .stepper[data-stepper-for]');
+  if (!stepper) return;
+
+  if (!stepper.querySelector('.stepper-item')) {
+    stepper.innerHTML = '';
+    flow.cards.forEach((card, idx) => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'stepper-item';
+      item.setAttribute('data-step-index', String(idx));
+      item.innerHTML =
+        '<div class="stepper-num">' + (idx + 1) + '</div>' +
+        '<div class="stepper-label"></div>';
+      item.querySelector('.stepper-label').textContent = getBrokerCardHeading(card, 'Step ' + (idx + 1));
+      item.addEventListener('click', () => flow.go(idx));
+      stepper.appendChild(item);
+      if (idx < flow.cards.length - 1) {
+        const bar = document.createElement('div');
+        bar.className = 'stepper-bar';
+        stepper.appendChild(bar);
+      }
+    });
+  }
+
+  stepper.querySelectorAll('.stepper-item').forEach((item, idx) => {
+    item.classList.toggle('done', idx < flow.current);
+    item.classList.toggle('current', idx === flow.current);
+  });
+  stepper.querySelectorAll('.stepper-bar').forEach((bar, idx) => {
+    bar.classList.toggle('done', idx < flow.current);
+  });
+}
+
+function decorateStaticBrokerCards() {
+  document.querySelectorAll('#tab-comp > .card[data-card-eyebrow]').forEach(card => decorateBrokerCard(card));
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // STEP FLOW — shared "one step at a time" controller for every tab
 //   Usage:   initStepFlow({tabId, mainId, stepAttr, previewFor})
@@ -3650,6 +3791,7 @@ function initStepFlow(opts) {
   main.classList.add('step-flow');
   const cards = Array.from(main.querySelectorAll('.card[' + opts.stepAttr + ']'));
   if (!cards.length) return null;
+  cards.forEach(card => decorateBrokerCard(card));
 
   const flow = {
     opts,
@@ -3664,6 +3806,7 @@ function initStepFlow(opts) {
         c.classList.toggle('step--done', idx < i);
         if (idx === i) c.classList.add('step--current');
       });
+      this.renderStepper();
       this.renderSummaries();
       this.renderNav();
       // Auto-scroll suppressed for Sign Request and Commission Voucher per user request.
@@ -3680,7 +3823,7 @@ function initStepFlow(opts) {
       cards.forEach((c, idx) => {
         if (idx >= this.current) return;
         const n = c.getAttribute(opts.stepAttr);
-        const title = (c.querySelector('h2')?.firstChild?.textContent || c.querySelector('h2')?.textContent || ('Step ' + n)).trim().replace(/\s*Required\s*$/, '');
+        const title = getBrokerCardHeading(c, 'Step ' + n);
         const preview = (opts.previewFor ? opts.previewFor(c, n) : '') || 'Completed';
         const strip = document.createElement('div');
         strip.className = 'step-summary';
@@ -3693,6 +3836,9 @@ function initStepFlow(opts) {
         strip.addEventListener('click', () => this.go(idx));
         c.insertAdjacentElement('beforebegin', strip);
       });
+    },
+    renderStepper() {
+      ensureBrokerStepper(this);
     },
     renderNav() {
       cards.forEach((c, idx) => {
@@ -3848,11 +3994,15 @@ function syncDealGlance() {
       if (flow) {
         li.classList.toggle('is-done', idx < flow.current);
         li.classList.toggle('is-active', idx === flow.current);
+        li.classList.toggle('done', idx < flow.current);
+        li.classList.toggle('current', idx === flow.current);
       } else {
         const n = li.getAttribute('data-step');
         const state = _dgStepState(n);
         li.classList.toggle('is-done', state === 'done');
         li.classList.toggle('is-active', state === 'active');
+        li.classList.toggle('done', state === 'done');
+        li.classList.toggle('current', state === 'active');
       }
     });
   }
