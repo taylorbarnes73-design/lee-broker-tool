@@ -148,7 +148,17 @@
 
     <div class="card required-section" data-lstep="1" data-step-label="Property Type" data-card-eyebrow="Step 1 of 4">
       <h2>Add Listing <span class="required-badge">Required</span></h2>
-      <div class="row c4">
+      <p class="card-lead">Start with the listing frame, then layer in documents, pricing, and location details in clean sections.</p>
+
+      <div class="form-slab">
+        <div class="form-slab-header">
+          <div>
+            <div class="form-slab-kicker">Setup</div>
+            <h3 class="form-slab-title">Transaction &amp; Property Basics</h3>
+          </div>
+          <p class="form-slab-copy">Choose the property profile first so the rest of the listing fields match the deal type.</p>
+        </div>
+        <div class="row c4">
         <div class="field"><label class="req">Date Entered</label><input id="l-date-entered" type="date"></div>
         <div class="field"><label class="req">Property Type</label>
           <div class="listing-type-grid" id="listing-type-picker">
@@ -183,10 +193,18 @@
         </div>
         <div class="field"><label>Listing expiration</label><input id="l-listing-expiration" type="date" data-lbt-auto-expiry="1"><div class="field-hint">Defaults from Date Entered + office term</div></div>
       </div>
+      </div>
 
-      <h3 class="section-heading-top">Upload Documents</h3>
+      <div class="form-slab">
+        <div class="form-slab-header">
+          <div>
+            <div class="form-slab-kicker">Documents</div>
+            <h3 class="form-slab-title">Upload the Source Material</h3>
+          </div>
+          <p class="form-slab-copy">Brochure and compliance docs stay together here so admin has the same context you do.</p>
+        </div>
 
-      <div class="field field-stack-gap">
+        <div class="field field-stack-gap">
         <label class="inline-flex-label">Property Brochure <span class="inline-badge">Auto-Fill from Document</span></label>
         <div class="brochure-zone" id="brochure-zone" onclick="document.getElementById('l-brochure-file').click()">
           <input type="file" id="l-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" onchange="onBrochureSelected(this)">
@@ -204,7 +222,7 @@
         </button>
       </div>
 
-      <div class="row c2">
+        <div class="row c2">
         <div class="field">
           <label>Listing Agreement</label>
           <div class="upload-zone" id="uz-l-agreement" data-category="listing_agreement" data-field="l-doc-agreement">
@@ -228,9 +246,16 @@
           </div>
         </div>
       </div>
+      </div>
 
-      <div id="lease-pricing">
-        <h3 class="section-heading-top">Lease Pricing</h3>
+      <div id="lease-pricing" class="form-slab">
+        <div class="form-slab-header">
+          <div>
+            <div class="form-slab-kicker">Pricing</div>
+            <h3 class="form-slab-title">Lease Pricing</h3>
+          </div>
+          <p class="form-slab-copy">Keep the rate, term, and visibility settings together for faster review.</p>
+        </div>
         <div class="row c4">
           <div class="field"><label class="req">Rate $/SF/Mo</label><input id="l-lease-sf" placeholder="$0.00" oninput="calcLeaseMonthly()"></div>
           <div class="field"><label>Monthly Rent (auto)</label><input id="l-lease-mo" class="readonly-fill" placeholder="$0.00" readonly></div>
@@ -263,8 +288,14 @@
         </div>
       </div>
 
-      <div id="sale-pricing" class="is-hidden">
-        <h3 class="section-heading-top">Sale Pricing</h3>
+      <div id="sale-pricing" class="form-slab is-hidden">
+        <div class="form-slab-header">
+          <div>
+            <div class="form-slab-kicker">Pricing</div>
+            <h3 class="form-slab-title">Sale Pricing</h3>
+          </div>
+          <p class="form-slab-copy">The sale view keeps asking price and disclosure choices in one spot.</p>
+        </div>
         <div class="row c3">
           <div class="field"><label class="req">Asking Price</label>
             <div class="currency-field"><span class="currency-prefix">$</span><input id="l-sale-price" class="currency-input" placeholder="0" oninput="calcSaleSF()"></div>
@@ -289,8 +320,15 @@
         </div>
       </div>
 
-      <h3 class="section-heading-top-lg">Property Address</h3>
-      <div class="row c2">
+      <div class="form-slab">
+        <div class="form-slab-header">
+          <div>
+            <div class="form-slab-kicker">Location</div>
+            <h3 class="form-slab-title">Property Address</h3>
+          </div>
+          <p class="form-slab-copy">These fields feed the listing title, exports, and downstream voucher references.</p>
+        </div>
+        <div class="row c2">
         <div class="field"><label id="lbl-name" class="req">Address</label><input id="l-address"></div>
         <div class="field is-hidden" id="field-project-name"><label>Project / Property Name</label><input id="l-project-name" placeholder="Optional"></div>
       </div>
@@ -305,8 +343,16 @@
           <select id="l-corner"><option value="">N/A</option><option value="NE">NE</option><option value="NW">NW</option><option value="SE">SE</option><option value="SW">SW</option></select>
         </div>
       </div>
+      </div>
 
-      <div id="size-building" class="type-section visible">
+      <div id="size-building" class="type-section visible form-slab">
+        <div class="form-slab-header">
+          <div>
+            <div class="form-slab-kicker">Size</div>
+            <h3 class="form-slab-title">Building Snapshot</h3>
+          </div>
+          <p class="form-slab-copy">Core square footage and parking metrics stay at the top for quick scanning.</p>
+        </div>
         <div class="row c3">
           <div class="field"><label id="lbl-sf" class="req">Building / GLA SF</label><input id="l-bldg-sf" oninput="calcSaleSF()"></div>
           <div class="field"><label>Year Built</label><input id="l-year-built"></div>
@@ -314,7 +360,14 @@
         </div>
       </div>
 
-      <div id="size-land" class="type-section">
+      <div id="size-land" class="type-section form-slab">
+        <div class="form-slab-header">
+          <div>
+            <div class="form-slab-kicker">Land Metrics</div>
+            <h3 class="form-slab-title">Site Size</h3>
+          </div>
+          <p class="form-slab-copy">Use the gross and net fields below when the property is land-focused.</p>
+        </div>
         <div class="row c4">
           <div class="field"><label class="req">Gross Acres</label><input id="l-acres-gross" placeholder="0.00"></div>
           <div class="field"><label>Net Acres</label><input id="l-acres-net" placeholder="0.00"></div>
@@ -326,18 +379,23 @@
 
     <div class="card" data-lstep="2" data-step-label="Listing Agents" data-card-eyebrow="Step 2 of 4">
       <h2>Listing Agents</h2>
-      <table class="suite-table" id="listing-agent-table">
-        <thead><tr><th>Agent Name</th><th>Phone</th><th>Email</th><th class="table-col-wide">Shared Expenses %</th><th class="table-col-narrow"></th></tr></thead>
-        <tbody id="listing-agent-body"></tbody>
-      </table>
-      <button class="btn btn-gray top-gap-sm" onclick="addListingAgent()">+ Add Agent</button>
-      <p class="micro-copy micro-copy-top">Shared Expenses: commission split / cost sharing between co-listing agents.</p>
+      <p class="card-lead">Keep the listing team together here so admin, marketing, and distribution all reference the same ownership set.</p>
+      <div class="table-slab">
+        <table class="suite-table" id="listing-agent-table">
+          <thead><tr><th>Agent Name</th><th>Phone</th><th>Email</th><th class="table-col-wide">Shared Expenses %</th><th class="table-col-narrow"></th></tr></thead>
+          <tbody id="listing-agent-body"></tbody>
+        </table>
+        <button class="btn btn-gray top-gap-sm" onclick="addListingAgent()">+ Add Agent</button>
+        <p class="micro-copy micro-copy-top">Shared Expenses: commission split / cost sharing between co-listing agents.</p>
+      </div>
     </div>
 
     <div class="card" data-lstep="3" data-step-label="Release" data-card-eyebrow="Step 3 of 4">
       <h2>Release Instructions</h2>
-      <h3>Listing Release</h3>
-      <div class="check-group">
+      <p class="card-lead">Set the release timing once here so everyone sees the same go-live instructions.</p>
+      <div class="form-slab">
+      <h3 class="form-slab-title">Listing Release</h3>
+      <div class="check-group top-gap-sm">
         <label><input type="radio" name="l-release" value="hold" checked> Hold Until Further Notice</label>
         <label><input type="radio" name="l-release" value="immediate"> Release to MLS &amp; Website Immediately</label>
         <label><input type="radio" name="l-release" value="date"> Release on Date:</label>
@@ -347,6 +405,7 @@
         <div class="field"><label>Notify the Multiple Listing Services?</label>
           <select id="l-agent-notify"><option value="admin-immediate">Admin releases to MLS immediately</option><option value="admin-date">Notify the MLS on this date</option><option value="agent-notified">Agent will notify / has already notified the MLS</option></select>
         </div>
+      </div>
       </div>
     </div>
 
@@ -794,7 +853,16 @@
   <div class="card required-section" id="vstep-1" data-vstep="1" data-step-label="Deal Basics" data-card-eyebrow="Step 1 of 7">
     <h2>Step 1 — Transaction Type <span class="required-badge">Required</span></h2>
     <div class="tip is-hidden top-gap-sm" id="voucher-confidential-warning"></div>
-    <div class="row c4">
+    <p class="card-lead">Frame the deal first, then keep the address block separate so the financial steps below stay easier to scan.</p>
+    <div class="form-slab">
+      <div class="form-slab-header">
+        <div>
+          <div class="form-slab-kicker">Deal Setup</div>
+          <h3 class="form-slab-title">Transaction Basics</h3>
+        </div>
+        <p class="form-slab-copy">These choices drive later labels, calculations, and exports throughout the voucher.</p>
+      </div>
+      <div class="row c4">
       <div class="field"><label class="req">Representation Type</label>
         <select id="v-rep-type">
           <option value="tenant_rep">Tenant Rep</option>
@@ -826,8 +894,15 @@
       <div class="field"><label class="req">Client Name</label><input id="v-on-behalf"><div class="field-hint">Client / Company name</div></div>
       <div class="field"></div>
     </div>
-    <div class="section-divider top-gap-md">
-      <h3 class="section-heading-tight">Property Address</h3>
+    </div>
+    <div class="form-slab form-slab-accent">
+      <div class="form-slab-header">
+        <div>
+          <div class="form-slab-kicker">Property</div>
+          <h3 class="form-slab-title">Address &amp; Deal Size</h3>
+        </div>
+        <p class="form-slab-copy">This is the common reference block the rest of the voucher points back to.</p>
+      </div>
       <div class="row c23">
         <div class="field"><label class="req">Street Address</label><input id="v-address"></div>
         <div class="field"><label>APN / Parcel</label><input id="v-apn" placeholder="Optional"></div>
@@ -845,14 +920,17 @@
 
   <div class="card" id="vstep-2" data-vstep="2" data-step-label="Brokers" data-card-eyebrow="Step 2 of 7">
     <h2>Step 2 — Broker Information</h2>
+    <p class="card-lead">Split the main parties into clean panels, then handle collaborators and outside agents beneath them.</p>
+    <div class="form-slab form-slab-compact">
     <div class="row c2 micro-copy-bottom-sm">
       <div class="field"><label>Same Listing &amp; Procuring Agent?</label>
         <select id="v-same-agent" onchange="onSameAgentChange()"><option value="no">No</option><option value="yes">Yes</option></select>
       </div>
       <div class="align-end-copy">House name, agent name &amp; city are usually sufficient</div>
     </div>
-    <div class="row c2">
-      <div>
+    </div>
+    <div class="agent-panel-grid">
+      <div class="agent-panel">
         <div class="sub-divider-label">Listing Agent</div>
         <div class="field"><label class="req">Agent Name</label>
           <div class="agent-picker" id="picker-v-la-name">
@@ -863,7 +941,7 @@
         <div class="field"><label>House</label><input id="v-la-house"></div>
         <div class="field"><label>City</label><input id="v-la-city"></div>
       </div>
-      <div id="procuring-section">
+      <div class="agent-panel" id="procuring-section">
         <div class="sub-divider-label">Procuring Agent</div>
         <div class="field"><label class="req">Agent Name</label>
           <div class="agent-picker" id="picker-v-pa-name">
@@ -875,7 +953,14 @@
         <div class="field"><label>City</label><input id="v-pa-city"></div>
       </div>
     </div>
-    <div class="top-gap-md">
+    <div class="form-slab top-gap-md">
+      <div class="form-slab-header">
+        <div>
+          <div class="form-slab-kicker">Internal Team</div>
+          <h3 class="form-slab-title">Additional Internal Agents</h3>
+        </div>
+        <p class="form-slab-copy">Use this table for collaborators who should be visible in the deal but are not the main outside-facing contacts.</p>
+      </div>
       <div class="sub-divider-label">Additional Internal Agents (Collaborators)</div>
       <table class="broker-table table-top-gap-sm" id="v-collab-table">
         <thead><tr><th>Agent Name</th><th class="table-col-role">Role / Team</th><th class="table-col-narrow"></th></tr></thead>
@@ -883,7 +968,7 @@
       </table>
       <button class="btn btn-gray top-gap-sm" onclick="addVoucherCollab()">+ Add Agent</button>
     </div>
-    <div class="section-divider">
+    <div class="form-slab">
       <div class="toggle-row">
         <label class="section-label">Outside Agents?</label>
         <label class="toggle-switch">
@@ -968,6 +1053,7 @@
 
   <div class="card" id="vstep-4" data-vstep="4" data-step-label="Commission Math" data-card-eyebrow="Step 4 of 7" data-card-control=".branch-toggle-wrap">
     <h2>Step 4 — Financial Details</h2>
+    <p class="card-lead">Keep the timing and math in a single visual block so it’s easier to review before invoice totals are generated.</p>
     <div class="branch-toggle-wrap">
       <label class="branch-toggle-label">Deal Branch</label>
       <div class="branch-toggle" id="voucher-branch-toggle">
@@ -975,8 +1061,14 @@
         <button type="button" data-branch="sale" onclick="setVoucherBranch('sale')">Sale</button>
       </div>
     </div>
-    <div id="v-req-lease">
-      <h3>Key Lease Terms</h3>
+    <div id="v-req-lease" class="form-slab branch-slab">
+      <div class="form-slab-header">
+        <div>
+          <div class="form-slab-kicker">Lease Math</div>
+          <h3 class="form-slab-title">Key Lease Terms</h3>
+        </div>
+        <p class="form-slab-copy">Dates, rates, and total consideration stay together for a faster financial review.</p>
+      </div>
       <div class="row c3">
         <div class="field"><label class="req">Start Date</label><input id="v-l-start" type="date"></div>
         <div class="field"><label class="req">End Date</label><input id="v-l-end" type="date"></div>
@@ -989,8 +1081,14 @@
         <div class="field"><label>Total Consideration</label><input id="v-l-consideration" class="readonly-fill-strong" placeholder="$0" readonly></div>
       </div>
     </div>
-    <div id="v-req-sale" class="is-hidden">
-      <h3>Key Sale Terms</h3>
+    <div id="v-req-sale" class="form-slab branch-slab is-hidden">
+      <div class="form-slab-header">
+        <div>
+          <div class="form-slab-kicker">Sale Math</div>
+          <h3 class="form-slab-title">Key Sale Terms</h3>
+        </div>
+        <p class="form-slab-copy">The sale branch keeps the main price metrics grouped together and easy to validate.</p>
+      </div>
       <div class="row c3">
         <div class="field"><label class="req">Total Consideration / Sale Price</label><input id="v-s-price" placeholder="$0" oninput="calcVoucherSale()"></div>
         <div class="field"><label>Price / SF</label><input id="v-s-price-sf" class="readonly-fill" placeholder="$0.00" readonly></div>
@@ -1001,7 +1099,15 @@
 
   <div class="card" id="vstep-5" data-vstep="5" data-step-label="Invoice" data-card-eyebrow="Step 5 of 7">
     <h2>Step 5 — Commission &amp; Invoice</h2>
-    <div id="v-req-comm-lease">
+    <p class="card-lead">This section now separates the topline commission math from invoice routing and payment scheduling.</p>
+    <div id="v-req-comm-lease" class="form-slab branch-slab">
+      <div class="form-slab-header">
+        <div>
+          <div class="form-slab-kicker">Commission</div>
+          <h3 class="form-slab-title">Lease Invoice Math</h3>
+        </div>
+        <p class="form-slab-copy">Review the main invoice-driving numbers together before splitting out payment timing.</p>
+      </div>
       <div class="row c4">
         <div class="field"><label class="req">Commission Rate %</label><input id="v-l-comm-rate" oninput="calcCommSummary()"></div>
         <div class="field"><label>Lease Commission Due</label><input id="v-l-comm-due" class="readonly-fill-strong" placeholder="$0" readonly></div>
@@ -1014,15 +1120,28 @@
         <div class="field"></div>
       </div>
     </div>
-    <div id="v-req-comm-sale" class="is-hidden">
+    <div id="v-req-comm-sale" class="form-slab branch-slab is-hidden">
+      <div class="form-slab-header">
+        <div>
+          <div class="form-slab-kicker">Commission</div>
+          <h3 class="form-slab-title">Sale Commission Math</h3>
+        </div>
+        <p class="form-slab-copy">Use the sale branch when the voucher is driven by a purchase price instead of lease consideration.</p>
+      </div>
       <div class="row c3">
         <div class="field"><label class="req">Commission %</label><input id="v-s-comm-pct" oninput="calcVoucherSale()"></div>
         <div class="field"><label>Commission Due $</label><input id="v-s-comm-due" class="readonly-fill-strong" placeholder="$0" readonly></div>
         <div class="field"><label>SALE Commission (auto)</label><input id="v-comm-sale" class="readonly-fill" placeholder="$0" readonly></div>
       </div>
     </div>
-    <div class="section-divider">
-      <h3>Invoice To</h3>
+    <div class="form-slab">
+      <div class="form-slab-header">
+        <div>
+          <div class="form-slab-kicker">Invoice Routing</div>
+          <h3 class="form-slab-title">Invoice To</h3>
+        </div>
+        <p class="form-slab-copy">Choose the billing recipient here, then capture any delivery or payment instructions underneath.</p>
+      </div>
       <div class="row c3">
         <div class="field">
           <label>Invoice To (Party)</label>
@@ -1045,7 +1164,15 @@
         </div>
       </div>
       <div class="field"><label>Special Invoice Instructions</label><textarea id="v-inv-instructions" rows="2"></textarea><div class="field-hint">Payment schedule, split payments, etc.</div></div>
-      <h3 class="top-gap-md">Payment Schedule</h3>
+    </div>
+    <div class="form-slab">
+      <div class="form-slab-header">
+        <div>
+          <div class="form-slab-kicker">Collections</div>
+          <h3 class="form-slab-title">Payment Schedule</h3>
+        </div>
+        <p class="form-slab-copy">Set installment timing here, then use AI analysis as a final reasonableness check.</p>
+      </div>
       <table class="broker-table" id="v-payment-table">
         <thead><tr><th>Date Due</th><th>Amount Due</th><th>Date Due</th><th>Amount Due</th><th class="table-col-compact"></th></tr></thead>
         <tbody id="v-payment-body"></tbody>
@@ -1085,10 +1212,18 @@
 
   <div class="card" id="vstep-8" data-vstep="8" data-step-label="Distribution" data-card-eyebrow="Step 7 of 7">
     <h2>Step 8 — Upload Documents &amp; Commission Distribution</h2>
-    <h3>Compliance Documents</h3>
+    <p class="card-lead">The final step now separates compliance uploads from the payout table so the page reads more like a review workflow.</p>
     <div id="voucher-attachment-required-msg" class="tip text-error is-hidden" role="alert"></div>
 
-    <div class="row c2">
+    <div class="form-slab">
+      <div class="form-slab-header">
+        <div>
+          <div class="form-slab-kicker">Compliance</div>
+          <h3 class="form-slab-title">Required Documents</h3>
+        </div>
+        <p class="form-slab-copy">Keep the supporting documents attached here so admin receives the same packet tied to the commission request.</p>
+      </div>
+      <div class="row c2">
       <div class="field">
         <label>Agency Disclosure</label>
         <div class="upload-zone" id="uz-v-disclosure" data-category="agency_disclosure" data-field="v-doc-disclosure">
@@ -1112,8 +1247,16 @@
         </div>
       </div>
     </div>
-    <h3 class="section-divider section-heading-top-lg">Commission Distribution</h3>
-    <div class="row c3 field-stack-gap-sm">
+    </div>
+    <div class="form-slab">
+      <div class="form-slab-header">
+        <div>
+          <div class="form-slab-kicker">Distribution</div>
+          <h3 class="form-slab-title">Commission Distribution</h3>
+        </div>
+        <p class="form-slab-copy">Review the top-line totals first, then confirm each participating agent’s gross and net allocation.</p>
+      </div>
+      <div class="row c3 field-stack-gap-sm">
       <div class="field"><label>Total Invoice</label><input id="v-dist-total-invoice" class="readonly-fill-strong" placeholder="$0" readonly></div>
       <div class="field"><label>Total to Outside Agents</label><input id="v-dist-total-outside" class="readonly-fill" placeholder="$0" readonly></div>
       <div class="field"><label>Gross $$ to Distribute</label><input id="v-gross-dist" class="invoice-highlight-input" placeholder="$0" readonly></div>
@@ -1123,6 +1266,7 @@
       <tbody id="v-dist-body"></tbody>
     </table>
     <button class="btn btn-gray top-gap-sm" onclick="addDistRow()">+ Add Agent</button>
+    </div>
   </div>
 
   <div class="optional-wrapper">
