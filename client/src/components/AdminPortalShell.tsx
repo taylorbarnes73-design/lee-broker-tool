@@ -1,15 +1,8 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { usePublicBranding } from "@/hooks/usePublicBranding";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Link, useLocation } from "wouter";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { ChevronDown, HelpCircle, Menu, X } from "lucide-react";
+import { HelpCircle, LogOut, Menu, User, X } from "lucide-react";
 import HelpPanel from "@/components/HelpPanel";
 import { getHelpForRoute } from "@/lib/helpContent";
 
@@ -139,6 +132,15 @@ export default function AdminPortalShell({
     ["--admin-accent" as string]: accent,
   } as CSSProperties;
 
+  const initials = user?.name
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "LA";
+
   const sidebarContents = (
     <>
       <div className="admin-portal-sidebar-brand">
@@ -180,6 +182,41 @@ export default function AdminPortalShell({
           </nav>
         </>
       )}
+
+      {/* User profile footer */}
+      <div className="admin-portal-sidebar-spacer" aria-hidden />
+      <div className="admin-portal-sidebar-user">
+        <div
+          className="admin-portal-sidebar-user-avatar"
+          style={{ background: `linear-gradient(135deg, ${accent}, ${accent}cc)` }}
+          aria-hidden
+        >
+          {initials}
+        </div>
+        <div className="admin-portal-sidebar-user-info">
+          <div className="admin-portal-sidebar-user-name">{user?.name ?? "User"}</div>
+          <div className="admin-portal-sidebar-user-role">
+            {user?.role === "admin" ? "Administrator" : "Agent"}
+          </div>
+        </div>
+        <div className="admin-portal-sidebar-user-actions">
+          <Link
+            href="/portal/account"
+            className="admin-portal-sidebar-user-btn"
+            aria-label="Profile"
+          >
+            <User size={14} aria-hidden />
+          </Link>
+          <button
+            type="button"
+            className="admin-portal-sidebar-user-btn"
+            onClick={() => logout().finally(() => setLocation("/login"))}
+            aria-label="Sign out"
+          >
+            <LogOut size={14} aria-hidden />
+          </button>
+        </div>
+      </div>
     </>
   );
 
@@ -232,31 +269,6 @@ export default function AdminPortalShell({
           >
             <HelpCircle size={18} aria-hidden />
           </button>
-          <div className="admin-portal-session">
-            <span className="admin-portal-session-text">
-              Signed in as <strong>{user?.name ?? "User"}</strong>
-              {user?.role === "admin" ? " · Admin" : user ? " · Agent" : ""}
-            </span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button type="button" className="admin-portal-session-trigger">
-                  Menu
-                  <ChevronDown size={14} aria-hidden />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[180px]">
-                <DropdownMenuItem onSelect={() => setLocation("/portal/account")}>Profile</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={() => {
-                    logout().finally(() => setLocation("/login"));
-                  }}
-                >
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
         </header>
 
         <main className="admin-portal-main">
