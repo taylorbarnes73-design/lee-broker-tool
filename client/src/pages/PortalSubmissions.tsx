@@ -184,7 +184,7 @@ function AdminSubmissions() {
         </select>
         <select value={formTypeFilter} onChange={e => setFormTypeFilter(e.target.value)} style={INPUT_STYLE}>
           <option value="">All types</option>
-          <option value="voucher">Voucher</option>
+          <option value="voucher">Commission voucher</option>
           <option value="listing">Listing</option>
           <option value="sign">Sign request</option>
           <option value="lease">Lease</option>

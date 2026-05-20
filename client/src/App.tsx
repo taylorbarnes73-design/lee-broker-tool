@@ -6,9 +6,7 @@ import { useEffect, type ReactNode } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Login from "./pages/Login";
-import PortalAdminSubmissions from "./pages/PortalAdminSubmissions";
 import PortalBrokerAdminRequestDetail from "./pages/PortalBrokerAdminRequestDetail";
-import PortalBrokerAdminRequests from "./pages/PortalBrokerAdminRequests";
 import PortalAdminAuditLog from "./pages/PortalAdminAuditLog";
 import PortalAdminUsers from "./pages/PortalAdminUsers";
 import PortalAdminSettings from "./pages/PortalAdminSettings";
@@ -119,10 +117,10 @@ function BrokerToolRedirect() {
   );
 }
 
-/** Bookmark-friendly alias: same login as `/login`, default return to admin queue after sign-in. */
+/** Bookmark-friendly alias: same login as `/login`, default return to submissions after sign-in. */
 function AdminLoginEntry() {
   useEffect(() => {
-    window.location.replace("/login?next=" + encodeURIComponent("/portal/admin/submissions"));
+    window.location.replace("/login?next=" + encodeURIComponent("/portal/submissions"));
   }, []);
   return (
     <div className="portal-loading">
@@ -200,7 +198,7 @@ function AdminAccessRequired() {
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <Link
-            href="/portal/dashboard"
+            href="/portal/submissions"
             style={{
               display: "block",
               padding: "12px 18px",
@@ -297,16 +295,8 @@ function Router() {
           <Redirect to="/portal/submissions" />
         </AdminPortalRoute>
       </Route>
-      <Route path="/portal/admin/submissions">
-        <AdminPortalRoute>
-          <PortalAdminSubmissions />
-        </AdminPortalRoute>
-      </Route>
-      <Route path="/portal/admin/broker-admin">
-        <AdminPortalRoute>
-          <PortalBrokerAdminRequests />
-        </AdminPortalRoute>
-      </Route>
+
+      {/* Detail view for Broker Admin inbox items (linked from unified Submissions page) */}
       <Route path="/portal/admin/broker-admin/:id">
         <AdminPortalRoute>
           <PortalBrokerAdminRequestDetail />

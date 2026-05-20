@@ -2720,7 +2720,7 @@
     <div id="sta-status" class="status-copy micro-copy-bottom-sm"></div>
     <div class="btn-bar">
       <button class="btn btn-gray" onclick="closeSendToAdminModal()">Cancel</button>
-      <button class="btn btn-green" id="sta-send-btn" onclick="submitSendToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Send Email</span></button>
+      <button class="btn btn-green" id="sta-send-btn" onclick="submitSendToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Submit to Queue</span></button>
     </div>
   </div>
 </div>
@@ -12614,12 +12614,12 @@ function openSendToAdminModal(formType) {
   title.textContent = formType === 'sign' ? `Submit ${label}` : `Send ${label} to Admin`;
   desc.textContent = formType === 'sign'
     ? 'This will submit the sign request into the admin submission queue. The admin will approve it, assign a PO #, and send it to Cimarron.'
-    : `This will email all filled ${label} fields to the office admin. You will be CC’d automatically.`;
+    : `This will submit the ${label} to the admin queue and send a copy to the office admin. You will be CC’d automatically.`;
   status.textContent = '';
   status.classList.remove('text-success', 'text-error', 'status-strong');
   btn.classList.remove('loading');
   btn.disabled = false;
-  btn.querySelector('.btn-label').textContent = formType === 'sign' ? 'Submit to Queue' : 'Send Email';
+  btn.querySelector('.btn-label').textContent = 'Submit to Queue';
   modal.classList.add('open');
 }
 
@@ -12923,7 +12923,7 @@ async function submitSendToAdmin() {
 
   try {
     const pdfAttachment = await buildSendToAdminPdfAttachment();
-    btn.querySelector('.btn-label').textContent = _staFormType === 'sign' ? 'Submitting…' : 'Uploading & Sending...';
+    btn.querySelector('.btn-label').textContent = 'Submitting…';
 
     const resp = await fetch('/api/trpc/email.sendToAdmin', {
       method: 'POST',
@@ -12944,35 +12944,39 @@ async function submitSendToAdmin() {
     const data = await resp.json();
     const result = data?.result?.data?.json;
     if (result?.success) {
-      const sentWithAttachment = Boolean(result?.attachmentIncluded);
+      // Submission was added to the admin queue regardless of email delivery status.
       const archivedLink = result?.archivedFile?.url;
-      status.textContent = _staFormType === 'sign'
-        ? 'Submitted to the admin queue successfully.'
-        : sentWithAttachment
-          ? 'Email sent successfully with the PDF attached and archived.'
-          : archivedLink
-            ? 'Email sent successfully. The PDF was archived and included as a secure link.'
-            : 'Email sent successfully.';
+      const emailOk = result?.emailDelivered !== false; // true for sign (queue-only), true when email sent
+      if (emailOk && archivedLink) {
+        status.textContent = 'Submitted to admin queue. A copy was archived and emailed to the office.';
+      } else if (emailOk && result?.attachmentIncluded) {
+        status.textContent = 'Submitted to admin queue. Email sent with PDF attached.';
+      } else if (emailOk && _staFormType !== 'sign') {
+        status.textContent = 'Submitted to admin queue. Email sent to admin.';
+      } else {
+        status.textContent = 'Submitted to admin queue successfully.';
+      }
+      if (!emailOk && result?.emailError) {
+        status.textContent += ' (Note: email notification failed — admin will still see it in the portal.)';
+      }
       status.classList.add('text-success', 'status-strong');
-      btn.querySelector('.btn-label').textContent = 'Sent';
-      showToast(_staFormType === 'sign'
-        ? 'Sign request submitted to queue.'
-        : (sentWithAttachment ? 'Submission emailed with PDF attached.' : 'Submission emailed and archived.'));
-      setTimeout(closeSendToAdminModal, 2000);
+      btn.querySelector('.btn-label').textContent = 'Submitted';
+      showToast('Submission added to admin queue.');
+      setTimeout(closeSendToAdminModal, 2200);
     } else {
       const errMsg = result?.error || 'Unknown error';
-      status.textContent = 'Failed to send: ' + errMsg;
+      status.textContent = 'Failed to submit: ' + errMsg;
       status.classList.add('text-error', 'status-strong');
       btn.classList.remove('loading');
       btn.disabled = false;
-      btn.querySelector('.btn-label').textContent = 'Send Email';
+      btn.querySelector('.btn-label').textContent = 'Submit to Queue';
     }
   } catch(err) {
     status.textContent = 'Error: ' + err.message;
     status.classList.add('text-error', 'status-strong');
     btn.classList.remove('loading');
     btn.disabled = false;
-    btn.querySelector('.btn-label').textContent = 'Send Email';
+    btn.querySelector('.btn-label').textContent = 'Submit to Queue';
   }
 }
 
