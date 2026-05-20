@@ -10316,7 +10316,7 @@ async function uploadFilesBatch(files, category, fieldId, statusId, uploaderName
       failMsg.className = 'text-error';
       failMsg.style.fontSize = '12px';
       failMsg.style.marginTop = '4px';
-      failMsg.textContent = failed.map(r => `${escHtml(r.filename)}: ${escHtml(r.error || 'failed')}`).join('; ');
+      failMsg.textContent = failed.map(r => `${r.filename}: ${r.error || 'failed'}`).join('; ');
       if (statusEl) statusEl.appendChild(failMsg);
     }
 
@@ -10376,7 +10376,9 @@ function initS3Uploads() {
   document.querySelectorAll('.upload-zone').forEach(zone => {
     const category = zone.dataset.category || 'other';
     const fieldId = zone.dataset.field;
-    const statusId = 'us-' + fieldId.replace('l-doc-', 'l-').replace('s-', 's-');
+    // Derive the status element ID: strip "-doc-" segment that separates
+    // zone prefixes from field names (e.g. "v-doc-disclosure" → "v-disclosure").
+    const statusId = 'us-' + fieldId.replace(/-doc-/, '-');
     const input = document.getElementById(fieldId);
     if (!input) return;
 

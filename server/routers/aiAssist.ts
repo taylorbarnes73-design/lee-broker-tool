@@ -2,6 +2,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable } from "../_core/llm";
 import { z } from "zod/v4";
 import { getSetting } from "../settings/getSetting";
+import { storageGetBytes } from "../storage";
 
 // ── Field schemas per tab ──
 
@@ -783,10 +784,15 @@ function buildJsonSchema(name: string, fieldNames: string[]) {
 
 async function fetchDocumentBuffer(fileUrl: string) {
   try {
+    // Local storage path — read directly from disk without an HTTP round-trip
+    if (fileUrl.startsWith("/local-uploads/")) {
+      const { bytes } = await storageGetBytes(fileUrl);
+      return { fileBuffer: bytes, error: null };
+    }
     const fileResp = await fetch(fileUrl, { signal: AbortSignal.timeout(30_000) });
     if (!fileResp.ok) throw new Error(`File fetch failed: ${fileResp.status}`);
     const buffer = await fileResp.arrayBuffer();
-    return { fileBuffer: Buffer.from(buffer), error: null as string | null };
+    return { fileBuffer: Buffer.from(buffer), error: null };
   } catch (e: any) {
     return { fileBuffer: null, error: `Could not fetch file: ${e.message}` };
   }
@@ -1017,8 +1023,8 @@ export const aiAssistRouter = router({
         fileUrl: z
           .string()
           .refine(
-            v => /^https?:\/\//i.test(v) || /^data:[^;]+;base64,/i.test(v),
-            { message: "fileUrl must be an http(s) URL or a data: URL" }
+            v => /^https?:\/\//i.test(v) || /^data:[^;]+;base64,/i.test(v) || v.startsWith("/local-uploads/"),
+            { message: "fileUrl must be an http(s) URL, a data: URL, or a local upload path" }
           ),
         mimeType: z
           .enum(["application/pdf", "image/jpeg", "image/png", "image/webp"])
@@ -1044,8 +1050,8 @@ export const aiAssistRouter = router({
         fileUrl: z
           .string()
           .refine(
-            v => /^https?:\/\//i.test(v) || /^data:[^;]+;base64,/i.test(v),
-            { message: "fileUrl must be an http(s) URL or a data: URL" }
+            v => /^https?:\/\//i.test(v) || /^data:[^;]+;base64,/i.test(v) || v.startsWith("/local-uploads/"),
+            { message: "fileUrl must be an http(s) URL, a data: URL, or a local upload path" }
           ),
         mimeType: z
           .enum(["application/pdf", "image/jpeg", "image/png", "image/webp"])

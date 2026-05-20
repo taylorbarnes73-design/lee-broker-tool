@@ -4,6 +4,7 @@ import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable, type Message } f
 import { execSync } from "child_process";
 import { ENV } from "../_core/env";
 import { getSetting } from "../settings/getSetting";
+import { storageGetBytes } from "../storage";
 
 // ── Types ──
 
@@ -163,8 +164,11 @@ export const contractsRouter = router({
   extractContract: publicProcedure
     .input(
       z.object({
-        /** Public URL of the uploaded PDF (from S3 / CDN) */
-        pdfUrl: z.string().url(),
+        /** URL of the uploaded PDF (S3 signed URL or /local-uploads/ path) */
+        pdfUrl: z.string().refine(
+          v => /^https?:\/\//i.test(v) || v.startsWith("/local-uploads/"),
+          { message: "pdfUrl must be an http(s) URL or a local upload path" }
+        ),
         contractType: z.string(),
       })
     )
@@ -226,16 +230,22 @@ Return JSON with these fields (omit any that are blank):
 }`;
 
       try {
-        // Fetch the PDF server-side
-        const pdfResp = await fetch(input.pdfUrl, { signal: AbortSignal.timeout(30_000) });
-        if (!pdfResp.ok) {
-          return {
-            success: false,
-            error: `Could not fetch PDF: ${pdfResp.status} ${pdfResp.statusText}`,
-            data: null,
-          };
+        // Fetch the PDF server-side — use direct FS read for local storage paths
+        let pdfBuffer: Buffer;
+        if (input.pdfUrl.startsWith("/local-uploads/")) {
+          const { bytes } = await storageGetBytes(input.pdfUrl);
+          pdfBuffer = bytes;
+        } else {
+          const pdfResp = await fetch(input.pdfUrl, { signal: AbortSignal.timeout(30_000) });
+          if (!pdfResp.ok) {
+            return {
+              success: false,
+              error: `Could not fetch PDF: ${pdfResp.status} ${pdfResp.statusText}`,
+              data: null,
+            };
+          }
+          pdfBuffer = Buffer.from(await pdfResp.arrayBuffer());
         }
-        const pdfBuffer = Buffer.from(await pdfResp.arrayBuffer());
 
         let rawJson: string;
 

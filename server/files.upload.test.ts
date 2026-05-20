@@ -66,7 +66,8 @@ describe("files.upload", () => {
 
     expect(result.success).toBe(true);
     expect(result.filename).toBe("test-file.txt");
-    expect(result.url).toContain("https://");
+    // URL is either an S3 signed URL (https://) or a local-storage path (/local-uploads/)
+    expect(result.url).toMatch(/^https?:\/\/|^\/local-uploads\//);
     expect(result.fileKey).toContain("broker-docs/listing_agreement/");
   });
 
@@ -112,7 +113,7 @@ describe("files.uploadBatch", () => {
     result.results.forEach(r => {
       expect(r.success).toBe(true);
       if (r.success) {
-        expect(r.url).toContain("https://");
+        expect(r.url).toMatch(/^https?:\/\/|^\/local-uploads\//);
         expect(r.fileKey).toContain("broker-docs/");
       }
     });

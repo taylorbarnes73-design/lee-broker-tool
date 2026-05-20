@@ -130,6 +130,20 @@ async function startServer() {
       createContext,
     })
   );
+  // Serve locally-stored uploads when AWS S3 is not configured (dev / no-S3 mode).
+  // The directory is created on first upload; this is a no-op when S3 is in use.
+  app.use(
+    "/local-uploads",
+    (req, _res, next) => {
+      // Block path-traversal attempts before they reach the static handler
+      if (req.path.includes("..")) {
+        next(new Error("Invalid path"));
+        return;
+      }
+      next();
+    },
+    express.static(path.join(process.cwd(), "local-uploads"), { fallthrough: false })
+  );
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
