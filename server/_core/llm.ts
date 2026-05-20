@@ -212,8 +212,10 @@ const normalizeToolChoice = (
 /**
  * Choose an OpenAI-compatible LLM backend.
  *   1. If both BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY are set,
- *      use the Forge proxy.
- *   2. Otherwise, fall back to direct OpenAI using OPENAI_API_KEY (and
+ *      use the Forge proxy (already targets gemini-2.5-flash).
+ *   2. If GEMINI_API_KEY is set, use Google's OpenAI-compatible endpoint
+ *      (https://generativelanguage.googleapis.com/v1beta/openai/).
+ *   3. Otherwise, fall back to direct OpenAI using OPENAI_API_KEY (and
  *      OPENAI_API_URL, which defaults to https://api.openai.com/v1).
  */
 type LLMBackend = { url: string; key: string; model: string };
@@ -229,6 +231,13 @@ function resolveBackend(): LLMBackend {
       model: "gemini-2.5-flash",
     };
   }
+  if (ENV.geminiApiKey) {
+    return {
+      url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+      key: ENV.geminiApiKey,
+      model: ENV.geminiModel || "gemini-2.5-flash",
+    };
+  }
   if (ENV.openaiApiKey) {
     return {
       url: `${ENV.openaiApiUrl}/chat/completions`,
@@ -237,7 +246,7 @@ function resolveBackend(): LLMBackend {
     };
   }
   throw new Error(
-    "No LLM backend configured. Set BUILT_IN_FORGE_API_URL + BUILT_IN_FORGE_API_KEY or OPENAI_API_KEY."
+    "No LLM backend configured. Set GEMINI_API_KEY, BUILT_IN_FORGE_API_URL + BUILT_IN_FORGE_API_KEY, or OPENAI_API_KEY."
   );
 }
 
