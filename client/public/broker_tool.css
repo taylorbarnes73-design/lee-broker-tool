@@ -6794,6 +6794,29 @@ body.broker-active .sub-tab-bar {
 }
 
 /* ── Focused listing + voucher cleanup ─────────────────────────────── */
+body.broker-active .sub-tab-bar {
+  position: static;
+  top: auto;
+  z-index: auto;
+}
+
+#tab-listing .sub-tab-bar {
+  padding: 0 0 8px;
+  margin-bottom: 4px;
+}
+
+#tab-listing .broker-page-head {
+  margin: 4px 0 18px;
+}
+
+#listing-mod-mode {
+  padding-top: 6px;
+}
+
+#listing-mod-mode .listing-mod-tip {
+  margin: 0 0 18px;
+}
+
 #tab-listing .listing-type-field {
   margin-bottom: 18px;
 }
@@ -6903,6 +6926,43 @@ body.broker-active .sub-tab-bar {
 #tab-voucher .reference-card {
   background: #FBFCFD;
   border-color: #DDE2E8;
+}
+
+#tab-voucher .stepper {
+  justify-content: flex-start;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+#tab-voucher .stepper::-webkit-scrollbar {
+  display: none;
+}
+
+#tab-voucher .stepper-item {
+  flex: 0 0 auto;
+}
+
+#tab-voucher .stepper-bar {
+  flex: 0 0 28px;
+  min-width: 28px;
+  margin: 0 10px;
+}
+
+#tab-voucher .stepper-label {
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+}
+
+#tab-queue .queue-status.queue-error {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(152, 0, 46, 0.16);
+  border-radius: 10px;
+  background: rgba(152, 0, 46, 0.05);
+  color: #8E1637;
+  line-height: 1.5;
 }
 
 @media (max-width: 960px) {

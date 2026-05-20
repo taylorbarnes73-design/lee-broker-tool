@@ -1,7 +1,7 @@
 import { submissions } from "../../drizzle/schema";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { and, desc, eq, or, sql } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import fs from "node:fs";
 import path from "node:path";
@@ -31,8 +31,126 @@ const submissionSummarySchema = z
 const adminStatusSchema = z.enum(["pending", "in_review", "approved", "rejected"]);
 const ACTIVE_QUEUE_STATUSES = ["pending", "in_review"] as const;
 
+type SubmissionCompatRow = {
+  id: number;
+  formType: string;
+  status: string;
+  payload: string | null;
+  reference: string | null;
+  submittedBy: string | null;
+  submittedByOpenId: string | null;
+  submittedByEmail: string | null;
+  pdfFileKey: string | null;
+  pdfUrl: string | null;
+  source: string | null;
+  sourceEmailMessageId: string | null;
+  sourceEmailWebLink: string | null;
+  parsedFields: unknown;
+  assignedTo: string | null;
+  assignedToOpenId: string | null;
+  assignedAt: string | Date | null;
+  completedBy: string | null;
+  completedAt: string | Date | null;
+  createdAt: string | Date | null;
+  updatedAt: string | Date | null;
+};
+
+const SUBMISSION_SELECT_SPECS: Array<{ column: string; alias: keyof SubmissionCompatRow; fallback?: string }> = [
+  { column: "id", alias: "id" },
+  { column: "formType", alias: "formType" },
+  { column: "status", alias: "status" },
+  { column: "payload", alias: "payload" },
+  { column: "reference", alias: "reference" },
+  { column: "submittedBy", alias: "submittedBy" },
+  { column: "submittedByOpenId", alias: "submittedByOpenId" },
+  { column: "submittedByEmail", alias: "submittedByEmail" },
+  { column: "pdfFileKey", alias: "pdfFileKey" },
+  { column: "pdfUrl", alias: "pdfUrl" },
+  { column: "source", alias: "source", fallback: "'tool'" },
+  { column: "source_email_message_id", alias: "sourceEmailMessageId", fallback: "null" },
+  { column: "source_email_web_link", alias: "sourceEmailWebLink", fallback: "null" },
+  { column: "parsed_fields", alias: "parsedFields", fallback: "null" },
+  { column: "assignedTo", alias: "assignedTo", fallback: "null" },
+  { column: "assignedToOpenId", alias: "assignedToOpenId", fallback: "null" },
+  { column: "assignedAt", alias: "assignedAt", fallback: "null" },
+  { column: "completedBy", alias: "completedBy", fallback: "null" },
+  { column: "completedAt", alias: "completedAt", fallback: "null" },
+  { column: "createdAt", alias: "createdAt" },
+  { column: "updatedAt", alias: "updatedAt" },
+];
+
+let cachedSubmissionColumns: { loadedAt: number; columns: Set<string> } | null = null;
+
 function activeQueueStatusCondition() {
   return sql`${submissions.status} in (${sql.join(ACTIVE_QUEUE_STATUSES.map(status => sql`${status}`), sql`, `)})`;
+}
+
+function normalizeExecuteRows<T = Record<string, unknown>>(result: unknown): T[] {
+  if (Array.isArray(result)) return result as T[];
+  if (result && typeof result === "object" && Array.isArray((result as any).rows)) {
+    return (result as any).rows as T[];
+  }
+  return [];
+}
+
+async function getSubmissionColumnSet(db: any): Promise<Set<string>> {
+  const now = Date.now();
+  if (cachedSubmissionColumns && now - cachedSubmissionColumns.loadedAt < 30_000) {
+    return cachedSubmissionColumns.columns;
+  }
+
+  const result = await db.execute(sql`show columns from submissions`);
+  const rows = normalizeExecuteRows<Record<string, unknown>>(result);
+  const columns = new Set(
+    rows
+      .map(row => String(row.Field ?? row.field ?? row.COLUMN_NAME ?? "").trim())
+      .filter(Boolean)
+  );
+  cachedSubmissionColumns = { loadedAt: now, columns };
+  return columns;
+}
+
+function buildSubmissionSelectList(tableAlias: string, columns: Set<string>) {
+  return sql.join(
+    SUBMISSION_SELECT_SPECS.map(spec => {
+      if (columns.has(spec.column)) {
+        return sql.raw(`${tableAlias}.\`${spec.column}\` as \`${String(spec.alias)}\``);
+      }
+      return sql.raw(`${spec.fallback ?? "null"} as \`${String(spec.alias)}\``);
+    }),
+    sql`, `
+  );
+}
+
+async function selectSubmissionRows(
+  db: any,
+  options: {
+    where?: any[];
+    orderBy?: any;
+    limit?: number;
+  }
+): Promise<SubmissionCompatRow[]> {
+  const columns = await getSubmissionColumnSet(db);
+  const selectList = buildSubmissionSelectList("s", columns);
+  const whereSql = options.where?.length ? sql`where ${sql.join(options.where, sql` and `)}` : sql``;
+  const orderBySql = options.orderBy ?? sql``;
+  const limitSql = typeof options.limit === "number" ? sql`limit ${options.limit}` : sql``;
+  const result = await db.execute(sql`
+    select ${selectList}
+    from submissions s
+    ${whereSql}
+    ${orderBySql}
+    ${limitSql}
+  `);
+  return normalizeExecuteRows<SubmissionCompatRow>(result);
+}
+
+async function selectSubmissionById(db: any, id: number): Promise<SubmissionCompatRow | null> {
+  const rows = await selectSubmissionRows(db, {
+    where: [sql`s.\`id\` = ${id}`],
+    limit: 1,
+  });
+  return rows[0] ?? null;
 }
 
 function parsePayload(payload: string | null) {
@@ -311,12 +429,11 @@ export const submissionsRouter = router({
       if (!db) return [];
       const limit = input?.limit ?? 25;
 
-      const rows = await db
-        .select()
-        .from(submissions)
-        .where(eq(submissions.submittedByOpenId, ctx.user.openId))
-        .orderBy(desc(submissions.createdAt))
-        .limit(limit);
+      const rows = await selectSubmissionRows(db, {
+        where: [sql`s.\`submittedByOpenId\` = ${ctx.user.openId}`],
+        orderBy: sql`order by s.\`createdAt\` desc`,
+        limit,
+      });
 
       return rows.map(row => ({
         id: row.id,
@@ -348,12 +465,14 @@ export const submissionsRouter = router({
       const limit = input?.limit ?? 50;
 
       // 1) Get *my* active queue requests (the broker should only see their own).
-      const myQueueRows = await db
-        .select()
-        .from(submissions)
-        .where(and(eq(submissions.submittedByOpenId, ctx.user.openId), activeQueueStatusCondition()))
-        .orderBy(submissions.createdAt, submissions.id)
-        .limit(limit);
+      const myQueueRows = await selectSubmissionRows(db, {
+        where: [
+          sql`s.\`submittedByOpenId\` = ${ctx.user.openId}`,
+          sql`s.\`status\` in (${sql.join(ACTIVE_QUEUE_STATUSES.map(status => sql`${status}`), sql`, `)})`,
+        ],
+        orderBy: sql`order by s.\`createdAt\` asc, s.\`id\` asc`,
+        limit,
+      });
 
       // 2) Total active requests in the global queue (used for context / UX).
       const totalActiveRows = await db
@@ -374,7 +493,7 @@ export const submissionsRouter = router({
                 activeQueueStatusCondition(),
                 or(
                   sql`${submissions.createdAt} < ${row.createdAt}`,
-                  and(eq(submissions.createdAt, row.createdAt), sql`${submissions.id} < ${row.id}`)
+                  and(sql`${submissions.createdAt} = ${row.createdAt}`, sql`${submissions.id} < ${row.id}`)
                 )
               )
             );
@@ -411,8 +530,7 @@ export const submissionsRouter = router({
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
       }
 
-      const rows = await db.select().from(submissions).where(eq(submissions.id, input.id)).limit(1);
-      const row = rows[0];
+      const row = await selectSubmissionById(db, input.id);
 
       if (!row) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Submission not found" });
@@ -448,11 +566,10 @@ export const submissionsRouter = router({
       if (!db) return [];
       const limit = input?.limit ?? 200;
 
-      const rows = await db
-        .select()
-        .from(submissions)
-        .orderBy(desc(submissions.createdAt))
-        .limit(limit);
+      const rows = await selectSubmissionRows(db, {
+        orderBy: sql`order by s.\`createdAt\` desc`,
+        limit,
+      });
 
       return rows.map(row => ({
         id: row.id,
@@ -487,8 +604,12 @@ export const submissionsRouter = router({
       }
 
       // Fetch current status to compute assignment side-effects only on actual transitions
-      const existingRows = await db.select({ status: submissions.status }).from(submissions).where(eq(submissions.id, input.id)).limit(1);
-      const currentStatus = existingRows[0]?.status ?? "";
+      const existingRow = await selectSubmissionById(db, input.id);
+      if (!existingRow) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Submission not found" });
+      }
+      const currentStatus = existingRow.status ?? "";
+      const availableColumns = await getSubmissionColumnSet(db);
 
       const now = new Date();
       const adminName = ctx.user.name || ctx.user.email || ctx.user.openId;
@@ -496,12 +617,12 @@ export const submissionsRouter = router({
 
       if (input.status !== currentStatus) {
         if (input.status === "in_review") {
-          patch.assignedTo = adminName;
-          patch.assignedToOpenId = ctx.user.openId;
-          patch.assignedAt = now;
-        } else if (input.status === "approved" || input.status === "closed") {
-          patch.completedBy = adminName;
-          patch.completedAt = now;
+          if (availableColumns.has("assignedTo")) patch.assignedTo = adminName;
+          if (availableColumns.has("assignedToOpenId")) patch.assignedToOpenId = ctx.user.openId;
+          if (availableColumns.has("assignedAt")) patch.assignedAt = now;
+        } else if (input.status === "approved") {
+          if (availableColumns.has("completedBy")) patch.completedBy = adminName;
+          if (availableColumns.has("completedAt")) patch.completedAt = now;
         }
       }
 

@@ -527,7 +527,7 @@
   </div><!-- end listing-add-mode -->
 
   <div id="listing-mod-mode" class="is-hidden">
-    <div class="tip">Enter the property address and describe the changes needed. Select which listing service(s) to notify.</div>
+    <div class="tip listing-mod-tip">Enter the property address and describe the changes needed. Select which listing service(s) to notify.</div>
     <div class="card required-section">
       <h2>Listing Modification <span class="required-badge">Required</span></h2>
       <div class="row c2">
@@ -11642,6 +11642,13 @@ function setQueueStatus(message, isError) {
   status.classList.toggle('queue-error', !!isError);
 }
 
+function renderBrokerQueueError() {
+  const list = document.getElementById('broker-queue-list');
+  setQueueStatus('We couldn’t load your active queue right now. Try refreshing again in a moment.', true);
+  if (!list) return;
+  list.innerHTML = '<div class="empty-state queue-empty"><div class="empty-icon"></div><h3>Queue unavailable</h3><p>Your submissions are still saved, but the live queue could not be loaded right now. Please refresh again in a moment.</p></div>';
+}
+
 function renderBrokerQueue(data) {
   const requests = Array.isArray(data?.requests) ? data.requests : [];
   const totalActive = Number(data?.totalActive ?? data?.totalPending ?? 0) || 0;
@@ -11719,7 +11726,8 @@ async function refreshBrokerQueue() {
     const data = await callTrpc('submissions.queueMine', { limit: 50 });
     renderBrokerQueue(data);
   } catch (error) {
-    setQueueStatus((error && error.message) ? error.message : 'Unable to load queue.', true);
+    console.warn('Unable to load broker queue:', error && error.message ? error.message : error);
+    renderBrokerQueueError();
   } finally {
     setBtnLoading(btn, false);
   }

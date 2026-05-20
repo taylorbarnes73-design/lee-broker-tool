@@ -822,7 +822,7 @@ submissionsApiRouter.post("/:id/import-listing-pdf", async (req, res) => {
 });
 
 submissionsApiRouter.put("/:id", async (req, res) => {
-  const user = (req as any).user as { openId: string; role: string; name?: string | null };
+  const user = (req as any).user as { openId: string; role: string; name?: string | null; email?: string | null };
   const id = Number(req.params.id);
   if (!Number.isFinite(id) || id <= 0) {
     res.status(400).json({ success: false, error: "Invalid id" });
@@ -922,4 +922,3 @@ submissionsApiRouter.delete("/:id", async (req, res) => {
   await db.delete(submissions).where(eq(submissions.id, id));
   res.json({ success: true });
 });
-
