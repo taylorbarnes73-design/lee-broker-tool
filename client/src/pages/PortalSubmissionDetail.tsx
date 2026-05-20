@@ -42,6 +42,7 @@ type SubmissionDetail = {
   assignedAt?: string | null;
   completedBy?: string | null;
   completedAt?: string | null;
+  attachments?: SubmissionDocument[];
 };
 
 type QueueMeta = {
@@ -53,9 +54,12 @@ type QueueMeta = {
 type SubmissionDocument = {
   title: string;
   filename: string;
-  url: string;
+  url: string | null;
   fileKey: string | null;
   category: string | null;
+  mimeType?: string | null;
+  fileSize?: number | null;
+  downloadUrl?: string | null;
 };
 
 function num(raw: unknown): number | null {
@@ -130,6 +134,9 @@ function submissionDocumentsFromPayload(payload: unknown): SubmissionDocument[] 
       url,
       fileKey: fileKey || null,
       category: category || null,
+      mimeType: typeof file.mimeType === "string" ? file.mimeType : null,
+      fileSize: typeof file.fileSize === "number" ? file.fileSize : null,
+      downloadUrl: null,
     });
   };
 
@@ -138,6 +145,11 @@ function submissionDocumentsFromPayload(payload: unknown): SubmissionDocument[] 
       ? (record.archivedFile as Record<string, unknown>)
       : null;
   pushDoc("Generated submission PDF", archivedFile, "submission_pdf");
+  const excelFile =
+    record.excelFile && typeof record.excelFile === "object"
+      ? (record.excelFile as Record<string, unknown>)
+      : null;
+  pushDoc("Generated Excel Voucher", excelFile, "voucher_excel");
 
   const supportingFiles = Array.isArray(record.supportingFiles) ? record.supportingFiles : [];
   supportingFiles.forEach((entry, index) => {
@@ -184,7 +196,8 @@ export default function PortalSubmissionDetail() {
   const uploadFile = trpc.files.upload.useMutation();
   const extractContract = trpc.contracts.extractContract.useMutation();
   const derivedFee = deriveFeePercent(item?.payload);
-  const submissionDocuments = submissionDocumentsFromPayload(item?.payload);
+  const submissionDocuments =
+    item?.attachments && item.attachments.length > 0 ? item.attachments : submissionDocumentsFromPayload(item?.payload);
 
   async function reloadSubmission() {
     if (!Number.isFinite(id)) {
@@ -588,9 +601,22 @@ export default function PortalSubmissionDetail() {
                             <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 2 }}>{doc.category}</div>
                           )}
                         </div>
-                        <a href={doc.url} target="_blank" rel="noreferrer" style={{ fontSize: 13, fontWeight: 600 }}>
-                          Open file ↗
-                        </a>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          {doc.downloadUrl && (
+                            <a
+                              href={doc.downloadUrl}
+                              download={doc.filename}
+                              style={{ fontSize: 13, fontWeight: 700, color: "var(--lee-crimson)" }}
+                            >
+                              Download
+                            </a>
+                          )}
+                          {doc.url && (
+                            <a href={doc.url} target="_blank" rel="noreferrer" style={{ fontSize: 13, fontWeight: 600 }}>
+                              Open file ↗
+                            </a>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>

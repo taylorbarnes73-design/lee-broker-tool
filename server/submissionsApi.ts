@@ -11,13 +11,149 @@ import { parseLeeVoucherExcelBuffer, submissionPayloadPatchFromParsedVoucher } f
 import { listingFormPatchFromParsed, parseListingFormPdfBuffer } from "./services/listingFormPdf";
 import { DealiusClient } from "./services/dealiusClient";
 import { authenticateConfiguredDealius } from "./services/dealiusAuth";
-import { storagePut } from "./storage";
+import { storageGetBytes, storagePut } from "./storage";
 
 const ACTIVE_QUEUE_STATUSES = ["pending", "in_review"] as const;
 type ActiveQueueStatus = (typeof ACTIVE_QUEUE_STATUSES)[number];
 
 function isActiveQueueStatus(status: string): status is ActiveQueueStatus {
   return (ACTIVE_QUEUE_STATUSES as readonly string[]).includes(status);
+}
+
+type SubmissionAttachment = {
+  title: string;
+  filename: string;
+  url: string | null;
+  fileKey: string | null;
+  category: string | null;
+  mimeType: string | null;
+  fileSize: number | null;
+  downloadUrl: string;
+};
+
+function parseSubmissionPayload(raw: string | null | undefined): Record<string, unknown> {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function readSubmissionFile(entry: unknown): {
+  filename: string;
+  url: string | null;
+  fileKey: string | null;
+  category: string | null;
+  mimeType: string | null;
+  fileSize: number | null;
+} | null {
+  if (!entry || typeof entry !== "object") return null;
+  const file = entry as Record<string, unknown>;
+  const filename = typeof file.filename === "string" ? file.filename.trim() : "";
+  const url = typeof file.url === "string" && file.url.trim() ? file.url.trim() : null;
+  const fileKey = typeof file.fileKey === "string" && file.fileKey.trim() ? file.fileKey.trim() : null;
+  const category = typeof file.category === "string" && file.category.trim() ? file.category.trim() : null;
+  const mimeType = typeof file.mimeType === "string" && file.mimeType.trim() ? file.mimeType.trim() : null;
+  const fileSizeRaw = typeof file.fileSize === "number" ? file.fileSize : Number(file.fileSize);
+  const fileSize = Number.isFinite(fileSizeRaw) && fileSizeRaw > 0 ? fileSizeRaw : null;
+
+  if (!filename || (!url && !fileKey)) return null;
+
+  return {
+    filename,
+    url,
+    fileKey,
+    category,
+    mimeType,
+    fileSize,
+  };
+}
+
+function buildSubmissionAttachments(params: {
+  id: number;
+  formType: string;
+  pdfFileKey: string | null;
+  pdfUrl: string | null;
+  payload: Record<string, unknown>;
+}): SubmissionAttachment[] {
+  const docs: Array<Omit<SubmissionAttachment, "downloadUrl">> = [];
+  const seen = new Set<string>();
+
+  const pushDoc = (
+    title: string,
+    fileEntry: unknown,
+    fallbackCategory: string | null = null,
+    fallbackFilename?: string
+  ) => {
+    const file = readSubmissionFile(fileEntry);
+    if (!file) return;
+    const dedupeKey = file.fileKey || file.url;
+    if (!dedupeKey || seen.has(dedupeKey)) return;
+    seen.add(dedupeKey);
+    docs.push({
+      title,
+      filename: file.filename || fallbackFilename || "attachment",
+      url: file.url,
+      fileKey: file.fileKey,
+      category: file.category || fallbackCategory,
+      mimeType: file.mimeType,
+      fileSize: file.fileSize,
+    });
+  };
+
+  const payloadArchivedFile =
+    params.payload.archivedFile && typeof params.payload.archivedFile === "object"
+      ? params.payload.archivedFile
+      : null;
+  const fallbackArchivedFile =
+    !payloadArchivedFile && (params.pdfFileKey || params.pdfUrl)
+      ? {
+          fileKey: params.pdfFileKey,
+          url: params.pdfUrl,
+          filename: `${params.formType || "submission"}-${params.id}.pdf`,
+          mimeType: "application/pdf",
+          category: "submission_pdf",
+        }
+      : null;
+
+  pushDoc("Generated submission PDF", payloadArchivedFile || fallbackArchivedFile, "submission_pdf");
+  pushDoc("Generated Excel Voucher", params.payload.excelFile, "voucher_excel", `voucher-${params.id}.xlsm`);
+
+  const supportingFiles = Array.isArray(params.payload.supportingFiles) ? params.payload.supportingFiles : [];
+  supportingFiles.forEach((entry, index) => {
+    if (!entry || typeof entry !== "object") return;
+    const file = entry as Record<string, unknown>;
+    const label =
+      typeof file.label === "string" && file.label.trim() ? file.label.trim() : `Supporting document ${index + 1}`;
+    pushDoc(label, file, typeof file.category === "string" ? file.category : null);
+  });
+
+  return docs.map((doc, index) => ({
+    ...doc,
+    downloadUrl: `/api/submissions/${params.id}/attachments/${index}/download`,
+  }));
+}
+
+function mimeTypeFromFilename(filename: string): string {
+  const normalized = filename.trim().toLowerCase();
+  if (normalized.endsWith(".pdf")) return "application/pdf";
+  if (normalized.endsWith(".xlsm")) return "application/vnd.ms-excel.sheet.macroEnabled.12";
+  if (normalized.endsWith(".xlsx")) {
+    return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  }
+  if (normalized.endsWith(".xls")) return "application/vnd.ms-excel";
+  if (normalized.endsWith(".csv")) return "text/csv; charset=utf-8";
+  if (normalized.endsWith(".doc")) return "application/msword";
+  if (normalized.endsWith(".docx")) {
+    return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  }
+  return "application/octet-stream";
+}
+
+function downloadFileName(filename: string): string {
+  return filename.replace(/[^a-zA-Z0-9._-]/g, "_") || "attachment";
 }
 
 // Support the "title/body" shape (preferred), and keep backward compatibility
@@ -249,6 +385,15 @@ submissionsApiRouter.get("/:id", async (req, res) => {
     return;
   }
 
+  const payload = parseSubmissionPayload(row.payload);
+  const attachments = buildSubmissionAttachments({
+    id: row.id,
+    formType: row.formType,
+    pdfFileKey: row.pdfFileKey ?? null,
+    pdfUrl: row.pdfUrl ?? null,
+    payload,
+  });
+
   res.json({
     success: true,
     data: {
@@ -275,15 +420,74 @@ submissionsApiRouter.get("/:id", async (req, res) => {
             completedAt: (row as any).completedAt ?? null,
           }
         : {}),
-      payload: (() => {
-        try {
-          return JSON.parse(row.payload ?? "{}");
-        } catch {
-          return {};
-        }
-      })(),
+      payload,
+      attachments,
     },
   });
+});
+
+submissionsApiRouter.get("/:id/attachments/:index/download", async (req, res) => {
+  const user = (req as any).user as { openId: string; role: string };
+  const id = Number(req.params.id);
+  const index = Number(req.params.index);
+  if (!Number.isFinite(id) || id <= 0) {
+    res.status(400).json({ success: false, error: "Invalid id" });
+    return;
+  }
+  if (!Number.isInteger(index) || index < 0) {
+    res.status(400).json({ success: false, error: "Invalid attachment index" });
+    return;
+  }
+
+  const db = await getDb();
+  if (!db) {
+    res.status(503).json({ success: false, error: "Database unavailable" });
+    return;
+  }
+
+  const rows = await db.select().from(submissions).where(eq(submissions.id, id)).limit(1);
+  const row = rows[0];
+  if (!row) {
+    res.status(404).json({ success: false, error: "Not found" });
+    return;
+  }
+
+  const isAdmin = user.role === "admin";
+  if (!isAdmin && row.submittedByOpenId !== user.openId) {
+    res.status(403).json({ success: false, error: "Forbidden" });
+    return;
+  }
+
+  const attachments = buildSubmissionAttachments({
+    id: row.id,
+    formType: row.formType,
+    pdfFileKey: row.pdfFileKey ?? null,
+    pdfUrl: row.pdfUrl ?? null,
+    payload: parseSubmissionPayload(row.payload),
+  });
+  const attachment = attachments[index];
+
+  if (!attachment) {
+    res.status(404).json({ success: false, error: "Attachment not found" });
+    return;
+  }
+
+  const storageKey = attachment.fileKey || attachment.url;
+  if (!storageKey) {
+    res.status(404).json({ success: false, error: "Attachment storage key missing" });
+    return;
+  }
+
+  try {
+    const { bytes } = await storageGetBytes(storageKey);
+    res.setHeader("Content-Type", attachment.mimeType || mimeTypeFromFilename(attachment.filename));
+    res.setHeader("Content-Length", String(bytes.length));
+    res.setHeader("Content-Disposition", `attachment; filename=\"${downloadFileName(attachment.filename)}\"`);
+    res.status(200).send(bytes);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ success: false, error: message || "Failed to download attachment" });
+  }
 });
 
 submissionsApiRouter.get("/:id/queue", async (req, res) => {
