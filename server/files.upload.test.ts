@@ -66,8 +66,97 @@ describe("files.upload", () => {
 
     expect(result.success).toBe(true);
     expect(result.filename).toBe("test-file.txt");
-    expect(result.url).toContain("https://");
+    // URL is either an S3 signed URL (https://) or a local-storage path (/local-uploads/)
+    expect(result.url).toMatch(/^https?:\/\/|^\/local-uploads\//);
     expect(result.fileKey).toContain("broker-docs/listing_agreement/");
+  });
+
+  it("rejects a file that exceeds the 100 MB size limit", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    // 101 MB of zeros
+    const oversized = Buffer.alloc(101 * 1024 * 1024, 0);
+    await expect(
+      caller.files.upload({
+        filename: "huge.pdf",
+        mimeType: "application/pdf",
+        base64Data: oversized.toString("base64"),
+        category: "listing_brochure",
+      })
+    ).rejects.toThrow(/exceeds maximum size/i);
+  });
+});
+
+describe("files.uploadBatch", () => {
+  it("uploads multiple files and returns per-file results", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    const result = await caller.files.uploadBatch({
+      files: [
+        {
+          filename: "doc1.pdf",
+          mimeType: "application/pdf",
+          base64Data: Buffer.from("%PDF-1.4 doc1").toString("base64"),
+          category: "agency_disclosure",
+        },
+        {
+          filename: "doc2.pdf",
+          mimeType: "application/pdf",
+          base64Data: Buffer.from("%PDF-1.4 doc2").toString("base64"),
+          category: "listing_agreement",
+        },
+      ],
+      uploaderName: "Test Broker",
+    });
+
+    expect(result.totalCount).toBe(2);
+    expect(result.successCount).toBe(2);
+    expect(result.results).toHaveLength(2);
+    result.results.forEach(r => {
+      expect(r.success).toBe(true);
+      if (r.success) {
+        expect(r.url).toMatch(/^https?:\/\/|^\/local-uploads\//);
+        expect(r.fileKey).toContain("broker-docs/");
+      }
+    });
+  });
+
+  it("returns per-file errors for oversized files in a batch", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    const oversized = Buffer.alloc(101 * 1024 * 1024, 0);
+    const result = await caller.files.uploadBatch({
+      files: [
+        {
+          filename: "good.pdf",
+          mimeType: "application/pdf",
+          base64Data: Buffer.from("%PDF-1.4 small").toString("base64"),
+          category: "agency_disclosure",
+        },
+        {
+          filename: "huge.pdf",
+          mimeType: "application/pdf",
+          base64Data: oversized.toString("base64"),
+          category: "agency_disclosure",
+        },
+      ],
+    });
+
+    expect(result.totalCount).toBe(2);
+    expect(result.successCount).toBe(1);
+    const failed = result.results.find(r => !r.success);
+    expect(failed).toBeDefined();
+    if (failed && !failed.success) {
+      expect(failed.error).toMatch(/exceeds maximum size/i);
+    }
+  });
+
+  it("rejects a batch with more than 20 files", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    const files = Array.from({ length: 21 }, (_, i) => ({
+      filename: `file${i}.pdf`,
+      mimeType: "application/pdf",
+      base64Data: Buffer.from(`%PDF-1.4 ${i}`).toString("base64"),
+      category: "other",
+    }));
+    await expect(caller.files.uploadBatch({ files })).rejects.toThrow();
   });
 });
 

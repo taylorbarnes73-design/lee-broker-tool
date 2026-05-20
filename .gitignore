@@ -121,3 +121,6 @@ Lee\ Broker\ Tool*/
 
 # Test files (sample PDFs, vouchers, etc.)
 test-files/
+
+# Local file storage fallback (used when AWS_S3_BUCKET is not set)
+local-uploads/

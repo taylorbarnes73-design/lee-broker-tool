@@ -1,7 +1,8 @@
 import { publicProcedure, router } from "../_core/trpc";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable } from "../_core/llm";
 import { z } from "zod/v4";
 import { getSetting } from "../settings/getSetting";
+import { storageGetBytes } from "../storage";
 
 // ── Field schemas per tab ──
 
@@ -783,10 +784,15 @@ function buildJsonSchema(name: string, fieldNames: string[]) {
 
 async function fetchDocumentBuffer(fileUrl: string) {
   try {
+    // Local storage path — read directly from disk without an HTTP round-trip
+    if (fileUrl.startsWith("/local-uploads/")) {
+      const { bytes } = await storageGetBytes(fileUrl);
+      return { fileBuffer: bytes, error: null };
+    }
     const fileResp = await fetch(fileUrl, { signal: AbortSignal.timeout(30_000) });
     if (!fileResp.ok) throw new Error(`File fetch failed: ${fileResp.status}`);
     const buffer = await fileResp.arrayBuffer();
-    return { fileBuffer: Buffer.from(buffer), error: null as string | null };
+    return { fileBuffer: Buffer.from(buffer), error: null };
   } catch (e: any) {
     return { fileBuffer: null, error: `Could not fetch file: ${e.message}` };
   }
@@ -857,15 +863,46 @@ async function extractDocumentFields(
     ? `Extract all listing fields you can identify from this ${mimeType === "application/pdf" ? "PDF brochure" : "brochure image"}.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nReturn JSON with only fields you can confidently extract:`
     : `Extract all fields you can identify for the "${tab}" form from this ${mimeType === "application/pdf" ? "PDF document" : "document image"}.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nReturn JSON with only fields you can confidently extract:`;
 
+  const systemContent = options.listingBrochurePrompt
+    ? await brochureSystemPrompt()
+    : await documentSystemPrompt();
+
+  // ── Preferred path: Gemini native API (inline file data, no text extraction) ──
+  // Gemini reads the document directly, giving much better results on scanned PDFs
+  // and image-heavy brochures. Only available when GEMINI_API_KEY is configured.
+  if (isGeminiDirectAvailable()) {
+    try {
+      const raw = await invokeLLMWithFile({
+        fileBuffer: fetched.fileBuffer,
+        mimeType,
+        systemPrompt: systemContent,
+        userPrompt: promptText,
+        outputSchema: buildJsonSchema(`${tab}_document_fields`, fieldNames),
+      });
+      const parsed = parseJsonObject(raw);
+      const fields = sanitizeAiFields(tab, parsed);
+      return {
+        success: true as const,
+        fields,
+        tab,
+        fieldCount: Object.keys(fields).length,
+      };
+    } catch (geminiErr: unknown) {
+      // Log and fall through to the text-extraction fallback so the user always
+      // gets a result even if the native Gemini call unexpectedly fails.
+      console.warn(
+        "[aiAssist] Gemini native file invocation failed, falling back to text extraction:",
+        geminiErr instanceof Error ? geminiErr.message : String(geminiErr)
+      );
+    }
+  }
+
+  // ── Fallback path: extract text from PDF, then call via the regular LLM ──
   const userContent = await buildDocumentUserContent(
     fetched.fileBuffer,
     mimeType,
     promptText
   );
-
-  const systemContent = options.listingBrochurePrompt
-    ? await brochureSystemPrompt()
-    : await documentSystemPrompt();
 
   const response = await invokeLLM({
     messages: [
@@ -986,8 +1023,8 @@ export const aiAssistRouter = router({
         fileUrl: z
           .string()
           .refine(
-            v => /^https?:\/\//i.test(v) || /^data:[^;]+;base64,/i.test(v),
-            { message: "fileUrl must be an http(s) URL or a data: URL" }
+            v => /^https?:\/\//i.test(v) || /^data:[^;]+;base64,/i.test(v) || v.startsWith("/local-uploads/"),
+            { message: "fileUrl must be an http(s) URL, a data: URL, or a local upload path" }
           ),
         mimeType: z
           .enum(["application/pdf", "image/jpeg", "image/png", "image/webp"])
@@ -1013,8 +1050,8 @@ export const aiAssistRouter = router({
         fileUrl: z
           .string()
           .refine(
-            v => /^https?:\/\//i.test(v) || /^data:[^;]+;base64,/i.test(v),
-            { message: "fileUrl must be an http(s) URL or a data: URL" }
+            v => /^https?:\/\//i.test(v) || /^data:[^;]+;base64,/i.test(v) || v.startsWith("/local-uploads/"),
+            { message: "fileUrl must be an http(s) URL, a data: URL, or a local upload path" }
           ),
         mimeType: z
           .enum(["application/pdf", "image/jpeg", "image/png", "image/webp"])
@@ -1039,6 +1076,94 @@ export const aiAssistRouter = router({
     .mutation(async ({ input }) => {
       const suggestions = runVoucherAudit(input.dealData);
       return { success: true, suggestions };
+    }),
+
+  /**
+   * AI-powered deal financial analysis using Gemini.
+   * Takes structured deal data and returns computed values plus a plain-English
+   * explanation of the deal's key financial metrics and any anomalies.
+   *
+   * Useful for: commission verification, deal summaries, quick sanity checks.
+   */
+  calculateDeal: publicProcedure
+    .input(
+      z.object({
+        /** Natural language description OR structured deal data (or both). */
+        description: z.string().optional(),
+        dealData: z.record(z.string(), z.unknown()).optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { description, dealData } = input;
+
+      if (!description && !dealData) {
+        return {
+          success: false as const,
+          error: "Provide either a deal description or structured deal data.",
+          analysis: null,
+        };
+      }
+
+      const company = String(await getSetting("branding.company_name"));
+
+      const systemPrompt = `You are a commercial real estate financial analyst for ${company}.
+Given deal data, compute financial metrics and return a concise JSON analysis.
+
+CRITICAL RULES:
+- Return ONLY a valid JSON object. No markdown, no explanation outside the JSON.
+- Compute all metrics from the data provided; never guess missing inputs.
+- All monetary values in the output must be plain numbers (no $ or commas).
+- Round dollar amounts to 2 decimal places.`;
+
+      const dataLines = dealData
+        ? Object.entries(dealData)
+            .filter(([, v]) => v !== null && v !== undefined && v !== "")
+            .map(([k, v]) => `  ${k}: ${JSON.stringify(v)}`)
+            .join("\n")
+        : "";
+
+      const userPrompt = [
+        "Analyze this commercial real estate deal and return a JSON object with the following fields:",
+        "",
+        '  "summary": "One-sentence deal summary (e.g. 5-year lease, 10,000 SF industrial, Irvine CA)",',
+        '  "transactionType": "Lease | Sale",',
+        '  "totalConsideration": <number — total lease value or sale price>,',
+        '  "commissionAmount": <number — gross commission dollar amount>,',
+        '  "commissionRate": <number — commission % used>,',
+        '  "avgMonthlyRent": <number — average monthly rent in dollars (lease only, or null)>,',
+        '  "avgRatePerSf": <number — average $/SF/month (lease only, or null)>,',
+        '  "pricePerSf": <number — sale price per SF (sale only, or null)>,',
+        '  "termMonths": <number — lease term in months or null>,',
+        '  "flags": ["array of any concerns or anomalies — empty array if none"],',
+        '  "explanation": "2-4 sentence plain-English explanation of the financials"',
+        "",
+        description ? `Deal description:\n"${description}"` : "",
+        dataLines ? `Structured deal data:\n${dataLines}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      try {
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          response_format: { type: "json_object" },
+        });
+
+        const raw = response.choices?.[0]?.message?.content;
+        const parsed = parseJsonObject(raw);
+
+        return {
+          success: true as const,
+          analysis: parsed,
+          error: null,
+        };
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return { success: false as const, error: msg, analysis: null };
+      }
     }),
 });
 

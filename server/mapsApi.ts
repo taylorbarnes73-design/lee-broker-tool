@@ -84,3 +84,148 @@ mapsApiRouter.get("/maps/maps/api/staticmap", async (req, res) => {
   await proxyGoogleMapsAsset(req, res, "/maps/api/staticmap");
 });
 
+// ── Address Autocomplete ──────────────────────────────────────────────────────
+//
+// Unified endpoint that returns address suggestions for the broker tool.
+// Prefers Google Places Autocomplete when GOOGLE_MAPS_API_KEY is set;
+// falls back to the free Photon/Nominatim geocoder otherwise.
+//
+// Response shape:
+//   { results: Array<{ address: string; city: string; state: string; zip: string }> }
+
+type AddressSuggestion = {
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+};
+
+async function fetchPhotonSuggestions(query: string): Promise<AddressSuggestion[]> {
+  const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), AXIOS_TIMEOUT_MS);
+  try {
+    const res = await fetch(photonUrl, { signal: controller.signal });
+    if (!res.ok) return [];
+    const data = (await res.json()) as {
+      features?: Array<{
+        properties: {
+          housenumber?: string;
+          street?: string;
+          name?: string;
+          city?: string;
+          county?: string;
+          state?: string;
+          postcode?: string;
+        };
+      }>;
+    };
+    return (data.features ?? []).map(f => {
+      const p = f.properties;
+      const house = p.housenumber ?? "";
+      const street = p.street ?? p.name ?? "";
+      return {
+        address: [house, street].filter(Boolean).join(" ").trim() || (p.name ?? ""),
+        city: p.city ?? p.county ?? "",
+        state: p.state ?? "",
+        zip: p.postcode ?? "",
+      };
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchGooglePlacesSuggestions(
+  query: string,
+  key: string
+): Promise<AddressSuggestion[]> {
+  const acUrl = new URL("https://maps.googleapis.com/maps/api/place/autocomplete/json");
+  acUrl.searchParams.set("input", query);
+  acUrl.searchParams.set("types", "address");
+  acUrl.searchParams.set("components", "country:us");
+  acUrl.searchParams.set("language", "en");
+  acUrl.searchParams.set("key", key);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), AXIOS_TIMEOUT_MS);
+  try {
+    const res = await fetch(acUrl.toString(), { signal: controller.signal });
+    if (!res.ok) return [];
+    const data = (await res.json()) as {
+      status: string;
+      predictions?: Array<{ place_id: string }>;
+    };
+    if (data.status !== "OK" || !data.predictions) return [];
+
+    // Resolve each prediction into address components via Place Details
+    const results: AddressSuggestion[] = [];
+    for (const pred of data.predictions.slice(0, 5)) {
+      const detailUrl = new URL("https://maps.googleapis.com/maps/api/place/details/json");
+      detailUrl.searchParams.set("place_id", pred.place_id);
+      detailUrl.searchParams.set("fields", "address_components");
+      detailUrl.searchParams.set("key", key);
+
+      try {
+        const detailRes = await fetch(detailUrl.toString(), {
+          signal: AbortSignal.timeout(5_000),
+        });
+        if (!detailRes.ok) continue;
+        const detail = (await detailRes.json()) as {
+          result?: {
+            address_components?: Array<{
+              long_name: string;
+              short_name: string;
+              types: string[];
+            }>;
+          };
+        };
+        const comps = detail.result?.address_components ?? [];
+        const get = (type: string, useShort = false) => {
+          const c = comps.find(ac => ac.types.includes(type));
+          return c ? (useShort ? c.short_name : c.long_name) : "";
+        };
+        const streetNumber = get("street_number");
+        const route = get("route");
+        results.push({
+          address: [streetNumber, route].filter(Boolean).join(" ").trim(),
+          city: get("locality") || get("sublocality") || get("administrative_area_level_2"),
+          state: get("administrative_area_level_1", true),
+          zip: get("postal_code"),
+        });
+      } catch {
+        // Skip this prediction if details fail
+      }
+    }
+    return results;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+mapsApiRouter.get("/places/autocomplete", async (req, res) => {
+  const query = String(req.query.input ?? "").trim();
+  if (!query || query.length < 3) {
+    res.json({ results: [] });
+    return;
+  }
+
+  const key = ENV.googleMapsApiKey?.trim();
+  try {
+    const suggestions = key
+      ? await fetchGooglePlacesSuggestions(query, key)
+      : await fetchPhotonSuggestions(query);
+
+    res.setHeader("Cache-Control", "public, max-age=60");
+    res.json({ results: suggestions });
+  } catch {
+    // Fall back to Photon when Google fails mid-flight
+    try {
+      const fallback = await fetchPhotonSuggestions(query);
+      res.json({ results: fallback });
+    } catch {
+      res.json({ results: [] });
+    }
+  }
+});
+

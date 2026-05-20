@@ -23,7 +23,9 @@ import { handlePlatformLogout } from "./auth/passwordPlatformAuth";
 import { linkPlatformSessionAfterLegacyLogin } from "./auth/linkPlatformSessionAfterLegacyLogin";
 import { isAdminByPolicy } from "./auth/isAdminByPolicy";
 
-const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 100 * 1024 * 1024; // 100 MB per file
+const MAX_BATCH_FILES = 20; // maximum files accepted in a single batch request
+const MAX_BATCH_CONCURRENCY = 5; // max concurrent S3 uploads within a batch
 const LISTING_BROCHURE_CATEGORY = "listing_brochure";
 const LISTING_BROCHURE_MIMES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
 
@@ -242,6 +244,105 @@ export const appRouter = router({
         }
 
         return { success: true, url, fileKey, filename };
+      }),
+
+    /**
+     * Upload multiple files in a single request.
+     * Files are validated individually and uploaded to S3 concurrently
+     * (capped at MAX_BATCH_CONCURRENCY to avoid overwhelming storage).
+     * A per-file result is returned so the client can show partial success.
+     */
+    uploadBatch: publicProcedure
+      .input(
+        z.object({
+          files: z
+            .array(
+              z.object({
+                filename: z.string(),
+                mimeType: z.string(),
+                base64Data: z.string(),
+                category: z.string().default("other"),
+                reference: z.string().optional(),
+              })
+            )
+            .min(1)
+            .max(MAX_BATCH_FILES),
+          uploaderName: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        type FileResult =
+          | { filename: string; success: true; url: string; fileKey: string }
+          | { filename: string; success: false; error: string };
+
+        async function uploadOne(
+          file: (typeof input.files)[number]
+        ): Promise<FileResult> {
+          try {
+            const { filename, mimeType, base64Data, category, reference } = file;
+            const buffer = Buffer.from(base64Data, "base64");
+            const fileSize = buffer.length;
+
+            if (fileSize > MAX_UPLOAD_BYTES) {
+              return {
+                filename,
+                success: false,
+                error: `File exceeds maximum size of ${MAX_UPLOAD_BYTES / (1024 * 1024)} MB.`,
+              };
+            }
+            if (category === LISTING_BROCHURE_CATEGORY && !LISTING_BROCHURE_MIMES.has(mimeType)) {
+              return {
+                filename,
+                success: false,
+                error: "Brochure uploads must be PDF, JPEG, PNG, or WebP.",
+              };
+            }
+
+            const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+            const fileKey = `broker-docs/${category}/${nanoid(10)}-${safeName}`;
+            const { url } = await storagePut(fileKey, buffer, mimeType);
+
+            const db = await getDb();
+            if (db) {
+              await db.insert(uploads).values({
+                fileKey,
+                url,
+                filename,
+                mimeType,
+                fileSize,
+                category,
+                reference: reference ?? null,
+                uploaderName:
+                  input.uploaderName ?? ctx.user?.name ?? null,
+                uploaderOpenId: ctx.user?.openId ?? null,
+              });
+            }
+
+            return { filename, success: true, url, fileKey };
+          } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err);
+            return { filename: file.filename, success: false, error: msg };
+          }
+        }
+
+        // Concurrency-limited pool — upload MAX_BATCH_CONCURRENCY files at once
+        const results: FileResult[] = [];
+        const queue = [...input.files];
+
+        async function runWorker() {
+          while (queue.length > 0) {
+            const file = queue.shift();
+            if (!file) break;
+            results.push(await uploadOne(file));
+          }
+        }
+
+        await Promise.all(
+          Array.from({ length: Math.min(MAX_BATCH_CONCURRENCY, input.files.length) }, runWorker)
+        );
+
+        const successCount = results.filter(r => r.success).length;
+        return { results, successCount, totalCount: results.length };
       }),
 
     /**

@@ -4,6 +4,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("../_core/llm", () => ({
   invokeLLM: vi.fn(),
+  invokeLLMWithFile: vi.fn(),
+  isGeminiDirectAvailable: vi.fn().mockReturnValue(false),
 }));
 
 vi.mock("child_process", () => ({

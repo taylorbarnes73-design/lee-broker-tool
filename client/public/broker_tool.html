@@ -993,6 +993,17 @@
         <tbody id="v-payment-body"></tbody>
       </table>
       <button class="btn btn-gray top-gap-sm" onclick="addPaymentRow()">+ Add Payment</button>
+
+      <!-- AI Deal Analysis — powered by Gemini -->
+      <div class="section-divider">
+        <h3>AI Deal Analysis</h3>
+        <p class="micro-copy">Let Gemini verify the financials and flag anything that looks off. Results are suggestions only — all calculated fields above are authoritative.</p>
+        <button class="btn btn-outline" id="v-ai-calc-btn" onclick="runVoucherAICalculate()">
+          <svg class="ui-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:5px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Analyze with Gemini
+        </button>
+        <div id="v-ai-calc-panel" class="is-hidden" style="margin-top:14px;"></div>
+      </div>
     </div>
   </div>
 
@@ -4427,6 +4438,101 @@ function calcOutsideTotals() {
   calcCommSummary();
 }
 document.getElementById('v-outside-body')?.addEventListener('input', calcOutsideTotals);
+
+// ── AI Deal Analysis (Gemini-powered) ────────────────────────────────────────
+async function runVoucherAICalculate() {
+  const btn = document.getElementById('v-ai-calc-btn');
+  const panel = document.getElementById('v-ai-calc-panel');
+  if (!btn || !panel) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Analyzing…';
+  setHiddenState(panel, false);
+  panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>Gemini</span> Deal Analysis</div><div class="ai-review-status-row"><div class="dx-spin dx-spin-accent"></div> Gemini is reviewing the deal financials…</div></div>';
+
+  // Collect the current voucher form state
+  const txnType = document.getElementById('v-txn-type')?.value || '';
+  const repType = document.getElementById('v-rep-type')?.value || '';
+  const address = document.getElementById('v-address')?.value || '';
+  const city = document.getElementById('v-city')?.value || '';
+  const zip = document.getElementById('v-zip')?.value || '';
+  const dealSf = document.getElementById('v-l-dealsf')?.value || document.getElementById('v-deal-sf')?.value || '';
+  const commRate = document.getElementById('v-l-comm-rate')?.value || '';
+  const totalConsideration = document.getElementById('v-l-consideration')?.value || '';
+  const commDue = document.getElementById('v-l-comm-due')?.value || '';
+  const totalInvoice = document.getElementById('v-total-invoice')?.value || '';
+  const avgRateSf = document.getElementById('v-avg-rate-sf')?.value || '';
+  const avgMonthly = document.getElementById('v-avg-monthly')?.value || '';
+  const salePrice = document.getElementById('v-s-price')?.value || '';
+  const saleCommPct = document.getElementById('v-s-comm-pct')?.value || '';
+  const saleCommDue = document.getElementById('v-s-comm-due')?.value || '';
+  const bonus = document.getElementById('v-comm-bonus')?.value || '';
+  const consulting = document.getElementById('v-comm-consulting')?.value || '';
+  const totalOutside = document.getElementById('v-total-outside')?.value || '';
+
+  // Collect rent schedule
+  const rentRows = [];
+  document.querySelectorAll('#v-rent-body tr').forEach(tr => {
+    const monthly = tr.querySelector('.rent-monthly')?.value || '';
+    const months = tr.querySelector('.rent-months')?.value || '';
+    if (monthly || months) rentRows.push({ monthly, months });
+  });
+
+  const dealData = {
+    transactionType: txnType, representationType: repType,
+    address, city, zip, dealSf, commRate,
+    totalConsideration, commDue, totalInvoice,
+    avgRateSf, avgMonthly,
+    salePrice: salePrice || undefined, saleCommPct: saleCommPct || undefined,
+    saleCommDue: saleCommDue || undefined,
+    bonus: bonus || undefined, consulting: consulting || undefined,
+    totalOutsideAgents: totalOutside || undefined,
+    rentSchedule: rentRows.length ? rentRows : undefined
+  };
+
+  try {
+    const result = await callTrpc('aiAssist.calculateDeal', { dealData });
+    const a = result && result.analysis ? result.analysis : null;
+    if (!a) {
+      panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>Gemini</span> Deal Analysis</div><div class="text-error">No analysis returned. Fill in more fields and try again.</div></div>';
+      return;
+    }
+
+    const fmt = (n) => (n != null && n !== '' && !isNaN(Number(n))) ? '$' + Number(n).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
+    const fmtPct = (n) => (n != null && n !== '' && !isNaN(Number(n))) ? Number(n).toFixed(2) + '%' : '—';
+    const flags = Array.isArray(a.flags) && a.flags.length ? a.flags : null;
+
+    let html = '<div class="ai-panel">';
+    html += '<div class="ai-panel-header"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Gemini Deal Analysis</div>';
+    if (a.summary) html += '<div style="font-size:13px;font-weight:600;color:var(--ink-800);margin-bottom:8px;">' + escHtml(a.summary) + '</div>';
+    html += '<div class="ai-calc-grid">';
+    html += '<div class="ai-calc-row"><span class="ai-calc-label">Total Consideration</span><span class="ai-calc-val">' + fmt(a.totalConsideration) + '</span></div>';
+    html += '<div class="ai-calc-row"><span class="ai-calc-label">Commission Rate</span><span class="ai-calc-val">' + fmtPct(a.commissionRate) + '</span></div>';
+    html += '<div class="ai-calc-row"><span class="ai-calc-label">Commission Amount</span><span class="ai-calc-val">' + fmt(a.commissionAmount) + '</span></div>';
+    if (a.avgMonthlyRent != null) html += '<div class="ai-calc-row"><span class="ai-calc-label">Avg Monthly Rent</span><span class="ai-calc-val">' + fmt(a.avgMonthlyRent) + '</span></div>';
+    if (a.avgRatePerSf != null)   html += '<div class="ai-calc-row"><span class="ai-calc-label">Avg Rate/SF/Mo</span><span class="ai-calc-val">' + fmt(a.avgRatePerSf) + '</span></div>';
+    if (a.termMonths != null)     html += '<div class="ai-calc-row"><span class="ai-calc-label">Term</span><span class="ai-calc-val">' + Number(a.termMonths) + ' months</span></div>';
+    if (a.pricePerSf != null)     html += '<div class="ai-calc-row"><span class="ai-calc-label">Price/SF</span><span class="ai-calc-val">' + fmt(a.pricePerSf) + '</span></div>';
+    html += '</div>';
+    if (a.explanation) html += '<p class="micro-copy" style="margin-top:10px;color:var(--ink-700);">' + escHtml(a.explanation) + '</p>';
+    if (flags) {
+      html += '<div style="margin-top:10px;"><strong style="font-size:12px;color:var(--lee-red,#98002E);">&#9888; Flags</strong><ul style="margin:4px 0 0 16px;font-size:12px;color:var(--ink-700);">';
+      flags.forEach(f => { html += '<li>' + escHtml(String(f)) + '</li>'; });
+      html += '</ul></div>';
+    }
+    html += '</div>';
+    panel.innerHTML = html;
+  } catch (err) {
+    panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>Gemini</span> Deal Analysis</div><div class="text-error">Error: ' + escHtml(err.message || String(err)) + '</div></div>';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg class="ui-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:5px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Analyze with Gemini';
+  }
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COPY LISTING DATA TO SIGN REQUEST
@@ -9951,6 +10057,20 @@ function initFreeAutocomplete() {
 
     let timeout = null;
 
+    /**
+     * Fetch address suggestions from the server-side proxy.
+     * The server prefers Google Places Autocomplete when GOOGLE_MAPS_API_KEY is
+     * configured, otherwise falls back to the free Photon geocoder.
+     * Both paths return the same normalized shape:
+     *   { results: [{ address, city, state, zip }] }
+     */
+    async function fetchSuggestions(query) {
+      const res = await fetch('/api/places/autocomplete?input=' + encodeURIComponent(query));
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data.results) ? data.results : [];
+    }
+
     input.addEventListener('input', () => {
       clearTimeout(timeout);
       const query = input.value.trim();
@@ -9962,22 +10082,19 @@ function initFreeAutocomplete() {
 
       timeout = setTimeout(async () => {
         try {
-          const res = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(query) + '&limit=5');
-          const data = await res.json();
+          const results = await fetchSuggestions(query);
           
           dropdown.innerHTML = '';
-          if (data.features && data.features.length > 0) {
-            data.features.forEach(feature => {
-              const p = feature.properties;
-              const house = p.housenumber || '';
-              const street = p.street || p.name || '';
-              const city = p.city || p.county || '';
-              const state = p.state || '';
-              const zip = p.postcode || '';
-              
-              const addressLine = (house + ' ' + street).trim() || p.name;
+          if (results.length > 0) {
+            results.forEach(r => {
+              const addressLine = r.address || '';
+              const city = r.city || '';
+              const state = r.state || '';
+              const zip = r.zip || '';
               const subText = [city, state, zip].filter(x => x).join(', ');
-              
+
+              if (!addressLine) return;
+
               const item = document.createElement('div');
               item.className = 'autocomplete-item';
               
@@ -10020,7 +10137,7 @@ function initFreeAutocomplete() {
               
               dropdown.appendChild(item);
             });
-            setHiddenState(dropdown, false);
+            setHiddenState(dropdown, results.length === 0);
           } else {
             setHiddenState(dropdown, true);
           }
@@ -10059,16 +10176,26 @@ document.addEventListener('DOMContentLoaded', () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // Store uploaded file metadata keyed by field id
+// uploadedFiles[fieldId] = Array<{ url, fileKey, filename }>
 const uploadedFiles = {};
 
+/**
+ * Upload a single File object to broker storage (used for brochures and
+ * specialised single-file flows such as property photos).
+ */
 async function uploadFileToBrokerStorage(file, category, fieldId, statusId, uploaderName) {
   const statusEl = document.getElementById(statusId);
   if (statusEl) {
     statusEl.innerHTML = '<span class="text-muted-sm">Uploading...</span>';
   }
 
+  const MAX_CLIENT_BYTES = 100 * 1024 * 1024; // 100 MB
+  if (file.size > MAX_CLIENT_BYTES) {
+    if (statusEl) statusEl.innerHTML = '<span class="text-error">File is too large (max 100 MB).</span>';
+    return;
+  }
+
   try {
-    // Read file as base64
     const base64Data = await new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result.split(',')[1]);
@@ -10096,37 +10223,130 @@ async function uploadFileToBrokerStorage(file, category, fieldId, statusId, uplo
     const result = data.result?.data?.json;
 
     if (result?.success) {
-      uploadedFiles[fieldId] = { url: result.url, fileKey: result.fileKey, filename: result.filename };
+      // Store as single-item array so downstream code can treat all fields uniformly
+      uploadedFiles[fieldId] = [{ url: result.url, fileKey: result.fileKey, filename: result.filename }];
       if (fieldId === 'c-property-photo') {
         compPropertyPhotoStorageUrl = result.url;
         if (!compPropertyPhotoFilename) compPropertyPhotoFilename = result.filename || file.name || 'Property photo';
         renderCompPhotoPreview();
       }
       if (statusEl) {
-        statusEl.innerHTML = `<span class="status-success">Stored: <a href="${result.url}" target="_blank" class="status-success">${result.filename}</a></span>
+        statusEl.innerHTML = `<span class="status-success">Stored: <a href="${result.url}" target="_blank" class="status-success">${escHtml(result.filename)}</a></span>
           <button onclick="clearUpload('${fieldId}','${statusId}')" class="upload-remove-btn">Remove</button>`;
       }
-      // Update zone appearance
       const zone = document.querySelector(`[data-field="${fieldId}"]`);
-      if (zone) {
-        zone.classList.add('upload-zone-success');
-        zone.classList.remove('upload-zone-active');
-      }
+      if (zone) { zone.classList.add('upload-zone-success'); zone.classList.remove('upload-zone-active'); }
     } else {
       throw new Error('Unexpected response');
     }
   } catch (err) {
     console.error('Upload error:', err);
-    if (fieldId === 'c-property-photo') {
-      compPropertyPhotoStorageUrl = '';
-      renderCompPhotoPreview();
-    }
-    if (statusEl) {
-      statusEl.innerHTML = '<span class="text-error">Upload failed. Try again.</span>';
-    }
+    if (fieldId === 'c-property-photo') { compPropertyPhotoStorageUrl = ''; renderCompPhotoPreview(); }
+    if (statusEl) statusEl.innerHTML = '<span class="text-error">Upload failed. Try again.</span>';
   }
 }
 
+/**
+ * Upload multiple File objects concurrently using files.uploadBatch.
+ * Used by upload zones that accept `multiple` files (documents, attachments).
+ */
+async function uploadFilesBatch(files, category, fieldId, statusId, uploaderName) {
+  const statusEl = document.getElementById(statusId);
+  if (!files || files.length === 0) return;
+
+  const MAX_CLIENT_BYTES = 100 * 1024 * 1024; // 100 MB per file
+  const MAX_FILES = 20;
+
+  // Build the valid list once; strip oversized files upfront
+  let validList = Array.from(files).slice(0, MAX_FILES);
+  const oversized = validList.filter(f => f.size > MAX_CLIENT_BYTES);
+  if (oversized.length > 0) {
+    if (statusEl) statusEl.innerHTML = `<span class="text-error">${oversized.length} file(s) exceed the 100 MB limit and were skipped.</span>`;
+    validList = validList.filter(f => f.size <= MAX_CLIENT_BYTES);
+    if (validList.length === 0) return;
+  }
+
+  if (statusEl) {
+    statusEl.innerHTML = `<span class="text-muted-sm">Uploading ${validList.length} file${validList.length > 1 ? 's' : ''}…</span>`;
+  }
+
+  try {
+    // Read all valid files as base64 in parallel
+    const filePayloads = await Promise.all(
+      validList.map(file =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve({
+            filename: file.name,
+            mimeType: file.type || 'application/octet-stream',
+            base64Data: reader.result.split(',')[1],
+            category,
+            reference: document.getElementById('v-address')?.value || document.getElementById('l-address')?.value || ''
+          });
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        })
+      )
+    );
+
+    const res = await fetch('/api/trpc/files.uploadBatch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ json: { files: filePayloads, uploaderName: uploaderName || '' } })
+    });
+
+    if (!res.ok) throw new Error('Batch upload failed: ' + res.statusText);
+    const data = await res.json();
+    const batchResult = data.result?.data?.json;
+
+    if (!batchResult || !Array.isArray(batchResult.results)) throw new Error('Unexpected batch response');
+
+    const succeeded = batchResult.results.filter(r => r.success);
+    const failed = batchResult.results.filter(r => !r.success);
+
+    // Merge into uploadedFiles array for this field
+    if (!Array.isArray(uploadedFiles[fieldId])) uploadedFiles[fieldId] = [];
+    succeeded.forEach(r => uploadedFiles[fieldId].push({ url: r.url, fileKey: r.fileKey, filename: r.filename }));
+
+    // Re-render the full status list
+    renderUploadStatus(fieldId, statusId);
+
+    if (failed.length > 0) {
+      const failMsg = document.createElement('div');
+      failMsg.className = 'text-error';
+      failMsg.style.fontSize = '12px';
+      failMsg.style.marginTop = '4px';
+      failMsg.textContent = failed.map(r => `${r.filename}: ${r.error || 'failed'}`).join('; ');
+      if (statusEl) statusEl.appendChild(failMsg);
+    }
+
+    const zone = document.querySelector(`[data-field="${fieldId}"]`);
+    if (zone) {
+      if (succeeded.length > 0) { zone.classList.add('upload-zone-success'); }
+      zone.classList.remove('upload-zone-active');
+    }
+  } catch (err) {
+    console.error('Batch upload error:', err);
+    if (statusEl) statusEl.innerHTML = '<span class="text-error">Upload failed. Try again.</span>';
+  }
+}
+
+/** Render the list of uploaded files for a zone, with per-file remove buttons. */
+function renderUploadStatus(fieldId, statusId) {
+  const statusEl = document.getElementById(statusId);
+  if (!statusEl) return;
+  const files = uploadedFiles[fieldId];
+  if (!files || files.length === 0) { statusEl.innerHTML = ''; return; }
+  let html = '<div class="upload-file-list">';
+  files.forEach((f, i) => {
+    html += `<div class="upload-file-item"><a href="${f.url}" target="_blank" class="status-success upload-file-name">${escHtml(f.filename)}</a>` +
+      `<button class="upload-remove-btn" onclick="clearSingleUpload('${fieldId}','${statusId}',${i})">×</button></div>`;
+  });
+  html += '</div>';
+  statusEl.innerHTML = html;
+}
+
+/** Remove all files from an upload zone. */
 function clearUpload(fieldId, statusId) {
   delete uploadedFiles[fieldId];
   const statusEl = document.getElementById(statusId);
@@ -10134,41 +10354,65 @@ function clearUpload(fieldId, statusId) {
   const input = document.getElementById(fieldId);
   if (input) input.value = '';
   const zone = document.querySelector(`[data-field="${fieldId}"]`);
-  if (zone) {
-    zone.classList.remove('upload-zone-success');
-    zone.classList.remove('upload-zone-active');
+  if (zone) { zone.classList.remove('upload-zone-success', 'upload-zone-active'); }
+  if (fieldId === 'c-property-photo') { clearCompPhotoState(); renderCompPhotoPreview(); }
+}
+
+/** Remove a single file (by index) from a multi-file upload zone. */
+function clearSingleUpload(fieldId, statusId, index) {
+  if (!Array.isArray(uploadedFiles[fieldId])) return;
+  uploadedFiles[fieldId].splice(index, 1);
+  if (uploadedFiles[fieldId].length === 0) {
+    delete uploadedFiles[fieldId];
+    const zone = document.querySelector(`[data-field="${fieldId}"]`);
+    if (zone) zone.classList.remove('upload-zone-success');
+    const input = document.getElementById(fieldId);
+    if (input) input.value = '';
   }
-  if (fieldId === 'c-property-photo') {
-    clearCompPhotoState();
-    renderCompPhotoPreview();
-  }
+  renderUploadStatus(fieldId, statusId);
 }
 
 function initS3Uploads() {
   document.querySelectorAll('.upload-zone').forEach(zone => {
     const category = zone.dataset.category || 'other';
     const fieldId = zone.dataset.field;
-    const statusId = 'us-' + fieldId.replace('l-doc-', 'l-').replace('s-', 's-');
+    // Derive the status element ID: strip "-doc-" segment that separates
+    // zone prefixes from field names (e.g. "v-doc-disclosure" → "v-disclosure").
+    const statusId = 'us-' + fieldId.replace(/-doc-/, '-');
     const input = document.getElementById(fieldId);
     if (!input) return;
 
+    // Allow multiple file selection on all document upload zones (not the property-photo zone)
+    if (fieldId !== 'c-property-photo') {
+      input.setAttribute('multiple', 'multiple');
+    }
+
     input.addEventListener('change', () => {
-      const file = input.files[0];
-      if (!file) return;
-      if (fieldId === 'c-property-photo') loadCompPhotoPreview(file);
-      uploadFileToBrokerStorage(file, category, fieldId, statusId, '');
+      const files = input.files;
+      if (!files || files.length === 0) return;
+      if (fieldId === 'c-property-photo') {
+        // Single file, specialised preview handler
+        loadCompPhotoPreview(files[0]);
+        uploadFileToBrokerStorage(files[0], category, fieldId, statusId, '');
+      } else {
+        uploadFilesBatch(files, category, fieldId, statusId, '');
+      }
     });
 
-    // Drag & drop
+    // Drag & drop — accept all dropped files
     zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('upload-zone-active'); });
     zone.addEventListener('dragleave', () => { zone.classList.remove('upload-zone-active'); });
     zone.addEventListener('drop', e => {
       e.preventDefault();
       zone.classList.remove('upload-zone-active');
-      const file = e.dataTransfer.files[0];
-      if (!file) return;
-      if (fieldId === 'c-property-photo') loadCompPhotoPreview(file);
-      uploadFileToBrokerStorage(file, category, fieldId, statusId, '');
+      const files = e.dataTransfer?.files;
+      if (!files || files.length === 0) return;
+      if (fieldId === 'c-property-photo') {
+        loadCompPhotoPreview(files[0]);
+        uploadFileToBrokerStorage(files[0], category, fieldId, statusId, '');
+      } else {
+        uploadFilesBatch(files, category, fieldId, statusId, '');
+      }
     });
   });
 }
@@ -12252,7 +12496,7 @@ function hasVoucherComplianceAttachment() {
   const d = document.getElementById('v-doc-disclosure');
   const a = document.getElementById('v-doc-agreement');
   if ((d && d.files && d.files.length) || (a && a.files && a.files.length)) return true;
-  return Boolean(uploadedFiles['v-doc-disclosure'] || uploadedFiles['v-doc-agreement']);
+  return (uploadedFiles['v-doc-disclosure']?.length > 0) || (uploadedFiles['v-doc-agreement']?.length > 0);
 }
 
 function openSendToAdminModal(formType) {

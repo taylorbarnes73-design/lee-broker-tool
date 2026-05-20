@@ -1,9 +1,10 @@
 import { z } from "zod/v4";
 import { publicProcedure, router } from "../_core/trpc";
-import { invokeLLM, type Message } from "../_core/llm";
+import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable, type Message } from "../_core/llm";
 import { execSync } from "child_process";
 import { ENV } from "../_core/env";
 import { getSetting } from "../settings/getSetting";
+import { storageGetBytes } from "../storage";
 
 // ── Types ──
 
@@ -163,8 +164,11 @@ export const contractsRouter = router({
   extractContract: publicProcedure
     .input(
       z.object({
-        /** Public URL of the uploaded PDF (from S3 / CDN) */
-        pdfUrl: z.string().url(),
+        /** URL of the uploaded PDF (S3 signed URL or /local-uploads/ path) */
+        pdfUrl: z.string().refine(
+          v => /^https?:\/\//i.test(v) || v.startsWith("/local-uploads/"),
+          { message: "pdfUrl must be an http(s) URL or a local upload path" }
+        ),
         contractType: z.string(),
       })
     )
@@ -226,45 +230,75 @@ Return JSON with these fields (omit any that are blank):
 }`;
 
       try {
-        // Fetch the PDF server-side and extract its text — file_url is not a supported
-        // content type in the OpenAI/Gemini chat API; send extracted text instead.
-        const pdfResp = await fetch(input.pdfUrl, { signal: AbortSignal.timeout(30_000) });
-        if (!pdfResp.ok) {
-          return {
-            success: false,
-            error: `Could not fetch PDF: ${pdfResp.status} ${pdfResp.statusText}`,
-            data: null,
-          };
-        }
-        const pdfBuffer = Buffer.from(await pdfResp.arrayBuffer());
-        let pdfText = "";
-        try {
-          const mod = await import("pdf-parse");
-          const parse = (mod as any).default ?? (mod as any);
-          const pdfParsed = await parse(pdfBuffer);
-          pdfText = (pdfParsed.text || "").replace(/\s+/g, " ").trim().slice(0, 40_000);
-        } catch (parseErr: unknown) {
-          const msg = parseErr instanceof Error ? parseErr.message : String(parseErr);
-          pdfText = `[PDF text extraction failed: ${msg}. Return empty JSON if no data is available.]`;
+        // Fetch the PDF server-side — use direct FS read for local storage paths
+        let pdfBuffer: Buffer;
+        if (input.pdfUrl.startsWith("/local-uploads/")) {
+          const { bytes } = await storageGetBytes(input.pdfUrl);
+          pdfBuffer = bytes;
+        } else {
+          const pdfResp = await fetch(input.pdfUrl, { signal: AbortSignal.timeout(30_000) });
+          if (!pdfResp.ok) {
+            return {
+              success: false,
+              error: `Could not fetch PDF: ${pdfResp.status} ${pdfResp.statusText}`,
+              data: null,
+            };
+          }
+          pdfBuffer = Buffer.from(await pdfResp.arrayBuffer());
         }
 
-        const messages: Message[] = [
-          { role: "system", content: systemPrompt },
-          {
-            role: "user",
-            content: `${userPrompt}\n\nDocument text (extracted from PDF):\n${pdfText}`,
-          },
-        ];
-        const response = await invokeLLM({
-          messages,
-          response_format: { type: "json_object" },
-        });
+        let rawJson: string;
 
-        const rawContent = response.choices?.[0]?.message?.content;
-        const raw = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent) || "{}";
+        // ── Preferred path: Gemini native API (inline PDF data, no text extraction) ──
+        if (isGeminiDirectAvailable()) {
+          try {
+            rawJson = await invokeLLMWithFile({
+              fileBuffer: pdfBuffer,
+              mimeType: "application/pdf",
+              systemPrompt: systemPrompt,
+              userPrompt: userPrompt,
+            });
+          } catch (geminiErr: unknown) {
+            console.warn(
+              "[contracts] Gemini native PDF invocation failed, falling back to text extraction:",
+              geminiErr instanceof Error ? geminiErr.message : String(geminiErr)
+            );
+            rawJson = "";
+          }
+        } else {
+          rawJson = "";
+        }
+
+        // ── Fallback path: extract text then call via the regular LLM ──
+        if (!rawJson) {
+          let pdfText = "";
+          try {
+            const mod = await import("pdf-parse");
+            const parse = (mod as any).default ?? (mod as any);
+            const pdfParsed = await parse(pdfBuffer);
+            pdfText = (pdfParsed.text || "").replace(/\s+/g, " ").trim().slice(0, 40_000);
+          } catch (parseErr: unknown) {
+            const msg = parseErr instanceof Error ? parseErr.message : String(parseErr);
+            pdfText = `[PDF text extraction failed: ${msg}. Return empty JSON if no data is available.]`;
+          }
+
+          const messages: Message[] = [
+            { role: "system", content: systemPrompt },
+            {
+              role: "user",
+              content: `${userPrompt}\n\nDocument text (extracted from PDF):\n${pdfText}`,
+            },
+          ];
+          const response = await invokeLLM({
+            messages,
+            response_format: { type: "json_object" },
+          });
+          const content = response.choices?.[0]?.message?.content;
+          rawJson = typeof content === "string" ? content : JSON.stringify(content) || "{}";
+        }
         let parsed: Record<string, unknown>;
         try {
-          parsed = JSON.parse(raw);
+          parsed = JSON.parse(rawJson);
         } catch {
           return { success: false, error: "AI returned invalid JSON", data: null };
         }
