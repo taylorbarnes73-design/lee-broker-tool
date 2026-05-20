@@ -43,6 +43,9 @@
     <button type="button" class="iconbtn header-help-btn" id="help-btn" aria-label="Help for this page" title="Help">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.5V14"></path><circle cx="12" cy="17" r="0.9" fill="currentColor" stroke="none"></circle></svg>
     </button>
+    <button type="button" class="broker-hamburger" id="broker-hamburger" aria-label="Open navigation menu" onclick="toggleBrokerSidebar(true)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <a class="admin-toggle is-hidden" id="header-admin-settings-link" href="/portal/admin" aria-label="Open admin portal">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
       <span id="admin-toggle-label">Admin Portal</span>
@@ -53,6 +56,61 @@
 <!-- Sign-in removed: redirecting to centralized React login -->
 
 <div id="broker-view" style="display:none">
+
+<div class="broker-sidebar-overlay" id="broker-sidebar-overlay" onclick="toggleBrokerSidebar(false)"></div>
+
+<aside class="broker-sidebar" id="broker-sidebar" aria-label="Workspace navigation">
+  <button type="button" class="broker-sidebar-close" aria-label="Close navigation" onclick="toggleBrokerSidebar(false)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+
+  <div class="broker-sidebar-brand">
+    <img class="broker-sidebar-logo" src="lee-newport-beach-fullcolor.png" alt="Lee &amp; Associates Newport Beach">
+    <div class="broker-sidebar-rule" aria-hidden="true"></div>
+    <div class="broker-sidebar-subtitle">Broker Tool</div>
+  </div>
+
+  <nav class="broker-sidebar-nav" aria-label="Workspace sections">
+    <div class="tab broker-nav-item active" data-tab="listing" data-tab-trigger="listings" onclick="switchTab('listing')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Listing Entry</span>
+    </div>
+    <div class="tab broker-nav-item" data-tab="sign" data-tab-trigger="signs" onclick="switchTab('sign')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      <span>Sign Request</span>
+    </div>
+    <div class="tab broker-nav-item" data-tab="voucher" data-tab-trigger="voucher" onclick="switchTab('voucher')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span>Commission Voucher</span>
+    </div>
+    <div class="tab broker-nav-item" data-tab="comp" data-tab-trigger="comp-input" onclick="switchTab('comp')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+      <span>Comp Input</span>
+    </div>
+    <div class="tab broker-nav-item" data-tab="comp-reports" data-tab-trigger="comp-reports" onclick="switchTab('comp-reports')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>Comp Reports</span>
+    </div>
+    <div class="tab broker-nav-item" data-tab="queue" onclick="switchTab('queue')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      <span>My Queue</span>
+    </div>
+  </nav>
+
+  <div class="broker-sidebar-spacer" aria-hidden="true"></div>
+
+  <div class="broker-sidebar-user">
+    <div class="broker-sidebar-user-info">
+      <div class="broker-sidebar-user-name" id="sidebar-user-name">Not signed in</div>
+      <div class="broker-sidebar-user-email" id="sidebar-user-email"></div>
+    </div>
+    <div class="broker-sidebar-user-actions">
+      <a class="broker-sidebar-action" href="/portal">Portal</a>
+      <a class="broker-sidebar-action admin-toggle is-hidden" id="sidebar-admin-link" href="/portal/admin">Admin</a>
+      <button type="button" class="broker-sidebar-action" onclick="signOut()">Sign Out</button>
+    </div>
+  </div>
+</aside>
 
 <div class="tab-bar">
   <div class="tab active" data-tab="listing" data-tab-trigger="listings" onclick="switchTab('listing')">Listing Entry</div>
@@ -2662,7 +2720,7 @@
     <div id="sta-status" class="status-copy micro-copy-bottom-sm"></div>
     <div class="btn-bar">
       <button class="btn btn-gray" onclick="closeSendToAdminModal()">Cancel</button>
-      <button class="btn btn-green" id="sta-send-btn" onclick="submitSendToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Send Email</span></button>
+      <button class="btn btn-green" id="sta-send-btn" onclick="submitSendToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Submit to Queue</span></button>
     </div>
   </div>
 </div>
@@ -2941,6 +2999,14 @@ function switchTab(name) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   window.scrollTo(0, 0);
+  // Close mobile sidebar on nav
+  const sidebar = document.getElementById('broker-sidebar');
+  const overlay = document.getElementById('broker-sidebar-overlay');
+  if (sidebar && sidebar.classList.contains('open')) {
+    sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
   if (name === 'queue') {
     void refreshBrokerQueue();
   }
@@ -6766,6 +6832,7 @@ const BROKER_EMAIL_MAP = {
 
 function showBrokerTool(user) {
   setAdminAccessForUser(user || null);
+  document.body.classList.add('broker-active');
   const brokerViewEl = document.getElementById('broker-view');
   if (brokerViewEl) {
     brokerViewEl.style.display = '';
@@ -6779,6 +6846,15 @@ function showBrokerTool(user) {
   }
   void refreshBrokerQueue();
   window.queueMicrotask(applyBrokerToolInitialTabFromUrl);
+}
+
+function toggleBrokerSidebar(open) {
+  const sidebar = document.getElementById('broker-sidebar');
+  const overlay = document.getElementById('broker-sidebar-overlay');
+  const isOpen = open !== undefined ? open : !sidebar.classList.contains('open');
+  if (sidebar) sidebar.classList.toggle('open', isOpen);
+  if (overlay) overlay.classList.toggle('active', isOpen);
+  document.body.style.overflow = isOpen ? 'hidden' : '';
 }
 
 // Sign-in functions removed, handled by React login.
@@ -7684,7 +7760,7 @@ function collectVoucherData() {
 
 function statusBadge(status) {
   const map = { pending: 'badge-pending', approved: 'badge-approved', rejected: 'badge-rejected', in_review: 'badge-review' };
-  const labels = { pending: 'Pending', approved: 'Approved', rejected: 'Rejected', in_review: 'In Review' };
+  const labels = { pending: 'Pending', approved: 'Complete', rejected: 'Not accepted', in_review: 'In progress', closed: 'Closed', cancelled: 'Cancelled' };
   return '<span class="badge ' + (map[status]||'') + '">' + (labels[status]||status) + '</span>';
 }
 
@@ -11188,6 +11264,17 @@ input.ai-smart, select.ai-smart, textarea.ai-smart {
 }
 input.ai-filled, select.ai-filled, textarea.ai-filled { animation: ai-pulse 0.5s ease-out; }
 input.ai-smart, select.ai-smart, textarea.ai-smart { animation: ai-pulse-amber 0.5s ease-out; }
+
+/* ---- Broker queue progress pipeline ---- */
+.q-pipeline{display:flex;align-items:center;gap:0;margin:8px 0 6px}
+.q-step{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:60px}
+.q-dot{display:block;width:11px;height:11px;border-radius:50%;background:var(--ink-200);flex-shrink:0;transition:background .2s}
+.q-dot.q-dot-on{background:#98002E}
+.q-line{display:block;flex:1;height:2px;min-width:20px;max-width:44px;background:var(--ink-200);margin:0 2px 14px;transition:background .2s}
+.q-line.q-line-on{background:#98002E}
+.q-step-label{font-size:11px;font-weight:400;color:var(--ink-400);white-space:nowrap}
+.q-step-label.q-step-label-on{font-weight:700;color:var(--ink-900)}
+.q-rejected .q-not-accepted{font-size:11px;font-weight:700;color:#A1102F;padding:3px 8px;border-radius:999px;background:rgba(205,20,66,.08)}
 </style>
 
 <button class="ai-fab" id="ai-fab" title="AI Assist" onclick="toggleAiPanel()">
@@ -11485,14 +11572,21 @@ function writeSharedBrokerIdentity(user) {
 function updateHeaderUserDisplay(user) {
   const nameEl = document.getElementById('header-user-name');
   const emailEl = document.getElementById('header-user-email');
+  const sidebarName = document.getElementById('sidebar-user-name');
+  const sidebarEmail = document.getElementById('sidebar-user-email');
   if (!nameEl || !emailEl) return;
   if (user && user.email) {
-    nameEl.textContent = user.name || 'Lee Broker';
+    const name = user.name || 'Lee Broker';
+    nameEl.textContent = name;
     emailEl.textContent = user.email;
+    if (sidebarName) sidebarName.textContent = name;
+    if (sidebarEmail) sidebarEmail.textContent = user.email;
     return;
   }
   nameEl.textContent = 'Broker session';
   emailEl.textContent = 'Sign in on the home page';
+  if (sidebarName) sidebarName.textContent = 'Broker session';
+  if (sidebarEmail) sidebarEmail.textContent = '';
 }
 
 function fillFieldIfEmpty(id, value) {
@@ -11510,9 +11604,11 @@ function getSignedInBrokerIdentity() {
 function setAdminAccessForUser(user) {
   const adminToggle = document.querySelector('.admin-toggle');
   const settingsLink = document.getElementById('header-admin-settings-link');
+  const sidebarAdminLink = document.getElementById('sidebar-admin-link');
   const canUseAdmin = user && user.role === 'admin';
   if (adminToggle) setHiddenState(adminToggle, !canUseAdmin);
   if (settingsLink) setHiddenState(settingsLink, !canUseAdmin);
+  if (sidebarAdminLink) setHiddenState(sidebarAdminLink, !canUseAdmin);
   if (!canUseAdmin && document.body.classList.contains('admin-mode')) {
     document.body.classList.remove('admin-mode');
     const label = document.getElementById('admin-toggle-label');
@@ -11571,15 +11667,38 @@ function renderBrokerQueue(data) {
     .slice()
     .sort((a, b) => Number(a.position || 0) - Number(b.position || 0))
     .map(item => {
-      const position = Number(item.position) || 0;
+      const status = item.status || 'pending';
       const ahead = Number(item.aheadCount) || 0;
       const reference = item.reference || item.payload?.address || item.payload?.propertyAddress || 'No property reference';
+      const isDone = status === 'approved' || status === 'closed';
+      const isInProgress = status === 'in_review';
+      const isRejected = status === 'rejected' || status === 'cancelled';
+      const step2 = isInProgress || isDone;
+      const step3 = isDone;
+      const dot = (on) => '<span class="q-dot' + (on ? ' q-dot-on' : '') + '"></span>';
+      const line = (on) => '<span class="q-line' + (on ? ' q-line-on' : '') + '"></span>';
+      const lbl = (label, on) => '<span class="q-step-label' + (on ? ' q-step-label-on' : '') + '">' + escapeQueueHtml(label) + '</span>';
+      let queueText;
+      if (isDone) queueText = 'Your submission is complete.';
+      else if (isInProgress) queueText = 'Your submission is being processed.';
+      else if (isRejected) queueText = 'Not accepted.';
+      else if (ahead === 0) queueText = "You're next in queue.";
+      else queueText = ahead + ' submission' + (ahead === 1 ? '' : 's') + ' ahead of yours.';
+      const pipelineHtml = isRejected
+        ? '<div class="q-pipeline q-rejected"><span class="q-not-accepted">Not accepted</span></div>'
+        : '<div class="q-pipeline">' +
+            '<div class="q-step">' + dot(true) + lbl('Submitted', true) + '</div>' +
+            line(step2) +
+            '<div class="q-step">' + dot(step2) + lbl('In progress', step2) + '</div>' +
+            line(step3) +
+            '<div class="q-step">' + dot(step3) + lbl('Complete', step3) + '</div>' +
+          '</div>';
       return '<div class="queue-item">' +
-        '<div class="queue-position"><span class="queue-number">#' + position + '</span><small class="queue-label">in line</small></div>' +
         '<div class="queue-item-main">' +
-          '<div class="queue-item-top"><span class="badge badge-pending">' + escapeQueueHtml(formatQueueFormType(item.formType)) + '</span><span class="cell-mono-sm">SUB-' + escapeQueueHtml(String(item.id).padStart(4, '0')) + '</span><span>' + statusBadge(item.status || 'pending') + '</span></div>' +
+          '<div class="queue-item-top"><span class="badge badge-pending">' + escapeQueueHtml(formatQueueFormType(item.formType)) + '</span><span class="cell-mono-sm">SUB-' + escapeQueueHtml(String(item.id).padStart(4, '0')) + '</span></div>' +
           '<div class="queue-item-title queue-title">' + escapeQueueHtml(reference) + '</div>' +
-          '<div class="queue-item-meta queue-detail">' + escapeQueueHtml(ahead + ' ahead of you') + ' &middot; Submitted ' + escapeQueueHtml(formatQueueDate(item.createdAt)) + '</div>' +
+          pipelineHtml +
+          '<div class="queue-item-meta queue-detail">' + escapeQueueHtml(queueText) + ' &middot; Submitted ' + escapeQueueHtml(formatQueueDate(item.createdAt)) + '</div>' +
         '</div>' +
       '</div>';
     })
@@ -12529,12 +12648,12 @@ function openSendToAdminModal(formType) {
   title.textContent = formType === 'sign' ? `Submit ${label}` : `Send ${label} to Admin`;
   desc.textContent = formType === 'sign'
     ? 'This will submit the sign request into the admin submission queue. The admin will approve it, assign a PO #, and send it to Cimarron.'
-    : `This will email all filled ${label} fields to the office admin. You will be CC’d automatically.`;
+    : `This will submit the ${label} to the admin queue and send a copy to the office admin. You will be CC’d automatically.`;
   status.textContent = '';
   status.classList.remove('text-success', 'text-error', 'status-strong');
   btn.classList.remove('loading');
   btn.disabled = false;
-  btn.querySelector('.btn-label').textContent = formType === 'sign' ? 'Submit to Queue' : 'Send Email';
+  btn.querySelector('.btn-label').textContent = 'Submit to Queue';
   modal.classList.add('open');
 }
 
@@ -12838,7 +12957,7 @@ async function submitSendToAdmin() {
 
   try {
     const pdfAttachment = await buildSendToAdminPdfAttachment();
-    btn.querySelector('.btn-label').textContent = _staFormType === 'sign' ? 'Submitting…' : 'Uploading & Sending...';
+    btn.querySelector('.btn-label').textContent = 'Submitting…';
 
     const resp = await fetch('/api/trpc/email.sendToAdmin', {
       method: 'POST',
@@ -12859,35 +12978,39 @@ async function submitSendToAdmin() {
     const data = await resp.json();
     const result = data?.result?.data?.json;
     if (result?.success) {
-      const sentWithAttachment = Boolean(result?.attachmentIncluded);
+      // Submission was added to the admin queue regardless of email delivery status.
       const archivedLink = result?.archivedFile?.url;
-      status.textContent = _staFormType === 'sign'
-        ? 'Submitted to the admin queue successfully.'
-        : sentWithAttachment
-          ? 'Email sent successfully with the PDF attached and archived.'
-          : archivedLink
-            ? 'Email sent successfully. The PDF was archived and included as a secure link.'
-            : 'Email sent successfully.';
+      const emailOk = result?.emailDelivered !== false; // true for sign (queue-only), true when email sent
+      if (emailOk && archivedLink) {
+        status.textContent = 'Submitted to admin queue. A copy was archived and emailed to the office.';
+      } else if (emailOk && result?.attachmentIncluded) {
+        status.textContent = 'Submitted to admin queue. Email sent with PDF attached.';
+      } else if (emailOk && _staFormType !== 'sign') {
+        status.textContent = 'Submitted to admin queue. Email sent to admin.';
+      } else {
+        status.textContent = 'Submitted to admin queue successfully.';
+      }
+      if (!emailOk && result?.emailError) {
+        status.textContent += ' (Note: email notification failed — admin will still see it in the portal.)';
+      }
       status.classList.add('text-success', 'status-strong');
-      btn.querySelector('.btn-label').textContent = 'Sent';
-      showToast(_staFormType === 'sign'
-        ? 'Sign request submitted to queue.'
-        : (sentWithAttachment ? 'Submission emailed with PDF attached.' : 'Submission emailed and archived.'));
-      setTimeout(closeSendToAdminModal, 2000);
+      btn.querySelector('.btn-label').textContent = 'Submitted';
+      showToast('Submission added to admin queue.');
+      setTimeout(closeSendToAdminModal, 2200);
     } else {
       const errMsg = result?.error || 'Unknown error';
-      status.textContent = 'Failed to send: ' + errMsg;
+      status.textContent = 'Failed to submit: ' + errMsg;
       status.classList.add('text-error', 'status-strong');
       btn.classList.remove('loading');
       btn.disabled = false;
-      btn.querySelector('.btn-label').textContent = 'Send Email';
+      btn.querySelector('.btn-label').textContent = 'Submit to Queue';
     }
   } catch(err) {
     status.textContent = 'Error: ' + err.message;
     status.classList.add('text-error', 'status-strong');
     btn.classList.remove('loading');
     btn.disabled = false;
-    btn.querySelector('.btn-label').textContent = 'Send Email';
+    btn.querySelector('.btn-label').textContent = 'Submit to Queue';
   }
 }
 

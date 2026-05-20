@@ -1,31 +1,20 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { usePublicBranding } from "@/hooks/usePublicBranding";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Link, useLocation } from "wouter";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { ChevronDown, HelpCircle, Menu, X } from "lucide-react";
+import { HelpCircle, LogOut, Menu, User, X } from "lucide-react";
 import HelpPanel from "@/components/HelpPanel";
 import { getHelpForRoute } from "@/lib/helpContent";
 
 type AdminPortalSection =
-  | "dashboard"
-  | "my-submissions"
-  | "admin-submissions"
-  | "broker-admin"
-  | "users"
+  | "submissions"
   | "settings"
+  | "users"
+  | "audit-log"
   | "dealius-tools"
   | "listing-import"
-  | "audit-log"
   | "account"
-  | "detail"
-  | "request-hub";
+  | "detail";
 
 type AdminPortalShellProps = {
   section: AdminPortalSection;
@@ -44,20 +33,14 @@ type NavItem = {
   adminOnly?: boolean;
 };
 
-const mainNav: ReadonlyArray<NavItem> = [
-  { section: "dashboard", label: "Dashboard", subhead: "Overview", href: "/portal" },
-  { section: "my-submissions", label: "My submissions", subhead: "Broker queue", href: "/portal/submissions" },
-  { section: "admin-submissions", label: "Admin queue", subhead: "Review work", href: "/portal/admin/submissions", adminOnly: true },
-  { section: "broker-admin", label: "Broker Admin", subhead: "Inbox requests", href: "/portal/admin/broker-admin", adminOnly: true },
-];
-
-const peopleNav: ReadonlyArray<NavItem> = [
-  { section: "users", label: "Users", subhead: "Brokers & admins", href: "/portal/admin/users", adminOnly: true },
-];
-
 const settingsNav: ReadonlyArray<NavItem> = [
   { section: "settings", label: "Settings", subhead: "Branding & workflow", href: "/portal/admin/settings", adminOnly: true },
-  { section: "dealius-tools", label: "Dealius tools", subhead: "Push & attachments", href: "/portal/admin/dealius-tools", adminOnly: true },
+  { section: "users", label: "Users", subhead: "Brokers & admins", href: "/portal/admin/users", adminOnly: true },
+  { section: "audit-log", label: "Audit log", subhead: "Security events", href: "/portal/admin/audit-log", adminOnly: true },
+];
+
+const toolsNav: ReadonlyArray<NavItem> = [
+  { section: "dealius-tools", label: "Dealius", subhead: "Push & attachments", href: "/portal/admin/dealius-tools", adminOnly: true },
   {
     section: "listing-import",
     label: "Listing import",
@@ -65,7 +48,6 @@ const settingsNav: ReadonlyArray<NavItem> = [
     href: "/portal/admin/listing-import",
     adminOnly: true,
   },
-  { section: "audit-log", label: "Audit log", subhead: "Security events", href: "/portal/admin/audit-log", adminOnly: true },
 ];
 
 function NavBlock({
@@ -139,6 +121,15 @@ export default function AdminPortalShell({
     ["--admin-accent" as string]: accent,
   } as CSSProperties;
 
+  const initials = user?.name
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "LA";
+
   const sidebarContents = (
     <>
       <div className="admin-portal-sidebar-brand">
@@ -152,34 +143,72 @@ export default function AdminPortalShell({
       </div>
 
       <nav className="admin-portal-sidebar-nav" aria-label="Primary">
-        <NavBlock items={mainNav.filter(i => !i.adminOnly || isAdmin)} active={section} accent={accent} />
-      </nav>
-
-      <div className="admin-portal-nav-section-label">FORMS</div>
-      <nav className="admin-portal-sidebar-nav" aria-label="Broker HTML tool">
+        <Link
+          href="/portal/submissions"
+          className={`admin-portal-nav-item ${section === "submissions" ? "active" : ""}`}
+          style={
+            section === "submissions"
+              ? ({ borderColor: `${accent}33`, color: accent } as CSSProperties)
+              : undefined
+          }
+        >
+          <span>Submissions</span>
+          <small>Queue & inbox</small>
+        </Link>
         <a href="/tool" className="admin-portal-nav-item">
-          <span>Broker submission tool</span>
+          <span>Broker tool</span>
           <small>Listings, comps, PDFs</small>
         </a>
-        <Link href="/portal/request-hub" className={`admin-portal-nav-item ${section === "request-hub" ? "active" : ""}`}>
-          <span>Request Hub</span>
-          <small>HR, IT, Facilities</small>
-        </Link>
       </nav>
 
       {isAdmin && (
         <>
-          <div className="admin-portal-nav-section-label">PEOPLE</div>
-          <nav className="admin-portal-sidebar-nav" aria-label="People">
-            <NavBlock items={peopleNav} active={section} accent={accent} />
+          <div className="admin-portal-nav-section-label">SETTINGS</div>
+          <nav className="admin-portal-sidebar-nav" aria-label="Settings">
+            <NavBlock items={settingsNav} active={section} accent={accent} />
           </nav>
 
-          <div className="admin-portal-nav-section-label">ADMIN TOOLS</div>
-          <nav className="admin-portal-sidebar-nav" aria-label="Admin tools">
-            <NavBlock items={settingsNav} active={section} accent={accent} />
+          <div className="admin-portal-nav-section-label">TOOLS</div>
+          <nav className="admin-portal-sidebar-nav" aria-label="Tools">
+            <NavBlock items={toolsNav} active={section} accent={accent} />
           </nav>
         </>
       )}
+
+      {/* User profile footer */}
+      <div className="admin-portal-sidebar-spacer" aria-hidden />
+      <div className="admin-portal-sidebar-user">
+        <div
+          className="admin-portal-sidebar-user-avatar"
+          style={{ background: `linear-gradient(135deg, ${accent}, ${accent}cc)` }}
+          aria-hidden
+        >
+          {initials}
+        </div>
+        <div className="admin-portal-sidebar-user-info">
+          <div className="admin-portal-sidebar-user-name">{user?.name ?? "User"}</div>
+          <div className="admin-portal-sidebar-user-role">
+            {user?.role === "admin" ? "Administrator" : "Agent"}
+          </div>
+        </div>
+        <div className="admin-portal-sidebar-user-actions">
+          <Link
+            href="/portal/account"
+            className="admin-portal-sidebar-user-btn"
+            aria-label="Profile"
+          >
+            <User size={14} aria-hidden />
+          </Link>
+          <button
+            type="button"
+            className="admin-portal-sidebar-user-btn"
+            onClick={() => logout().finally(() => setLocation("/login"))}
+            aria-label="Sign out"
+          >
+            <LogOut size={14} aria-hidden />
+          </button>
+        </div>
+      </div>
     </>
   );
 
@@ -232,31 +261,6 @@ export default function AdminPortalShell({
           >
             <HelpCircle size={18} aria-hidden />
           </button>
-          <div className="admin-portal-session">
-            <span className="admin-portal-session-text">
-              Signed in as <strong>{user?.name ?? "User"}</strong>
-              {user?.role === "admin" ? " · Admin" : user ? " · Agent" : ""}
-            </span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button type="button" className="admin-portal-session-trigger">
-                  Menu
-                  <ChevronDown size={14} aria-hidden />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[180px]">
-                <DropdownMenuItem onSelect={() => setLocation("/portal/account")}>Profile</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={() => {
-                    logout().finally(() => setLocation("/login"));
-                  }}
-                >
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
         </header>
 
         <main className="admin-portal-main">

@@ -351,9 +351,6 @@
     color: var(--ink-700);
     cursor: pointer;
   }
-  .admin-portal-session-text {
-    display: none;
-  }
   .admin-portal-main {
     width: 100%;
     padding: 16px 14px 48px;
@@ -487,6 +484,81 @@
   padding: 7px 10px;
   font-size: 12px;
   font-weight: 700;
+}
+
+/* Sidebar user footer */
+.admin-portal-sidebar-spacer {
+  flex: 1;
+  min-height: 12px;
+}
+
+.admin-portal-sidebar-user {
+  border-top: 1px solid var(--ink-200);
+  padding: 12px 4px 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-portal-sidebar-user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: 0.04em;
+}
+
+.admin-portal-sidebar-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-portal-sidebar-user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-portal-sidebar-user-role {
+  font-size: 11px;
+  color: var(--ink-500);
+  margin-top: 1px;
+}
+
+.admin-portal-sidebar-user-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.admin-portal-sidebar-user-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-6);
+  border: none;
+  background: transparent;
+  color: var(--ink-500);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  text-decoration: none;
+}
+
+.admin-portal-sidebar-user-btn:hover {
+  background: var(--ink-100);
+  color: var(--ink-900);
 }
 
 .admin-portal-brand {
@@ -1654,10 +1726,6 @@
 
   .admin-portal-header {
     position: relative;
-  }
-
-  .admin-portal-session-text {
-    max-width: 100%;
   }
 
   .admin-portal-hero {

@@ -395,6 +395,8 @@ export const emailRouter = router({
 
       // For sign requests, we record/queue the submission for the admin portal.
       // The admin later sends to Cimarron after approval + PO assignment.
+      // For listing/voucher, we try email delivery but always queue the submission
+      // regardless of whether email succeeds — the admin portal is the source of truth.
       const delivery =
         formType === "sign"
           ? {
@@ -428,6 +430,7 @@ export const emailRouter = router({
         });
       } catch (error: unknown) {
         return {
+          // If we can't record the submission at all, that IS a real failure.
           success: false,
           error: error instanceof Error ? error.message : String(error),
           deliveryMethod: delivery.deliveryMethod,
@@ -443,9 +446,13 @@ export const emailRouter = router({
         };
       }
 
+      // The submission is in the queue. Email delivery is best-effort — a failed email
+      // does not mean the submission failed. Surface email status separately so the
+      // broker tool can show the right message without blocking the queue entry.
       return {
-        success: delivery.success,
-        error: delivery.error,
+        success: true,
+        emailDelivered: delivery.success,
+        emailError: delivery.success ? undefined : delivery.error,
         deliveryMethod: delivery.deliveryMethod,
         attachmentIncluded: delivery.attachmentIncluded,
         submissionId: recordedSubmission?.id ?? null,

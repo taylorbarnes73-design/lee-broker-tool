@@ -236,6 +236,16 @@ export const submissions = mysqlTable("submissions", {
   sourceEmailWebLink: text("source_email_web_link"),
   /** Smart-parsed structured fields when source is an email ingest. */
   parsedFields: json("parsed_fields"),
+  /** Display name of the admin who claimed / started work on this submission. */
+  assignedTo: varchar("assignedTo", { length: 128 }),
+  /** Stable identity (openId) of the admin who claimed this submission. */
+  assignedToOpenId: varchar("assignedToOpenId", { length: 64 }),
+  /** Timestamp when the submission was claimed (status moved to in_review). */
+  assignedAt: timestamp("assignedAt"),
+  /** Display name of the admin who marked this submission complete. */
+  completedBy: varchar("completedBy", { length: 128 }),
+  /** Timestamp when the submission was marked complete. */
+  completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => ({

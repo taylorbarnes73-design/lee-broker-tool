@@ -17,8 +17,8 @@ export function titleize(input: string): string {
 
 const SUBMISSION_STATUS_LABELS: Record<string, string> = {
   pending: "Pending",
-  in_review: "In review",
-  approved: "Approved",
+  in_review: "In progress",
+  approved: "Complete",
   rejected: "Rejected",
   waiting_on_broker: "Waiting on broker",
   waiting_on_admin: "Waiting on admin",
@@ -29,6 +29,36 @@ const SUBMISSION_STATUS_LABELS: Record<string, string> = {
 export function formatSubmissionStatus(status: string | null | undefined): string {
   if (!status) return "Unknown";
   return SUBMISSION_STATUS_LABELS[status] ?? titleize(status);
+}
+
+/**
+ * Returns a short broker-facing status phrase.
+ * queuePosition is 1-based (1 = next in line, so 0 submissions are ahead).
+ * Pass null when position is not available.
+ */
+export function brokerQueueStatusText(
+  status: string | null | undefined,
+  queuePosition: number | null
+): string {
+  if (!status) return "Submitted";
+  switch (status) {
+    case "pending":
+      if (queuePosition !== null && queuePosition > 1) {
+        const ahead = queuePosition - 1;
+        return `${ahead} submission${ahead === 1 ? "" : "s"} ahead of yours`;
+      }
+      return "You're next in queue";
+    case "in_review":
+      return "Your submission is being processed";
+    case "approved":
+    case "closed":
+      return "Completed ✓";
+    case "rejected":
+    case "cancelled":
+      return "Not accepted";
+    default:
+      return formatSubmissionStatus(status);
+  }
 }
 
 const BROKER_ADMIN_STATUS_LABELS: Record<string, string> = {
@@ -83,14 +113,13 @@ const TONE_GRAY: StatusTone = { bg: "var(--ink-100)", fg: "var(--ink-700)", bord
 export function submissionStatusTone(status: string | null | undefined): StatusTone {
   switch (status) {
     case "closed":
-      return TONE_GREEN;
     case "approved":
-      return TONE_BLUE;
+      return TONE_GREEN;
     case "rejected":
     case "cancelled":
       return TONE_RED;
     case "in_review":
-      return TONE_SLATE;
+      return TONE_BLUE;
     case "waiting_on_broker":
     case "waiting_on_admin":
       return TONE_AMBER;

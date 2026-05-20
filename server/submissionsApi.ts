@@ -178,6 +178,15 @@ submissionsApiRouter.get("/", async (req, res) => {
       queuePosition: includeQueue ? (r as any).queuePosition ?? null : null,
       source: (r as any).source ?? "tool",
       sourceEmailWebLink: (r as any).source_email_web_link ?? (r as any).sourceEmailWebLink ?? null,
+      // Assignment fields — only surfaced to admins so broker-facing views don't leak who's working on what
+      ...(isAdmin
+        ? {
+            assignedTo: (r as any).assignedTo ?? null,
+            assignedAt: (r as any).assignedAt ?? null,
+            completedBy: (r as any).completedBy ?? null,
+            completedAt: (r as any).completedAt ?? null,
+          }
+        : {}),
     })),
   });
 });
@@ -256,6 +265,16 @@ submissionsApiRouter.get("/:id", async (req, res) => {
       sourceEmailMessageId: (row as any).sourceEmailMessageId ?? null,
       sourceEmailWebLink: (row as any).sourceEmailWebLink ?? null,
       parsedFields: (row as any).parsedFields ?? null,
+      // Assignment / completion tracking — only surfaced to admins
+      ...(isAdmin
+        ? {
+            assignedTo: (row as any).assignedTo ?? null,
+            assignedToOpenId: (row as any).assignedToOpenId ?? null,
+            assignedAt: (row as any).assignedAt ?? null,
+            completedBy: (row as any).completedBy ?? null,
+            completedAt: (row as any).completedAt ?? null,
+          }
+        : {}),
       payload: (() => {
         try {
           return JSON.parse(row.payload ?? "{}");
@@ -803,7 +822,7 @@ submissionsApiRouter.post("/:id/import-listing-pdf", async (req, res) => {
 });
 
 submissionsApiRouter.put("/:id", async (req, res) => {
-  const user = (req as any).user as { openId: string; role: string };
+  const user = (req as any).user as { openId: string; role: string; name?: string | null };
   const id = Number(req.params.id);
   if (!Number.isFinite(id) || id <= 0) {
     res.status(400).json({ success: false, error: "Invalid id" });
@@ -840,6 +859,24 @@ submissionsApiRouter.put("/:id", async (req, res) => {
     return;
   }
 
+  // Compute assignment side-effects for admin status transitions.
+  // "Claim" (→ in_review): record who picked it up and when.
+  // "Complete" (→ approved | closed): record who finished it and when.
+  const now = new Date();
+  const adminName = user.name || user.email || user.openId;
+  const assignmentPatch: Record<string, unknown> = {};
+  if (isAdmin && nextStatus !== undefined && nextStatus !== row.status) {
+    if (nextStatus === "in_review") {
+      // Always update assignedTo so re-assignment works
+      assignmentPatch.assignedTo = adminName;
+      assignmentPatch.assignedToOpenId = user.openId;
+      assignmentPatch.assignedAt = now;
+    } else if (nextStatus === "approved" || nextStatus === "closed") {
+      assignmentPatch.completedBy = adminName;
+      assignmentPatch.completedAt = now;
+    }
+  }
+
   await db
     .update(submissions)
     .set({
@@ -847,7 +884,8 @@ submissionsApiRouter.put("/:id", async (req, res) => {
       reference: parsed.data.reference ?? row.reference,
       payload:
         parsed.data.payload !== undefined ? JSON.stringify(parsed.data.payload) : row.payload,
-      updatedAt: new Date(),
+      updatedAt: now,
+      ...(assignmentPatch as any),
     })
     .where(eq(submissions.id, id));
 
