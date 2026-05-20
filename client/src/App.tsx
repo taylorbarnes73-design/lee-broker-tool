@@ -51,8 +51,8 @@ function PublicHome() {
           Sign in for the broker portal and submission queue, or open the listing and forms workspace.
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <Link
-            href="/login"
+          <a
+            href="/login?next=/tool"
             style={{
               display: "block",
               padding: "14px 20px",
@@ -65,7 +65,7 @@ function PublicHome() {
             }}
           >
             Sign in
-          </Link>
+          </a>
           <a
             href="/tool"
             style={{
@@ -253,6 +253,11 @@ function Router() {
       <Route path="/" component={PublicHome} />
       <Route path="/login" component={Login} />
       <Route path="/portal/admin/login" component={AdminLoginEntry} />
+      <Route path="/portal/admin">
+        <AdminPortalRoute>
+          <PortalAdminSubmissions />
+        </AdminPortalRoute>
+      </Route>
       <Route path="/portal">
         <PortalRoute>
           <PortalDashboard />

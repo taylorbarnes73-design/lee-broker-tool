@@ -342,6 +342,7 @@ const fallback: HelpEntry = {
 };
 
 const ROUTE_MAP: ReadonlyArray<{ match: RegExp; entry: HelpEntry }> = [
+  { match: /^\/portal\/admin\/?$/, entry: adminSubmissions },
   { match: /^\/portal\/admin\/broker-admin/, entry: brokerAdmin },
   { match: /^\/portal\/admin\/submissions/, entry: adminSubmissions },
   { match: /^\/portal\/admin\/users/, entry: users },

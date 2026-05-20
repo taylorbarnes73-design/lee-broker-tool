@@ -24,7 +24,7 @@
     <div class="header-copy">
     <div class="header-kicker" id="header-kicker">Broker Workspace</div>
     <h1>Broker Submission Tool</h1>
-    <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher &bull; Comp Input &bull; Comp Reports &bull; Documents &bull; Contracts</div>
+    <div class="sub">Listing Entry &bull; Sign Request &bull; Commission Voucher &bull; Comp Input &bull; Comp Reports</div>
     </div>
   </div>
   <div class="header-actions">
@@ -40,9 +40,12 @@
         <button type="button" class="header-sign-out-btn" onclick="signOut()">Sign Out</button>
       </nav>
     </div>
-    <a class="admin-toggle is-hidden" id="header-admin-settings-link" href="/portal/admin/settings" aria-label="Open admin settings">
+    <button type="button" class="iconbtn header-help-btn" id="help-btn" aria-label="Help for this page" title="Help">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.5V14"></path><circle cx="12" cy="17" r="0.9" fill="currentColor" stroke="none"></circle></svg>
+    </button>
+    <a class="admin-toggle is-hidden" id="header-admin-settings-link" href="/portal/admin" aria-label="Open admin portal">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-      <span id="admin-toggle-label">Settings</span>
+      <span id="admin-toggle-label">Admin Portal</span>
     </a>
   </div><!-- /header-right -->
 </div><!-- /header -->
@@ -52,18 +55,16 @@
 <div id="broker-view" style="display:none">
 
 <div class="tab-bar">
-  <div class="tab active" data-tab="listing" onclick="switchTab('listing')">Listing Entry</div>
-  <div class="tab" data-tab="sign" onclick="switchTab('sign')">Sign Request</div>
-  <div class="tab" data-tab="voucher" onclick="switchTab('voucher')">Commission Voucher</div>
-  <div class="tab" data-tab="comp" onclick="switchTab('comp')">Comp Input</div>
-  <div class="tab" data-tab="comp-reports" onclick="switchTab('comp-reports')">Comp Reports</div>
-  <div class="tab" data-tab="docs" onclick="switchTab('docs')">Documents</div>
-  <div class="tab" data-tab="contracts" onclick="switchTab('contracts')">Contracts</div>
+  <div class="tab active" data-tab="listing" data-tab-trigger="listings" onclick="switchTab('listing')">Listing Entry</div>
+  <div class="tab" data-tab="sign" data-tab-trigger="signs" onclick="switchTab('sign')">Sign Request</div>
+  <div class="tab" data-tab="voucher" data-tab-trigger="voucher" onclick="switchTab('voucher')">Commission Voucher</div>
+  <div class="tab" data-tab="comp" data-tab-trigger="comp-input" onclick="switchTab('comp')">Comp Input</div>
+  <div class="tab" data-tab="comp-reports" data-tab-trigger="comp-reports" onclick="switchTab('comp-reports')">Comp Reports</div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-<div id="tab-listing" class="panel active">
+<div id="tab-listing" class="panel active" data-pane="listings">
 
   <div class="sub-tab-bar">
     <button class="sub-tab active" id="subtab-add" onclick="switchListingMode('add')">Add Listing</button>
@@ -81,7 +82,24 @@
       <div class="row c4">
         <div class="field"><label class="req">Date Entered</label><input id="l-date-entered" type="date"></div>
         <div class="field"><label class="req">Property Type</label>
-          <select id="l-prop-type" onchange="onPropTypeChange()">
+          <div class="listing-type-grid" id="listing-type-picker">
+            <button type="button" class="listing-type-opt" data-type="office" onclick="setListingType('office')">
+              <span class="lto-eyebrow">Office</span>
+              <span class="lto-title">Office</span>
+              <span class="lto-sub">Class, floor, parking, and office-specific fields.</span>
+            </button>
+            <button type="button" class="listing-type-opt" data-type="industrial" onclick="setListingType('industrial')">
+              <span class="lto-eyebrow">Industrial</span>
+              <span class="lto-title">Industrial</span>
+              <span class="lto-sub">Warehouse, loading, power, and yard details.</span>
+            </button>
+            <button type="button" class="listing-type-opt" data-type="retail" onclick="setListingType('retail')">
+              <span class="lto-eyebrow">Retail</span>
+              <span class="lto-title">Retail</span>
+              <span class="lto-sub">Frontage, center type, anchor, and traffic fields.</span>
+            </button>
+          </div>
+          <select id="l-prop-type" class="picker-sync-select" onchange="onPropTypeChange()">
             <option value="industrial">Industrial</option>
             <option value="office">Office</option>
             <option value="retail">Retail</option>
@@ -465,7 +483,7 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-<div id="tab-sign" class="panel">
+<div id="tab-sign" class="panel" data-pane="signs">
   <div class="tip">Complete each step. Fields marked <span class="required-mark">*</span> are required.</div>
 
   <div class="deal-shell" id="s-deal-shell">
@@ -659,7 +677,7 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-<div id="tab-voucher" class="panel">
+<div id="tab-voucher" class="panel" data-pane="voucher">
   <div class="tip">Required fields are marked with <span class="required-mark">*</span> — complete all steps in order for fastest processing.</div>
 
   <div class="deal-shell" id="v-deal-shell">
@@ -728,8 +746,10 @@
         <div class="field"><label class="req">City</label><input id="v-city"></div>
         <div class="field"><label class="req">State</label><input id="v-state" value="CA"></div>
         <div class="field"><label class="req">Zip</label><input id="v-zip" placeholder="92618" onblur="voucherZipAutofill(this.value)"></div>
-        <div class="field"><label class="req">Deal SF</label><input id="v-l-dealsf" placeholder="0" oninput="calcVoucherLease()"></div>
+        <div class="field"><label class="req">Deal SF</label><input id="v-l-dealsf" placeholder="0" oninput="syncVoucherDealAliases(); calcVoucherLease()"></div>
       </div>
+      <input id="v-deal-sf" type="hidden">
+      <input id="v-land-sf" type="hidden">
     </div>
   </div>
 
@@ -858,6 +878,13 @@
 
   <div class="card" id="vstep-4" data-vstep="4">
     <h2>Step 4 — Financial Details</h2>
+    <div class="branch-toggle-wrap">
+      <label class="branch-toggle-label">Deal Branch</label>
+      <div class="branch-toggle" id="voucher-branch-toggle">
+        <button type="button" data-branch="lease" onclick="setVoucherBranch('lease')">Lease</button>
+        <button type="button" data-branch="sale" onclick="setVoucherBranch('sale')">Sale</button>
+      </div>
+    </div>
     <div id="v-req-lease">
       <h3>Key Lease Terms</h3>
       <div class="row c3">
@@ -1146,12 +1173,19 @@
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-<div id="tab-comp" class="panel">
+<div id="tab-comp" class="panel" data-pane="comp-input">
   <div class="tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections for additional detail.</div>
 
   <!-- ═══ REQUIRED SECTION ═══ -->
   <div class="card required-section">
     <h2>Required Information <span class="required-badge">Required</span></h2>
+    <div class="branch-toggle-wrap branch-toggle-wrap-top">
+      <label class="branch-toggle-label">Comp Branch</label>
+      <div class="branch-toggle" id="comp-branch-toggle">
+        <button type="button" data-branch="lease" onclick="setCompBranch('lease')">Lease</button>
+        <button type="button" data-branch="sale" onclick="setCompBranch('sale')">Sale</button>
+      </div>
+    </div>
 
     <div class="row c3">
       <div class="field"><label class="req">Comp Type</label>
@@ -1443,7 +1477,7 @@
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-<div id="tab-comp-reports" class="panel">
+<div id="tab-comp-reports" class="panel" data-pane="comp-reports">
   <div class="cr-shell">
 
     <div class="cr-topbar">
@@ -2118,6 +2152,17 @@
 </div><!-- /tab-queue -->
 
 </div><!-- /broker-view -->
+
+<div class="help-overlay" id="help-overlay"></div>
+<aside class="help-panel" id="help-panel" role="dialog" aria-modal="true" aria-labelledby="help-title">
+  <div class="help-head">
+    <div class="help-title" id="help-title">Broker Tool — how this page works</div>
+    <button type="button" class="iconbtn" id="help-close" aria-label="Close help">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+    </button>
+  </div>
+  <div class="help-body" id="help-body"></div>
+</aside>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
@@ -2794,7 +2839,7 @@ function toggleOptional(toggleEl) {
   }
 }
 
-const BROKER_TOOL_TAB_IDS = new Set(['listing', 'sign', 'voucher', 'comp', 'comp-reports', 'docs', 'contracts', 'queue']);
+const BROKER_TOOL_TAB_IDS = new Set(['listing', 'sign', 'voucher', 'comp', 'comp-reports', 'queue']);
 
 function parseBrokerToolTabFromLocation() {
   try {
@@ -2846,6 +2891,7 @@ function switchTab(name) {
   }
   bootstrapStepFlowFor(name);
   syncBrokerToolUrlTab(name);
+  if (typeof renderHelpPanel === 'function') renderHelpPanel();
 }
 
 window.addEventListener('hashchange', function () {
@@ -3095,6 +3141,19 @@ function onPropTypeChange() {
   if (type === 'retail') sfLabel.textContent = 'GLA / Bldg SF';
   else if (type === 'office') sfLabel.textContent = 'Building SF';
   else sfLabel.textContent = 'Size (SF)';
+
+  const pane = document.getElementById('tab-listing');
+  if (pane) pane.dataset.listingType = type;
+  document.querySelectorAll('#listing-type-picker .listing-type-opt').forEach(opt => {
+    opt.classList.toggle('selected', opt.dataset.type === type);
+  });
+}
+
+function setListingType(type) {
+  const select = document.getElementById('l-prop-type');
+  if (!select || !type) return;
+  select.value = type;
+  onPropTypeChange();
 }
 
 function onTxnTypeChange() {
@@ -4016,11 +4075,69 @@ function addDistRow() {
   });
 }
 
+function syncVoucherDealAliases() {
+  const dealSf = document.getElementById('v-l-dealsf');
+  const dealSfAlias = document.getElementById('v-deal-sf');
+  if (dealSf && dealSfAlias) {
+    dealSfAlias.value = dealSf.value || '';
+  }
+}
+
+function calcVoucherLease() {
+  syncVoucherDealAliases();
+  const dealSf = parseFloat(document.getElementById('v-l-dealsf')?.value?.replace(/[^0-9.]/g, '')) || 0;
+  const rate = parseFloat(document.getElementById('v-l-rate')?.value?.replace(/[^0-9.\-]/g, '')) || 0;
+  const term = parseInt(document.getElementById('v-l-term')?.value, 10) || 0;
+  const monthly = dealSf > 0 ? rate * dealSf : 0;
+  const consideration = monthly * term;
+
+  const totalField = document.getElementById('v-l-consideration');
+  if (totalField) {
+    totalField.value = consideration > 0
+      ? '$' + consideration.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : '';
+  }
+
+  const rentRows = [...document.querySelectorAll('#v-rent-body tr')];
+  if (rentRows.length === 1) {
+    const monthlyInput = rentRows[0].querySelector('.rent-monthly');
+    const monthsInput = rentRows[0].querySelector('.rent-months');
+    if (monthlyInput && monthsInput && !String(monthlyInput.value || '').trim()) {
+      monthlyInput.value = monthly > 0 ? monthly.toFixed(2) : '';
+      monthsInput.value = term > 0 ? String(term) : monthsInput.value;
+      calcRentRow(monthlyInput);
+      return;
+    }
+  }
+
+  calcCommSummary();
+}
+
+function calcVoucherSale() {
+  syncVoucherDealAliases();
+  calcCommSummary();
+}
+
+function setVoucherBranch(branch) {
+  const select = document.getElementById('v-txn-type');
+  if (!select || !branch) return;
+  select.value = branch;
+  onVoucherTxnChange();
+}
+
+function syncVoucherBranchToggle() {
+  const active = document.getElementById('v-txn-type')?.value === 'sale' ? 'sale' : 'lease';
+  document.querySelectorAll('#voucher-branch-toggle button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.branch === active);
+  });
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // VOUCHER: TXN TYPE TOGGLE
 // ═══════════════════════════════════════════════════════════════════════════════
 function onVoucherTxnChange() {
   const txn = document.getElementById('v-txn-type').value;
+  syncVoucherDealAliases();
   setHiddenState(document.getElementById('v-lease-section'), txn !== 'lease');
   setHiddenState(document.getElementById('v-sale-section'), txn !== 'sale');
   setHiddenState(document.getElementById('v-rent-section'), txn !== 'lease');
@@ -4035,6 +4152,8 @@ function onVoucherTxnChange() {
   setHiddenState(reqCommSale, txn !== 'sale');
   document.getElementById('v-lbl-lessor').textContent = txn === 'sale' ? 'Seller' : 'Lessor / Seller';
   document.getElementById('v-lbl-lessee').textContent = txn === 'sale' ? 'Buyer' : 'Lessee / Buyer';
+  syncVoucherBranchToggle();
+  calcCommSummary();
   syncDealGlance();
 }
 
@@ -5225,6 +5344,16 @@ function onCompTypeChange() {
     tab.classList.remove('sale-mode');
     document.getElementById('comp-features-title').textContent = 'Property Features';
   }
+  document.querySelectorAll('#comp-branch-toggle button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.branch === mode);
+  });
+}
+
+function setCompBranch(branch) {
+  const select = document.getElementById('c-comp-type');
+  if (!select || !branch) return;
+  select.value = branch;
+  onCompTypeChange();
 }
 
 function clearComp() {
@@ -6851,7 +6980,9 @@ void loadPublicToolSettings().then(function() {
 // Initialize property type sections
 onPropTypeChange();
 onTxnTypeChange();
+syncVoucherDealAliases();
 onVoucherTxnChange();
+onCompTypeChange();
 
 // Auth initialization runs after the shared API helper is declared later in the page.
 
@@ -11001,7 +11132,7 @@ function setAdminAccessForUser(user) {
   if (!canUseAdmin && document.body.classList.contains('admin-mode')) {
     document.body.classList.remove('admin-mode');
     const label = document.getElementById('admin-toggle-label');
-    if (label) label.textContent = 'Settings';
+    if (label) label.textContent = 'Admin Portal';
   }
 }
 
@@ -12984,7 +13115,138 @@ function ciReset() {
   ciClearValidation();
 }
 
+const HELP_PANEL_CONTENT = {
+  'listings': {
+    title: 'Listing Entry — how this form works',
+    body: `
+      <p>Use Listing Entry to capture the property basics, pricing, agents, release instructions, and property-specific details before the office pushes the listing live.</p>
+      <h4>Property Type</h4>
+      <p>The Office, Industrial, and Retail cards control the conditional fields that appear later in the form. Pick the property type first, then move through pricing, agents, and release details.</p>
+      <h4>Submitting</h4>
+      <p>Review the side summary, then use <strong>Review &amp; Submit</strong> or <strong>Send to Admin</strong> when the draft is ready for office processing.</p>
+    `,
+  },
+  'signs': {
+    title: 'Sign Request — how this form works',
+    body: `
+      <p>Use this form to order a new sign installation, removal, or update. The right rail keeps a live summary of the property, sign counts, and requestor details.</p>
+      <h4>Order Basics</h4>
+      <p>Enter the address, city, order type, and any location notes the install crew will need.</p>
+      <h4>Signs &amp; Access</h4>
+      <p>Set sign quantities, add the participating agents, and include any gate codes or special access instructions before submitting.</p>
+    `,
+  },
+  'voucher': {
+    title: 'Commission Voucher — how this form works',
+    body: `
+      <p>Commission Voucher captures the closed deal, the parties, the rent or sale math, outside agents, and the final distribution that accounting needs to process payment.</p>
+      <h4>Lease vs Sale</h4>
+      <p>Use the branch toggle in Financial Details to switch between lease and sale math. Lease deals drive the rent schedule and commission totals; sale deals calculate price per SF and commission due automatically.</p>
+      <h4>Distribution</h4>
+      <p>Outside-agent totals flow into gross-to-distribute automatically, so you can confirm the final payout before sending the voucher to admin.</p>
+    `,
+  },
+  'comp-input': {
+    title: 'Comp Input — how this form works',
+    body: `
+      <p>Comp Input saves a new lease or sale comparable into the comp database. The branch toggle switches the form between lease and sale fields without sending you to another page.</p>
+      <h4>Core Fields</h4>
+      <p>Start with address, property type, photo, and the key lease or sale terms. Expanded sections below capture market, features, brokerage, and comments.</p>
+      <h4>After Submit</h4>
+      <p>Submitted comps become searchable from Comp Reports, where they can be filtered and exported into the Lee template.</p>
+    `,
+  },
+  'comp-reports': {
+    title: 'Comp Reports — how this page works',
+    body: `
+      <p>Comp Reports lets you filter saved comps, review the result table, and export the current set to CSV or the Lee PDF template.</p>
+      <h4>Search</h4>
+      <p>Filter by transaction type, city, market, submarket, property type, SF range, or date range, then run the search to update the report-ready grid.</p>
+      <h4>Exports</h4>
+      <p>Use the export buttons above the table to download the current result set after you’ve narrowed it to the comps you want.</p>
+    `,
+  },
+  'queue': {
+    title: 'Submission Queue — how this page works',
+    body: `
+      <p>The queue shows your active submissions and where each one sits in the office processing line.</p>
+      <h4>What you’ll see</h4>
+      <p>Each row includes the form type, submission reference, current status, and how many requests are ahead of it in line.</p>
+    `,
+  },
+  'default': {
+    title: 'Broker Tool — how this page works',
+    body: `<p>Select a pane to see instructions for that workflow.</p>`,
+  },
+};
+
+function getActiveBrokerPaneKey() {
+  const activePanel = document.querySelector('#broker-view .panel.active');
+  if (!activePanel) return 'default';
+  return activePanel.dataset.pane || activePanel.id.replace(/^tab-/, '') || 'default';
+}
+
+function renderHelpPanel() {
+  const paneKey = getActiveBrokerPaneKey();
+  const content = HELP_PANEL_CONTENT[paneKey] || HELP_PANEL_CONTENT.default;
+  const title = document.getElementById('help-title');
+  const body = document.getElementById('help-body');
+  if (title) title.textContent = content.title;
+  if (body) body.innerHTML = content.body;
+}
+
+function openHelpPanel() {
+  renderHelpPanel();
+  document.body.classList.add('help-open');
+}
+
+function closeHelpPanel() {
+  document.body.classList.remove('help-open');
+}
+
+function initializeBrokerToolEnhancements() {
+  const helpBtn = document.getElementById('help-btn');
+  if (helpBtn && !helpBtn.dataset.wired) {
+    helpBtn.dataset.wired = '1';
+    helpBtn.addEventListener('click', openHelpPanel);
+  }
+
+  const helpClose = document.getElementById('help-close');
+  if (helpClose && !helpClose.dataset.wired) {
+    helpClose.dataset.wired = '1';
+    helpClose.addEventListener('click', closeHelpPanel);
+  }
+
+  const helpOverlay = document.getElementById('help-overlay');
+  if (helpOverlay && !helpOverlay.dataset.wired) {
+    helpOverlay.dataset.wired = '1';
+    helpOverlay.addEventListener('click', closeHelpPanel);
+  }
+
+  if (!document.body.dataset.helpEscapeWired) {
+    document.body.dataset.helpEscapeWired = '1';
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeHelpPanel();
+    });
+  }
+
+  [
+    'button[onclick="addListingAgent()"]',
+    'button[onclick="addSignAgent()"]',
+    'button[onclick="addVoucherCollab()"]',
+    'button[onclick="addOutsideAgent()"]',
+    'button[onclick="addPaymentRow()"]',
+    'button[onclick="addRentRow()"]',
+    'button[onclick="addDistRow()"]',
+  ].forEach(selector => {
+    document.querySelectorAll(selector).forEach(btn => btn.classList.add('add-row-btn'));
+  });
+
+  renderHelpPanel();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  initializeBrokerToolEnhancements();
   void initBrokerToolAuth();
 });
 </script>

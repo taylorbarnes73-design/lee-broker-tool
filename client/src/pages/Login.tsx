@@ -12,9 +12,9 @@ function normalizeLoginIdentifier(raw: string) {
 }
 
 function getSafeNextPath() {
-  if (typeof window === "undefined") return "/portal";
+  if (typeof window === "undefined") return "/tool";
   const next = new URLSearchParams(window.location.search).get("next");
-  if (!next || !next.startsWith("/") || next.startsWith("//")) return "/portal";
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return "/tool";
   return next;
 }
 
