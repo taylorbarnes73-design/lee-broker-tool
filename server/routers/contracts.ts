@@ -1,6 +1,6 @@
 import { z } from "zod/v4";
 import { publicProcedure, router } from "../_core/trpc";
-import { invokeLLM, type Message } from "../_core/llm";
+import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable, type Message } from "../_core/llm";
 import { execSync } from "child_process";
 import { ENV } from "../_core/env";
 import { getSetting } from "../settings/getSetting";
@@ -226,8 +226,7 @@ Return JSON with these fields (omit any that are blank):
 }`;
 
       try {
-        // Fetch the PDF server-side and extract its text — file_url is not a supported
-        // content type in the OpenAI/Gemini chat API; send extracted text instead.
+        // Fetch the PDF server-side
         const pdfResp = await fetch(input.pdfUrl, { signal: AbortSignal.timeout(30_000) });
         if (!pdfResp.ok) {
           return {
@@ -237,34 +236,59 @@ Return JSON with these fields (omit any that are blank):
           };
         }
         const pdfBuffer = Buffer.from(await pdfResp.arrayBuffer());
-        let pdfText = "";
-        try {
-          const mod = await import("pdf-parse");
-          const parse = (mod as any).default ?? (mod as any);
-          const pdfParsed = await parse(pdfBuffer);
-          pdfText = (pdfParsed.text || "").replace(/\s+/g, " ").trim().slice(0, 40_000);
-        } catch (parseErr: unknown) {
-          const msg = parseErr instanceof Error ? parseErr.message : String(parseErr);
-          pdfText = `[PDF text extraction failed: ${msg}. Return empty JSON if no data is available.]`;
+
+        let rawJson: string;
+
+        // ── Preferred path: Gemini native API (inline PDF data, no text extraction) ──
+        if (isGeminiDirectAvailable()) {
+          try {
+            rawJson = await invokeLLMWithFile({
+              fileBuffer: pdfBuffer,
+              mimeType: "application/pdf",
+              systemPrompt: systemPrompt,
+              userPrompt: userPrompt,
+            });
+          } catch (geminiErr: unknown) {
+            console.warn(
+              "[contracts] Gemini native PDF invocation failed, falling back to text extraction:",
+              geminiErr instanceof Error ? geminiErr.message : String(geminiErr)
+            );
+            rawJson = "";
+          }
+        } else {
+          rawJson = "";
         }
 
-        const messages: Message[] = [
-          { role: "system", content: systemPrompt },
-          {
-            role: "user",
-            content: `${userPrompt}\n\nDocument text (extracted from PDF):\n${pdfText}`,
-          },
-        ];
-        const response = await invokeLLM({
-          messages,
-          response_format: { type: "json_object" },
-        });
+        // ── Fallback path: extract text then call via the regular LLM ──
+        if (!rawJson) {
+          let pdfText = "";
+          try {
+            const mod = await import("pdf-parse");
+            const parse = (mod as any).default ?? (mod as any);
+            const pdfParsed = await parse(pdfBuffer);
+            pdfText = (pdfParsed.text || "").replace(/\s+/g, " ").trim().slice(0, 40_000);
+          } catch (parseErr: unknown) {
+            const msg = parseErr instanceof Error ? parseErr.message : String(parseErr);
+            pdfText = `[PDF text extraction failed: ${msg}. Return empty JSON if no data is available.]`;
+          }
 
-        const rawContent = response.choices?.[0]?.message?.content;
-        const raw = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent) || "{}";
+          const messages: Message[] = [
+            { role: "system", content: systemPrompt },
+            {
+              role: "user",
+              content: `${userPrompt}\n\nDocument text (extracted from PDF):\n${pdfText}`,
+            },
+          ];
+          const response = await invokeLLM({
+            messages,
+            response_format: { type: "json_object" },
+          });
+          const content = response.choices?.[0]?.message?.content;
+          rawJson = typeof content === "string" ? content : JSON.stringify(content) || "{}";
+        }
         let parsed: Record<string, unknown>;
         try {
-          parsed = JSON.parse(raw);
+          parsed = JSON.parse(rawJson);
         } catch {
           return { success: false, error: "AI returned invalid JSON", data: null };
         }

@@ -5,6 +5,8 @@ import type { TrpcContext } from "../_core/context";
 // Mock the LLM to avoid real API calls in tests
 vi.mock("../_core/llm", () => ({
   invokeLLM: vi.fn(),
+  invokeLLMWithFile: vi.fn(),
+  isGeminiDirectAvailable: vi.fn().mockReturnValue(false),
 }));
 
 // Mock PDF parsing so brochure tests don't need real PDFs

@@ -295,6 +295,97 @@ const normalizeResponseFormat = ({
   };
 };
 
+/**
+ * Returns true when a GEMINI_API_KEY is configured for direct native Gemini API access.
+ * Used by file-parsing callers to decide whether to send files as inline data rather
+ * than extracting text first.
+ */
+export function isGeminiDirectAvailable(): boolean {
+  return Boolean(ENV.geminiApiKey?.trim());
+}
+
+/**
+ * Invoke the Gemini native generateContent API with an inline file (PDF or image).
+ *
+ * Unlike the OpenAI-compatible endpoint, the native API accepts PDFs as inline base64
+ * data — meaning Gemini reads the document directly rather than relying on pre-extracted
+ * text. This produces significantly better results for scanned or form-heavy PDFs.
+ *
+ * Falls back to the regular `invokeLLM` path when GEMINI_API_KEY is not set.
+ */
+export async function invokeLLMWithFile(params: {
+  fileBuffer: Buffer;
+  mimeType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp";
+  systemPrompt: string;
+  userPrompt: string;
+  /** Optional JSON Schema — when provided Gemini will return structured JSON. */
+  outputSchema?: OutputSchema;
+}): Promise<string> {
+  const { fileBuffer, mimeType, systemPrompt, userPrompt, outputSchema } = params;
+
+  if (!ENV.geminiApiKey?.trim()) {
+    throw new Error(
+      "invokeLLMWithFile requires GEMINI_API_KEY. Set GEMINI_API_KEY in the server environment."
+    );
+  }
+
+  const model = (ENV.geminiModel || "gemini-2.5-flash").trim();
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${ENV.geminiApiKey}`;
+
+  const generationConfig: Record<string, unknown> = {
+    maxOutputTokens: 4096,
+  };
+
+  if (outputSchema) {
+    generationConfig.responseMimeType = "application/json";
+    // Gemini's responseSchema follows a subset of JSON Schema; supply the inner schema object
+    generationConfig.responseSchema = outputSchema.schema;
+  }
+
+  const body = {
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            inlineData: {
+              mimeType,
+              data: fileBuffer.toString("base64"),
+            },
+          },
+          { text: userPrompt },
+        ],
+      },
+    ],
+    systemInstruction: {
+      parts: [{ text: systemPrompt }],
+    },
+    generationConfig,
+  };
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Gemini native file API failed: ${response.status} ${response.statusText} – ${errorText.slice(0, 500)}`
+    );
+  }
+
+  const data = (await response.json()) as {
+    candidates?: Array<{
+      content?: { parts?: Array<{ text?: string }> };
+      finishReason?: string;
+    }>;
+  };
+
+  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+}
+
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   const backend = resolveBackend();
 

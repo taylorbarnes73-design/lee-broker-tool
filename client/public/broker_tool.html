@@ -993,6 +993,17 @@
         <tbody id="v-payment-body"></tbody>
       </table>
       <button class="btn btn-gray top-gap-sm" onclick="addPaymentRow()">+ Add Payment</button>
+
+      <!-- AI Deal Analysis — powered by Gemini -->
+      <div class="section-divider">
+        <h3>AI Deal Analysis</h3>
+        <p class="micro-copy">Let Gemini verify the financials and flag anything that looks off. Results are suggestions only — all calculated fields above are authoritative.</p>
+        <button class="btn btn-outline" id="v-ai-calc-btn" onclick="runVoucherAICalculate()">
+          <svg class="ui-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:5px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Analyze with Gemini
+        </button>
+        <div id="v-ai-calc-panel" class="is-hidden" style="margin-top:14px;"></div>
+      </div>
     </div>
   </div>
 
@@ -4427,6 +4438,101 @@ function calcOutsideTotals() {
   calcCommSummary();
 }
 document.getElementById('v-outside-body')?.addEventListener('input', calcOutsideTotals);
+
+// ── AI Deal Analysis (Gemini-powered) ────────────────────────────────────────
+async function runVoucherAICalculate() {
+  const btn = document.getElementById('v-ai-calc-btn');
+  const panel = document.getElementById('v-ai-calc-panel');
+  if (!btn || !panel) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Analyzing…';
+  setHiddenState(panel, false);
+  panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>Gemini</span> Deal Analysis</div><div class="ai-review-status-row"><div class="dx-spin dx-spin-accent"></div> Gemini is reviewing the deal financials…</div></div>';
+
+  // Collect the current voucher form state
+  const txnType = document.getElementById('v-txn-type')?.value || '';
+  const repType = document.getElementById('v-rep-type')?.value || '';
+  const address = document.getElementById('v-address')?.value || '';
+  const city = document.getElementById('v-city')?.value || '';
+  const zip = document.getElementById('v-zip')?.value || '';
+  const dealSf = document.getElementById('v-l-dealsf')?.value || document.getElementById('v-deal-sf')?.value || '';
+  const commRate = document.getElementById('v-l-comm-rate')?.value || '';
+  const totalConsideration = document.getElementById('v-l-consideration')?.value || '';
+  const commDue = document.getElementById('v-l-comm-due')?.value || '';
+  const totalInvoice = document.getElementById('v-total-invoice')?.value || '';
+  const avgRateSf = document.getElementById('v-avg-rate-sf')?.value || '';
+  const avgMonthly = document.getElementById('v-avg-monthly')?.value || '';
+  const salePrice = document.getElementById('v-s-price')?.value || '';
+  const saleCommPct = document.getElementById('v-s-comm-pct')?.value || '';
+  const saleCommDue = document.getElementById('v-s-comm-due')?.value || '';
+  const bonus = document.getElementById('v-comm-bonus')?.value || '';
+  const consulting = document.getElementById('v-comm-consulting')?.value || '';
+  const totalOutside = document.getElementById('v-total-outside')?.value || '';
+
+  // Collect rent schedule
+  const rentRows = [];
+  document.querySelectorAll('#v-rent-body tr').forEach(tr => {
+    const monthly = tr.querySelector('.rent-monthly')?.value || '';
+    const months = tr.querySelector('.rent-months')?.value || '';
+    if (monthly || months) rentRows.push({ monthly, months });
+  });
+
+  const dealData = {
+    transactionType: txnType, representationType: repType,
+    address, city, zip, dealSf, commRate,
+    totalConsideration, commDue, totalInvoice,
+    avgRateSf, avgMonthly,
+    salePrice: salePrice || undefined, saleCommPct: saleCommPct || undefined,
+    saleCommDue: saleCommDue || undefined,
+    bonus: bonus || undefined, consulting: consulting || undefined,
+    totalOutsideAgents: totalOutside || undefined,
+    rentSchedule: rentRows.length ? rentRows : undefined
+  };
+
+  try {
+    const result = await callTrpc('aiAssist.calculateDeal', { dealData });
+    const a = result && result.analysis ? result.analysis : null;
+    if (!a) {
+      panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>Gemini</span> Deal Analysis</div><div class="text-error">No analysis returned. Fill in more fields and try again.</div></div>';
+      return;
+    }
+
+    const fmt = (n) => (n != null && n !== '' && !isNaN(Number(n))) ? '$' + Number(n).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
+    const fmtPct = (n) => (n != null && n !== '' && !isNaN(Number(n))) ? Number(n).toFixed(2) + '%' : '—';
+    const flags = Array.isArray(a.flags) && a.flags.length ? a.flags : null;
+
+    let html = '<div class="ai-panel">';
+    html += '<div class="ai-panel-header"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Gemini Deal Analysis</div>';
+    if (a.summary) html += '<div style="font-size:13px;font-weight:600;color:var(--ink-800);margin-bottom:8px;">' + escHtml(a.summary) + '</div>';
+    html += '<div class="ai-calc-grid">';
+    html += '<div class="ai-calc-row"><span class="ai-calc-label">Total Consideration</span><span class="ai-calc-val">' + fmt(a.totalConsideration) + '</span></div>';
+    html += '<div class="ai-calc-row"><span class="ai-calc-label">Commission Rate</span><span class="ai-calc-val">' + fmtPct(a.commissionRate) + '</span></div>';
+    html += '<div class="ai-calc-row"><span class="ai-calc-label">Commission Amount</span><span class="ai-calc-val">' + fmt(a.commissionAmount) + '</span></div>';
+    if (a.avgMonthlyRent != null) html += '<div class="ai-calc-row"><span class="ai-calc-label">Avg Monthly Rent</span><span class="ai-calc-val">' + fmt(a.avgMonthlyRent) + '</span></div>';
+    if (a.avgRatePerSf != null)   html += '<div class="ai-calc-row"><span class="ai-calc-label">Avg Rate/SF/Mo</span><span class="ai-calc-val">' + fmt(a.avgRatePerSf) + '</span></div>';
+    if (a.termMonths != null)     html += '<div class="ai-calc-row"><span class="ai-calc-label">Term</span><span class="ai-calc-val">' + Number(a.termMonths) + ' months</span></div>';
+    if (a.pricePerSf != null)     html += '<div class="ai-calc-row"><span class="ai-calc-label">Price/SF</span><span class="ai-calc-val">' + fmt(a.pricePerSf) + '</span></div>';
+    html += '</div>';
+    if (a.explanation) html += '<p class="micro-copy" style="margin-top:10px;color:var(--ink-700);">' + escHtml(a.explanation) + '</p>';
+    if (flags) {
+      html += '<div style="margin-top:10px;"><strong style="font-size:12px;color:var(--lee-red,#98002E);">&#9888; Flags</strong><ul style="margin:4px 0 0 16px;font-size:12px;color:var(--ink-700);">';
+      flags.forEach(f => { html += '<li>' + escHtml(String(f)) + '</li>'; });
+      html += '</ul></div>';
+    }
+    html += '</div>';
+    panel.innerHTML = html;
+  } catch (err) {
+    panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>Gemini</span> Deal Analysis</div><div class="text-error">Error: ' + escHtml(err.message || String(err)) + '</div></div>';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg class="ui-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:5px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Analyze with Gemini';
+  }
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COPY LISTING DATA TO SIGN REQUEST
@@ -9951,6 +10057,20 @@ function initFreeAutocomplete() {
 
     let timeout = null;
 
+    /**
+     * Fetch address suggestions from the server-side proxy.
+     * The server prefers Google Places Autocomplete when GOOGLE_MAPS_API_KEY is
+     * configured, otherwise falls back to the free Photon geocoder.
+     * Both paths return the same normalized shape:
+     *   { results: [{ address, city, state, zip }] }
+     */
+    async function fetchSuggestions(query) {
+      const res = await fetch('/api/places/autocomplete?input=' + encodeURIComponent(query));
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data.results) ? data.results : [];
+    }
+
     input.addEventListener('input', () => {
       clearTimeout(timeout);
       const query = input.value.trim();
@@ -9962,22 +10082,19 @@ function initFreeAutocomplete() {
 
       timeout = setTimeout(async () => {
         try {
-          const res = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(query) + '&limit=5');
-          const data = await res.json();
+          const results = await fetchSuggestions(query);
           
           dropdown.innerHTML = '';
-          if (data.features && data.features.length > 0) {
-            data.features.forEach(feature => {
-              const p = feature.properties;
-              const house = p.housenumber || '';
-              const street = p.street || p.name || '';
-              const city = p.city || p.county || '';
-              const state = p.state || '';
-              const zip = p.postcode || '';
-              
-              const addressLine = (house + ' ' + street).trim() || p.name;
+          if (results.length > 0) {
+            results.forEach(r => {
+              const addressLine = r.address || '';
+              const city = r.city || '';
+              const state = r.state || '';
+              const zip = r.zip || '';
               const subText = [city, state, zip].filter(x => x).join(', ');
-              
+
+              if (!addressLine) return;
+
               const item = document.createElement('div');
               item.className = 'autocomplete-item';
               
@@ -10020,7 +10137,7 @@ function initFreeAutocomplete() {
               
               dropdown.appendChild(item);
             });
-            setHiddenState(dropdown, false);
+            setHiddenState(dropdown, results.length > 0 ? false : true);
           } else {
             setHiddenState(dropdown, true);
           }
