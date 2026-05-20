@@ -12618,6 +12618,37 @@ function hasVoucherComplianceAttachment() {
   return (uploadedFiles['v-doc-disclosure']?.length > 0) || (uploadedFiles['v-doc-agreement']?.length > 0);
 }
 
+function collectSupportingFilesForAdminSubmission(formType) {
+  const fieldConfigs = formType === 'listing'
+    ? [
+        { fieldId: 'l-doc-agreement', category: 'listing_agreement', label: 'Exclusive Listing Agreement' },
+        { fieldId: 'l-doc-disclosure', category: 'agency_disclosure', label: 'Agency Disclosure' }
+      ]
+    : formType === 'voucher'
+      ? [
+          { fieldId: 'v-doc-agreement', category: 'listing_agreement', label: 'Exclusive Listing Agreement' },
+          { fieldId: 'v-doc-disclosure', category: 'agency_disclosure', label: 'Agency Disclosure' }
+        ]
+      : [];
+
+  const collected = [];
+  fieldConfigs.forEach(({ fieldId, category, label }) => {
+    const files = Array.isArray(uploadedFiles[fieldId]) ? uploadedFiles[fieldId] : [];
+    files.forEach(file => {
+      if (!file || !file.url || !file.fileKey) return;
+      collected.push({
+        filename: file.filename || label || 'Supporting Document',
+        url: file.url,
+        fileKey: file.fileKey,
+        category,
+        label,
+      });
+    });
+  });
+
+  return collected;
+}
+
 function openSendToAdminModal(formType) {
   _staFormType = formType;
   const attachErr = document.getElementById('voucher-attachment-required-msg');
@@ -12949,6 +12980,7 @@ async function submitSendToAdmin() {
     : _staFormType === 'sign'
       ? collectSignSections(notes)
       : collectVoucherSections(notes);
+  const supportingFiles = collectSupportingFilesForAdminSubmission(_staFormType);
 
   // Determine property address for subject line
   const addrId = _staFormType === 'listing' ? 'l-address' : _staFormType === 'sign' ? 's-address' : 'v-address';
@@ -12971,6 +13003,7 @@ async function submitSendToAdmin() {
           sections,
           senderEmail,
           pdfAttachment,
+          supportingFiles,
           formData: _staFormType === 'sign' ? collectSignFormData() : undefined,
         }
       })

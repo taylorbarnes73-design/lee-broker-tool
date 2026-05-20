@@ -147,6 +147,47 @@ describe("email.sendToAdmin", () => {
     expect(callArg).toContain("testuser@example.test");
   });
 
+  it("persists supporting upload metadata and includes document links in the email body", async () => {
+    const caller = makeCaller();
+    const supportingFiles = [
+      {
+        filename: "Agency Disclosure.pdf",
+        url: "https://cdn.example.com/broker-docs/agency_disclosure/disclosure.pdf",
+        fileKey: "broker-docs/agency_disclosure/disclosure.pdf",
+        category: "agency_disclosure",
+        label: "Agency Disclosure",
+      },
+      {
+        filename: "Exclusive Listing Agreement.pdf",
+        url: "https://cdn.example.com/broker-docs/listing_agreement/agreement.pdf",
+        fileKey: "broker-docs/listing_agreement/agreement.pdf",
+        category: "listing_agreement",
+        label: "Exclusive Listing Agreement",
+      },
+    ];
+
+    const result = await caller.sendToAdmin({
+      formType: "voucher",
+      brokerName: "Test Broker",
+      propertyAddress: "456 Commerce Dr",
+      sections: sampleSections,
+      senderEmail: "testuser@example.test",
+      supportingFiles,
+    });
+
+    expect(result.success).toBe(true);
+
+    const callArg = execSyncMock.mock.calls[0][0] as string;
+    expect(callArg).toContain("Supporting Documents");
+    expect(callArg).toContain("Agency Disclosure");
+    expect(callArg).toContain("agreement.pdf");
+
+    expect(dbInsertValuesMock).toHaveBeenCalledOnce();
+    const insertArg = dbInsertValuesMock.mock.calls[0][0] as Record<string, unknown>;
+    const payload = JSON.parse(String(insertArg.payload));
+    expect(payload.supportingFiles).toEqual(supportingFiles);
+  });
+
   it("archives the generated PDF and includes attachment metadata for Outlook", async () => {
     const caller = makeCaller();
     const result = await caller.sendToAdmin({

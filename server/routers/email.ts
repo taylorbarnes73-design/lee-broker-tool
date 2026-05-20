@@ -26,6 +26,14 @@ const pdfAttachmentSchema = z.object({
   base64Data: z.string().min(1),
 });
 
+const supportingFileSchema = z.object({
+  filename: z.string().trim().min(1).max(255),
+  url: z.string().trim().url(),
+  fileKey: z.string().trim().min(1).max(512),
+  category: z.string().trim().max(128).optional(),
+  label: z.string().trim().max(255).optional(),
+});
+
 const sendToAdminInput = z.object({
   formType: z.enum(["listing", "voucher", "sign"]),
   brokerName: z.string().optional(),
@@ -33,6 +41,7 @@ const sendToAdminInput = z.object({
   sections: z.array(sectionSchema),
   senderEmail: z.string().email().optional(),
   pdfAttachment: pdfAttachmentSchema.optional(),
+  supportingFiles: z.array(supportingFileSchema).optional(),
   formData: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -79,8 +88,17 @@ async function buildEmailBody(params: {
   sections: Array<{ title: string; fields: Array<{ label: string; value: string }> }>;
   archivedPdfUrl?: string;
   archivedPdfName?: string;
+  supportingFiles?: Array<z.infer<typeof supportingFileSchema>>;
 }): Promise<string> {
-  const { formType, brokerName, propertyAddress, sections, archivedPdfUrl, archivedPdfName } = params;
+  const {
+    formType,
+    brokerName,
+    propertyAddress,
+    sections,
+    archivedPdfUrl,
+    archivedPdfName,
+    supportingFiles = [],
+  } = params;
   const companyName = String(await getSetting("branding.company_name"));
   const supportEmail = String(await getSetting("branding.support_email"));
   const now = new Date().toLocaleString("en-US", {
@@ -99,6 +117,10 @@ async function buildEmailBody(params: {
       return `\n--- ${section.title} ---\n${rows}`;
     })
     .join("\n");
+  const supportingFileLines = supportingFiles
+    .filter(file => file.url.trim())
+    .map(file => `  ${file.label || file.filename}: ${file.url}`)
+    .join("\n");
 
   return [
     `${companyName} - ${formLabelFor(formType)} Submission`,
@@ -106,6 +128,7 @@ async function buildEmailBody(params: {
     brokerName ? `Broker: ${brokerName}` : "",
     propertyAddress ? `Property: ${propertyAddress}` : "",
     archivedPdfUrl ? `Archived PDF: ${archivedPdfName || "submission.pdf"} - ${archivedPdfUrl}` : "",
+    supportingFileLines ? `Supporting Documents:\n${supportingFileLines}` : "",
     "",
     "=".repeat(60),
     sectionLines,
@@ -303,6 +326,7 @@ async function recordSubmissionRequest(params: {
   sections: Array<{ title: string; fields: Array<{ label: string; value: string }> }>;
   senderEmail?: string;
   archivedPdf?: ArchivedPdf;
+  supportingFiles?: Array<z.infer<typeof supportingFileSchema>>;
   uploaderOpenId?: string | null;
   deliveryMethod?: string;
   deliveryError?: string;
@@ -337,6 +361,7 @@ async function recordSubmissionRequest(params: {
             fileSize: params.archivedPdf.fileSize,
           }
         : null,
+      supportingFiles: params.supportingFiles ?? [],
       deliveryMethod: params.deliveryMethod ?? "",
       deliveryError: params.deliveryError ?? "",
     }),
@@ -352,7 +377,16 @@ export const emailRouter = router({
   sendToAdmin: publicProcedure
     .input(sendToAdminInput)
     .mutation(async ({ input, ctx }) => {
-      const { formType, brokerName = "", propertyAddress = "", sections, senderEmail, pdfAttachment, formData } = input;
+      const {
+        formType,
+        brokerName = "",
+        propertyAddress = "",
+        sections,
+        senderEmail,
+        pdfAttachment,
+        supportingFiles = [],
+        formData,
+      } = input;
       const adminEmail = ENV.adminEmail;
 
       if (!adminEmail) {
@@ -391,6 +425,7 @@ export const emailRouter = router({
         sections,
         archivedPdfUrl: archivedPdf?.url,
         archivedPdfName: archivedPdf?.filename,
+        supportingFiles,
       });
 
       // For sign requests, we record/queue the submission for the admin portal.
@@ -423,6 +458,7 @@ export const emailRouter = router({
           sections,
           senderEmail,
           archivedPdf,
+          supportingFiles,
           uploaderOpenId: ctx.user?.openId ?? null,
           deliveryMethod: delivery.deliveryMethod,
           deliveryError: delivery.error,
