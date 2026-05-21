@@ -3549,7 +3549,7 @@ function normalizeListingDocumentState(value) {
   const record = value && typeof value === 'object' ? value : {};
   const found = Boolean(record.found);
   const executed = found ? Boolean(record.executed) : false;
-  const manualOverride = executed ? Boolean(record.manualOverride) : false;
+  const manualOverride = found && executed ? Boolean(record.manualOverride) : false;
   const missingSignatures = found && !executed && Array.isArray(record.missingSignatures)
     ? record.missingSignatures.map((item) => String(item || '').trim()).filter(Boolean)
     : [];
@@ -11614,9 +11614,10 @@ async function uploadAndParseListingDealDocuments(fileList) {
     const uploaderName = getSignedInBrokerIdentity()?.name || '';
     const payloads = await Promise.all(validList.map(file => new Promise((resolve, reject) => {
       const reader = new FileReader();
+      const normalizedMime = String(file.type || '').toLowerCase();
       reader.onload = () => resolve({
         filename: file.name,
-        mimeType: file.type === 'application/pdf' ? 'application/pdf' : (file.type?.startsWith('image/') ? file.type : 'application/pdf'),
+        mimeType: normalizedMime === 'application/pdf' ? 'application/pdf' : normalizedMime,
         base64Data: String(reader.result || '').split(',')[1],
         category: 'listing_deal_documents',
         reference: document.getElementById('l-address')?.value || 'listing',
@@ -11644,6 +11645,7 @@ async function uploadAndParseListingDealDocuments(fileList) {
         url: result.url,
         fileKey: result.fileKey,
         filename: result.filename || payloads[index]?.filename || `Document ${uploadedCount}`,
+        mimeType: payloads[index]?.mimeType || 'application/pdf',
         sourceKey,
       });
 
@@ -11701,11 +11703,13 @@ async function reanalyzeListingDealDocuments() {
   listingDocumentDetection = listingDocumentDefaults();
   await Promise.all(files.map(async (file) => {
     try {
-      const mime = (String(file.filename || '').toLowerCase().endsWith('.png'))
-        ? 'image/png'
-        : (String(file.filename || '').toLowerCase().endsWith('.jpg') || String(file.filename || '').toLowerCase().endsWith('.jpeg'))
-          ? 'image/jpeg'
-          : 'application/pdf';
+      const mime = (file && typeof file.mimeType === 'string' && file.mimeType)
+        ? file.mimeType
+        : (String(file.filename || '').toLowerCase().endsWith('.png'))
+            ? 'image/png'
+            : (String(file.filename || '').toLowerCase().endsWith('.jpg') || String(file.filename || '').toLowerCase().endsWith('.jpeg'))
+              ? 'image/jpeg'
+              : 'application/pdf';
       const parsed = await callTrpc('aiAssist.extractListingDocument', {
         fileUrl: file.url,
         mimeType: mime,
