@@ -10798,15 +10798,7 @@ async function uploadFileToBrokerStorage(file, category, fieldId, statusId, uplo
       reference: document.getElementById('v-address')?.value || document.getElementById('l-address')?.value || ''
     };
 
-    const res = await fetch('/api/trpc/files.upload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ json: payload })
-    });
-
-    if (!res.ok) throw new Error('Upload failed: ' + res.statusText);
-    const data = await res.json();
-    const result = data.result?.data?.json;
+    const result = await callTrpc('files.upload', payload);
 
     if (result?.success) {
       // Store as single-item array so downstream code can treat all fields uniformly
@@ -10875,15 +10867,10 @@ async function uploadFilesBatch(files, category, fieldId, statusId, uploaderName
       )
     );
 
-    const res = await fetch('/api/trpc/files.uploadBatch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ json: { files: filePayloads, uploaderName: uploaderName || '' } })
+    const batchResult = await callTrpc('files.uploadBatch', {
+      files: filePayloads,
+      uploaderName: uploaderName || '',
     });
-
-    if (!res.ok) throw new Error('Batch upload failed: ' + res.statusText);
-    const data = await res.json();
-    const batchResult = data.result?.data?.json;
 
     if (!batchResult || !Array.isArray(batchResult.results)) throw new Error('Unexpected batch response');
 
@@ -11093,21 +11080,14 @@ function onBrochureSelected(input) {
   reader.onload = async function(e) {
     try {
       const base64 = e.target.result.split(',')[1];
-      const resp = await fetch('/api/trpc/files.upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          json: {
-            filename: file.name,
-            mimeType: brochureMimeType,
-            base64Data: base64,
-            category: 'brochure',
-            reference: 'listing'
-          }
-        })
+      const uploadResult = await callTrpc('files.upload', {
+        filename: file.name,
+        mimeType: brochureMimeType,
+        base64Data: base64,
+        category: 'brochure',
+        reference: 'listing',
       });
-      const data = await resp.json();
-      const url = data?.result?.data?.json?.url;
+      const url = uploadResult?.url;
       if (url) {
         brochureFileUrl = url;
         status.textContent = `Uploaded: ${file.name}`;
@@ -11172,15 +11152,14 @@ function onVoucherBrochureSelected(input) {
   reader.onload = async function(e) {
     try {
       const base64 = e.target.result.split(',')[1];
-      const resp = await fetch('/api/trpc/files.upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          json: { filename: file.name, mimeType: voucherBrochureMimeType, base64Data: base64, category: 'brochure', reference: 'voucher' }
-        })
+      const uploadResult = await callTrpc('files.upload', {
+        filename: file.name,
+        mimeType: voucherBrochureMimeType,
+        base64Data: base64,
+        category: 'brochure',
+        reference: 'voucher',
       });
-      const data = await resp.json();
-      const url = data?.result?.data?.json?.url;
+      const url = uploadResult?.url;
       if (url) {
         voucherBrochureFileUrl = url;
         status.textContent = `Uploaded: ${file.name}`;
@@ -12979,25 +12958,14 @@ async function compReportUploadWorkbook(file) {
     reader.readAsDataURL(file);
   });
 
-  const res = await fetch('/api/trpc/files.upload', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({
-      json: {
-        filename: file.name,
-        mimeType: file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        base64Data,
-        category: 'comp_workbook',
-        reference: 'comp-report-dataset',
-        uploaderName: compReportsUser?.name || compReportsUser?.email || 'Lee Admin'
-      }
-    })
+  const result = await callTrpc('files.upload', {
+    filename: file.name,
+    mimeType: file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    base64Data,
+    category: 'comp_workbook',
+    reference: 'comp-report-dataset',
+    uploaderName: compReportsUser?.name || compReportsUser?.email || 'Lee Admin',
   });
-
-  if (!res.ok) throw new Error('Workbook upload failed with status ' + res.status);
-  const data = await res.json();
-  const result = data.result?.data?.json;
   if (!result?.success) throw new Error('Workbook upload did not complete.');
   return result;
 }
@@ -13693,15 +13661,14 @@ async function ciProcessPdf(file) {
       reader.readAsDataURL(file);
     });
 
-    // 2. Upload to S3 via tRPC (raw fetch)
+    // 2. Upload to S3 via tRPC
     statusEl.innerHTML = '<span class="text-muted-sm status-strong">Uploading to secure storage...</span>';
-    const uploadResp = await fetch('/api/trpc/files.upload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ json: { filename: file.name, mimeType: 'application/pdf', base64Data: base64, category: 'contract-intake' } })
+    const uploadRes = await callTrpc('files.upload', {
+      filename: file.name,
+      mimeType: 'application/pdf',
+      base64Data: base64,
+      category: 'contract-intake',
     });
-    const uploadData = await uploadResp.json();
-    const uploadRes = uploadData?.result?.data?.json;
     if (!uploadRes || !uploadRes.url) throw new Error('Upload failed');
 
     // 3. Extract fields via AI
