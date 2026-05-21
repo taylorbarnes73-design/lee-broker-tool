@@ -15,6 +15,14 @@ vi.mock("../_core/llm", () => ({
 
 vi.mock("../storage", () => ({
   storageGetBytes: storageGetBytesMock,
+  isStoredFileReference: vi.fn((value: string) =>
+    Boolean(
+      value?.startsWith("/api/files/content") ||
+      value?.startsWith("/local-uploads/") ||
+      value?.includes("/api/files/content?key=") ||
+      /^(broker-docs|broker-admin|broker-docusign)\//.test(value ?? "")
+    )
+  ),
 }));
 
 // Mock PDF parsing so brochure tests don't need real PDFs
