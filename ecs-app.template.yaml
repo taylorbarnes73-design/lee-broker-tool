@@ -174,7 +174,10 @@ Resources:
             Action:
               - s3:GetObject
               - s3:PutObject
-            Resource: !Sub "arn:aws:s3:::${AwsS3Bucket}/*"
+            Resource:
+              - !Sub "arn:aws:s3:::${AwsS3Bucket}/broker-docs/*"
+              - !Sub "arn:aws:s3:::${AwsS3Bucket}/broker-admin/*"
+              - !Sub "arn:aws:s3:::${AwsS3Bucket}/broker-docusign/*"
 
   LoadBalancerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
