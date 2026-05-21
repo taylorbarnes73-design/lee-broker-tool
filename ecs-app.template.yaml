@@ -105,6 +105,7 @@ Parameters:
 Conditions:
   HasCertificate: !Not [!Equals [!Ref CertificateArn, '']]
   HasDatabaseUrlSecretArn: !Not [!Equals [!Ref DatabaseUrlSecretArn, '']]
+  HasAwsS3Bucket: !Not [!Equals [!Ref AwsS3Bucket, '']]
 
 Resources:
   Cluster:
@@ -158,6 +159,22 @@ Resources:
             Principal:
               Service: ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
+
+  TaskRoleS3AccessPolicy:
+    Type: AWS::IAM::Policy
+    Condition: HasAwsS3Bucket
+    Properties:
+      PolicyName: !Sub '${ServiceName}-task-s3-access'
+      Roles:
+        - !Ref TaskRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+            Resource: !Sub 'arn:aws:s3:::${AwsS3Bucket}/*'
 
   LoadBalancerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
