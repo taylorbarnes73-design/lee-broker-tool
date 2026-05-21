@@ -947,6 +947,61 @@ const voucherDocumentDetectionSchema = {
   },
 } as const;
 
+const listingDocumentDetectionSchema = {
+  name: "listing_document_detection",
+  schema: {
+    type: "object",
+    properties: {
+      agencyDisclosure: {
+        type: "object",
+        properties: {
+          found: { type: "boolean" },
+          executed: { type: "boolean" },
+          missingSignatures: {
+            type: "array",
+            items: { type: "string" },
+          },
+        },
+        required: ["found", "executed", "missingSignatures"],
+        additionalProperties: false,
+      },
+      listingAgreement: {
+        type: "object",
+        properties: {
+          found: { type: "boolean" },
+          executed: { type: "boolean" },
+          missingSignatures: {
+            type: "array",
+            items: { type: "string" },
+          },
+        },
+        required: ["found", "executed", "missingSignatures"],
+        additionalProperties: false,
+      },
+    },
+    required: ["agencyDisclosure", "listingAgreement"],
+    additionalProperties: false,
+  },
+} as const;
+
+type ListingDocumentDetectionState = {
+  found: boolean;
+  executed: boolean;
+  missingSignatures: string[];
+};
+
+type ListingDocumentDetectionResult = {
+  agencyDisclosure: ListingDocumentDetectionState;
+  listingAgreement: ListingDocumentDetectionState;
+};
+
+function emptyListingDocumentDetection(): ListingDocumentDetectionResult {
+  return {
+    agencyDisclosure: { found: false, executed: false, missingSignatures: [] },
+    listingAgreement: { found: false, executed: false, missingSignatures: [] },
+  };
+}
+
 function normalizeDetectionFlag(value: unknown): boolean {
   if (typeof value === "boolean") return value;
   const text = String(value ?? "").trim().toLowerCase();
@@ -958,6 +1013,30 @@ function parseVoucherDocumentDetection(value: unknown) {
   return {
     agencyDisclosure: normalizeDetectionFlag(record.agencyDisclosure),
     listingAgreement: normalizeDetectionFlag(record.listingAgreement),
+  };
+}
+
+function parseListingDocumentDetectionState(value: unknown): ListingDocumentDetectionState {
+  const record = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  const found = normalizeDetectionFlag(record.found);
+  const executed = found ? normalizeDetectionFlag(record.executed) : false;
+  const missingSignatures = Array.isArray(record.missingSignatures)
+    ? record.missingSignatures
+        .map((entry) => String(entry ?? "").trim())
+        .filter((entry) => entry.length > 0)
+    : [];
+  return {
+    found,
+    executed,
+    missingSignatures: found && !executed ? missingSignatures : [],
+  };
+}
+
+function parseListingDocumentDetection(value: unknown): ListingDocumentDetectionResult {
+  const record = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  return {
+    agencyDisclosure: parseListingDocumentDetectionState(record.agencyDisclosure),
+    listingAgreement: parseListingDocumentDetectionState(record.listingAgreement),
   };
 }
 
@@ -1009,6 +1088,67 @@ Return JSON booleans only. Mark true only when the document appears present in t
   return parseVoucherDocumentDetection(parseJsonObject(raw));
 }
 
+async function detectListingRequiredDocuments(
+  fileBuffer: Buffer,
+  mimeType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp"
+) {
+  const promptText = `You are checking listing workflow compliance documents in this file.
+
+Required documents:
+- Agency Disclosure (agent + principal signatures required)
+- Listing Agreement (listing broker + property owner/principal signatures required)
+
+For each document type return:
+- found: true only if the document appears in this file
+- executed: true only if required signatures appear complete
+- missingSignatures: list who is missing a signature when found is true and executed is false
+
+Execution signals:
+- Presence of signature blocks/lines
+- Signature image, typed signature, or DocuSign certificate
+- Date near signature
+- For DocuSign PDFs, Certificate of Completion is the strongest signal
+
+Return JSON only, matching the requested schema.`;
+
+  if (isGeminiDirectAvailable()) {
+    try {
+      const raw = await invokeLLMWithFile({
+        fileBuffer,
+        mimeType,
+        systemPrompt:
+          "You classify listing compliance documents and signature execution status. Return only the requested JSON result.",
+        userPrompt: promptText,
+        outputSchema: listingDocumentDetectionSchema,
+      });
+      return parseListingDocumentDetection(parseJsonObject(raw));
+    } catch (geminiErr: unknown) {
+      console.warn(
+        "[aiAssist] Gemini listing document detection failed, falling back to text extraction:",
+        geminiErr instanceof Error ? geminiErr.message : String(geminiErr)
+      );
+    }
+  }
+
+  const userContent = await buildDocumentUserContent(fileBuffer, mimeType, promptText);
+  const response = await invokeLLM({
+    messages: [
+      {
+        role: "system",
+        content:
+          "You classify listing compliance documents and signature execution status. Return only the requested JSON result.",
+      },
+      { role: "user", content: userContent as any[] },
+    ],
+    response_format: {
+      type: "json_schema",
+      json_schema: listingDocumentDetectionSchema,
+    },
+  });
+  const raw = response.choices?.[0]?.message?.content;
+  return parseListingDocumentDetection(parseJsonObject(raw));
+}
+
 async function extractVoucherDocumentWithDetection(
   fileUrl: string,
   mimeType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp"
@@ -1039,6 +1179,40 @@ async function extractVoucherDocumentWithDetection(
     return {
       ...extracted,
       documentDetection: { agencyDisclosure: false, listingAgreement: false },
+    };
+  }
+}
+
+async function extractListingDocumentWithDetection(
+  fileUrl: string,
+  mimeType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp"
+) {
+  const extracted = await extractDocumentFields("listing", fileUrl, mimeType);
+  if (!extracted.success) {
+    return {
+      ...extracted,
+      documentDetection: emptyListingDocumentDetection(),
+    };
+  }
+
+  const fetched = await fetchDocumentBuffer(fileUrl);
+  if (!fetched.fileBuffer) {
+    return {
+      ...extracted,
+      documentDetection: emptyListingDocumentDetection(),
+    };
+  }
+
+  try {
+    const documentDetection = await detectListingRequiredDocuments(fetched.fileBuffer, mimeType);
+    return {
+      ...extracted,
+      documentDetection,
+    };
+  } catch {
+    return {
+      ...extracted,
+      documentDetection: emptyListingDocumentDetection(),
     };
   }
 }
@@ -1217,6 +1391,30 @@ export const aiAssistRouter = router({
     )
     .mutation(async ({ input }) =>
       extractVoucherDocumentWithDetection(input.fileUrl, input.mimeType)
+    ),
+
+  extractListingDocument: publicProcedure
+    .input(
+      z.object({
+        fileUrl: z
+          .string()
+          .refine(
+            v =>
+              /^https?:\/\//i.test(v) ||
+              /^data:[^;]+;base64,/i.test(v) ||
+              v.startsWith("/local-uploads/") ||
+              v.startsWith("/api/files/content") ||
+              /^(broker-docs|broker-admin|broker-docusign)\//.test(v),
+            {
+              message:
+                "fileUrl must be an http(s) URL, data URL, local upload path, file proxy URL, or stored file key",
+            }
+          ),
+        mimeType: aiDocumentMimeSchema,
+      })
+    )
+    .mutation(async ({ input }) =>
+      extractListingDocumentWithDetection(input.fileUrl, input.mimeType)
     ),
 
   /**

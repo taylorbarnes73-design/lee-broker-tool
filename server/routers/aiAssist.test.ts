@@ -536,6 +536,64 @@ describe("aiAssist.extractDocument", () => {
       listingAgreement: false,
     });
   });
+
+  it("returns listing document execution detection alongside extracted fields", async () => {
+    vi.mocked(invokeLLM)
+      .mockResolvedValueOnce({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                address: "123 Main Street",
+                city: "Irvine",
+                listingAgentName: "Test Broker",
+              }),
+            },
+          },
+        ],
+      } as any)
+      .mockResolvedValueOnce({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                agencyDisclosure: {
+                  found: true,
+                  executed: true,
+                  missingSignatures: [],
+                },
+                listingAgreement: {
+                  found: true,
+                  executed: false,
+                  missingSignatures: ["Property owner/principal"],
+                },
+              }),
+            },
+          },
+        ],
+      } as any);
+
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.extractListingDocument({
+      fileUrl: "https://example.com/listing-doc.pdf",
+      mimeType: "application/pdf",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.fields.address).toBe("123 Main Street");
+    expect(result.documentDetection).toEqual({
+      agencyDisclosure: {
+        found: true,
+        executed: true,
+        missingSignatures: [],
+      },
+      listingAgreement: {
+        found: true,
+        executed: false,
+        missingSignatures: ["Property owner/principal"],
+      },
+    });
+  });
 });
 
 describe("aiAssist.smartComplete", () => {
