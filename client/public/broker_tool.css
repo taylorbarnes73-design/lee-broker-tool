@@ -7357,3 +7357,40 @@ body.broker-active .sub-tab-bar {
   font-size: 11px;
   color: #6B7280;
 }
+
+/* ── Address autocomplete dropdown ── */
+.addr-ac-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 8000;
+  background: #fff;
+  border: 1px solid #D1D5DB;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.10);
+  max-height: 260px;
+  overflow-y: auto;
+}
+.addr-ac-dropdown.is-hidden { display: none; }
+.addr-ac-item {
+  padding: 9px 14px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-bottom: 1px solid #F3F4F6;
+}
+.addr-ac-item:last-child { border-bottom: none; }
+.addr-ac-item:hover,
+.addr-ac-item.addr-ac-active { background: #FFF5F7; }
+.addr-ac-line1 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1A1A1A;
+}
+.addr-ac-line2 {
+  font-size: 11px;
+  color: #6B7280;
+}

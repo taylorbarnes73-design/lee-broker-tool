@@ -13616,6 +13616,14 @@ function compReportRenderPhotoBox(result) {
   if (url) {
     return '<div class="cr-photo-box"><img src="' + dxEscHtml(url) + '" alt="Property photo"></div>';
   }
+  // Fall back to Street View proxy when no photo is stored but an address is available.
+  var addrLine = result?.reportCard?.addressLine || result?.address || '';
+  var cityLine = result?.reportCard?.cityLine || result?.city || '';
+  var location = [addrLine, cityLine].filter(Boolean).join(', ').trim();
+  if (location) {
+    var svUrl = '/api/maps/api/streetview?size=180x120&location=' + encodeURIComponent(location) + '&fov=80&pitch=0';
+    return '<div class="cr-photo-box"><img src="' + dxEscHtml(svUrl) + '" alt="Street view" onerror="this.parentNode.innerHTML=\'No<br>Photo\'"></div>';
+  }
   return '<div class="cr-photo-box">No<br>Photo</div>';
 }
 
@@ -15678,6 +15686,111 @@ function setFieldLoading(fieldEl, loading) {
   if (loading) fieldEl.classList.add('field-loading');
   else fieldEl.classList.remove('field-loading');
 }
+
+// ── Address autocomplete ──
+// Calls the server-side proxy at /api/maps/places/autocomplete
+// which keeps the API key server-side and returns { address, city, state, zip }.
+
+(function initAddressAutocompletes() {
+  const configs = [
+    { inputId: 'l-address', cityId: 'l-city', stateId: 'l-state', zipId: 'l-zip' },
+    { inputId: 'v-address', cityId: 'v-city', stateId: 'v-state', zipId: 'v-zip' },
+    { inputId: 's-address', cityId: 's-city', stateId: null,      zipId: null      },
+    { inputId: 'c-address', cityId: 'c-city', stateId: null,      zipId: null      },
+  ];
+
+  configs.forEach(function(cfg) {
+    var input = document.getElementById(cfg.inputId);
+    if (!input) return;
+
+    // Remove the browser datalist so it doesn't compete with our dropdown
+    if (input.hasAttribute('list')) input.removeAttribute('list');
+
+    var dropdown = document.createElement('div');
+    dropdown.className = 'addr-ac-dropdown is-hidden';
+    input.parentNode.style.position = 'relative';
+    input.parentNode.appendChild(dropdown);
+
+    var timer = null;
+    var currentSuggestions = [];
+    var activeIdx = -1;
+
+    function showDropdown(items) {
+      currentSuggestions = items;
+      activeIdx = -1;
+      if (!items.length) { dropdown.classList.add('is-hidden'); return; }
+      dropdown.innerHTML = items.map(function(s, i) {
+        return '<div class="addr-ac-item" data-idx="' + i + '">' +
+          '<span class="addr-ac-line1">' + escHtml(s.address) + '</span>' +
+          '<span class="addr-ac-line2">' + escHtml([s.city, s.state, s.zip].filter(Boolean).join(', ')) + '</span>' +
+          '</div>';
+      }).join('');
+      dropdown.querySelectorAll('.addr-ac-item').forEach(function(el) {
+        el.addEventListener('mousedown', function(e) {
+          e.preventDefault();
+          selectSuggestion(parseInt(el.getAttribute('data-idx'), 10));
+        });
+      });
+      dropdown.classList.remove('is-hidden');
+    }
+
+    function hideDropdown() {
+      dropdown.classList.add('is-hidden');
+      currentSuggestions = [];
+      activeIdx = -1;
+    }
+
+    function setActive(idx) {
+      var items = dropdown.querySelectorAll('.addr-ac-item');
+      items.forEach(function(el) { el.classList.remove('addr-ac-active'); });
+      activeIdx = idx;
+      if (idx >= 0 && idx < items.length) items[idx].classList.add('addr-ac-active');
+    }
+
+    function selectSuggestion(idx) {
+      var s = currentSuggestions[idx];
+      if (!s) return;
+      input.value = s.address;
+      if (cfg.cityId)  { var c = document.getElementById(cfg.cityId);  if (c)  c.value = s.city; }
+      if (cfg.stateId) { var st = document.getElementById(cfg.stateId); if (st) st.value = s.state || 'CA'; }
+      if (cfg.zipId)   { var z = document.getElementById(cfg.zipId);   if (z)  z.value = s.zip; }
+      hideDropdown();
+      // Fire change events so form listeners react
+      [cfg.cityId, cfg.stateId, cfg.zipId].filter(Boolean).forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    }
+
+    input.addEventListener('input', function() {
+      clearTimeout(timer);
+      var val = input.value.trim();
+      if (val.length < 3) { hideDropdown(); setFieldLoading(input.parentNode, false); return; }
+      setFieldLoading(input.parentNode, true);
+      timer = setTimeout(async function() {
+        try {
+          var res = await fetch('/api/maps/places/autocomplete?input=' + encodeURIComponent(val));
+          var data = await res.json();
+          showDropdown(data.results || []);
+        } catch (_) {
+          hideDropdown();
+        } finally {
+          setFieldLoading(input.parentNode, false);
+        }
+      }, 280);
+    });
+
+    input.addEventListener('keydown', function(e) {
+      if (dropdown.classList.contains('is-hidden')) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); setActive(Math.min(activeIdx + 1, currentSuggestions.length - 1)); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(Math.max(activeIdx - 1, 0)); }
+      else if (e.key === 'Enter' && activeIdx >= 0) { e.preventDefault(); selectSuggestion(activeIdx); }
+      else if (e.key === 'Escape') { hideDropdown(); }
+    });
+
+    input.addEventListener('blur', function() { setTimeout(hideDropdown, 150); });
+  });
+})();
 </script>
 </body>
 </html>
