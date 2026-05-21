@@ -4319,16 +4319,56 @@ body {
 
 /* AI Auto-fill shortcut card — placed above Step 1 on voucher */
 .ai-shortcut-card {
-  border: 1px dashed rgba(139, 95, 240, .35) !important;
-  background: linear-gradient(180deg, rgba(139, 95, 240, .04), #fff) !important;
+  border: 1px solid #E7EAEE !important;
+  background: #fff !important;
 }
 .ai-shortcut-card h2 { color: var(--ink-900, #0A0A0B); }
 .ai-shortcut-card .inline-badge {
-  background: rgba(139, 95, 240, .12);
-  color: #5b3fb7;
-  border: 1px solid rgba(139, 95, 240, .25);
+  background: rgba(10, 10, 11, .06);
+  color: var(--ink-700, #1f2937);
+  border: 1px solid rgba(10, 10, 11, .14);
 }
 .ai-shortcut-card .micro-copy { color: var(--text2, #575A74); margin-bottom: 10px; }
+
+.voucher-doc-status-list {
+  display: grid;
+  gap: 8px;
+}
+
+.voucher-doc-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.voucher-doc-status-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.voucher-doc-status-btn.status-found {
+  color: #15803d;
+  cursor: default;
+}
+
+.voucher-doc-status-btn.status-missing {
+  color: #b42318;
+  text-decoration: underline;
+}
+
+.voucher-doc-status-btn.status-not-required {
+  color: #6b7280;
+  cursor: default;
+}
+
+.voucher-doc-status-btn:disabled {
+  pointer-events: none;
+}
 
 
 /* Comp Reports — row selection column */

@@ -934,6 +934,115 @@ async function extractDocumentFields(
   };
 }
 
+const voucherDocumentDetectionSchema = {
+  name: "voucher_document_detection",
+  schema: {
+    type: "object",
+    properties: {
+      agencyDisclosure: { type: "boolean" },
+      listingAgreement: { type: "boolean" },
+    },
+    required: ["agencyDisclosure", "listingAgreement"],
+    additionalProperties: false,
+  },
+} as const;
+
+function normalizeDetectionFlag(value: unknown): boolean {
+  if (typeof value === "boolean") return value;
+  const text = String(value ?? "").trim().toLowerCase();
+  return text === "true" || text === "yes" || text === "1" || text === "found" || text === "present";
+}
+
+function parseVoucherDocumentDetection(value: unknown) {
+  const record = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  return {
+    agencyDisclosure: normalizeDetectionFlag(record.agencyDisclosure),
+    listingAgreement: normalizeDetectionFlag(record.listingAgreement),
+  };
+}
+
+async function detectVoucherRequiredDocuments(
+  fileBuffer: Buffer,
+  mimeType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp"
+) {
+  const promptText = `Determine whether this file contains either of these documents:
+- Agency Disclosure
+- Listing Agreement
+
+Return JSON booleans only. Mark true only when the document appears present in this file.`;
+
+  if (isGeminiDirectAvailable()) {
+    try {
+      const raw = await invokeLLMWithFile({
+        fileBuffer,
+        mimeType,
+        systemPrompt:
+          "You classify real estate compliance documents. Return only the requested boolean JSON result.",
+        userPrompt: promptText,
+        outputSchema: voucherDocumentDetectionSchema,
+      });
+      return parseVoucherDocumentDetection(parseJsonObject(raw));
+    } catch (geminiErr: unknown) {
+      console.warn(
+        "[aiAssist] Gemini document detection failed, falling back to text extraction:",
+        geminiErr instanceof Error ? geminiErr.message : String(geminiErr)
+      );
+    }
+  }
+
+  const userContent = await buildDocumentUserContent(fileBuffer, mimeType, promptText);
+  const response = await invokeLLM({
+    messages: [
+      {
+        role: "system",
+        content:
+          "You classify real estate compliance documents. Return only the requested boolean JSON result.",
+      },
+      { role: "user", content: userContent as any[] },
+    ],
+    response_format: {
+      type: "json_schema",
+      json_schema: voucherDocumentDetectionSchema,
+    },
+  });
+  const raw = response.choices?.[0]?.message?.content;
+  return parseVoucherDocumentDetection(parseJsonObject(raw));
+}
+
+async function extractVoucherDocumentWithDetection(
+  fileUrl: string,
+  mimeType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp"
+) {
+  const extracted = await extractDocumentFields("voucher", fileUrl, mimeType);
+  if (!extracted.success) {
+    return {
+      ...extracted,
+      documentDetection: { agencyDisclosure: false, listingAgreement: false },
+    };
+  }
+
+  const fetched = await fetchDocumentBuffer(fileUrl);
+  if (!fetched.fileBuffer) {
+    return {
+      ...extracted,
+      documentDetection: { agencyDisclosure: false, listingAgreement: false },
+    };
+  }
+
+  try {
+    const documentDetection = await detectVoucherRequiredDocuments(fetched.fileBuffer, mimeType);
+    return {
+      ...extracted,
+      documentDetection,
+    };
+  } catch {
+    return {
+      ...extracted,
+      documentDetection: { agencyDisclosure: false, listingAgreement: false },
+    };
+  }
+}
+
 // ── Router ──
 
 export const aiAssistRouter = router({
@@ -1084,6 +1193,30 @@ export const aiAssistRouter = router({
     )
     .mutation(async ({ input }) =>
       extractDocumentFields(input.tab, input.fileUrl, input.mimeType)
+    ),
+
+  extractVoucherDocument: publicProcedure
+    .input(
+      z.object({
+        fileUrl: z
+          .string()
+          .refine(
+            v =>
+              /^https?:\/\//i.test(v) ||
+              /^data:[^;]+;base64,/i.test(v) ||
+              v.startsWith("/local-uploads/") ||
+              v.startsWith("/api/files/content") ||
+              /^(broker-docs|broker-admin|broker-docusign)\//.test(v),
+            {
+              message:
+                "fileUrl must be an http(s) URL, data URL, local upload path, file proxy URL, or stored file key",
+            }
+          ),
+        mimeType: aiDocumentMimeSchema,
+      })
+    )
+    .mutation(async ({ input }) =>
+      extractVoucherDocumentWithDetection(input.fileUrl, input.mimeType)
     ),
 
   /**
