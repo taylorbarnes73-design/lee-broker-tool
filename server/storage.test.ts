@@ -1,0 +1,70 @@
+import { afterEach, describe, expect, it } from "vitest";
+import { ENV } from "./_core/env";
+import { normalizeStoredFileUrl, storagePublicUrl } from "./storage";
+
+const originalBucket = ENV.awsS3Bucket;
+const originalRegion = ENV.awsS3Region;
+const originalAwsRegion = ENV.awsRegion;
+
+afterEach(() => {
+  ENV.awsS3Bucket = originalBucket;
+  ENV.awsS3Region = originalRegion;
+  ENV.awsRegion = originalAwsRegion;
+});
+
+describe("storagePublicUrl", () => {
+  it("returns a local uploads path when S3 is not configured", () => {
+    ENV.awsS3Bucket = "";
+    expect(storagePublicUrl("broker-docs/contracts/test file.pdf")).toBe(
+      "/local-uploads/broker-docs/contracts/test file.pdf"
+    );
+  });
+
+  it("returns the public proxy path with encoded keys when S3 is configured", () => {
+    ENV.awsS3Bucket = "test-bucket";
+    ENV.awsS3Region = "us-west-2";
+    expect(storagePublicUrl("broker-docs/contracts/test file.pdf")).toBe(
+      "/api/files/content?key=broker-docs%2Fcontracts%2Ftest%20file.pdf"
+    );
+  });
+});
+
+describe("normalizeStoredFileUrl", () => {
+  it("prefers an explicit file key", () => {
+    ENV.awsS3Bucket = "test-bucket";
+    expect(
+      normalizeStoredFileUrl("https://example.com/ignored", "broker-docs/contracts/lease.pdf")
+    ).toBe("/api/files/content?key=broker-docs%2Fcontracts%2Flease.pdf");
+  });
+
+  it("normalizes legacy virtual-hosted S3 URLs", () => {
+    ENV.awsS3Bucket = "test-bucket";
+    ENV.awsS3Region = "us-west-2";
+    expect(
+      normalizeStoredFileUrl(
+        "https://test-bucket.s3.us-west-2.amazonaws.com/broker-docs/contracts/lease.pdf?X-Amz-Signature=abc"
+      )
+    ).toBe("/api/files/content?key=broker-docs%2Fcontracts%2Flease.pdf");
+  });
+
+  it("normalizes legacy path-style S3 URLs", () => {
+    ENV.awsS3Bucket = "test-bucket";
+    expect(
+      normalizeStoredFileUrl(
+        "https://s3.amazonaws.com/test-bucket/broker-docs/contracts/lease.pdf?X-Amz-Signature=abc"
+      )
+    ).toBe("/api/files/content?key=broker-docs%2Fcontracts%2Flease.pdf");
+  });
+
+  it("leaves local and already-normalized URLs unchanged", () => {
+    ENV.awsS3Bucket = "";
+    expect(normalizeStoredFileUrl("/local-uploads/broker-docs/contracts/lease.pdf")).toBe(
+      "/local-uploads/broker-docs/contracts/lease.pdf"
+    );
+
+    ENV.awsS3Bucket = "test-bucket";
+    expect(
+      normalizeStoredFileUrl("/api/files/content?key=broker-docs%2Fcontracts%2Flease.pdf")
+    ).toBe("/api/files/content?key=broker-docs%2Fcontracts%2Flease.pdf");
+  });
+});

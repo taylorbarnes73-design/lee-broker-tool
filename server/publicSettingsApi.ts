@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { getPublicToolSettings } from "./settings/settingsStore";
+import { normalizeStoredFileUrl } from "./storage";
 
 export const publicSettingsRouter = Router();
 
@@ -27,7 +28,11 @@ const fallbackPublicSettings = {
 
 publicSettingsRouter.get("/public", async (_req, res) => {
   try {
-    res.json(await getPublicToolSettings());
+    const settings = await getPublicToolSettings();
+    res.json({
+      ...settings,
+      logo_url: normalizeStoredFileUrl(settings.logo_url),
+    });
   } catch (error) {
     console.error("[public settings]", error);
     res.json(fallbackPublicSettings);

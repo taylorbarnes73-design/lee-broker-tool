@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod/v4";
+import { normalizeStoredFileUrl } from "./storage";
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "./db";
 import { brokerAdminRequests, uploads } from "../drizzle/schema";
@@ -114,7 +115,16 @@ brokerAdminApiRouter.get("/requests/:id", async (req, res) => {
     .orderBy(desc(uploads.createdAt))
     .limit(500);
 
-  res.json({ success: true, data: { request: row, attachments: files } });
+  res.json({
+    success: true,
+    data: {
+      request: row,
+      attachments: files.map(file => ({
+        ...file,
+        url: normalizeStoredFileUrl(file.url, file.fileKey),
+      })),
+    },
+  });
 });
 
 const updateSchema = z.object({
@@ -168,4 +178,3 @@ brokerAdminApiRouter.put("/requests/:id", async (req, res) => {
   await db.update(brokerAdminRequests).set({ ...patch, updatedAt: new Date() }).where(eq(brokerAdminRequests.id, id));
   res.json({ success: true });
 });
-

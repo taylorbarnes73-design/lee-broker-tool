@@ -1067,7 +1067,7 @@ submissionsApiRouter.put("/:id", async (req, res) => {
   // "Claim" (→ in_review): record who picked it up and when.
   // "Complete" (→ approved | closed): record who finished it and when.
   const now = new Date();
-  const adminName = user.name || user.email || user.openId;
+  const adminName = user.name || user.openId;
   const assignmentPatch: Record<string, unknown> = {};
   if (isAdmin && nextStatus !== undefined && nextStatus !== row.status) {
     if (nextStatus === "in_review") {
