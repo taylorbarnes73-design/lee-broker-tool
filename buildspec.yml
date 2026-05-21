@@ -1,0 +1,20 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_DEFAULT_REGION: us-east-2
+    ECR_REPOSITORY: lee-broker-tool
+
+phases:
+  pre_build:
+    commands:
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - ECR_URI=$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_URI
+  build:
+    commands:
+      - docker build -t $ECR_REPOSITORY:latest .
+      - docker tag $ECR_REPOSITORY:latest $ECR_URI:latest
+  post_build:
+    commands:
+      - docker push $ECR_URI:latest
