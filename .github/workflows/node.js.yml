@@ -9,6 +9,11 @@ on:
   pull_request:
     branches: [ "main" ]
 
+env:
+  # GitHub Actions is deprecating Node.js 20 for JS-based actions.
+  # Opt into Node.js 24 now to avoid future breakage.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   build:
 
