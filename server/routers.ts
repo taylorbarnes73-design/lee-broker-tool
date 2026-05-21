@@ -275,8 +275,8 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) {
+        const uploadDb = await getDb();
+        if (!uploadDb) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Database unavailable; cannot record file upload metadata.",
@@ -314,7 +314,7 @@ export const appRouter = router({
             const fileKey = `broker-docs/${category}/${nanoid(10)}-${safeName}`;
             const { url } = await storagePut(fileKey, buffer, mimeType);
 
-            await db.insert(uploads).values({
+            await uploadDb!.insert(uploads).values({
               fileKey,
               url,
               filename,
