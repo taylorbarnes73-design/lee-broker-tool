@@ -412,7 +412,6 @@ const RENT_TYPE_ABBREV_RULES: Array<{ match: RegExp; abbrev: string }> = [
 export function abbreviateRentTypeForReport(raw: string): string {
   const t = String(raw ?? "").trim();
   if (!t) return "";
-  if (/^grs$/i.test(t)) return "G";
   if (/^(G|IG|MG|NNN|FS|FSG|NN)$/i.test(t)) return t.toUpperCase();
   for (const { match, abbrev } of RENT_TYPE_ABBREV_RULES) {
     if (match.test(t)) return abbrev;

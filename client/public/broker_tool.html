@@ -1153,7 +1153,7 @@
   </div>
 
   <div class="card" id="vstep-8" data-vstep="8" data-step-label="Distribution" data-card-eyebrow="Step 7 of 7">
-    <h2>Step 8 — Commission Distribution</h2>
+    <h2>Step 7 — Commission Distribution</h2>
     <div id="voucher-attachment-required-msg" class="tip text-error is-hidden" role="alert"></div>
     <h3 class="section-divider section-heading-top-lg">Commission Distribution</h3>
     <div class="row c3 field-stack-gap-sm voucher-summary-row">
@@ -13401,7 +13401,7 @@ function hasListingComplianceAttachments() {
 function hasVoucherComplianceAttachments() {
   const d = document.getElementById('v-doc-disclosure');
   const a = document.getElementById('v-doc-agreement');
-  if ((d && d.files && d.files.length) && (a && a.files && a.files.length)) return true;
+  if ((d && d.files && d.files.length > 0) && (a && a.files && a.files.length > 0)) return true;
   return (uploadedFiles['v-doc-disclosure']?.length > 0) && (uploadedFiles['v-doc-agreement']?.length > 0);
 }
 
@@ -13449,7 +13449,7 @@ function openSendToAdminModal(formType) {
   }
   if (formType === 'voucher' && workflowRequireVoucherAttachment() && !hasVoucherComplianceAttachments()) {
     if (attachErr) {
-      attachErr.textContent = 'Upload required Agency Disclosure and Exclusive Listing Agreement before sending to admin.';
+      attachErr.textContent = 'Upload both required Agency Disclosure and Exclusive Listing Agreement documents before sending to admin.';
       attachErr.classList.remove('is-hidden');
     }
     showToast('Add required voucher attachments before sending to admin.', 'error');
