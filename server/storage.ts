@@ -14,7 +14,7 @@ const PUBLIC_FILE_PROXY_PREFIX = "/api/files/content?key=";
 const CONTROL_CHAR_PATTERN = /[\0-\x1F\x7F]/;
 
 export function sanitizeStorageKey(rawKey: string): string {
-  const trimmed = String(rawKey ?? "").trim().replace(/\\/g, "/").replace(/^\/+/, "");
+  const trimmed = String(rawKey).trim().replace(/\\/g, "/").replace(/^\/+/, "");
   const segments = trimmed.split("/").filter(Boolean);
   if (segments.length === 0) {
     throw new Error("Invalid storage key");

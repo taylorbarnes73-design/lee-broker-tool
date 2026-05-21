@@ -318,6 +318,7 @@ export const appRouter = router({
             message: "Database unavailable; cannot record file upload metadata.",
           });
         }
+        const ensuredUploadDb = uploadDb;
 
         type FileResult =
           | { filename: string; success: true; url: string; fileKey: string }
@@ -360,7 +361,7 @@ export const appRouter = router({
             const fileKey = `broker-docs/${category}/${nanoid(10)}-${safeName}`;
             const { url } = await storagePut(fileKey, buffer, mimeType);
 
-            await uploadDb!.insert(uploads).values({
+            await ensuredUploadDb.insert(uploads).values({
               fileKey,
               url,
               filename,
