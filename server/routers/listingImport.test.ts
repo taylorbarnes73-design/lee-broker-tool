@@ -3,6 +3,10 @@ import { listingImportRouter } from "./listingImport";
 import type { TrpcContext } from "../_core/context";
 import type { User } from "../../drizzle/schema";
 
+const { storageGetBytesMock } = vi.hoisted(() => ({
+  storageGetBytesMock: vi.fn(),
+}));
+
 vi.mock("../_core/llm", () => ({
   invokeLLM: vi.fn(),
 }));
@@ -22,6 +26,10 @@ vi.mock("../settings/settingsStore", () => ({
   ensureSettingsCache: vi.fn(),
 }));
 
+vi.mock("../storage", () => ({
+  storageGetBytes: storageGetBytesMock,
+}));
+
 import { invokeLLM } from "../_core/llm";
 import { ensureSettingsCache } from "../settings/settingsStore";
 
@@ -38,6 +46,10 @@ function adminCtx(): TrpcContext {
 describe("listingImport.extractFromBrochure", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    storageGetBytesMock.mockResolvedValue({
+      key: "broker-docs/listing_brochure/proxy.pdf",
+      bytes: Buffer.from("%PDF-proxy"),
+    });
   });
 
   it("returns property, contacts, and https photo URLs", async () => {
@@ -78,6 +90,39 @@ describe("listingImport.extractFromBrochure", () => {
     expect(r.property.address).toBe("100 Main St");
     expect(r.contacts[0]?.name).toBe("Pat Lee");
     expect(r.photoUrls).toEqual(["https://cdn.example.com/a.jpg"]);
+  });
+
+  it("accepts uploaded file proxy URLs and reads via storage", async () => {
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              property: {
+                address: "42 Proxy Ave",
+                city: "Irvine",
+              },
+              contacts: [],
+              photoUrls: [],
+            }),
+          },
+        },
+      ],
+    } as any);
+
+    const fetchMock = vi.mocked(globalThis.fetch);
+    const caller = listingImportRouter.createCaller(adminCtx());
+    const r = await caller.extractFromBrochure({
+      fileUrl: "/api/files/content?key=broker-docs%2Flisting_brochure%2Fproxy.pdf",
+      mimeType: "application/pdf",
+    });
+
+    expect(r.success).toBe(true);
+    expect(r.property.address).toBe("42 Proxy Ave");
+    expect(storageGetBytesMock).toHaveBeenCalledWith(
+      "/api/files/content?key=broker-docs%2Flisting_brochure%2Fproxy.pdf"
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

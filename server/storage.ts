@@ -56,6 +56,12 @@ function tryParseStoredKey(input: string): string | null {
   const value = input.trim();
   if (!value) return null;
 
+  if (value.startsWith("/api/files/content")) {
+    const [, query = ""] = value.split("?", 2);
+    const key = new URLSearchParams(query).get("key");
+    return key ? key.trim() : null;
+  }
+
   if (value.startsWith(LOCAL_URL_PREFIX)) {
     return value.slice(LOCAL_URL_PREFIX.length);
   }
@@ -73,6 +79,10 @@ function tryParseStoredKey(input: string): string | null {
     const bucket = ENV.awsS3Bucket?.trim().toLowerCase();
     const host = parsed.hostname.toLowerCase();
     const pathname = decodeURIComponent(parsed.pathname.replace(/^\/+/, ""));
+    if (parsed.pathname === "/api/files/content") {
+      const key = parsed.searchParams.get("key");
+      return key ? key.trim() : null;
+    }
 
     if (!pathname) return null;
 
@@ -121,10 +131,7 @@ async function localGetBytes(relKey: string): Promise<{ key: string; bytes: Buff
  * Can also be called with a `/local-uploads/…` URL path directly.
  */
 export async function storageGetBytes(urlOrKey: string): Promise<{ key: string; bytes: Buffer }> {
-  // Strip the "/local-uploads/" prefix if it was passed as a URL
-  const relKey = urlOrKey.startsWith(LOCAL_URL_PREFIX)
-    ? urlOrKey.slice(LOCAL_URL_PREFIX.length)
-    : urlOrKey;
+  const relKey = tryParseStoredKey(urlOrKey) ?? urlOrKey;
 
   if (isLocalStorage()) {
     return localGetBytes(relKey);

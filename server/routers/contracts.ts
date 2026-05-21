@@ -163,14 +163,21 @@ export const contractsRouter = router({
    */
   extractContract: publicProcedure
     .input(
-      z.object({
-        /** URL of the uploaded PDF (S3 signed URL or /local-uploads/ path) */
-        pdfUrl: z.string().refine(
-          v => /^https?:\/\//i.test(v) || v.startsWith("/local-uploads/"),
-          { message: "pdfUrl must be an http(s) URL or a local upload path" }
-        ),
-        contractType: z.string(),
-      })
+        z.object({
+          /** URL of the uploaded PDF (S3 signed URL or /local-uploads/ path) */
+          pdfUrl: z.string().refine(
+            v =>
+              /^https?:\/\//i.test(v) ||
+              v.startsWith("/local-uploads/") ||
+              v.startsWith("/api/files/content") ||
+              /^(broker-docs|broker-admin|broker-docusign)\//.test(v),
+            {
+              message:
+                "pdfUrl must be an http(s) URL, local upload path, file proxy URL, or stored file key",
+            }
+          ),
+          contractType: z.string(),
+        })
     )
     .mutation(async ({ input }) => {
       const systemPrompt = `You are an expert real estate contract analyst. You will be given an AIR CRE contract PDF that a broker has filled out in Adobe Acrobat. Your job is to:
@@ -232,7 +239,11 @@ Return JSON with these fields (omit any that are blank):
       try {
         // Fetch the PDF server-side — use direct FS read for local storage paths
         let pdfBuffer: Buffer;
-        if (input.pdfUrl.startsWith("/local-uploads/")) {
+        if (
+          input.pdfUrl.startsWith("/local-uploads/") ||
+          input.pdfUrl.startsWith("/api/files/content") ||
+          /^(broker-docs|broker-admin|broker-docusign)\//.test(input.pdfUrl)
+        ) {
           const { bytes } = await storageGetBytes(input.pdfUrl);
           pdfBuffer = bytes;
         } else {

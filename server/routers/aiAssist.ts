@@ -783,13 +783,21 @@ function buildJsonSchema(name: string, fieldNames: string[]) {
 }
 
 async function fetchDocumentBuffer(fileUrl: string) {
+  const target = fileUrl.trim();
+  const isHttp = /^https?:\/\//i.test(target);
+  const isDataUrl = /^data:[^;]+;base64,/i.test(target);
+  const isStoredPath = target.startsWith("/local-uploads/") || target.startsWith("/api/files/content");
+  const isStoredKey = /^(broker-docs|broker-admin|broker-docusign)\//.test(target);
+
   try {
-    // Local storage path — read directly from disk without an HTTP round-trip
-    if (fileUrl.startsWith("/local-uploads/")) {
-      const { bytes } = await storageGetBytes(fileUrl);
+    if (isStoredPath || isStoredKey) {
+      const { bytes } = await storageGetBytes(target);
       return { fileBuffer: bytes, error: null };
     }
-    const fileResp = await fetch(fileUrl, { signal: AbortSignal.timeout(30_000) });
+    if (!isHttp && !isDataUrl) {
+      return { fileBuffer: null, error: "Unsupported file URL format" };
+    }
+    const fileResp = await fetch(target, { signal: AbortSignal.timeout(30_000) });
     if (!fileResp.ok) throw new Error(`File fetch failed: ${fileResp.status}`);
     const buffer = await fileResp.arrayBuffer();
     return { fileBuffer: Buffer.from(buffer), error: null };
@@ -1023,8 +1031,16 @@ export const aiAssistRouter = router({
         fileUrl: z
           .string()
           .refine(
-            v => /^https?:\/\//i.test(v) || /^data:[^;]+;base64,/i.test(v) || v.startsWith("/local-uploads/"),
-            { message: "fileUrl must be an http(s) URL, a data: URL, or a local upload path" }
+            v =>
+              /^https?:\/\//i.test(v) ||
+              /^data:[^;]+;base64,/i.test(v) ||
+              v.startsWith("/local-uploads/") ||
+              v.startsWith("/api/files/content") ||
+              /^(broker-docs|broker-admin|broker-docusign)\//.test(v),
+            {
+              message:
+                "fileUrl must be an http(s) URL, data URL, local upload path, file proxy URL, or stored file key",
+            }
           ),
         mimeType: z
           .enum(["application/pdf", "image/jpeg", "image/png", "image/webp"])
@@ -1050,8 +1066,16 @@ export const aiAssistRouter = router({
         fileUrl: z
           .string()
           .refine(
-            v => /^https?:\/\//i.test(v) || /^data:[^;]+;base64,/i.test(v) || v.startsWith("/local-uploads/"),
-            { message: "fileUrl must be an http(s) URL, a data: URL, or a local upload path" }
+            v =>
+              /^https?:\/\//i.test(v) ||
+              /^data:[^;]+;base64,/i.test(v) ||
+              v.startsWith("/local-uploads/") ||
+              v.startsWith("/api/files/content") ||
+              /^(broker-docs|broker-admin|broker-docusign)\//.test(v),
+            {
+              message:
+                "fileUrl must be an http(s) URL, data URL, local upload path, file proxy URL, or stored file key",
+            }
           ),
         mimeType: z
           .enum(["application/pdf", "image/jpeg", "image/png", "image/webp"])
@@ -1166,4 +1190,3 @@ CRITICAL RULES:
       }
     }),
 });
-

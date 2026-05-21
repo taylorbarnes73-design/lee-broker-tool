@@ -2,11 +2,19 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { aiAssistRouter } from "./aiAssist";
 import type { TrpcContext } from "../_core/context";
 
+const { storageGetBytesMock } = vi.hoisted(() => ({
+  storageGetBytesMock: vi.fn(),
+}));
+
 // Mock the LLM to avoid real API calls in tests
 vi.mock("../_core/llm", () => ({
   invokeLLM: vi.fn(),
   invokeLLMWithFile: vi.fn(),
   isGeminiDirectAvailable: vi.fn().mockReturnValue(false),
+}));
+
+vi.mock("../storage", () => ({
+  storageGetBytes: storageGetBytesMock,
 }));
 
 // Mock PDF parsing so brochure tests don't need real PDFs
@@ -265,6 +273,10 @@ describe("aiAssist.scrapeBrochure", () => {
 describe("aiAssist.extractDocument", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    storageGetBytesMock.mockResolvedValue({
+      key: "broker-docs/listing_brochure/sample.pdf",
+      bytes: Buffer.from("%PDF-sample"),
+    });
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
@@ -414,6 +426,36 @@ describe("aiAssist.extractDocument", () => {
     });
     expect(result.fields.listingAgentName).toBeUndefined();
     expect(PDFParse).not.toHaveBeenCalled();
+  });
+
+  it("accepts uploaded proxy URLs and reads bytes from storage", async () => {
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              transactionType: "Lease",
+              clientName: "Proxy URL Client",
+            }),
+          },
+        },
+      ],
+    } as any);
+
+    const fetchMock = vi.mocked(globalThis.fetch);
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.extractDocument({
+      fileUrl: "/api/files/content?key=broker-docs%2Flisting_brochure%2Fsample.pdf",
+      mimeType: "application/pdf",
+      tab: "voucher",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.fields.clientName).toBe("Proxy URL Client");
+    expect(storageGetBytesMock).toHaveBeenCalledWith(
+      "/api/files/content?key=broker-docs%2Flisting_brochure%2Fsample.pdf"
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

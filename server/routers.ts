@@ -201,6 +201,13 @@ export const appRouter = router({
       )
       .mutation(async ({ ctx, input }) => {
         const { filename, mimeType, base64Data, category, reference, uploaderName } = input;
+        const db = await getDb();
+        if (!db) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Database unavailable; cannot record file upload metadata.",
+          });
+        }
 
         // Decode base64 to buffer
         const buffer = Buffer.from(base64Data, "base64");
@@ -228,20 +235,17 @@ export const appRouter = router({
         const { url } = await storagePut(fileKey, buffer, mimeType);
 
         // Save metadata to database
-        const db = await getDb();
-        if (db) {
-          await db.insert(uploads).values({
-            fileKey,
-            url,
-            filename,
-            mimeType,
-            fileSize,
-            category,
-            reference: reference ?? null,
-            uploaderName: uploaderName ?? ctx.user?.name ?? null,
-            uploaderOpenId: ctx.user?.openId ?? null,
-          });
-        }
+        await db.insert(uploads).values({
+          fileKey,
+          url,
+          filename,
+          mimeType,
+          fileSize,
+          category,
+          reference: reference ?? null,
+          uploaderName: uploaderName ?? ctx.user?.name ?? null,
+          uploaderOpenId: ctx.user?.openId ?? null,
+        });
 
         return { success: true, url, fileKey, filename };
       }),
@@ -271,6 +275,14 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Database unavailable; cannot record file upload metadata.",
+          });
+        }
+
         type FileResult =
           | { filename: string; success: true; url: string; fileKey: string }
           | { filename: string; success: false; error: string };
@@ -302,21 +314,18 @@ export const appRouter = router({
             const fileKey = `broker-docs/${category}/${nanoid(10)}-${safeName}`;
             const { url } = await storagePut(fileKey, buffer, mimeType);
 
-            const db = await getDb();
-            if (db) {
-              await db.insert(uploads).values({
-                fileKey,
-                url,
-                filename,
-                mimeType,
-                fileSize,
-                category,
-                reference: reference ?? null,
-                uploaderName:
-                  input.uploaderName ?? ctx.user?.name ?? null,
-                uploaderOpenId: ctx.user?.openId ?? null,
-              });
-            }
+            await db.insert(uploads).values({
+              fileKey,
+              url,
+              filename,
+              mimeType,
+              fileSize,
+              category,
+              reference: reference ?? null,
+              uploaderName:
+                input.uploaderName ?? ctx.user?.name ?? null,
+              uploaderOpenId: ctx.user?.openId ?? null,
+            });
 
             return { filename, success: true, url, fileKey };
           } catch (err: unknown) {

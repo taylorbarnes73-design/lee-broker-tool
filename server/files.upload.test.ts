@@ -43,6 +43,7 @@ vi.mock("./db", () => ({
 
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
+import { getDb } from "./db";
 
 function createCtx(): TrpcContext {
   return {
@@ -83,6 +84,19 @@ describe("files.upload", () => {
         category: "listing_brochure",
       })
     ).rejects.toThrow(/exceeds maximum size/i);
+  });
+
+  it("fails when database is unavailable so uploads are always auditable", async () => {
+    vi.mocked(getDb).mockResolvedValueOnce(null as any);
+    const caller = appRouter.createCaller(createCtx());
+    await expect(
+      caller.files.upload({
+        filename: "audit-required.pdf",
+        mimeType: "application/pdf",
+        base64Data: Buffer.from("%PDF-1.4").toString("base64"),
+        category: "listing_brochure",
+      })
+    ).rejects.toThrow(/Database unavailable/i);
   });
 });
 

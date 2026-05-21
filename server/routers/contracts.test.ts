@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ── Mock dependencies ──
+const { storageGetBytesMock } = vi.hoisted(() => ({
+  storageGetBytesMock: vi.fn(),
+}));
 
 vi.mock("../_core/llm", () => ({
   invokeLLM: vi.fn(),
@@ -16,6 +19,10 @@ vi.mock("../_core/env", () => ({
   ENV: {
     adminEmail: "admin@lee-associates.com",
   },
+}));
+
+vi.mock("../storage", () => ({
+  storageGetBytes: storageGetBytesMock,
 }));
 
 import { invokeLLM } from "../_core/llm";
@@ -57,7 +64,13 @@ async function callMutation(procedure: string, input: unknown) {
 // ── extractContract tests ──
 
 describe("contracts.extractContract", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    storageGetBytesMock.mockResolvedValue({
+      key: "broker-docs/submissions/contracts/test.pdf",
+      bytes: mockPdfBuffer,
+    });
+  });
 
   it("returns extracted data on successful AI response", async () => {
     const mockData = {
@@ -136,6 +149,34 @@ describe("contracts.extractContract", () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toContain("LLM timeout");
+  });
+
+  it("accepts uploaded file proxy URLs", async () => {
+    (invokeLLM as ReturnType<typeof vi.fn>).mockResolvedValue({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              contractType: "excl-sublease",
+              party1Name: "Proxy Source",
+            }),
+          },
+        },
+      ],
+    });
+
+    const fetchMock = vi.mocked(global.fetch);
+    const result = await callMutation("extractContract", {
+      pdfUrl: "/api/files/content?key=broker-docs%2Fsubmissions%2Fcontracts%2Ftest.pdf",
+      contractType: "excl-sublease",
+    }) as { success: boolean; data: { party1Name?: string } | null; error: string | null };
+
+    expect(result.success).toBe(true);
+    expect(result.data?.party1Name).toBe("Proxy Source");
+    expect(storageGetBytesMock).toHaveBeenCalledWith(
+      "/api/files/content?key=broker-docs%2Fsubmissions%2Fcontracts%2Ftest.pdf"
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

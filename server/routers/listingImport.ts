@@ -12,6 +12,7 @@ import {
   buildoutResultErrorMessage,
 } from "../services/buildoutClient";
 import { mapListingFieldsToBuildoutProperty } from "../services/listingToBuildoutMap";
+import { storageGetBytes } from "../storage";
 
 /** Server-side brochure / flyer size cap (after fetch or decode). */
 export const BROCHURE_MAX_BYTES = 18 * 1024 * 1024;
@@ -41,8 +42,27 @@ function normalizeWhitespace(value: string) {
 }
 
 async function fetchDocumentBuffer(fileUrl: string): Promise<{ fileBuffer: Buffer | null; error: string | null }> {
+  const target = fileUrl.trim();
+  const isHttp = /^https?:\/\//i.test(target);
+  const isDataUrl = /^data:[^;]+;base64,/i.test(target);
+  const isStoredPath = target.startsWith("/local-uploads/") || target.startsWith("/api/files/content");
+  const isStoredKey = /^(broker-docs|broker-admin|broker-docusign)\//.test(target);
+
   try {
-    const fileResp = await fetch(fileUrl, { signal: AbortSignal.timeout(30_000) });
+    if (isStoredPath || isStoredKey) {
+      const { bytes } = await storageGetBytes(target);
+      if (bytes.length > BROCHURE_MAX_BYTES) {
+        return {
+          fileBuffer: null,
+          error: `File exceeds maximum size of ${Math.floor(BROCHURE_MAX_BYTES / (1024 * 1024))} MB.`,
+        };
+      }
+      return { fileBuffer: bytes, error: null };
+    }
+    if (!isHttp && !isDataUrl) {
+      return { fileBuffer: null, error: "Unsupported file URL format" };
+    }
+    const fileResp = await fetch(target, { signal: AbortSignal.timeout(30_000) });
     if (!fileResp.ok) {
       return { fileBuffer: null, error: `File fetch failed: ${fileResp.status}` };
     }
@@ -205,9 +225,18 @@ export const listingImportRouter = router({
       z.object({
         fileUrl: z
           .string()
-          .refine(v => /^https?:\/\//i.test(v) || /^data:[^;]+;base64,/i.test(v), {
-            message: "fileUrl must be an http(s) URL or a data: URL",
-          }),
+          .refine(
+            v =>
+              /^https?:\/\//i.test(v) ||
+              /^data:[^;]+;base64,/i.test(v) ||
+              v.startsWith("/local-uploads/") ||
+              v.startsWith("/api/files/content") ||
+              /^(broker-docs|broker-admin|broker-docusign)\//.test(v),
+            {
+              message:
+                "fileUrl must be an http(s) URL, data URL, local upload path, file proxy URL, or stored file key",
+            }
+          ),
         mimeType: mimeSchema.default("application/pdf"),
       })
     )
