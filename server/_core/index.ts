@@ -100,7 +100,8 @@ async function startServer() {
       res.setHeader("Content-Type", mimeType);
       res.setHeader("Content-Length", String(bytes.length));
       res.setHeader("Cache-Control", "private, max-age=300");
-      res.setHeader("Content-Disposition", `inline; filename="${filename.replace(/"/g, "")}"`);
+      const safeFilename = filename.replace(/[\r\n\x00-\x1F\x7F"]/g, "").trim() || "file";
+      res.setHeader("Content-Disposition", `inline; filename="${safeFilename}"`);
       res.send(bytes);
     } catch (error) {
       console.error("[files.content] Could not serve uploaded file:", error);

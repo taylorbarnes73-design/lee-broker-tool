@@ -84,7 +84,7 @@ function tryParseStoredKey(input: string): string | null {
       return pathname;
     }
 
-    if (host.includes(".amazonaws.com")) {
+    if (host === "s3.amazonaws.com" || /^s3[.-][a-z0-9-]+\.amazonaws\.com$/.test(host)) {
       const [first, ...rest] = pathname.split("/");
       if (bucket && first === bucket && rest.length > 0) {
         return rest.join("/");
