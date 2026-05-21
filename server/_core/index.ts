@@ -4,6 +4,7 @@ if (!globalThis.crypto) {
   globalThis.crypto = webcrypto as any;
 }
 import express from "express";
+import type { RequestHandler } from "express";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -37,6 +38,30 @@ import { getDb } from "../db";
 import { uploads } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "../middleware/requireAuth";
+
+const FILE_CONTENT_RATE_LIMIT_WINDOW_MS = 60_000;
+const FILE_CONTENT_RATE_LIMIT_MAX = 120;
+const fileContentRateLimit = new Map<string, { windowStart: number; count: number }>();
+
+const requireFileContentRateLimit: RequestHandler = (req, res, next) => {
+  const now = Date.now();
+  const identity = req.user?.id ? `user:${req.user.id}` : `ip:${req.ip}`;
+  const current = fileContentRateLimit.get(identity);
+  if (!current || now - current.windowStart >= FILE_CONTENT_RATE_LIMIT_WINDOW_MS) {
+    fileContentRateLimit.set(identity, { windowStart: now, count: 1 });
+    next();
+    return;
+  }
+
+  if (current.count >= FILE_CONTENT_RATE_LIMIT_MAX) {
+    res.status(429).json({ success: false, error: "Too many file requests. Try again later." });
+    return;
+  }
+
+  current.count += 1;
+  fileContentRateLimit.set(identity, current);
+  next();
+};
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -74,7 +99,7 @@ async function startServer() {
     res.status(200).send("OK");
   });
 
-  app.get("/api/files/content", requireAuth, async (req, res) => {
+  app.get("/api/files/content", requireAuth, requireFileContentRateLimit, async (req, res) => {
     const key = String(req.query.key ?? "").trim();
     if (!key) {
       res.status(400).json({ success: false, error: "key query parameter is required" });

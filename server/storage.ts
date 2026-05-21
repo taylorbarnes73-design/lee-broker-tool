@@ -11,6 +11,7 @@ import { ENV } from "./_core/env";
 const LOCAL_UPLOADS_DIR = path.join(process.cwd(), "local-uploads");
 const LOCAL_URL_PREFIX = "/local-uploads/";
 const PUBLIC_FILE_PROXY_PREFIX = "/api/files/content?key=";
+const CONTROL_CHAR_PATTERN = /[\0-\x1F\x7F]/;
 
 export function sanitizeStorageKey(rawKey: string): string {
   const trimmed = String(rawKey ?? "").trim().replace(/\\/g, "/").replace(/^\/+/, "");
@@ -18,7 +19,7 @@ export function sanitizeStorageKey(rawKey: string): string {
   if (segments.length === 0) {
     throw new Error("Invalid storage key");
   }
-  if (segments.some((segment) => segment === "." || segment === ".." || /[\0-\x1F\x7F]/.test(segment))) {
+  if (segments.some((segment) => segment === "." || segment === ".." || CONTROL_CHAR_PATTERN.test(segment))) {
     throw new Error("Invalid storage key");
   }
   return segments.join("/");

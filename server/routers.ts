@@ -28,6 +28,8 @@ const MAX_BATCH_FILES = 20; // maximum files accepted in a single batch request
 const MAX_BATCH_CONCURRENCY = 5; // max concurrent S3 uploads within a batch
 const LISTING_BROCHURE_CATEGORY = "listing_brochure";
 const LISTING_BROCHURE_MIMES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
+// Categories are path segments in storage keys: lowercase alphanumeric start,
+// then lowercase alphanumeric, underscore, or hyphen (max 64 chars).
 const CATEGORY_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 
 function normalizeLeeLogin(raw: string) {
@@ -47,6 +49,10 @@ function sanitizeUploadCategory(raw: string): string {
   return category;
 }
 
+/**
+ * Estimate decoded byte size before base64 decoding so oversized payloads can
+ * be rejected early without allocating a large buffer in memory.
+ */
 function estimatedBase64ByteLength(base64Data: string): number {
   const raw = String(base64Data ?? "").trim();
   const payload = raw.startsWith("data:") ? raw.slice(raw.indexOf(",") + 1) : raw;
@@ -312,7 +318,6 @@ export const appRouter = router({
             message: "Database unavailable; cannot record file upload metadata.",
           });
         }
-        const ensuredUploadDb = uploadDb as NonNullable<typeof uploadDb>;
 
         type FileResult =
           | { filename: string; success: true; url: string; fileKey: string }
@@ -355,7 +360,7 @@ export const appRouter = router({
             const fileKey = `broker-docs/${category}/${nanoid(10)}-${safeName}`;
             const { url } = await storagePut(fileKey, buffer, mimeType);
 
-            await ensuredUploadDb.insert(uploads).values({
+            await uploadDb!.insert(uploads).values({
               fileKey,
               url,
               filename,
