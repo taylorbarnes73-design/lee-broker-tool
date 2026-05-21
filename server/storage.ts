@@ -12,6 +12,18 @@ const LOCAL_UPLOADS_DIR = path.join(process.cwd(), "local-uploads");
 const LOCAL_URL_PREFIX = "/local-uploads/";
 const PUBLIC_FILE_PROXY_PREFIX = "/api/files/content?key=";
 
+export function sanitizeStorageKey(rawKey: string): string {
+  const trimmed = String(rawKey ?? "").trim().replace(/\\/g, "/").replace(/^\/+/, "");
+  const segments = trimmed.split("/").filter(Boolean);
+  if (segments.length === 0) {
+    throw new Error("Invalid storage key");
+  }
+  if (segments.some((segment) => segment === "." || segment === ".." || /[\0-\x1F\x7F]/.test(segment))) {
+    throw new Error("Invalid storage key");
+  }
+  return segments.join("/");
+}
+
 /** True when no S3 bucket is configured and the local FS fallback is active. */
 export function isLocalStorage(): boolean {
   return !ENV.awsS3Bucket?.trim();
@@ -32,21 +44,20 @@ async function localPut(
   data: Buffer,
 ): Promise<{ key: string; url: string }> {
   warnLocalStorage();
-  // Normalise separators so the path is safe on all platforms
-  const safeKey = relKey.replace(/\\/g, "/").replace(/^\/+/, "");
+  const safeKey = sanitizeStorageKey(relKey);
   const filePath = path.join(LOCAL_UPLOADS_DIR, ...safeKey.split("/"));
   await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
   await fs.promises.writeFile(filePath, data);
-  return { key: relKey, url: LOCAL_URL_PREFIX + safeKey };
+  return { key: safeKey, url: LOCAL_URL_PREFIX + safeKey };
 }
 
 function localGet(relKey: string): { key: string; url: string } {
-  const safeKey = relKey.replace(/\\/g, "/").replace(/^\/+/, "");
-  return { key: relKey, url: LOCAL_URL_PREFIX + safeKey };
+  const safeKey = sanitizeStorageKey(relKey);
+  return { key: safeKey, url: LOCAL_URL_PREFIX + safeKey };
 }
 
 export function storagePublicUrl(relKey: string): string {
-  const safeKey = relKey.replace(/\\/g, "/").replace(/^\/+/, "");
+  const safeKey = sanitizeStorageKey(relKey);
   return isLocalStorage()
     ? LOCAL_URL_PREFIX + safeKey
     : `${PUBLIC_FILE_PROXY_PREFIX}${encodeURIComponent(safeKey)}`;
@@ -119,10 +130,10 @@ export function normalizeStoredFileUrl(urlOrKey: string | null | undefined, file
 }
 
 async function localGetBytes(relKey: string): Promise<{ key: string; bytes: Buffer }> {
-  const safeKey = relKey.replace(/\\/g, "/").replace(/^\/+/, "");
+  const safeKey = sanitizeStorageKey(relKey);
   const filePath = path.join(LOCAL_UPLOADS_DIR, ...safeKey.split("/"));
   const bytes = await fs.promises.readFile(filePath);
-  return { key: relKey, bytes };
+  return { key: safeKey, bytes };
 }
 
 /**
@@ -131,7 +142,7 @@ async function localGetBytes(relKey: string): Promise<{ key: string; bytes: Buff
  * Can also be called with a `/local-uploads/…` URL path directly.
  */
 export async function storageGetBytes(urlOrKey: string): Promise<{ key: string; bytes: Buffer }> {
-  const relKey = tryParseStoredKey(urlOrKey) ?? urlOrKey;
+  const relKey = sanitizeStorageKey(tryParseStoredKey(urlOrKey) ?? urlOrKey);
 
   if (isLocalStorage()) {
     return localGetBytes(relKey);
@@ -139,7 +150,7 @@ export async function storageGetBytes(urlOrKey: string): Promise<{ key: string; 
 
   const bucket = ENV.awsS3Bucket;
   if (!bucket) throw new Error("AWS_S3_BUCKET is not set");
-  const key = relKey.replace(/^\/+/, "");
+  const key = relKey;
   const resp = await getS3Client().send(new GetObjectCommand({ Bucket: bucket, Key: key }));
   const bytes = await streamToBuffer(resp.Body);
   return { key, bytes };
@@ -174,13 +185,13 @@ export async function storagePut(
   contentType = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
   const body = Buffer.isBuffer(data) ? data : typeof data === "string" ? Buffer.from(data) : Buffer.from(data);
+  const key = sanitizeStorageKey(relKey);
 
   if (isLocalStorage()) {
-    return localPut(relKey, body);
+    return localPut(key, body);
   }
 
   const bucket = ENV.awsS3Bucket!;
-  const key = relKey.replace(/^\/+/, "");
 
   await getS3Client().send(
     new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType })
@@ -190,14 +201,14 @@ export async function storagePut(
 }
 
 export async function storageGet(relKey: string): Promise<{ key: string; url: string }> {
+  const key = sanitizeStorageKey(relKey);
   if (isLocalStorage()) {
-    return localGet(relKey);
+    return localGet(key);
   }
 
   const bucket = ENV.awsS3Bucket;
   if (!bucket) throw new Error("AWS_S3_BUCKET is not set");
 
-  const key = relKey.replace(/^\/+/, "");
   const url = await getSignedUrl(
     getS3Client(),
     new GetObjectCommand({ Bucket: bucket, Key: key }),

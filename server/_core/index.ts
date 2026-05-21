@@ -36,6 +36,7 @@ import { storageGetBytes } from "../storage";
 import { getDb } from "../db";
 import { uploads } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { requireAuth } from "../middleware/requireAuth";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -73,7 +74,7 @@ async function startServer() {
     res.status(200).send("OK");
   });
 
-  app.get("/api/files/content", async (req, res) => {
+  app.get("/api/files/content", requireAuth, async (req, res) => {
     const key = String(req.query.key ?? "").trim();
     if (!key) {
       res.status(400).json({ success: false, error: "key query parameter is required" });

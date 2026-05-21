@@ -98,6 +98,18 @@ describe("files.upload", () => {
       })
     ).rejects.toThrow(/Database unavailable/i);
   });
+
+  it("rejects unsafe category values", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    await expect(
+      caller.files.upload({
+        filename: "bad.pdf",
+        mimeType: "application/pdf",
+        base64Data: Buffer.from("%PDF-1.4").toString("base64"),
+        category: "../contracts",
+      })
+    ).rejects.toThrow(/Invalid file category/i);
+  });
 });
 
 describe("files.uploadBatch", () => {
@@ -171,6 +183,28 @@ describe("files.uploadBatch", () => {
       category: "other",
     }));
     await expect(caller.files.uploadBatch({ files })).rejects.toThrow();
+  });
+
+  it("returns a per-file error for unsafe categories", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    const result = await caller.files.uploadBatch({
+      files: [
+        {
+          filename: "bad.pdf",
+          mimeType: "application/pdf",
+          base64Data: Buffer.from("%PDF-1.4").toString("base64"),
+          category: "../contracts",
+        },
+      ],
+    });
+
+    expect(result.successCount).toBe(0);
+    expect(result.totalCount).toBe(1);
+    const failed = result.results[0];
+    expect(failed.success).toBe(false);
+    if (!failed.success) {
+      expect(failed.error).toMatch(/Invalid file category/i);
+    }
   });
 });
 
