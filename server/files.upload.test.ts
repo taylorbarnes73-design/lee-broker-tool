@@ -110,6 +110,30 @@ describe("files.upload", () => {
       })
     ).rejects.toThrow(/Invalid file category/i);
   });
+
+  it("allows nested category paths used by portal uploads", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    const result = await caller.files.upload({
+      filename: "contract.pdf",
+      mimeType: "application/pdf",
+      base64Data: Buffer.from("%PDF-1.4").toString("base64"),
+      category: "submissions/contracts",
+    });
+    expect(result.success).toBe(true);
+    expect(result.fileKey).toContain("broker-docs/submissions/contracts/");
+  });
+
+  it("rejects traversal segments inside nested categories", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    await expect(
+      caller.files.upload({
+        filename: "bad.pdf",
+        mimeType: "application/pdf",
+        base64Data: Buffer.from("%PDF-1.4").toString("base64"),
+        category: "submissions/../contracts",
+      })
+    ).rejects.toThrow(/Invalid file category/i);
+  });
 });
 
 describe("files.uploadBatch", () => {
