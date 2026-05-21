@@ -32,6 +32,10 @@ import { dealiusAdminApiRouter } from "../dealiusAdminApi";
 import { brokerAdminIngestRouter } from "../brokerAdminIngestApi";
 import { dealiusApiAdminRouter } from "../dealiusApiAdmin";
 import { startBrokerAdminIngestScheduler } from "../jobs/ingestBrokerAdminEmails";
+import { storageGetBytes } from "../storage";
+import { getDb } from "../db";
+import { uploads } from "../../drizzle/schema";
+import { eq } from "drizzle-orm";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -67,6 +71,41 @@ async function startServer() {
   // Health check endpoint for AWS Application Load Balancer
   app.get(["/health", "/api/health"], (_req, res) => {
     res.status(200).send("OK");
+  });
+
+  app.get("/api/files/content", async (req, res) => {
+    const key = String(req.query.key ?? "").trim();
+    if (!key) {
+      res.status(400).json({ success: false, error: "key query parameter is required" });
+      return;
+    }
+
+    try {
+      const { bytes } = await storageGetBytes(key);
+      let filename = key.split("/").pop() || "file";
+      let mimeType = "application/octet-stream";
+
+      const db = await getDb();
+      if (db) {
+        const rows = await db
+          .select({ filename: uploads.filename, mimeType: uploads.mimeType })
+          .from(uploads)
+          .where(eq(uploads.fileKey, key))
+          .limit(1);
+        const row = rows[0];
+        if (row?.filename) filename = row.filename;
+        if (row?.mimeType) mimeType = row.mimeType;
+      }
+
+      res.setHeader("Content-Type", mimeType);
+      res.setHeader("Content-Length", String(bytes.length));
+      res.setHeader("Cache-Control", "private, max-age=300");
+      res.setHeader("Content-Disposition", `inline; filename="${filename.replace(/"/g, "")}"`);
+      res.send(bytes);
+    } catch (error) {
+      console.error("[files.content] Could not serve uploaded file:", error);
+      res.status(404).json({ success: false, error: "File not found" });
+    }
   });
 
   // TEMPORARY: Seed the database for AWS

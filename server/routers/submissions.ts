@@ -8,6 +8,7 @@ import path from "node:path";
 import { z } from "zod/v4";
 import { addSingleComp } from "../services/compData";
 import type { LeaseCompRecord, SaleCompRecord } from "../../shared/comp-data";
+import { normalizeStoredFileUrl } from "../storage";
 
 const submissionSummarySchema = z
   .object({
@@ -28,7 +29,7 @@ const submissionSummarySchema = z
   })
   .catchall(z.unknown());
 
-const adminStatusSchema = z.enum(["pending", "in_review", "approved", "rejected"]);
+const adminStatusSchema = z.enum(["pending", "in_review", "approved", "rejected", "closed"]);
 const ACTIVE_QUEUE_STATUSES = ["pending", "in_review"] as const;
 
 function activeQueueStatusCondition() {
@@ -326,7 +327,7 @@ export const submissionsRouter = router({
         submittedBy: row.submittedBy,
         submittedByEmail: row.submittedByEmail,
         pdfFileKey: row.pdfFileKey,
-        pdfUrl: row.pdfUrl,
+        pdfUrl: normalizeStoredFileUrl(row.pdfUrl, row.pdfFileKey),
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         payload: parsePayload(row.payload),
@@ -430,7 +431,7 @@ export const submissionsRouter = router({
         submittedBy: row.submittedBy,
         submittedByEmail: row.submittedByEmail,
         pdfFileKey: row.pdfFileKey,
-        pdfUrl: row.pdfUrl,
+        pdfUrl: normalizeStoredFileUrl(row.pdfUrl, row.pdfFileKey),
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         payload: parsePayload(row.payload),
@@ -462,7 +463,7 @@ export const submissionsRouter = router({
         submittedBy: row.submittedBy,
         submittedByEmail: row.submittedByEmail,
         pdfFileKey: row.pdfFileKey,
-        pdfUrl: row.pdfUrl,
+        pdfUrl: normalizeStoredFileUrl(row.pdfUrl, row.pdfFileKey),
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         payload: parsePayload(row.payload),

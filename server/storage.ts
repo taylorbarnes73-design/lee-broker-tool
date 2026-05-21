@@ -10,6 +10,7 @@ import { ENV } from "./_core/env";
 
 const LOCAL_UPLOADS_DIR = path.join(process.cwd(), "local-uploads");
 const LOCAL_URL_PREFIX = "/local-uploads/";
+const PUBLIC_FILE_PROXY_PREFIX = "/api/files/content?key=";
 
 /** True when no S3 bucket is configured and the local FS fallback is active. */
 export function isLocalStorage(): boolean {
@@ -42,6 +43,69 @@ async function localPut(
 function localGet(relKey: string): { key: string; url: string } {
   const safeKey = relKey.replace(/\\/g, "/").replace(/^\/+/, "");
   return { key: relKey, url: LOCAL_URL_PREFIX + safeKey };
+}
+
+export function storagePublicUrl(relKey: string): string {
+  const safeKey = relKey.replace(/\\/g, "/").replace(/^\/+/, "");
+  return isLocalStorage()
+    ? LOCAL_URL_PREFIX + safeKey
+    : `${PUBLIC_FILE_PROXY_PREFIX}${encodeURIComponent(safeKey)}`;
+}
+
+function tryParseStoredKey(input: string): string | null {
+  const value = input.trim();
+  if (!value) return null;
+
+  if (value.startsWith(LOCAL_URL_PREFIX)) {
+    return value.slice(LOCAL_URL_PREFIX.length);
+  }
+
+  if (value.startsWith(PUBLIC_FILE_PROXY_PREFIX)) {
+    return decodeURIComponent(value.slice(PUBLIC_FILE_PROXY_PREFIX.length));
+  }
+
+  if (/^(broker-docs|broker-admin|broker-docusign)\//.test(value)) {
+    return value;
+  }
+
+  try {
+    const parsed = new URL(value);
+    const bucket = ENV.awsS3Bucket?.trim().toLowerCase();
+    const host = parsed.hostname.toLowerCase();
+    const pathname = decodeURIComponent(parsed.pathname.replace(/^\/+/, ""));
+
+    if (!pathname) return null;
+
+    if (bucket && host === `${bucket}.s3.${(ENV.awsS3Region || ENV.awsRegion || "").toLowerCase()}.amazonaws.com`) {
+      return pathname;
+    }
+
+    if (bucket && host === `${bucket}.s3.amazonaws.com`) {
+      return pathname;
+    }
+
+    if (host.includes(".amazonaws.com")) {
+      const [first, ...rest] = pathname.split("/");
+      if (bucket && first === bucket && rest.length > 0) {
+        return rest.join("/");
+      }
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+export function normalizeStoredFileUrl(urlOrKey: string | null | undefined, fileKey?: string | null): string | null {
+  const explicitKey = String(fileKey ?? "").trim();
+  if (explicitKey) return storagePublicUrl(explicitKey);
+
+  const raw = String(urlOrKey ?? "").trim();
+  if (!raw) return null;
+
+  const parsedKey = tryParseStoredKey(raw);
+  return parsedKey ? storagePublicUrl(parsedKey) : raw;
 }
 
 async function localGetBytes(relKey: string): Promise<{ key: string; bytes: Buffer }> {
@@ -115,13 +179,7 @@ export async function storagePut(
     new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType })
   );
 
-  const url = await getSignedUrl(
-    getS3Client(),
-    new GetObjectCommand({ Bucket: bucket, Key: key }),
-    { expiresIn: 3600 }
-  );
-
-  return { key, url };
+  return { key, url: storagePublicUrl(key) };
 }
 
 export async function storageGet(relKey: string): Promise<{ key: string; url: string }> {

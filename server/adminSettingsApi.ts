@@ -18,6 +18,7 @@ import {
   verifyBuildoutCredentials,
   verifyDealiusCredentials,
 } from "./settings/settingsStore";
+import { normalizeStoredFileUrl } from "./storage";
 
 const categorySchema = z.enum(["branding", "workflow", "notifications", "integrations", "security"]);
 
@@ -46,7 +47,12 @@ adminSettingsRouter.get(
       sendAdminError(res, 503, "NO_DATABASE", "Database is not available.");
       return;
     }
-    res.json(await getGroupedSettings(true));
+    const grouped = await getGroupedSettings(true);
+    if (grouped?.branding) {
+      grouped.branding.logo_url = normalizeStoredFileUrl(grouped.branding.logo_url);
+      grouped.branding.letterhead_template_url = normalizeStoredFileUrl(grouped.branding.letterhead_template_url);
+    }
+    res.json(grouped);
   })
 );
 
@@ -155,7 +161,12 @@ adminSettingsRouter.get(
       sendAdminError(res, 503, "NO_DATABASE", "Database is not available.");
       return;
     }
-    res.json(await getGroupedCategory(parsed.data as SettingsCategory, true));
+    const grouped = await getGroupedCategory(parsed.data as SettingsCategory, true);
+    if (parsed.data === "branding") {
+      grouped.logo_url = normalizeStoredFileUrl(grouped.logo_url);
+      grouped.letterhead_template_url = normalizeStoredFileUrl(grouped.letterhead_template_url);
+    }
+    res.json(grouped);
   })
 );
 
@@ -172,6 +183,10 @@ adminSettingsRouter.patch(
       return;
     }
     const out = await patchSettings(db, req.body as Record<string, unknown>, req.user!.id, req);
+    if (out?.branding) {
+      out.branding.logo_url = normalizeStoredFileUrl(out.branding.logo_url);
+      out.branding.letterhead_template_url = normalizeStoredFileUrl(out.branding.letterhead_template_url);
+    }
     res.json(out);
   })
 );
