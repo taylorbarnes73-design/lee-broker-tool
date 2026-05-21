@@ -7394,3 +7394,82 @@ body.broker-active .sub-tab-bar {
   font-size: 11px;
   color: #6B7280;
 }
+
+/* ── Drafts page ── */
+.drafts-hint {
+  font-size: 13px;
+  color: #6B7280;
+  margin: 0 0 24px;
+  padding: 0 var(--panel-h-pad, 24px);
+}
+.drafts-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 64px 24px;
+  color: #9CA3AF;
+  text-align: center;
+}
+.drafts-empty svg { opacity: 0.35; }
+.drafts-empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #6B7280;
+  margin: 4px 0 0;
+}
+.drafts-empty-sub {
+  font-size: 13px;
+  color: #9CA3AF;
+  margin: 0;
+}
+.drafts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  padding: 0 var(--panel-h-pad, 24px) 40px;
+}
+.draft-card {
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  transition: box-shadow 0.15s;
+}
+.draft-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.09); }
+.draft-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.draft-card-pill {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.draft-card-time {
+  font-size: 11px;
+  color: #9CA3AF;
+  white-space: nowrap;
+}
+.draft-card-address {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1A1A1A;
+  line-height: 1.4;
+  min-height: 20px;
+}
+.draft-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}

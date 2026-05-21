@@ -36,6 +36,7 @@
       </div>
       <nav class="header-portal-actions" aria-label="Portal links">
         <button type="button" class="submission-queue-button" onclick="switchTab('queue')">Queue</button>
+        <button type="button" class="submission-queue-button" onclick="switchTab('drafts')">Drafts</button>
         <a class="header-portal-link" href="/portal">Portal</a>
         <button type="button" class="header-sign-out-btn" onclick="signOut()">Sign Out</button>
       </nav>
@@ -94,6 +95,10 @@
     <div class="tab broker-nav-item" data-tab="queue" onclick="switchTab('queue')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
       <span>My Queue</span>
+    </div>
+    <div class="tab broker-nav-item" data-tab="drafts" onclick="switchTab('drafts')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <span>My Drafts</span>
     </div>
   </nav>
 
@@ -2300,6 +2305,17 @@
   </div>
 </div><!-- /tab-queue -->
 
+<div id="tab-drafts" class="panel">
+  <div class="page-head broker-page-head">
+    <div class="page-head-left">
+      <div class="page-eyebrow">Workspace</div>
+      <h1 class="page-h1">My Drafts</h1>
+    </div>
+  </div>
+  <p class="drafts-hint">Drafts are saved locally in this browser. Resume any draft to pick up where you left off.</p>
+  <div id="drafts-list"></div>
+</div><!-- /tab-drafts -->
+
 </div><!-- /broker-view -->
 
 <div class="help-overlay" id="help-overlay"></div>
@@ -3059,6 +3075,9 @@ function switchTab(name) {
   }
   if (name === 'comp-reports') {
     void initCompReports();
+  }
+  if (name === 'drafts') {
+    renderDraftsPanel();
   }
   const flow = bootstrapStepFlowFor(name);
   if (flow && typeof flow.go === 'function') flow.go(0);
@@ -15685,6 +15704,120 @@ function setFieldLoading(fieldEl, loading) {
   if (!fieldEl) return;
   if (loading) fieldEl.classList.add('field-loading');
   else fieldEl.classList.remove('field-loading');
+}
+
+// ── Drafts page ──
+
+const LBT_DRAFT_CONFIGS = [
+  { key: 'lbt_autosave_listing_v1',     label: 'Listing Entry',        tab: 'listing', sub: null,  addrId: 'l-address',  color: '#003146' },
+  { key: 'lbt_autosave_voucher_v1',     label: 'Commission Voucher',   tab: 'voucher', sub: null,  addrId: 'v-address',  color: '#009AD9' },
+  { key: 'lbt_autosave_comp_v1',        label: 'Comp Input',           tab: 'comp',    sub: null,  addrId: 'c-address',  color: '#8A941E' },
+  { key: 'lbt_autosave_listing_mod_v1', label: 'Listing Modification', tab: 'listing', sub: 'mod', addrId: 'lm-address', color: '#6B7280' },
+  { key: 'lbt_autosave_sign_v1',        label: 'Sign Request',         tab: 'sign',    sub: null,  addrId: 's-address',  color: '#98002E' },
+];
+
+function lbtFormatDraftTime(ts) {
+  if (!ts) return '';
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(mins / 60);
+  const days = Math.floor(hours / 24);
+  if (mins < 2) return 'Just now';
+  if (mins < 60) return mins + ' min ago';
+  if (hours < 24) return hours + (hours === 1 ? ' hr ago' : ' hrs ago');
+  if (days === 1) return 'Yesterday';
+  return new Date(ts).toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+
+function lbtRestoreDraftFields(values) {
+  if (!values || typeof values !== 'object') return;
+  Object.keys(values).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var t = el.type;
+    if (t === 'file' || t === 'button' || t === 'submit' || t === 'hidden') return;
+    if (t === 'checkbox') {
+      el.checked = values[id] === '1';
+    } else if (t === 'radio') {
+      if (values[id]) el.checked = (el.value === values[id]);
+    } else {
+      el.value = values[id] || '';
+    }
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+}
+
+function renderDraftsPanel() {
+  var container = document.getElementById('drafts-list');
+  if (!container) return;
+
+  var drafts = [];
+  LBT_DRAFT_CONFIGS.forEach(function(cfg) {
+    try {
+      var raw = localStorage.getItem(cfg.key);
+      if (!raw) return;
+      var parsed = JSON.parse(raw);
+      if (!parsed || !parsed.savedAt) return;
+      var addr = (parsed.values && parsed.values[cfg.addrId]) || '';
+      drafts.push({ key: cfg.key, label: cfg.label, tab: cfg.tab, sub: cfg.sub,
+                    color: cfg.color, savedAt: parsed.savedAt, address: addr });
+    } catch (e) {}
+  });
+
+  if (!drafts.length) {
+    container.innerHTML = '<div class="drafts-empty">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
+      '<p class="drafts-empty-title">No saved drafts</p>' +
+      '<p class="drafts-empty-sub">Click <strong>Save Draft</strong> on any form to save your progress.</p>' +
+      '</div>';
+    return;
+  }
+
+  var html = '<div class="drafts-grid">';
+  drafts.forEach(function(d) {
+    var addrText = d.address || 'No address entered';
+    var when = lbtFormatDraftTime(d.savedAt);
+    html += '<div class="draft-card">' +
+      '<div class="draft-card-header">' +
+        '<span class="draft-card-pill" style="background:' + d.color + '18;color:' + d.color + '">' + escHtml(d.label) + '</span>' +
+        '<span class="draft-card-time">' + escHtml(when) + '</span>' +
+      '</div>' +
+      '<div class="draft-card-address">' + escHtml(addrText) + '</div>' +
+      '<div class="draft-card-actions">' +
+        '<button class="btn btn-red btn-sm" data-draft-key="' + escHtml(d.key) + '" onclick="resumeDraft(this.dataset.draftKey)">Resume</button>' +
+        '<button class="btn btn-outline btn-sm" data-draft-key="' + escHtml(d.key) + '" onclick="deleteDraft(this.dataset.draftKey)">Delete</button>' +
+      '</div>' +
+    '</div>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function resumeDraft(key) {
+  var cfg = null;
+  for (var i = 0; i < LBT_DRAFT_CONFIGS.length; i++) {
+    if (LBT_DRAFT_CONFIGS[i].key === key) { cfg = LBT_DRAFT_CONFIGS[i]; break; }
+  }
+  if (!cfg) return;
+  try {
+    var raw = localStorage.getItem(key);
+    if (!raw) { showToast('Draft not found.', 'error'); return; }
+    var parsed = JSON.parse(raw);
+    if (!parsed || !parsed.values) { showToast('Draft is empty.', 'error'); return; }
+    switchTab(cfg.tab);
+    if (cfg.sub === 'mod' && typeof switchListingMode === 'function') switchListingMode('mod');
+    lbtRestoreDraftFields(parsed.values);
+    showToast('Draft loaded.');
+  } catch (e) {
+    showToast('Could not load draft.', 'error');
+  }
+}
+
+function deleteDraft(key) {
+  if (!confirm('Delete this draft? This cannot be undone.')) return;
+  try { localStorage.removeItem(key); } catch (e) {}
+  renderDraftsPanel();
+  showToast('Draft deleted.');
 }
 
 // ── Address autocomplete ──
