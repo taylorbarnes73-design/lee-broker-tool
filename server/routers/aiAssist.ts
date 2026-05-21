@@ -934,13 +934,27 @@ async function extractDocumentFields(
   };
 }
 
+const voucherDocumentStatusSchema = {
+  type: "object",
+  properties: {
+    found: { type: "boolean" },
+    executed: { type: "boolean" },
+    missingSignatures: {
+      type: "array",
+      items: { type: "string" },
+    },
+  },
+  required: ["found", "executed", "missingSignatures"],
+  additionalProperties: false,
+} as const;
+
 const voucherDocumentDetectionSchema = {
   name: "voucher_document_detection",
   schema: {
     type: "object",
     properties: {
-      agencyDisclosure: { type: "boolean" },
-      listingAgreement: { type: "boolean" },
+      agencyDisclosure: voucherDocumentStatusSchema,
+      listingAgreement: voucherDocumentStatusSchema,
     },
     required: ["agencyDisclosure", "listingAgreement"],
     additionalProperties: false,
@@ -1005,14 +1019,40 @@ function emptyListingDocumentDetection(): ListingDocumentDetectionResult {
 function normalizeDetectionFlag(value: unknown): boolean {
   if (typeof value === "boolean") return value;
   const text = String(value ?? "").trim().toLowerCase();
-  return text === "true" || text === "yes" || text === "1" || text === "found" || text === "present";
+  return text === "true" || text === "yes" || text === "1" || text === "found" || text === "present" || text === "executed";
+}
+
+function normalizeVoucherDocumentStatus(value: unknown) {
+  if (typeof value === "boolean") {
+    return {
+      found: value,
+      executed: false,
+      missingSignatures: [] as string[],
+    };
+  }
+
+  const record = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  const found = normalizeDetectionFlag(record.found);
+  const executed = normalizeDetectionFlag(record.executed);
+  const missingSignatures = Array.isArray(record.missingSignatures)
+    ? record.missingSignatures
+        .filter((entry) => typeof entry === "string")
+        .map((entry) => String(entry).trim())
+        .filter(Boolean)
+    : [];
+
+  return {
+    found,
+    executed: found && executed,
+    missingSignatures: executed ? [] : missingSignatures,
+  };
 }
 
 function parseVoucherDocumentDetection(value: unknown) {
   const record = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
   return {
-    agencyDisclosure: normalizeDetectionFlag(record.agencyDisclosure),
-    listingAgreement: normalizeDetectionFlag(record.listingAgreement),
+    agencyDisclosure: normalizeVoucherDocumentStatus(record.agencyDisclosure),
+    listingAgreement: normalizeVoucherDocumentStatus(record.listingAgreement),
   };
 }
 
@@ -1044,11 +1084,21 @@ async function detectVoucherRequiredDocuments(
   fileBuffer: Buffer,
   mimeType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp"
 ) {
-  const promptText = `Determine whether this file contains either of these documents:
+  const promptText = `Determine whether this file includes either of these documents and whether each one appears fully executed:
 - Agency Disclosure
 - Listing Agreement
 
-Return JSON booleans only. Mark true only when the document appears present in this file.`;
+Return JSON using this shape exactly:
+{
+  "agencyDisclosure": { "found": boolean, "executed": boolean, "missingSignatures": string[] },
+  "listingAgreement": { "found": boolean, "executed": boolean, "missingSignatures": string[] }
+}
+
+Rules:
+- found=true only when the document is present in the file.
+- executed=true only when all required signatures and signature dates appear present.
+- If executed=false and found=true, list missing or unclear signatures in missingSignatures.
+- If found=false, executed must be false and missingSignatures must be an empty array.`;
 
   if (isGeminiDirectAvailable()) {
     try {
@@ -1056,7 +1106,7 @@ Return JSON booleans only. Mark true only when the document appears present in t
         fileBuffer,
         mimeType,
         systemPrompt:
-          "You classify real estate compliance documents. Return only the requested boolean JSON result.",
+          "You classify real estate compliance documents. Return only the requested JSON result.",
         userPrompt: promptText,
         outputSchema: voucherDocumentDetectionSchema,
       });
@@ -1075,7 +1125,7 @@ Return JSON booleans only. Mark true only when the document appears present in t
       {
         role: "system",
         content:
-          "You classify real estate compliance documents. Return only the requested boolean JSON result.",
+          "You classify real estate compliance documents. Return only the requested JSON result.",
       },
       { role: "user", content: userContent as any[] },
     ],
@@ -1157,7 +1207,10 @@ async function extractVoucherDocumentWithDetection(
   if (!extracted.success) {
     return {
       ...extracted,
-      documentDetection: { agencyDisclosure: false, listingAgreement: false },
+      documentDetection: {
+        agencyDisclosure: { found: false, executed: false, missingSignatures: [] },
+        listingAgreement: { found: false, executed: false, missingSignatures: [] },
+      },
     };
   }
 
@@ -1165,7 +1218,10 @@ async function extractVoucherDocumentWithDetection(
   if (!fetched.fileBuffer) {
     return {
       ...extracted,
-      documentDetection: { agencyDisclosure: false, listingAgreement: false },
+      documentDetection: {
+        agencyDisclosure: { found: false, executed: false, missingSignatures: [] },
+        listingAgreement: { found: false, executed: false, missingSignatures: [] },
+      },
     };
   }
 
@@ -1178,7 +1234,10 @@ async function extractVoucherDocumentWithDetection(
   } catch {
     return {
       ...extracted,
-      documentDetection: { agencyDisclosure: false, listingAgreement: false },
+      documentDetection: {
+        agencyDisclosure: { found: false, executed: false, missingSignatures: [] },
+        listingAgreement: { found: false, executed: false, missingSignatures: [] },
+      },
     };
   }
 }
