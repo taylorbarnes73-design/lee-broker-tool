@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { ENV } from "./_core/env";
-import { normalizeStoredFileUrl, storagePublicUrl } from "./storage";
+import { normalizeStoredFileUrl, sanitizeStorageKey, storagePublicUrl } from "./storage";
 
 const originalBucket = ENV.awsS3Bucket;
 const originalRegion = ENV.awsS3Region;
@@ -66,5 +66,16 @@ describe("normalizeStoredFileUrl", () => {
     expect(
       normalizeStoredFileUrl("/api/files/content?key=broker-docs%2Fcontracts%2Flease.pdf")
     ).toBe("/api/files/content?key=broker-docs%2Fcontracts%2Flease.pdf");
+  });
+});
+
+describe("sanitizeStorageKey", () => {
+  it("normalizes slashes while preserving nested keys", () => {
+    expect(sanitizeStorageKey("\\broker-docs\\contracts\\lease.pdf")).toBe("broker-docs/contracts/lease.pdf");
+  });
+
+  it("rejects traversal keys", () => {
+    expect(() => sanitizeStorageKey("../secrets.txt")).toThrow(/Invalid storage key/i);
+    expect(() => sanitizeStorageKey("broker-docs/contracts/../../secrets.txt")).toThrow(/Invalid storage key/i);
   });
 });

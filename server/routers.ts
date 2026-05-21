@@ -28,11 +28,38 @@ const MAX_BATCH_FILES = 20; // maximum files accepted in a single batch request
 const MAX_BATCH_CONCURRENCY = 5; // max concurrent S3 uploads within a batch
 const LISTING_BROCHURE_CATEGORY = "listing_brochure";
 const LISTING_BROCHURE_MIMES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
+// Categories are path segments in storage keys: lowercase alphanumeric start,
+// then lowercase alphanumeric, underscore, or hyphen (max 64 chars).
+const CATEGORY_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 
 function normalizeLeeLogin(raw: string) {
   const value = raw.trim().toLowerCase();
   if (!value || value.includes("@")) return localAuth.normalizeEmail(value);
   return localAuth.normalizeEmail(`${value}@lee-associates.com`);
+}
+
+function sanitizeUploadCategory(raw: string): string {
+  const category = String(raw ?? "").trim().toLowerCase();
+  if (!CATEGORY_PATTERN.test(category)) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Invalid file category.",
+    });
+  }
+  return category;
+}
+
+/**
+ * Estimate decoded byte size before base64 decoding so oversized payloads can
+ * be rejected early without allocating a large buffer in memory.
+ */
+function estimatedBase64ByteLength(base64Data: string): number {
+  const raw = String(base64Data ?? "").trim();
+  const payload = raw.startsWith("data:") ? raw.slice(raw.indexOf(",") + 1) : raw;
+  const normalized = payload.replace(/\s+/g, "");
+  if (!normalized) return 0;
+  const padding = normalized.endsWith("==") ? 2 : normalized.endsWith("=") ? 1 : 0;
+  return Math.floor((normalized.length * 3) / 4) - padding;
 }
 
 export const appRouter = router({
@@ -200,7 +227,23 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const { filename, mimeType, base64Data, category, reference, uploaderName } = input;
+        const { filename, mimeType, base64Data, reference, uploaderName } = input;
+        const category = sanitizeUploadCategory(input.category);
+        const db = await getDb();
+        if (!db) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Database unavailable; cannot record file upload metadata.",
+          });
+        }
+
+        const estimatedSize = estimatedBase64ByteLength(base64Data);
+        if (estimatedSize > MAX_UPLOAD_BYTES) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `File exceeds maximum size of ${MAX_UPLOAD_BYTES / (1024 * 1024)} MB.`,
+          });
+        }
 
         // Decode base64 to buffer
         const buffer = Buffer.from(base64Data, "base64");
@@ -228,20 +271,17 @@ export const appRouter = router({
         const { url } = await storagePut(fileKey, buffer, mimeType);
 
         // Save metadata to database
-        const db = await getDb();
-        if (db) {
-          await db.insert(uploads).values({
-            fileKey,
-            url,
-            filename,
-            mimeType,
-            fileSize,
-            category,
-            reference: reference ?? null,
-            uploaderName: uploaderName ?? ctx.user?.name ?? null,
-            uploaderOpenId: ctx.user?.openId ?? null,
-          });
-        }
+        await db.insert(uploads).values({
+          fileKey,
+          url,
+          filename,
+          mimeType,
+          fileSize,
+          category,
+          reference: reference ?? null,
+          uploaderName: uploaderName ?? ctx.user?.name ?? null,
+          uploaderOpenId: ctx.user?.openId ?? null,
+        });
 
         return { success: true, url, fileKey, filename };
       }),
@@ -271,6 +311,15 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
+        const uploadDb = await getDb();
+        if (!uploadDb) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Database unavailable; cannot record file upload metadata.",
+          });
+        }
+        const ensuredUploadDb = uploadDb;
+
         type FileResult =
           | { filename: string; success: true; url: string; fileKey: string }
           | { filename: string; success: false; error: string };
@@ -279,7 +328,17 @@ export const appRouter = router({
           file: (typeof input.files)[number]
         ): Promise<FileResult> {
           try {
-            const { filename, mimeType, base64Data, category, reference } = file;
+            const { filename, mimeType, base64Data, reference } = file;
+            const category = sanitizeUploadCategory(file.category);
+            const estimatedSize = estimatedBase64ByteLength(base64Data);
+            if (estimatedSize > MAX_UPLOAD_BYTES) {
+              return {
+                filename,
+                success: false,
+                error: `File exceeds maximum size of ${MAX_UPLOAD_BYTES / (1024 * 1024)} MB.`,
+              };
+            }
+
             const buffer = Buffer.from(base64Data, "base64");
             const fileSize = buffer.length;
 
@@ -302,21 +361,18 @@ export const appRouter = router({
             const fileKey = `broker-docs/${category}/${nanoid(10)}-${safeName}`;
             const { url } = await storagePut(fileKey, buffer, mimeType);
 
-            const db = await getDb();
-            if (db) {
-              await db.insert(uploads).values({
-                fileKey,
-                url,
-                filename,
-                mimeType,
-                fileSize,
-                category,
-                reference: reference ?? null,
-                uploaderName:
-                  input.uploaderName ?? ctx.user?.name ?? null,
-                uploaderOpenId: ctx.user?.openId ?? null,
-              });
-            }
+            await ensuredUploadDb.insert(uploads).values({
+              fileKey,
+              url,
+              filename,
+              mimeType,
+              fileSize,
+              category,
+              reference: reference ?? null,
+              uploaderName:
+                input.uploaderName ?? ctx.user?.name ?? null,
+              uploaderOpenId: ctx.user?.openId ?? null,
+            });
 
             return { filename, success: true, url, fileKey };
           } catch (err: unknown) {

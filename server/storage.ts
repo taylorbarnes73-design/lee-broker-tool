@@ -11,6 +11,19 @@ import { ENV } from "./_core/env";
 const LOCAL_UPLOADS_DIR = path.join(process.cwd(), "local-uploads");
 const LOCAL_URL_PREFIX = "/local-uploads/";
 const PUBLIC_FILE_PROXY_PREFIX = "/api/files/content?key=";
+const CONTROL_CHAR_PATTERN = /[\0-\x1F\x7F]/;
+
+export function sanitizeStorageKey(rawKey: string): string {
+  const trimmed = String(rawKey).trim().replace(/\\/g, "/").replace(/^\/+/, "");
+  const segments = trimmed.split("/").filter(Boolean);
+  if (segments.length === 0) {
+    throw new Error("Invalid storage key");
+  }
+  if (segments.some((segment) => segment === "." || segment === ".." || CONTROL_CHAR_PATTERN.test(segment))) {
+    throw new Error("Invalid storage key");
+  }
+  return segments.join("/");
+}
 
 /** True when no S3 bucket is configured and the local FS fallback is active. */
 export function isLocalStorage(): boolean {
@@ -32,21 +45,20 @@ async function localPut(
   data: Buffer,
 ): Promise<{ key: string; url: string }> {
   warnLocalStorage();
-  // Normalise separators so the path is safe on all platforms
-  const safeKey = relKey.replace(/\\/g, "/").replace(/^\/+/, "");
+  const safeKey = sanitizeStorageKey(relKey);
   const filePath = path.join(LOCAL_UPLOADS_DIR, ...safeKey.split("/"));
   await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
   await fs.promises.writeFile(filePath, data);
-  return { key: relKey, url: LOCAL_URL_PREFIX + safeKey };
+  return { key: safeKey, url: LOCAL_URL_PREFIX + safeKey };
 }
 
 function localGet(relKey: string): { key: string; url: string } {
-  const safeKey = relKey.replace(/\\/g, "/").replace(/^\/+/, "");
-  return { key: relKey, url: LOCAL_URL_PREFIX + safeKey };
+  const safeKey = sanitizeStorageKey(relKey);
+  return { key: safeKey, url: LOCAL_URL_PREFIX + safeKey };
 }
 
 export function storagePublicUrl(relKey: string): string {
-  const safeKey = relKey.replace(/\\/g, "/").replace(/^\/+/, "");
+  const safeKey = sanitizeStorageKey(relKey);
   return isLocalStorage()
     ? LOCAL_URL_PREFIX + safeKey
     : `${PUBLIC_FILE_PROXY_PREFIX}${encodeURIComponent(safeKey)}`;
@@ -55,6 +67,12 @@ export function storagePublicUrl(relKey: string): string {
 function tryParseStoredKey(input: string): string | null {
   const value = input.trim();
   if (!value) return null;
+
+  if (value.startsWith("/api/files/content")) {
+    const [, query = ""] = value.split("?", 2);
+    const key = new URLSearchParams(query).get("key");
+    return key ? key.trim() : null;
+  }
 
   if (value.startsWith(LOCAL_URL_PREFIX)) {
     return value.slice(LOCAL_URL_PREFIX.length);
@@ -73,6 +91,10 @@ function tryParseStoredKey(input: string): string | null {
     const bucket = ENV.awsS3Bucket?.trim().toLowerCase();
     const host = parsed.hostname.toLowerCase();
     const pathname = decodeURIComponent(parsed.pathname.replace(/^\/+/, ""));
+    if (parsed.pathname === "/api/files/content") {
+      const key = parsed.searchParams.get("key");
+      return key ? key.trim() : null;
+    }
 
     if (!pathname) return null;
 
@@ -109,10 +131,10 @@ export function normalizeStoredFileUrl(urlOrKey: string | null | undefined, file
 }
 
 async function localGetBytes(relKey: string): Promise<{ key: string; bytes: Buffer }> {
-  const safeKey = relKey.replace(/\\/g, "/").replace(/^\/+/, "");
+  const safeKey = sanitizeStorageKey(relKey);
   const filePath = path.join(LOCAL_UPLOADS_DIR, ...safeKey.split("/"));
   const bytes = await fs.promises.readFile(filePath);
-  return { key: relKey, bytes };
+  return { key: safeKey, bytes };
 }
 
 /**
@@ -121,10 +143,7 @@ async function localGetBytes(relKey: string): Promise<{ key: string; bytes: Buff
  * Can also be called with a `/local-uploads/…` URL path directly.
  */
 export async function storageGetBytes(urlOrKey: string): Promise<{ key: string; bytes: Buffer }> {
-  // Strip the "/local-uploads/" prefix if it was passed as a URL
-  const relKey = urlOrKey.startsWith(LOCAL_URL_PREFIX)
-    ? urlOrKey.slice(LOCAL_URL_PREFIX.length)
-    : urlOrKey;
+  const relKey = sanitizeStorageKey(tryParseStoredKey(urlOrKey) ?? urlOrKey);
 
   if (isLocalStorage()) {
     return localGetBytes(relKey);
@@ -132,7 +151,7 @@ export async function storageGetBytes(urlOrKey: string): Promise<{ key: string; 
 
   const bucket = ENV.awsS3Bucket;
   if (!bucket) throw new Error("AWS_S3_BUCKET is not set");
-  const key = relKey.replace(/^\/+/, "");
+  const key = relKey;
   const resp = await getS3Client().send(new GetObjectCommand({ Bucket: bucket, Key: key }));
   const bytes = await streamToBuffer(resp.Body);
   return { key, bytes };
@@ -167,13 +186,13 @@ export async function storagePut(
   contentType = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
   const body = Buffer.isBuffer(data) ? data : typeof data === "string" ? Buffer.from(data) : Buffer.from(data);
+  const key = sanitizeStorageKey(relKey);
 
   if (isLocalStorage()) {
-    return localPut(relKey, body);
+    return localPut(key, body);
   }
 
   const bucket = ENV.awsS3Bucket!;
-  const key = relKey.replace(/^\/+/, "");
 
   await getS3Client().send(
     new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType })
@@ -183,14 +202,14 @@ export async function storagePut(
 }
 
 export async function storageGet(relKey: string): Promise<{ key: string; url: string }> {
+  const key = sanitizeStorageKey(relKey);
   if (isLocalStorage()) {
-    return localGet(relKey);
+    return localGet(key);
   }
 
   const bucket = ENV.awsS3Bucket;
   if (!bucket) throw new Error("AWS_S3_BUCKET is not set");
 
-  const key = relKey.replace(/^\/+/, "");
   const url = await getSignedUrl(
     getS3Client(),
     new GetObjectCommand({ Bucket: bucket, Key: key }),
