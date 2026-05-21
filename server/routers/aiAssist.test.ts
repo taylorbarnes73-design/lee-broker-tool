@@ -457,6 +457,36 @@ describe("aiAssist.extractDocument", () => {
     );
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("accepts absolute proxy URLs and reads bytes from storage", async () => {
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              transactionType: "Lease",
+              clientName: "Absolute Proxy URL Client",
+            }),
+          },
+        },
+      ],
+    } as any);
+
+    const fetchMock = vi.mocked(globalThis.fetch);
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.extractDocument({
+      fileUrl: "https://broker.example.com/api/files/content?key=broker-docs%2Flisting_brochure%2Fsample.pdf",
+      mimeType: "application/pdf",
+      tab: "voucher",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.fields.clientName).toBe("Absolute Proxy URL Client");
+    expect(storageGetBytesMock).toHaveBeenCalledWith(
+      "https://broker.example.com/api/files/content?key=broker-docs%2Flisting_brochure%2Fsample.pdf"
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });
 
 describe("aiAssist.smartComplete", () => {

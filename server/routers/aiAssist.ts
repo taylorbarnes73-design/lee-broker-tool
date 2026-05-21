@@ -786,7 +786,16 @@ async function fetchDocumentBuffer(fileUrl: string) {
   const target = fileUrl.trim();
   const isHttp = /^https?:\/\//i.test(target);
   const isDataUrl = /^data:[^;]+;base64,/i.test(target);
-  const isStoredPath = target.startsWith("/local-uploads/") || target.startsWith("/api/files/content");
+  const isStorageProxyUrl = (() => {
+    if (target.startsWith("/api/files/content")) return true;
+    try {
+      const parsed = new URL(target);
+      return parsed.pathname === "/api/files/content" && parsed.searchParams.has("key");
+    } catch {
+      return false;
+    }
+  })();
+  const isStoredPath = target.startsWith("/local-uploads/") || isStorageProxyUrl;
   const isStoredKey = /^(broker-docs|broker-admin|broker-docusign)\//.test(target);
 
   try {
