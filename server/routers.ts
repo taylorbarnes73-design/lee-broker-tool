@@ -45,10 +45,12 @@ function sanitizeUploadCategory(raw: string): string {
     .toLowerCase()
     .replace(/\\/g, "/")
     .replace(/^\/+|\/+$/g, "");
-  const segments = category.split("/").filter(Boolean);
+  const segments = category.split("/");
   if (
     segments.length === 0 ||
-    segments.some(segment => segment === "." || segment === ".." || !CATEGORY_SEGMENT_PATTERN.test(segment))
+    segments.some(
+      segment => segment.length === 0 || segment === "." || segment === ".." || !CATEGORY_SEGMENT_PATTERN.test(segment)
+    )
   ) {
     throw new TRPCError({
       code: "BAD_REQUEST",

@@ -134,6 +134,18 @@ describe("files.upload", () => {
       })
     ).rejects.toThrow(/Invalid file category/i);
   });
+
+  it("rejects malformed nested categories with empty path segments", async () => {
+    const caller = appRouter.createCaller(createCtx());
+    await expect(
+      caller.files.upload({
+        filename: "bad.pdf",
+        mimeType: "application/pdf",
+        base64Data: Buffer.from("%PDF-1.4").toString("base64"),
+        category: "submissions//contracts",
+      })
+    ).rejects.toThrow(/Invalid file category/i);
+  });
 });
 
 describe("files.uploadBatch", () => {
