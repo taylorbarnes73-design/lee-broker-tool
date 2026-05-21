@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { Script } from "node:vm";
 import { describe, expect, it } from "vitest";
 
 const brokerToolHtml = readFileSync(
@@ -47,5 +48,17 @@ describe("broker_tool.html wiring", () => {
     );
 
     expect(missingPages).toEqual([]);
+  });
+
+  it("keeps every inline script block syntactically valid", () => {
+    const scripts = [...brokerToolHtml.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map(
+      match => match[1]
+    );
+
+    expect(() => {
+      scripts.forEach((script, index) => {
+        new Script(script, { filename: `broker_tool.inline.${index}.js` });
+      });
+    }).not.toThrow();
   });
 });
