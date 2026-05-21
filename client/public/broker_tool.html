@@ -148,9 +148,8 @@
 
     <div class="card required-section" data-lstep="1" data-step-label="Property Type" data-card-eyebrow="Step 1 of 4">
       <h2>Add Listing <span class="required-badge">Required</span></h2>
-      <div class="row c4">
-        <div class="field"><label class="req">Date Entered</label><input id="l-date-entered" type="date"></div>
-        <div class="field"><label class="req">Property Type</label>
+      <div class="field listing-type-field">
+        <label class="req">Property Type</label>
           <div class="listing-type-grid" id="listing-type-picker">
             <button type="button" class="listing-type-opt" data-type="office" onclick="setListingType('office')">
               <span class="lto-eyebrow">Office</span>
@@ -175,6 +174,8 @@
             <option value="land">Land</option>
           </select>
         </div>
+      <div class="row c3 listing-core-row">
+        <div class="field"><label class="req">Date Entered</label><input id="l-date-entered" type="date"></div>
         <div class="field"><label class="req">Transaction Type</label>
           <select id="l-txn-type" onchange="onTxnTypeChange()">
             <option value="lease">Lease</option>
@@ -526,7 +527,7 @@
   </div><!-- end listing-add-mode -->
 
   <div id="listing-mod-mode" class="is-hidden">
-    <div class="tip">Enter the property address and describe the changes needed. Select which listing service(s) to notify.</div>
+    <div class="tip listing-mod-tip">Enter the property address and describe the changes needed. Select which listing service(s) to notify.</div>
     <div class="card required-section">
       <h2>Listing Modification <span class="required-badge">Required</span></h2>
       <div class="row c2">
@@ -851,7 +852,7 @@
       </div>
       <div class="align-end-copy">House name, agent name &amp; city are usually sufficient</div>
     </div>
-    <div class="row c2">
+    <div class="row c2 voucher-agent-grid">
       <div>
         <div class="sub-divider-label">Listing Agent</div>
         <div class="field"><label class="req">Agent Name</label>
@@ -875,7 +876,7 @@
         <div class="field"><label>City</label><input id="v-pa-city"></div>
       </div>
     </div>
-    <div class="top-gap-md">
+    <div class="top-gap-md voucher-subsection">
       <div class="sub-divider-label">Additional Internal Agents (Collaborators)</div>
       <table class="broker-table table-top-gap-sm" id="v-collab-table">
         <thead><tr><th>Agent Name</th><th class="table-col-role">Role / Team</th><th class="table-col-narrow"></th></tr></thead>
@@ -883,7 +884,7 @@
       </table>
       <button class="btn btn-gray top-gap-sm" onclick="addVoucherCollab()">+ Add Agent</button>
     </div>
-    <div class="section-divider">
+    <div class="section-divider voucher-subsection">
       <div class="toggle-row">
         <label class="section-label">Outside Agents?</label>
         <label class="toggle-switch">
@@ -913,7 +914,7 @@
       <p class="reference-copy">&#8593; Property address and Deal SF are entered in Step 1 above.</p>
     </div>
     <div class="section-heading-top">
-      <div class="row c2">
+      <div class="row c2 voucher-party-grid">
         <div>
           <div class="sub-divider-label" id="v-lbl-lessor">Lessor / Seller</div>
           <div class="field"><label class="req">Contact Name</label><input id="v-ls-contact"><div class="field-hint">Full name</div></div>
@@ -1021,7 +1022,7 @@
         <div class="field"><label>SALE Commission (auto)</label><input id="v-comm-sale" class="readonly-fill" placeholder="$0" readonly></div>
       </div>
     </div>
-    <div class="section-divider">
+    <div class="section-divider voucher-subsection">
       <h3>Invoice To</h3>
       <div class="row c3">
         <div class="field">
@@ -1088,7 +1089,7 @@
     <h3>Compliance Documents</h3>
     <div id="voucher-attachment-required-msg" class="tip text-error is-hidden" role="alert"></div>
 
-    <div class="row c2">
+    <div class="row c2 voucher-upload-grid">
       <div class="field">
         <label>Agency Disclosure</label>
         <div class="upload-zone" id="uz-v-disclosure" data-category="agency_disclosure" data-field="v-doc-disclosure">
@@ -1113,7 +1114,7 @@
       </div>
     </div>
     <h3 class="section-divider section-heading-top-lg">Commission Distribution</h3>
-    <div class="row c3 field-stack-gap-sm">
+    <div class="row c3 field-stack-gap-sm voucher-summary-row">
       <div class="field"><label>Total Invoice</label><input id="v-dist-total-invoice" class="readonly-fill-strong" placeholder="$0" readonly></div>
       <div class="field"><label>Total to Outside Agents</label><input id="v-dist-total-outside" class="readonly-fill" placeholder="$0" readonly></div>
       <div class="field"><label>Gross $$ to Distribute</label><input id="v-gross-dist" class="invoice-highlight-input" placeholder="$0" readonly></div>
@@ -1207,7 +1208,7 @@
   </div>
 
   <div class="btn-bar">
-    <button class="btn btn-gray" onclick="exportVoucherPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
+    <button class="btn btn-gray" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Excel Voucher</span></button>
     <button class="btn btn-red" onclick="openEmailModal('voucher')">Submit Voucher</button>
     <button class="btn btn-green" id="btn-voucher-send-admin" onclick="openSendToAdminModal('voucher')"><span class="btn-spinner"></span><span class="btn-label">Send to Admin</span></button>
     <button class="btn btn-outline" onclick="switchTab('sign')">Remove Signs &rarr;</button>
@@ -1264,7 +1265,7 @@
     </div>
 
     <div class="deal-actions">
-      <button class="btn btn-gray" onclick="exportVoucherPdf()">Download PDF</button>
+      <button class="btn btn-gray" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Excel Voucher</span></button>
       <button class="btn btn-red" onclick="openEmailModal('voucher')">Submit Voucher</button>
       <button class="btn btn-green" onclick="openSendToAdminModal('voucher')">Send to Admin</button>
     </div>
@@ -5641,6 +5642,515 @@ function exportVoucherPdf() {
 
   const addr = getVal('v-address') || 'Voucher';
   doc.save('Commission_Voucher_' + addr.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30) + '.pdf');
+}
+
+const VOUCHER_EXCEL_TEMPLATE_URL = '/templates/commission-voucher-template.xlsm';
+const VOUCHER_EXCEL_MIME = 'application/vnd.ms-excel.sheet.macroEnabled.12';
+
+function voucherWorkbookSelectText(id) {
+  const text = getSelect(id);
+  return text && !text.startsWith('—') ? text.trim() : '';
+}
+
+function voucherWorkbookSelectValue(id) {
+  const el = document.getElementById(id);
+  const value = el ? String(el.value || '').trim() : '';
+  return value === '—' ? '' : value;
+}
+
+function voucherWorkbookParseNumber(value) {
+  const text = String(value == null ? '' : value).trim();
+  if (!text) return null;
+  const parsed = Number.parseFloat(text.replace(/[^0-9.\-]/g, ''));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function voucherWorkbookPercentNumber(value) {
+  const parsed = voucherWorkbookParseNumber(value);
+  if (parsed == null) return null;
+  return parsed > 1 ? parsed / 100 : parsed;
+}
+
+function voucherWorkbookDateFromInput(value) {
+  const text = String(value || '').trim();
+  if (!text) return null;
+  const date = new Date(text + 'T00:00:00');
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function voucherWorkbookYesNoValue(value) {
+  const text = String(value || '').trim().toLowerCase();
+  if (!text || text === '—') return '';
+  if (text === 'yes' || text === 'y' || text === 'true') return 'YES';
+  if (text === 'no' || text === 'n' || text === 'false') return 'NO';
+  return String(value).trim().toUpperCase();
+}
+
+function voucherWorkbookDownloadName() {
+  const addr = getVal('v-address') || 'Voucher';
+  return 'Commission_Voucher_' + addr.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30) + '.xlsm';
+}
+
+function voucherWorkbookDownloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function voucherWorkbookCell(ws, addr) {
+  if (!ws[addr]) ws[addr] = { t: 'z' };
+  return ws[addr];
+}
+
+function voucherWorkbookClearCell(ws, addr) {
+  const cell = voucherWorkbookCell(ws, addr);
+  delete cell.v;
+  delete cell.w;
+  delete cell.r;
+  delete cell.h;
+  delete cell.f;
+  cell.t = 'z';
+}
+
+function voucherWorkbookSetText(ws, addr, value) {
+  const text = String(value || '').trim();
+  if (!text) {
+    voucherWorkbookClearCell(ws, addr);
+    return;
+  }
+  const cell = voucherWorkbookCell(ws, addr);
+  delete cell.f;
+  delete cell.w;
+  delete cell.r;
+  delete cell.h;
+  cell.t = 's';
+  cell.v = text;
+}
+
+function voucherWorkbookSetNumber(ws, addr, value) {
+  if (value == null || value === '' || Number.isNaN(Number(value))) {
+    voucherWorkbookClearCell(ws, addr);
+    return;
+  }
+  const cell = voucherWorkbookCell(ws, addr);
+  delete cell.f;
+  delete cell.w;
+  delete cell.r;
+  delete cell.h;
+  cell.t = 'n';
+  cell.v = Number(value);
+}
+
+function voucherWorkbookSetDate(ws, addr, value) {
+  const date = value instanceof Date ? value : voucherWorkbookDateFromInput(value);
+  if (!date) {
+    voucherWorkbookClearCell(ws, addr);
+    return;
+  }
+  const cell = voucherWorkbookCell(ws, addr);
+  delete cell.f;
+  delete cell.w;
+  delete cell.r;
+  delete cell.h;
+  cell.t = 'd';
+  cell.v = date;
+}
+
+function voucherWorkbookPartyAddress(prefix) {
+  const street = getVal(prefix + '-address');
+  const city = getVal(prefix + '-city');
+  const state = getVal(prefix + '-state');
+  const zip = getVal(prefix + '-zip');
+  const cityStateZip = [city, state, zip].filter(Boolean).join(', ');
+  return [street, cityStateZip].filter(Boolean).join(', ');
+}
+
+function voucherWorkbookResolveInvoiceTarget() {
+  const selection = voucherWorkbookSelectValue('v-invoice-to');
+  if (selection === 'third_party' || (!selection && (getVal('v-inv-company') || getVal('v-inv-address')))) {
+    return {
+      company: getVal('v-inv-company'),
+      address: getVal('v-inv-address'),
+    };
+  }
+  if (selection === 'lessor') {
+    return {
+      company: getVal('v-ls-company') || getVal('v-ls-contact') || 'Lessor / Seller',
+      address: voucherWorkbookPartyAddress('v-ls'),
+    };
+  }
+  if (selection === 'lessee') {
+    return {
+      company: getVal('v-lb-company') || getVal('v-lb-contact') || 'Lessee / Buyer',
+      address: voucherWorkbookPartyAddress('v-lb'),
+    };
+  }
+  if (selection === 'listing_agent') {
+    return {
+      company: [getVal('v-la-house'), getVal('v-la-name')].filter(Boolean).join(' - ') || 'Listing Agent',
+      address: voucherWorkbookPartyAddress('v-la'),
+    };
+  }
+  if (selection === 'procuring_agent') {
+    return {
+      company: [getVal('v-pa-house'), getVal('v-pa-name')].filter(Boolean).join(' - ') || 'Procuring Agent',
+      address: voucherWorkbookPartyAddress('v-pa'),
+    };
+  }
+  return { company: '', address: '' };
+}
+
+function voucherWorkbookRentRows() {
+  const rate = voucherWorkbookPercentNumber(getVal('v-l-comm-rate'));
+  return Array.from(document.querySelectorAll('#v-rent-body tr'))
+    .map(tr => ({
+      monthly: voucherWorkbookParseNumber(tr.querySelector('.rent-monthly')?.value),
+      months: voucherWorkbookParseNumber(tr.querySelector('.rent-months')?.value),
+      commissionRate: rate,
+    }))
+    .filter(row => (row.monthly != null || row.months != null) && (row.monthly != null || row.months));
+}
+
+function voucherWorkbookOutsideRows() {
+  return Array.from(document.querySelectorAll('#v-outside-body tr'))
+    .map(tr => {
+      const select = tr.querySelector('select');
+      const inputs = tr.querySelectorAll('input');
+      return {
+        side: String(select?.value || '').trim().toLowerCase(),
+        name: String(inputs[0]?.value || '').trim(),
+        address: String(inputs[1]?.value || '').trim(),
+        amount: voucherWorkbookParseNumber(inputs[2]?.value),
+      };
+    })
+    .filter(row => row.name || row.address || row.amount != null);
+}
+
+function voucherWorkbookDistributionSide(side) {
+  const normalized = String(side || '').trim().toLowerCase();
+  if (normalized === 'procuring') return 'Procurring';
+  if (normalized === 'both') return 'Both';
+  if (normalized === 'other') return 'Other';
+  if (normalized === 'referring') return 'Referring';
+  if (normalized === 'listing') return 'Listing';
+  return '';
+}
+
+function voucherWorkbookDistributionRows() {
+  return Array.from(document.querySelectorAll('#v-dist-body tr'))
+    .map(tr => {
+      const inputs = tr.querySelectorAll('input');
+      const select = tr.querySelector('select');
+      return {
+        name: String(inputs[0]?.value || '').trim(),
+        side: voucherWorkbookDistributionSide(select?.value || ''),
+        pct: voucherWorkbookPercentNumber(inputs[1]?.value),
+      };
+    })
+    .filter(row => row.name || row.side || row.pct != null);
+}
+
+function voucherWorkbookPaymentRows() {
+  return Array.from(document.querySelectorAll('#v-payment-body tr'))
+    .map(tr => {
+      const inputs = tr.querySelectorAll('input');
+      return {
+        leftDate: voucherWorkbookDateFromInput(inputs[0]?.value),
+        leftAmount: voucherWorkbookParseNumber(inputs[1]?.value),
+        rightDate: voucherWorkbookDateFromInput(inputs[2]?.value),
+        rightAmount: voucherWorkbookParseNumber(inputs[3]?.value),
+      };
+    })
+    .filter(row => row.leftDate || row.leftAmount != null || row.rightDate || row.rightAmount != null);
+}
+
+function voucherWorkbookOverflowNotes(extraOutsideRows, extraPaymentRows, extraRentRows) {
+  const notes = [];
+  const client = getVal('v-on-behalf');
+  const representation = voucherWorkbookSelectText('v-rep-type');
+  const apn = getVal('v-apn');
+  const propertyState = getVal('v-state');
+  const collaborators = Array.from(document.querySelectorAll('#v-collab-body tr'))
+    .map(tr => {
+      const inputs = tr.querySelectorAll('input');
+      const name = String(inputs[0]?.value || '').trim();
+      const role = String(inputs[1]?.value || '').trim();
+      return [name, role].filter(Boolean).join(' — ');
+    })
+    .filter(Boolean);
+
+  if (client) notes.push('Client / On Behalf Of: ' + client);
+  if (representation) notes.push('Representation Type: ' + representation);
+  if (apn) notes.push('APN / Parcel: ' + apn);
+  if (propertyState && propertyState.toUpperCase() !== 'CA') notes.push('Property State: ' + propertyState);
+  if (collaborators.length) notes.push('Internal Collaborators: ' + collaborators.join('; '));
+  if (extraOutsideRows.length) {
+    notes.push('Additional Outside Agents: ' + extraOutsideRows.map(row => {
+      const amount = row.amount != null ? '$' + row.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'No amount entered';
+      return [row.side || 'other', row.name || 'Unnamed', row.address, amount].filter(Boolean).join(' — ');
+    }).join(' | '));
+  }
+  if (extraPaymentRows.length) {
+    notes.push('Additional Payment Schedule: ' + extraPaymentRows.map(row => {
+      const parts = [];
+      if (row.leftDate || row.leftAmount != null) {
+        parts.push([
+          row.leftDate ? row.leftDate.toLocaleDateString('en-US') : 'No date',
+          row.leftAmount != null ? '$' + row.leftAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'No amount'
+        ].join(' / '));
+      }
+      if (row.rightDate || row.rightAmount != null) {
+        parts.push([
+          row.rightDate ? row.rightDate.toLocaleDateString('en-US') : 'No date',
+          row.rightAmount != null ? '$' + row.rightAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'No amount'
+        ].join(' / '));
+      }
+      return parts.join(' ; ');
+    }).filter(Boolean).join(' | '));
+  }
+  if (extraRentRows.length) {
+    notes.push('Additional Rent Schedule Rows: ' + extraRentRows.map(row => {
+      const monthly = row.monthly != null ? '$' + row.monthly.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '$0.00';
+      const months = row.months != null ? row.months : 0;
+      return monthly + ' for ' + months + ' month(s)';
+    }).join(' | '));
+  }
+
+  return notes.join('\n');
+}
+
+function voucherWorkbookApplyForm(ws) {
+  const txnType = voucherWorkbookSelectText('v-txn-type');
+  const propTypeText = voucherWorkbookSelectText('v-prop-type');
+  const propTypeValue = voucherWorkbookSelectValue('v-prop-type');
+  const otherType = getVal('v-other-type');
+  const activeListing = voucherWorkbookYesNoValue(voucherWorkbookSelectValue('v-active-listing'));
+  const closeListing = voucherWorkbookYesNoValue(voucherWorkbookSelectValue('v-close-listing'));
+  const confidential = voucherWorkbookYesNoValue(voucherWorkbookSelectValue('v-confidential'));
+  const dateFilled = voucherWorkbookDateFromInput(getVal('v-date-filled')) || new Date();
+  const invoiceTarget = voucherWorkbookResolveInvoiceTarget();
+  const rentRows = voucherWorkbookRentRows();
+  const paymentRows = voucherWorkbookPaymentRows();
+  const outsideRows = voucherWorkbookOutsideRows();
+  const distributionRows = voucherWorkbookDistributionRows();
+
+  let lessorCompany = getVal('v-ls-company');
+  let lesseeCompany = getVal('v-lb-company');
+  const clientName = getVal('v-on-behalf');
+  const repType = voucherWorkbookSelectValue('v-rep-type');
+  if (clientName && !lessorCompany && (repType === 'landlord_rep' || repType === 'seller_rep')) lessorCompany = clientName;
+  if (clientName && !lesseeCompany && (repType === 'tenant_rep' || repType === 'buyer_rep')) lesseeCompany = clientName;
+
+  voucherWorkbookSetText(ws, 'D4', txnType);
+  voucherWorkbookSetText(ws, 'G4', propTypeText);
+  voucherWorkbookSetText(ws, 'K4', activeListing);
+  voucherWorkbookSetText(ws, 'N4', closeListing);
+  voucherWorkbookSetText(ws, 'L1', confidential);
+  voucherWorkbookSetDate(ws, 'N2', dateFilled);
+  voucherWorkbookSetText(ws, 'E6', propTypeValue === 'other' ? otherType : '');
+
+  voucherWorkbookSetText(ws, 'B9', getVal('v-address'));
+  voucherWorkbookSetText(ws, 'K9', getVal('v-city'));
+  voucherWorkbookSetText(ws, 'N9', getVal('v-zip'));
+
+  voucherWorkbookSetText(ws, 'G11', voucherWorkbookYesNoValue(voucherWorkbookSelectValue('v-ls-invoice')));
+  voucherWorkbookSetText(ws, 'N11', voucherWorkbookYesNoValue(voucherWorkbookSelectValue('v-lb-invoice')));
+  voucherWorkbookSetText(ws, 'C12', lessorCompany);
+  voucherWorkbookSetText(ws, 'K12', lesseeCompany);
+  voucherWorkbookSetText(ws, 'C13', getVal('v-ls-contact'));
+  voucherWorkbookSetText(ws, 'K13', getVal('v-lb-contact'));
+  voucherWorkbookSetText(ws, 'C14', getVal('v-ls-email'));
+  voucherWorkbookSetText(ws, 'K14', getVal('v-lb-email'));
+  voucherWorkbookSetText(ws, 'C15', getVal('v-ls-address'));
+  voucherWorkbookSetText(ws, 'K15', getVal('v-lb-address'));
+  voucherWorkbookSetText(ws, 'C16', getVal('v-ls-city'));
+  voucherWorkbookSetText(ws, 'K16', getVal('v-lb-city'));
+  voucherWorkbookSetText(ws, 'C17', getVal('v-ls-state'));
+  voucherWorkbookSetText(ws, 'E17', getVal('v-ls-zip'));
+  voucherWorkbookSetText(ws, 'K17', getVal('v-lb-state'));
+  voucherWorkbookSetText(ws, 'M17', getVal('v-lb-zip'));
+  voucherWorkbookSetText(ws, 'C18', getVal('v-ls-phone'));
+  voucherWorkbookSetText(ws, 'K18', getVal('v-lb-phone'));
+
+  voucherWorkbookSetText(ws, 'C22', getVal('v-suite'));
+  voucherWorkbookSetText(ws, 'E22', voucherWorkbookSelectText('v-occ-type'));
+  voucherWorkbookSetText(ws, 'G22', voucherWorkbookSelectText('v-deal-type-req'));
+  voucherWorkbookSetText(ws, 'L22', getVal('v-prior-loc'));
+  voucherWorkbookSetNumber(ws, 'C23', voucherWorkbookParseNumber(getVal('v-l-dealsf')));
+  voucherWorkbookSetText(ws, 'E23', getVal('v-submarket'));
+  voucherWorkbookSetText(ws, 'K23', propTypeValue === 'other' ? (otherType || propTypeText) : propTypeText);
+  voucherWorkbookSetNumber(ws, 'M23', voucherWorkbookParseNumber(getVal('v-land-sf')));
+  voucherWorkbookSetNumber(ws, 'C24', voucherWorkbookParseNumber(getVal('v-bldg-sf')));
+  voucherWorkbookSetText(ws, 'C25', voucherWorkbookSelectText('v-bldg-class'));
+  voucherWorkbookSetNumber(ws, 'E25', voucherWorkbookParseNumber(getVal('v-year-built')));
+
+  voucherWorkbookSetDate(ws, 'E36', getVal('v-l-start'));
+  voucherWorkbookSetDate(ws, 'H36', getVal('v-l-end'));
+  voucherWorkbookSetNumber(ws, 'M36', voucherWorkbookParseNumber(getVal('v-s-price')));
+  voucherWorkbookSetDate(ws, 'B38', getVal('v-l-occ'));
+  voucherWorkbookSetNumber(ws, 'E38', voucherWorkbookParseNumber(getVal('v-l-term')));
+  voucherWorkbookSetNumber(ws, 'C40', voucherWorkbookParseNumber(getVal('v-l-rate')));
+  voucherWorkbookSetText(ws, 'C41', voucherWorkbookSelectText('v-l-rate-type'));
+  voucherWorkbookSetText(ws, 'M40', voucherWorkbookSelectText('v-s-buyer-type'));
+  voucherWorkbookSetNumber(ws, 'M41', voucherWorkbookParseNumber(getVal('v-s-asking')));
+  voucherWorkbookSetNumber(ws, 'M42', voucherWorkbookPercentNumber(getVal('v-s-cap')));
+  voucherWorkbookSetNumber(ws, 'M43', voucherWorkbookPercentNumber(getVal('v-s-comm-pct')));
+  voucherWorkbookSetText(ws, 'M45', getVal('v-s-escrow'));
+  voucherWorkbookSetText(ws, 'N46', voucherWorkbookYesNoValue(voucherWorkbookSelectValue('v-s-escrow-check')));
+
+  for (let row = 53; row <= 67; row++) {
+    voucherWorkbookClearCell(ws, 'A' + row);
+    voucherWorkbookClearCell(ws, 'D' + row);
+    voucherWorkbookClearCell(ws, 'K' + row);
+  }
+  rentRows.slice(0, 15).forEach((row, index) => {
+    const sheetRow = 53 + index;
+    voucherWorkbookSetNumber(ws, 'A' + sheetRow, row.monthly == null ? 0 : row.monthly);
+    voucherWorkbookSetNumber(ws, 'D' + sheetRow, row.months);
+    voucherWorkbookSetNumber(ws, 'K' + sheetRow, row.commissionRate);
+  });
+  voucherWorkbookSetNumber(ws, 'L70', voucherWorkbookParseNumber(getVal('v-comm-bonus')));
+  voucherWorkbookSetNumber(ws, 'L74', voucherWorkbookParseNumber(getVal('v-comm-consulting')));
+
+  voucherWorkbookSetText(ws, 'J80', voucherWorkbookYesNoValue(voucherWorkbookSelectValue('v-same-agent')));
+  voucherWorkbookSetText(ws, 'G84', voucherWorkbookYesNoValue(voucherWorkbookSelectValue('v-la-invoice')));
+  voucherWorkbookSetText(ws, 'N84', voucherWorkbookYesNoValue(voucherWorkbookSelectValue('v-pa-invoice')));
+  voucherWorkbookSetText(ws, 'C85', getVal('v-la-house'));
+  voucherWorkbookSetText(ws, 'K85', getVal('v-pa-house'));
+  voucherWorkbookSetText(ws, 'C86', getVal('v-la-name'));
+  voucherWorkbookSetText(ws, 'K86', getVal('v-pa-name'));
+  voucherWorkbookSetText(ws, 'C87', getVal('v-la-address'));
+  voucherWorkbookSetText(ws, 'K87', getVal('v-pa-address'));
+  voucherWorkbookSetText(ws, 'C88', getVal('v-la-city'));
+  voucherWorkbookSetText(ws, 'K88', getVal('v-pa-city'));
+  voucherWorkbookSetText(ws, 'C89', getVal('v-la-state'));
+  voucherWorkbookSetText(ws, 'E89', getVal('v-la-zip'));
+  voucherWorkbookSetText(ws, 'K89', getVal('v-pa-state'));
+  voucherWorkbookSetText(ws, 'M89', getVal('v-pa-zip'));
+  voucherWorkbookSetText(ws, 'C90', getVal('v-la-phone'));
+  voucherWorkbookSetText(ws, 'K90', getVal('v-pa-phone'));
+  voucherWorkbookSetText(ws, 'E92', voucherWorkbookYesNoValue(voucherWorkbookSelectValue('v-la-pay-fee')));
+  voucherWorkbookSetText(ws, 'L92', voucherWorkbookYesNoValue(voucherWorkbookSelectValue('v-pa-pay-fee')));
+
+  const listingOutside = outsideRows.find(row => row.side === 'listing') || null;
+  const procuringOutside = outsideRows.find(row => row.side === 'procuring') || null;
+  const extraOutsideRows = outsideRows.filter(row => row !== listingOutside && row !== procuringOutside);
+  const firstExtraOutside = extraOutsideRows[0] || null;
+  const overflowOutsideRows = extraOutsideRows.slice(firstExtraOutside ? 1 : 0);
+
+  voucherWorkbookSetText(ws, 'C96', listingOutside?.name || '');
+  voucherWorkbookSetNumber(ws, 'L96', listingOutside?.amount);
+  voucherWorkbookSetText(ws, 'C98', procuringOutside?.name || '');
+  voucherWorkbookSetNumber(ws, 'L98', procuringOutside?.amount);
+  voucherWorkbookSetText(ws, 'C100', firstExtraOutside?.name || '');
+  voucherWorkbookSetText(ws, 'C101', firstExtraOutside?.address || '');
+  voucherWorkbookSetNumber(ws, 'L100', firstExtraOutside?.amount);
+
+  voucherWorkbookSetText(ws, 'G109', invoiceTarget.company);
+  voucherWorkbookSetText(ws, 'G110', invoiceTarget.address);
+  voucherWorkbookSetText(ws, 'A113', getVal('v-inv-instructions'));
+  ['K113', 'L113', 'M113', 'N113', 'K114', 'L114', 'M114', 'N114'].forEach(addr => voucherWorkbookClearCell(ws, addr));
+  paymentRows.slice(0, 2).forEach((row, index) => {
+    const sheetRow = 113 + index;
+    voucherWorkbookSetDate(ws, 'K' + sheetRow, row.leftDate);
+    voucherWorkbookSetNumber(ws, 'L' + sheetRow, row.leftAmount);
+    voucherWorkbookSetDate(ws, 'M' + sheetRow, row.rightDate);
+    voucherWorkbookSetNumber(ws, 'N' + sheetRow, row.rightAmount);
+  });
+
+  for (let row = 124; row <= 130; row++) {
+    voucherWorkbookClearCell(ws, 'A' + row);
+    voucherWorkbookClearCell(ws, 'D' + row);
+    voucherWorkbookClearCell(ws, 'E' + row);
+  }
+  distributionRows.slice(0, 7).forEach((row, index) => {
+    const sheetRow = 124 + index;
+    voucherWorkbookSetText(ws, 'A' + sheetRow, row.name);
+    voucherWorkbookSetText(ws, 'D' + sheetRow, row.side);
+    voucherWorkbookSetNumber(ws, 'E' + sheetRow, row.pct);
+  });
+
+  voucherWorkbookSetText(
+    ws,
+    'A133',
+    voucherWorkbookOverflowNotes(overflowOutsideRows, paymentRows.slice(2), rentRows.slice(15))
+  );
+}
+
+async function buildVoucherExcelBlob() {
+  if (!window.XLSX) throw new Error('Excel export is unavailable in this browser session.');
+  if (typeof onSameAgentChange === 'function' && voucherWorkbookSelectValue('v-same-agent') === 'yes') onSameAgentChange();
+  if (typeof syncVoucherDealAliases === 'function') syncVoucherDealAliases();
+  if (typeof calcOutsideTotals === 'function') calcOutsideTotals();
+  if (typeof calcCommSummary === 'function') calcCommSummary();
+
+  const response = await fetch(VOUCHER_EXCEL_TEMPLATE_URL, { credentials: 'same-origin' });
+  if (!response.ok) throw new Error('Unable to load the voucher template.');
+  const templateBuffer = await response.arrayBuffer();
+  const workbook = XLSX.read(templateBuffer, {
+    type: 'array',
+    bookVBA: true,
+    cellDates: true,
+    cellStyles: true,
+    sheetStubs: true,
+  });
+  const firstSheetName = workbook.SheetNames[0];
+  if (!firstSheetName || !workbook.Sheets[firstSheetName]) throw new Error('Voucher template is missing its worksheet.');
+
+  voucherWorkbookApplyForm(workbook.Sheets[firstSheetName]);
+  const output = XLSX.write(workbook, {
+    type: 'array',
+    bookType: 'xlsm',
+    bookVBA: true,
+    cellDates: true,
+    cellStyles: true,
+  });
+  return {
+    filename: voucherWorkbookDownloadName(),
+    blob: new Blob([output], { type: VOUCHER_EXCEL_MIME }),
+  };
+}
+
+async function buildVoucherExcelAttachment() {
+  const built = await buildVoucherExcelBlob();
+  return {
+    filename: built.filename,
+    mimeType: VOUCHER_EXCEL_MIME,
+    base64Data: await blobToBase64(built.blob),
+  };
+}
+
+async function exportVoucherExcel() {
+  const built = await buildVoucherExcelBlob();
+  voucherWorkbookDownloadBlob(built.blob, built.filename);
+}
+
+async function exportVoucherExcelWithSpinner(btn) {
+  const label = btn?.querySelector('.btn-label');
+  const originalText = label ? label.textContent : btn?.textContent || '';
+  if (btn) btn.disabled = true;
+  if (btn?.classList) btn.classList.add('loading');
+  if (label) label.textContent = 'Preparing Excel...';
+  else if (btn) btn.textContent = 'Preparing Excel...';
+
+  try {
+    await exportVoucherExcel();
+    if (typeof showToast === 'function') showToast('Excel voucher downloaded');
+  } catch (error) {
+    const message = error && error.message ? error.message : 'The Excel voucher could not be created.';
+    if (typeof showToast === 'function') showToast(message, 'error');
+    else alert(message);
+  } finally {
+    if (btn) btn.disabled = false;
+    if (btn?.classList) btn.classList.remove('loading');
+    if (label) label.textContent = originalText;
+    else if (btn) btn.textContent = originalText;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -11641,6 +12151,13 @@ function setQueueStatus(message, isError) {
   status.classList.toggle('queue-error', !!isError);
 }
 
+function renderBrokerQueueError() {
+  const list = document.getElementById('broker-queue-list');
+  setQueueStatus('We couldn’t load your active queue right now. Try refreshing again in a moment.', true);
+  if (!list) return;
+  list.innerHTML = '<div class="empty-state queue-empty"><div class="empty-icon"></div><h3>Queue unavailable</h3><p>Your submissions are still saved, but the live queue could not be loaded right now. Please refresh again in a moment.</p></div>';
+}
+
 function renderBrokerQueue(data) {
   const requests = Array.isArray(data?.requests) ? data.requests : [];
   const totalActive = Number(data?.totalActive ?? data?.totalPending ?? 0) || 0;
@@ -11718,7 +12235,8 @@ async function refreshBrokerQueue() {
     const data = await callTrpc('submissions.queueMine', { limit: 50 });
     renderBrokerQueue(data);
   } catch (error) {
-    setQueueStatus((error && error.message) ? error.message : 'Unable to load queue.', true);
+    console.warn('Unable to load broker queue:', error && error.message ? error.message : error);
+    renderBrokerQueueError();
   } finally {
     setBtnLoading(btn, false);
   }
@@ -12618,6 +13136,37 @@ function hasVoucherComplianceAttachment() {
   return (uploadedFiles['v-doc-disclosure']?.length > 0) || (uploadedFiles['v-doc-agreement']?.length > 0);
 }
 
+function collectSupportingFilesForAdminSubmission(formType) {
+  const fieldConfigs = formType === 'listing'
+    ? [
+        { fieldId: 'l-doc-agreement', category: 'listing_agreement', label: 'Exclusive Listing Agreement' },
+        { fieldId: 'l-doc-disclosure', category: 'agency_disclosure', label: 'Agency Disclosure' }
+      ]
+    : formType === 'voucher'
+      ? [
+          { fieldId: 'v-doc-agreement', category: 'listing_agreement', label: 'Exclusive Listing Agreement' },
+          { fieldId: 'v-doc-disclosure', category: 'agency_disclosure', label: 'Agency Disclosure' }
+        ]
+      : [];
+
+  const collected = [];
+  fieldConfigs.forEach(({ fieldId, category, label }) => {
+    const files = Array.isArray(uploadedFiles[fieldId]) ? uploadedFiles[fieldId] : [];
+    files.forEach(file => {
+      if (!file || !file.url || !file.fileKey) return;
+      collected.push({
+        filename: file.filename || label || 'Supporting Document',
+        url: file.url,
+        fileKey: file.fileKey,
+        category,
+        label,
+      });
+    });
+  });
+
+  return collected;
+}
+
 function openSendToAdminModal(formType) {
   _staFormType = formType;
   const attachErr = document.getElementById('voucher-attachment-required-msg');
@@ -12882,7 +13431,7 @@ async function blobToBase64(blob) {
       const commaIndex = result.indexOf(',');
       resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
     };
-    reader.onerror = () => reject(reader.error || new Error('Unable to read the generated PDF.'));
+    reader.onerror = () => reject(reader.error || new Error('Unable to read the generated file.'));
     reader.readAsDataURL(blob);
   });
 }
@@ -12940,7 +13489,7 @@ async function submitSendToAdmin() {
 
   btn.classList.add('loading');
   btn.disabled = true;
-  btn.querySelector('.btn-label').textContent = 'Preparing PDF...';
+  btn.querySelector('.btn-label').textContent = _staFormType === 'voucher' ? 'Preparing files...' : 'Preparing PDF...';
   status.textContent = '';
   status.classList.remove('text-success', 'text-error', 'status-strong');
 
@@ -12949,6 +13498,7 @@ async function submitSendToAdmin() {
     : _staFormType === 'sign'
       ? collectSignSections(notes)
       : collectVoucherSections(notes);
+  const supportingFiles = collectSupportingFilesForAdminSubmission(_staFormType);
 
   // Determine property address for subject line
   const addrId = _staFormType === 'listing' ? 'l-address' : _staFormType === 'sign' ? 's-address' : 'v-address';
@@ -12957,6 +13507,7 @@ async function submitSendToAdmin() {
 
   try {
     const pdfAttachment = await buildSendToAdminPdfAttachment();
+    const excelAttachment = _staFormType === 'voucher' ? await buildVoucherExcelAttachment() : undefined;
     btn.querySelector('.btn-label').textContent = 'Submitting…';
 
     const resp = await fetch('/api/trpc/email.sendToAdmin', {
@@ -12971,6 +13522,8 @@ async function submitSendToAdmin() {
           sections,
           senderEmail,
           pdfAttachment,
+          excelAttachment,
+          supportingFiles,
           formData: _staFormType === 'sign' ? collectSignFormData() : undefined,
         }
       })

@@ -42,12 +42,24 @@ type SubmissionDetail = {
   assignedAt?: string | null;
   completedBy?: string | null;
   completedAt?: string | null;
+  attachments?: SubmissionDocument[];
 };
 
 type QueueMeta = {
   position: number | null;
   totalActive: number;
   aheadOfYou: number | null;
+};
+
+type SubmissionDocument = {
+  title: string;
+  filename: string;
+  url: string | null;
+  fileKey: string | null;
+  category: string | null;
+  mimeType?: string | null;
+  fileSize?: number | null;
+  downloadUrl?: string | null;
 };
 
 function num(raw: unknown): number | null {
@@ -93,6 +105,65 @@ function payloadBody(payload: unknown): string {
   return JSON.stringify(payload, null, 2);
 }
 
+function submissionDocumentsFromPayload(payload: unknown): SubmissionDocument[] {
+  if (!payload || typeof payload !== "object") {
+    return [];
+  }
+
+  const record = payload as Record<string, unknown>;
+  const docs: SubmissionDocument[] = [];
+  const seen = new Set<string>();
+
+  const pushDoc = (
+    title: string,
+    file: Record<string, unknown> | null | undefined,
+    fallbackCategory: string | null = null
+  ) => {
+    if (!file) return;
+    const filename = typeof file.filename === "string" ? file.filename.trim() : "";
+    const url = typeof file.url === "string" ? file.url.trim() : "";
+    const fileKey = typeof file.fileKey === "string" ? file.fileKey.trim() : "";
+    const category = typeof file.category === "string" ? file.category.trim() : fallbackCategory;
+    if (!filename || !url) return;
+    const dedupeKey = fileKey || url;
+    if (!dedupeKey || seen.has(dedupeKey)) return;
+    seen.add(dedupeKey);
+    docs.push({
+      title,
+      filename,
+      url,
+      fileKey: fileKey || null,
+      category: category || null,
+      mimeType: typeof file.mimeType === "string" ? file.mimeType : null,
+      fileSize: typeof file.fileSize === "number" ? file.fileSize : null,
+      downloadUrl: null,
+    });
+  };
+
+  const archivedFile =
+    record.archivedFile && typeof record.archivedFile === "object"
+      ? (record.archivedFile as Record<string, unknown>)
+      : null;
+  pushDoc("Generated submission PDF", archivedFile, "submission_pdf");
+  const excelFile =
+    record.excelFile && typeof record.excelFile === "object"
+      ? (record.excelFile as Record<string, unknown>)
+      : null;
+  pushDoc("Generated Excel Voucher", excelFile, "voucher_excel");
+
+  const supportingFiles = Array.isArray(record.supportingFiles) ? record.supportingFiles : [];
+  supportingFiles.forEach((entry, index) => {
+    if (!entry || typeof entry !== "object") return;
+    const file = entry as Record<string, unknown>;
+    const label = typeof file.label === "string" && file.label.trim()
+      ? file.label.trim()
+      : `Supporting document ${index + 1}`;
+    pushDoc(label, file, typeof file.category === "string" ? file.category : null);
+  });
+
+  return docs;
+}
+
 function fileAsBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -125,6 +196,8 @@ export default function PortalSubmissionDetail() {
   const uploadFile = trpc.files.upload.useMutation();
   const extractContract = trpc.contracts.extractContract.useMutation();
   const derivedFee = deriveFeePercent(item?.payload);
+  const submissionDocuments =
+    item?.attachments && item.attachments.length > 0 ? item.attachments : submissionDocumentsFromPayload(item?.payload);
 
   async function reloadSubmission() {
     if (!Number.isFinite(id)) {
@@ -499,9 +572,65 @@ export default function PortalSubmissionDetail() {
               </section>
             )}
 
+            {activeTab === "documents" && (
+              <section className="admin-detail-panel">
+                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 6 }}>
+                  Submission files
+                </div>
+                {submissionDocuments.length > 0 ? (
+                  <div style={{ display: "grid", gap: 10 }}>
+                    {submissionDocuments.map(doc => (
+                      <div
+                        key={doc.fileKey || doc.url}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: 12,
+                          flexWrap: "wrap",
+                          padding: 12,
+                          borderRadius: 10,
+                          border: "1px solid var(--ink-200)",
+                          background: "white",
+                        }}
+                      >
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 12, color: "var(--ink-500)", marginBottom: 2 }}>{doc.title}</div>
+                          <div style={{ fontWeight: 600, color: "var(--ink-900)", wordBreak: "break-word" }}>{doc.filename}</div>
+                          {doc.category && (
+                            <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 2 }}>{doc.category}</div>
+                          )}
+                        </div>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          {doc.downloadUrl && (
+                            <a
+                              href={doc.downloadUrl}
+                              download={doc.filename}
+                              style={{ fontSize: 13, fontWeight: 700, color: "var(--lee-crimson)" }}
+                            >
+                              Download
+                            </a>
+                          )}
+                          {doc.url && (
+                            <a href={doc.url} target="_blank" rel="noreferrer" style={{ fontSize: 13, fontWeight: 600 }}>
+                              Open file ↗
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ color: "var(--ink-500)", fontSize: 13 }}>
+                    No uploaded documents were attached to this submission.
+                  </div>
+                )}
+              </section>
+            )}
+
             {activeTab === "documents" && user?.role !== "admin" && (
               <section className="admin-detail-panel">
-                <div style={{ color: "var(--ink-500)", fontSize: 13 }}>Admin access is required for document import and extraction.</div>
+                <div style={{ color: "var(--ink-500)", fontSize: 13 }}>Admin access is required for document import and extraction tools.</div>
               </section>
             )}
 

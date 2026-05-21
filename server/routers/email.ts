@@ -26,6 +26,20 @@ const pdfAttachmentSchema = z.object({
   base64Data: z.string().min(1),
 });
 
+const generatedFileSchema = z.object({
+  filename: z.string().trim().min(1).max(255),
+  mimeType: z.string().trim().min(1).max(128),
+  base64Data: z.string().min(1),
+});
+
+const supportingFileSchema = z.object({
+  filename: z.string().trim().min(1).max(255),
+  url: z.string().trim().url(),
+  fileKey: z.string().trim().min(1).max(512),
+  category: z.string().trim().max(128).optional(),
+  label: z.string().trim().max(255).optional(),
+});
+
 const sendToAdminInput = z.object({
   formType: z.enum(["listing", "voucher", "sign"]),
   brokerName: z.string().optional(),
@@ -33,18 +47,21 @@ const sendToAdminInput = z.object({
   sections: z.array(sectionSchema),
   senderEmail: z.string().email().optional(),
   pdfAttachment: pdfAttachmentSchema.optional(),
+  excelAttachment: generatedFileSchema.optional(),
+  supportingFiles: z.array(supportingFileSchema).optional(),
   formData: z.record(z.string(), z.unknown()).optional(),
 });
 
 type FormType = z.infer<typeof sendToAdminInput>["formType"];
 
-type ArchivedPdf = {
+type ArchivedSubmissionFile = {
   filename: string;
-  mimeType: "application/pdf";
+  mimeType: string;
   base64Data: string;
   fileKey: string;
   url: string;
   fileSize: number;
+  category: string;
 };
 
 type DeliveryResult = {
@@ -67,9 +84,11 @@ function formLabelFor(formType: FormType): string {
       : "Commission Voucher";
 }
 
-function sanitizeFileName(filename: string): string {
+function sanitizeFileName(filename: string, fallbackExtension?: string): string {
   const safe = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
-  return safe.toLowerCase().endsWith(".pdf") ? safe : `${safe}.pdf`;
+  if (safe.includes(".")) return safe;
+  if (fallbackExtension) return `${safe}.${fallbackExtension.replace(/^\./, "")}`;
+  return safe;
 }
 
 async function buildEmailBody(params: {
@@ -79,8 +98,21 @@ async function buildEmailBody(params: {
   sections: Array<{ title: string; fields: Array<{ label: string; value: string }> }>;
   archivedPdfUrl?: string;
   archivedPdfName?: string;
+  excelAttachmentUrl?: string;
+  excelAttachmentName?: string;
+  supportingFiles?: Array<z.infer<typeof supportingFileSchema>>;
 }): Promise<string> {
-  const { formType, brokerName, propertyAddress, sections, archivedPdfUrl, archivedPdfName } = params;
+  const {
+    formType,
+    brokerName,
+    propertyAddress,
+    sections,
+    archivedPdfUrl,
+    archivedPdfName,
+    excelAttachmentUrl,
+    excelAttachmentName,
+    supportingFiles = [],
+  } = params;
   const companyName = String(await getSetting("branding.company_name"));
   const supportEmail = String(await getSetting("branding.support_email"));
   const now = new Date().toLocaleString("en-US", {
@@ -99,6 +131,10 @@ async function buildEmailBody(params: {
       return `\n--- ${section.title} ---\n${rows}`;
     })
     .join("\n");
+  const supportingFileLines = supportingFiles
+    .filter(file => file.url.trim())
+    .map(file => `  ${file.label || file.filename}: ${file.url}`)
+    .join("\n");
 
   return [
     `${companyName} - ${formLabelFor(formType)} Submission`,
@@ -106,6 +142,8 @@ async function buildEmailBody(params: {
     brokerName ? `Broker: ${brokerName}` : "",
     propertyAddress ? `Property: ${propertyAddress}` : "",
     archivedPdfUrl ? `Archived PDF: ${archivedPdfName || "submission.pdf"} - ${archivedPdfUrl}` : "",
+    excelAttachmentUrl ? `Generated Excel Voucher: ${excelAttachmentName || "voucher.xlsm"} - ${excelAttachmentUrl}` : "",
+    supportingFileLines ? `Supporting Documents:\n${supportingFileLines}` : "",
     "",
     "=".repeat(60),
     sectionLines,
@@ -128,7 +166,7 @@ async function sendViaSmtp(params: {
   cc: string[];
   subject: string;
   content: string;
-  archivedPdf?: ArchivedPdf;
+  attachments?: ArchivedSubmissionFile[];
 }): Promise<DeliveryResult> {
   try {
     const transporter = nodemailer.createTransport({
@@ -146,21 +184,19 @@ async function sendViaSmtp(params: {
       replyTo: params.cc[0] || undefined,
       subject: params.subject,
       text: params.content,
-      attachments: params.archivedPdf
-        ? [
-            {
-              filename: params.archivedPdf.filename,
-              content: Buffer.from(params.archivedPdf.base64Data, "base64"),
-              contentType: params.archivedPdf.mimeType,
-            },
-          ]
+      attachments: params.attachments?.length
+        ? params.attachments.map(file => ({
+            filename: file.filename,
+            content: Buffer.from(file.base64Data, "base64"),
+            contentType: file.mimeType,
+          }))
         : undefined,
     });
 
     return {
       success: true,
       deliveryMethod: "smtp",
-      attachmentIncluded: Boolean(params.archivedPdf),
+      attachmentIncluded: Boolean(params.attachments?.length),
     };
   } catch (error: unknown) {
     return {
@@ -175,7 +211,7 @@ function sendViaOutlookMcp(params: {
   cc: string[];
   subject: string;
   content: string;
-  archivedPdf?: ArchivedPdf;
+  attachments?: ArchivedSubmissionFile[];
   includeAttachment?: boolean;
 }): DeliveryResult {
   try {
@@ -186,16 +222,14 @@ function sendViaOutlookMcp(params: {
       content: params.content,
     };
 
-    if (params.includeAttachment && params.archivedPdf) {
-      message.attachments = [
-        {
-          filename: params.archivedPdf.filename,
-          name: params.archivedPdf.filename,
-          contentType: params.archivedPdf.mimeType,
-          mimeType: params.archivedPdf.mimeType,
-          contentBytes: params.archivedPdf.base64Data,
-        },
-      ];
+    if (params.includeAttachment && params.attachments?.length) {
+      message.attachments = params.attachments.map(file => ({
+        filename: file.filename,
+        name: file.filename,
+        contentType: file.mimeType,
+        mimeType: file.mimeType,
+        contentBytes: file.base64Data,
+      }));
     }
 
     const input = JSON.stringify({ messages: [message] });
@@ -207,8 +241,8 @@ function sendViaOutlookMcp(params: {
 
     return {
       success: true,
-      deliveryMethod: params.includeAttachment && params.archivedPdf ? "outlook-mcp" : "outlook-mcp-link",
-      attachmentIncluded: Boolean(params.includeAttachment && params.archivedPdf),
+      deliveryMethod: params.includeAttachment && params.attachments?.length ? "outlook-mcp" : "outlook-mcp-link",
+      attachmentIncluded: Boolean(params.includeAttachment && params.attachments?.length),
     };
   } catch (error: unknown) {
     return {
@@ -223,7 +257,7 @@ async function deliverSubmissionEmail(params: {
   cc: string[];
   subject: string;
   content: string;
-  archivedPdf?: ArchivedPdf;
+  attachments?: ArchivedSubmissionFile[];
 }): Promise<DeliveryResult> {
   if (isSmtpConfigured()) {
     const smtpResult = await sendViaSmtp(params);
@@ -234,13 +268,13 @@ async function deliverSubmissionEmail(params: {
 
   const mcpWithAttachment = sendViaOutlookMcp({
     ...params,
-    includeAttachment: Boolean(params.archivedPdf),
+    includeAttachment: Boolean(params.attachments?.length),
   });
   if (mcpWithAttachment.success) {
     return mcpWithAttachment;
   }
 
-  if (params.archivedPdf) {
+  if (params.attachments?.length) {
     const fallbackWithoutAttachment = sendViaOutlookMcp({
       ...params,
       includeAttachment: false,
@@ -253,23 +287,24 @@ async function deliverSubmissionEmail(params: {
   return mcpWithAttachment;
 }
 
-async function archivePdf(params: {
+async function archiveGeneratedFile(params: {
   formType: FormType;
   propertyAddress: string;
-  pdfAttachment: z.infer<typeof pdfAttachmentSchema>;
+  attachment: z.infer<typeof generatedFileSchema>;
+  category: string;
   brokerName?: string;
   senderEmail?: string;
   uploaderOpenId?: string | null;
-}): Promise<ArchivedPdf> {
-  const safeFilename = sanitizeFileName(params.pdfAttachment.filename);
-  const buffer = Buffer.from(params.pdfAttachment.base64Data, "base64");
+}): Promise<ArchivedSubmissionFile> {
+  const safeFilename = sanitizeFileName(params.attachment.filename);
+  const buffer = Buffer.from(params.attachment.base64Data, "base64");
 
   if (!buffer.length) {
-    throw new Error("Generated PDF is empty.");
+    throw new Error(`Generated ${params.category.replace(/_/g, " ")} is empty.`);
   }
 
   const fileKey = `broker-docs/submissions/${params.formType}/${new Date().toISOString().slice(0, 10)}/${nanoid(10)}-${safeFilename}`;
-  const { url } = await storagePut(fileKey, buffer, params.pdfAttachment.mimeType);
+  const { url } = await storagePut(fileKey, buffer, params.attachment.mimeType);
 
   const db = await getDb();
   if (db) {
@@ -277,9 +312,9 @@ async function archivePdf(params: {
       fileKey,
       url,
       filename: safeFilename,
-      mimeType: params.pdfAttachment.mimeType,
+      mimeType: params.attachment.mimeType,
       fileSize: buffer.length,
-      category: "submission_pdf",
+      category: params.category,
       reference: params.propertyAddress || null,
       uploaderName: params.brokerName || params.senderEmail || null,
       uploaderOpenId: params.uploaderOpenId ?? null,
@@ -288,11 +323,12 @@ async function archivePdf(params: {
 
   return {
     filename: safeFilename,
-    mimeType: params.pdfAttachment.mimeType,
-    base64Data: params.pdfAttachment.base64Data,
+    mimeType: params.attachment.mimeType,
+    base64Data: params.attachment.base64Data,
     fileKey,
     url,
     fileSize: buffer.length,
+    category: params.category,
   };
 }
 
@@ -302,7 +338,9 @@ async function recordSubmissionRequest(params: {
   propertyAddress: string;
   sections: Array<{ title: string; fields: Array<{ label: string; value: string }> }>;
   senderEmail?: string;
-  archivedPdf?: ArchivedPdf;
+  archivedPdf?: ArchivedSubmissionFile;
+  excelFile?: ArchivedSubmissionFile;
+  supportingFiles?: Array<z.infer<typeof supportingFileSchema>>;
   uploaderOpenId?: string | null;
   deliveryMethod?: string;
   deliveryError?: string;
@@ -335,8 +373,21 @@ async function recordSubmissionRequest(params: {
             url: params.archivedPdf.url,
             filename: params.archivedPdf.filename,
             fileSize: params.archivedPdf.fileSize,
+            mimeType: params.archivedPdf.mimeType,
+            category: params.archivedPdf.category,
           }
         : null,
+      excelFile: params.excelFile
+        ? {
+            fileKey: params.excelFile.fileKey,
+            url: params.excelFile.url,
+            filename: params.excelFile.filename,
+            fileSize: params.excelFile.fileSize,
+            mimeType: params.excelFile.mimeType,
+            category: params.excelFile.category,
+          }
+        : null,
+      supportingFiles: params.supportingFiles ?? [],
       deliveryMethod: params.deliveryMethod ?? "",
       deliveryError: params.deliveryError ?? "",
     }),
@@ -352,7 +403,17 @@ export const emailRouter = router({
   sendToAdmin: publicProcedure
     .input(sendToAdminInput)
     .mutation(async ({ input, ctx }) => {
-      const { formType, brokerName = "", propertyAddress = "", sections, senderEmail, pdfAttachment, formData } = input;
+      const {
+        formType,
+        brokerName = "",
+        propertyAddress = "",
+        sections,
+        senderEmail,
+        pdfAttachment,
+        excelAttachment,
+        supportingFiles = [],
+        formData,
+      } = input;
       const adminEmail = ENV.adminEmail;
 
       if (!adminEmail) {
@@ -362,13 +423,14 @@ export const emailRouter = router({
         };
       }
 
-      let archivedPdf: ArchivedPdf | undefined;
+      let archivedPdf: ArchivedSubmissionFile | undefined;
       if (pdfAttachment) {
         try {
-          archivedPdf = await archivePdf({
+          archivedPdf = await archiveGeneratedFile({
             formType,
             propertyAddress,
-            pdfAttachment,
+            attachment: pdfAttachment,
+            category: "submission_pdf",
             brokerName: brokerName || ctx.user?.name || undefined,
             senderEmail,
             uploaderOpenId: ctx.user?.openId ?? null,
@@ -381,6 +443,28 @@ export const emailRouter = router({
         }
       }
 
+      let archivedExcel: ArchivedSubmissionFile | undefined;
+      if (excelAttachment) {
+        try {
+          archivedExcel = await archiveGeneratedFile({
+            formType,
+            propertyAddress,
+            attachment: excelAttachment,
+            category: "voucher_excel",
+            brokerName: brokerName || ctx.user?.name || undefined,
+            senderEmail,
+            uploaderOpenId: ctx.user?.openId ?? null,
+          });
+        } catch (error: unknown) {
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          };
+        }
+      }
+
+      const generatedAttachments = [archivedPdf, archivedExcel].filter(Boolean) as ArchivedSubmissionFile[];
+
       const addressPart = propertyAddress ? ` - ${propertyAddress}` : "";
       const companyName = String(await getSetting("branding.company_name"));
       const subject = `[${companyName}] ${formLabelFor(formType)} Submission${addressPart}`;
@@ -391,6 +475,9 @@ export const emailRouter = router({
         sections,
         archivedPdfUrl: archivedPdf?.url,
         archivedPdfName: archivedPdf?.filename,
+        excelAttachmentUrl: archivedExcel?.url,
+        excelAttachmentName: archivedExcel?.filename,
+        supportingFiles,
       });
 
       // For sign requests, we record/queue the submission for the admin portal.
@@ -411,7 +498,7 @@ export const emailRouter = router({
               cc: senderEmail ? [senderEmail] : [],
               subject,
               content,
-              archivedPdf,
+              attachments: generatedAttachments,
             });
 
       let recordedSubmission: RecordedSubmission | null = null;
@@ -423,6 +510,8 @@ export const emailRouter = router({
           sections,
           senderEmail,
           archivedPdf,
+          excelFile: archivedExcel,
+          supportingFiles,
           uploaderOpenId: ctx.user?.openId ?? null,
           deliveryMethod: delivery.deliveryMethod,
           deliveryError: delivery.error,
@@ -441,6 +530,18 @@ export const emailRouter = router({
                 url: archivedPdf.url,
                 filename: archivedPdf.filename,
                 fileSize: archivedPdf.fileSize,
+                mimeType: archivedPdf.mimeType,
+                category: archivedPdf.category,
+              }
+            : null,
+          excelFile: archivedExcel
+            ? {
+                fileKey: archivedExcel.fileKey,
+                url: archivedExcel.url,
+                filename: archivedExcel.filename,
+                fileSize: archivedExcel.fileSize,
+                mimeType: archivedExcel.mimeType,
+                category: archivedExcel.category,
               }
             : null,
         };
@@ -463,6 +564,18 @@ export const emailRouter = router({
               url: archivedPdf.url,
               filename: archivedPdf.filename,
               fileSize: archivedPdf.fileSize,
+              mimeType: archivedPdf.mimeType,
+              category: archivedPdf.category,
+            }
+          : null,
+        excelFile: archivedExcel
+          ? {
+              fileKey: archivedExcel.fileKey,
+              url: archivedExcel.url,
+              filename: archivedExcel.filename,
+              fileSize: archivedExcel.fileSize,
+              mimeType: archivedExcel.mimeType,
+              category: archivedExcel.category,
             }
           : null,
       };
@@ -502,13 +615,14 @@ export const emailRouter = router({
       const brokerEmail = String(row.submittedByEmail ?? payload?.senderEmail ?? "").trim();
       const reference = String(row.reference ?? payload?.propertyAddress ?? "").trim();
 
-      const archivedPdf: ArchivedPdf = {
+      const archivedPdf: ArchivedSubmissionFile = {
         filename: input.pdfAttachment.filename,
         mimeType: "application/pdf",
         base64Data: input.pdfAttachment.base64Data,
         fileKey: row.pdfFileKey ?? "",
         url: row.pdfUrl ?? "",
         fileSize: Buffer.from(input.pdfAttachment.base64Data, "base64").length,
+        category: "submission_pdf",
       };
 
       const companyName = String(await getSetting("branding.company_name"));
@@ -533,7 +647,7 @@ export const emailRouter = router({
         cc: brokerEmail ? [brokerEmail] : [],
         subject,
         content,
-        archivedPdf,
+        attachments: [archivedPdf],
       });
 
       return {

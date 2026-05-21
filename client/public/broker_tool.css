@@ -6792,3 +6792,197 @@ body.broker-active .sub-tab-bar {
     flex: none;
   }
 }
+
+/* ── Focused listing + voucher cleanup ─────────────────────────────── */
+body.broker-active .sub-tab-bar {
+  position: static;
+  top: auto;
+  z-index: auto;
+}
+
+#tab-listing .sub-tab-bar {
+  padding: 0 0 8px;
+  margin-bottom: 4px;
+}
+
+#tab-listing .broker-page-head {
+  margin: 4px 0 18px;
+}
+
+#listing-mod-mode {
+  padding-top: 6px;
+}
+
+#listing-mod-mode .listing-mod-tip {
+  margin: 0 0 18px;
+}
+
+#tab-listing .listing-type-field {
+  margin-bottom: 18px;
+}
+
+#tab-listing .listing-core-row {
+  align-items: end;
+}
+
+#tab-listing .listing-type-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+#tab-listing .listing-type-opt {
+  min-height: 116px;
+  justify-content: flex-start;
+}
+
+#tab-listing .listing-type-opt .lto-sub {
+  max-width: 28ch;
+}
+
+#tab-listing .suite-table,
+#tab-voucher .broker-table,
+#tab-voucher .suite-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #E7EAEE;
+  border-radius: 12px;
+  background: #fff;
+}
+
+#tab-listing .suite-table th,
+#tab-voucher .broker-table th,
+#tab-voucher .suite-table th {
+  background: #F5F7F9;
+  color: #55606C;
+}
+
+#tab-listing .suite-table td,
+#tab-voucher .broker-table td,
+#tab-voucher .suite-table td {
+  border-bottom-color: #ECEFF3;
+}
+
+#tab-listing .suite-table tbody tr:nth-child(even) td,
+#tab-voucher .broker-table tbody tr:nth-child(even) td,
+#tab-voucher .suite-table tbody tr:nth-child(even) td {
+  background: #FBFCFD;
+}
+
+#tab-listing .upload-zone,
+#tab-listing .brochure-zone,
+#tab-voucher .upload-zone {
+  background: #FBFCFD;
+}
+
+#tab-listing .upload-zone-inner:hover,
+#tab-listing .brochure-zone-inner:hover,
+#tab-voucher .upload-zone-inner:hover {
+  background: #F5F7F9;
+}
+
+#tab-voucher .section-divider {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top-color: #E7EAEE;
+}
+
+#tab-voucher .voucher-agent-grid,
+#tab-voucher .voucher-party-grid {
+  gap: 18px;
+}
+
+#tab-voucher .voucher-agent-grid > div,
+#tab-voucher .voucher-party-grid > div {
+  padding: 18px 18px 16px;
+  border: 1px solid #E7EAEE;
+  border-radius: 12px;
+  background: #fff;
+}
+
+#tab-voucher .voucher-subsection {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #E7EAEE;
+}
+
+#tab-voucher .voucher-subsection.section-divider {
+  padding-top: 18px;
+}
+
+#tab-voucher .voucher-subsection > h3:first-child {
+  margin-top: 0;
+}
+
+#tab-voucher .voucher-upload-grid {
+  gap: 20px;
+}
+
+#tab-voucher .voucher-summary-row .field {
+  padding: 14px;
+  border: 1px solid #E7EAEE;
+  border-radius: 10px;
+  background: #fff;
+}
+
+#tab-voucher .reference-card {
+  background: #FBFCFD;
+  border-color: #DDE2E8;
+}
+
+#tab-voucher .stepper {
+  justify-content: flex-start;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+#tab-voucher .stepper::-webkit-scrollbar {
+  display: none;
+}
+
+#tab-voucher .stepper-item {
+  flex: 0 0 auto;
+}
+
+#tab-voucher .stepper-bar {
+  flex: 0 0 28px;
+  min-width: 28px;
+  margin: 0 10px;
+}
+
+#tab-voucher .stepper-label {
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+}
+
+#tab-queue .queue-status.queue-error {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(152, 0, 46, 0.16);
+  border-radius: 10px;
+  background: rgba(152, 0, 46, 0.05);
+  color: #8E1637;
+  line-height: 1.5;
+}
+
+@media (max-width: 960px) {
+  #tab-voucher .voucher-summary-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  #tab-listing .listing-type-opt {
+    min-height: 0;
+  }
+
+  #tab-voucher .voucher-agent-grid > div,
+  #tab-voucher .voucher-party-grid > div,
+  #tab-voucher .voucher-summary-row .field {
+    padding: 14px;
+  }
+
+  #tab-voucher .voucher-subsection {
+    padding: 14px 0 0;
+  }
+}
