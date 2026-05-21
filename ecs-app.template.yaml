@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: Lee Broker Tool ECS Fargate deployment with public ALB
 
 Parameters:
@@ -13,16 +13,16 @@ Parameters:
     Type: String
   CertificateArn:
     Type: String
-    Default: ''
+    Default: ""
   AppPort:
     Type: Number
     Default: 3000
   TaskCpu:
     Type: String
-    Default: '512'
+    Default: "512"
   TaskMemory:
     Type: String
-    Default: '1024'
+    Default: "1024"
   DesiredCount:
     Type: Number
     Default: 1
@@ -31,99 +31,99 @@ Parameters:
   DatabaseUrl:
     Type: String
     NoEcho: true
-    Default: ''
+    Default: ""
   DatabaseUrlSecretArn:
     Type: String
-    Default: ''
+    Default: ""
   DatabaseSslMode:
     Type: String
     Default: require
   DatabaseSslRejectUnauthorized:
     Type: String
-    Default: 'false'
+    Default: "false"
   JwtSecret:
     Type: String
     NoEcho: true
-    Default: ''
+    Default: ""
   ConnectorApiKey:
     Type: String
     NoEcho: true
-    Default: ''
+    Default: ""
   OwnerOpenId:
     Type: String
-    Default: ''
+    Default: ""
   AdminEmail:
     Type: String
-    Default: ''
+    Default: ""
   LocalAuthEnabled:
     Type: String
-    Default: 'true'
+    Default: "true"
   LocalAuthEmailDomain:
     Type: String
-    Default: ''
+    Default: ""
   LocalAdminEmails:
     Type: String
-    Default: ''
+    Default: ""
   OAuthServerUrl:
     Type: String
-    Default: ''
+    Default: ""
   ViteOAuthPortalUrl:
     Type: String
-    Default: ''
+    Default: ""
   ViteEnableAuthRedirect:
     Type: String
-    Default: 'false'
+    Default: "false"
   ViteAppId:
     Type: String
-    Default: ''
+    Default: ""
   BuiltInForgeApiUrl:
     Type: String
-    Default: ''
+    Default: ""
   BuiltInForgeApiKey:
     Type: String
     NoEcho: true
-    Default: ''
+    Default: ""
   AwsRegion:
     Type: String
-    Default: ''
+    Default: ""
   AwsCognitoUserPoolId:
     Type: String
-    Default: ''
+    Default: ""
   AwsCognitoClientId:
     Type: String
-    Default: ''
+    Default: ""
   AwsCognitoDomain:
     Type: String
-    Default: ''
+    Default: ""
   AwsS3Bucket:
     Type: String
-    Default: ''
+    Default: ""
   AwsS3Region:
     Type: String
-    Default: ''
+    Default: ""
 
 Conditions:
-  HasCertificate: !Not [!Equals [!Ref CertificateArn, '']]
-  HasDatabaseUrlSecretArn: !Not [!Equals [!Ref DatabaseUrlSecretArn, '']]
-  HasAwsS3Bucket: !Not [!Equals [!Ref AwsS3Bucket, '']]
+  HasCertificate: !Not [!Equals [!Ref CertificateArn, ""]]
+  HasDatabaseUrlSecretArn: !Not [!Equals [!Ref DatabaseUrlSecretArn, ""]]
+  HasAwsS3Bucket: !Not [!Equals [!Ref AwsS3Bucket, ""]]
 
 Resources:
   Cluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: !Sub '${ServiceName}-cluster'
+      ClusterName: !Sub "${ServiceName}-cluster"
 
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub '/ecs/${ServiceName}'
+      LogGroupName: !Sub "/ecs/${ServiceName}"
       RetentionInDays: 14
 
   ExecutionRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
@@ -138,11 +138,11 @@ Resources:
     Type: AWS::IAM::Policy
     Condition: HasDatabaseUrlSecretArn
     Properties:
-      PolicyName: !Sub '${ServiceName}-exec-database-url-secret'
+      PolicyName: !Sub "${ServiceName}-exec-database-url-secret"
       Roles:
         - !Ref ExecutionRole
       PolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Action:
@@ -153,7 +153,7 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
@@ -164,17 +164,17 @@ Resources:
     Type: AWS::IAM::Policy
     Condition: HasAwsS3Bucket
     Properties:
-      PolicyName: !Sub '${ServiceName}-task-s3-access'
+      PolicyName: !Sub "${ServiceName}-task-s3-access"
       Roles:
         - !Ref TaskRole
       PolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Action:
               - s3:GetObject
               - s3:PutObject
-            Resource: !Sub 'arn:aws:s3:::${AwsS3Bucket}/*'
+            Resource: !Sub "arn:aws:s3:::${AwsS3Bucket}/*"
 
   LoadBalancerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -215,7 +215,7 @@ Resources:
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: !Sub '${ServiceName}-alb'
+      Name: !Sub "${ServiceName}-alb"
       Scheme: internet-facing
       Type: application
       SecurityGroups:
@@ -223,12 +223,12 @@ Resources:
       Subnets: !Ref PublicSubnetIds
       LoadBalancerAttributes:
         - Key: deletion_protection.enabled
-          Value: 'false'
+          Value: "false"
 
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub '${ServiceName}-tg'
+      Name: !Sub "${ServiceName}-tg"
       Port: !Ref AppPort
       Protocol: HTTP
       TargetType: ip
@@ -251,7 +251,7 @@ Resources:
         - - Type: redirect
             RedirectConfig:
               Protocol: HTTPS
-              Port: '443'
+              Port: "443"
               StatusCode: HTTP_301
         - - Type: forward
             TargetGroupArn: !Ref TargetGroup
@@ -259,7 +259,7 @@ Resources:
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub '${ServiceName}-task'
+      Family: !Sub "${ServiceName}-task"
       Cpu: !Ref TaskCpu
       Memory: !Ref TaskMemory
       NetworkMode: awsvpc
@@ -283,7 +283,7 @@ Resources:
               awslogs-stream-prefix: ecs
           Environment:
             - Name: PORT
-              Value: !Sub '${AppPort}'
+              Value: !Sub "${AppPort}"
             - Name: NODE_ENV
               Value: production
             - Name: DATABASE_SSL_MODE
@@ -359,7 +359,7 @@ Resources:
 Outputs:
   AppUrl:
     Description: Public URL for the Lee Broker Tool service
-    Value: !Sub 'http://${LoadBalancer.DNSName}'
+    Value: !Sub "http://${LoadBalancer.DNSName}"
   LoadBalancerDnsName:
     Description: Application Load Balancer DNS name
     Value: !GetAtt LoadBalancer.DNSName
