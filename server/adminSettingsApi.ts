@@ -25,6 +25,12 @@ const categorySchema = z.enum(["branding", "workflow", "notifications", "integra
 export const adminSettingsRouter = Router();
 adminSettingsRouter.use(requirePlatformAdmin);
 
+function normalizeOptionalUrl(value: unknown): string | null {
+  return typeof value === "string" || value === null || value === undefined
+    ? normalizeStoredFileUrl(value)
+    : null;
+}
+
 function asyncAdmin(
   fn: (req: Request, res: Response) => Promise<void>
 ): (req: Request, res: Response, next: NextFunction) => void {
@@ -49,8 +55,8 @@ adminSettingsRouter.get(
     }
     const grouped = await getGroupedSettings(true);
     if (grouped?.branding) {
-      grouped.branding.logo_url = normalizeStoredFileUrl(grouped.branding.logo_url);
-      grouped.branding.letterhead_template_url = normalizeStoredFileUrl(grouped.branding.letterhead_template_url);
+      grouped.branding.logo_url = normalizeOptionalUrl(grouped.branding.logo_url);
+      grouped.branding.letterhead_template_url = normalizeOptionalUrl(grouped.branding.letterhead_template_url);
     }
     res.json(grouped);
   })
@@ -163,8 +169,8 @@ adminSettingsRouter.get(
     }
     const grouped = await getGroupedCategory(parsed.data as SettingsCategory, true);
     if (parsed.data === "branding") {
-      grouped.logo_url = normalizeStoredFileUrl(grouped.logo_url);
-      grouped.letterhead_template_url = normalizeStoredFileUrl(grouped.letterhead_template_url);
+      grouped.logo_url = normalizeOptionalUrl(grouped.logo_url);
+      grouped.letterhead_template_url = normalizeOptionalUrl(grouped.letterhead_template_url);
     }
     res.json(grouped);
   })
@@ -184,8 +190,8 @@ adminSettingsRouter.patch(
     }
     const out = await patchSettings(db, req.body as Record<string, unknown>, req.user!.id, req);
     if (out?.branding) {
-      out.branding.logo_url = normalizeStoredFileUrl(out.branding.logo_url);
-      out.branding.letterhead_template_url = normalizeStoredFileUrl(out.branding.letterhead_template_url);
+      out.branding.logo_url = normalizeOptionalUrl(out.branding.logo_url);
+      out.branding.letterhead_template_url = normalizeOptionalUrl(out.branding.letterhead_template_url);
     }
     res.json(out);
   })
