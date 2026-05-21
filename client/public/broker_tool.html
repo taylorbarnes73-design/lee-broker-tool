@@ -1150,7 +1150,7 @@
 
   <div class="optional-wrapper">
     <div class="optional-toggle" onclick="toggleOptional(this)">
-      <h2>Additional Details <span class="optional-badge">Optional</span></h2>
+      <h2>Additional Details</h2>
       <span class="opt-chevron">&#9662;</span>
     </div>
     <div class="optional-body">
@@ -11682,6 +11682,7 @@ async function uploadAndParseListingDealDocuments(fileList) {
 
   if (status) status.innerHTML = '<span class="text-muted-sm">Analyzing with Gemini…</span>';
   if (zone) zone.classList.add('upload-zone-active');
+  showFormOverlay('Uploading documents...', { step: 1, totalSteps: 3, stepLabel: 'Uploading' });
 
   try {
     const uploaderName = getSignedInBrokerIdentity()?.name || '';
@@ -11704,6 +11705,8 @@ async function uploadAndParseListingDealDocuments(fileList) {
       uploaderName,
     });
     if (!batchResult || !Array.isArray(batchResult.results)) throw new Error('Unexpected upload response');
+
+    updateFormOverlay('Analyzing with Gemini...', 2, 3, 'Checking signatures');
 
     if (!Array.isArray(uploadedFiles['l-deal-documents'])) uploadedFiles['l-deal-documents'] = [];
     const parseTasks = [];
@@ -11744,6 +11747,7 @@ async function uploadAndParseListingDealDocuments(fileList) {
     });
 
     await Promise.all(parseTasks);
+    updateFormOverlay('Applying extracted fields...', 3, 3, 'Applying fields');
     renderListingDealDocumentsStatusMessage();
     updateListingRequiredDocStatus();
     if (live) live.textContent = getListingDetectionAnnouncement();
@@ -11764,6 +11768,8 @@ async function uploadAndParseListingDealDocuments(fileList) {
     listingDocumentDetection = listingDocumentDefaults();
     updateListingRequiredDocStatus();
     if (zone) zone.classList.remove('upload-zone-active');
+  } finally {
+    hideFormOverlay();
   }
 }
 
@@ -12216,6 +12222,7 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
 
   if (status) status.innerHTML = '<span class="text-muted-sm">Uploading documents…</span>';
   if (zone) zone.classList.add('upload-zone-active');
+  showFormOverlay('Uploading documents...', { step: 1, totalSteps: 3, stepLabel: 'Uploading' });
 
   try {
     const payloads = await Promise.all(validList.map(file => new Promise((resolve, reject) => {
@@ -12237,6 +12244,8 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
     });
     if (!batchResult || !Array.isArray(batchResult.results)) throw new Error('Upload failed.');
 
+    updateFormOverlay('Analyzing with Gemini...', 2, 3, 'Checking signatures');
+
     if (!Array.isArray(uploadedFiles['v-deal-documents'])) uploadedFiles['v-deal-documents'] = [];
     let uploadedCount = 0;
     batchResult.results.forEach((result, index) => {
@@ -12257,6 +12266,7 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
     }
 
     const analysis = await runVoucherGeminiAnalysis();
+    updateFormOverlay('Applying extracted fields...', 3, 3, 'Applying fields');
     if (analysis.appliedCount > 0) {
       showToast(`Uploaded ${uploadedCount} file${uploadedCount !== 1 ? 's' : ''} and filled ${analysis.appliedCount} field${analysis.appliedCount !== 1 ? 's' : ''}.`);
     } else {
@@ -12265,6 +12275,8 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
   } catch (err) {
     if (status) status.innerHTML = '<span class="text-error">Upload failed. Please try again.</span>';
     if (zone) zone.classList.remove('upload-zone-active');
+  } finally {
+    hideFormOverlay();
   }
 }
 
@@ -12336,8 +12348,10 @@ async function scrapeDealDocForTab(fileUrl, mimeType, tab, statusId, buttonId, d
     btn.classList.add('loading');
     btn.textContent = 'Analyzing document...';
   }
+  showFormOverlay('Analyzing with Gemini...', { step: 1, totalSteps: 2, stepLabel: 'Extracting fields' });
   try {
     const result = await callTrpc('aiAssist.extractDocument', { fileUrl, mimeType, tab });
+    updateFormOverlay('Applying extracted fields...', 2, 2, 'Applying fields');
     if (result && result.success) {
       const count = applyAiFields(tab, result.fields || {});
       if (status) status.textContent = `Filled ${count} field${count !== 1 ? 's' : ''} from document`;
@@ -12347,6 +12361,7 @@ async function scrapeDealDocForTab(fileUrl, mimeType, tab, statusId, buttonId, d
   } catch (err) {
     if (status) status.textContent = 'Error: ' + err.message;
   } finally {
+    hideFormOverlay();
     if (btn) {
       btn.classList.remove('loading');
       btn.textContent = doneText;
@@ -15596,5 +15611,73 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 <script src="/broker_profiles.js"></script>
+
+<!-- Form-level loading overlay -->
+<div id="form-overlay" class="form-overlay is-hidden" role="status" aria-live="polite" aria-hidden="true">
+  <div class="form-overlay-inner">
+    <div class="form-overlay-spinner"></div>
+    <div class="form-overlay-msg" id="form-overlay-msg">Processing...</div>
+    <div class="form-overlay-sub">This may take up to 30 seconds</div>
+    <div class="form-overlay-progress is-hidden" id="form-overlay-progress">
+      <div class="form-overlay-bar"><div class="form-overlay-fill" id="form-overlay-fill"></div></div>
+      <div class="form-overlay-step-label" id="form-overlay-step-label"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Form overlay helpers ──
+function showFormOverlay(msg, opts) {
+  const overlay = document.getElementById('form-overlay');
+  const msgEl = document.getElementById('form-overlay-msg');
+  const progress = document.getElementById('form-overlay-progress');
+  if (!overlay) return;
+  if (msgEl) msgEl.textContent = msg || 'Processing...';
+  if (opts && typeof opts.step === 'number') {
+    _setFormOverlayProgress(opts.step, opts.totalSteps || 1, opts.stepLabel || '');
+    if (progress) progress.classList.remove('is-hidden');
+  } else {
+    if (progress) progress.classList.add('is-hidden');
+  }
+  overlay.classList.remove('is-hidden');
+  overlay.setAttribute('aria-hidden', 'false');
+}
+
+function updateFormOverlay(msg, step, totalSteps, stepLabel) {
+  const msgEl = document.getElementById('form-overlay-msg');
+  if (msgEl && msg) msgEl.textContent = msg;
+  if (typeof step === 'number') {
+    _setFormOverlayProgress(step, totalSteps || 1, stepLabel || '');
+    const progress = document.getElementById('form-overlay-progress');
+    if (progress) progress.classList.remove('is-hidden');
+  }
+}
+
+function _setFormOverlayProgress(step, totalSteps, stepLabel) {
+  const fill = document.getElementById('form-overlay-fill');
+  const label = document.getElementById('form-overlay-step-label');
+  const pct = Math.round((step / totalSteps) * 100);
+  if (fill) fill.style.width = pct + '%';
+  if (label) label.textContent = stepLabel ? 'Step ' + step + ' of ' + totalSteps + ' — ' + stepLabel : 'Step ' + step + ' of ' + totalSteps;
+}
+
+function hideFormOverlay() {
+  const overlay = document.getElementById('form-overlay');
+  if (!overlay) return;
+  overlay.classList.add('is-hidden');
+  overlay.setAttribute('aria-hidden', 'true');
+  const fill = document.getElementById('form-overlay-fill');
+  if (fill) fill.style.width = '0%';
+  const progress = document.getElementById('form-overlay-progress');
+  if (progress) progress.classList.add('is-hidden');
+}
+
+// ── Inline field loading state helpers ──
+function setFieldLoading(fieldEl, loading) {
+  if (!fieldEl) return;
+  if (loading) fieldEl.classList.add('field-loading');
+  else fieldEl.classList.remove('field-loading');
+}
+</script>
 </body>
 </html>
