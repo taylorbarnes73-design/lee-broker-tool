@@ -28,9 +28,10 @@ const MAX_BATCH_FILES = 20; // maximum files accepted in a single batch request
 const MAX_BATCH_CONCURRENCY = 5; // max concurrent S3 uploads within a batch
 const LISTING_BROCHURE_CATEGORY = "listing_brochure";
 const LISTING_BROCHURE_MIMES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
-// Categories are path segments in storage keys: lowercase alphanumeric start,
-// then lowercase alphanumeric, underscore, or hyphen (max 64 chars).
-const CATEGORY_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+// Categories are one or more slash-delimited path segments in storage keys.
+// Each segment must start with lowercase alphanumeric and then use
+// lowercase alphanumeric, underscore, or hyphen (max 64 chars per segment).
+const CATEGORY_SEGMENT_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 
 function normalizeLeeLogin(raw: string) {
   const value = raw.trim().toLowerCase();
@@ -39,14 +40,24 @@ function normalizeLeeLogin(raw: string) {
 }
 
 function sanitizeUploadCategory(raw: string): string {
-  const category = String(raw ?? "").trim().toLowerCase();
-  if (!CATEGORY_PATTERN.test(category)) {
+  const category = String(raw ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\\/g, "/")
+    .replace(/^\/+|\/+$/g, "");
+  const segments = category.split("/");
+  if (
+    segments.length === 0 ||
+    segments.some(
+      segment => segment.length === 0 || segment === "." || segment === ".." || !CATEGORY_SEGMENT_PATTERN.test(segment)
+    )
+  ) {
     throw new TRPCError({
       code: "BAD_REQUEST",
       message: "Invalid file category.",
     });
   }
-  return category;
+  return segments.join("/");
 }
 
 /**
