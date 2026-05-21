@@ -199,5 +199,6 @@ describe("comp data normalization", () => {
     expect(formatSaleTransactionTypeDisplay("Investor")).toBe("Investment");
     expect(formatSaleTransactionTypeDisplay("Owner/User")).toBe("User");
     expect(abbreviateRentTypeForReport("Full Service Gross")).toBe("FSG");
+    expect(abbreviateRentTypeForReport("GRS")).toBe("G");
   });
 });

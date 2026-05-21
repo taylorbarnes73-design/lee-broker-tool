@@ -135,7 +135,7 @@
       <h1 class="page-h1">Listing Entry</h1>
     </div>
     <div class="page-head-right">
-      <div class="page-meta-chip"><span class="dot"></span>Draft saved locally</div>
+      <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('listing')">Save Draft</button>
     </div>
   </div>
 
@@ -166,12 +166,23 @@
               <span class="lto-title">Retail</span>
               <span class="lto-sub">Frontage, center type, anchor, and traffic fields.</span>
             </button>
+            <button type="button" class="listing-type-opt" data-type="land" onclick="setListingType('land')">
+              <span class="lto-eyebrow">Land</span>
+              <span class="lto-title">Land</span>
+              <span class="lto-sub">Parcel-level details, zoning, and entitlement fields.</span>
+            </button>
+            <button type="button" class="listing-type-opt" data-type="multifamily" onclick="setListingType('multifamily')">
+              <span class="lto-eyebrow">Multifamily</span>
+              <span class="lto-title">Multifamily</span>
+              <span class="lto-sub">Apartment and multifamily inventory details.</span>
+            </button>
           </div>
           <select id="l-prop-type" class="picker-sync-select" onchange="onPropTypeChange()">
             <option value="industrial">Industrial</option>
             <option value="office">Office</option>
             <option value="retail">Retail</option>
             <option value="land">Land</option>
+            <option value="multifamily">Multifamily</option>
           </select>
         </div>
       <div class="row c3 listing-core-row">
@@ -185,29 +196,29 @@
         <div class="field"><label>Listing expiration</label><input id="l-listing-expiration" type="date" data-lbt-auto-expiry="1"><div class="field-hint">Defaults from Date Entered + office term</div></div>
       </div>
 
-      <h3 class="section-heading-top">Upload Documents</h3>
+      <h3 class="section-heading-top">Upload Deal Documents</h3>
 
       <div class="field field-stack-gap">
-        <label class="inline-flex-label">Property Brochure <span class="inline-badge">Auto-Fill from Document</span></label>
+        <label class="inline-flex-label">Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></label>
         <div class="brochure-zone" id="brochure-zone" onclick="document.getElementById('l-brochure-file').click()">
           <input type="file" id="l-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" onchange="onBrochureSelected(this)">
           <div class="brochure-zone-inner">
             <span class="brochure-zone-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
             <div>
-              <div class="brochure-zone-label">Upload property brochure or flyer</div>
+              <div class="brochure-zone-label">Upload deal documents</div>
               <div class="brochure-zone-sub">PDF, JPG, PNG &mdash; AI will extract address, size, rate, and more</div>
             </div>
           </div>
           <div class="brochure-status" id="brochure-status"></div>
         </div>
         <button class="brochure-scrape-btn" id="brochure-scrape-btn" onclick="scrapeBrochure()">
-          Scrape &amp; Fill Listing Fields
+          Parse &amp; Fill Listing Fields
         </button>
       </div>
 
       <div class="row c2">
         <div class="field">
-          <label>Listing Agreement</label>
+          <label class="req">Listing Agreement</label>
           <div class="upload-zone" id="uz-l-agreement" data-category="listing_agreement" data-field="l-doc-agreement">
             <input type="file" id="l-doc-agreement" class="hidden-file-input" accept=".pdf,.doc,.docx">
             <div class="upload-zone-inner" onclick="document.getElementById('l-doc-agreement').click()">
@@ -218,7 +229,7 @@
           </div>
         </div>
         <div class="field">
-          <label>Agency Disclosure</label>
+          <label class="req">Agency Disclosure</label>
           <div class="upload-zone" id="uz-l-disclosure" data-category="agency_disclosure" data-field="l-doc-disclosure">
             <input type="file" id="l-doc-disclosure" class="hidden-file-input" accept=".pdf,.doc,.docx">
             <div class="upload-zone-inner" onclick="document.getElementById('l-doc-disclosure').click()">
@@ -486,16 +497,16 @@
 
       <div class="deal-actions">
         <button class="btn btn-gray" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
-        <button class="btn btn-red" onclick="showListingReview()">Review &amp; Submit</button>
-        <button class="btn btn-green" onclick="openSendToAdminModal('listing')">Send to Admin</button>
+        <button class="btn btn-red" onclick="showListingReview()">Review</button>
+        <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing')">Save Draft</button>
       </div>
     </aside>
     </div><!-- /deal-shell -->
 
     <div class="btn-bar is-hidden" id="listing-form-actions">
-      <button class="btn btn-red" onclick="showListingReview()"><span class="btn-label">Review &amp; Confirm &rarr;</span></button>
+      <button class="btn btn-red" onclick="showListingReview()"><span class="btn-label">Review</span></button>
       <button class="btn btn-gray" id="btn-listing-pdf" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
-    <button class="btn btn-green" id="btn-listing-send-admin" onclick="openSendToAdminModal('listing')"><span class="btn-spinner"></span><span class="btn-label">Send to Admin</span></button>
+    <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing')"><span class="btn-label">Save Draft</span></button>
       <button class="btn btn-gray" onclick="clearListing()"><span class="btn-label">Clear Form</span></button>
     </div>
 
@@ -509,14 +520,14 @@
         <div id="listing-review-content" class="review-content"></div>
       </div>
       <div class="btn-bar btn-bar-compact">
-        <button class="btn btn-red btn-lg" onclick="submitListingToMLS(this)"><span class="btn-spinner"></span><span class="btn-label">Submit to MLS</span></button>
+        <button class="btn btn-red btn-lg" onclick="submitListingToAdmin(this)"><span class="btn-spinner"></span><span class="btn-label">Submit to Admin</span></button>
         <button class="btn btn-gray" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
       </div>
       <div id="listing-post-submit" class="card success-card is-hidden">
         <div class="success-header">
-          <h2 class="success-title">Listing Submitted to MLS</h2>
+          <h2 class="success-title">Listing Submitted to Admin</h2>
         </div>
-        <p class="success-copy">Your listing has been sent. Would you like to create a sign order for this property?</p>
+        <p class="success-copy">Your listing has been sent to admin. Would you like to create a sign order for this property?</p>
         <div class="btn-bar btn-bar-compact">
           <button class="btn btn-red" onclick="copyToSign(); switchTab('sign');">Create Sign Order &rarr;</button>
           <button class="btn btn-gray" onclick="exportListingPdf()">Download PDF</button>
@@ -528,6 +539,22 @@
 
   <div id="listing-mod-mode" class="is-hidden">
     <div class="tip listing-mod-tip">Enter the property address and describe the changes needed. Select which listing service(s) to notify.</div>
+    <div class="card ai-shortcut-card">
+      <h2>Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></h2>
+      <p class="micro-copy">Upload deal documents and let Gemini extract key details into the modification form.</p>
+      <div class="brochure-zone" id="lm-brochure-zone" onclick="document.getElementById('lm-brochure-file').click()">
+        <input type="file" id="lm-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" onchange="onListingModBrochureSelected(this)">
+        <div class="brochure-zone-inner">
+          <span class="brochure-zone-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+          <div>
+            <div class="brochure-zone-label">Upload deal documents</div>
+            <div class="brochure-zone-sub">PDF, JPG, PNG</div>
+          </div>
+        </div>
+        <div class="brochure-status" id="lm-brochure-status"></div>
+      </div>
+      <button class="brochure-scrape-btn" id="lm-brochure-scrape-btn" onclick="scrapeListingModBrochure()">Parse &amp; Fill Modification Fields</button>
+    </div>
     <div class="card required-section">
       <h2>Listing Modification <span class="required-badge">Required</span></h2>
       <div class="row c2">
@@ -544,8 +571,9 @@
         <label><input type="checkbox" name="lm-services" value="other"> Other (specify in notes)</label>
       </div>
     </div>
-    <div class="btn-bar">
-      <button class="btn btn-red" onclick="openEmailModal('listing-mod')">Submit Modification</button>
+    <div class="btn-bar" id="listing-mod-form-actions">
+      <button class="btn btn-red" onclick="openReviewSnapshot('listing-mod')">Review</button>
+      <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing-mod')">Save Draft</button>
       <button class="btn btn-gray" onclick="document.getElementById('lm-notes').value='';document.getElementById('lm-address').value='';">Clear</button>
     </div>
   </div><!-- end listing-mod-mode -->
@@ -564,6 +592,22 @@
     </div>
   </div>
   <div class="tip pane-intro-tip">Complete each step. Fields marked <span class="required-mark">*</span> are required.</div>
+  <div class="card ai-shortcut-card">
+    <h2>Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></h2>
+    <p class="micro-copy">Upload deal documents to extract order basics and autofill this sign request.</p>
+    <div class="brochure-zone" id="s-brochure-zone" onclick="document.getElementById('s-brochure-file').click()">
+      <input type="file" id="s-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" onchange="onSignBrochureSelected(this)">
+      <div class="brochure-zone-inner">
+        <span class="brochure-zone-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+        <div>
+          <div class="brochure-zone-label">Upload deal documents</div>
+          <div class="brochure-zone-sub">PDF, JPG, PNG</div>
+        </div>
+      </div>
+      <div class="brochure-status" id="s-brochure-status"></div>
+    </div>
+    <button class="brochure-scrape-btn" id="s-brochure-scrape-btn" onclick="scrapeSignBrochure()">Parse &amp; Fill Sign Fields</button>
+  </div>
 
   <div class="deal-shell" id="s-deal-shell">
   <div class="deal-main" id="sign-main">
@@ -745,13 +789,13 @@
     </div>
     <div class="deal-actions">
       <button class="btn btn-gray" onclick="exportSignPdf()">Download PDF</button>
-      <button class="btn btn-red" onclick="openSendToAdminModal('sign')">Submit Sign Request</button>
+      <button class="btn btn-red" onclick="openReviewSnapshot('sign')">Review</button>
     </div>
   </aside>
   </div><!-- /deal-shell -->
   <div class="btn-bar btn-bar-top-md">
     <button class="btn btn-gray" onclick="exportSignPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
-    <button class="btn btn-red" onclick="openSendToAdminModal('sign')">Send Sign Order to Admin</button>
+    <button class="btn btn-red" onclick="openReviewSnapshot('sign')">Review</button>
     <button class="btn btn-gray" onclick="clearSign()">Clear Form</button>
   </div>
 </div>
@@ -774,20 +818,44 @@
 
   <!-- AI Auto-fill (optional shortcut, sits above Step 1) -->
   <div class="card ai-shortcut-card">
-    <h2>Auto-fill from Document <span class="inline-badge">Auto-Fill from Document</span></h2>
-    <p class="micro-copy">Optional. Upload a deal brochure, OM, or commission agreement and the AI will pre-fill as many voucher fields as it can. You can still edit every value in the steps below.</p>
+    <h2>Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></h2>
+    <p class="micro-copy">Upload deal documents and let Gemini pre-fill voucher fields before review.</p>
     <div class="brochure-zone" id="v-brochure-zone" onclick="document.getElementById('v-brochure-file').click()">
       <input type="file" id="v-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" onchange="onVoucherBrochureSelected(this)">
       <div class="brochure-zone-inner">
         <span class="brochure-zone-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
         <div>
-          <div class="brochure-zone-label">Upload deal brochure, OM, or commission agreement</div>
+          <div class="brochure-zone-label">Upload deal documents</div>
           <div class="brochure-zone-sub">PDF, JPG, PNG</div>
         </div>
       </div>
       <div class="brochure-status" id="v-brochure-status"></div>
     </div>
-    <button class="brochure-scrape-btn" id="v-brochure-scrape-btn" onclick="scrapeVoucherBrochure()">Scrape &amp; Fill Voucher Fields</button>
+    <button class="brochure-scrape-btn" id="v-brochure-scrape-btn" onclick="scrapeVoucherBrochure()">Parse &amp; Fill Voucher Fields</button>
+    <div class="row c2 voucher-upload-grid top-gap-md">
+      <div class="field">
+        <label class="req">Agency Disclosure</label>
+        <div class="upload-zone" id="uz-v-disclosure" data-category="agency_disclosure" data-field="v-doc-disclosure">
+          <input type="file" id="v-doc-disclosure" class="hidden-file-input" accept=".pdf,.doc,.docx">
+          <div class="upload-zone-inner" onclick="document.getElementById('v-doc-disclosure').click()">
+            <span class="upload-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+            <span class="upload-label">Click to upload PDF / DOC</span>
+          </div>
+          <div class="upload-status" id="us-v-disclosure"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label class="req">Exclusive Listing Agreement</label>
+        <div class="upload-zone" id="uz-v-agreement" data-category="listing_agreement" data-field="v-doc-agreement">
+          <input type="file" id="v-doc-agreement" class="hidden-file-input" accept=".pdf,.doc,.docx">
+          <div class="upload-zone-inner" onclick="document.getElementById('v-doc-agreement').click()">
+            <span class="upload-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+            <span class="upload-label">Click to upload PDF / DOC</span>
+          </div>
+          <div class="upload-status" id="us-v-agreement"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="stepper" data-stepper-for="voucher-main"></div>
@@ -1085,34 +1153,8 @@
   </div>
 
   <div class="card" id="vstep-8" data-vstep="8" data-step-label="Distribution" data-card-eyebrow="Step 7 of 7">
-    <h2>Step 8 — Upload Documents &amp; Commission Distribution</h2>
-    <h3>Compliance Documents</h3>
+    <h2>Step 7 — Commission Distribution</h2>
     <div id="voucher-attachment-required-msg" class="tip text-error is-hidden" role="alert"></div>
-
-    <div class="row c2 voucher-upload-grid">
-      <div class="field">
-        <label>Agency Disclosure</label>
-        <div class="upload-zone" id="uz-v-disclosure" data-category="agency_disclosure" data-field="v-doc-disclosure">
-          <input type="file" id="v-doc-disclosure" class="hidden-file-input" accept=".pdf,.doc,.docx">
-          <div class="upload-zone-inner" onclick="document.getElementById('v-doc-disclosure').click()">
-            <span class="upload-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
-            <span class="upload-label">Click to upload PDF / DOC</span>
-          </div>
-          <div class="upload-status" id="us-v-disclosure"></div>
-        </div>
-      </div>
-      <div class="field">
-        <label>Exclusive Listing Agreement</label>
-        <div class="upload-zone" id="uz-v-agreement" data-category="listing_agreement" data-field="v-doc-agreement">
-          <input type="file" id="v-doc-agreement" class="hidden-file-input" accept=".pdf,.doc,.docx">
-          <div class="upload-zone-inner" onclick="document.getElementById('v-doc-agreement').click()">
-            <span class="upload-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
-            <span class="upload-label">Click to upload PDF / DOC</span>
-          </div>
-          <div class="upload-status" id="us-v-agreement"></div>
-        </div>
-      </div>
-    </div>
     <h3 class="section-divider section-heading-top-lg">Commission Distribution</h3>
     <div class="row c3 field-stack-gap-sm voucher-summary-row">
       <div class="field"><label>Total Invoice</label><input id="v-dist-total-invoice" class="readonly-fill-strong" placeholder="$0" readonly></div>
@@ -1209,8 +1251,8 @@
 
   <div class="btn-bar">
     <button class="btn btn-gray" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Excel Voucher</span></button>
-    <button class="btn btn-red" onclick="openEmailModal('voucher')">Submit Voucher</button>
-    <button class="btn btn-green" id="btn-voucher-send-admin" onclick="openSendToAdminModal('voucher')"><span class="btn-spinner"></span><span class="btn-label">Send to Admin</span></button>
+    <button class="btn btn-red" onclick="openReviewSnapshot('voucher')">Review</button>
+    <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('voucher')">Save Draft</button>
     <button class="btn btn-outline" onclick="switchTab('sign')">Remove Signs &rarr;</button>
     <button class="btn btn-gray" onclick="clearVoucher()">Clear Form</button>
   </div>
@@ -1266,8 +1308,7 @@
 
     <div class="deal-actions">
       <button class="btn btn-gray" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Excel Voucher</span></button>
-      <button class="btn btn-red" onclick="openEmailModal('voucher')">Submit Voucher</button>
-      <button class="btn btn-green" onclick="openSendToAdminModal('voucher')">Send to Admin</button>
+      <button class="btn btn-red" onclick="openReviewSnapshot('voucher')">Review</button>
     </div>
   </aside>
   </div><!-- /deal-shell -->
@@ -1282,10 +1323,26 @@
       <h1 class="page-h1">Comp Input</h1>
     </div>
     <div class="page-head-right">
-      <div class="page-meta-chip"><span class="dot"></span>Single-screen entry</div>
+      <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('comp')">Save Draft</button>
     </div>
   </div>
   <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections for additional detail.</div>
+  <div class="card ai-shortcut-card">
+    <h2>Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></h2>
+    <p class="micro-copy">Upload deal documents to parse comp details and prefill the comp form.</p>
+    <div class="brochure-zone" id="c-brochure-zone" onclick="document.getElementById('c-brochure-file').click()">
+      <input type="file" id="c-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" onchange="onCompBrochureSelected(this)">
+      <div class="brochure-zone-inner">
+        <span class="brochure-zone-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+        <div>
+          <div class="brochure-zone-label">Upload deal documents</div>
+          <div class="brochure-zone-sub">PDF, JPG, PNG</div>
+        </div>
+      </div>
+      <div class="brochure-status" id="c-brochure-status"></div>
+    </div>
+    <button class="brochure-scrape-btn" id="c-brochure-scrape-btn" onclick="scrapeCompBrochure()">Parse &amp; Fill Comp Fields</button>
+  </div>
 
   <!-- ═══ REQUIRED SECTION ═══ -->
   <div class="card required-section" data-card-eyebrow="Add a comp" data-card-control=".branch-toggle-wrap">
@@ -1305,14 +1362,14 @@
           <option value="sale">Sale Comp</option>
         </select>
       </div>
-      <div class="field"><label class="req">LANB Source</label><select id="c-source"></select><div class="field-hint">Broker Name</div></div>
+      <div class="field"><label class="req">LANB Source</label><input id="c-source" list="comp-source-options"><div class="field-hint">Start typing broker name...</div></div>
       <div class="field"><label>Date</label><input id="c-date" type="date"></div>
     </div>
 
     <h3 class="section-heading-top">Location</h3>
     <div class="row c2">
       <div class="field"><label class="req">Address</label><input id="c-address" list="comp-address-options"></div>
-      <div class="field"><label class="req">City</label><select id="c-city"></select></div>
+      <div class="field"><label class="req">City</label><input id="c-city"></div>
     </div>
 
     <h3 class="section-heading-top">Property Photo</h3>
@@ -1363,11 +1420,6 @@
         <div class="field"><label>Lessee / Tenant</label><input id="c-lessee" list="comp-party-options"><div class="field-hint">Tenant name</div></div>
         <div class="field"><label>Lessor / Landlord</label><input id="c-lessor" list="comp-party-options"><div class="field-hint">Landlord name</div></div>
       </div>
-      <div class="row comp-lease-only" style="margin-top:8px;">
-        <div class="field">
-          <label><input type="checkbox" id="c-sublease-party-labels"> Sublease — PDF labels use Sublessor / Sublessee</label>
-        </div>
-      </div>
     </div>
 
     <div class="comp-sale-only">
@@ -1391,7 +1443,7 @@
   <!-- ═══ OPTIONAL SECTIONS ═══ -->
   <div class="optional-wrapper">
     <div class="optional-toggle" onclick="toggleOptional(this)">
-      <h2>Additional Details <span class="optional-badge">Optional</span></h2>
+      <h2>Additional Details</h2>
       <span class="opt-chevron">&#9662;</span>
     </div>
     <div class="optional-body">
@@ -1555,8 +1607,8 @@
 
   <div class="btn-bar btn-bar-top-md">
     <button class="btn btn-gray" onclick="exportCompPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
-    <button class="btn btn-red" onclick="submitCompDirect()">Submit Comp</button>
-    <button class="btn btn-outline" onclick="switchTab('comp-reports')">Open Comp Reports</button>
+    <button class="btn btn-red" onclick="openReviewSnapshot('comp')">Review</button>
+    <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('comp')">Save Draft</button>
     <button class="btn btn-gray" onclick="clearComp()">Clear Form</button>
   </div>
   <div id="comp-submit-badge" class="comp-submit-badge"></div>
@@ -1583,6 +1635,7 @@
     <option value="Owner/User">
     <option value="TBD">
   </datalist>
+  <datalist id="comp-source-options"></datalist>
 
 </div>
 
@@ -1665,8 +1718,8 @@
     <div class="cr-results-meta">
       <div id="cr-results-count">No results loaded.</div>
       <div class="cr-filters-actions-right">
-        <button class="btn btn-gray" type="button" onclick="compReportExportCsv()">Download CSV</button>
-        <button class="btn btn-outline" type="button" onclick="compReportExportPdf()">Download PDF (Lee Template)</button>
+        <button class="btn btn-gray" type="button" onclick="compReportExportCsv()">Excel file</button>
+        <button class="btn btn-outline" type="button" onclick="compReportExportPdf()">Download Comp Report</button>
       </div>
     </div>
 
@@ -2241,7 +2294,6 @@
       <div>
         <div class="admin-page-eyebrow">Broker Desk</div>
         <h2>Submission Queue</h2>
-        <p>See your active submissions and where each one sits in the shared processing queue. Full submission details remain available to admins in the Admin Portal.</p>
       </div>
       <button type="button" class="btn btn-outline" id="btn-broker-queue-refresh" onclick="refreshBrokerQueue()"><span class="btn-spinner"></span><span class="btn-label">Refresh Queue</span></button>
     </div>
@@ -2722,6 +2774,20 @@
     <div class="btn-bar">
       <button class="btn btn-gray" onclick="closeSendToAdminModal()">Cancel</button>
       <button class="btn btn-green" id="sta-send-btn" onclick="submitSendToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Submit to Queue</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="review-snapshot-modal">
+  <div class="modal">
+    <h2 id="review-snapshot-title">Review Snapshot</h2>
+    <p class="modal-copy" id="review-snapshot-copy">Review this snapshot before sending to admin.</p>
+    <div id="review-snapshot-content" class="review-content"></div>
+    <div class="btn-bar">
+      <button class="btn btn-gray" onclick="closeReviewSnapshot()">Back</button>
+      <button class="btn btn-outline is-hidden" id="review-open-comp-reports" onclick="closeReviewSnapshot(); switchTab('comp-reports')">Open Comp Reports</button>
+      <button class="btn btn-red" id="review-submit-btn" onclick="submitReviewSnapshot()">Submit to Admin</button>
     </div>
   </div>
 </div>
@@ -3253,34 +3319,35 @@ document.addEventListener('DOMContentLoaded', function () {
 // ═══════════════════════════════════════════════════════════════════════════════
 function onPropTypeChange() {
   const type = document.getElementById('l-prop-type').value;
+  const sectionType = type === 'multifamily' ? 'office' : type;
   const sections = { industrial: 'sec-industrial', office: 'sec-office', retail: 'sec-retail', land: 'sec-land' };
   Object.entries(sections).forEach(([key, id]) => {
     const el = document.getElementById(id);
-    if (el) el.classList.toggle('visible', key === type);
+    if (el) el.classList.toggle('visible', key === sectionType);
   });
 
   // Show/hide building vs land size fields
-  document.getElementById('size-building').classList.toggle('visible', type !== 'land');
-  document.getElementById('size-land').classList.toggle('visible', type === 'land');
+  document.getElementById('size-building').classList.toggle('visible', sectionType !== 'land');
+  document.getElementById('size-land').classList.toggle('visible', sectionType === 'land');
 
   // Show/hide project name for office/retail
-  setHiddenState(document.getElementById('field-project-name'), !(type === 'office' || type === 'retail'));
+  setHiddenState(document.getElementById('field-project-name'), !(sectionType === 'office' || sectionType === 'retail'));
 
   // State field is now always visible
 
   // Show/hide corner for retail
-  setHiddenState(document.getElementById('field-corner'), type !== 'retail');
+  setHiddenState(document.getElementById('field-corner'), sectionType !== 'retail');
 
   // Show/hide occupancy for non-land
-  setHiddenState(document.getElementById('field-occupancy'), type === 'land');
+  setHiddenState(document.getElementById('field-occupancy'), sectionType === 'land');
 
   // Show/hide cap rate for retail sale
   updateCapRateVisibility();
 
   // Update SF label
   const sfLabel = document.getElementById('lbl-sf');
-  if (type === 'retail') sfLabel.textContent = 'GLA / Bldg SF';
-  else if (type === 'office') sfLabel.textContent = 'Building SF';
+  if (sectionType === 'retail') sfLabel.textContent = 'GLA / Bldg SF';
+  else if (sectionType === 'office') sfLabel.textContent = 'Building SF';
   else sfLabel.textContent = 'Size (SF)';
 
   const pane = document.getElementById('tab-listing');
@@ -3366,6 +3433,10 @@ function switchListingMode(mode) {
   document.getElementById('listing-mod-mode').classList.toggle('is-hidden', mode !== 'mod');
   document.getElementById('subtab-add').classList.toggle('active', mode === 'add');
   document.getElementById('subtab-mod').classList.toggle('active', mode === 'mod');
+  if (mode === 'mod') {
+    const modDate = document.getElementById('lm-date');
+    if (modDate && !modDate.value) modDate.value = new Date().toISOString().slice(0, 10);
+  }
 }
 
 // ── Lease Monthly Auto-calc ──
@@ -3468,16 +3539,116 @@ function hideListingReview() {
   setHiddenState(formActions, true);
 }
 
-function submitListingToMLS(btn) {
+function submitListingToAdmin(btn) {
   if (btn) { btn.classList.add('loading'); btn.disabled = true; }
-  // Open the email modal for MLS submission
-  openEmailModal('listing');
+  openSendToAdminModal('listing');
   // After a short delay, reveal the post-submit actions and remove spinner
   setTimeout(() => {
     const postSubmit = document.getElementById('listing-post-submit');
     setHiddenState(postSubmit, false);
     if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
   }, 800);
+}
+
+let reviewSnapshotContext = null;
+
+function saveCurrentDraft(context) {
+  try {
+    if (context === 'listing') {
+      localStorage.setItem(LBT_AUTOSAVE_KEYS.listing, JSON.stringify({ savedAt: Date.now(), values: lbtCollectDraftFields('#listing-add-mode') }));
+    } else if (context === 'comp') {
+      localStorage.setItem('lbt_autosave_comp_v1', JSON.stringify({ savedAt: Date.now(), values: lbtCollectDraftFields('#tab-comp') }));
+    } else if (context === 'listing-mod') {
+      localStorage.setItem('lbt_autosave_listing_mod_v1', JSON.stringify({ savedAt: Date.now(), values: lbtCollectDraftFields('#listing-mod-mode') }));
+    } else if (context === 'sign') {
+      localStorage.setItem('lbt_autosave_sign_v1', JSON.stringify({ savedAt: Date.now(), values: lbtCollectDraftFields('#tab-sign') }));
+    } else if (context === 'voucher') {
+      localStorage.setItem(LBT_AUTOSAVE_KEYS.voucher, JSON.stringify({ savedAt: Date.now(), values: lbtCollectDraftFields('#v-deal-shell') }));
+    }
+    showToast('Draft saved');
+  } catch (e) {
+    showToast('Draft could not be saved', 'error');
+  }
+}
+
+function reviewSnapshotRowsFor(context) {
+  if (context === 'listing-mod') {
+    return [
+      ['Property Address', document.getElementById('lm-address')?.value || '—'],
+      ['Date of Modification', document.getElementById('lm-date')?.value || '—'],
+      ['Notes / Changes', document.getElementById('lm-notes')?.value || '—'],
+    ];
+  }
+  if (context === 'sign') {
+    return [
+      ['Date', document.getElementById('s-date')?.value || '—'],
+      ['Order Type', document.getElementById('s-order-type')?.value || '—'],
+      ['Property Address', document.getElementById('s-address')?.value || '—'],
+      ['City', document.getElementById('s-city')?.value || '—'],
+      ['Requested By', document.getElementById('s-requested-by')?.value || '—'],
+    ];
+  }
+  if (context === 'voucher') {
+    return [
+      ['Representation Type', document.getElementById('v-rep-type')?.value || '—'],
+      ['Transaction Type', document.getElementById('v-txn-type')?.value || '—'],
+      ['Property Address', document.getElementById('v-address')?.value || '—'],
+      ['City', document.getElementById('v-city')?.value || '—'],
+      ['Deal SF', document.getElementById('v-l-dealsf')?.value || '—'],
+    ];
+  }
+  return [
+    ['Comp Type', document.getElementById('c-comp-type')?.value || '—'],
+    ['LANB Source', document.getElementById('c-source')?.value || '—'],
+    ['Address', document.getElementById('c-address')?.value || '—'],
+    ['City', document.getElementById('c-city')?.value || '—'],
+    ['Property Type', document.getElementById('c-prop-type')?.value || '—'],
+  ];
+}
+
+function openReviewSnapshot(context) {
+  reviewSnapshotContext = context;
+  const modal = document.getElementById('review-snapshot-modal');
+  const title = document.getElementById('review-snapshot-title');
+  const content = document.getElementById('review-snapshot-content');
+  const openCompReportsBtn = document.getElementById('review-open-comp-reports');
+  if (!modal || !title || !content) return;
+  title.textContent = context === 'listing-mod'
+    ? 'Review Listing Modification'
+    : context === 'sign'
+      ? 'Review Sign Request'
+      : context === 'voucher'
+        ? 'Review Commission Voucher'
+        : 'Review Comp Input';
+  const rows = reviewSnapshotRowsFor(context);
+  content.innerHTML = '<table class="review-table">' +
+    rows.map((r, i) =>
+      '<tr class="' + (i % 2 === 0 ? 'review-table-alt' : '') + '">' +
+      '<td class="review-key-cell">' + escHtml(r[0]) + '</td>' +
+      '<td class="review-value-cell">' + escHtml(r[1]) + '</td></tr>'
+    ).join('') +
+    '</table>';
+  if (openCompReportsBtn) setHiddenState(openCompReportsBtn, context !== 'comp');
+  modal.classList.add('open');
+}
+
+function closeReviewSnapshot() {
+  const modal = document.getElementById('review-snapshot-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+function submitReviewSnapshot() {
+  const context = reviewSnapshotContext;
+  closeReviewSnapshot();
+  if (context === 'sign' || context === 'voucher') {
+    openSendToAdminModal(context);
+    return;
+  }
+  if (context === 'listing-mod') {
+    openEmailModal('listing-mod');
+    return;
+  }
+  submitCompDirect();
 }
 
 function exportListingPdfWithSpinner(btn) {
@@ -7249,9 +7420,16 @@ function initCompFormSelects() {
     el.innerHTML = '<option value="">—</option>' + opts.map(o => '<option>' + o + '</option>').join('');
   }
 
+  function fillDataList(id, opts) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = opts.map(o => '<option value="' + o + '"></option>').join('');
+  }
+
   ['c-source','c-list-agent1','c-proc-agent1','c-list-agent2','c-proc-agent2','cs-list-agent1','cs-proc-agent1','cs-list-agent2','cs-proc-agent2'].forEach(id => fillSel(id, AGENTS));
   ['c-list-brokerage','c-proc-brokerage','cs-list-brokerage','cs-proc-brokerage'].forEach(id => fillSel(id, BROKERAGES));
   fillSel('c-city', CITIES);
+  fillDataList('comp-source-options', AGENTS);
   ['c-leased-sf','cs-bldg-sf','cs-office-sf','cs-land-sf','c-bldg-sf','c-land-sf','c-office-sf'].forEach(id => fillSel(id, SF));
   ['c-rent-sf','c-eff-rent'].forEach(id => fillSel(id, RATES));
   fillSel('c-term', TERMS);
@@ -11126,7 +11304,7 @@ async function scrapeBrochure() {
     status.textContent = 'Error: ' + err.message;
   } finally {
     btn.classList.remove('loading');
-    btn.textContent = 'Scrape and Fill Listing Fields';
+    btn.textContent = 'Parse & Fill Listing Fields';
   }
 }
 
@@ -11198,8 +11376,121 @@ async function scrapeVoucherBrochure() {
     status.textContent = 'Error: ' + err.message;
   } finally {
     btn.classList.remove('loading');
-    btn.textContent = 'Scrape and Fill Voucher Fields';
+    btn.textContent = 'Parse & Fill Voucher Fields';
   }
+}
+
+let listingModBrochureFileUrl = null;
+let listingModBrochureMimeType = 'application/pdf';
+let signBrochureFileUrl = null;
+let signBrochureMimeType = 'application/pdf';
+let compBrochureFileUrl = null;
+let compBrochureMimeType = 'application/pdf';
+
+function handleDealDocSelection(input, options) {
+  const file = input.files[0];
+  if (!file) return;
+  const status = document.getElementById(options.statusId);
+  const btn = document.getElementById(options.buttonId);
+  if (status) status.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(0)} KB) — uploading…`;
+  if (btn) setHiddenState(btn, true);
+  options.setUrl(null);
+  options.setMime(file.type === 'application/pdf' ? 'application/pdf' : (file.type?.startsWith('image/') ? file.type : 'application/pdf'));
+
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      const base64 = e.target.result.split(',')[1];
+      const uploadResult = await callTrpc('files.upload', {
+        filename: file.name,
+        mimeType: options.getMime(),
+        base64Data: base64,
+        category: 'brochure',
+        reference: options.reference,
+      });
+      if (uploadResult?.url) {
+        options.setUrl(uploadResult.url);
+        if (status) status.textContent = `Uploaded: ${file.name}`;
+        if (btn) setHiddenState(btn, false);
+      } else if (status) {
+        status.textContent = 'Upload failed. Please try again.';
+      }
+    } catch (err) {
+      if (status) status.textContent = 'Upload error: ' + err.message;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function scrapeDealDocForTab(fileUrl, mimeType, tab, statusId, buttonId, doneText) {
+  if (!fileUrl) return;
+  const btn = document.getElementById(buttonId);
+  const status = document.getElementById(statusId);
+  if (btn) {
+    btn.classList.add('loading');
+    btn.textContent = 'Analyzing document...';
+  }
+  try {
+    const result = await callTrpc('aiAssist.extractDocument', { fileUrl, mimeType, tab });
+    if (result && result.success) {
+      const count = applyAiFields(tab, result.fields || {});
+      if (status) status.textContent = `Filled ${count} field${count !== 1 ? 's' : ''} from document`;
+    } else if (status) {
+      status.textContent = 'Could not extract fields. Try a clearer document.';
+    }
+  } catch (err) {
+    if (status) status.textContent = 'Error: ' + err.message;
+  } finally {
+    if (btn) {
+      btn.classList.remove('loading');
+      btn.textContent = doneText;
+    }
+  }
+}
+
+function onListingModBrochureSelected(input) {
+  handleDealDocSelection(input, {
+    statusId: 'lm-brochure-status',
+    buttonId: 'lm-brochure-scrape-btn',
+    reference: 'listing-mod',
+    setUrl: (v) => { listingModBrochureFileUrl = v; },
+    setMime: (v) => { listingModBrochureMimeType = v; },
+    getMime: () => listingModBrochureMimeType,
+  });
+}
+
+function scrapeListingModBrochure() {
+  return scrapeDealDocForTab(listingModBrochureFileUrl, listingModBrochureMimeType, 'listing', 'lm-brochure-status', 'lm-brochure-scrape-btn', 'Parse & Fill Modification Fields');
+}
+
+function onSignBrochureSelected(input) {
+  handleDealDocSelection(input, {
+    statusId: 's-brochure-status',
+    buttonId: 's-brochure-scrape-btn',
+    reference: 'sign',
+    setUrl: (v) => { signBrochureFileUrl = v; },
+    setMime: (v) => { signBrochureMimeType = v; },
+    getMime: () => signBrochureMimeType,
+  });
+}
+
+function scrapeSignBrochure() {
+  return scrapeDealDocForTab(signBrochureFileUrl, signBrochureMimeType, 'sign', 's-brochure-status', 's-brochure-scrape-btn', 'Parse & Fill Sign Fields');
+}
+
+function onCompBrochureSelected(input) {
+  handleDealDocSelection(input, {
+    statusId: 'c-brochure-status',
+    buttonId: 'c-brochure-scrape-btn',
+    reference: 'comp',
+    setUrl: (v) => { compBrochureFileUrl = v; },
+    setMime: (v) => { compBrochureMimeType = v; },
+    getMime: () => compBrochureMimeType,
+  });
+}
+
+function scrapeCompBrochure() {
+  return scrapeDealDocForTab(compBrochureFileUrl, compBrochureMimeType, 'comp', 'c-brochure-status', 'c-brochure-scrape-btn', 'Parse & Fill Comp Fields');
 }
 </script>
 
@@ -13097,11 +13388,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let _staFormType = 'listing';
 
-function hasVoucherComplianceAttachment() {
+function hasRequiredUpload(fieldId) {
+  const input = document.getElementById(fieldId);
+  if (input && input.files && input.files.length) return true;
+  return (uploadedFiles[fieldId]?.length > 0);
+}
+
+function hasListingComplianceAttachments() {
+  return hasRequiredUpload('l-doc-disclosure') && hasRequiredUpload('l-doc-agreement');
+}
+
+function hasVoucherComplianceAttachments() {
   const d = document.getElementById('v-doc-disclosure');
   const a = document.getElementById('v-doc-agreement');
-  if ((d && d.files && d.files.length) || (a && a.files && a.files.length)) return true;
-  return (uploadedFiles['v-doc-disclosure']?.length > 0) || (uploadedFiles['v-doc-agreement']?.length > 0);
+  if ((d && d.files && d.files.length > 0) && (a && a.files && a.files.length > 0)) return true;
+  return (uploadedFiles['v-doc-disclosure']?.length > 0) && (uploadedFiles['v-doc-agreement']?.length > 0);
 }
 
 function collectSupportingFilesForAdminSubmission(formType) {
@@ -13142,12 +13443,16 @@ function openSendToAdminModal(formType) {
     attachErr.classList.add('is-hidden');
     attachErr.textContent = '';
   }
-  if (formType === 'voucher' && workflowRequireVoucherAttachment() && !hasVoucherComplianceAttachment()) {
+  if (formType === 'listing' && !hasListingComplianceAttachments()) {
+    showToast('Upload required Listing Agreement and Agency Disclosure before sending to admin.', 'error');
+    return;
+  }
+  if (formType === 'voucher' && workflowRequireVoucherAttachment() && !hasVoucherComplianceAttachments()) {
     if (attachErr) {
-      attachErr.textContent = 'Upload at least one compliance document (Agency Disclosure or Exclusive Listing Agreement) before sending to admin.';
+      attachErr.textContent = 'Upload both required Agency Disclosure and Exclusive Listing Agreement documents before sending to admin.';
       attachErr.classList.remove('is-hidden');
     }
-    showToast('Add a voucher attachment before sending to admin.', 'error');
+    showToast('Add required voucher attachments before sending to admin.', 'error');
     return;
   }
   applySharedBrokerIdentity(getSignedInBrokerIdentity());
@@ -13183,6 +13488,8 @@ function closeSendToAdminModal() {
 document.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('send-admin-modal');
   if (modal) modal.addEventListener('click', e => { if (e.target === modal) closeSendToAdminModal(); });
+  const reviewModal = document.getElementById('review-snapshot-modal');
+  if (reviewModal) reviewModal.addEventListener('click', e => { if (e.target === reviewModal) closeReviewSnapshot(); });
 });
 
 /**
@@ -13444,8 +13751,8 @@ async function submitSendToAdmin() {
   const btn = document.getElementById('sta-send-btn');
   const status = document.getElementById('sta-status');
   if (btn && btn.disabled) return;
-  if (_staFormType === 'voucher' && workflowRequireVoucherAttachment() && !hasVoucherComplianceAttachment()) {
-    status.textContent = 'Add at least one compliance document attachment before sending.';
+  if (_staFormType === 'voucher' && workflowRequireVoucherAttachment() && !hasVoucherComplianceAttachments()) {
+    status.textContent = 'Add required compliance document attachments before sending.';
     status.classList.add('text-error', 'status-strong');
     return;
   }
@@ -14150,7 +14457,7 @@ const HELP_PANEL_CONTENT = {
       <h4>Property Type</h4>
       <p>The Office, Industrial, and Retail cards control the conditional fields that appear later in the form. Pick the property type first, then move through pricing, agents, and release details.</p>
       <h4>Submitting</h4>
-      <p>Review the side summary, then use <strong>Review &amp; Submit</strong> or <strong>Send to Admin</strong> when the draft is ready for office processing.</p>
+      <p>Use <strong>Review</strong> to open the submission snapshot, then submit to admin from the snapshot once everything looks right.</p>
     `,
   },
   'signs': {

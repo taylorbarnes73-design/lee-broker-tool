@@ -397,6 +397,7 @@ export function formatSaleTransactionTypeDisplay(raw: string): string {
 
 const RENT_TYPE_ABBREV_RULES: Array<{ match: RegExp; abbrev: string }> = [
   { match: /\bnnn\b/i, abbrev: "NNN" },
+  { match: /\bgrs\b/i, abbrev: "G" },
   { match: /\bmodified\s+gross\b/i, abbrev: "MG" },
   { match: /\bindustrial\s+gross\b/i, abbrev: "IG" },
   { match: /\bfull\s+service\s+gross\b/i, abbrev: "FSG" },
