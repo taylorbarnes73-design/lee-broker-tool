@@ -15,6 +15,14 @@ vi.mock("../_core/llm", () => ({
 
 vi.mock("../storage", () => ({
   storageGetBytes: storageGetBytesMock,
+  isStoredFileReference: vi.fn((value: string) =>
+    Boolean(
+      value?.startsWith("/api/files/content") ||
+      value?.startsWith("/local-uploads/") ||
+      value?.includes("/api/files/content?key=") ||
+      /^(broker-docs|broker-admin|broker-docusign)\//.test(value ?? "")
+    )
+  ),
 }));
 
 // Mock PDF parsing so brochure tests don't need real PDFs
@@ -454,6 +462,36 @@ describe("aiAssist.extractDocument", () => {
     expect(result.fields.clientName).toBe("Proxy URL Client");
     expect(storageGetBytesMock).toHaveBeenCalledWith(
       "/api/files/content?key=broker-docs%2Flisting_brochure%2Fsample.pdf"
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("accepts absolute proxy URLs and reads bytes from storage", async () => {
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              transactionType: "Lease",
+              clientName: "Absolute Proxy URL Client",
+            }),
+          },
+        },
+      ],
+    } as any);
+
+    const fetchMock = vi.mocked(globalThis.fetch);
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.extractDocument({
+      fileUrl: "https://broker.example.com/api/files/content?key=broker-docs%2Flisting_brochure%2Fsample.pdf",
+      mimeType: "application/pdf",
+      tab: "voucher",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.fields.clientName).toBe("Absolute Proxy URL Client");
+    expect(storageGetBytesMock).toHaveBeenCalledWith(
+      "https://broker.example.com/api/files/content?key=broker-docs%2Flisting_brochure%2Fsample.pdf"
     );
     expect(fetchMock).not.toHaveBeenCalled();
   });

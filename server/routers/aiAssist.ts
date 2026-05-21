@@ -2,7 +2,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable } from "../_core/llm";
 import { z } from "zod/v4";
 import { getSetting } from "../settings/getSetting";
-import { storageGetBytes } from "../storage";
+import { isStoredFileReference, storageGetBytes } from "../storage";
 
 // ── Field schemas per tab ──
 
@@ -786,11 +786,10 @@ async function fetchDocumentBuffer(fileUrl: string) {
   const target = fileUrl.trim();
   const isHttp = /^https?:\/\//i.test(target);
   const isDataUrl = /^data:[^;]+;base64,/i.test(target);
-  const isStoredPath = target.startsWith("/local-uploads/") || target.startsWith("/api/files/content");
-  const isStoredKey = /^(broker-docs|broker-admin|broker-docusign)\//.test(target);
+  const isStoredPath = isStoredFileReference(target);
 
   try {
-    if (isStoredPath || isStoredKey) {
+    if (isStoredPath) {
       const { bytes } = await storageGetBytes(target);
       return { fileBuffer: bytes, error: null };
     }

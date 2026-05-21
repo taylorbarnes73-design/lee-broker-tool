@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { ENV } from "./_core/env";
-import { normalizeStoredFileUrl, sanitizeStorageKey, storagePublicUrl } from "./storage";
+import { isStoredFileReference, normalizeStoredFileUrl, sanitizeStorageKey, storagePublicUrl } from "./storage";
 
 const originalBucket = ENV.awsS3Bucket;
 const originalRegion = ENV.awsS3Region;
@@ -66,6 +66,22 @@ describe("normalizeStoredFileUrl", () => {
     expect(
       normalizeStoredFileUrl("/api/files/content?key=broker-docs%2Fcontracts%2Flease.pdf")
     ).toBe("/api/files/content?key=broker-docs%2Fcontracts%2Flease.pdf");
+  });
+});
+
+describe("isStoredFileReference", () => {
+  it("recognizes storage keys, local paths, and proxy URLs", () => {
+    expect(isStoredFileReference("broker-docs/contracts/lease.pdf")).toBe(true);
+    expect(isStoredFileReference("/local-uploads/broker-docs/contracts/lease.pdf")).toBe(true);
+    expect(isStoredFileReference("/api/files/content?key=broker-docs%2Fcontracts%2Flease.pdf")).toBe(true);
+    expect(
+      isStoredFileReference("https://broker.example.com/api/files/content?key=broker-docs%2Fcontracts%2Flease.pdf")
+    ).toBe(true);
+  });
+
+  it("returns false for non-storage URLs", () => {
+    expect(isStoredFileReference("https://example.com/file.pdf")).toBe(false);
+    expect(isStoredFileReference("")).toBe(false);
   });
 });
 
