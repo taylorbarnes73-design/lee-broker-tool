@@ -12045,7 +12045,7 @@ function validateVoucherDealDocumentFile(file, maxBytes) {
   const isJpg = mime === 'image/jpeg' || mime === 'image/jpg' || name.endsWith('.jpg') || name.endsWith('.jpeg');
   const isPng = mime === 'image/png' || name.endsWith('.png');
   if (!isPdf && !isJpg && !isPng) {
-    return 'Couldn't read this file. Try a different format or remove password protection.';
+    return "Couldn't read this file. Try a different format or remove password protection.";
   }
   return '';
 }
