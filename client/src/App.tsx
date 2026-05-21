@@ -7,7 +7,6 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Login from "./pages/Login";
 import PortalBrokerAdminRequestDetail from "./pages/PortalBrokerAdminRequestDetail";
-import PortalAdminAuditLog from "./pages/PortalAdminAuditLog";
 import PortalAdminUsers from "./pages/PortalAdminUsers";
 import PortalAdminSettings from "./pages/PortalAdminSettings";
 import PortalAdminDealiusTools from "./pages/PortalAdminDealiusTools";
@@ -310,7 +309,7 @@ function Router() {
         </PortalRoute>
       </Route>
 
-      {/* Settings group (Users + Audit Log grouped here in nav) */}
+      {/* Settings group */}
       <Route path="/portal/admin/settings">
         <AdminPortalRoute>
           <PortalAdminSettings />
@@ -331,17 +330,6 @@ function Router() {
           <PortalAdminUsers />
         </AdminPortalRoute>
       </Route>
-      <Route path="/portal/admin/audit-log">
-        <AdminPortalRoute>
-          <PortalAdminAuditLog />
-        </AdminPortalRoute>
-      </Route>
-      <Route path="/admin/audit-log">
-        <AdminPortalRoute>
-          <PortalAdminAuditLog />
-        </AdminPortalRoute>
-      </Route>
-
       {/* Tools group */}
       <Route path="/portal/admin/dealius-tools">
         <AdminPortalRoute>

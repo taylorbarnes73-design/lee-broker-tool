@@ -397,6 +397,7 @@ export function formatSaleTransactionTypeDisplay(raw: string): string {
 
 const RENT_TYPE_ABBREV_RULES: Array<{ match: RegExp; abbrev: string }> = [
   { match: /\bnnn\b/i, abbrev: "NNN" },
+  { match: /\bgrs\b/i, abbrev: "G" },
   { match: /\bmodified\s+gross\b/i, abbrev: "MG" },
   { match: /\bindustrial\s+gross\b/i, abbrev: "IG" },
   { match: /\bfull\s+service\s+gross\b/i, abbrev: "FSG" },
@@ -411,6 +412,7 @@ const RENT_TYPE_ABBREV_RULES: Array<{ match: RegExp; abbrev: string }> = [
 export function abbreviateRentTypeForReport(raw: string): string {
   const t = String(raw ?? "").trim();
   if (!t) return "";
+  if (/^grs$/i.test(t)) return "G";
   if (/^(G|IG|MG|NNN|FS|FSG|NN)$/i.test(t)) return t.toUpperCase();
   for (const { match, abbrev } of RENT_TYPE_ABBREV_RULES) {
     if (match.test(t)) return abbrev;

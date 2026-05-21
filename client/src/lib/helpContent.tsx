@@ -254,22 +254,6 @@ const users: HelpEntry = {
   ),
 };
 
-const auditLog: HelpEntry = {
-  title: "Audit log — how this page works",
-  body: (
-    <>
-      <p>
-        A read-only timeline of security-relevant events: sign-ins, role changes, settings changes,
-        and admin actions on submissions.
-      </p>
-      <p>
-        Filter by user, event type, or date range. The list is paginated; oldest events fall off
-        once the retention window passes.
-      </p>
-    </>
-  ),
-};
-
 const listingImport: HelpEntry = {
   title: "Listing import — how this page works",
   body: (
@@ -349,7 +333,6 @@ const ROUTE_MAP: ReadonlyArray<{ match: RegExp; entry: HelpEntry }> = [
   { match: /^\/portal\/admin\/settings/, entry: settings },
   { match: /^\/portal\/admin\/dealius-tools/, entry: dealiusTools },
   { match: /^\/portal\/admin\/listing-import/, entry: listingImport },
-  { match: /^\/portal\/admin\/audit-log/, entry: auditLog },
   { match: /^\/portal\/account/, entry: account },
   { match: /^\/portal\/submissions\/[^/]+/, entry: submissionDetail },
   { match: /^\/portal\/submissions/, entry: mySubmissions },
