@@ -119,6 +119,12 @@ function tryParseStoredKey(input: string): string | null {
   return null;
 }
 
+export function isStoredFileReference(input: string | null | undefined): boolean {
+  const value = String(input ?? "").trim();
+  if (!value) return false;
+  return Boolean(tryParseStoredKey(value));
+}
+
 export function normalizeStoredFileUrl(urlOrKey: string | null | undefined, fileKey?: string | null): string | null {
   const explicitKey = String(fileKey ?? "").trim();
   if (explicitKey) return storagePublicUrl(explicitKey);

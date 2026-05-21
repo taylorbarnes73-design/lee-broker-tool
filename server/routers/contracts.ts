@@ -4,7 +4,7 @@ import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable, type Message } f
 import { execSync } from "child_process";
 import { ENV } from "../_core/env";
 import { getSetting } from "../settings/getSetting";
-import { storageGetBytes } from "../storage";
+import { isStoredFileReference, storageGetBytes } from "../storage";
 
 // ── Types ──
 
@@ -239,20 +239,7 @@ Return JSON with these fields (omit any that are blank):
       try {
         // Fetch the PDF server-side — use direct FS read for local storage paths
         let pdfBuffer: Buffer;
-        const isStorageProxyUrl = (() => {
-          if (input.pdfUrl.startsWith("/api/files/content")) return true;
-          try {
-            const parsed = new URL(input.pdfUrl);
-            return parsed.pathname === "/api/files/content" && parsed.searchParams.has("key");
-          } catch {
-            return false;
-          }
-        })();
-        if (
-          input.pdfUrl.startsWith("/local-uploads/") ||
-          isStorageProxyUrl ||
-          /^(broker-docs|broker-admin|broker-docusign)\//.test(input.pdfUrl)
-        ) {
+        if (isStoredFileReference(input.pdfUrl)) {
           const { bytes } = await storageGetBytes(input.pdfUrl);
           pdfBuffer = bytes;
         } else {
