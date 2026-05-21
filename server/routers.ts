@@ -4,7 +4,7 @@ import { findBrokerDirectoryEntry } from "@shared/brokerDirectory";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
-import { storagePut, storageGet } from "./storage";
+import { storagePut, storageGet, storagePublicUrl } from "./storage";
 import { getDb, getUserByOpenId, upsertUser } from "./db";
 import { uploads } from "../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
@@ -71,6 +71,21 @@ function estimatedBase64ByteLength(base64Data: string): number {
   if (!normalized) return 0;
   const padding = normalized.endsWith("==") ? 2 : normalized.endsWith("=") ? 1 : 0;
   return Math.floor((normalized.length * 3) / 4) - padding;
+}
+
+async function storeUploadForBrowser(
+  fileKey: string,
+  data: Buffer,
+  mimeType: string
+): Promise<{ fileKey: string; storedUrl: string; browserUrl: string }> {
+  const stored = await storagePut(fileKey, data, mimeType);
+  const stableKey = stored.key;
+  const { url: browserUrl } = await storageGet(stableKey);
+  return {
+    fileKey: stableKey,
+    storedUrl: storagePublicUrl(stableKey),
+    browserUrl,
+  };
 }
 
 export const appRouter = router({
@@ -278,13 +293,12 @@ export const appRouter = router({
         const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
         const fileKey = `broker-docs/${category}/${nanoid(10)}-${safeName}`;
 
-        // Upload to S3
-        const { url } = await storagePut(fileKey, buffer, mimeType);
+        const stored = await storeUploadForBrowser(fileKey, buffer, mimeType);
 
         // Save metadata to database
         await db.insert(uploads).values({
-          fileKey,
-          url,
+          fileKey: stored.fileKey,
+          url: stored.storedUrl,
           filename,
           mimeType,
           fileSize,
@@ -294,7 +308,7 @@ export const appRouter = router({
           uploaderOpenId: ctx.user?.openId ?? null,
         });
 
-        return { success: true, url, fileKey, filename };
+        return { success: true, url: stored.browserUrl, fileKey: stored.fileKey, filename };
       }),
 
     /**
@@ -370,11 +384,11 @@ export const appRouter = router({
 
             const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
             const fileKey = `broker-docs/${category}/${nanoid(10)}-${safeName}`;
-            const { url } = await storagePut(fileKey, buffer, mimeType);
+            const stored = await storeUploadForBrowser(fileKey, buffer, mimeType);
 
             await ensuredUploadDb.insert(uploads).values({
-              fileKey,
-              url,
+              fileKey: stored.fileKey,
+              url: stored.storedUrl,
               filename,
               mimeType,
               fileSize,
@@ -385,7 +399,7 @@ export const appRouter = router({
               uploaderOpenId: ctx.user?.openId ?? null,
             });
 
-            return { filename, success: true, url, fileKey };
+            return { filename, success: true, url: stored.browserUrl, fileKey: stored.fileKey };
           } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : String(err);
             return { filename: file.filename, success: false, error: msg };

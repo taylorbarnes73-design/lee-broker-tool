@@ -2,14 +2,19 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // Mock storagePut so tests don't hit real S3
 vi.mock("./storage", () => ({
-  storagePut: vi.fn().mockResolvedValue({
-    key: "broker-docs/listing_agreement/test-file.txt",
-    url: "https://cdn.example.com/broker-docs/listing_agreement/test-file.txt",
-  }),
-  storageGet: vi.fn().mockResolvedValue({
-    key: "broker-docs/listing_agreement/test-file.txt",
-    url: "https://cdn.example.com/broker-docs/listing_agreement/test-file.txt",
-  }),
+  storagePut: vi.fn((key: string) =>
+    Promise.resolve({
+      key,
+      url: `https://cdn.example.com/${key}`,
+    })
+  ),
+  storageGet: vi.fn((key: string) =>
+    Promise.resolve({
+      key,
+      url: `https://cdn.example.com/${key}`,
+    })
+  ),
+  storagePublicUrl: vi.fn((key: string) => `/api/files/content?key=${encodeURIComponent(key)}`),
 }));
 
 // Mock getDb so tests don't need a real database
