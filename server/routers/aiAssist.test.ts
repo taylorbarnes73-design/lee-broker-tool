@@ -495,6 +495,47 @@ describe("aiAssist.extractDocument", () => {
     );
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("returns voucher document detection alongside extracted fields", async () => {
+    vi.mocked(invokeLLM)
+      .mockResolvedValueOnce({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                transactionType: "Lease",
+                clientName: "Detected Client",
+              }),
+            },
+          },
+        ],
+      } as any)
+      .mockResolvedValueOnce({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                agencyDisclosure: true,
+                listingAgreement: false,
+              }),
+            },
+          },
+        ],
+      } as any);
+
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.extractVoucherDocument({
+      fileUrl: "https://example.com/voucher-doc.pdf",
+      mimeType: "application/pdf",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.fields.clientName).toBe("Detected Client");
+    expect(result.documentDetection).toEqual({
+      agencyDisclosure: true,
+      listingAgreement: false,
+    });
+  });
 });
 
 describe("aiAssist.smartComplete", () => {

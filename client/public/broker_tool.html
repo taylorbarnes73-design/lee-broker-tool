@@ -819,43 +819,30 @@
   <!-- AI Auto-fill (optional shortcut, sits above Step 1) -->
   <div class="card ai-shortcut-card">
     <h2>Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></h2>
-    <p class="micro-copy">Upload deal documents and let Gemini pre-fill voucher fields before review.</p>
     <div class="brochure-zone" id="v-brochure-zone" onclick="document.getElementById('v-brochure-file').click()">
-      <input type="file" id="v-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" onchange="onVoucherBrochureSelected(this)">
+      <input type="file" id="v-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" multiple aria-label="Upload deal documents" onchange="onVoucherDealDocumentsSelected(this)">
       <div class="brochure-zone-inner">
-        <span class="brochure-zone-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
         <div>
-          <div class="brochure-zone-label">Upload deal documents</div>
+          <div class="brochure-zone-label">Drop files here</div>
           <div class="brochure-zone-sub">PDF, JPG, PNG</div>
         </div>
       </div>
       <div class="brochure-status" id="v-brochure-status"></div>
     </div>
-    <button class="brochure-scrape-btn" id="v-brochure-scrape-btn" onclick="scrapeVoucherBrochure()">Parse &amp; Fill Voucher Fields</button>
-    <div class="row c2 voucher-upload-grid top-gap-md">
-      <div class="field">
-        <label class="req">Agency Disclosure</label>
-        <div class="upload-zone" id="uz-v-disclosure" data-category="agency_disclosure" data-field="v-doc-disclosure">
-          <input type="file" id="v-doc-disclosure" class="hidden-file-input" accept=".pdf,.doc,.docx">
-          <div class="upload-zone-inner" onclick="document.getElementById('v-doc-disclosure').click()">
-            <span class="upload-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
-            <span class="upload-label">Click to upload PDF / DOC</span>
-          </div>
-          <div class="upload-status" id="us-v-disclosure"></div>
-        </div>
+    <div class="voucher-doc-status-list top-gap-md">
+      <div class="voucher-doc-status-row">
+        <span>Agency Disclosure</span>
+        <button type="button" class="voucher-doc-status-btn" id="v-doc-status-disclosure" onclick="triggerVoucherMissingDocUpload('agencyDisclosure')">Not required</button>
       </div>
-      <div class="field">
-        <label class="req">Exclusive Listing Agreement</label>
-        <div class="upload-zone" id="uz-v-agreement" data-category="listing_agreement" data-field="v-doc-agreement">
-          <input type="file" id="v-doc-agreement" class="hidden-file-input" accept=".pdf,.doc,.docx">
-          <div class="upload-zone-inner" onclick="document.getElementById('v-doc-agreement').click()">
-            <span class="upload-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
-            <span class="upload-label">Click to upload PDF / DOC</span>
-          </div>
-          <div class="upload-status" id="us-v-agreement"></div>
-        </div>
+      <div class="voucher-doc-status-row">
+        <span>Listing Agreement</span>
+        <button type="button" class="voucher-doc-status-btn" id="v-doc-status-agreement" onclick="triggerVoucherMissingDocUpload('listingAgreement')">Not required</button>
       </div>
     </div>
+    <input type="file" id="v-doc-disclosure" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" aria-label="Upload Agency Disclosure document" onchange="onVoucherMissingDocUploaded('agencyDisclosure', this)">
+    <input type="file" id="v-doc-agreement" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" aria-label="Upload Listing Agreement document" onchange="onVoucherMissingDocUploaded('listingAgreement', this)">
+    <div class="upload-status is-hidden" id="us-v-disclosure" aria-hidden="true"></div>
+    <div class="upload-status is-hidden" id="us-v-agreement" aria-hidden="true"></div>
   </div>
 
   <div class="stepper" data-stepper-for="voucher-main"></div>
@@ -874,7 +861,7 @@
         </select>
       </div>
       <div class="field"><label class="req">Transaction Type</label>
-        <select id="v-txn-type" onchange="onVoucherTxnChange()"><option value="lease">Lease</option><option value="sale">Sale</option></select>
+        <select id="v-txn-type" onchange="onVoucherTxnChange()"><option value="lease">Lease</option><option value="sale">Sale</option><option value="referral">Referral</option><option value="sublease">Sublease</option><option value="renewal">Renewal</option><option value="other">Other</option></select>
       </div>
       <div class="field"><label class="req">Property Type</label>
         <select id="v-prop-type"><option value="industrial">Industrial</option><option value="office">Office</option><option value="retail">Retail</option><option value="land">Land</option><option value="other">Other</option></select>
@@ -3551,6 +3538,31 @@ function submitListingToAdmin(btn) {
 }
 
 let reviewSnapshotContext = null;
+let voucherDocumentDetection = { agencyDisclosure: false, listingAgreement: false };
+const uploadedFiles = {};
+
+function collectVoucherUploadDraftState() {
+  return {
+    uploadedDealDocuments: Array.isArray(uploadedFiles['v-deal-documents']) ? uploadedFiles['v-deal-documents'] : [],
+    agencyDisclosureUploads: Array.isArray(uploadedFiles['v-doc-disclosure']) ? uploadedFiles['v-doc-disclosure'] : [],
+    listingAgreementUploads: Array.isArray(uploadedFiles['v-doc-agreement']) ? uploadedFiles['v-doc-agreement'] : [],
+    detection: {
+      agencyDisclosure: Boolean(voucherDocumentDetection.agencyDisclosure),
+      listingAgreement: Boolean(voucherDocumentDetection.listingAgreement),
+    },
+  };
+}
+
+function restoreVoucherUploadDraftState(state) {
+  if (!state || typeof state !== 'object') return;
+  uploadedFiles['v-deal-documents'] = Array.isArray(state.uploadedDealDocuments) ? state.uploadedDealDocuments.filter(Boolean) : [];
+  uploadedFiles['v-doc-disclosure'] = Array.isArray(state.agencyDisclosureUploads) ? state.agencyDisclosureUploads.filter(Boolean) : [];
+  uploadedFiles['v-doc-agreement'] = Array.isArray(state.listingAgreementUploads) ? state.listingAgreementUploads.filter(Boolean) : [];
+  voucherDocumentDetection.agencyDisclosure = Boolean(state?.detection?.agencyDisclosure);
+  voucherDocumentDetection.listingAgreement = Boolean(state?.detection?.listingAgreement);
+  renderVoucherDealDocumentsStatusMessage();
+  updateVoucherRequiredDocStatus();
+}
 
 function saveCurrentDraft(context) {
   try {
@@ -3563,7 +3575,11 @@ function saveCurrentDraft(context) {
     } else if (context === 'sign') {
       localStorage.setItem('lbt_autosave_sign_v1', JSON.stringify({ savedAt: Date.now(), values: lbtCollectDraftFields('#tab-sign') }));
     } else if (context === 'voucher') {
-      localStorage.setItem(LBT_AUTOSAVE_KEYS.voucher, JSON.stringify({ savedAt: Date.now(), values: lbtCollectDraftFields('#v-deal-shell') }));
+      localStorage.setItem(LBT_AUTOSAVE_KEYS.voucher, JSON.stringify({
+        savedAt: Date.now(),
+        values: lbtCollectDraftFields('#v-deal-shell'),
+        voucherUploads: collectVoucherUploadDraftState(),
+      }));
     }
     showToast('Draft saved');
   } catch (e) {
@@ -3589,12 +3605,23 @@ function reviewSnapshotRowsFor(context) {
     ];
   }
   if (context === 'voucher') {
+    const docFiles = Array.isArray(uploadedFiles['v-deal-documents']) ? uploadedFiles['v-deal-documents'] : [];
+    const docNames = docFiles.length
+      ? (docFiles.length <= 3
+          ? docFiles.map(file => file.filename || 'Document').join(', ')
+          : `${(docFiles[0]?.filename || 'Document')}, ${(docFiles[1]?.filename || 'Document')}, ${(docFiles[2]?.filename || 'Document')}, and ${docFiles.length - 3} more`)
+      : '—';
+    const disclosureStatus = !voucherTransactionRequiresComplianceDocs() ? 'Not required' : (voucherDocFound('agencyDisclosure') ? 'Found' : 'Missing');
+    const listingStatus = !voucherTransactionRequiresComplianceDocs() ? 'Not required' : (voucherDocFound('listingAgreement') ? 'Found' : 'Missing');
     return [
       ['Representation Type', document.getElementById('v-rep-type')?.value || '—'],
       ['Transaction Type', document.getElementById('v-txn-type')?.value || '—'],
       ['Property Address', document.getElementById('v-address')?.value || '—'],
       ['City', document.getElementById('v-city')?.value || '—'],
       ['Deal SF', document.getElementById('v-l-dealsf')?.value || '—'],
+      ['Uploaded Deal Documents', docNames],
+      ['Agency Disclosure', disclosureStatus],
+      ['Listing Agreement', listingStatus],
     ];
   }
   return [
@@ -3607,6 +3634,17 @@ function reviewSnapshotRowsFor(context) {
 }
 
 function openReviewSnapshot(context) {
+  if (context === 'voucher') {
+    const voucherValidation = validateVoucherDocumentRequirements(true);
+    if (!voucherValidation.ok) {
+      const attachErr = document.getElementById('voucher-attachment-required-msg');
+      if (attachErr) {
+        attachErr.textContent = voucherValidation.message;
+        attachErr.classList.remove('is-hidden');
+      }
+      return;
+    }
+  }
   reviewSnapshotContext = context;
   const modal = document.getElementById('review-snapshot-modal');
   const title = document.getElementById('review-snapshot-title');
@@ -4541,6 +4579,7 @@ function onVoucherTxnChange() {
   setHiddenState(reqCommSale, txn !== 'sale');
   document.getElementById('v-lbl-lessor').textContent = txn === 'sale' ? 'Seller' : 'Lessor / Seller';
   document.getElementById('v-lbl-lessee').textContent = txn === 'sale' ? 'Buyer' : 'Lessee / Buyer';
+  updateVoucherRequiredDocStatus();
   syncVoucherBranchToggle();
   calcCommSummary();
   syncDealGlance();
@@ -4844,6 +4883,21 @@ function clearVoucher() {
    'v-avg-rate-sf', 'v-avg-monthly', 'v-total-outside', 'v-dist-total-invoice', 'v-dist-total-outside', 'v-gross-dist'
   ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   rentRowCount = 0;
+  delete uploadedFiles['v-deal-documents'];
+  delete uploadedFiles['v-doc-disclosure'];
+  delete uploadedFiles['v-doc-agreement'];
+  voucherDocumentDetection.agencyDisclosure = false;
+  voucherDocumentDetection.listingAgreement = false;
+  renderVoucherDealDocumentsStatusMessage();
+  updateVoucherRequiredDocStatus();
+  const voucherDocInput = document.getElementById('v-brochure-file');
+  if (voucherDocInput) voucherDocInput.value = '';
+  const disclosureInput = document.getElementById('v-doc-disclosure');
+  if (disclosureInput) disclosureInput.value = '';
+  const agreementInput = document.getElementById('v-doc-agreement');
+  if (agreementInput) agreementInput.value = '';
+  const voucherDocZone = document.getElementById('v-brochure-zone');
+  if (voucherDocZone) voucherDocZone.classList.remove('upload-zone-success', 'upload-zone-active');
   onVoucherTxnChange();
   try { localStorage.removeItem(LBT_AUTOSAVE_KEYS.voucher); } catch (e) {}
   const au = document.getElementById('dg-autosave');
@@ -7937,6 +7991,15 @@ function wireListingExpirationListeners() {
 
 const LBT_AUTOSAVE_KEYS = { listing: 'lbt_autosave_listing_v1', voucher: 'lbt_autosave_voucher_v1' };
 
+function restoreVoucherUploadStateFromAutosave() {
+  try {
+    const raw = localStorage.getItem(LBT_AUTOSAVE_KEYS.voucher);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    restoreVoucherUploadDraftState(parsed?.voucherUploads);
+  } catch (e) {}
+}
+
 function lbtCollectDraftFields(rootSel) {
   const root = document.querySelector(rootSel);
   if (!root) return {};
@@ -7966,7 +8029,11 @@ function startWorkflowAutosaveTimer() {
   function tick() {
     try {
       localStorage.setItem(LBT_AUTOSAVE_KEYS.listing, JSON.stringify({ savedAt: Date.now(), values: lbtCollectDraftFields('#listing-add-mode') }));
-      localStorage.setItem(LBT_AUTOSAVE_KEYS.voucher, JSON.stringify({ savedAt: Date.now(), values: lbtCollectDraftFields('#v-deal-shell') }));
+      localStorage.setItem(LBT_AUTOSAVE_KEYS.voucher, JSON.stringify({
+        savedAt: Date.now(),
+        values: lbtCollectDraftFields('#v-deal-shell'),
+        voucherUploads: collectVoucherUploadDraftState(),
+      }));
       const ts = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
       const msg = 'Draft autosaved at ' + ts;
       const elL = document.getElementById('lg-autosave');
@@ -10941,7 +11008,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Store uploaded file metadata keyed by field id
 // uploadedFiles[fieldId] = Array<{ url, fileKey, filename }>
-const uploadedFiles = {};
 
 /**
  * Upload a single File object to broker storage (used for brochures and
@@ -11170,6 +11236,31 @@ function initS3Uploads() {
 
 document.addEventListener('DOMContentLoaded', initS3Uploads);
 
+function initVoucherDealDocumentsUpload() {
+  const zone = document.getElementById('v-brochure-zone');
+  if (!zone || zone.dataset.voucherDocsWired === '1') return;
+  zone.dataset.voucherDocsWired = '1';
+  zone.addEventListener('dragover', e => {
+    e.preventDefault();
+    zone.classList.add('upload-zone-active');
+  });
+  zone.addEventListener('dragleave', () => {
+    zone.classList.remove('upload-zone-active');
+  });
+  zone.addEventListener('drop', async e => {
+    e.preventDefault();
+    zone.classList.remove('upload-zone-active');
+    const files = e.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+    await uploadAndParseVoucherDealDocuments(Array.from(files));
+  });
+  restoreVoucherUploadStateFromAutosave();
+  updateVoucherRequiredDocStatus();
+  renderVoucherDealDocumentsStatusMessage();
+}
+
+document.addEventListener('DOMContentLoaded', initVoucherDealDocumentsUpload);
+
 // ── DOCUMENTS TAB: SEARCH + COLLAPSE ──
 
 function toggleDocsSection(id) {
@@ -11308,75 +11399,178 @@ async function scrapeBrochure() {
   }
 }
 
-// ── VOUCHER BROCHURE UPLOAD + AI SCRAPE ──
+// ── VOUCHER DEAL DOCUMENT UPLOAD + GEMINI PARSE ──
 
-let voucherBrochureFileUrl = null;
-let voucherBrochureMimeType = 'application/pdf';
-
-function onVoucherBrochureSelected(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const status = document.getElementById('v-brochure-status');
-  const btn = document.getElementById('v-brochure-scrape-btn');
-  status.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(0)} KB) — uploading…`;
-  setHiddenState(btn, true);
-  voucherBrochureFileUrl = null;
-
-  if (file.type === 'application/pdf') voucherBrochureMimeType = 'application/pdf';
-  else if (file.type.startsWith('image/')) voucherBrochureMimeType = file.type;
-  else voucherBrochureMimeType = 'application/pdf';
-
-  const reader = new FileReader();
-  reader.onload = async function(e) {
-    try {
-      const base64 = e.target.result.split(',')[1];
-      const uploadResult = await callTrpc('files.upload', {
-        filename: file.name,
-        mimeType: voucherBrochureMimeType,
-        base64Data: base64,
-        category: 'brochure',
-        reference: 'voucher',
-      });
-      const url = uploadResult?.url;
-      if (url) {
-        voucherBrochureFileUrl = url;
-        status.textContent = `Uploaded: ${file.name}`;
-        setHiddenState(btn, false);
-      } else {
-        status.textContent = 'Upload failed. Please try again.';
-      }
-    } catch(err) {
-      status.textContent = 'Upload error: ' + err.message;
-    }
-  };
-  reader.readAsDataURL(file);
+function voucherTransactionRequiresComplianceDocs() {
+  const txn = String(document.getElementById('v-txn-type')?.value || '').toLowerCase();
+  return txn === 'lease' || txn === 'sale';
 }
 
-async function scrapeVoucherBrochure() {
-  if (!voucherBrochureFileUrl) return;
-  const btn = document.getElementById('v-brochure-scrape-btn');
+function voucherHasUploadedDealDocuments() {
+  return Array.isArray(uploadedFiles['v-deal-documents']) && uploadedFiles['v-deal-documents'].length > 0;
+}
+
+function voucherManualDocUploaded(kind) {
+  const fieldId = kind === 'agencyDisclosure' ? 'v-doc-disclosure' : 'v-doc-agreement';
+  return Array.isArray(uploadedFiles[fieldId]) && uploadedFiles[fieldId].length > 0;
+}
+
+function voucherDocFound(kind) {
+  return Boolean(voucherDocumentDetection[kind]) || voucherManualDocUploaded(kind);
+}
+
+function renderVoucherDealDocumentsStatusMessage(messageHtml) {
   const status = document.getElementById('v-brochure-status');
-  btn.classList.add('loading');
-  btn.textContent = 'Analyzing document...';
-  try {
-    const result = await callTrpc('aiAssist.extractDocument', {
-      fileUrl: voucherBrochureFileUrl,
-      mimeType: voucherBrochureMimeType,
-      tab: 'voucher'
-    });
-    if (result && result.success) {
-      const count = applyAiFields('voucher', result.fields || {});
-      status.textContent = `Filled ${count} voucher field${count !== 1 ? 's' : ''} from document`;
-      if (count > 0) showToast(`Filled ${count} voucher field${count !== 1 ? 's' : ''} from document`);
-      else showToast('No matching voucher fields found in document', 'warn');
-    } else {
-      status.textContent = 'Could not extract fields. Try a clearer document.';
+  if (!status) return;
+  if (messageHtml) {
+    status.innerHTML = messageHtml;
+    return;
+  }
+  const files = Array.isArray(uploadedFiles['v-deal-documents']) ? uploadedFiles['v-deal-documents'] : [];
+  if (!files.length) {
+    status.textContent = '';
+    return;
+  }
+  status.innerHTML = '<div class="upload-file-list">' + files
+    .map((file) => `<div class="upload-file-item"><a href="${file.url}" target="_blank" class="upload-file-name">${escHtml(file.filename || 'Document')}</a></div>`)
+    .join('') + '</div>';
+}
+
+function updateVoucherRequiredDocStatus() {
+  const disclosureBtn = document.getElementById('v-doc-status-disclosure');
+  const agreementBtn = document.getElementById('v-doc-status-agreement');
+  if (!disclosureBtn || !agreementBtn) return;
+
+  const isRequired = voucherTransactionRequiresComplianceDocs();
+  const applyState = (btn, kind) => {
+    btn.classList.remove('status-found', 'status-missing', 'status-not-required');
+    if (!isRequired) {
+      btn.textContent = 'Not required';
+      btn.classList.add('status-not-required');
+      btn.disabled = true;
+      return;
     }
-  } catch(err) {
-    status.textContent = 'Error: ' + err.message;
-  } finally {
-    btn.classList.remove('loading');
-    btn.textContent = 'Parse & Fill Voucher Fields';
+    if (voucherDocFound(kind)) {
+      btn.textContent = 'Found';
+      btn.classList.add('status-found');
+      btn.disabled = true;
+      return;
+    }
+    btn.textContent = 'Missing — Upload';
+    btn.classList.add('status-missing');
+    btn.disabled = false;
+  };
+
+  applyState(disclosureBtn, 'agencyDisclosure');
+  applyState(agreementBtn, 'listingAgreement');
+}
+
+function triggerVoucherMissingDocUpload(kind) {
+  if (!voucherTransactionRequiresComplianceDocs()) return;
+  const inputId = kind === 'agencyDisclosure' ? 'v-doc-disclosure' : 'v-doc-agreement';
+  const input = document.getElementById(inputId);
+  if (input) input.click();
+}
+
+async function onVoucherMissingDocUploaded(kind, input) {
+  const files = input?.files;
+  if (!files || files.length === 0) return;
+  const config = kind === 'agencyDisclosure'
+    ? { category: 'agency_disclosure', fieldId: 'v-doc-disclosure', statusId: 'us-v-disclosure' }
+    : { category: 'listing_agreement', fieldId: 'v-doc-agreement', statusId: 'us-v-agreement' };
+  await uploadFilesBatch(files, config.category, config.fieldId, config.statusId, '');
+  input.value = '';
+  updateVoucherRequiredDocStatus();
+}
+
+async function onVoucherDealDocumentsSelected(input) {
+  const files = input?.files;
+  if (!files || files.length === 0) return;
+  await uploadAndParseVoucherDealDocuments(Array.from(files));
+  input.value = '';
+}
+
+async function uploadAndParseVoucherDealDocuments(fileList) {
+  const VOUCHER_DOC_MAX_CLIENT_BYTES = 100 * 1024 * 1024;
+  const VOUCHER_DOC_MAX_FILES = 20;
+  const status = document.getElementById('v-brochure-status');
+  const zone = document.getElementById('v-brochure-zone');
+  if (!fileList || fileList.length === 0) return;
+  const uploaderName = getSignedInBrokerIdentity()?.name || '';
+  let validList = fileList.slice(0, VOUCHER_DOC_MAX_FILES).filter(file => file && file.size <= VOUCHER_DOC_MAX_CLIENT_BYTES);
+  if (!validList.length) {
+    renderVoucherDealDocumentsStatusMessage('<span class="text-error">All selected files exceeded the 100 MB limit.</span>');
+    return;
+  }
+
+  if (status) status.innerHTML = '<span class="text-muted-sm">Uploading and parsing documents…</span>';
+  if (zone) zone.classList.add('upload-zone-active');
+
+  try {
+    const payloads = await Promise.all(validList.map(file => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve({
+        filename: file.name,
+        mimeType: file.type === 'application/pdf' ? 'application/pdf' : (file.type?.startsWith('image/') ? file.type : 'application/pdf'),
+        base64Data: String(reader.result || '').split(',')[1],
+        category: 'voucher_deal_documents',
+        reference: document.getElementById('v-address')?.value || 'voucher',
+      });
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    })));
+
+    const batchResult = await callTrpc('files.uploadBatch', {
+      files: payloads,
+      uploaderName,
+    });
+    if (!batchResult || !Array.isArray(batchResult.results)) throw new Error('Unexpected upload response');
+
+    if (!Array.isArray(uploadedFiles['v-deal-documents'])) uploadedFiles['v-deal-documents'] = [];
+    const parseTasks = [];
+    let uploadedCount = 0;
+    let appliedCount = 0;
+
+    batchResult.results.forEach((result, index) => {
+      if (!result?.success || !result.url || !result.fileKey) return;
+      uploadedCount += 1;
+      uploadedFiles['v-deal-documents'].push({
+        url: result.url,
+        fileKey: result.fileKey,
+        filename: result.filename || payloads[index]?.filename || `Document ${uploadedCount}`,
+      });
+
+      parseTasks.push(
+        callTrpc('aiAssist.extractVoucherDocument', {
+          fileUrl: result.url,
+          mimeType: payloads[index]?.mimeType || 'application/pdf',
+        }).then((parsed) => {
+          if (!parsed?.success) return;
+          appliedCount += applyAiFields('voucher', parsed.fields || {});
+          voucherDocumentDetection.agencyDisclosure = voucherDocumentDetection.agencyDisclosure || Boolean(parsed.documentDetection?.agencyDisclosure);
+          voucherDocumentDetection.listingAgreement = voucherDocumentDetection.listingAgreement || Boolean(parsed.documentDetection?.listingAgreement);
+        }).catch((parseErr) => {
+          console.warn('Voucher document parse failed:', parseErr);
+        })
+      );
+    });
+
+    await Promise.all(parseTasks);
+    renderVoucherDealDocumentsStatusMessage();
+    updateVoucherRequiredDocStatus();
+    if (zone) {
+      if (uploadedCount > 0) zone.classList.add('upload-zone-success');
+      zone.classList.remove('upload-zone-active');
+    }
+    if (uploadedCount > 0) {
+      const msg = appliedCount > 0
+        ? `Uploaded ${uploadedCount} file${uploadedCount !== 1 ? 's' : ''} and filled ${appliedCount} field${appliedCount !== 1 ? 's' : ''}.`
+        : `Uploaded ${uploadedCount} file${uploadedCount !== 1 ? 's' : ''}.`;
+      showToast(msg);
+    }
+  } catch (err) {
+    if (status) status.innerHTML = '<span class="text-error">Upload failed. Please try again.</span>';
+    if (zone) zone.classList.remove('upload-zone-active');
   }
 }
 
@@ -13399,10 +13593,25 @@ function hasListingComplianceAttachments() {
 }
 
 function hasVoucherComplianceAttachments() {
-  const d = document.getElementById('v-doc-disclosure');
-  const a = document.getElementById('v-doc-agreement');
-  if ((d && d.files && d.files.length > 0) && (a && a.files && a.files.length > 0)) return true;
-  return (uploadedFiles['v-doc-disclosure']?.length > 0) && (uploadedFiles['v-doc-agreement']?.length > 0);
+  const docsReady = voucherDocFound('agencyDisclosure') && voucherDocFound('listingAgreement');
+  if (!voucherTransactionRequiresComplianceDocs()) return true;
+  return docsReady;
+}
+
+function hasVoucherDealDocumentUpload() {
+  return Array.isArray(uploadedFiles['v-deal-documents']) && uploadedFiles['v-deal-documents'].length > 0;
+}
+
+function validateVoucherDocumentRequirements(showFeedback = false) {
+  if (!hasVoucherDealDocumentUpload()) {
+    if (showFeedback) showToast('Upload at least one deal document before review.', 'error');
+    return { ok: false, message: 'Upload at least one deal document before review.' };
+  }
+  if (voucherTransactionRequiresComplianceDocs() && !hasVoucherComplianceAttachments()) {
+    if (showFeedback) showToast('Upload missing required Agency Disclosure and Listing Agreement documents.', 'error');
+    return { ok: false, message: 'Upload required Agency Disclosure and Listing Agreement documents before review.' };
+  }
+  return { ok: true, message: '' };
 }
 
 function collectSupportingFilesForAdminSubmission(formType) {
@@ -13411,9 +13620,10 @@ function collectSupportingFilesForAdminSubmission(formType) {
         { fieldId: 'l-doc-agreement', category: 'listing_agreement', label: 'Exclusive Listing Agreement' },
         { fieldId: 'l-doc-disclosure', category: 'agency_disclosure', label: 'Agency Disclosure' }
       ]
-    : formType === 'voucher'
-      ? [
-          { fieldId: 'v-doc-agreement', category: 'listing_agreement', label: 'Exclusive Listing Agreement' },
+      : formType === 'voucher'
+        ? [
+          { fieldId: 'v-deal-documents', category: 'voucher_deal_documents', label: 'Deal Document' },
+          { fieldId: 'v-doc-agreement', category: 'listing_agreement', label: 'Listing Agreement' },
           { fieldId: 'v-doc-disclosure', category: 'agency_disclosure', label: 'Agency Disclosure' }
         ]
       : [];
@@ -13447,13 +13657,15 @@ function openSendToAdminModal(formType) {
     showToast('Upload required Listing Agreement and Agency Disclosure before sending to admin.', 'error');
     return;
   }
-  if (formType === 'voucher' && workflowRequireVoucherAttachment() && !hasVoucherComplianceAttachments()) {
-    if (attachErr) {
-      attachErr.textContent = 'Upload both required Agency Disclosure and Exclusive Listing Agreement documents before sending to admin.';
-      attachErr.classList.remove('is-hidden');
+  if (formType === 'voucher') {
+    const voucherValidation = validateVoucherDocumentRequirements(true);
+    if (!voucherValidation.ok) {
+      if (attachErr) {
+        attachErr.textContent = voucherValidation.message;
+        attachErr.classList.remove('is-hidden');
+      }
+      return;
     }
-    showToast('Add required voucher attachments before sending to admin.', 'error');
-    return;
   }
   applySharedBrokerIdentity(getSignedInBrokerIdentity());
   void ensureSharedBrokerSession();
@@ -13751,10 +13963,13 @@ async function submitSendToAdmin() {
   const btn = document.getElementById('sta-send-btn');
   const status = document.getElementById('sta-status');
   if (btn && btn.disabled) return;
-  if (_staFormType === 'voucher' && workflowRequireVoucherAttachment() && !hasVoucherComplianceAttachments()) {
-    status.textContent = 'Add required compliance document attachments before sending.';
-    status.classList.add('text-error', 'status-strong');
-    return;
+  if (_staFormType === 'voucher') {
+    const voucherValidation = validateVoucherDocumentRequirements();
+    if (!voucherValidation.ok) {
+      status.textContent = voucherValidation.message;
+      status.classList.add('text-error', 'status-strong');
+      return;
+    }
   }
   await ensureSharedBrokerSession();
   const authUser = getSignedInBrokerIdentity();
