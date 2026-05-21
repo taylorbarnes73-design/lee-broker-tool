@@ -1,4 +1,4 @@
-FROM node:22-bookworm-slim AS base
+FROM public.ecr.aws/docker/library/node:22-bookworm-slim AS base
 WORKDIR /app
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
@@ -13,7 +13,7 @@ FROM deps AS build
 COPY . .
 RUN pnpm build
 
-FROM node:22-bookworm-slim AS runtime
+FROM public.ecr.aws/docker/library/node:22-bookworm-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
