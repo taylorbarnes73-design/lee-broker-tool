@@ -819,7 +819,7 @@
   <!-- AI Auto-fill (optional shortcut, sits above Step 1) -->
   <div class="card ai-shortcut-card">
     <h2>Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></h2>
-    <div class="brochure-zone" id="v-brochure-zone" onclick="document.getElementById('v-brochure-file').click()">
+    <div class="brochure-zone" id="v-brochure-zone" tabindex="0" role="button" aria-label="Upload deal documents" onclick="document.getElementById('v-brochure-file').click()" onkeydown="onVoucherDocZoneKeydown(event)">
       <input type="file" id="v-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" multiple aria-label="Upload deal documents" onchange="onVoucherDealDocumentsSelected(this)">
       <div class="brochure-zone-inner">
         <div>
@@ -832,17 +832,22 @@
     <div class="voucher-doc-status-list top-gap-md">
       <div class="voucher-doc-status-row">
         <span>Agency Disclosure</span>
-        <button type="button" class="voucher-doc-status-btn" id="v-doc-status-disclosure" onclick="triggerVoucherMissingDocUpload('agencyDisclosure')">Not required</button>
+        <div class="voucher-doc-status-actions">
+          <button type="button" class="voucher-doc-status-btn" id="v-doc-status-disclosure" onclick="onVoucherDocStatusPrimaryAction('agencyDisclosure')">Not required</button>
+          <button type="button" class="voucher-doc-status-link is-hidden" id="v-doc-override-disclosure" onclick="onVoucherManualOverrideClick('agencyDisclosure')">Mark as executed</button>
+        </div>
       </div>
       <div class="voucher-doc-status-row">
         <span>Listing Agreement</span>
-        <button type="button" class="voucher-doc-status-btn" id="v-doc-status-agreement" onclick="triggerVoucherMissingDocUpload('listingAgreement')">Not required</button>
+        <div class="voucher-doc-status-actions">
+          <button type="button" class="voucher-doc-status-btn" id="v-doc-status-agreement" onclick="onVoucherDocStatusPrimaryAction('listingAgreement')">Not required</button>
+          <button type="button" class="voucher-doc-status-link is-hidden" id="v-doc-override-agreement" onclick="onVoucherManualOverrideClick('listingAgreement')">Mark as executed</button>
+        </div>
       </div>
     </div>
     <input type="file" id="v-doc-disclosure" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" aria-label="Upload Agency Disclosure document" onchange="onVoucherMissingDocUploaded('agencyDisclosure', this)">
     <input type="file" id="v-doc-agreement" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" aria-label="Upload Listing Agreement document" onchange="onVoucherMissingDocUploaded('listingAgreement', this)">
-    <div class="upload-status is-hidden" id="us-v-disclosure" aria-hidden="true"></div>
-    <div class="upload-status is-hidden" id="us-v-agreement" aria-hidden="true"></div>
+    <div id="v-doc-analysis-live" class="assistive-live" aria-live="polite"></div>
   </div>
 
   <div class="stepper" data-stepper-for="voucher-main"></div>
@@ -3538,28 +3543,77 @@ function submitListingToAdmin(btn) {
 }
 
 let reviewSnapshotContext = null;
-let voucherDocumentDetection = { agencyDisclosure: false, listingAgreement: false };
 const uploadedFiles = {};
+
+function createEmptyVoucherDocStatus() {
+  return { found: false, executed: false, missingSignatures: [] };
+}
+
+function normalizeVoucherDocStatus(value) {
+  if (typeof value === 'boolean') {
+    return { found: value, executed: false, missingSignatures: [] };
+  }
+  if (!value || typeof value !== 'object') return createEmptyVoucherDocStatus();
+  const src = value;
+  return {
+    found: Boolean(src.found),
+    executed: Boolean(src.executed),
+    missingSignatures: Array.isArray(src.missingSignatures)
+      ? src.missingSignatures.map((item) => String(item).trim()).filter(Boolean)
+      : [],
+  };
+}
+
+let voucherDocumentDetection = {
+  agencyDisclosure: createEmptyVoucherDocStatus(),
+  listingAgreement: createEmptyVoucherDocStatus(),
+};
+let voucherDocumentManualOverride = { agencyDisclosure: false, listingAgreement: false };
+let voucherDocumentSourceByType = { agencyDisclosure: null, listingAgreement: null };
+let voucherAutofillFieldSource = {};
+let voucherAnalysisStatus = { state: 'idle', error: '' };
+
+function resetVoucherDetectionState() {
+  voucherDocumentDetection = {
+    agencyDisclosure: createEmptyVoucherDocStatus(),
+    listingAgreement: createEmptyVoucherDocStatus(),
+  };
+  voucherDocumentSourceByType = { agencyDisclosure: null, listingAgreement: null };
+  voucherDocumentManualOverride = { agencyDisclosure: false, listingAgreement: false };
+  voucherAnalysisStatus = { state: 'idle', error: '' };
+}
 
 function collectVoucherUploadDraftState() {
   return {
     uploadedDealDocuments: Array.isArray(uploadedFiles['v-deal-documents']) ? uploadedFiles['v-deal-documents'] : [],
-    agencyDisclosureUploads: Array.isArray(uploadedFiles['v-doc-disclosure']) ? uploadedFiles['v-doc-disclosure'] : [],
-    listingAgreementUploads: Array.isArray(uploadedFiles['v-doc-agreement']) ? uploadedFiles['v-doc-agreement'] : [],
     detection: {
-      agencyDisclosure: Boolean(voucherDocumentDetection.agencyDisclosure),
-      listingAgreement: Boolean(voucherDocumentDetection.listingAgreement),
+      agencyDisclosure: normalizeVoucherDocStatus(voucherDocumentDetection.agencyDisclosure),
+      listingAgreement: normalizeVoucherDocStatus(voucherDocumentDetection.listingAgreement),
+    },
+    manualOverride: {
+      agencyDisclosure: Boolean(voucherDocumentManualOverride.agencyDisclosure),
+      listingAgreement: Boolean(voucherDocumentManualOverride.listingAgreement),
+    },
+    sourceByType: {
+      agencyDisclosure: voucherDocumentSourceByType.agencyDisclosure || null,
+      listingAgreement: voucherDocumentSourceByType.listingAgreement || null,
     },
   };
 }
 
 function restoreVoucherUploadDraftState(state) {
   if (!state || typeof state !== 'object') return;
-  uploadedFiles['v-deal-documents'] = Array.isArray(state.uploadedDealDocuments) ? state.uploadedDealDocuments.filter(Boolean) : [];
-  uploadedFiles['v-doc-disclosure'] = Array.isArray(state.agencyDisclosureUploads) ? state.agencyDisclosureUploads.filter(Boolean) : [];
-  uploadedFiles['v-doc-agreement'] = Array.isArray(state.listingAgreementUploads) ? state.listingAgreementUploads.filter(Boolean) : [];
-  voucherDocumentDetection.agencyDisclosure = Boolean(state?.detection?.agencyDisclosure);
-  voucherDocumentDetection.listingAgreement = Boolean(state?.detection?.listingAgreement);
+  const uploadedDealDocs = Array.isArray(state.uploadedDealDocuments) ? state.uploadedDealDocuments.filter(Boolean) : [];
+  const legacyDisclosureUploads = Array.isArray(state.agencyDisclosureUploads) ? state.agencyDisclosureUploads.filter(Boolean) : [];
+  const legacyAgreementUploads = Array.isArray(state.listingAgreementUploads) ? state.listingAgreementUploads.filter(Boolean) : [];
+  uploadedFiles['v-deal-documents'] = uploadedDealDocs.length ? uploadedDealDocs : [...legacyDisclosureUploads, ...legacyAgreementUploads];
+  voucherDocumentDetection.agencyDisclosure = normalizeVoucherDocStatus(state?.detection?.agencyDisclosure);
+  voucherDocumentDetection.listingAgreement = normalizeVoucherDocStatus(state?.detection?.listingAgreement);
+  voucherDocumentManualOverride.agencyDisclosure = Boolean(state?.manualOverride?.agencyDisclosure);
+  voucherDocumentManualOverride.listingAgreement = Boolean(state?.manualOverride?.listingAgreement);
+  voucherDocumentSourceByType.agencyDisclosure = state?.sourceByType?.agencyDisclosure || null;
+  voucherDocumentSourceByType.listingAgreement = state?.sourceByType?.listingAgreement || null;
+  voucherAnalysisStatus = { state: 'idle', error: '' };
   renderVoucherDealDocumentsStatusMessage();
   updateVoucherRequiredDocStatus();
 }
@@ -3611,8 +3665,8 @@ function reviewSnapshotRowsFor(context) {
           ? docFiles.map(file => file.filename || 'Document').join(', ')
           : `${(docFiles[0]?.filename || 'Document')}, ${(docFiles[1]?.filename || 'Document')}, ${(docFiles[2]?.filename || 'Document')}, and ${docFiles.length - 3} more`)
       : '—';
-    const disclosureStatus = !voucherTransactionRequiresComplianceDocs() ? 'Not required' : (voucherDocFound('agencyDisclosure') ? 'Found' : 'Missing');
-    const listingStatus = !voucherTransactionRequiresComplianceDocs() ? 'Not required' : (voucherDocFound('listingAgreement') ? 'Found' : 'Missing');
+    const disclosureStatus = getVoucherDocDisplayState('agencyDisclosure').label;
+    const listingStatus = getVoucherDocDisplayState('listingAgreement').label;
     return [
       ['Representation Type', document.getElementById('v-rep-type')?.value || '—'],
       ['Transaction Type', document.getElementById('v-txn-type')?.value || '—'],
@@ -4884,10 +4938,8 @@ function clearVoucher() {
   ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   rentRowCount = 0;
   delete uploadedFiles['v-deal-documents'];
-  delete uploadedFiles['v-doc-disclosure'];
-  delete uploadedFiles['v-doc-agreement'];
-  voucherDocumentDetection.agencyDisclosure = false;
-  voucherDocumentDetection.listingAgreement = false;
+  voucherAutofillFieldSource = {};
+  resetVoucherDetectionState();
   renderVoucherDealDocumentsStatusMessage();
   updateVoucherRequiredDocStatus();
   const voucherDocInput = document.getElementById('v-brochure-file');
@@ -11401,6 +11453,12 @@ async function scrapeBrochure() {
 
 // ── VOUCHER DEAL DOCUMENT UPLOAD + GEMINI PARSE ──
 
+const VOUCHER_DOC_TYPES = {
+  agencyDisclosure: 'Agency Disclosure',
+  listingAgreement: 'Listing Agreement',
+};
+let voucherPendingRemovalIndex = -1;
+
 function voucherTransactionRequiresComplianceDocs() {
   const txn = String(document.getElementById('v-txn-type')?.value || '').toLowerCase();
   return txn === 'lease' || txn === 'sale';
@@ -11410,13 +11468,50 @@ function voucherHasUploadedDealDocuments() {
   return Array.isArray(uploadedFiles['v-deal-documents']) && uploadedFiles['v-deal-documents'].length > 0;
 }
 
-function voucherManualDocUploaded(kind) {
-  const fieldId = kind === 'agencyDisclosure' ? 'v-doc-disclosure' : 'v-doc-agreement';
-  return Array.isArray(uploadedFiles[fieldId]) && uploadedFiles[fieldId].length > 0;
+function voucherDocFound(kind) {
+  return Boolean(voucherDocumentManualOverride[kind]) || Boolean(voucherDocumentDetection[kind]?.found);
 }
 
-function voucherDocFound(kind) {
-  return Boolean(voucherDocumentDetection[kind]) || voucherManualDocUploaded(kind);
+function voucherDocExecuted(kind) {
+  if (voucherDocumentManualOverride[kind]) return true;
+  const detection = normalizeVoucherDocStatus(voucherDocumentDetection[kind]);
+  return detection.found && detection.executed;
+}
+
+function getVoucherDocDisplayState(kind) {
+  if (!voucherTransactionRequiresComplianceDocs()) {
+    return { key: 'not-required', label: 'Not required', colorClass: 'status-not-required', clickable: false, showOverride: false, missingSignatures: [] };
+  }
+  if (voucherDocumentManualOverride[kind]) {
+    return { key: 'manual', label: 'Executed (manual)', colorClass: 'status-manual', clickable: false, showOverride: false, missingSignatures: [] };
+  }
+  const detection = normalizeVoucherDocStatus(voucherDocumentDetection[kind]);
+  if (!detection.found) {
+    return { key: 'missing', label: 'Missing — Upload', colorClass: 'status-missing', clickable: true, showOverride: true, missingSignatures: [] };
+  }
+  if (detection.executed) {
+    return { key: 'executed', label: 'Executed', colorClass: 'status-executed', clickable: false, showOverride: false, missingSignatures: [] };
+  }
+  return {
+    key: 'not-executed',
+    label: 'Not executed — Signatures missing',
+    colorClass: 'status-not-executed',
+    clickable: true,
+    showOverride: true,
+    missingSignatures: detection.missingSignatures,
+  };
+}
+
+function buildVoucherAnalysisLiveMessage() {
+  const disclosure = getVoucherDocDisplayState('agencyDisclosure');
+  const listing = getVoucherDocDisplayState('listingAgreement');
+  return `Analysis complete. Agency Disclosure ${disclosure.label.toLowerCase()}. Listing Agreement ${listing.label.toLowerCase()}.`;
+}
+
+function announceVoucherAnalysisComplete() {
+  const live = document.getElementById('v-doc-analysis-live');
+  if (!live) return;
+  live.textContent = buildVoucherAnalysisLiveMessage();
 }
 
 function renderVoucherDealDocumentsStatusMessage(messageHtml) {
@@ -11427,42 +11522,100 @@ function renderVoucherDealDocumentsStatusMessage(messageHtml) {
     return;
   }
   const files = Array.isArray(uploadedFiles['v-deal-documents']) ? uploadedFiles['v-deal-documents'] : [];
+  const notices = [];
+  if (voucherAnalysisStatus.state === 'analyzing') {
+    notices.push('<div class="voucher-analysis-inline">Analyzing with Gemini…</div>');
+  } else if (voucherAnalysisStatus.error) {
+    notices.push('<div class="text-error">' + escHtml(voucherAnalysisStatus.error) + '</div>');
+  }
   if (!files.length) {
-    status.textContent = '';
+    status.innerHTML = notices.join('');
     return;
   }
-  status.innerHTML = '<div class="upload-file-list">' + files
-    .map((file) => `<div class="upload-file-item"><a href="${file.url}" target="_blank" class="upload-file-name">${escHtml(file.filename || 'Document')}</a></div>`)
-    .join('') + '</div>';
+
+  let html = notices.join('') + '<div class="upload-file-list">';
+  files.forEach((file, index) => {
+    const fileKey = String(file.fileKey || `voucher-file-${index}`);
+    const disclosureSource = voucherDocumentSourceByType.agencyDisclosure === fileKey;
+    const listingSource = voucherDocumentSourceByType.listingAgreement === fileKey;
+    html += '<div class="upload-file-item voucher-upload-file-item">' +
+      `<a href="${file.url}" target="_blank" class="upload-file-name">${escHtml(file.filename || 'Document')}</a>` +
+      `<button type="button" class="voucher-file-remove" onclick="requestVoucherDealDocumentRemoval(${index})">Remove</button>` +
+      '</div>';
+    if (voucherPendingRemovalIndex === index) {
+      html += `<div class="voucher-remove-confirm">Remove ${escHtml(file.filename || 'document')}? Autofilled fields from this document will be cleared. <button type="button" class="voucher-remove-confirm-btn" onclick="confirmVoucherDealDocumentRemoval(${index})">Remove</button> <button type="button" class="voucher-remove-confirm-btn" onclick="cancelVoucherDealDocumentRemoval()">Cancel</button></div>`;
+    }
+    if (disclosureSource) {
+      html += `<div class="voucher-file-doc-status">• Agency Disclosure <span class="${getVoucherDocDisplayState('agencyDisclosure').colorClass}">${escHtml(getVoucherDocDisplayState('agencyDisclosure').label)}</span></div>`;
+    }
+    if (listingSource) {
+      html += `<div class="voucher-file-doc-status">• Listing Agreement <span class="${getVoucherDocDisplayState('listingAgreement').colorClass}">${escHtml(getVoucherDocDisplayState('listingAgreement').label)}</span></div>`;
+    }
+  });
+  html += '</div>';
+  status.innerHTML = html;
 }
 
 function updateVoucherRequiredDocStatus() {
   const disclosureBtn = document.getElementById('v-doc-status-disclosure');
   const agreementBtn = document.getElementById('v-doc-status-agreement');
+  const disclosureOverride = document.getElementById('v-doc-override-disclosure');
+  const agreementOverride = document.getElementById('v-doc-override-agreement');
   if (!disclosureBtn || !agreementBtn) return;
 
-  const isRequired = voucherTransactionRequiresComplianceDocs();
-  const applyState = (btn, kind) => {
-    btn.classList.remove('status-found', 'status-missing', 'status-not-required');
-    if (!isRequired) {
-      btn.textContent = 'Not required';
-      btn.classList.add('status-not-required');
-      btn.disabled = true;
-      return;
+  const applyState = (btn, overrideBtn, kind) => {
+    const state = getVoucherDocDisplayState(kind);
+    btn.classList.remove('status-executed', 'status-not-executed', 'status-missing', 'status-not-required', 'status-manual');
+    btn.classList.add(state.colorClass);
+    btn.textContent = state.label;
+    btn.disabled = !state.clickable;
+    if (overrideBtn) {
+      overrideBtn.classList.toggle('is-hidden', !state.showOverride);
+      overrideBtn.textContent = state.key === 'missing' ? 'Mark as included' : 'Mark as executed';
     }
-    if (voucherDocFound(kind)) {
-      btn.textContent = 'Found';
-      btn.classList.add('status-found');
-      btn.disabled = true;
-      return;
-    }
-    btn.textContent = 'Missing — Upload';
-    btn.classList.add('status-missing');
-    btn.disabled = false;
   };
 
-  applyState(disclosureBtn, 'agencyDisclosure');
-  applyState(agreementBtn, 'listingAgreement');
+  applyState(disclosureBtn, disclosureOverride, 'agencyDisclosure');
+  applyState(agreementBtn, agreementOverride, 'listingAgreement');
+}
+
+function onVoucherDocZoneKeydown(event) {
+  if (!event) return;
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    document.getElementById('v-brochure-file')?.click();
+  }
+}
+
+function onVoucherDocStatusPrimaryAction(kind) {
+  const state = getVoucherDocDisplayState(kind);
+  if (state.key === 'missing') {
+    triggerVoucherMissingDocUpload(kind);
+    return;
+  }
+  if (state.key === 'not-executed') {
+    if (state.missingSignatures.length) {
+      const msg = 'Missing signatures for ' + VOUCHER_DOC_TYPES[kind] + ': ' + state.missingSignatures.join(', ');
+      showToast(msg, 'warn');
+      const live = document.getElementById('v-doc-analysis-live');
+      if (live) live.textContent = msg;
+    } else {
+      const msg = `${VOUCHER_DOC_TYPES[kind]} is not fully executed.`;
+      showToast(msg, 'warn');
+      const live = document.getElementById('v-doc-analysis-live');
+      if (live) live.textContent = msg;
+    }
+  }
+}
+
+function onVoucherManualOverrideClick(kind) {
+  const state = getVoucherDocDisplayState(kind);
+  if (state.key !== 'missing' && state.key !== 'not-executed') return;
+  const confirmed = confirm('Confirm this document is fully executed. This will be flagged in the submission for admin review.');
+  if (!confirmed) return;
+  voucherDocumentManualOverride[kind] = true;
+  updateVoucherRequiredDocStatus();
+  renderVoucherDealDocumentsStatusMessage();
 }
 
 function triggerVoucherMissingDocUpload(kind) {
@@ -11475,12 +11628,14 @@ function triggerVoucherMissingDocUpload(kind) {
 async function onVoucherMissingDocUploaded(kind, input) {
   const files = input?.files;
   if (!files || files.length === 0) return;
-  const config = kind === 'agencyDisclosure'
-    ? { category: 'agency_disclosure', fieldId: 'v-doc-disclosure', statusId: 'us-v-disclosure' }
-    : { category: 'listing_agreement', fieldId: 'v-doc-agreement', statusId: 'us-v-agreement' };
-  await uploadFilesBatch(files, config.category, config.fieldId, config.statusId, '');
+  await uploadAndParseVoucherDealDocuments(Array.from(files));
   input.value = '';
-  updateVoucherRequiredDocStatus();
+  if (kind) {
+    const state = getVoucherDocDisplayState(kind);
+    if (state.key === 'missing') {
+      showToast(`Uploaded file. ${VOUCHER_DOC_TYPES[kind]} is still missing from analysis.`, 'warn');
+    }
+  }
 }
 
 async function onVoucherDealDocumentsSelected(input) {
@@ -11490,20 +11645,191 @@ async function onVoucherDealDocumentsSelected(input) {
   input.value = '';
 }
 
+function validateVoucherDealDocumentFile(file, maxBytes) {
+  if (!file) return 'File is invalid or could not be read.';
+  if (file.size > maxBytes) return 'File too large. Max 25MB per file.';
+  const mime = String(file.type || '').toLowerCase();
+  const name = String(file.name || '').toLowerCase();
+  const isPdf = mime === 'application/pdf' || name.endsWith('.pdf');
+  const isJpg = mime === 'image/jpeg' || mime === 'image/jpg' || name.endsWith('.jpg') || name.endsWith('.jpeg');
+  const isPng = mime === 'image/png' || name.endsWith('.png');
+  if (!isPdf && !isJpg && !isPng) {
+    return 'Couldn't read this file. Try a different format or remove password protection.';
+  }
+  return '';
+}
+
+function requestVoucherDealDocumentRemoval(index) {
+  voucherPendingRemovalIndex = index;
+  renderVoucherDealDocumentsStatusMessage();
+}
+
+function cancelVoucherDealDocumentRemoval() {
+  voucherPendingRemovalIndex = -1;
+  renderVoucherDealDocumentsStatusMessage();
+}
+
+function clearVoucherAutofillFromSource(sourceToken) {
+  if (!sourceToken) return;
+  Object.entries(voucherAutofillFieldSource).forEach(([fieldId, token]) => {
+    if (token !== sourceToken) return;
+    const el = document.getElementById(fieldId);
+    if (el && el.classList.contains('ai-filled')) {
+      el.value = '';
+      el.classList.remove('ai-filled', 'ai-smart');
+      const badge = el.parentNode?.querySelector('.ai-filled-badge');
+      if (badge) badge.remove();
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    delete voucherAutofillFieldSource[fieldId];
+  });
+}
+
+function buildEmptyVoucherDetectionResult() {
+  return {
+    detection: {
+      agencyDisclosure: createEmptyVoucherDocStatus(),
+      listingAgreement: createEmptyVoucherDocStatus(),
+    },
+    sourceByType: {
+      agencyDisclosure: null,
+      listingAgreement: null,
+    },
+    appliedCount: 0,
+    hadFailures: false,
+    hadTimeout: false,
+    hadUnreadable: false,
+  };
+}
+
+async function runVoucherGeminiAnalysis() {
+  const files = Array.isArray(uploadedFiles['v-deal-documents']) ? uploadedFiles['v-deal-documents'] : [];
+  if (!files.length) {
+    resetVoucherDetectionState();
+    renderVoucherDealDocumentsStatusMessage();
+    updateVoucherRequiredDocStatus();
+    return buildEmptyVoucherDetectionResult();
+  }
+
+  voucherAnalysisStatus = { state: 'analyzing', error: '' };
+  renderVoucherDealDocumentsStatusMessage();
+
+  const result = buildEmptyVoucherDetectionResult();
+  for (const file of files) {
+    const fileUrl = file?.url;
+    const fileKey = String(file?.fileKey || '');
+    const filename = String(file?.filename || '').toLowerCase();
+    const mimeType = filename.endsWith('.png')
+      ? 'image/png'
+      : (filename.endsWith('.jpg') || filename.endsWith('.jpeg')
+        ? 'image/jpeg'
+        : 'application/pdf');
+    if (!fileUrl) {
+      result.hadFailures = true;
+      continue;
+    }
+
+    try {
+      const parsed = await callTrpc('aiAssist.extractVoucherDocument', {
+        fileUrl,
+        mimeType,
+      });
+      if (!parsed?.success) {
+        result.hadFailures = true;
+        const errText = String(parsed?.error || '').toLowerCase();
+        if (errText.includes('password') || errText.includes('corrupt') || errText.includes('read')) result.hadUnreadable = true;
+        if (errText.includes('timeout')) result.hadTimeout = true;
+        continue;
+      }
+      result.appliedCount += applyAiFields('voucher', parsed.fields || {}, { sourceToken: fileKey || fileUrl });
+      ['agencyDisclosure', 'listingAgreement'].forEach((kind) => {
+        const current = result.detection[kind];
+        if (current.found) return;
+        const detection = normalizeVoucherDocStatus(parsed?.documentDetection?.[kind]);
+        if (!detection.found) return;
+        result.detection[kind] = detection;
+        result.sourceByType[kind] = fileKey || fileUrl;
+      });
+    } catch (error) {
+      const msg = String(error?.message || error || '').toLowerCase();
+      result.hadFailures = true;
+      if (msg.includes('timeout')) result.hadTimeout = true;
+      if (msg.includes('password') || msg.includes('corrupt') || msg.includes('read')) result.hadUnreadable = true;
+    }
+  }
+
+  voucherDocumentDetection = {
+    agencyDisclosure: normalizeVoucherDocStatus(result.detection.agencyDisclosure),
+    listingAgreement: normalizeVoucherDocStatus(result.detection.listingAgreement),
+  };
+  voucherDocumentSourceByType = {
+    agencyDisclosure: result.sourceByType.agencyDisclosure,
+    listingAgreement: result.sourceByType.listingAgreement,
+  };
+  if (voucherDocumentDetection.agencyDisclosure.executed) voucherDocumentManualOverride.agencyDisclosure = false;
+  if (voucherDocumentDetection.listingAgreement.executed) voucherDocumentManualOverride.listingAgreement = false;
+
+  if (result.hadTimeout) {
+    voucherAnalysisStatus = { state: 'error', error: 'Auto-fill unavailable — fill manually.' };
+  } else if (result.hadUnreadable) {
+    voucherAnalysisStatus = { state: 'error', error: "Couldn't read this file. Try a different format or remove password protection." };
+  } else if (result.hadFailures) {
+    voucherAnalysisStatus = { state: 'error', error: 'Auto-fill unavailable — fill manually.' };
+  } else {
+    voucherAnalysisStatus = { state: 'done', error: '' };
+    announceVoucherAnalysisComplete();
+  }
+
+  updateVoucherRequiredDocStatus();
+  renderVoucherDealDocumentsStatusMessage();
+  return result;
+}
+
+async function confirmVoucherDealDocumentRemoval(index) {
+  const files = Array.isArray(uploadedFiles['v-deal-documents']) ? uploadedFiles['v-deal-documents'] : [];
+  if (index < 0 || index >= files.length) {
+    voucherPendingRemovalIndex = -1;
+    renderVoucherDealDocumentsStatusMessage();
+    return;
+  }
+  const [removed] = files.splice(index, 1);
+  clearVoucherAutofillFromSource(String(removed?.fileKey || removed?.url || ''));
+  voucherPendingRemovalIndex = -1;
+
+  if (!files.length) {
+    delete uploadedFiles['v-deal-documents'];
+    resetVoucherDetectionState();
+    renderVoucherDealDocumentsStatusMessage();
+    updateVoucherRequiredDocStatus();
+    return;
+  }
+
+  await runVoucherGeminiAnalysis();
+}
+
 async function uploadAndParseVoucherDealDocuments(fileList) {
-  const VOUCHER_DOC_MAX_CLIENT_BYTES = 100 * 1024 * 1024;
+  const VOUCHER_DOC_MAX_CLIENT_BYTES = 25 * 1024 * 1024;
   const VOUCHER_DOC_MAX_FILES = 20;
   const status = document.getElementById('v-brochure-status');
   const zone = document.getElementById('v-brochure-zone');
   if (!fileList || fileList.length === 0) return;
   const uploaderName = getSignedInBrokerIdentity()?.name || '';
-  let validList = fileList.slice(0, VOUCHER_DOC_MAX_FILES).filter(file => file && file.size <= VOUCHER_DOC_MAX_CLIENT_BYTES);
-  if (!validList.length) {
-    renderVoucherDealDocumentsStatusMessage('<span class="text-error">All selected files exceeded the 100 MB limit.</span>');
-    return;
+  const selected = fileList.slice(0, VOUCHER_DOC_MAX_FILES);
+  const validList = [];
+
+  for (const file of selected) {
+    const validationError = validateVoucherDealDocumentFile(file, VOUCHER_DOC_MAX_CLIENT_BYTES);
+    if (!validationError) {
+      validList.push(file);
+      continue;
+    }
+    if (status) status.innerHTML = `<span class="text-error">${escHtml(validationError)}</span>`;
   }
 
-  if (status) status.innerHTML = '<span class="text-muted-sm">Uploading and parsing documents…</span>';
+  if (!validList.length) return;
+
+  if (status) status.innerHTML = '<span class="text-muted-sm">Uploading documents…</span>';
   if (zone) zone.classList.add('upload-zone-active');
 
   try {
@@ -11511,7 +11837,7 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
       const reader = new FileReader();
       reader.onload = () => resolve({
         filename: file.name,
-        mimeType: file.type === 'application/pdf' ? 'application/pdf' : (file.type?.startsWith('image/') ? file.type : 'application/pdf'),
+        mimeType: file.type || 'application/pdf',
         base64Data: String(reader.result || '').split(',')[1],
         category: 'voucher_deal_documents',
         reference: document.getElementById('v-address')?.value || 'voucher',
@@ -11524,13 +11850,10 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
       files: payloads,
       uploaderName,
     });
-    if (!batchResult || !Array.isArray(batchResult.results)) throw new Error('Unexpected upload response');
+    if (!batchResult || !Array.isArray(batchResult.results)) throw new Error('Upload failed.');
 
     if (!Array.isArray(uploadedFiles['v-deal-documents'])) uploadedFiles['v-deal-documents'] = [];
-    const parseTasks = [];
     let uploadedCount = 0;
-    let appliedCount = 0;
-
     batchResult.results.forEach((result, index) => {
       if (!result?.success || !result.url || !result.fileKey) return;
       uploadedCount += 1;
@@ -11539,34 +11862,20 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
         fileKey: result.fileKey,
         filename: result.filename || payloads[index]?.filename || `Document ${uploadedCount}`,
       });
-
-      parseTasks.push(
-        callTrpc('aiAssist.extractVoucherDocument', {
-          fileUrl: result.url,
-          mimeType: payloads[index]?.mimeType || 'application/pdf',
-        }).then((parsed) => {
-          if (!parsed?.success) return;
-          appliedCount += applyAiFields('voucher', parsed.fields || {});
-          voucherDocumentDetection.agencyDisclosure = voucherDocumentDetection.agencyDisclosure || Boolean(parsed.documentDetection?.agencyDisclosure);
-          voucherDocumentDetection.listingAgreement = voucherDocumentDetection.listingAgreement || Boolean(parsed.documentDetection?.listingAgreement);
-        }).catch((parseErr) => {
-          console.warn('Voucher document parse failed:', parseErr);
-        })
-      );
     });
 
-    await Promise.all(parseTasks);
-    renderVoucherDealDocumentsStatusMessage();
-    updateVoucherRequiredDocStatus();
+    if (uploadedCount === 0) throw new Error('Upload failed.');
+
     if (zone) {
-      if (uploadedCount > 0) zone.classList.add('upload-zone-success');
+      zone.classList.add('upload-zone-success');
       zone.classList.remove('upload-zone-active');
     }
-    if (uploadedCount > 0) {
-      const msg = appliedCount > 0
-        ? `Uploaded ${uploadedCount} file${uploadedCount !== 1 ? 's' : ''} and filled ${appliedCount} field${appliedCount !== 1 ? 's' : ''}.`
-        : `Uploaded ${uploadedCount} file${uploadedCount !== 1 ? 's' : ''}.`;
-      showToast(msg);
+
+    const analysis = await runVoucherGeminiAnalysis();
+    if (analysis.appliedCount > 0) {
+      showToast(`Uploaded ${uploadedCount} file${uploadedCount !== 1 ? 's' : ''} and filled ${analysis.appliedCount} field${analysis.appliedCount !== 1 ? 's' : ''}.`);
+    } else {
+      showToast(`Uploaded ${uploadedCount} file${uploadedCount !== 1 ? 's' : ''}.`);
     }
   } catch (err) {
     if (status) status.innerHTML = '<span class="text-error">Upload failed. Please try again.</span>';
@@ -12404,8 +12713,9 @@ function addAiBadge(el) {
   return badge;
 }
 
-function applyAiFields(tab, fields) {
+function applyAiFields(tab, fields, options = {}) {
   const map = AI_FIELD_MAP[tab] || {};
+  const sourceToken = options && typeof options.sourceToken === 'string' ? options.sourceToken : '';
   let applied = 0;
   Object.entries(fields).forEach(([key, value]) => {
     const elId = map[key];
@@ -12416,10 +12726,16 @@ function applyAiFields(tab, fields) {
     if (oldVal.trim() !== '') return; // don't overwrite existing values
     el.value = value;
     el.classList.add('ai-filled');
+    if (tab === 'voucher' && sourceToken) {
+      voucherAutofillFieldSource[elId] = sourceToken;
+    }
     const badge = addAiBadge(el);
     el.addEventListener('input', function onEdit() {
       el.classList.remove('ai-filled');
       badge.remove();
+      if (tab === 'voucher') {
+        delete voucherAutofillFieldSource[elId];
+      }
       el.removeEventListener('input', onEdit);
     }, { once: true });
     // Trigger change event so any dependent calculations update
@@ -13593,7 +13909,7 @@ function hasListingComplianceAttachments() {
 }
 
 function hasVoucherComplianceAttachments() {
-  const docsReady = voucherDocFound('agencyDisclosure') && voucherDocFound('listingAgreement');
+  const docsReady = voucherDocExecuted('agencyDisclosure') && voucherDocExecuted('listingAgreement');
   if (!voucherTransactionRequiresComplianceDocs()) return true;
   return docsReady;
 }
@@ -13603,13 +13919,13 @@ function hasVoucherDealDocumentUpload() {
 }
 
 function validateVoucherDocumentRequirements(showFeedback = false) {
-  if (!hasVoucherDealDocumentUpload()) {
+  if (!hasVoucherDealDocumentUpload() && voucherTransactionRequiresComplianceDocs()) {
     if (showFeedback) showToast('Upload at least one deal document before review.', 'error');
     return { ok: false, message: 'Upload at least one deal document before review.' };
   }
   if (voucherTransactionRequiresComplianceDocs() && !hasVoucherComplianceAttachments()) {
-    if (showFeedback) showToast('Upload missing required Agency Disclosure and Listing Agreement documents.', 'error');
-    return { ok: false, message: 'Upload required Agency Disclosure and Listing Agreement documents before review.' };
+    if (showFeedback) showToast('Both Agency Disclosure and Listing Agreement must be executed before review.', 'error');
+    return { ok: false, message: 'Both Agency Disclosure and Listing Agreement must be executed before review.' };
   }
   return { ok: true, message: '' };
 }
@@ -13622,9 +13938,7 @@ function collectSupportingFilesForAdminSubmission(formType) {
       ]
       : formType === 'voucher'
         ? [
-          { fieldId: 'v-deal-documents', category: 'voucher_deal_documents', label: 'Deal Document' },
-          { fieldId: 'v-doc-agreement', category: 'listing_agreement', label: 'Listing Agreement' },
-          { fieldId: 'v-doc-disclosure', category: 'agency_disclosure', label: 'Agency Disclosure' }
+          { fieldId: 'v-deal-documents', category: 'voucher_deal_documents', label: 'Deal Document' }
         ]
       : [];
 

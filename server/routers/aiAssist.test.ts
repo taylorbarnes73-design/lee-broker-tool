@@ -515,8 +515,16 @@ describe("aiAssist.extractDocument", () => {
           {
             message: {
               content: JSON.stringify({
-                agencyDisclosure: true,
-                listingAgreement: false,
+                agencyDisclosure: {
+                  found: true,
+                  executed: false,
+                  missingSignatures: ["Principal signature"],
+                },
+                listingAgreement: {
+                  found: false,
+                  executed: false,
+                  missingSignatures: [],
+                },
               }),
             },
           },
@@ -532,8 +540,16 @@ describe("aiAssist.extractDocument", () => {
     expect(result.success).toBe(true);
     expect(result.fields.clientName).toBe("Detected Client");
     expect(result.documentDetection).toEqual({
-      agencyDisclosure: true,
-      listingAgreement: false,
+      agencyDisclosure: {
+        found: true,
+        executed: false,
+        missingSignatures: ["Principal signature"],
+      },
+      listingAgreement: {
+        found: false,
+        executed: false,
+        missingSignatures: [],
+      },
     });
   });
 });
