@@ -3599,6 +3599,26 @@ function normalizeListingDocumentState(value) {
   return { ...base, found, executed, missingSignatures, manualOverride };
 }
 
+function safeRenderVoucherDealDocumentsStatusMessage(messageHtml) {
+  if (typeof renderVoucherDealDocumentsStatusMessage !== 'function') return;
+  renderVoucherDealDocumentsStatusMessage(messageHtml);
+}
+
+function safeUpdateVoucherRequiredDocStatus() {
+  if (typeof updateVoucherRequiredDocStatus !== 'function') return;
+  updateVoucherRequiredDocStatus();
+}
+
+function safeRenderListingDealDocumentsStatusMessage() {
+  if (typeof renderListingDealDocumentsStatusMessage !== 'function') return;
+  renderListingDealDocumentsStatusMessage();
+}
+
+function safeUpdateListingRequiredDocStatus() {
+  if (typeof updateListingRequiredDocStatus !== 'function') return;
+  updateListingRequiredDocStatus();
+}
+
 function collectVoucherUploadDraftState() {
   return {
     uploadedDealDocuments: Array.isArray(uploadedFiles['v-deal-documents']) ? uploadedFiles['v-deal-documents'] : [],
@@ -3630,8 +3650,8 @@ function restoreVoucherUploadDraftState(state) {
   voucherDocumentSourceByType.agencyDisclosure = state?.sourceByType?.agencyDisclosure || null;
   voucherDocumentSourceByType.listingAgreement = state?.sourceByType?.listingAgreement || null;
   voucherAnalysisStatus = { state: 'idle', error: '' };
-  renderVoucherDealDocumentsStatusMessage();
-  updateVoucherRequiredDocStatus();
+  safeRenderVoucherDealDocumentsStatusMessage();
+  safeUpdateVoucherRequiredDocStatus();
 }
 
 function collectListingUploadDraftState() {
@@ -3655,8 +3675,8 @@ function restoreListingUploadDraftState(state) {
   Object.keys(sourceState).forEach((k) => {
     if (typeof sourceState[k] === 'string') listingAiFieldSources[k] = sourceState[k];
   });
-  renderListingDealDocumentsStatusMessage();
-  updateListingRequiredDocStatus();
+  safeRenderListingDealDocumentsStatusMessage();
+  safeUpdateListingRequiredDocStatus();
 }
 
 function saveCurrentDraft(context) {
@@ -4678,7 +4698,7 @@ function onVoucherTxnChange() {
   setHiddenState(reqCommSale, txn !== 'sale');
   document.getElementById('v-lbl-lessor').textContent = txn === 'sale' ? 'Seller' : 'Lessor / Seller';
   document.getElementById('v-lbl-lessee').textContent = txn === 'sale' ? 'Buyer' : 'Lessee / Buyer';
-  updateVoucherRequiredDocStatus();
+  safeUpdateVoucherRequiredDocStatus();
   syncVoucherBranchToggle();
   calcCommSummary();
   syncDealGlance();
@@ -4957,8 +4977,8 @@ function clearListing() {
   delete uploadedFiles['l-deal-documents'];
   listingDocumentDetection = listingDocumentDefaults();
   Object.keys(listingAiFieldSources).forEach((k) => delete listingAiFieldSources[k]);
-  renderListingDealDocumentsStatusMessage();
-  updateListingRequiredDocStatus();
+  safeRenderListingDealDocumentsStatusMessage();
+  safeUpdateListingRequiredDocStatus();
   const listingDocsInput = document.getElementById('l-deal-documents-file');
   if (listingDocsInput) listingDocsInput.value = '';
   const listingDocsZone = document.getElementById('l-deal-docs-zone');
@@ -4995,8 +5015,8 @@ function clearVoucher() {
   delete uploadedFiles['v-deal-documents'];
   voucherAutofillFieldSource = {};
   resetVoucherDetectionState();
-  renderVoucherDealDocumentsStatusMessage();
-  updateVoucherRequiredDocStatus();
+  safeRenderVoucherDealDocumentsStatusMessage();
+  safeUpdateVoucherRequiredDocStatus();
   const voucherDocInput = document.getElementById('v-brochure-file');
   if (voucherDocInput) voucherDocInput.value = '';
   const disclosureInput = document.getElementById('v-doc-disclosure');
