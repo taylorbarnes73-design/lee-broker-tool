@@ -820,7 +820,7 @@
   <div class="card ai-shortcut-card">
     <h2>Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></h2>
     <div class="brochure-zone" id="v-brochure-zone" onclick="document.getElementById('v-brochure-file').click()">
-      <input type="file" id="v-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" multiple onchange="onVoucherDealDocumentsSelected(this)">
+      <input type="file" id="v-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" multiple aria-label="Upload deal documents" onchange="onVoucherDealDocumentsSelected(this)">
       <div class="brochure-zone-inner">
         <div>
           <div class="brochure-zone-label">Drop files here</div>
@@ -839,8 +839,8 @@
         <button type="button" class="voucher-doc-status-btn" id="v-doc-status-agreement" onclick="triggerVoucherMissingDocUpload('listingAgreement')">Not required</button>
       </div>
     </div>
-    <input type="file" id="v-doc-disclosure" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" onchange="onVoucherMissingDocUploaded('agencyDisclosure', this)">
-    <input type="file" id="v-doc-agreement" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" onchange="onVoucherMissingDocUploaded('listingAgreement', this)">
+    <input type="file" id="v-doc-disclosure" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" aria-label="Upload Agency Disclosure document" onchange="onVoucherMissingDocUploaded('agencyDisclosure', this)">
+    <input type="file" id="v-doc-agreement" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" aria-label="Upload Listing Agreement document" onchange="onVoucherMissingDocUploaded('listingAgreement', this)">
     <div class="upload-status is-hidden" id="us-v-disclosure" aria-hidden="true"></div>
     <div class="upload-status is-hidden" id="us-v-agreement" aria-hidden="true"></div>
   </div>
@@ -3606,7 +3606,11 @@ function reviewSnapshotRowsFor(context) {
   }
   if (context === 'voucher') {
     const docFiles = Array.isArray(uploadedFiles['v-deal-documents']) ? uploadedFiles['v-deal-documents'] : [];
-    const docNames = docFiles.length ? docFiles.map(file => file.filename || 'Document').join(', ') : '—';
+    const docNames = docFiles.length
+      ? (docFiles.length <= 3
+          ? docFiles.map(file => file.filename || 'Document').join(', ')
+          : `${(docFiles[0]?.filename || 'Document')}, ${(docFiles[1]?.filename || 'Document')}, ${(docFiles[2]?.filename || 'Document')}, and ${docFiles.length - 3} more`)
+      : '—';
     const disclosureStatus = !voucherTransactionRequiresComplianceDocs() ? 'Not required' : (voucherDocFound('agencyDisclosure') ? 'Found' : 'Missing');
     const listingStatus = !voucherTransactionRequiresComplianceDocs() ? 'Not required' : (voucherDocFound('listingAgreement') ? 'Found' : 'Missing');
     return [
@@ -11487,12 +11491,13 @@ async function onVoucherDealDocumentsSelected(input) {
 }
 
 async function uploadAndParseVoucherDealDocuments(fileList) {
+  const VOUCHER_DOC_MAX_CLIENT_BYTES = 100 * 1024 * 1024;
+  const VOUCHER_DOC_MAX_FILES = 20;
   const status = document.getElementById('v-brochure-status');
   const zone = document.getElementById('v-brochure-zone');
   if (!fileList || fileList.length === 0) return;
-
-  const MAX_CLIENT_BYTES = 100 * 1024 * 1024;
-  let validList = fileList.slice(0, 20).filter(file => file && file.size <= MAX_CLIENT_BYTES);
+  const uploaderName = getSignedInBrokerIdentity()?.name || '';
+  let validList = fileList.slice(0, VOUCHER_DOC_MAX_FILES).filter(file => file && file.size <= VOUCHER_DOC_MAX_CLIENT_BYTES);
   if (!validList.length) {
     renderVoucherDealDocumentsStatusMessage('<span class="text-error">All selected files exceeded the 100 MB limit.</span>');
     return;
@@ -11517,7 +11522,7 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
 
     const batchResult = await callTrpc('files.uploadBatch', {
       files: payloads,
-      uploaderName: '',
+      uploaderName,
     });
     if (!batchResult || !Array.isArray(batchResult.results)) throw new Error('Unexpected upload response');
 
@@ -11544,7 +11549,9 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
           appliedCount += applyAiFields('voucher', parsed.fields || {});
           voucherDocumentDetection.agencyDisclosure = voucherDocumentDetection.agencyDisclosure || Boolean(parsed.documentDetection?.agencyDisclosure);
           voucherDocumentDetection.listingAgreement = voucherDocumentDetection.listingAgreement || Boolean(parsed.documentDetection?.listingAgreement);
-        }).catch(() => {})
+        }).catch((parseErr) => {
+          console.warn('Voucher document parse failed:', parseErr);
+        })
       );
     });
 
