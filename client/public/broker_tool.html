@@ -200,45 +200,33 @@
 
       <div class="field field-stack-gap">
         <label class="inline-flex-label">Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></label>
-        <div class="brochure-zone" id="brochure-zone" onclick="document.getElementById('l-brochure-file').click()">
-          <input type="file" id="l-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" onchange="onBrochureSelected(this)">
+        <div class="brochure-zone" id="l-deal-docs-zone" role="button" tabindex="0" aria-label="Upload deal documents" onclick="document.getElementById('l-deal-documents-file').click()">
+          <input type="file" id="l-deal-documents-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" multiple onchange="onListingDealDocumentsSelected(this)">
           <div class="brochure-zone-inner">
-            <span class="brochure-zone-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
             <div>
-              <div class="brochure-zone-label">Upload deal documents</div>
-              <div class="brochure-zone-sub">PDF, JPG, PNG &mdash; AI will extract address, size, rate, and more</div>
+              <div class="brochure-zone-label">Drop files here</div>
+              <div class="brochure-zone-sub">PDF, JPG, PNG</div>
             </div>
           </div>
-          <div class="brochure-status" id="brochure-status"></div>
+          <div class="brochure-status" id="l-deal-docs-status"></div>
         </div>
-        <button class="brochure-scrape-btn" id="brochure-scrape-btn" onclick="scrapeBrochure()">
-          Parse &amp; Fill Listing Fields
-        </button>
-      </div>
-
-      <div class="row c2">
-        <div class="field">
-          <label class="req">Listing Agreement</label>
-          <div class="upload-zone" id="uz-l-agreement" data-category="listing_agreement" data-field="l-doc-agreement">
-            <input type="file" id="l-doc-agreement" class="hidden-file-input" accept=".pdf,.doc,.docx">
-            <div class="upload-zone-inner" onclick="document.getElementById('l-doc-agreement').click()">
-              <span class="upload-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
-              <span class="upload-label">Click to upload PDF / DOC</span>
-            </div>
-            <div class="upload-status" id="us-l-agreement"></div>
+        <div class="required-doc-status-list" id="l-required-doc-status-list">
+          <div class="required-doc-status-row">
+            <span>Agency Disclosure</span>
+            <span class="required-doc-status-row-actions">
+              <button type="button" class="voucher-doc-status-btn" id="l-doc-status-disclosure" onclick="onListingRequiredStatusClick('agencyDisclosure')">Missing — Upload</button>
+              <button type="button" class="doc-manual-link is-hidden" id="l-doc-manual-disclosure" onclick="markListingDocumentManual('agencyDisclosure')">Mark as included</button>
+            </span>
+          </div>
+          <div class="required-doc-status-row">
+            <span>Listing Agreement</span>
+            <span class="required-doc-status-row-actions">
+              <button type="button" class="voucher-doc-status-btn" id="l-doc-status-agreement" onclick="onListingRequiredStatusClick('listingAgreement')">Missing — Upload</button>
+              <button type="button" class="doc-manual-link is-hidden" id="l-doc-manual-agreement" onclick="markListingDocumentManual('listingAgreement')">Mark as included</button>
+            </span>
           </div>
         </div>
-        <div class="field">
-          <label class="req">Agency Disclosure</label>
-          <div class="upload-zone" id="uz-l-disclosure" data-category="agency_disclosure" data-field="l-doc-disclosure">
-            <input type="file" id="l-doc-disclosure" class="hidden-file-input" accept=".pdf,.doc,.docx">
-            <div class="upload-zone-inner" onclick="document.getElementById('l-doc-disclosure').click()">
-              <span class="upload-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
-              <span class="upload-label">Click to upload PDF / DOC</span>
-            </div>
-            <div class="upload-status" id="us-l-disclosure"></div>
-          </div>
-        </div>
+        <div class="sr-only" id="l-doc-analysis-live" aria-live="polite"></div>
       </div>
 
       <div id="lease-pricing">
@@ -3467,6 +3455,8 @@ function toggleLeaseTerm(val) {
 
 // ── Listing Review & Confirm Page ──
 function showListingReview() {
+  const listingValidation = validateListingDocumentRequirements(true);
+  if (!listingValidation.ok) return;
   const formShell = document.getElementById('l-deal-shell');
   const reviewPage = document.getElementById('listing-review-page');
   const postSubmit = document.getElementById('listing-post-submit');
@@ -3490,6 +3480,10 @@ function showListingReview() {
   const releaseVal = document.querySelector('input[name="l-release"]:checked');
   const release = releaseVal ? releaseVal.value : '—';
   const comments = (document.getElementById('l-comments') || {}).value || '';
+  const docFiles = Array.isArray(uploadedFiles['l-deal-documents']) ? uploadedFiles['l-deal-documents'] : [];
+  const docNames = docFiles.length
+    ? docFiles.map(file => file.filename || 'Document').join(', ')
+    : '—';
 
   const rows = [
     ['Date Entered', dateEntered],
@@ -3500,6 +3494,9 @@ function showListingReview() {
     txnType === 'lease' ? ['Rate $/SF/Mo', leaseSF ? '$' + leaseSF + ' ' + leaseType : '—'] : ['Asking Price', salePrice ? '$' + salePrice : '—'],
     ['MLS Pricing', reveal ? 'Visible on MLS' : 'Hidden from MLS'],
     ['Listing Agents', agentNames],
+    ['Uploaded Deal Documents', docNames],
+    ['Agency Disclosure', getListingDocumentStatusLabel('agencyDisclosure')],
+    ['Listing Agreement', getListingDocumentStatusLabel('listingAgreement')],
     ['MLS Release', release],
     comments ? ['Comments', comments] : null,
   ].filter(Boolean);
@@ -3583,6 +3580,25 @@ function resetVoucherDetectionState() {
   voucherAnalysisStatus = { state: 'idle', error: '' };
 }
 
+const listingDocumentDefaults = () => ({
+  agencyDisclosure: { found: false, executed: false, missingSignatures: [], manualOverride: false },
+  listingAgreement: { found: false, executed: false, missingSignatures: [], manualOverride: false },
+});
+let listingDocumentDetection = listingDocumentDefaults();
+const listingAiFieldSources = {};
+
+function normalizeListingDocumentState(value) {
+  const base = { found: false, executed: false, missingSignatures: [], manualOverride: false };
+  const record = value && typeof value === 'object' ? value : {};
+  const found = Boolean(record.found);
+  const executed = found ? Boolean(record.executed) : false;
+  const manualOverride = found && executed ? Boolean(record.manualOverride) : false;
+  const missingSignatures = found && !executed && Array.isArray(record.missingSignatures)
+    ? record.missingSignatures.map((item) => String(item || '').trim()).filter(Boolean)
+    : [];
+  return { ...base, found, executed, missingSignatures, manualOverride };
+}
+
 function collectVoucherUploadDraftState() {
   return {
     uploadedDealDocuments: Array.isArray(uploadedFiles['v-deal-documents']) ? uploadedFiles['v-deal-documents'] : [],
@@ -3618,10 +3634,39 @@ function restoreVoucherUploadDraftState(state) {
   updateVoucherRequiredDocStatus();
 }
 
+function collectListingUploadDraftState() {
+  return {
+    uploadedDealDocuments: Array.isArray(uploadedFiles['l-deal-documents']) ? uploadedFiles['l-deal-documents'] : [],
+    detection: {
+      agencyDisclosure: normalizeListingDocumentState(listingDocumentDetection.agencyDisclosure),
+      listingAgreement: normalizeListingDocumentState(listingDocumentDetection.listingAgreement),
+    },
+    aiFieldSources: Object.assign({}, listingAiFieldSources),
+  };
+}
+
+function restoreListingUploadDraftState(state) {
+  if (!state || typeof state !== 'object') return;
+  uploadedFiles['l-deal-documents'] = Array.isArray(state.uploadedDealDocuments) ? state.uploadedDealDocuments.filter(Boolean) : [];
+  listingDocumentDetection.agencyDisclosure = normalizeListingDocumentState(state?.detection?.agencyDisclosure);
+  listingDocumentDetection.listingAgreement = normalizeListingDocumentState(state?.detection?.listingAgreement);
+  Object.keys(listingAiFieldSources).forEach((k) => delete listingAiFieldSources[k]);
+  const sourceState = state.aiFieldSources && typeof state.aiFieldSources === 'object' ? state.aiFieldSources : {};
+  Object.keys(sourceState).forEach((k) => {
+    if (typeof sourceState[k] === 'string') listingAiFieldSources[k] = sourceState[k];
+  });
+  renderListingDealDocumentsStatusMessage();
+  updateListingRequiredDocStatus();
+}
+
 function saveCurrentDraft(context) {
   try {
     if (context === 'listing') {
-      localStorage.setItem(LBT_AUTOSAVE_KEYS.listing, JSON.stringify({ savedAt: Date.now(), values: lbtCollectDraftFields('#listing-add-mode') }));
+      localStorage.setItem(LBT_AUTOSAVE_KEYS.listing, JSON.stringify({
+        savedAt: Date.now(),
+        values: lbtCollectDraftFields('#listing-add-mode'),
+        listingUploads: collectListingUploadDraftState(),
+      }));
     } else if (context === 'comp') {
       localStorage.setItem('lbt_autosave_comp_v1', JSON.stringify({ savedAt: Date.now(), values: lbtCollectDraftFields('#tab-comp') }));
     } else if (context === 'listing-mod') {
@@ -4908,6 +4953,16 @@ function clearListing() {
   const de = document.getElementById('l-date-entered');
   if (de) de.value = today;
   applyDefaultListingExpirationFromStart(true);
+  clearAllListingAutofill();
+  delete uploadedFiles['l-deal-documents'];
+  listingDocumentDetection = listingDocumentDefaults();
+  Object.keys(listingAiFieldSources).forEach((k) => delete listingAiFieldSources[k]);
+  renderListingDealDocumentsStatusMessage();
+  updateListingRequiredDocStatus();
+  const listingDocsInput = document.getElementById('l-deal-documents-file');
+  if (listingDocsInput) listingDocsInput.value = '';
+  const listingDocsZone = document.getElementById('l-deal-docs-zone');
+  if (listingDocsZone) listingDocsZone.classList.remove('upload-zone-success', 'upload-zone-active');
   try { localStorage.removeItem(LBT_AUTOSAVE_KEYS.listing); } catch (e) {}
   const au = document.getElementById('lg-autosave');
   if (au) au.textContent = '';
@@ -8052,6 +8107,15 @@ function restoreVoucherUploadStateFromAutosave() {
   } catch (e) {}
 }
 
+function restoreListingUploadStateFromAutosave() {
+  try {
+    const raw = localStorage.getItem(LBT_AUTOSAVE_KEYS.listing);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    restoreListingUploadDraftState(parsed?.listingUploads);
+  } catch (e) {}
+}
+
 function lbtCollectDraftFields(rootSel) {
   const root = document.querySelector(rootSel);
   if (!root) return {};
@@ -8080,7 +8144,11 @@ function startWorkflowAutosaveTimer() {
   sec = Math.min(Math.max(sec, 15), 900);
   function tick() {
     try {
-      localStorage.setItem(LBT_AUTOSAVE_KEYS.listing, JSON.stringify({ savedAt: Date.now(), values: lbtCollectDraftFields('#listing-add-mode') }));
+      localStorage.setItem(LBT_AUTOSAVE_KEYS.listing, JSON.stringify({
+        savedAt: Date.now(),
+        values: lbtCollectDraftFields('#listing-add-mode'),
+        listingUploads: collectListingUploadDraftState(),
+      }));
       localStorage.setItem(LBT_AUTOSAVE_KEYS.voucher, JSON.stringify({
         savedAt: Date.now(),
         values: lbtCollectDraftFields('#v-deal-shell'),
@@ -11377,79 +11445,376 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// ── BROCHURE UPLOAD + AI SCRAPE ──
+// ── LISTING DEAL DOCUMENT UPLOAD + GEMINI PARSE ──
 
-let brochureFileUrl = null;
-let brochureMimeType = 'application/pdf';
+function listingDocumentStatus(kind) {
+  return normalizeListingDocumentState(listingDocumentDetection[kind]);
+}
 
-function onBrochureSelected(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const status = document.getElementById('brochure-status');
-  const btn = document.getElementById('brochure-scrape-btn');
-  status.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(0)} KB) — uploading…`;
-  setHiddenState(btn, true);
-  brochureFileUrl = null;
+function listingDocumentIsExecuted(kind) {
+  const state = listingDocumentStatus(kind);
+  return state.found && state.executed;
+}
 
-  // Determine MIME type
-  if (file.type === 'application/pdf') brochureMimeType = 'application/pdf';
-  else if (file.type.startsWith('image/')) brochureMimeType = file.type;
-  else brochureMimeType = 'application/pdf';
+function listingDocumentMissing(kind) {
+  const state = listingDocumentStatus(kind);
+  return !state.found;
+}
 
-  // Convert to base64 and upload via tRPC files.upload
-  const reader = new FileReader();
-  reader.onload = async function(e) {
-    try {
-      const base64 = e.target.result.split(',')[1];
-      const uploadResult = await callTrpc('files.upload', {
-        filename: file.name,
-        mimeType: brochureMimeType,
-        base64Data: base64,
-        category: 'brochure',
-        reference: 'listing',
-      });
-      const url = uploadResult?.url;
-      if (url) {
-        brochureFileUrl = url;
-        status.textContent = `Uploaded: ${file.name}`;
-        setHiddenState(btn, false);
-      } else {
-        status.textContent = 'Upload failed. Please try again.';
+function listingDocumentNeedsExecution(kind) {
+  const state = listingDocumentStatus(kind);
+  return state.found && !state.executed;
+}
+
+function getListingDocumentStatusLabel(kind) {
+  const state = listingDocumentStatus(kind);
+  if (!state.found) return 'Missing — Upload';
+  if (state.executed && state.manualOverride) return 'Executed (manual)';
+  if (state.executed) return 'Executed';
+  return 'Not executed — Signatures missing';
+}
+
+function setListingDocumentState(kind, next) {
+  listingDocumentDetection[kind] = normalizeListingDocumentState(next);
+}
+
+function listingDocumentStateFromApi(value) {
+  const state = normalizeListingDocumentState(value);
+  if (!state.found) return { found: false, executed: false, missingSignatures: [], manualOverride: false };
+  return { ...state, manualOverride: false };
+}
+
+function combineListingDocumentState(currentValue, nextValue) {
+  const current = normalizeListingDocumentState(currentValue);
+  const next = normalizeListingDocumentState(nextValue);
+  if (current.found) return current;
+  return listingDocumentStateFromApi(next);
+}
+
+function getListingDetectionAnnouncement() {
+  const disclosure = getListingDocumentStatusLabel('agencyDisclosure').toLowerCase();
+  const agreement = getListingDocumentStatusLabel('listingAgreement').toLowerCase();
+  return `Analysis complete. Agency Disclosure ${disclosure}. Listing Agreement ${agreement}.`;
+}
+
+function renderListingDealDocumentsStatusMessage() {
+  const status = document.getElementById('l-deal-docs-status');
+  if (!status) return;
+  const files = Array.isArray(uploadedFiles['l-deal-documents']) ? uploadedFiles['l-deal-documents'] : [];
+  if (!files.length) {
+    status.textContent = '';
+    return;
+  }
+  const rows = files.map((file, i) => {
+    const fileLabel = escHtml(file.filename || `Document ${i + 1}`);
+    if (file.pendingRemoval) {
+      return `<div class="upload-file-item upload-file-item-confirm">
+        <span class="upload-file-name">${fileLabel}</span>
+        <span class="upload-remove-confirm-copy">Remove ${fileLabel}? Autofilled fields from this document will be cleared.</span>
+        <span class="upload-remove-confirm-actions">
+          <button type="button" class="upload-remove-confirm-btn" onclick="confirmRemoveListingDealDocument(${i})">Remove</button>
+          <button type="button" class="upload-remove-cancel-btn" onclick="cancelRemoveListingDealDocument(${i})">Cancel</button>
+        </span>
+      </div>`;
+    }
+    return `<div class="upload-file-item">
+      <a href="${file.url}" target="_blank" class="upload-file-name">${fileLabel}</a>
+      <button type="button" class="upload-remove-link" onclick="promptRemoveListingDealDocument(${i})">Remove</button>
+    </div>`;
+  }).join('');
+  status.innerHTML = `<div class="upload-file-list">${rows}</div>`;
+}
+
+function updateListingRequiredDocStatus() {
+  const disclosureBtn = document.getElementById('l-doc-status-disclosure');
+  const agreementBtn = document.getElementById('l-doc-status-agreement');
+  const disclosureManual = document.getElementById('l-doc-manual-disclosure');
+  const agreementManual = document.getElementById('l-doc-manual-agreement');
+  const applyState = (btn, manualLink, kind) => {
+    if (!btn) return;
+    const state = listingDocumentStatus(kind);
+    btn.classList.remove('status-found', 'status-missing', 'status-not-required', 'status-pending', 'status-manual');
+    btn.textContent = getListingDocumentStatusLabel(kind);
+    btn.disabled = false;
+    btn.dataset.kind = kind;
+    btn.dataset.missingSignatures = state.missingSignatures.join(', ');
+    if (!state.found) {
+      btn.classList.add('status-missing');
+      if (manualLink) {
+        manualLink.textContent = 'Mark as included';
+        manualLink.classList.remove('is-hidden');
       }
-    } catch(err) {
-      status.textContent = 'Upload error: ' + err.message;
+      return;
+    }
+    if (state.executed && state.manualOverride) {
+      btn.classList.add('status-manual');
+      if (manualLink) manualLink.classList.add('is-hidden');
+      return;
+    }
+    if (state.executed) {
+      btn.classList.add('status-found');
+      btn.disabled = true;
+      if (manualLink) manualLink.classList.add('is-hidden');
+      return;
+    }
+    btn.classList.add('status-pending');
+    if (manualLink) {
+      manualLink.textContent = 'Mark as executed';
+      manualLink.classList.remove('is-hidden');
     }
   };
-  reader.readAsDataURL(file);
+  applyState(disclosureBtn, disclosureManual, 'agencyDisclosure');
+  applyState(agreementBtn, agreementManual, 'listingAgreement');
 }
 
-async function scrapeBrochure() {
-  if (!brochureFileUrl) return;
-  const btn = document.getElementById('brochure-scrape-btn');
-  const status = document.getElementById('brochure-status');
-  btn.classList.add('loading');
-  btn.textContent = 'Analyzing brochure...';
-  try {
-    const result = await callTrpc('aiAssist.extractDocument', {
-      fileUrl: brochureFileUrl,
-      mimeType: brochureMimeType,
-      tab: 'listing'
-    });
-    if (result && result.success) {
-      const count = applyAiFields('listing', result.fields);
-      status.textContent = `Extracted ${result.fieldCount || count} fields from brochure`;
-      if (count > 0) showToast(`Filled ${count} field${count !== 1 ? 's' : ''} from brochure`);
-      else showToast('No matching fields found in brochure', 'warn');
-    } else {
-      status.textContent = 'Could not extract fields. Try a clearer brochure.';
+function markListingDocumentManual(kind) {
+  const msg = 'Confirm this document is fully executed. This will be flagged in the submission for admin review.';
+  if (!confirm(msg)) return;
+  setListingDocumentState(kind, {
+    found: true,
+    executed: true,
+    missingSignatures: [],
+    manualOverride: true,
+    manualOverrideAt: new Date().toISOString(),
+    manualOverrideBy: getSignedInBrokerIdentity()?.name || '',
+    manualOverrideByEmail: getSignedInBrokerIdentity()?.email || '',
+  });
+  updateListingRequiredDocStatus();
+}
+
+function onListingRequiredStatusClick(kind) {
+  if (listingDocumentMissing(kind)) {
+    const input = document.getElementById('l-deal-documents-file');
+    if (input) input.click();
+    return;
+  }
+  if (listingDocumentNeedsExecution(kind)) {
+    const state = listingDocumentStatus(kind);
+    const details = state.missingSignatures.length
+      ? '\n\nMissing signatures: ' + state.missingSignatures.join(', ')
+      : '';
+    if (confirm(`Gemini marked this document as not executed.${details}\n\nMark as executed?`)) {
+      markListingDocumentManual(kind);
     }
-  } catch(err) {
-    status.textContent = 'Error: ' + err.message;
-  } finally {
-    btn.classList.remove('loading');
-    btn.textContent = 'Parse & Fill Listing Fields';
   }
 }
+
+function promptRemoveListingDealDocument(index) {
+  if (!Array.isArray(uploadedFiles['l-deal-documents'])) return;
+  uploadedFiles['l-deal-documents'] = uploadedFiles['l-deal-documents'].map((item, i) => ({
+    ...item,
+    pendingRemoval: i === index,
+  }));
+  renderListingDealDocumentsStatusMessage();
+}
+
+function cancelRemoveListingDealDocument(index) {
+  if (!Array.isArray(uploadedFiles['l-deal-documents'])) return;
+  if (!uploadedFiles['l-deal-documents'][index]) return;
+  uploadedFiles['l-deal-documents'][index].pendingRemoval = false;
+  renderListingDealDocumentsStatusMessage();
+}
+
+async function confirmRemoveListingDealDocument(index) {
+  if (!Array.isArray(uploadedFiles['l-deal-documents'])) return;
+  const target = uploadedFiles['l-deal-documents'][index];
+  if (!target) return;
+  const sourceKey = target.sourceKey || '';
+  uploadedFiles['l-deal-documents'].splice(index, 1);
+  clearListingAutofillFromSource(sourceKey);
+  if (uploadedFiles['l-deal-documents'].length === 0) {
+    clearAllListingAutofill();
+    delete uploadedFiles['l-deal-documents'];
+    listingDocumentDetection = listingDocumentDefaults();
+    const zone = document.getElementById('l-deal-docs-zone');
+    if (zone) zone.classList.remove('upload-zone-success');
+  } else {
+    await reanalyzeListingDealDocuments();
+  }
+  renderListingDealDocumentsStatusMessage();
+  updateListingRequiredDocStatus();
+}
+
+async function onListingDealDocumentsSelected(input) {
+  const files = input?.files;
+  if (!files || files.length === 0) return;
+  await uploadAndParseListingDealDocuments(Array.from(files));
+  input.value = '';
+}
+
+async function uploadAndParseListingDealDocuments(fileList) {
+  const MAX_CLIENT_BYTES = 25 * 1024 * 1024;
+  const MAX_FILES = 20;
+  const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png']);
+  const status = document.getElementById('l-deal-docs-status');
+  const zone = document.getElementById('l-deal-docs-zone');
+  const live = document.getElementById('l-doc-analysis-live');
+  if (!fileList || fileList.length === 0) return;
+
+  const validList = fileList
+    .slice(0, MAX_FILES)
+    .filter(file => file && file.size <= MAX_CLIENT_BYTES)
+    .filter(file => ALLOWED_MIME_TYPES.has(String(file.type || '').toLowerCase()));
+  if (!validList.length) {
+    if (status) status.innerHTML = '<span class="text-error">Upload PDF, JPG, or PNG up to 25MB per file.</span>';
+    return;
+  }
+
+  if (status) status.innerHTML = '<span class="text-muted-sm">Analyzing with Gemini…</span>';
+  if (zone) zone.classList.add('upload-zone-active');
+
+  try {
+    const uploaderName = getSignedInBrokerIdentity()?.name || '';
+    const payloads = await Promise.all(validList.map(file => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      const normalizedMime = String(file.type || '').toLowerCase();
+      reader.onload = () => resolve({
+        filename: file.name,
+        mimeType: normalizedMime === 'application/pdf' ? 'application/pdf' : normalizedMime,
+        base64Data: String(reader.result || '').split(',')[1],
+        category: 'listing_deal_documents',
+        reference: document.getElementById('l-address')?.value || 'listing',
+      });
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    })));
+
+    const batchResult = await callTrpc('files.uploadBatch', {
+      files: payloads,
+      uploaderName,
+    });
+    if (!batchResult || !Array.isArray(batchResult.results)) throw new Error('Unexpected upload response');
+
+    if (!Array.isArray(uploadedFiles['l-deal-documents'])) uploadedFiles['l-deal-documents'] = [];
+    const parseTasks = [];
+    let uploadedCount = 0;
+    let appliedCount = 0;
+
+    batchResult.results.forEach((result, index) => {
+      if (!result?.success || !result.url || !result.fileKey) return;
+      const sourceKey = result.fileKey || `${Date.now()}-${index}`;
+      uploadedCount += 1;
+      uploadedFiles['l-deal-documents'].push({
+        url: result.url,
+        fileKey: result.fileKey,
+        filename: result.filename || payloads[index]?.filename || `Document ${uploadedCount}`,
+        mimeType: payloads[index]?.mimeType || 'application/pdf',
+        sourceKey,
+      });
+
+      parseTasks.push(
+        callTrpc('aiAssist.extractListingDocument', {
+          fileUrl: result.url,
+          mimeType: payloads[index]?.mimeType || 'application/pdf',
+        }).then((parsed) => {
+          if (!parsed?.success) return;
+          appliedCount += applyAiFields('listing', parsed.fields || {}, { sourceKey });
+          setListingDocumentState(
+            'agencyDisclosure',
+            combineListingDocumentState(listingDocumentDetection.agencyDisclosure, parsed.documentDetection?.agencyDisclosure)
+          );
+          setListingDocumentState(
+            'listingAgreement',
+            combineListingDocumentState(listingDocumentDetection.listingAgreement, parsed.documentDetection?.listingAgreement)
+          );
+        }).catch((parseErr) => {
+          console.warn('Listing document parse failed:', parseErr);
+        })
+      );
+    });
+
+    await Promise.all(parseTasks);
+    renderListingDealDocumentsStatusMessage();
+    updateListingRequiredDocStatus();
+    if (live) live.textContent = getListingDetectionAnnouncement();
+    if (zone) {
+      if (uploadedCount > 0) zone.classList.add('upload-zone-success');
+      zone.classList.remove('upload-zone-active');
+    }
+    if (uploadedCount > 0) {
+      const msg = appliedCount > 0
+        ? `Uploaded ${uploadedCount} file${uploadedCount !== 1 ? 's' : ''} and filled ${appliedCount} field${appliedCount !== 1 ? 's' : ''}.`
+        : `Uploaded ${uploadedCount} file${uploadedCount !== 1 ? 's' : ''}.`;
+      showToast(msg);
+    } else if (status) {
+      status.innerHTML = '<span class="text-error">Upload failed. Please retry.</span>';
+    }
+  } catch (err) {
+    if (status) status.innerHTML = '<span class="text-error">Auto-fill unavailable — fill manually.</span>';
+    listingDocumentDetection = listingDocumentDefaults();
+    updateListingRequiredDocStatus();
+    if (zone) zone.classList.remove('upload-zone-active');
+  }
+}
+
+async function reanalyzeListingDealDocuments() {
+  const files = Array.isArray(uploadedFiles['l-deal-documents']) ? uploadedFiles['l-deal-documents'] : [];
+  if (!files.length) {
+    listingDocumentDetection = listingDocumentDefaults();
+    return;
+  }
+  listingDocumentDetection = listingDocumentDefaults();
+  await Promise.all(files.map(async (file) => {
+    try {
+      const mime = (file && typeof file.mimeType === 'string' && file.mimeType)
+        ? file.mimeType
+        : (String(file.filename || '').toLowerCase().endsWith('.png'))
+            ? 'image/png'
+            : (String(file.filename || '').toLowerCase().endsWith('.jpg') || String(file.filename || '').toLowerCase().endsWith('.jpeg'))
+              ? 'image/jpeg'
+              : 'application/pdf';
+      const parsed = await callTrpc('aiAssist.extractListingDocument', {
+        fileUrl: file.url,
+        mimeType: mime,
+      });
+      if (!parsed?.success) return;
+      const sourceKey = file.sourceKey || file.fileKey || '';
+      if (sourceKey) applyAiFields('listing', parsed.fields || {}, { sourceKey });
+      setListingDocumentState(
+        'agencyDisclosure',
+        combineListingDocumentState(listingDocumentDetection.agencyDisclosure, parsed.documentDetection?.agencyDisclosure)
+      );
+      setListingDocumentState(
+        'listingAgreement',
+        combineListingDocumentState(listingDocumentDetection.listingAgreement, parsed.documentDetection?.listingAgreement)
+      );
+    } catch (err) {
+      console.warn('Listing document re-analysis failed:', err);
+    }
+  }));
+}
+
+function initListingDealDocumentsUpload() {
+  const zone = document.getElementById('l-deal-docs-zone');
+  if (!zone || zone.dataset.listingDocsWired === '1') return;
+  zone.dataset.listingDocsWired = '1';
+  zone.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      const input = document.getElementById('l-deal-documents-file');
+      if (input) input.click();
+    }
+  });
+  zone.addEventListener('dragover', e => {
+    e.preventDefault();
+    zone.classList.add('upload-zone-active');
+  });
+  zone.addEventListener('dragleave', () => {
+    zone.classList.remove('upload-zone-active');
+  });
+  zone.addEventListener('drop', async e => {
+    e.preventDefault();
+    zone.classList.remove('upload-zone-active');
+    const files = e.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+    await uploadAndParseListingDealDocuments(Array.from(files));
+  });
+  restoreListingUploadStateFromAutosave();
+  updateListingRequiredDocStatus();
+  renderListingDealDocumentsStatusMessage();
+}
+
+document.addEventListener('DOMContentLoaded', initListingDealDocumentsUpload);
 
 // ── VOUCHER DEAL DOCUMENT UPLOAD + GEMINI PARSE ──
 
@@ -12635,19 +13000,22 @@ function getActiveTabKey() {
 const AI_FIELD_MAP = {
   listing: {
     propertyType: 'l-prop-type',
-    transactionType: 'l-trans-type',
+    transactionType: 'l-txn-type',
     address: 'l-address',
     city: 'l-city',
     state: 'l-state',
     zip: 'l-zip',
-    rateSfMo: 'l-rate',
-    term: 'l-term',
+    dateEntered: 'l-date-entered',
+    listingExpiration: 'l-listing-expiration',
+    rateSfMo: 'l-lease-sf',
+    term: 'l-lease-term',
     leaseType: 'l-lease-type',
     buildingSf: 'l-bldg-sf',
-    suiteSf: 'l-suite-sf',
-    askingPrice: 'l-asking-price',
-    listingAgentName: 'l-la-name',
-    listingAgentLicense: 'l-la-lic',
+    sizeSf: 'l-bldg-sf',
+    yearBuilt: 'l-year-built',
+    askingPrice: 'l-sale-price',
+    crossStreets: 'l-cross',
+    buildingType: 'l-ind-construction',
     comments: 'l-comments',
   },
   voucher: {
@@ -12716,6 +13084,7 @@ function addAiBadge(el) {
 function applyAiFields(tab, fields, options = {}) {
   const map = AI_FIELD_MAP[tab] || {};
   const sourceToken = options && typeof options.sourceToken === 'string' ? options.sourceToken : '';
+  const sourceKey = typeof options.sourceKey === 'string' ? options.sourceKey : '';
   let applied = 0;
   Object.entries(fields).forEach(([key, value]) => {
     const elId = map[key];
@@ -12730,12 +13099,14 @@ function applyAiFields(tab, fields, options = {}) {
       voucherAutofillFieldSource[elId] = sourceToken;
     }
     const badge = addAiBadge(el);
+    if (tab === 'listing' && sourceKey) listingAiFieldSources[elId] = sourceKey;
     el.addEventListener('input', function onEdit() {
       el.classList.remove('ai-filled');
       badge.remove();
       if (tab === 'voucher') {
         delete voucherAutofillFieldSource[elId];
       }
+      if (tab === 'listing' && listingAiFieldSources[elId]) delete listingAiFieldSources[elId];
       el.removeEventListener('input', onEdit);
     }, { once: true });
     // Trigger change event so any dependent calculations update
@@ -12744,6 +13115,30 @@ function applyAiFields(tab, fields, options = {}) {
     applied++;
   });
   return applied;
+}
+
+function clearListingAutofillFromSource(sourceKey) {
+  if (!sourceKey) return;
+  Object.entries(listingAiFieldSources).forEach(([fieldId, fieldSource]) => {
+    if (fieldSource !== sourceKey) return;
+    const el = document.getElementById(fieldId);
+    if (el) {
+      el.value = '';
+      el.classList.remove('ai-filled');
+      const badge = el.parentNode ? el.parentNode.querySelector('.ai-filled-badge') : null;
+      if (badge) badge.remove();
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    delete listingAiFieldSources[fieldId];
+  });
+}
+
+function clearAllListingAutofill() {
+  const allSources = new Set(Object.values(listingAiFieldSources));
+  allSources.forEach((sourceKey) => {
+    if (typeof sourceKey === 'string' && sourceKey) clearListingAutofillFromSource(sourceKey);
+  });
 }
 
 function applyAiFieldsForce(tab, fields) {
@@ -13905,7 +14300,35 @@ function hasRequiredUpload(fieldId) {
 }
 
 function hasListingComplianceAttachments() {
-  return hasRequiredUpload('l-doc-disclosure') && hasRequiredUpload('l-doc-agreement');
+  return listingDocumentIsExecuted('agencyDisclosure') && listingDocumentIsExecuted('listingAgreement');
+}
+
+function hasListingDealDocumentUpload() {
+  return Array.isArray(uploadedFiles['l-deal-documents']) && uploadedFiles['l-deal-documents'].length > 0;
+}
+
+function hasListingCoreRequiredFields() {
+  const required = ['l-prop-type', 'l-address', 'l-date-entered', 'l-txn-type', 'l-listing-expiration'];
+  return required.every((fieldId) => {
+    const el = document.getElementById(fieldId);
+    return Boolean(el && String(el.value || '').trim());
+  });
+}
+
+function validateListingDocumentRequirements(showFeedback = false) {
+  if (!hasListingDealDocumentUpload()) {
+    if (showFeedback) showToast('Upload at least one deal document before review.', 'error');
+    return { ok: false, message: 'Upload at least one deal document before review.' };
+  }
+  if (!hasListingComplianceAttachments()) {
+    if (showFeedback) showToast('Agency Disclosure and Listing Agreement must be executed before review.', 'error');
+    return { ok: false, message: 'Agency Disclosure and Listing Agreement must be executed before review.' };
+  }
+  if (!hasListingCoreRequiredFields()) {
+    if (showFeedback) showToast('Complete Property Type, Address, Date Entered, Transaction Type, and Listing Expiration.', 'error');
+    return { ok: false, message: 'Complete required listing fields before review.' };
+  }
+  return { ok: true, message: '' };
 }
 
 function hasVoucherComplianceAttachments() {
@@ -13933,8 +14356,7 @@ function validateVoucherDocumentRequirements(showFeedback = false) {
 function collectSupportingFilesForAdminSubmission(formType) {
   const fieldConfigs = formType === 'listing'
     ? [
-        { fieldId: 'l-doc-agreement', category: 'listing_agreement', label: 'Exclusive Listing Agreement' },
-        { fieldId: 'l-doc-disclosure', category: 'agency_disclosure', label: 'Agency Disclosure' }
+        { fieldId: 'l-deal-documents', category: 'listing_deal_documents', label: 'Deal Document' }
       ]
       : formType === 'voucher'
         ? [
@@ -13967,9 +14389,15 @@ function openSendToAdminModal(formType) {
     attachErr.classList.add('is-hidden');
     attachErr.textContent = '';
   }
-  if (formType === 'listing' && !hasListingComplianceAttachments()) {
-    showToast('Upload required Listing Agreement and Agency Disclosure before sending to admin.', 'error');
-    return;
+  if (formType === 'listing') {
+    const listingValidation = validateListingDocumentRequirements(true);
+    if (!listingValidation.ok) {
+      if (attachErr) {
+        attachErr.textContent = listingValidation.message;
+        attachErr.classList.remove('is-hidden');
+      }
+      return;
+    }
   }
   if (formType === 'voucher') {
     const voucherValidation = validateVoucherDocumentRequirements(true);
@@ -14099,6 +14527,18 @@ function collectListingSections(notes) {
       { label: 'Owner Phone', value: v('l-owner-phone') },
       { label: 'Owner Email', value: v('l-owner-email') },
       { label: 'Owner Address', value: v('l-owner-address') },
+    ]
+  });
+
+  sections.push({
+    title: 'Document Detection',
+    fields: [
+      { label: 'Agency Disclosure', value: getListingDocumentStatusLabel('agencyDisclosure') },
+      { label: 'Listing Agreement', value: getListingDocumentStatusLabel('listingAgreement') },
+      { label: 'Agency Disclosure Missing Signatures', value: listingDocumentStatus('agencyDisclosure').missingSignatures.join(', ') || 'None' },
+      { label: 'Listing Agreement Missing Signatures', value: listingDocumentStatus('listingAgreement').missingSignatures.join(', ') || 'None' },
+      { label: 'Agency Disclosure Manual Override', value: listingDocumentStatus('agencyDisclosure').manualOverride ? 'Yes' : 'No' },
+      { label: 'Listing Agreement Manual Override', value: listingDocumentStatus('listingAgreement').manualOverride ? 'Yes' : 'No' },
     ]
   });
 
@@ -14329,6 +14769,7 @@ async function submitSendToAdmin() {
           excelAttachment,
           supportingFiles,
           formData: _staFormType === 'sign' ? collectSignFormData() : undefined,
+          listingDocumentDetection: _staFormType === 'listing' ? listingDocumentDetection : undefined,
         }
       })
     });
