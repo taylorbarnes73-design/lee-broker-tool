@@ -208,7 +208,7 @@
               <div class="brochure-zone-sub">PDF, JPG, PNG</div>
             </div>
           </div>
-          <div class="brochure-status" id="l-deal-docs-status"></div>
+          <div class="brochure-status" id="l-deal-docs-status" onclick="event.stopPropagation()"></div>
         </div>
         <div class="required-doc-status-list" id="l-required-doc-status-list">
           <div class="required-doc-status-row">
@@ -539,7 +539,7 @@
             <div class="brochure-zone-sub">PDF, JPG, PNG</div>
           </div>
         </div>
-        <div class="brochure-status" id="lm-brochure-status"></div>
+        <div class="brochure-status" id="lm-brochure-status" onclick="event.stopPropagation()"></div>
       </div>
       <button class="brochure-scrape-btn" id="lm-brochure-scrape-btn" onclick="scrapeListingModBrochure()">Parse &amp; Fill Modification Fields</button>
     </div>
@@ -592,7 +592,7 @@
           <div class="brochure-zone-sub">PDF, JPG, PNG</div>
         </div>
       </div>
-      <div class="brochure-status" id="s-brochure-status"></div>
+      <div class="brochure-status" id="s-brochure-status" onclick="event.stopPropagation()"></div>
     </div>
     <button class="brochure-scrape-btn" id="s-brochure-scrape-btn" onclick="scrapeSignBrochure()">Parse &amp; Fill Sign Fields</button>
   </div>
@@ -815,7 +815,7 @@
           <div class="brochure-zone-sub">PDF, JPG, PNG</div>
         </div>
       </div>
-      <div class="brochure-status" id="v-brochure-status"></div>
+      <div class="brochure-status" id="v-brochure-status" onclick="event.stopPropagation()"></div>
     </div>
     <div class="voucher-doc-status-list top-gap-md">
       <div class="voucher-doc-status-row">
@@ -1319,7 +1319,7 @@
           <div class="brochure-zone-sub">PDF, JPG, PNG</div>
         </div>
       </div>
-      <div class="brochure-status" id="c-brochure-status"></div>
+      <div class="brochure-status" id="c-brochure-status" onclick="event.stopPropagation()"></div>
     </div>
     <button class="brochure-scrape-btn" id="c-brochure-scrape-btn" onclick="scrapeCompBrochure()">Parse &amp; Fill Comp Fields</button>
   </div>
@@ -12265,6 +12265,17 @@ function handleDealDocSelection(input, options) {
   options.setUrl(null);
   options.setMime(file.type === 'application/pdf' ? 'application/pdf' : (file.type?.startsWith('image/') ? file.type : 'application/pdf'));
 
+  function clear() {
+    options.setUrl(null);
+    options.setMime(null);
+    const statusEl = document.getElementById(options.statusId);
+    if (statusEl) statusEl.textContent = '';
+    const btnEl = document.getElementById(options.buttonId);
+    if (btnEl) setHiddenState(btnEl, true);
+    const fileInput = document.getElementById(options.fileId);
+    if (fileInput) fileInput.value = '';
+  }
+
   const reader = new FileReader();
   reader.onload = async function(e) {
     try {
@@ -12278,7 +12289,14 @@ function handleDealDocSelection(input, options) {
       });
       if (uploadResult?.url) {
         options.setUrl(uploadResult.url);
-        if (status) status.textContent = `Uploaded: ${file.name}`;
+        if (status) {
+          if (options.fileId) {
+            status.innerHTML = `<span class="upload-file-name">${escHtml(file.name)}</span> <button type="button" class="upload-remove-link">Remove</button>`;
+            status.querySelector('.upload-remove-link').addEventListener('click', clear);
+          } else {
+            status.textContent = `Uploaded: ${file.name}`;
+          }
+        }
         if (btn) setHiddenState(btn, false);
       } else if (status) {
         status.textContent = 'Upload failed. Please try again.';
@@ -12320,6 +12338,7 @@ function onListingModBrochureSelected(input) {
   handleDealDocSelection(input, {
     statusId: 'lm-brochure-status',
     buttonId: 'lm-brochure-scrape-btn',
+    fileId: 'lm-brochure-file',
     reference: 'listing-mod',
     setUrl: (v) => { listingModBrochureFileUrl = v; },
     setMime: (v) => { listingModBrochureMimeType = v; },
@@ -12335,6 +12354,7 @@ function onSignBrochureSelected(input) {
   handleDealDocSelection(input, {
     statusId: 's-brochure-status',
     buttonId: 's-brochure-scrape-btn',
+    fileId: 's-brochure-file',
     reference: 'sign',
     setUrl: (v) => { signBrochureFileUrl = v; },
     setMime: (v) => { signBrochureMimeType = v; },
@@ -12350,6 +12370,7 @@ function onCompBrochureSelected(input) {
   handleDealDocSelection(input, {
     statusId: 'c-brochure-status',
     buttonId: 'c-brochure-scrape-btn',
+    fileId: 'c-brochure-file',
     reference: 'comp',
     setUrl: (v) => { compBrochureFileUrl = v; },
     setMime: (v) => { compBrochureMimeType = v; },
