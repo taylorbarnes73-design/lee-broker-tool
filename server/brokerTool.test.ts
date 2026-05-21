@@ -51,7 +51,7 @@ describe("broker_tool.html wiring", () => {
   });
 
   it("keeps every inline script block syntactically valid", () => {
-    const scripts = [...brokerToolHtml.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map(
+    const scripts = [...brokerToolHtml.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/gi)].map(
       match => match[1]
     );
 
