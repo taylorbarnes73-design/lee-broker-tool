@@ -3029,6 +3029,12 @@ body.admin-mode #admin-view {
   white-space: nowrap;
 }
 
+.brochure-status-detail {
+  margin-top: 4px;
+  color: var(--text2);
+  font-size: 11px;
+}
+
 .upload-file-item .upload-remove-btn {
   flex-shrink: 0;
   font-size: 14px;
@@ -4479,6 +4485,16 @@ body {
   border: 1px solid rgba(10, 10, 11, .14);
 }
 .ai-shortcut-card .micro-copy { color: var(--text2, #575A74); margin-bottom: 10px; }
+
+.sign-upload-docs-section {
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border, #E6E8EC);
+}
+
+.sign-upload-docs-section .section-heading-top {
+  margin-top: 0;
+}
 
 .voucher-doc-status-list {
   display: grid;

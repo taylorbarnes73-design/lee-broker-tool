@@ -524,7 +524,7 @@
         </div>
         <p class="success-copy">Your listing has been sent to admin. Would you like to create a sign order for this property?</p>
         <div class="btn-bar btn-bar-compact">
-          <button class="btn btn-red" onclick="copyToSign(); switchTab('sign');">Create Sign Order &rarr;</button>
+          <button class="btn btn-red" onclick="copyToSign()">Create Sign Order &rarr;</button>
           <button class="btn btn-gray" onclick="exportListingPdf()">Download PDF</button>
           <button class="btn btn-outline" onclick="hideListingReview()">Return to Form</button>
         </div>
@@ -589,27 +589,27 @@
   <div class="tip pane-intro-tip">Complete each step. Fields marked <span class="required-mark">*</span> are required.</div>
   <div class="deal-shell" id="s-deal-shell">
   <div class="deal-main" id="sign-main">
-  <div class="card ai-shortcut-card" id="sstep-upload" data-sstep="0" data-step-label="Upload Deal Documents">
-    <h2>Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></h2>
-    <p class="micro-copy">Upload deal documents to extract order basics and autofill this sign request.</p>
-    <div class="brochure-zone" id="s-brochure-zone" onclick="document.getElementById('s-brochure-file').click()">
-      <input type="file" id="s-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" onchange="onSignBrochureSelected(this)">
-      <div class="brochure-zone-inner">
-        <span class="brochure-zone-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
-        <div>
-          <div class="brochure-zone-label">Upload deal documents</div>
-          <div class="brochure-zone-sub">PDF, JPG, PNG</div>
-        </div>
-      </div>
-      <div class="brochure-status" id="s-brochure-status" onclick="event.stopPropagation()"></div>
-    </div>
-    <button class="brochure-scrape-btn" id="s-brochure-scrape-btn" onclick="scrapeSignBrochure()">Parse &amp; Fill Sign Fields</button>
-  </div>
   <div class="stepper" data-stepper-for="sign-main"></div>
 
   <!-- STEP 1: Order Basics -->
-  <div class="card required-section" data-sstep="1" data-step-label="Order Basics" data-card-eyebrow="Step 1 of 4">
+  <div class="card required-section" data-sstep="0" data-step-label="Order Basics" data-card-eyebrow="Step 1 of 4">
     <h2>Order Basics <span class="required-badge">Required</span></h2>
+    <div class="sign-upload-docs-section">
+      <h3 class="section-heading-top">Upload Documents <span class="inline-badge">Gemini Auto-Fill</span></h3>
+      <p class="micro-copy">Upload listing agreements, sign photos, placement images, or other request documents to help autofill this order.</p>
+      <div class="brochure-zone" id="s-brochure-zone" onclick="document.getElementById('s-brochure-file').click()">
+        <input type="file" id="s-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" onchange="onSignBrochureSelected(this)">
+        <div class="brochure-zone-inner">
+          <span class="brochure-zone-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+          <div>
+            <div class="brochure-zone-label">Upload documents</div>
+            <div class="brochure-zone-sub">PDF, JPG, PNG</div>
+          </div>
+        </div>
+        <div class="brochure-status" id="s-brochure-status" onclick="event.stopPropagation()"></div>
+      </div>
+      <button class="brochure-scrape-btn" id="s-brochure-scrape-btn" onclick="scrapeSignBrochure()">Parse &amp; Fill Sign Fields</button>
+    </div>
     <div class="row c2">
       <div class="field"><label>Date</label><input id="s-date" type="date"></div>
       <div class="field"><label>Order Type</label>
@@ -625,7 +625,7 @@
   </div>
 
   <!-- STEP 2: Sign Specifications -->
-  <div class="card" data-sstep="2" data-step-label="Sign Specifications" data-card-eyebrow="Step 2 of 4">
+  <div class="card" data-sstep="1" data-step-label="Sign Specifications" data-card-eyebrow="Step 2 of 4">
     <h2>Sign Specifications</h2>
     <h3 class="section-heading-top">Configuration</h3>
     <div class="support-options">
@@ -679,7 +679,7 @@
   </div>
 
   <!-- STEP 3: Details & Placement -->
-  <div class="card" data-sstep="3" data-step-label="Details" data-card-eyebrow="Step 3 of 4">
+  <div class="card" data-sstep="2" data-step-label="Details" data-card-eyebrow="Step 3 of 4">
     <h2>Details</h2>
     <div class="row c2">
       <div class="field">
@@ -724,7 +724,7 @@
   </div>
 
   <!-- STEP 4: Requested By + Access -->
-  <div class="card" data-sstep="4" data-step-label="Requested By" data-card-eyebrow="Step 4 of 4">
+  <div class="card" data-sstep="3" data-step-label="Requested By" data-card-eyebrow="Step 4 of 4">
     <h2>Requested By &amp; Access</h2>
     <div class="field field-stack-gap-sm"><label class="req">Requested By</label>
       <div class="agent-picker" id="picker-s-requested-by">
@@ -775,11 +775,10 @@
     <div class="deal-card">
       <div class="deal-eyebrow">Progress</div>
       <ol class="deal-steps" id="sg-steps">
-        <li data-step="0"><span class="deal-step-dot"></span><span class="deal-step-label">Upload Docs</span></li>
-        <li data-step="1"><span class="deal-step-dot"></span><span class="deal-step-label">Order Basics</span></li>
-        <li data-step="2"><span class="deal-step-dot"></span><span class="deal-step-label">Sign Specs</span></li>
-        <li data-step="3"><span class="deal-step-dot"></span><span class="deal-step-label">Details</span></li>
-        <li data-step="4"><span class="deal-step-dot"></span><span class="deal-step-label">Requested By &amp; Access</span></li>
+        <li data-step="0"><span class="deal-step-dot"></span><span class="deal-step-label">Order Basics</span></li>
+        <li data-step="1"><span class="deal-step-dot"></span><span class="deal-step-label">Sign Specs</span></li>
+        <li data-step="2"><span class="deal-step-dot"></span><span class="deal-step-label">Details</span></li>
+        <li data-step="3"><span class="deal-step-dot"></span><span class="deal-step-label">Requested By &amp; Access</span></li>
       </ol>
     </div>
     <div class="deal-actions">
@@ -3140,21 +3139,21 @@ function bootstrapStepFlowFor(name) {
 function signStepPreview(card, n) {
   const v = id => (document.getElementById(id)?.value || '').trim();
   if (n === '0') {
-    return signBrochureFileUrl ? 'Document uploaded' : 'Skipped — fill manually';
+    const basics = [v('s-address'), v('s-city')].filter(Boolean).join(', ');
+    return basics || (signBrochureFileUrl ? 'Document uploaded' : 'Order basics');
   }
-  if (n === '1') return [v('s-address'), v('s-city')].filter(Boolean).join(', ') || 'Order basics';
-  if (n === '2') {
+  if (n === '1') {
     const total = ['s-4x8-qty','s-6x8-qty','s-other-qty','s-banner-qty'].reduce((a,id)=>a + (parseInt(v(id),10)||0), 0);
     const sup = document.getElementById('s-support')?.value;
     const supLabel = sup ? ({sf:'S/F', df:'D/F', vshape:'V-Shape'}[sup] || sup) : '';
     return (total ? (total + ' sign' + (total>1?'s':'')) : 'No signs set') + (supLabel ? ' · ' + supLabel : '');
   }
-  if (n === '3') {
+  if (n === '2') {
     const rider = document.getElementById('s-rider-toggle')?.checked ? ('Rider: ' + (v('s-rider') || 'yes')) : 'No rider';
     const upload = document.getElementById('s-placement-toggle')?.checked ? 'Custom placement' : 'Standard placement';
     return rider + ' · ' + upload;
   }
-  if (n === '4') return v('s-requested-by') || 'Requested by';
+  if (n === '3') return v('s-requested-by') || 'Requested by';
   return '';
 }
 
@@ -5008,13 +5007,20 @@ function escHtml(str) {
 // COPY LISTING DATA TO SIGN REQUEST
 // ═══════════════════════════════════════════════════════════════════════════════
 function copyToSign() {
-  document.getElementById('s-address').value = document.getElementById('l-address').value;
-  document.getElementById('s-city').value = document.getElementById('l-city').value;
-  document.getElementById('s-cross').value = document.getElementById('l-cross').value;
+  const setAndNotify = (id, value) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = value || '';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  };
+  setAndNotify('s-address', document.getElementById('l-address')?.value);
+  setAndNotify('s-city', document.getElementById('l-city')?.value);
+  setAndNotify('s-cross', document.getElementById('l-cross')?.value);
   // Copy listing agents to sign request
   const agents = getListingAgents();
   if (agents.length > 0) {
-    document.getElementById('s-requested-by').value = agents[0].name;
+    setAndNotify('s-requested-by', agents[0].name);
     // Clear existing sign agent rows and rebuild from listing agents
     document.getElementById('sign-agent-body').innerHTML = '';
     signAgentCount = 0;
@@ -5022,10 +5028,18 @@ function copyToSign() {
       addSignAgent();
       const rows = document.getElementById('sign-agent-body').querySelectorAll('tr');
       const lastRow = rows[rows.length - 1];
-      if (lastRow) lastRow.querySelector('input').value = a.name;
+      const input = lastRow?.querySelector('input');
+      if (input) {
+        input.value = a.name;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
     });
   }
   switchTab('sign');
+  const flow = bootstrapStepFlowFor('sign');
+  if (flow && typeof flow.go === 'function') flow.go(0);
+  try { syncSignGlance(); } catch(e) {}
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -12520,27 +12534,97 @@ let signBrochureMimeType = 'application/pdf';
 let compBrochureFileUrl = null;
 let compBrochureMimeType = 'application/pdf';
 
+function resetDealDocSelectionState(reference) {
+  if (reference === 'listing-mod') {
+    listingModBrochureFileUrl = null;
+    listingModBrochureMimeType = 'application/pdf';
+  } else if (reference === 'sign') {
+    signBrochureFileUrl = null;
+    signBrochureMimeType = 'application/pdf';
+  } else if (reference === 'comp') {
+    compBrochureFileUrl = null;
+    compBrochureMimeType = 'application/pdf';
+  }
+}
+
+function clearDealDocSelection(statusId, buttonId, fileId, reference) {
+  resetDealDocSelectionState(reference);
+  const statusEl = document.getElementById(statusId);
+  if (statusEl) {
+    statusEl.textContent = '';
+    delete statusEl.dataset.uploadFilename;
+    delete statusEl.dataset.uploadFileId;
+    delete statusEl.dataset.uploadButtonId;
+    delete statusEl.dataset.uploadReference;
+  }
+  const btnEl = document.getElementById(buttonId);
+  if (btnEl) setHiddenState(btnEl, true);
+  const fileInput = document.getElementById(fileId);
+  if (fileInput) fileInput.value = '';
+}
+
+function renderDealDocSelectionStatus(statusId, buttonId, fileId, reference, filename, detailText) {
+  const statusEl = document.getElementById(statusId);
+  if (!statusEl) return;
+  const fileLabel = filename || statusEl.dataset.uploadFilename || 'Uploaded document';
+  statusEl.dataset.uploadFilename = fileLabel;
+  statusEl.dataset.uploadFileId = fileId || statusEl.dataset.uploadFileId || '';
+  statusEl.dataset.uploadButtonId = buttonId || statusEl.dataset.uploadButtonId || '';
+  statusEl.dataset.uploadReference = reference || statusEl.dataset.uploadReference || '';
+  statusEl.innerHTML = `
+    <div class="upload-file-item">
+      <span class="upload-file-name">${escHtml(fileLabel)}</span>
+      <button type="button" class="upload-remove-link">Remove</button>
+    </div>
+    ${detailText ? `<div class="brochure-status-detail">${escHtml(detailText)}</div>` : ''}
+  `;
+  const removeButton = statusEl.querySelector('.upload-remove-link');
+  if (removeButton) {
+    removeButton.addEventListener('click', () => {
+      clearDealDocSelection(
+        statusId,
+        statusEl.dataset.uploadButtonId || buttonId,
+        statusEl.dataset.uploadFileId || fileId,
+        statusEl.dataset.uploadReference || reference
+      );
+    });
+  }
+}
+
+function updateDealDocSelectionStatus(statusId, detailText) {
+  const statusEl = document.getElementById(statusId);
+  if (!statusEl) return;
+  const filename = statusEl.dataset.uploadFilename;
+  if (!filename) {
+    statusEl.textContent = detailText;
+    return;
+  }
+  renderDealDocSelectionStatus(
+    statusId,
+    statusEl.dataset.uploadButtonId || '',
+    statusEl.dataset.uploadFileId || '',
+    statusEl.dataset.uploadReference || '',
+    filename,
+    detailText
+  );
+}
+
 function handleDealDocSelection(input, options) {
   const file = input.files[0];
   if (!file) return;
   const status = document.getElementById(options.statusId);
   const btn = document.getElementById(options.buttonId);
-  if (status) status.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(0)} KB) — uploading…`;
+  if (status) {
+    status.dataset.uploadFilename = file.name;
+    status.dataset.uploadFileId = options.fileId || '';
+    status.dataset.uploadButtonId = options.buttonId || '';
+    status.dataset.uploadReference = options.reference || '';
+    status.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(0)} KB) — uploading...`;
+  }
   if (btn) setHiddenState(btn, true);
   options.setUrl(null);
   options.setMime(file.type === 'application/pdf' ? 'application/pdf' : (file.type?.startsWith('image/') ? file.type : 'application/pdf'));
   showFormOverlay(`Uploading ${file.name}...`, { step: 1, totalSteps: 4, stepLabel: 'Uploading' });
-
-  function clear() {
-    options.setUrl(null);
-    options.setMime(null);
-    const statusEl = document.getElementById(options.statusId);
-    if (statusEl) statusEl.textContent = '';
-    const btnEl = document.getElementById(options.buttonId);
-    if (btnEl) setHiddenState(btnEl, true);
-    const fileInput = document.getElementById(options.fileId);
-    if (fileInput) fileInput.value = '';
-  }
 
   const reader = new FileReader();
   reader.onload = async function(e) {
@@ -12556,20 +12640,13 @@ function handleDealDocSelection(input, options) {
       if (uploadResult?.url) {
         options.setUrl(uploadResult.url);
         hideFormOverlay();
-        if (status) {
-          if (options.fileId) {
-            status.innerHTML = `<span class="upload-file-name">${escHtml(file.name)}</span> <button type="button" class="upload-remove-link">Remove</button>`;
-            status.querySelector('.upload-remove-link').addEventListener('click', clear);
-          } else {
-            status.textContent = `Uploaded: ${file.name}`;
-          }
-        }
+        if (status) renderDealDocSelectionStatus(options.statusId, options.buttonId, options.fileId, options.reference, file.name);
         if (btn) setHiddenState(btn, false);
         if (options.reference === 'sign') {
           Promise.resolve().then(() => scrapeSignBrochure());
         }
       } else if (status) {
-        status.textContent = 'Upload failed. Please try again.';
+        updateDealDocSelectionStatus(options.statusId, 'Upload failed. Please try again.');
         showFormOverlayError('Upload failed — Check your connection', 'Please try again.', {
           tryLabel: 'Retry Upload',
           manualLabel: 'Cancel',
@@ -12578,7 +12655,7 @@ function handleDealDocSelection(input, options) {
         });
       }
     } catch (err) {
-      if (status) status.textContent = 'Upload error: ' + err.message;
+      if (status) updateDealDocSelectionStatus(options.statusId, 'Upload error: ' + err.message);
       showFormOverlayError('Upload failed — Check your connection', err?.message || 'Please try again.', {
         tryLabel: 'Retry Upload',
         manualLabel: 'Cancel',
@@ -12588,7 +12665,7 @@ function handleDealDocSelection(input, options) {
     }
   };
   reader.onerror = function() {
-    if (status) status.textContent = 'Upload error: could not read this file.';
+    if (status) updateDealDocSelectionStatus(options.statusId, 'Upload error: could not read this file.');
     showFormOverlayError("Couldn't read this file — Try a different format or remove password protection", 'Try a PDF, JPG, or PNG that is not password-protected.', {
       tryLabel: 'Try Another File',
       manualLabel: 'Fill Manually',
@@ -12621,13 +12698,13 @@ async function scrapeDealDocForTab(fileUrl, mimeType, tab, statusId, buttonId, d
     updateFormOverlay('Analyzing documents with Gemini', 3, 3, 'Checking signatures...');
     if (result && result.success) {
       const count = applyAiFields(tab, result.fields || {});
-      if (status) status.textContent = `Filled ${count} field${count !== 1 ? 's' : ''} from document`;
+      if (status) updateDealDocSelectionStatus(statusId, `Filled ${count} field${count !== 1 ? 's' : ''} from document`);
       showToast('✓ Documents analyzed');
     } else if (status) {
-      status.textContent = 'Could not extract fields. Try a clearer document.';
+      updateDealDocSelectionStatus(statusId, 'Could not extract fields. Try a clearer document.');
     }
   } catch (err) {
-    if (status) status.textContent = 'Error: ' + err.message;
+    if (status) updateDealDocSelectionStatus(statusId, 'Error: ' + err.message);
     keepOverlayOpen = true;
     showFormOverlayError(
       'Analysis failed',
