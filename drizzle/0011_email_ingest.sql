@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS `email_ingest_log` (
   `submission_id` int,
   `ingest_status` varchar(32) NOT NULL DEFAULT 'imported',
   `error_message` text,
-  `created_at` datetime(3) NOT NULL DEFAULT (UTC_TIMESTAMP(3)),
+  `created_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   CONSTRAINT `email_ingest_log_id` PRIMARY KEY (`id`),
   CONSTRAINT `email_ingest_log_message_id_unique` UNIQUE (`message_id`),
   CONSTRAINT `email_ingest_log_internet_message_id_unique` UNIQUE (`internet_message_id`)
@@ -25,7 +25,7 @@ CREATE INDEX `eil_ingest_status_idx` ON `email_ingest_log` (`ingest_status`);
 CREATE TABLE IF NOT EXISTS `kv_state` (
   `key` varchar(255) NOT NULL,
   `value` json NOT NULL,
-  `updated_at` datetime(3) NOT NULL DEFAULT (UTC_TIMESTAMP(3)),
+  `updated_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   CONSTRAINT `kv_state_key` PRIMARY KEY (`key`)
 );
 --> statement-breakpoint

@@ -9,9 +9,9 @@ CREATE TABLE `app_users` (
 	`password_hash` varchar(255),
 	`is_active` boolean NOT NULL DEFAULT true,
 	`last_login_at` datetime(3),
-	`created_at` datetime(3) NOT NULL DEFAULT (UTC_TIMESTAMP(3)),
+	`created_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 	`created_by` char(36),
-	`updated_at` datetime(3) NOT NULL DEFAULT (UTC_TIMESTAMP(3)) ON UPDATE UTC_TIMESTAMP(3),
+	`updated_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
 	`deactivated_at` datetime(3),
 	CONSTRAINT `app_users_id` PRIMARY KEY(`id`),
 	CONSTRAINT `app_users_email_unique` UNIQUE(`email`),
@@ -25,7 +25,7 @@ CREATE TABLE `sessions` (
 	`user_id` char(36) NOT NULL,
 	`token_hash` varchar(255) NOT NULL,
 	`expires_at` datetime(3) NOT NULL,
-	`created_at` datetime(3) NOT NULL DEFAULT (UTC_TIMESTAMP(3)),
+	`created_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 	`ip_address` varchar(45),
 	`user_agent` varchar(512),
 	CONSTRAINT `sessions_id` PRIMARY KEY(`id`)
@@ -36,7 +36,7 @@ CREATE TABLE `app_settings` (
 	`value` json NOT NULL,
 	`description` text,
 	`category` enum('branding','notifications','integrations','workflow','security') NOT NULL,
-	`updated_at` datetime(3) NOT NULL DEFAULT (UTC_TIMESTAMP(3)) ON UPDATE UTC_TIMESTAMP(3),
+	`updated_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
 	`updated_by` char(36),
 	CONSTRAINT `app_settings_key` PRIMARY KEY(`key`)
 );
@@ -49,7 +49,7 @@ CREATE TABLE `audit_log` (
 	`target_id` varchar(255),
 	`metadata` json NOT NULL DEFAULT (JSON_OBJECT()),
 	`ip_address` varchar(45),
-	`created_at` datetime(3) NOT NULL DEFAULT (UTC_TIMESTAMP(3)),
+	`created_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 	CONSTRAINT `audit_log_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint

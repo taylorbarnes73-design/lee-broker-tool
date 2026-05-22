@@ -55,11 +55,11 @@ export const appUsers = mysqlTable(
     lastLoginAt: datetime("last_login_at", { mode: "date", fsp: 3 }),
     createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .notNull()
-      .default(sql`(UTC_TIMESTAMP(3))`),
+      .default(sql`CURRENT_TIMESTAMP(3)`),
     createdBy: char("created_by", { length: 36 }),
     updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .notNull()
-      .default(sql`(UTC_TIMESTAMP(3))`),
+      .default(sql`CURRENT_TIMESTAMP(3)`),
     deactivatedAt: datetime("deactivated_at", { mode: "date", fsp: 3 }),
   },
   table => ({
@@ -90,7 +90,7 @@ export const appSessions = mysqlTable(
     expiresAt: datetime("expires_at", { mode: "date", fsp: 3 }).notNull(),
     createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .notNull()
-      .default(sql`(UTC_TIMESTAMP(3))`),
+      .default(sql`CURRENT_TIMESTAMP(3)`),
     ipAddress: varchar("ip_address", { length: 45 }),
     userAgent: varchar("user_agent", { length: 512 }),
   },
@@ -126,7 +126,7 @@ export const appSettings = mysqlTable(
     ]).notNull(),
     updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
       .notNull()
-      .default(sql`(UTC_TIMESTAMP(3))`),
+      .default(sql`CURRENT_TIMESTAMP(3)`),
     updatedBy: char("updated_by", { length: 36 }),
   },
   table => ({
@@ -158,7 +158,7 @@ export const auditLog = mysqlTable(
     ipAddress: varchar("ip_address", { length: 45 }),
     createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .notNull()
-      .default(sql`(UTC_TIMESTAMP(3))`),
+      .default(sql`CURRENT_TIMESTAMP(3)`),
   },
   table => ({
     userFk: foreignKey({
@@ -431,7 +431,7 @@ export const emailIngestLog = mysqlTable(
     errorMessage: text("error_message"),
     createdAt: datetime("created_at", { mode: "date", fsp: 3 })
       .notNull()
-      .default(sql`(UTC_TIMESTAMP(3))`),
+      .default(sql`CURRENT_TIMESTAMP(3)`),
   },
   table => ({
     messageIdUnique: uniqueIndex("email_ingest_log_message_id_unique").on(table.messageId),
@@ -454,7 +454,7 @@ export const kvState = mysqlTable("kv_state", {
   value: json("value").notNull(),
   updatedAt: datetime("updated_at", { mode: "date", fsp: 3 })
     .notNull()
-    .default(sql`(UTC_TIMESTAMP(3))`),
+    .default(sql`CURRENT_TIMESTAMP(3)`),
 });
 
 export type KvStateRow = typeof kvState.$inferSelect;
