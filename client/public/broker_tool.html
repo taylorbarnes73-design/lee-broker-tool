@@ -803,7 +803,7 @@
       <h1 class="page-h1">Commission Voucher</h1>
     </div>
     <div class="page-head-right">
-      <div class="page-meta-chip"><span class="dot"></span>Guided submission</div>
+      <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('voucher')">Save Draft</button>
     </div>
   </div>
   <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete all steps in order for fastest processing.</div>
@@ -840,8 +840,6 @@
         </div>
       </div>
     </div>
-    <input type="file" id="v-doc-disclosure" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" aria-label="Upload Agency Disclosure document" onchange="onVoucherMissingDocUploaded('agencyDisclosure', this)">
-    <input type="file" id="v-doc-agreement" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" aria-label="Upload Listing Agreement document" onchange="onVoucherMissingDocUploaded('listingAgreement', this)">
     <div id="v-doc-analysis-live" class="assistive-live" aria-live="polite"></div>
   </div>
 
@@ -12086,9 +12084,17 @@ function onVoucherManualOverrideClick(kind) {
 
 function triggerVoucherMissingDocUpload(kind) {
   if (!voucherTransactionRequiresComplianceDocs()) return;
-  const inputId = kind === 'agencyDisclosure' ? 'v-doc-disclosure' : 'v-doc-agreement';
-  const input = document.getElementById(inputId);
-  if (input) input.click();
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.pdf,.jpg,.jpeg,.png';
+  input.className = 'hidden-file-input';
+  input.setAttribute('aria-label', 'Upload ' + VOUCHER_DOC_TYPES[kind] + ' document');
+  input.addEventListener('change', async () => {
+    await onVoucherMissingDocUploaded(kind, input);
+    if (input.parentNode) input.parentNode.removeChild(input);
+  }, { once: true });
+  document.body.appendChild(input);
+  input.click();
 }
 
 async function onVoucherMissingDocUploaded(kind, input) {
