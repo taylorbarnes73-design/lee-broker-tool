@@ -150,10 +150,10 @@
     <div class="deal-shell" id="l-deal-shell">
     <div class="deal-main" id="listing-main">
     <div class="card" id="lstep-upload" data-lstep="0" data-step-label="Upload Deal Documents">
-      <h2>Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></h2>
-      <p class="micro-copy">Upload deal documents and let Gemini extract key details into the listing form.</p>
+      <h2>Upload Deal Documents <span class="inline-badge">AI Auto-Fill</span></h2>
+      <p class="micro-copy">Upload deal documents and let AI extract key details into the listing form.</p>
       <div class="field field-stack-gap">
-        <label class="inline-flex-label">Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></label>
+        <label class="inline-flex-label">Upload Deal Documents <span class="inline-badge">AI Auto-Fill</span></label>
         <div class="brochure-zone" id="l-deal-docs-zone" role="button" tabindex="0" aria-label="Upload deal documents" onclick="document.getElementById('l-deal-documents-file').click()">
           <input type="file" id="l-deal-documents-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" multiple onchange="onListingDealDocumentsSelected(this)">
           <div class="brochure-zone-inner">
@@ -235,6 +235,40 @@
         <div class="field"><label>Listing expiration</label><input id="l-listing-expiration" type="date" data-lbt-auto-expiry="1"><div class="field-hint">Defaults from Date Entered + office term</div></div>
       </div>
 
+      <h3 class="section-heading-top-lg">Property Address</h3>
+      <div class="row c2">
+        <div class="field"><label id="lbl-name" class="req">Address</label><input id="l-address"></div>
+        <div class="field is-hidden" id="field-project-name"><label>Project / Property Name</label><input id="l-project-name" placeholder="Optional"></div>
+      </div>
+      <div class="row c3">
+        <div class="field"><label class="req">City</label><input id="l-city"></div>
+        <div class="field"><label class="req">State</label><input id="l-state" value="CA"></div>
+        <div class="field"><label class="req">Zip</label><input id="l-zip" placeholder="92618"></div>
+      </div>
+      <div class="row c2">
+        <div class="field"><label>Cross Street(s)</label><input id="l-cross"></div>
+        <div class="field is-hidden" id="field-corner"><label>Corner</label>
+          <select id="l-corner"><option value="">N/A</option><option value="NE">NE</option><option value="NW">NW</option><option value="SE">SE</option><option value="SW">SW</option></select>
+        </div>
+      </div>
+
+      <div id="size-building" class="type-section visible">
+        <div class="row c3">
+          <div class="field"><label id="lbl-sf" class="req">Building / GLA SF</label><input id="l-bldg-sf" oninput="calcSaleSF()"></div>
+          <div class="field"><label>Year Built</label><input id="l-year-built"></div>
+          <div class="field"><label>Parking Ratio</label><input id="l-parking-ratio"></div>
+        </div>
+      </div>
+
+      <div id="size-land" class="type-section">
+        <div class="row c4">
+          <div class="field"><label class="req">Gross Acres</label><input id="l-acres-gross" placeholder="0.00"></div>
+          <div class="field"><label>Net Acres</label><input id="l-acres-net" placeholder="0.00"></div>
+          <div class="field"><label>Gross SF</label><input id="l-land-sf-gross" placeholder="0"></div>
+          <div class="field"><label>Net SF</label><input id="l-land-sf-net" placeholder="0"></div>
+        </div>
+      </div>
+
       <div id="lease-pricing">
         <h3 class="section-heading-top">Lease Pricing</h3>
         <div class="row c4">
@@ -292,40 +326,6 @@
         <div class="row c2">
           <div class="field"><label>Sale Terms</label><input id="l-sale-terms"></div>
           <div class="field is-hidden" id="cap-rate-row"><label>CAP Rate</label><input id="l-cap-rate"></div>
-        </div>
-      </div>
-
-      <h3 class="section-heading-top-lg">Property Address</h3>
-      <div class="row c2">
-        <div class="field"><label id="lbl-name" class="req">Address</label><input id="l-address"></div>
-        <div class="field is-hidden" id="field-project-name"><label>Project / Property Name</label><input id="l-project-name" placeholder="Optional"></div>
-      </div>
-      <div class="row c3">
-        <div class="field"><label class="req">City</label><input id="l-city"></div>
-        <div class="field"><label class="req">State</label><input id="l-state" value="CA"></div>
-        <div class="field"><label class="req">Zip</label><input id="l-zip" placeholder="92618"></div>
-      </div>
-      <div class="row c2">
-        <div class="field"><label>Cross Street(s)</label><input id="l-cross"></div>
-        <div class="field is-hidden" id="field-corner"><label>Corner</label>
-          <select id="l-corner"><option value="">N/A</option><option value="NE">NE</option><option value="NW">NW</option><option value="SE">SE</option><option value="SW">SW</option></select>
-        </div>
-      </div>
-
-      <div id="size-building" class="type-section visible">
-        <div class="row c3">
-          <div class="field"><label id="lbl-sf" class="req">Building / GLA SF</label><input id="l-bldg-sf" oninput="calcSaleSF()"></div>
-          <div class="field"><label>Year Built</label><input id="l-year-built"></div>
-          <div class="field"><label>Parking Ratio</label><input id="l-parking-ratio"></div>
-        </div>
-      </div>
-
-      <div id="size-land" class="type-section">
-        <div class="row c4">
-          <div class="field"><label class="req">Gross Acres</label><input id="l-acres-gross" placeholder="0.00"></div>
-          <div class="field"><label>Net Acres</label><input id="l-acres-net" placeholder="0.00"></div>
-          <div class="field"><label>Gross SF</label><input id="l-land-sf-gross" placeholder="0"></div>
-          <div class="field"><label>Net SF</label><input id="l-land-sf-net" placeholder="0"></div>
         </div>
       </div>
     </div><!-- end required-section -->
@@ -535,8 +535,8 @@
   <div id="listing-mod-mode" class="is-hidden">
     <div class="tip listing-mod-tip">Enter the property address and describe the changes needed. Select which listing service(s) to notify.</div>
     <div class="card ai-shortcut-card">
-      <h2>Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></h2>
-      <p class="micro-copy">Upload deal documents and let Gemini extract key details into the modification form.</p>
+      <h2>Upload Deal Documents <span class="inline-badge">AI Auto-Fill</span></h2>
+      <p class="micro-copy">Upload deal documents and let AI extract key details into the modification form.</p>
       <div class="brochure-zone" id="lm-brochure-zone" onclick="document.getElementById('lm-brochure-file').click()">
         <input type="file" id="lm-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" onchange="onListingModBrochureSelected(this)">
         <div class="brochure-zone-inner">
@@ -595,7 +595,7 @@
   <div class="card required-section" data-sstep="0" data-step-label="Order Basics" data-card-eyebrow="Step 1 of 4">
     <h2>Order Basics <span class="required-badge">Required</span></h2>
     <div class="sign-upload-docs-section">
-      <h3 class="section-heading-top">Upload Documents <span class="inline-badge">Gemini Auto-Fill</span></h3>
+      <h3 class="section-heading-top">Upload Documents <span class="inline-badge">AI Auto-Fill</span></h3>
       <p class="micro-copy">Upload listing agreements, sign photos, placement images, or other request documents to help autofill this order.</p>
       <div class="brochure-zone" id="s-brochure-zone" onclick="document.getElementById('s-brochure-file').click()">
         <input type="file" id="s-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" onchange="onSignBrochureSelected(this)">
@@ -812,7 +812,7 @@
 
   <!-- AI Auto-fill (optional shortcut, sits above Step 1) -->
   <div class="card ai-shortcut-card" id="vstep-upload" data-vstep="0" data-step-label="Upload Deal Documents">
-    <h2>Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></h2>
+    <h2>Upload Deal Documents <span class="inline-badge">AI Auto-Fill</span></h2>
     <div class="brochure-zone" id="v-brochure-zone" tabindex="0" role="button" aria-label="Upload deal documents" onclick="document.getElementById('v-brochure-file').click()" onkeydown="onVoucherDocZoneKeydown(event)">
       <input type="file" id="v-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" multiple aria-label="Upload deal documents" onchange="onVoucherDealDocumentsSelected(this)">
       <div class="brochure-zone-inner">
@@ -1105,13 +1105,13 @@
       </table>
       <button class="btn btn-gray top-gap-sm" onclick="addPaymentRow()">+ Add Payment</button>
 
-      <!-- AI Deal Analysis — powered by Gemini -->
+      <!-- AI Deal Analysis -->
       <div class="section-divider">
         <h3>AI Deal Analysis</h3>
-        <p class="micro-copy">Let Gemini verify the financials and flag anything that looks off. Results are suggestions only — all calculated fields above are authoritative.</p>
+        <p class="micro-copy">Let AI verify the financials and flag anything that looks off. Results are suggestions only — all calculated fields above are authoritative.</p>
         <button class="btn btn-outline" id="v-ai-calc-btn" onclick="runVoucherAICalculate()">
           <svg class="ui-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:5px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          Analyze with Gemini
+          Analyze with AI
         </button>
         <div id="v-ai-calc-panel" class="is-hidden" style="margin-top:14px;"></div>
       </div>
@@ -1313,7 +1313,7 @@
   </div>
   <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections for additional detail.</div>
   <div class="card ai-shortcut-card">
-    <h2>Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></h2>
+    <h2>Upload Deal Documents <span class="inline-badge">AI Auto-Fill</span></h2>
     <p class="micro-copy">Upload deal documents to parse comp details and prefill the comp form.</p>
     <div class="brochure-zone" id="c-brochure-zone" onclick="document.getElementById('c-brochure-file').click()">
       <input type="file" id="c-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" onchange="onCompBrochureSelected(this)">
@@ -3271,7 +3271,6 @@ function canProceedListingStep(index, card) {
   const n = String(card.getAttribute('data-lstep') || '');
   if (n !== '0') return true;
   if (listingAnalysisStatus.state === 'analyzing') return false;
-  if (listingAnalysisStatus.state === 'manual') return true;
   return listingDocumentIsExecuted('agencyDisclosure') && listingDocumentIsExecuted('listingAgreement');
 }
 
@@ -4908,7 +4907,7 @@ function calcOutsideTotals() {
 }
 document.getElementById('v-outside-body')?.addEventListener('input', calcOutsideTotals);
 
-// ── AI Deal Analysis (Gemini-powered) ────────────────────────────────────────
+// ── AI Deal Analysis ──────────────────────────────────────────────────────────
 async function runVoucherAICalculate() {
   const btn = document.getElementById('v-ai-calc-btn');
   const panel = document.getElementById('v-ai-calc-panel');
@@ -4917,7 +4916,7 @@ async function runVoucherAICalculate() {
   btn.disabled = true;
   btn.textContent = 'Analyzing…';
   setHiddenState(panel, false);
-  panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>Gemini</span> Deal Analysis</div><div class="ai-review-status-row"><div class="dx-spin dx-spin-accent"></div> Gemini is reviewing the deal financials…</div></div>';
+  panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header">AI Deal Analysis</div><div class="ai-review-status-row"><div class="dx-spin dx-spin-accent"></div> AI is reviewing the deal financials…</div></div>';
 
   // Collect the current voucher form state
   const txnType = document.getElementById('v-txn-type')?.value || '';
@@ -4963,7 +4962,7 @@ async function runVoucherAICalculate() {
     const result = await callTrpc('aiAssist.calculateDeal', { dealData });
     const a = result && result.analysis ? result.analysis : null;
     if (!a) {
-      panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>Gemini</span> Deal Analysis</div><div class="text-error">No analysis returned. Fill in more fields and try again.</div></div>';
+      panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header">AI Deal Analysis</div><div class="text-error">No analysis returned. Fill in more fields and try again.</div></div>';
       return;
     }
 
@@ -4972,7 +4971,7 @@ async function runVoucherAICalculate() {
     const flags = Array.isArray(a.flags) && a.flags.length ? a.flags : null;
 
     let html = '<div class="ai-panel">';
-    html += '<div class="ai-panel-header"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Gemini Deal Analysis</div>';
+    html += '<div class="ai-panel-header"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> AI Deal Analysis</div>';
     if (a.summary) html += '<div style="font-size:13px;font-weight:600;color:var(--ink-800);margin-bottom:8px;">' + escHtml(a.summary) + '</div>';
     html += '<div class="ai-calc-grid">';
     html += '<div class="ai-calc-row"><span class="ai-calc-label">Total Consideration</span><span class="ai-calc-val">' + fmt(a.totalConsideration) + '</span></div>';
@@ -4992,10 +4991,10 @@ async function runVoucherAICalculate() {
     html += '</div>';
     panel.innerHTML = html;
   } catch (err) {
-    panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>Gemini</span> Deal Analysis</div><div class="text-error">Error: ' + escHtml(err.message || String(err)) + '</div></div>';
+    panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header">AI Deal Analysis</div><div class="text-error">Error: ' + escHtml(err.message || String(err)) + '</div></div>';
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '<svg class="ui-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:5px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Analyze with Gemini';
+    btn.innerHTML = '<svg class="ui-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:5px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Analyze with AI';
   }
 }
 
@@ -11621,7 +11620,7 @@ function renderListingDealDocumentsStatusMessage() {
     if (file.pendingRemoval) {
       return `<div class="upload-file-item upload-file-item-confirm">
         <span class="upload-file-name">${fileLabel}</span>
-        <span class="upload-remove-confirm-copy">Remove ${fileLabel}? Autofilled values stay in place, but their Gemini markers will be removed.</span>
+        <span class="upload-remove-confirm-copy">Remove ${fileLabel}? Autofilled values stay in place, but their AI markers will be removed.</span>
         <span class="upload-remove-confirm-actions">
           <button type="button" class="upload-remove-confirm-btn" onclick="confirmRemoveListingDealDocument(${i})">Remove</button>
           <button type="button" class="upload-remove-cancel-btn" onclick="cancelRemoveListingDealDocument(${i})">Cancel</button>
@@ -11706,7 +11705,7 @@ function onListingRequiredStatusClick(kind) {
     const details = state.missingSignatures.length
       ? '\n\nMissing signatures: ' + state.missingSignatures.join(', ')
       : '';
-    if (confirm(`Gemini marked this document as not executed.${details}\n\nMark as executed?`)) {
+    if (confirm(`AI marked this document as not executed.${details}\n\nMark as executed?`)) {
       markListingDocumentManual(kind);
     }
   }
@@ -11791,7 +11790,7 @@ async function uploadAndParseListingDealDocuments(fileList) {
 
   listingAnalysisStatus = { state: 'analyzing', error: '' };
   updateListingRequiredDocStatus();
-  if (status) status.innerHTML = '<span class="text-muted-sm">Analyzing with Gemini…</span>';
+  if (status) status.innerHTML = '<span class="text-muted-sm">Analyzing with AI…</span>';
   if (zone) zone.classList.add('upload-zone-active');
   showFormOverlay(`Uploading ${validList.length === 1 ? validList[0].name : validList.length + ' documents'}...`, { step: 1, totalSteps: 4, stepLabel: 'Uploading' });
   let keepOverlayOpen = false;
@@ -11818,7 +11817,7 @@ async function uploadAndParseListingDealDocuments(fileList) {
     });
     if (!batchResult || !Array.isArray(batchResult.results)) throw new Error('Unexpected upload response');
 
-    updateFormOverlay('Analyzing documents with Gemini', 1, 3, 'Reading documents...');
+    updateFormOverlay('Analyzing documents with AI', 1, 3, 'Reading documents...');
 
     if (!Array.isArray(uploadedFiles['l-deal-documents'])) uploadedFiles['l-deal-documents'] = [];
     const parseTasks = [];
@@ -11857,9 +11856,9 @@ async function uploadAndParseListingDealDocuments(fileList) {
       );
     });
 
-    updateFormOverlay('Analyzing documents with Gemini', 2, 3, 'Extracting field data...');
+    updateFormOverlay('Analyzing documents with AI', 2, 3, 'Extracting field data...');
     await Promise.all(parseTasks);
-    updateFormOverlay('Analyzing documents with Gemini', 3, 3, 'Checking signatures...');
+    updateFormOverlay('Analyzing documents with AI', 3, 3, 'Checking signatures...');
     renderListingDealDocumentsStatusMessage();
     updateListingRequiredDocStatus();
     if (live) live.textContent = getListingDetectionAnnouncement();
@@ -11877,8 +11876,8 @@ async function uploadAndParseListingDealDocuments(fileList) {
   } catch (err) {
     console.error('[AI] Listing upload/analysis failed:', err?.message || err);
     const errMsg = String(err?.message || '').toLowerCase();
-    const configErr = errMsg.includes('no llm backend') || errMsg.includes('gemini_api_key') || errMsg.includes('api key');
-    if (status) status.innerHTML = `<span class="text-error">${configErr ? 'AI not configured — add GEMINI_API_KEY to server .env.' : 'Upload failed. Please retry.'}</span>`;
+    const configErr = errMsg.includes('no llm backend') || errMsg.includes('api key') || errMsg.includes('gemini_api_key');
+    if (status) status.innerHTML = `<span class="text-error">${configErr ? 'AI not configured — contact your administrator.' : 'Upload failed. Please retry.'}</span>`;
     listingDocumentDetection = listingDocumentDefaults();
     listingAnalysisStatus = { state: 'error', error: err?.message || 'Upload failed. Please retry.' };
     updateListingRequiredDocStatus();
@@ -11886,7 +11885,7 @@ async function uploadAndParseListingDealDocuments(fileList) {
     keepOverlayOpen = true;
     showFormOverlayError(
       configErr ? 'Analysis failed' : 'Upload failed — Check your connection',
-      configErr ? 'AI not configured — add GEMINI_API_KEY to server .env.' : (err?.message || 'Please try again.'),
+      configErr ? 'AI not configured — contact your administrator.' : (err?.message || 'Please try again.'),
       {
         tryLabel: configErr ? 'Try Again' : 'Retry Upload',
         manualLabel: 'Fill Manually',
@@ -12046,7 +12045,7 @@ function renderVoucherDealDocumentsStatusMessage(messageHtml) {
   const files = Array.isArray(uploadedFiles['v-deal-documents']) ? uploadedFiles['v-deal-documents'] : [];
   const notices = [];
   if (voucherAnalysisStatus.state === 'analyzing') {
-    notices.push('<div class="voucher-analysis-inline">Analyzing with Gemini…</div>');
+    notices.push('<div class="voucher-analysis-inline">Analyzing with AI…</div>');
   } else if (voucherAnalysisStatus.error) {
     notices.push('<div class="text-error">' + escHtml(voucherAnalysisStatus.error) + '</div>');
   }
@@ -12065,7 +12064,7 @@ function renderVoucherDealDocumentsStatusMessage(messageHtml) {
       `<button type="button" class="voucher-file-remove" onclick="requestVoucherDealDocumentRemoval(${index})">Remove</button>` +
       '</div>';
     if (voucherPendingRemovalIndex === index) {
-      html += `<div class="voucher-remove-confirm">Remove ${escHtml(file.filename || 'document')}? Autofilled values stay in place, but their Gemini markers will be removed. <button type="button" class="voucher-remove-confirm-btn" onclick="confirmVoucherDealDocumentRemoval(${index})">Remove</button> <button type="button" class="voucher-remove-confirm-btn" onclick="cancelVoucherDealDocumentRemoval()">Cancel</button></div>`;
+      html += `<div class="voucher-remove-confirm">Remove ${escHtml(file.filename || 'document')}? Autofilled values stay in place, but their AI markers will be removed. <button type="button" class="voucher-remove-confirm-btn" onclick="confirmVoucherDealDocumentRemoval(${index})">Remove</button> <button type="button" class="voucher-remove-confirm-btn" onclick="cancelVoucherDealDocumentRemoval()">Cancel</button></div>`;
     }
     if (disclosureSource) {
       html += `<div class="voucher-file-doc-status">• Agency Disclosure <span class="${getVoucherDocDisplayState('agencyDisclosure').colorClass}">${escHtml(getVoucherDocDisplayState('agencyDisclosure').label)}</span></div>`;
@@ -12233,7 +12232,7 @@ function buildEmptyVoucherDetectionResult() {
   };
 }
 
-async function runVoucherGeminiAnalysis() {
+async function runVoucherAiAnalysis() {
   const files = Array.isArray(uploadedFiles['v-deal-documents']) ? uploadedFiles['v-deal-documents'] : [];
   if (!files.length) {
     resetVoucherDetectionState();
@@ -12379,7 +12378,7 @@ async function confirmVoucherDealDocumentRemoval(index) {
     return;
   }
 
-  await runVoucherGeminiAnalysis();
+  await runVoucherAiAnalysis();
 }
 
 async function uploadAndParseVoucherDealDocuments(fileList) {
@@ -12449,7 +12448,7 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
     });
     if (!batchResult || !Array.isArray(batchResult.results)) throw new Error('Upload failed.');
 
-    updateFormOverlay('Analyzing documents with Gemini', 1, 3, 'Reading documents...');
+    updateFormOverlay('Analyzing documents with AI', 1, 3, 'Reading documents...');
 
     if (!Array.isArray(uploadedFiles['v-deal-documents'])) uploadedFiles['v-deal-documents'] = [];
     let uploadedCount = 0;
@@ -12470,9 +12469,9 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
       zone.classList.remove('upload-zone-active');
     }
 
-    updateFormOverlay('Analyzing documents with Gemini', 2, 3, 'Extracting field data...');
-    const analysis = await runVoucherGeminiAnalysis();
-    updateFormOverlay('Analyzing documents with Gemini', 3, 3, 'Checking signatures...');
+    updateFormOverlay('Analyzing documents with AI', 2, 3, 'Extracting field data...');
+    const analysis = await runVoucherAiAnalysis();
+    updateFormOverlay('Analyzing documents with AI', 3, 3, 'Checking signatures...');
     if (analysis.hadTimeout || analysis.hadUnreadable || analysis.hadConfigError || analysis.hadFailures) {
       keepOverlayOpen = true;
       let title = 'Analysis failed';
@@ -12490,7 +12489,7 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
       showFormOverlayError(title, body, {
         tryLabel,
         manualLabel: 'Fill Manually',
-        tryAgain: () => analysis.hadTimeout ? runVoucherGeminiAnalysis() : document.getElementById('v-brochure-file')?.click(),
+        tryAgain: () => analysis.hadTimeout ? runVoucherAiAnalysis() : document.getElementById('v-brochure-file')?.click(),
         fillManually: () => {
           voucherAnalysisStatus = { state: 'manual', error: '' };
           updateVoucherRequiredDocStatus();
@@ -12692,12 +12691,12 @@ async function scrapeDealDocForTab(fileUrl, mimeType, tab, statusId, buttonId, d
     btn.classList.add('loading');
     btn.textContent = 'Analyzing document...';
   }
-  showFormOverlay('Analyzing documents with Gemini', { step: 1, totalSteps: 3, stepLabel: 'Reading documents...', detail: 'Reading documents...' });
+  showFormOverlay('Analyzing documents with AI', { step: 1, totalSteps: 3, stepLabel: 'Reading documents...', detail: 'Reading documents...' });
   let keepOverlayOpen = false;
   try {
-    updateFormOverlay('Analyzing documents with Gemini', 2, 3, 'Extracting field data...');
+    updateFormOverlay('Analyzing documents with AI', 2, 3, 'Extracting field data...');
     const result = await callTrpc('aiAssist.extractDocument', { fileUrl, mimeType, tab });
-    updateFormOverlay('Analyzing documents with Gemini', 3, 3, 'Checking signatures...');
+    updateFormOverlay('Analyzing documents with AI', 3, 3, 'Checking signatures...');
     if (result && result.success) {
       const count = applyAiFields(tab, result.fields || {});
       if (status) updateDealDocSelectionStatus(statusId, `Filled ${count} field${count !== 1 ? 's' : ''} from document`);
