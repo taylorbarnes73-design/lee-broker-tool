@@ -38,6 +38,7 @@ import { getDb } from "../db";
 import { uploads } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "../middleware/requireAuth";
+import { migrate } from "drizzle-orm/mysql2/migrator";
 
 const FILE_CONTENT_RATE_LIMIT_WINDOW_MS = 60_000;
 const FILE_CONTENT_RATE_LIMIT_MAX = 120;
@@ -82,7 +83,23 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
   throw new Error(`No available port found starting from ${startPort}`);
 }
 
+async function runMigrations() {
+  try {
+    const db = await getDb();
+    if (!db) {
+      console.log("[migrate] No database configured, skipping migrations.");
+      return;
+    }
+    await migrate(db, { migrationsFolder: path.join(process.cwd(), "drizzle") });
+    console.log("[migrate] Migrations applied successfully.");
+  } catch (err) {
+    console.error("[migrate] Migration failed:", err);
+    throw err;
+  }
+}
+
 async function startServer() {
+  await runMigrations();
   const app = express();
   const server = createServer(app);
   // Configure body parser with larger size limit for file uploads

@@ -11679,6 +11679,23 @@ function updateListingRequiredDocStatus() {
   if (flow && typeof flow.renderNav === 'function') flow.renderNav();
 }
 
+function autoMarkDetectedListingDocuments() {
+  ['agencyDisclosure', 'listingAgreement'].forEach(kind => {
+    const state = listingDocumentStatus(kind);
+    if (state.found && !state.executed && !state.manualOverride) {
+      setListingDocumentState(kind, {
+        found: true,
+        executed: true,
+        missingSignatures: state.missingSignatures || [],
+        manualOverride: true,
+        manualOverrideAt: new Date().toISOString(),
+        manualOverrideBy: 'AI Detection',
+        manualOverrideByEmail: '',
+      });
+    }
+  });
+}
+
 function markListingDocumentManual(kind) {
   const msg = 'Confirm this document is fully executed. This will be flagged in the submission for admin review.';
   if (!confirm(msg)) return;
@@ -11859,6 +11876,7 @@ async function uploadAndParseListingDealDocuments(fileList) {
     updateFormOverlay('Analyzing documents with AI', 2, 3, 'Extracting field data...');
     await Promise.all(parseTasks);
     updateFormOverlay('Analyzing documents with AI', 3, 3, 'Checking signatures...');
+    autoMarkDetectedListingDocuments();
     renderListingDealDocumentsStatusMessage();
     updateListingRequiredDocStatus();
     if (live) live.textContent = getListingDetectionAnnouncement();
@@ -11938,6 +11956,7 @@ async function reanalyzeListingDealDocuments() {
       console.warn('Listing document re-analysis failed:', err);
     }
   }));
+  autoMarkDetectedListingDocuments();
 }
 
 function initListingDealDocumentsUpload() {
