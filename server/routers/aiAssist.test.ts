@@ -25,18 +25,16 @@ vi.mock("../storage", () => ({
   ),
 }));
 
-// Mock PDF parsing so brochure tests don't need real PDFs
+// Mock PDF parsing so brochure tests don't need real PDFs.
+// The production code uses the default export as a callable: (mod.default ?? mod)(buffer)
+const mockPdfParse = vi.fn().mockResolvedValue({
+  text: "Mock brochure text: 123 Commerce Way, Irvine CA 92618, 12,500 SF, $1.10/SF/Mo NNN",
+});
 vi.mock("pdf-parse", () => ({
-  PDFParse: vi.fn().mockImplementation(() => ({
-    getText: vi.fn().mockResolvedValue({
-      text: "Mock brochure text: 123 Commerce Way, Irvine CA 92618, 12,500 SF, $1.10/SF/Mo NNN",
-    }),
-    destroy: vi.fn(),
-  })),
+  default: mockPdfParse,
 }));
 
 import { invokeLLM } from "../_core/llm";
-import { PDFParse } from "pdf-parse";
 
 function createCtx(): TrpcContext {
   return {
@@ -203,7 +201,7 @@ describe("aiAssist.scrapeBrochure", () => {
     expect(result.fields.city).toBe("Irvine");
     expect(result.fields.buildingSf).toBe("12500");
     expect(result.fieldCount).toBe(8);
-    expect(PDFParse).toHaveBeenCalledTimes(1);
+    expect(mockPdfParse).toHaveBeenCalledTimes(1);
   });
 
   it("handles image brochure URLs", async () => {
@@ -230,7 +228,7 @@ describe("aiAssist.scrapeBrochure", () => {
     expect(result.success).toBe(true);
     expect(result.fields.propertyType).toBe("Office");
     expect(result.fields.city).toBe("Newport Beach");
-    expect(PDFParse).not.toHaveBeenCalled();
+    expect(mockPdfParse).not.toHaveBeenCalled();
   });
 
   it("filters empty fields from brochure scrape result", async () => {
@@ -340,7 +338,7 @@ describe("aiAssist.extractDocument", () => {
     });
     expect(result.fields.buildingSf).toBeUndefined();
     expect(result.fieldCount).toBe(10);
-    expect(PDFParse).toHaveBeenCalledTimes(1);
+    expect(mockPdfParse).toHaveBeenCalledTimes(1);
   });
 
   it("supports image documents for non-listing tabs", async () => {
@@ -370,7 +368,7 @@ describe("aiAssist.extractDocument", () => {
     expect(result.tab).toBe("sign");
     expect(result.fields.propertyAddress).toBe("9 Main Street");
     expect(result.fields.requestedBy).toBe("Jane Broker");
-    expect(PDFParse).not.toHaveBeenCalled();
+    expect(mockPdfParse).not.toHaveBeenCalled();
   });
 
   it("returns a structured error when document fetch fails", async () => {
@@ -433,7 +431,7 @@ describe("aiAssist.extractDocument", () => {
       brokerName: "Right Comp Field",
     });
     expect(result.fields.listingAgentName).toBeUndefined();
-    expect(PDFParse).not.toHaveBeenCalled();
+    expect(mockPdfParse).not.toHaveBeenCalled();
   });
 
   it("accepts uploaded proxy URLs and reads bytes from storage", async () => {
@@ -626,8 +624,9 @@ describe("aiAssist.smartComplete", () => {
     // Provide all fields filled
     const allFilled = Object.fromEntries(
       ["propertyType","transactionType","address","city","state","zip","rateSfMo",
-       "term","leaseType","buildingSf","suiteSf","askingPrice","listingAgentName",
-       "listingAgentLicense","comments"].map(k => [k, "value"])
+       "term","leaseType","buildingSf","suiteSf","askingPrice","listingExpiration",
+       "dateEntered","ownerName","commissionRate","crossStreets","yearBuilt",
+       "listingAgentName","listingAgentLicense","comments"].map(k => [k, "value"])
     );
     const result = await caller.smartComplete({
       currentFields: allFilled,
