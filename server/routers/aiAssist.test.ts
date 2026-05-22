@@ -497,24 +497,16 @@ describe("aiAssist.extractDocument", () => {
   });
 
   it("returns voucher document detection alongside extracted fields", async () => {
-    vi.mocked(invokeLLM)
-      .mockResolvedValueOnce({
-        choices: [
-          {
-            message: {
-              content: JSON.stringify({
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              fields: {
                 transactionType: "Lease",
                 clientName: "Detected Client",
-              }),
-            },
-          },
-        ],
-      } as any)
-      .mockResolvedValueOnce({
-        choices: [
-          {
-            message: {
-              content: JSON.stringify({
+              },
+              documentDetection: {
                 agencyDisclosure: {
                   found: true,
                   executed: false,
@@ -525,11 +517,12 @@ describe("aiAssist.extractDocument", () => {
                   executed: false,
                   missingSignatures: [],
                 },
-              }),
-            },
+              },
+            }),
           },
-        ],
-      } as any);
+        },
+      ],
+    } as any);
 
     const caller = aiAssistRouter.createCaller(createCtx());
     const result = await caller.extractVoucherDocument({
@@ -539,6 +532,7 @@ describe("aiAssist.extractDocument", () => {
 
     expect(result.success).toBe(true);
     expect(result.fields.clientName).toBe("Detected Client");
+    expect(invokeLLM).toHaveBeenCalledTimes(1);
     expect(result.documentDetection).toEqual({
       agencyDisclosure: {
         found: true,
@@ -554,25 +548,17 @@ describe("aiAssist.extractDocument", () => {
   });
 
   it("returns listing document execution detection alongside extracted fields", async () => {
-    vi.mocked(invokeLLM)
-      .mockResolvedValueOnce({
-        choices: [
-          {
-            message: {
-              content: JSON.stringify({
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              fields: {
                 address: "123 Main Street",
                 city: "Irvine",
                 listingAgentName: "Test Broker",
-              }),
-            },
-          },
-        ],
-      } as any)
-      .mockResolvedValueOnce({
-        choices: [
-          {
-            message: {
-              content: JSON.stringify({
+              },
+              documentDetection: {
                 agencyDisclosure: {
                   found: true,
                   executed: true,
@@ -583,11 +569,12 @@ describe("aiAssist.extractDocument", () => {
                   executed: false,
                   missingSignatures: ["Property owner/principal"],
                 },
-              }),
-            },
+              },
+            }),
           },
-        ],
-      } as any);
+        },
+      ],
+    } as any);
 
     const caller = aiAssistRouter.createCaller(createCtx());
     const result = await caller.extractListingDocument({
@@ -597,6 +584,7 @@ describe("aiAssist.extractDocument", () => {
 
     expect(result.success).toBe(true);
     expect(result.fields.address).toBe("123 Main Street");
+    expect(invokeLLM).toHaveBeenCalledTimes(1);
     expect(result.documentDetection).toEqual({
       agencyDisclosure: {
         found: true,

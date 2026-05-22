@@ -88,6 +88,7 @@ const tabFieldSchemas: Record<string, z.ZodObject<any>> = {
 };
 
 type FormTab = keyof typeof tabFieldSchemas;
+type AiDocumentMime = "application/pdf" | "image/jpeg" | "image/png" | "image/webp";
 
 const formTabSchema = z.enum(["listing", "voucher", "sign", "comp"]);
 const aiDocumentMimeSchema = z
@@ -807,7 +808,7 @@ async function fetchDocumentBuffer(fileUrl: string) {
 
 async function buildDocumentUserContent(
   fileBuffer: Buffer,
-  mimeType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp",
+  mimeType: AiDocumentMime,
   promptText: string
 ) {
   if (mimeType !== "application/pdf") {
@@ -850,7 +851,7 @@ async function buildDocumentUserContent(
 async function extractDocumentFields(
   tab: FormTab,
   fileUrl: string,
-  mimeType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp",
+  mimeType: AiDocumentMime,
   options: { listingBrochurePrompt?: boolean } = {}
 ) {
   const fieldNames = Object.keys(tabFieldSchemas[tab].shape);
@@ -998,6 +999,25 @@ const listingDocumentDetectionSchema = {
   },
 } as const;
 
+function buildFieldsWithDetectionSchema(
+  name: string,
+  fieldNames: string[],
+  documentDetectionSchema: typeof voucherDocumentDetectionSchema | typeof listingDocumentDetectionSchema
+) {
+  return {
+    name,
+    schema: {
+      type: "object",
+      properties: {
+        fields: buildJsonSchema(`${name}_fields`, fieldNames).schema,
+        documentDetection: documentDetectionSchema.schema,
+      },
+      required: ["fields", "documentDetection"],
+      additionalProperties: false,
+    },
+  } as const;
+}
+
 type ListingDocumentDetectionState = {
   found: boolean;
   executed: boolean;
@@ -1080,71 +1100,154 @@ function parseListingDocumentDetection(value: unknown): ListingDocumentDetection
   };
 }
 
-async function detectVoucherRequiredDocuments(
-  fileBuffer: Buffer,
-  mimeType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp"
-) {
-  const promptText = `Determine whether this file includes either of these documents and whether each one appears fully executed:
-- Agency Disclosure
-- Listing Agreement
-
-Return JSON using this shape exactly:
-{
-  "agencyDisclosure": { "found": boolean, "executed": boolean, "missingSignatures": string[] },
-  "listingAgreement": { "found": boolean, "executed": boolean, "missingSignatures": string[] }
+function emptyVoucherDocumentDetection() {
+  return {
+    agencyDisclosure: { found: false, executed: false, missingSignatures: [] as string[] },
+    listingAgreement: { found: false, executed: false, missingSignatures: [] as string[] },
+  };
 }
 
-Rules:
-- found=true only when the document is present in the file.
-- executed=true only when all required signatures and signature dates appear present.
-- If executed=false and found=true, list missing or unclear signatures in missingSignatures.
-- If found=false, executed must be false and missingSignatures must be an empty array.`;
+async function extractDocumentFieldsAndDetection<TDetection>(params: {
+  tab: "voucher" | "listing";
+  fileUrl: string;
+  mimeType: AiDocumentMime;
+  detectionPrompt: string;
+  systemPrompt: string;
+  schemaName: string;
+  detectionSchema: typeof voucherDocumentDetectionSchema | typeof listingDocumentDetectionSchema;
+  parseDetection: (value: unknown) => TDetection;
+  emptyDetection: () => TDetection;
+}) {
+  const fieldNames = Object.keys(tabFieldSchemas[params.tab].shape);
+  const fetched = await fetchDocumentBuffer(params.fileUrl);
 
+  if (!fetched.fileBuffer) {
+    return {
+      success: false as const,
+      fields: {},
+      tab: params.tab,
+      fieldCount: 0,
+      error: fetched.error ?? "Could not fetch file",
+      documentDetection: params.emptyDetection(),
+    };
+  }
+
+  const fieldPrompt = `Extract all fields you can identify for the "${params.tab}" form from this ${params.mimeType === "application/pdf" ? "PDF document" : "document image"}.
+
+Available fields: ${fieldNames.join(", ")}
+
+Return fields only when you can confidently extract them.`;
+
+  const promptText = `${fieldPrompt}
+
+Also check required compliance document status:
+
+${params.detectionPrompt}
+
+Return one JSON object with:
+- fields: object of extracted form fields
+- documentDetection: required document status`;
+
+  const outputSchema = buildFieldsWithDetectionSchema(
+    params.schemaName,
+    fieldNames,
+    params.detectionSchema
+  );
+
+  let raw = "";
   if (isGeminiDirectAvailable()) {
     try {
-      const raw = await invokeLLMWithFile({
-        fileBuffer,
-        mimeType,
-        systemPrompt:
-          "You classify real estate compliance documents. Return only the requested JSON result.",
+      raw = await invokeLLMWithFile({
+        fileBuffer: fetched.fileBuffer,
+        mimeType: params.mimeType,
+        systemPrompt: params.systemPrompt,
         userPrompt: promptText,
-        outputSchema: voucherDocumentDetectionSchema,
+        outputSchema,
       });
-      return parseVoucherDocumentDetection(parseJsonObject(raw));
     } catch (geminiErr: unknown) {
       console.warn(
-        "[aiAssist] Gemini document detection failed, falling back to text extraction:",
+        "[aiAssist] Gemini combined document invocation failed, falling back to text extraction:",
         geminiErr instanceof Error ? geminiErr.message : String(geminiErr)
       );
     }
   }
 
-  const userContent = await buildDocumentUserContent(fileBuffer, mimeType, promptText);
-  const response = await invokeLLM({
-    messages: [
-      {
-        role: "system",
-        content:
-          "You classify real estate compliance documents. Return only the requested JSON result.",
+  if (!raw) {
+    const userContent = await buildDocumentUserContent(
+      fetched.fileBuffer,
+      params.mimeType,
+      promptText
+    );
+    const response = await invokeLLM({
+      messages: [
+        { role: "system", content: params.systemPrompt },
+        { role: "user", content: userContent as any[] },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: outputSchema,
       },
-      { role: "user", content: userContent as any[] },
-    ],
-    response_format: {
-      type: "json_schema",
-      json_schema: voucherDocumentDetectionSchema,
-    },
-  });
-  const raw = response.choices?.[0]?.message?.content;
-  return parseVoucherDocumentDetection(parseJsonObject(raw));
+    });
+    const content = response.choices?.[0]?.message?.content;
+    raw = typeof content === "string" ? content : "";
+  }
+
+  const parsed = parseJsonObject(raw) as Record<string, unknown>;
+  const fieldSource =
+    parsed.fields && typeof parsed.fields === "object" && !Array.isArray(parsed.fields)
+      ? (parsed.fields as Record<string, unknown>)
+      : parsed;
+  const fields = sanitizeAiFields(params.tab, fieldSource);
+  return {
+    success: true as const,
+    fields,
+    tab: params.tab,
+    fieldCount: Object.keys(fields).length,
+    documentDetection: params.parseDetection(parsed.documentDetection),
+  };
 }
 
-async function detectListingRequiredDocuments(
-  fileBuffer: Buffer,
-  mimeType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp"
+async function extractVoucherDocumentWithDetection(
+  fileUrl: string,
+  mimeType: AiDocumentMime
 ) {
-  const promptText = `You are checking listing workflow compliance documents in this file.
+  return extractDocumentFieldsAndDetection({
+    tab: "voucher",
+    fileUrl,
+    mimeType,
+    schemaName: "voucher_document_fields_and_detection",
+    detectionSchema: voucherDocumentDetectionSchema,
+    parseDetection: parseVoucherDocumentDetection,
+    emptyDetection: emptyVoucherDocumentDetection,
+    systemPrompt:
+      "You extract real estate form fields and classify compliance document execution status. Return only the requested JSON result.",
+    detectionPrompt: `Determine whether this file includes either of these documents and whether each one appears fully executed:
+- Agency Disclosure
+- Listing Agreement
 
-Required documents:
+Rules:
+- found=true only when the document is present in the file.
+- executed=true only when all required signatures and signature dates appear present.
+- If executed=false and found=true, list missing or unclear signatures in missingSignatures.
+- If found=false, executed must be false and missingSignatures must be an empty array.`,
+  });
+}
+
+async function extractListingDocumentWithDetection(
+  fileUrl: string,
+  mimeType: AiDocumentMime
+) {
+  return extractDocumentFieldsAndDetection({
+    tab: "listing",
+    fileUrl,
+    mimeType,
+    schemaName: "listing_document_fields_and_detection",
+    detectionSchema: listingDocumentDetectionSchema,
+    parseDetection: parseListingDocumentDetection,
+    emptyDetection: emptyListingDocumentDetection,
+    systemPrompt:
+      "You extract listing form fields and classify listing compliance document execution status. Return only the requested JSON result.",
+    detectionPrompt: `Required documents:
 - Agency Disclosure (agent + principal signatures required)
 - Listing Agreement (listing broker + property owner/principal signatures required)
 
@@ -1157,123 +1260,8 @@ Execution signals:
 - Presence of signature blocks/lines
 - Signature image, typed signature, or DocuSign certificate
 - Date near signature
-- For DocuSign PDFs, Certificate of Completion is the strongest signal
-
-Return JSON only, matching the requested schema.`;
-
-  if (isGeminiDirectAvailable()) {
-    try {
-      const raw = await invokeLLMWithFile({
-        fileBuffer,
-        mimeType,
-        systemPrompt:
-          "You classify listing compliance documents and signature execution status. Return only the requested JSON result.",
-        userPrompt: promptText,
-        outputSchema: listingDocumentDetectionSchema,
-      });
-      return parseListingDocumentDetection(parseJsonObject(raw));
-    } catch (geminiErr: unknown) {
-      console.warn(
-        "[aiAssist] Gemini listing document detection failed, falling back to text extraction:",
-        geminiErr instanceof Error ? geminiErr.message : String(geminiErr)
-      );
-    }
-  }
-
-  const userContent = await buildDocumentUserContent(fileBuffer, mimeType, promptText);
-  const response = await invokeLLM({
-    messages: [
-      {
-        role: "system",
-        content:
-          "You classify listing compliance documents and signature execution status. Return only the requested JSON result.",
-      },
-      { role: "user", content: userContent as any[] },
-    ],
-    response_format: {
-      type: "json_schema",
-      json_schema: listingDocumentDetectionSchema,
-    },
+- For DocuSign PDFs, Certificate of Completion is the strongest signal`,
   });
-  const raw = response.choices?.[0]?.message?.content;
-  return parseListingDocumentDetection(parseJsonObject(raw));
-}
-
-async function extractVoucherDocumentWithDetection(
-  fileUrl: string,
-  mimeType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp"
-) {
-  const extracted = await extractDocumentFields("voucher", fileUrl, mimeType);
-  if (!extracted.success) {
-    return {
-      ...extracted,
-      documentDetection: {
-        agencyDisclosure: { found: false, executed: false, missingSignatures: [] },
-        listingAgreement: { found: false, executed: false, missingSignatures: [] },
-      },
-    };
-  }
-
-  const fetched = await fetchDocumentBuffer(fileUrl);
-  if (!fetched.fileBuffer) {
-    return {
-      ...extracted,
-      documentDetection: {
-        agencyDisclosure: { found: false, executed: false, missingSignatures: [] },
-        listingAgreement: { found: false, executed: false, missingSignatures: [] },
-      },
-    };
-  }
-
-  try {
-    const documentDetection = await detectVoucherRequiredDocuments(fetched.fileBuffer, mimeType);
-    return {
-      ...extracted,
-      documentDetection,
-    };
-  } catch {
-    return {
-      ...extracted,
-      documentDetection: {
-        agencyDisclosure: { found: false, executed: false, missingSignatures: [] },
-        listingAgreement: { found: false, executed: false, missingSignatures: [] },
-      },
-    };
-  }
-}
-
-async function extractListingDocumentWithDetection(
-  fileUrl: string,
-  mimeType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp"
-) {
-  const extracted = await extractDocumentFields("listing", fileUrl, mimeType);
-  if (!extracted.success) {
-    return {
-      ...extracted,
-      documentDetection: emptyListingDocumentDetection(),
-    };
-  }
-
-  const fetched = await fetchDocumentBuffer(fileUrl);
-  if (!fetched.fileBuffer) {
-    return {
-      ...extracted,
-      documentDetection: emptyListingDocumentDetection(),
-    };
-  }
-
-  try {
-    const documentDetection = await detectListingRequiredDocuments(fetched.fileBuffer, mimeType);
-    return {
-      ...extracted,
-      documentDetection,
-    };
-  } catch {
-    return {
-      ...extracted,
-      documentDetection: emptyListingDocumentDetection(),
-    };
-  }
 }
 
 // ── Router ──
