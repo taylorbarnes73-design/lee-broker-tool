@@ -875,8 +875,8 @@ async function extractDocumentFields(
     ? await brochureSystemPrompt()
     : await documentSystemPrompt();
 
-  // ── Preferred path: Gemini native API (inline file data, no text extraction) ──
-  // Gemini reads the document directly, giving much better results on scanned PDFs
+  // ── Preferred path: native AI inline file (no text extraction) ──
+  // The AI reads the document directly, giving much better results on scanned PDFs
   // and image-heavy brochures. Only available when GEMINI_API_KEY is configured.
   if (isGeminiDirectAvailable()) {
     try {
@@ -895,12 +895,12 @@ async function extractDocumentFields(
         tab,
         fieldCount: Object.keys(fields).length,
       };
-    } catch (geminiErr: unknown) {
+    } catch (aiErr: unknown) {
       // Log and fall through to the text-extraction fallback so the user always
-      // gets a result even if the native Gemini call unexpectedly fails.
+      // gets a result even if the native AI call unexpectedly fails.
       console.warn(
-        "[aiAssist] Gemini native file invocation failed, falling back to text extraction:",
-        geminiErr instanceof Error ? geminiErr.message : String(geminiErr)
+        "[aiAssist] AI native file invocation failed, falling back to text extraction:",
+        aiErr instanceof Error ? aiErr.message : String(aiErr)
       );
     }
   }
@@ -1164,10 +1164,10 @@ Return one JSON object with:
         userPrompt: promptText,
         outputSchema,
       });
-    } catch (geminiErr: unknown) {
+    } catch (aiErr: unknown) {
       console.warn(
-        "[aiAssist] Gemini combined document invocation failed, falling back to text extraction:",
-        geminiErr instanceof Error ? geminiErr.message : String(geminiErr)
+        "[aiAssist] AI combined document invocation failed, falling back to text extraction:",
+        aiErr instanceof Error ? aiErr.message : String(aiErr)
       );
     }
   }
@@ -1480,7 +1480,7 @@ export const aiAssistRouter = router({
     }),
 
   /**
-   * AI-powered deal financial analysis using Gemini.
+   * AI-powered deal financial analysis.
    * Takes structured deal data and returns computed values plus a plain-English
    * explanation of the deal's key financial metrics and any anomalies.
    *

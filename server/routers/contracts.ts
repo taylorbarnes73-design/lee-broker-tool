@@ -256,7 +256,7 @@ Return JSON with these fields (omit any that are blank):
 
         let rawJson: string;
 
-        // ── Preferred path: Gemini native API (inline PDF data, no text extraction) ──
+        // ── Preferred path: native AI inline PDF (no text extraction) ──
         if (isGeminiDirectAvailable()) {
           try {
             rawJson = await invokeLLMWithFile({
@@ -265,10 +265,10 @@ Return JSON with these fields (omit any that are blank):
               systemPrompt: systemPrompt,
               userPrompt: userPrompt,
             });
-          } catch (geminiErr: unknown) {
+          } catch (aiErr: unknown) {
             console.warn(
-              "[contracts] Gemini native PDF invocation failed, falling back to text extraction:",
-              geminiErr instanceof Error ? geminiErr.message : String(geminiErr)
+              "[contracts] AI native PDF invocation failed, falling back to text extraction:",
+              aiErr instanceof Error ? aiErr.message : String(aiErr)
             );
             rawJson = "";
           }

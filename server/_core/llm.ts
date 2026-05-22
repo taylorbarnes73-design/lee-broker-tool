@@ -212,7 +212,7 @@ const normalizeToolChoice = (
 /**
  * Choose an OpenAI-compatible LLM backend.
  *   1. If both BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY are set,
- *      use the Forge proxy (already targets gemini-2.5-flash).
+ *      use the Forge proxy.
  *   2. If GEMINI_API_KEY is set, use Google's OpenAI-compatible endpoint
  *      (https://generativelanguage.googleapis.com/v1beta/openai/).
  *   3. Otherwise, fall back to direct OpenAI using OPENAI_API_KEY (and
@@ -246,7 +246,7 @@ function resolveBackend(): LLMBackend {
     };
   }
   throw new Error(
-    "No LLM backend configured. Set GEMINI_API_KEY, BUILT_IN_FORGE_API_URL + BUILT_IN_FORGE_API_KEY, or OPENAI_API_KEY."
+    "No AI backend configured. Set OPENAI_API_KEY, BUILT_IN_FORGE_API_URL + BUILT_IN_FORGE_API_KEY, or GEMINI_API_KEY."
   );
 }
 
@@ -296,7 +296,7 @@ const normalizeResponseFormat = ({
 };
 
 /**
- * Returns true when a GEMINI_API_KEY is configured for direct native Gemini API access.
+ * Returns true when a GEMINI_API_KEY is configured for native inline-file API access.
  * Used by file-parsing callers to decide whether to send files as inline data rather
  * than extracting text first.
  */
@@ -305,10 +305,10 @@ export function isGeminiDirectAvailable(): boolean {
 }
 
 /**
- * Invoke the Gemini native generateContent API with an inline file (PDF or image).
+ * Invoke the native AI generateContent API with an inline file (PDF or image).
  *
  * Unlike the OpenAI-compatible endpoint, the native API accepts PDFs as inline base64
- * data — meaning Gemini reads the document directly rather than relying on pre-extracted
+ * data — meaning the AI reads the document directly rather than relying on pre-extracted
  * text. This produces significantly better results for scanned or form-heavy PDFs.
  *
  * Falls back to the regular `invokeLLM` path when GEMINI_API_KEY is not set.
@@ -318,7 +318,7 @@ export async function invokeLLMWithFile(params: {
   mimeType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp";
   systemPrompt: string;
   userPrompt: string;
-  /** Optional JSON Schema — when provided Gemini will return structured JSON. */
+  /** Optional JSON Schema — when provided the AI will return structured JSON. */
   outputSchema?: OutputSchema;
 }): Promise<string> {
   const { fileBuffer, mimeType, systemPrompt, userPrompt, outputSchema } = params;
@@ -338,7 +338,7 @@ export async function invokeLLMWithFile(params: {
 
   if (outputSchema) {
     generationConfig.responseMimeType = "application/json";
-    // Gemini's responseSchema follows a subset of JSON Schema; supply the inner schema object
+    // responseSchema follows a subset of JSON Schema; supply the inner schema object
     generationConfig.responseSchema = outputSchema.schema;
   }
 
@@ -372,7 +372,7 @@ export async function invokeLLMWithFile(params: {
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(
-      `Gemini native file API failed: ${response.status} ${response.statusText} – ${errorText.slice(0, 500)}`
+      `AI native file API failed: ${response.status} ${response.statusText} – ${errorText.slice(0, 500)}`
     );
   }
 
