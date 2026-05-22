@@ -4236,6 +4236,12 @@ body {
 .step-flow .card[data-step].step--done {
   display: none;
 }
+/* Hide all non-current vstep/lstep/sstep cards (show only active step) */
+.step-flow .card[data-vstep]:not(.step--current),
+.step-flow .card[data-lstep]:not(.step--current),
+.step-flow .card[data-sstep]:not(.step--current) {
+  display: none;
+}
 /* Compact summary strip for a completed step, shown in place of the card */
 .step-summary {
   background: #fff;
@@ -7223,62 +7229,103 @@ body.broker-active .sub-tab-bar {
 .form-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9990;
-  background: rgba(255,255,255,0.87);
-  -webkit-backdrop-filter: blur(2px);
-  backdrop-filter: blur(2px);
+  z-index: 9999;
+  background: rgba(255,255,255,0.92);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: 1;
+  transition: opacity 300ms ease;
 }
-.form-overlay.is-hidden { display: none; }
+.form-overlay.is-hidden {
+  display: flex !important;
+  opacity: 0;
+  pointer-events: none;
+}
 .form-overlay-inner {
   text-align: center;
-  padding: 32px 40px;
-  border-radius: 12px;
+  padding: 48px;
+  border-radius: 8px;
   background: #fff;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.12);
-  min-width: 300px;
-  max-width: 420px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  min-width: 320px;
+  max-width: 500px;
 }
 .form-overlay-spinner {
-  width: 32px; height: 32px;
+  width: 48px; height: 48px;
   border: 3px solid #E5E7EB;
   border-top-color: #98002E;
   border-radius: 50%;
   animation: btnSpin 0.7s linear infinite;
-  margin: 0 auto 16px;
+  margin: 0 auto 24px;
 }
 .form-overlay-msg {
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 600;
-  color: #1A1A1A;
-  margin-bottom: 4px;
+  color: #333;
+}
+.form-overlay-detail {
+  margin-top: 8px;
+  font-size: 16px;
+  color: #666;
 }
 .form-overlay-sub {
-  font-size: 12px;
-  color: #6B7280;
-  margin-bottom: 8px;
+  margin-top: 8px;
+  font-size: 14px;
+  color: #999;
+  margin-bottom: 12px;
 }
 .form-overlay-progress { margin-top: 16px; }
 .form-overlay-progress.is-hidden { display: none; }
 .form-overlay-bar {
-  height: 6px;
-  background: #E5E7EB;
-  border-radius: 3px;
+  height: 8px;
+  background: #E0E0E0;
+  border-radius: 4px;
   overflow: hidden;
   margin-bottom: 8px;
 }
 .form-overlay-fill {
   height: 100%;
-  background: #98002E;
-  border-radius: 3px;
-  transition: width 0.35s ease;
+  background: #2563EB;
+  border-radius: 4px;
+  transition: width 0.3s ease;
   width: 0%;
 }
 .form-overlay-step-label {
-  font-size: 12px;
-  color: #6B7280;
+  font-size: 14px;
+  color: #666;
+}
+.form-overlay-error-icon {
+  font-size: 28px;
+  color: #DC2626;
+  margin-bottom: 12px;
+}
+.form-overlay-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 16px;
+}
+.form-overlay-actions .btn-overlay-try {
+  background: #98002E;
+  color: #fff;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.form-overlay-actions .btn-overlay-manual {
+  background: none;
+  border: 1px solid #D1D5DB;
+  color: #374151;
+  padding: 9px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
 }
 
 /* ── Inline input loading spinner ── */

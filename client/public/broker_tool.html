@@ -149,6 +149,40 @@
 
     <div class="deal-shell" id="l-deal-shell">
     <div class="deal-main" id="listing-main">
+    <div class="card" id="lstep-upload" data-lstep="0" data-step-label="Upload Documents">
+      <h2>Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></h2>
+      <p class="micro-copy">Upload deal documents and let Gemini extract key details into the listing form.</p>
+      <div class="field field-stack-gap">
+        <label class="inline-flex-label">Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></label>
+        <div class="brochure-zone" id="l-deal-docs-zone" role="button" tabindex="0" aria-label="Upload deal documents" onclick="document.getElementById('l-deal-documents-file').click()">
+          <input type="file" id="l-deal-documents-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" multiple onchange="onListingDealDocumentsSelected(this)">
+          <div class="brochure-zone-inner">
+            <div>
+              <div class="brochure-zone-label">Drop files here</div>
+              <div class="brochure-zone-sub">PDF, JPG, PNG</div>
+            </div>
+          </div>
+          <div class="brochure-status" id="l-deal-docs-status" onclick="event.stopPropagation()"></div>
+        </div>
+        <div class="required-doc-status-list" id="l-required-doc-status-list">
+          <div class="required-doc-status-row">
+            <span>Agency Disclosure</span>
+            <span class="required-doc-status-row-actions">
+              <button type="button" class="voucher-doc-status-btn" id="l-doc-status-disclosure" onclick="onListingRequiredStatusClick('agencyDisclosure')">Missing — Upload</button>
+              <button type="button" class="doc-manual-link is-hidden" id="l-doc-manual-disclosure" onclick="markListingDocumentManual('agencyDisclosure')">Mark as included</button>
+            </span>
+          </div>
+          <div class="required-doc-status-row">
+            <span>Listing Agreement</span>
+            <span class="required-doc-status-row-actions">
+              <button type="button" class="voucher-doc-status-btn" id="l-doc-status-agreement" onclick="onListingRequiredStatusClick('listingAgreement')">Missing — Upload</button>
+              <button type="button" class="doc-manual-link is-hidden" id="l-doc-manual-agreement" onclick="markListingDocumentManual('listingAgreement')">Mark as included</button>
+            </span>
+          </div>
+        </div>
+        <div class="sr-only" id="l-doc-analysis-live" aria-live="polite"></div>
+      </div>
+    </div>
     <div class="stepper" data-stepper-for="listing-main"></div>
 
     <div class="card required-section" data-lstep="1" data-step-label="Property Type" data-card-eyebrow="Step 1 of 4">
@@ -199,39 +233,6 @@
           </select>
         </div>
         <div class="field"><label>Listing expiration</label><input id="l-listing-expiration" type="date" data-lbt-auto-expiry="1"><div class="field-hint">Defaults from Date Entered + office term</div></div>
-      </div>
-
-      <h3 class="section-heading-top">Upload Deal Documents</h3>
-
-      <div class="field field-stack-gap">
-        <label class="inline-flex-label">Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></label>
-        <div class="brochure-zone" id="l-deal-docs-zone" role="button" tabindex="0" aria-label="Upload deal documents" onclick="document.getElementById('l-deal-documents-file').click()">
-          <input type="file" id="l-deal-documents-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" multiple onchange="onListingDealDocumentsSelected(this)">
-          <div class="brochure-zone-inner">
-            <div>
-              <div class="brochure-zone-label">Drop files here</div>
-              <div class="brochure-zone-sub">PDF, JPG, PNG</div>
-            </div>
-          </div>
-          <div class="brochure-status" id="l-deal-docs-status" onclick="event.stopPropagation()"></div>
-        </div>
-        <div class="required-doc-status-list" id="l-required-doc-status-list">
-          <div class="required-doc-status-row">
-            <span>Agency Disclosure</span>
-            <span class="required-doc-status-row-actions">
-              <button type="button" class="voucher-doc-status-btn" id="l-doc-status-disclosure" onclick="onListingRequiredStatusClick('agencyDisclosure')">Missing — Upload</button>
-              <button type="button" class="doc-manual-link is-hidden" id="l-doc-manual-disclosure" onclick="markListingDocumentManual('agencyDisclosure')">Mark as included</button>
-            </span>
-          </div>
-          <div class="required-doc-status-row">
-            <span>Listing Agreement</span>
-            <span class="required-doc-status-row-actions">
-              <button type="button" class="voucher-doc-status-btn" id="l-doc-status-agreement" onclick="onListingRequiredStatusClick('listingAgreement')">Missing — Upload</button>
-              <button type="button" class="doc-manual-link is-hidden" id="l-doc-manual-agreement" onclick="markListingDocumentManual('listingAgreement')">Mark as included</button>
-            </span>
-          </div>
-        </div>
-        <div class="sr-only" id="l-doc-analysis-live" aria-live="polite"></div>
       </div>
 
       <div id="lease-pricing">
@@ -481,6 +482,7 @@
       <div class="deal-card">
         <div class="deal-eyebrow">Progress</div>
         <ol class="deal-steps" id="lg-steps">
+          <li data-step="0"><span class="deal-step-dot"></span><span class="deal-step-label">Upload Docs</span></li>
           <li data-step="1"><span class="deal-step-dot"></span><span class="deal-step-label">Add Listing</span></li>
           <li data-step="2"><span class="deal-step-dot"></span><span class="deal-step-label">Listing Agents</span></li>
           <li data-step="3"><span class="deal-step-dot"></span><span class="deal-step-label">Release Instructions</span></li>
@@ -585,7 +587,9 @@
     </div>
   </div>
   <div class="tip pane-intro-tip">Complete each step. Fields marked <span class="required-mark">*</span> are required.</div>
-  <div class="card ai-shortcut-card">
+  <div class="deal-shell" id="s-deal-shell">
+  <div class="deal-main" id="sign-main">
+  <div class="card ai-shortcut-card" id="sstep-upload" data-sstep="0" data-step-label="Upload Documents">
     <h2>Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></h2>
     <p class="micro-copy">Upload deal documents to extract order basics and autofill this sign request.</p>
     <div class="brochure-zone" id="s-brochure-zone" onclick="document.getElementById('s-brochure-file').click()">
@@ -601,14 +605,11 @@
     </div>
     <button class="brochure-scrape-btn" id="s-brochure-scrape-btn" onclick="scrapeSignBrochure()">Parse &amp; Fill Sign Fields</button>
   </div>
-
-  <div class="deal-shell" id="s-deal-shell">
-  <div class="deal-main" id="sign-main">
   <div class="stepper" data-stepper-for="sign-main"></div>
 
   <!-- STEP 1: Order Basics -->
   <div class="card required-section" data-sstep="1" data-step-label="Order Basics" data-card-eyebrow="Step 1 of 4">
-    <h2>Step 1 — Order Basics <span class="required-badge">Required</span></h2>
+    <h2>Order Basics <span class="required-badge">Required</span></h2>
     <div class="row c2">
       <div class="field"><label>Date</label><input id="s-date" type="date"></div>
       <div class="field"><label>Order Type</label>
@@ -625,7 +626,7 @@
 
   <!-- STEP 2: Sign Specifications -->
   <div class="card" data-sstep="2" data-step-label="Signs" data-card-eyebrow="Step 2 of 4">
-    <h2>Step 2 — Sign Specifications</h2>
+    <h2>Sign Specifications</h2>
     <h3 class="section-heading-top">Configuration</h3>
     <div class="support-options">
       <div class="support-opt" onclick="selectSupport(this, 'sf')"><div class="icon">&#9632;&#9632;</div><div class="lbl">S/F</div></div>
@@ -679,7 +680,7 @@
 
   <!-- STEP 3: Details & Placement -->
   <div class="card" data-sstep="3" data-step-label="Details" data-card-eyebrow="Step 3 of 4">
-    <h2>Step 3 — Details</h2>
+    <h2>Details</h2>
     <div class="row c2">
       <div class="field">
         <label>Name Rider <span class="optional-note">(Optional)</span></label>
@@ -724,7 +725,7 @@
 
   <!-- STEP 4: Requested By + Access -->
   <div class="card" data-sstep="4" data-step-label="Requested By" data-card-eyebrow="Step 4 of 4">
-    <h2>Step 4 — Requested By &amp; Access</h2>
+    <h2>Requested By &amp; Access</h2>
     <div class="field field-stack-gap-sm"><label class="req">Requested By</label>
       <div class="agent-picker" id="picker-s-requested-by">
         <input id="s-requested-by" autocomplete="off"><div class="field-hint">Start typing agent name...</div>
@@ -774,6 +775,7 @@
     <div class="deal-card">
       <div class="deal-eyebrow">Progress</div>
       <ol class="deal-steps" id="sg-steps">
+        <li data-step="0"><span class="deal-step-dot"></span><span class="deal-step-label">Upload Docs</span></li>
         <li data-step="1"><span class="deal-step-dot"></span><span class="deal-step-label">Order Basics</span></li>
         <li data-step="2"><span class="deal-step-dot"></span><span class="deal-step-label">Sign Specs</span></li>
         <li data-step="3"><span class="deal-step-dot"></span><span class="deal-step-label">Details</span></li>
@@ -810,7 +812,7 @@
   <div class="deal-main" id="voucher-main">
 
   <!-- AI Auto-fill (optional shortcut, sits above Step 1) -->
-  <div class="card ai-shortcut-card">
+  <div class="card ai-shortcut-card" id="vstep-upload" data-vstep="0" data-step-label="Upload Documents">
     <h2>Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></h2>
     <div class="brochure-zone" id="v-brochure-zone" tabindex="0" role="button" aria-label="Upload deal documents" onclick="document.getElementById('v-brochure-file').click()" onkeydown="onVoucherDocZoneKeydown(event)">
       <input type="file" id="v-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" multiple aria-label="Upload deal documents" onchange="onVoucherDealDocumentsSelected(this)">
@@ -846,7 +848,7 @@
   <div class="stepper" data-stepper-for="voucher-main"></div>
 
   <div class="card required-section" id="vstep-1" data-vstep="1" data-step-label="Deal Basics" data-card-eyebrow="Step 1 of 7">
-    <h2>Step 1 — Transaction Type <span class="required-badge">Required</span></h2>
+    <h2>Deal Basics <span class="required-badge">Required</span></h2>
     <div class="tip is-hidden top-gap-sm" id="voucher-confidential-warning"></div>
     <div class="row c4">
       <div class="field"><label class="req">Representation Type</label>
@@ -1281,6 +1283,7 @@
     <div class="deal-card">
       <div class="deal-eyebrow">Progress</div>
       <ol class="deal-steps" id="dg-steps">
+        <li data-step="0"><span class="deal-step-dot"></span><span class="deal-step-label">Upload Docs</span></li>
         <li data-step="1"><span class="deal-step-dot"></span><span class="deal-step-label">Transaction Type</span></li>
         <li data-step="2"><span class="deal-step-dot"></span><span class="deal-step-label">Broker Information</span></li>
         <li data-step="3"><span class="deal-step-dot"></span><span class="deal-step-label">Client &amp; Property</span></li>
@@ -3103,6 +3106,7 @@ function bootstrapStepFlowFor(name) {
         mainId: 'voucher-main',
         stepAttr: 'data-vstep',
         previewFor: voucherStepPreview,
+        canProceed: canProceedVoucherStep,
         onStep: () => { try { syncDealGlance(); } catch(e) {} }
       });
     }
@@ -3114,6 +3118,7 @@ function bootstrapStepFlowFor(name) {
         mainId: 'listing-main',
         stepAttr: 'data-lstep',
         previewFor: listingStepPreview,
+        canProceed: canProceedListingStep,
         onStep: () => { try { syncListingGlance(); } catch(e) {} }
       });
     }
@@ -3136,6 +3141,9 @@ function bootstrapStepFlowFor(name) {
 // Sign Request previews for the step summary strips
 function signStepPreview(card, n) {
   const v = id => (document.getElementById(id)?.value || '').trim();
+  if (n === '0') {
+    return signBrochureFileUrl ? 'Document uploaded' : 'Skipped — fill manually';
+  }
   if (n === '1') return [v('s-address'), v('s-city')].filter(Boolean).join(', ') || 'Order basics';
   if (n === '2') {
     const total = ['s-4x8-qty','s-6x8-qty','s-other-qty','s-banner-qty'].reduce((a,id)=>a + (parseInt(v(id),10)||0), 0);
@@ -3211,6 +3219,10 @@ document.addEventListener('DOMContentLoaded', function () {
 // Step previews used by the step-summary strip
 function voucherStepPreview(card, n) {
   const v = id => (document.getElementById(id)?.value || '').trim();
+  if (n === '0') {
+    const files = Array.isArray(uploadedFiles['v-deal-documents']) ? uploadedFiles['v-deal-documents'] : [];
+    return files.length ? files.length + ' document' + (files.length !== 1 ? 's' : '') + ' uploaded' : 'Skipped — fill manually';
+  }
   if (n === '1') {
     const rep = document.getElementById('v-rep-type');
     const txn = document.getElementById('v-txn-type');
@@ -3226,6 +3238,10 @@ function voucherStepPreview(card, n) {
 }
 function listingStepPreview(card, n) {
   const v = id => (document.getElementById(id)?.value || '').trim();
+  if (n === '0') {
+    const files = Array.isArray(uploadedFiles['l-deal-documents']) ? uploadedFiles['l-deal-documents'] : [];
+    return files.length ? files.length + ' document' + (files.length !== 1 ? 's' : '') + ' uploaded' : 'Skipped — fill manually';
+  }
   if (n === '1') return [v('l-address'), v('l-city')].filter(Boolean).join(', ') || 'Listing basics';
   if (n === '2') {
     const rows = card.querySelectorAll('#listing-agent-body tr');
@@ -3241,6 +3257,21 @@ function listingStepPreview(card, n) {
     return label ? (label + ' details') : 'Property details';
   }
   return '';
+}
+
+function canProceedVoucherStep(index, card) {
+  if (!card) return true;
+  const n = String(card.getAttribute('data-vstep') || '');
+  if (n !== '0') return true;
+  if (!voucherTransactionRequiresComplianceDocs()) return true;
+  return voucherDocExecuted('agencyDisclosure') && voucherDocExecuted('listingAgreement');
+}
+
+function canProceedListingStep(index, card) {
+  if (!card) return true;
+  const n = String(card.getAttribute('data-lstep') || '');
+  if (n !== '0') return true;
+  return listingDocumentIsExecuted('agencyDisclosure') && listingDocumentIsExecuted('listingAgreement');
 }
 
 // Listing Glance — sidebar sync
@@ -4127,7 +4158,7 @@ function getBrokerCardHeading(card, fallback) {
   return raw.replace(/^Step\s*\d+\s*[—-]\s*/i, '').replace(/\s*Required\s*$/i, '').trim();
 }
 
-function decorateBrokerCard(card) {
+function decorateBrokerCard(card, stepIndex, stepTotal) {
   if (!card || card.querySelector(':scope > .card-head')) return;
   const h2 = card.querySelector(':scope > h2');
   if (!h2) return;
@@ -4137,7 +4168,10 @@ function decorateBrokerCard(card) {
   const left = document.createElement('div');
   left.className = 'card-head-left';
 
-  const eyebrowText = (card.dataset.cardEyebrow || '').trim();
+  let eyebrowText = (card.dataset.cardEyebrow || '').trim();
+  if (typeof stepIndex === 'number' && typeof stepTotal === 'number') {
+    eyebrowText = 'Step ' + (stepIndex + 1) + ' of ' + stepTotal;
+  }
   if (eyebrowText) {
     const eyebrow = document.createElement('div');
     eyebrow.className = 'card-eyebrow';
@@ -4210,7 +4244,7 @@ function initStepFlow(opts) {
   main.classList.add('step-flow');
   const cards = Array.from(main.querySelectorAll('.card[' + opts.stepAttr + ']'));
   if (!cards.length) return null;
-  cards.forEach(card => decorateBrokerCard(card));
+  cards.forEach((card, idx) => decorateBrokerCard(card, idx, cards.length));
 
   const flow = {
     opts,
@@ -4244,7 +4278,7 @@ function initStepFlow(opts) {
         strip.className = 'step-summary';
         strip.setAttribute('data-step-summary', n);
         strip.innerHTML = '<div class="s-num"></div>' +
-          '<div class="s-text"><div class="s-title">Step ' + n + ' — ' + title + '</div>' +
+          '<div class="s-text"><div class="s-title">Step ' + (idx + 1) + ' — ' + title + '</div>' +
           '<div class="s-preview"></div></div>' +
           '<div class="s-edit">Edit</div>';
         strip.querySelector('.s-preview').textContent = preview;
@@ -4284,6 +4318,9 @@ function initStepFlow(opts) {
           nextBtn.type = 'button';
           nextBtn.className = 'btn btn-red';
           nextBtn.textContent = 'Continue →';
+          const canProceed = (typeof opts.canProceed === 'function') ? !!opts.canProceed(idx, c, this) : true;
+          nextBtn.disabled = !canProceed;
+          if (!canProceed) nextBtn.title = 'Complete required items before continuing.';
           nextBtn.onclick = () => this.next();
           right.appendChild(nextBtn);
         }
@@ -11604,6 +11641,8 @@ function updateListingRequiredDocStatus() {
   };
   applyState(disclosureBtn, disclosureManual, 'agencyDisclosure');
   applyState(agreementBtn, agreementManual, 'listingAgreement');
+  const flow = window.__stepFlows && window.__stepFlows['listing-main'];
+  if (flow && typeof flow.renderNav === 'function') flow.renderNav();
 }
 
 function markListingDocumentManual(kind) {
@@ -11702,6 +11741,7 @@ async function uploadAndParseListingDealDocuments(fileList) {
   if (status) status.innerHTML = '<span class="text-muted-sm">Analyzing with Gemini…</span>';
   if (zone) zone.classList.add('upload-zone-active');
   showFormOverlay('Uploading documents...', { step: 1, totalSteps: 3, stepLabel: 'Uploading' });
+  let keepOverlayOpen = false;
 
   try {
     const uploaderName = getSignedInBrokerIdentity()?.name || '';
@@ -11725,12 +11765,11 @@ async function uploadAndParseListingDealDocuments(fileList) {
     });
     if (!batchResult || !Array.isArray(batchResult.results)) throw new Error('Unexpected upload response');
 
-    updateFormOverlay('Analyzing with Gemini...', 2, 3, 'Checking signatures');
+    updateFormOverlay('Analyzing documents with Gemini', 1, 3, 'Reading documents...');
 
     if (!Array.isArray(uploadedFiles['l-deal-documents'])) uploadedFiles['l-deal-documents'] = [];
     const parseTasks = [];
     let uploadedCount = 0;
-    let appliedCount = 0;
 
     batchResult.results.forEach((result, index) => {
       if (!result?.success || !result.url || !result.fileKey) return;
@@ -11750,7 +11789,7 @@ async function uploadAndParseListingDealDocuments(fileList) {
           mimeType: payloads[index]?.mimeType || 'application/pdf',
         }).then((parsed) => {
           if (!parsed?.success) return;
-          appliedCount += applyAiFields('listing', parsed.fields || {}, { sourceKey });
+          applyAiFields('listing', parsed.fields || {}, { sourceKey });
           setListingDocumentState(
             'agencyDisclosure',
             combineListingDocumentState(listingDocumentDetection.agencyDisclosure, parsed.documentDetection?.agencyDisclosure)
@@ -11765,8 +11804,9 @@ async function uploadAndParseListingDealDocuments(fileList) {
       );
     });
 
+    updateFormOverlay('Analyzing documents with Gemini', 2, 3, 'Extracting field data...');
     await Promise.all(parseTasks);
-    updateFormOverlay('Applying extracted fields...', 3, 3, 'Applying fields');
+    updateFormOverlay('Analyzing documents with Gemini', 3, 3, 'Checking signatures...');
     renderListingDealDocumentsStatusMessage();
     updateListingRequiredDocStatus();
     if (live) live.textContent = getListingDetectionAnnouncement();
@@ -11775,10 +11815,7 @@ async function uploadAndParseListingDealDocuments(fileList) {
       zone.classList.remove('upload-zone-active');
     }
     if (uploadedCount > 0) {
-      const msg = appliedCount > 0
-        ? `Uploaded ${uploadedCount} file${uploadedCount !== 1 ? 's' : ''} and filled ${appliedCount} field${appliedCount !== 1 ? 's' : ''}.`
-        : `Uploaded ${uploadedCount} file${uploadedCount !== 1 ? 's' : ''}.`;
-      showToast(msg);
+      showToast('✓ Documents analyzed');
     } else if (status) {
       status.innerHTML = '<span class="text-error">Upload failed. Please retry.</span>';
     }
@@ -11790,8 +11827,22 @@ async function uploadAndParseListingDealDocuments(fileList) {
     listingDocumentDetection = listingDocumentDefaults();
     updateListingRequiredDocStatus();
     if (zone) zone.classList.remove('upload-zone-active');
+    keepOverlayOpen = true;
+    showFormOverlayError(
+      configErr ? 'Analysis failed' : 'Upload failed — Check your connection',
+      configErr ? 'AI not configured — add GEMINI_API_KEY to server .env.' : (err?.message || 'Please try again.'),
+      {
+        tryLabel: configErr ? 'Try Again' : 'Retry Upload',
+        manualLabel: 'Fill Manually',
+        tryAgain: () => uploadAndParseListingDealDocuments(fileList),
+        fillManually: () => {
+          const flow = window.__stepFlows && window.__stepFlows['listing-main'];
+          if (flow && typeof flow.next === 'function') flow.next();
+        }
+      }
+    );
   } finally {
-    hideFormOverlay();
+    if (!keepOverlayOpen) hideFormOverlay();
   }
 }
 
@@ -11990,6 +12041,8 @@ function updateVoucherRequiredDocStatus() {
 
   applyState(disclosureBtn, disclosureOverride, 'agencyDisclosure');
   applyState(agreementBtn, agreementOverride, 'listingAgreement');
+  const flow = window.__stepFlows && window.__stepFlows['voucher-main'];
+  if (flow && typeof flow.renderNav === 'function') flow.renderNav();
 }
 
 function onVoucherDocZoneKeydown(event) {
@@ -12130,7 +12183,8 @@ async function runVoucherGeminiAnalysis() {
   renderVoucherDealDocumentsStatusMessage();
 
   const result = buildEmptyVoucherDetectionResult();
-  for (const file of files) {
+  const MAX_CONCURRENT_ANALYSES = 4;
+  const tasks = files.map((file) => async () => {
     const fileUrl = file?.url;
     const fileKey = String(file?.fileKey || '');
     const filename = String(file?.filename || '').toLowerCase();
@@ -12139,9 +12193,20 @@ async function runVoucherGeminiAnalysis() {
       : (filename.endsWith('.jpg') || filename.endsWith('.jpeg')
         ? 'image/jpeg'
         : 'application/pdf');
+
+    const out = {
+      fileUrl,
+      fileKey,
+      parsed: null,
+      hadFailure: false,
+      hadTimeout: false,
+      hadUnreadable: false,
+      hadConfigError: false,
+    };
+
     if (!fileUrl) {
-      result.hadFailures = true;
-      continue;
+      out.hadFailure = true;
+      return out;
     }
 
     try {
@@ -12150,30 +12215,58 @@ async function runVoucherGeminiAnalysis() {
         mimeType,
       });
       if (!parsed?.success) {
-        result.hadFailures = true;
+        out.hadFailure = true;
         const errText = String(parsed?.error || '').toLowerCase();
-        if (errText.includes('password') || errText.includes('corrupt') || errText.includes('read')) result.hadUnreadable = true;
-        if (errText.includes('timeout')) result.hadTimeout = true;
-        continue;
+        if (errText.includes('password') || errText.includes('corrupt') || errText.includes('read')) out.hadUnreadable = true;
+        if (errText.includes('timeout')) out.hadTimeout = true;
+        if (errText.includes('no llm backend') || errText.includes('gemini_api_key') || errText.includes('openai_api_key') || errText.includes('api key')) out.hadConfigError = true;
+        return out;
       }
-      result.appliedCount += applyAiFields('voucher', parsed.fields || {}, { sourceToken: fileKey || fileUrl });
-      ['agencyDisclosure', 'listingAgreement'].forEach((kind) => {
-        const current = result.detection[kind];
-        if (current.found) return;
-        const detection = normalizeVoucherDocStatus(parsed?.documentDetection?.[kind]);
-        if (!detection.found) return;
-        result.detection[kind] = detection;
-        result.sourceByType[kind] = fileKey || fileUrl;
-      });
+      out.parsed = parsed;
+      return out;
     } catch (error) {
       const msg = String(error?.message || error || '').toLowerCase();
       console.error('[AI] Voucher document analysis failed:', error?.message || error);
-      result.hadFailures = true;
-      if (msg.includes('timeout')) result.hadTimeout = true;
-      if (msg.includes('password') || msg.includes('corrupt') || msg.includes('read')) result.hadUnreadable = true;
-      if (msg.includes('no llm backend') || msg.includes('gemini_api_key') || msg.includes('openai_api_key') || msg.includes('api key')) result.hadConfigError = true;
+      out.hadFailure = true;
+      if (msg.includes('timeout')) out.hadTimeout = true;
+      if (msg.includes('password') || msg.includes('corrupt') || msg.includes('read')) out.hadUnreadable = true;
+      if (msg.includes('no llm backend') || msg.includes('gemini_api_key') || msg.includes('openai_api_key') || msg.includes('api key')) out.hadConfigError = true;
+      return out;
     }
-  }
+  });
+
+  const outputs = new Array(tasks.length);
+  let cursor = 0;
+  const workerCount = Math.min(MAX_CONCURRENT_ANALYSES, tasks.length);
+  await Promise.all(Array.from({ length: workerCount }, async () => {
+    while (true) {
+      const idx = cursor;
+      cursor += 1;
+      if (idx >= tasks.length) break;
+      outputs[idx] = await tasks[idx]();
+    }
+  }));
+
+  // Merge in original file order for deterministic field precedence.
+  outputs.forEach((out) => {
+    if (!out) return;
+    if (out.hadFailure) result.hadFailures = true;
+    if (out.hadTimeout) result.hadTimeout = true;
+    if (out.hadUnreadable) result.hadUnreadable = true;
+    if (out.hadConfigError) result.hadConfigError = true;
+    if (!out.parsed) return;
+
+    const sourceToken = out.fileKey || out.fileUrl;
+    result.appliedCount += applyAiFields('voucher', out.parsed.fields || {}, { sourceToken });
+    ['agencyDisclosure', 'listingAgreement'].forEach((kind) => {
+      const current = result.detection[kind];
+      if (current.found) return;
+      const detection = normalizeVoucherDocStatus(out.parsed?.documentDetection?.[kind]);
+      if (!detection.found) return;
+      result.detection[kind] = detection;
+      result.sourceByType[kind] = sourceToken;
+    });
+  });
 
   voucherDocumentDetection = {
     agencyDisclosure: normalizeVoucherDocStatus(result.detection.agencyDisclosure),
@@ -12250,6 +12343,7 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
   if (status) status.innerHTML = '<span class="text-muted-sm">Uploading documents…</span>';
   if (zone) zone.classList.add('upload-zone-active');
   showFormOverlay('Uploading documents...', { step: 1, totalSteps: 3, stepLabel: 'Uploading' });
+  let keepOverlayOpen = false;
 
   try {
     const payloads = await Promise.all(validList.map(file => new Promise((resolve, reject) => {
@@ -12271,7 +12365,7 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
     });
     if (!batchResult || !Array.isArray(batchResult.results)) throw new Error('Upload failed.');
 
-    updateFormOverlay('Analyzing with Gemini...', 2, 3, 'Checking signatures');
+    updateFormOverlay('Analyzing documents with Gemini', 1, 3, 'Reading documents...');
 
     if (!Array.isArray(uploadedFiles['v-deal-documents'])) uploadedFiles['v-deal-documents'] = [];
     let uploadedCount = 0;
@@ -12292,18 +12386,33 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
       zone.classList.remove('upload-zone-active');
     }
 
+    updateFormOverlay('Analyzing documents with Gemini', 2, 3, 'Extracting field data...');
     const analysis = await runVoucherGeminiAnalysis();
-    updateFormOverlay('Applying extracted fields...', 3, 3, 'Applying fields');
+    updateFormOverlay('Analyzing documents with Gemini', 3, 3, 'Checking signatures...');
     if (analysis.appliedCount > 0) {
-      showToast(`Uploaded ${uploadedCount} file${uploadedCount !== 1 ? 's' : ''} and filled ${analysis.appliedCount} field${analysis.appliedCount !== 1 ? 's' : ''}.`);
+      showToast('✓ Documents analyzed');
     } else {
-      showToast(`Uploaded ${uploadedCount} file${uploadedCount !== 1 ? 's' : ''}.`);
+      showToast('✓ Documents analyzed');
     }
   } catch (err) {
     if (status) status.innerHTML = '<span class="text-error">Upload failed. Please try again.</span>';
     if (zone) zone.classList.remove('upload-zone-active');
+    keepOverlayOpen = true;
+    showFormOverlayError(
+      'Upload failed — Check your connection',
+      err?.message || 'Please try again.',
+      {
+        tryLabel: 'Retry Upload',
+        manualLabel: 'Fill Manually',
+        tryAgain: () => uploadAndParseVoucherDealDocuments(fileList),
+        fillManually: () => {
+          const flow = window.__stepFlows && window.__stepFlows['voucher-main'];
+          if (flow && typeof flow.next === 'function') flow.next();
+        }
+      }
+    );
   } finally {
-    hideFormOverlay();
+    if (!keepOverlayOpen) hideFormOverlay();
   }
 }
 
@@ -12357,6 +12466,9 @@ function handleDealDocSelection(input, options) {
           }
         }
         if (btn) setHiddenState(btn, false);
+        if (options.reference === 'sign') {
+          Promise.resolve().then(() => scrapeSignBrochure());
+        }
       } else if (status) {
         status.textContent = 'Upload failed. Please try again.';
       }
@@ -12376,6 +12488,7 @@ async function scrapeDealDocForTab(fileUrl, mimeType, tab, statusId, buttonId, d
     btn.textContent = 'Analyzing document...';
   }
   showFormOverlay('Analyzing with Gemini...', { step: 1, totalSteps: 2, stepLabel: 'Extracting fields' });
+  let keepOverlayOpen = false;
   try {
     const result = await callTrpc('aiAssist.extractDocument', { fileUrl, mimeType, tab });
     updateFormOverlay('Applying extracted fields...', 2, 2, 'Applying fields');
@@ -12387,8 +12500,26 @@ async function scrapeDealDocForTab(fileUrl, mimeType, tab, statusId, buttonId, d
     }
   } catch (err) {
     if (status) status.textContent = 'Error: ' + err.message;
+    keepOverlayOpen = true;
+    showFormOverlayError(
+      'Analysis failed',
+      err?.message || 'You can fill the form manually or try re-uploading.',
+      {
+        tryAgain: () => {
+          if (tab === 'sign') return scrapeSignBrochure();
+          if (tab === 'listing') return scrapeListingModBrochure();
+          if (tab === 'comp') return scrapeCompBrochure();
+        },
+        fillManually: () => {
+          if (tab === 'sign') {
+            const flow = window.__stepFlows && window.__stepFlows['sign-main'];
+            if (flow && typeof flow.next === 'function') flow.next();
+          }
+        }
+      }
+    );
   } finally {
-    hideFormOverlay();
+    if (!keepOverlayOpen) hideFormOverlay();
     if (btn) {
       btn.classList.remove('loading');
       btn.textContent = doneText;
@@ -15648,15 +15779,19 @@ document.addEventListener('DOMContentLoaded', () => {
 <script src="/broker_profiles.js"></script>
 
 <!-- Form-level loading overlay -->
-<div id="form-overlay" class="form-overlay is-hidden" role="status" aria-live="polite" aria-hidden="true">
+<div id="form-overlay" class="form-overlay is-hidden" role="dialog" aria-label="Processing documents" aria-hidden="true" aria-modal="true">
   <div class="form-overlay-inner">
-    <div class="form-overlay-spinner"></div>
+    <div class="form-overlay-spinner" id="form-overlay-spinner"></div>
+    <div class="form-overlay-error-icon is-hidden" id="form-overlay-error-icon">✕</div>
     <div class="form-overlay-msg" id="form-overlay-msg">Processing...</div>
-    <div class="form-overlay-sub">This may take up to 30 seconds</div>
+    <div class="form-overlay-detail is-hidden" id="form-overlay-detail"></div>
+    <div class="form-overlay-sub" id="form-overlay-sub">This may take up to 30 seconds</div>
     <div class="form-overlay-progress is-hidden" id="form-overlay-progress">
       <div class="form-overlay-bar"><div class="form-overlay-fill" id="form-overlay-fill"></div></div>
       <div class="form-overlay-step-label" id="form-overlay-step-label"></div>
     </div>
+    <div class="form-overlay-actions is-hidden" id="form-overlay-actions"></div>
+    <div id="form-overlay-live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
   </div>
 </div>
 
@@ -15664,10 +15799,36 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── Form overlay helpers ──
 function showFormOverlay(msg, opts) {
   const overlay = document.getElementById('form-overlay');
+  const spinner = document.getElementById('form-overlay-spinner');
+  const errorIcon = document.getElementById('form-overlay-error-icon');
+  const actions = document.getElementById('form-overlay-actions');
   const msgEl = document.getElementById('form-overlay-msg');
+  const subEl = document.getElementById('form-overlay-sub');
+  const detailEl = document.getElementById('form-overlay-detail');
   const progress = document.getElementById('form-overlay-progress');
   if (!overlay) return;
+
+  if (spinner) spinner.style.display = '';
+  if (errorIcon) errorIcon.classList.add('is-hidden');
+  if (actions) {
+    actions.innerHTML = '';
+    actions.classList.add('is-hidden');
+  }
+
   if (msgEl) msgEl.textContent = msg || 'Processing...';
+  if (subEl) subEl.textContent = (opts && opts.subMsg) ? opts.subMsg : 'This may take up to 30 seconds';
+  if (detailEl) {
+    if (opts && opts.detail) {
+      detailEl.textContent = opts.detail;
+      detailEl.classList.remove('is-hidden');
+      const live = document.getElementById('form-overlay-live');
+      if (live) live.textContent = 'Now ' + String(opts.detail).replace(/\.\.\.$/, '').toLowerCase();
+    } else {
+      detailEl.classList.add('is-hidden');
+      detailEl.textContent = '';
+    }
+  }
+
   if (opts && typeof opts.step === 'number') {
     _setFormOverlayProgress(opts.step, opts.totalSteps || 1, opts.stepLabel || '');
     if (progress) progress.classList.remove('is-hidden');
@@ -15680,11 +15841,18 @@ function showFormOverlay(msg, opts) {
 
 function updateFormOverlay(msg, step, totalSteps, stepLabel) {
   const msgEl = document.getElementById('form-overlay-msg');
+  const detailEl = document.getElementById('form-overlay-detail');
   if (msgEl && msg) msgEl.textContent = msg;
   if (typeof step === 'number') {
     _setFormOverlayProgress(step, totalSteps || 1, stepLabel || '');
     const progress = document.getElementById('form-overlay-progress');
     if (progress) progress.classList.remove('is-hidden');
+    if (detailEl && stepLabel) {
+      detailEl.textContent = stepLabel;
+      detailEl.classList.remove('is-hidden');
+      const live = document.getElementById('form-overlay-live');
+      if (live) live.textContent = 'Now ' + String(stepLabel).replace(/\.\.\.$/, '').toLowerCase();
+    }
   }
 }
 
@@ -15699,12 +15867,76 @@ function _setFormOverlayProgress(step, totalSteps, stepLabel) {
 function hideFormOverlay() {
   const overlay = document.getElementById('form-overlay');
   if (!overlay) return;
+  const spinner = document.getElementById('form-overlay-spinner');
+  const errorIcon = document.getElementById('form-overlay-error-icon');
+  const actions = document.getElementById('form-overlay-actions');
+  const detail = document.getElementById('form-overlay-detail');
   overlay.classList.add('is-hidden');
   overlay.setAttribute('aria-hidden', 'true');
+  if (spinner) spinner.style.display = '';
+  if (errorIcon) errorIcon.classList.add('is-hidden');
+  if (actions) {
+    actions.innerHTML = '';
+    actions.classList.add('is-hidden');
+  }
+  if (detail) {
+    detail.textContent = '';
+    detail.classList.add('is-hidden');
+  }
   const fill = document.getElementById('form-overlay-fill');
   if (fill) fill.style.width = '0%';
   const progress = document.getElementById('form-overlay-progress');
   if (progress) progress.classList.add('is-hidden');
+  const live = document.getElementById('form-overlay-live');
+  if (live) live.textContent = '';
+}
+
+function showFormOverlayError(mainMsg, subMsg, opts) {
+  const overlay = document.getElementById('form-overlay');
+  if (!overlay) return;
+  const spinner = document.getElementById('form-overlay-spinner');
+  const errorIcon = document.getElementById('form-overlay-error-icon');
+  const msgEl = document.getElementById('form-overlay-msg');
+  const subEl = document.getElementById('form-overlay-sub');
+  const detailEl = document.getElementById('form-overlay-detail');
+  const progress = document.getElementById('form-overlay-progress');
+  const actions = document.getElementById('form-overlay-actions');
+
+  if (spinner) spinner.style.display = 'none';
+  if (errorIcon) errorIcon.classList.remove('is-hidden');
+  if (msgEl) msgEl.textContent = mainMsg || 'Analysis failed';
+  if (subEl) subEl.textContent = subMsg || 'You can fill the form manually or try re-uploading.';
+  if (detailEl) {
+    detailEl.textContent = '';
+    detailEl.classList.add('is-hidden');
+  }
+  if (progress) progress.classList.add('is-hidden');
+
+  if (actions) {
+    actions.innerHTML = '';
+    actions.classList.remove('is-hidden');
+    if (opts && typeof opts.tryAgain === 'function') {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn-overlay-try';
+      btn.textContent = opts.tryLabel || 'Try Again';
+      btn.onclick = () => { hideFormOverlay(); opts.tryAgain(); };
+      actions.appendChild(btn);
+    }
+    if (opts && typeof opts.fillManually === 'function') {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn-overlay-manual';
+      btn.textContent = opts.manualLabel || 'Fill Manually';
+      btn.onclick = () => { hideFormOverlay(); opts.fillManually(); };
+      actions.appendChild(btn);
+    }
+  }
+
+  const live = document.getElementById('form-overlay-live');
+  if (live) live.textContent = mainMsg || 'Analysis failed';
+  overlay.classList.remove('is-hidden');
+  overlay.setAttribute('aria-hidden', 'false');
 }
 
 // ── Inline field loading state helpers ──
