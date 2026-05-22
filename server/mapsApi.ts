@@ -203,7 +203,7 @@ async function fetchGooglePlacesSuggestions(
   }
 }
 
-mapsApiRouter.get("/places/autocomplete", async (req, res) => {
+async function handlePlacesAutocomplete(req: Request, res: Response) {
   const query = String(req.query.input ?? "").trim();
   if (!query || query.length < 3) {
     res.json({ results: [] });
@@ -227,5 +227,9 @@ mapsApiRouter.get("/places/autocomplete", async (req, res) => {
       res.json({ results: [] });
     }
   }
-});
+}
 
+mapsApiRouter.get("/places/autocomplete", handlePlacesAutocomplete);
+
+// Back-compat alias: older clients requested `/api/maps/places/autocomplete`.
+mapsApiRouter.get("/maps/places/autocomplete", handlePlacesAutocomplete);

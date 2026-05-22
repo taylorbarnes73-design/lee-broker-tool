@@ -48,4 +48,9 @@ describe("broker_tool.html wiring", () => {
 
     expect(missingPages).toEqual([]);
   });
+
+  it("uses the canonical address autocomplete endpoint", () => {
+    expect(brokerToolHtml).toContain("/api/places/autocomplete");
+    expect(brokerToolHtml).not.toContain("/api/maps/places/autocomplete");
+  });
 });

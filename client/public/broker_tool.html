@@ -16341,7 +16341,7 @@ function deleteDraft(key) {
 }
 
 // ── Address autocomplete ──
-// Calls the server-side proxy at /api/maps/places/autocomplete
+// Calls the server-side proxy at /api/places/autocomplete
 // which keeps the API key server-side and returns { address, city, state, zip }.
 
 (function initAddressAutocompletes() {
@@ -16434,7 +16434,7 @@ function deleteDraft(key) {
       setFieldLoading(input.parentNode, true);
       timer = setTimeout(async function() {
         try {
-          var res = await fetch('/api/maps/places/autocomplete?input=' + encodeURIComponent(val));
+          var res = await fetch('/api/places/autocomplete?input=' + encodeURIComponent(val));
           var data = await res.json();
           showDropdown(data.results || []);
         } catch (_) {
