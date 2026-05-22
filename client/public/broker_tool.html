@@ -149,7 +149,7 @@
 
     <div class="deal-shell" id="l-deal-shell">
     <div class="deal-main" id="listing-main">
-    <div class="card" id="lstep-upload" data-lstep="0" data-step-label="Upload Documents">
+    <div class="card" id="lstep-upload" data-lstep="0" data-step-label="Upload Deal Documents">
       <h2>Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></h2>
       <p class="micro-copy">Upload deal documents and let Gemini extract key details into the listing form.</p>
       <div class="field field-stack-gap">
@@ -185,7 +185,7 @@
     </div>
     <div class="stepper" data-stepper-for="listing-main"></div>
 
-    <div class="card required-section" data-lstep="1" data-step-label="Property Type" data-card-eyebrow="Step 1 of 4">
+    <div class="card required-section" data-lstep="1" data-step-label="Property Type & Address">
       <h2>Add Listing <span class="required-badge">Required</span></h2>
       <div class="field listing-type-field">
         <label class="req">Property Type</label>
@@ -330,7 +330,7 @@
       </div>
     </div><!-- end required-section -->
 
-    <div class="card" data-lstep="2" data-step-label="Listing Agents" data-card-eyebrow="Step 2 of 4">
+    <div class="card" data-lstep="2" data-step-label="Listing Details">
       <h2>Listing Agents</h2>
       <table class="suite-table" id="listing-agent-table">
         <thead><tr><th>Agent Name</th><th>Phone</th><th>Email</th><th class="table-col-wide">Shared Expenses %</th><th class="table-col-narrow"></th></tr></thead>
@@ -340,7 +340,7 @@
       <p class="micro-copy micro-copy-top">Shared Expenses: commission split / cost sharing between co-listing agents.</p>
     </div>
 
-    <div class="card" data-lstep="3" data-step-label="Release" data-card-eyebrow="Step 3 of 4">
+    <div class="card" data-lstep="3" data-step-label="Additional Information">
       <h2>Release Instructions</h2>
       <h3>Listing Release</h3>
       <div class="check-group">
@@ -356,7 +356,7 @@
       </div>
     </div>
 
-    <div class="card" id="property-details-card" data-lstep="4" data-step-label="Property Details" data-card-eyebrow="Step 4 of 4">
+    <div class="card" id="property-details-card" data-lstep="4" data-step-label="Property Specifications">
       <h2>Property Details</h2>
     <p class="micro-copy micro-copy-bottom">Fields shown are specific to the selected property type.</p>
 
@@ -589,7 +589,7 @@
   <div class="tip pane-intro-tip">Complete each step. Fields marked <span class="required-mark">*</span> are required.</div>
   <div class="deal-shell" id="s-deal-shell">
   <div class="deal-main" id="sign-main">
-  <div class="card ai-shortcut-card" id="sstep-upload" data-sstep="0" data-step-label="Upload Documents">
+  <div class="card ai-shortcut-card" id="sstep-upload" data-sstep="0" data-step-label="Upload Deal Documents">
     <h2>Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></h2>
     <p class="micro-copy">Upload deal documents to extract order basics and autofill this sign request.</p>
     <div class="brochure-zone" id="s-brochure-zone" onclick="document.getElementById('s-brochure-file').click()">
@@ -625,7 +625,7 @@
   </div>
 
   <!-- STEP 2: Sign Specifications -->
-  <div class="card" data-sstep="2" data-step-label="Signs" data-card-eyebrow="Step 2 of 4">
+  <div class="card" data-sstep="2" data-step-label="Sign Specifications" data-card-eyebrow="Step 2 of 4">
     <h2>Sign Specifications</h2>
     <h3 class="section-heading-top">Configuration</h3>
     <div class="support-options">
@@ -812,7 +812,7 @@
   <div class="deal-main" id="voucher-main">
 
   <!-- AI Auto-fill (optional shortcut, sits above Step 1) -->
-  <div class="card ai-shortcut-card" id="vstep-upload" data-vstep="0" data-step-label="Upload Documents">
+  <div class="card ai-shortcut-card" id="vstep-upload" data-vstep="0" data-step-label="Upload Deal Documents">
     <h2>Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></h2>
     <div class="brochure-zone" id="v-brochure-zone" tabindex="0" role="button" aria-label="Upload deal documents" onclick="document.getElementById('v-brochure-file').click()" onkeydown="onVoucherDocZoneKeydown(event)">
       <input type="file" id="v-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" multiple aria-label="Upload deal documents" onchange="onVoucherDealDocumentsSelected(this)">
@@ -897,7 +897,7 @@
     </div>
   </div>
 
-  <div class="card" id="vstep-2" data-vstep="2" data-step-label="Brokers" data-card-eyebrow="Step 2 of 7">
+  <div class="card" id="vstep-2" data-vstep="2" data-step-label="Broker Information" data-card-eyebrow="Step 2 of 7">
     <h2>Step 2 — Broker Information</h2>
     <div class="row c2 micro-copy-bottom-sm">
       <div class="field"><label>Same Listing &amp; Procuring Agent?</label>
@@ -961,7 +961,7 @@
     </div>
   </div>
 
-  <div class="card" id="vstep-3" data-vstep="3" data-step-label="Parties" data-card-eyebrow="Step 3 of 7">
+  <div class="card" id="vstep-3" data-vstep="3" data-step-label="Client & Property Info" data-card-eyebrow="Step 3 of 7">
     <h2>Step 3 — Client &amp; Property Info</h2>
     <div class="card reference-card" id="v-addr-ref">
       <p class="reference-copy">&#8593; Property address and Deal SF are entered in Step 1 above.</p>
@@ -1020,7 +1020,7 @@
     </div>
   </div>
 
-  <div class="card" id="vstep-4" data-vstep="4" data-step-label="Commission Math" data-card-eyebrow="Step 4 of 7" data-card-control=".branch-toggle-wrap">
+  <div class="card" id="vstep-4" data-vstep="4" data-step-label="Financial Details" data-card-eyebrow="Step 4 of 7" data-card-control=".branch-toggle-wrap">
     <h2>Step 4 — Financial Details</h2>
     <div class="branch-toggle-wrap">
       <label class="branch-toggle-label">Deal Branch</label>
@@ -1053,7 +1053,7 @@
     </div>
   </div>
 
-  <div class="card" id="vstep-5" data-vstep="5" data-step-label="Invoice" data-card-eyebrow="Step 5 of 7">
+  <div class="card" id="vstep-5" data-vstep="5" data-step-label="Commission & Invoice" data-card-eyebrow="Step 5 of 7">
     <h2>Step 5 — Commission &amp; Invoice</h2>
     <div id="v-req-comm-lease">
       <div class="row c4">
@@ -1137,7 +1137,7 @@
     </div>
   </div>
 
-  <div class="card" id="vstep-8" data-vstep="8" data-step-label="Distribution" data-card-eyebrow="Step 7 of 7">
+  <div class="card" id="vstep-8" data-vstep="8" data-step-label="Review" data-card-eyebrow="Step 7 of 7">
     <h2>Step 7 — Commission Distribution</h2>
     <div id="voucher-attachment-required-msg" class="tip text-error is-hidden" role="alert"></div>
     <h3 class="section-divider section-heading-top-lg">Commission Distribution</h3>
@@ -3261,6 +3261,8 @@ function canProceedVoucherStep(index, card) {
   if (!card) return true;
   const n = String(card.getAttribute('data-vstep') || '');
   if (n !== '0') return true;
+  if (voucherAnalysisStatus.state === 'analyzing') return false;
+  if (voucherAnalysisStatus.state === 'manual') return true;
   if (!voucherTransactionRequiresComplianceDocs()) return true;
   return voucherDocExecuted('agencyDisclosure') && voucherDocExecuted('listingAgreement');
 }
@@ -3269,6 +3271,8 @@ function canProceedListingStep(index, card) {
   if (!card) return true;
   const n = String(card.getAttribute('data-lstep') || '');
   if (n !== '0') return true;
+  if (listingAnalysisStatus.state === 'analyzing') return false;
+  if (listingAnalysisStatus.state === 'manual') return true;
   return listingDocumentIsExecuted('agencyDisclosure') && listingDocumentIsExecuted('listingAgreement');
 }
 
@@ -3633,6 +3637,7 @@ const listingDocumentDefaults = () => ({
   listingAgreement: { found: false, executed: false, missingSignatures: [], manualOverride: false },
 });
 let listingDocumentDetection = listingDocumentDefaults();
+let listingAnalysisStatus = { state: 'idle', error: '' };
 const listingAiFieldSources = {};
 
 function normalizeListingDocumentState(value) {
@@ -3718,6 +3723,7 @@ function restoreListingUploadDraftState(state) {
   uploadedFiles['l-deal-documents'] = Array.isArray(state.uploadedDealDocuments) ? state.uploadedDealDocuments.filter(Boolean) : [];
   listingDocumentDetection.agencyDisclosure = normalizeListingDocumentState(state?.detection?.agencyDisclosure);
   listingDocumentDetection.listingAgreement = normalizeListingDocumentState(state?.detection?.listingAgreement);
+  listingAnalysisStatus = { state: 'idle', error: '' };
   Object.keys(listingAiFieldSources).forEach((k) => delete listingAiFieldSources[k]);
   const sourceState = state.aiFieldSources && typeof state.aiFieldSources === 'object' ? state.aiFieldSources : {};
   Object.keys(sourceState).forEach((k) => {
@@ -4221,6 +4227,7 @@ function ensureBrokerStepper(flow) {
   stepper.querySelectorAll('.stepper-item').forEach((item, idx) => {
     item.classList.toggle('done', idx < flow.current);
     item.classList.toggle('current', idx === flow.current);
+    if (typeof flow.canAdvanceTo === 'function') item.disabled = !flow.canAdvanceTo(idx);
   });
   stepper.querySelectorAll('.stepper-bar').forEach((bar, idx) => {
     bar.classList.toggle('done', idx < flow.current);
@@ -4249,8 +4256,21 @@ function initStepFlow(opts) {
     main,
     cards,
     current: 0,
+    canAdvanceTo(targetIndex) {
+      if (targetIndex <= this.current) return true;
+      if (typeof opts.canProceed !== 'function') return true;
+      for (let i = this.current; i < targetIndex; i += 1) {
+        if (!opts.canProceed(i, cards[i], this)) return false;
+      }
+      return true;
+    },
     go(i) {
       i = Math.max(0, Math.min(cards.length - 1, i));
+      if (i > this.current && !this.canAdvanceTo(i)) {
+        this.renderNav();
+        this.renderStepper();
+        return;
+      }
       this.current = i;
       cards.forEach((c, idx) => {
         c.classList.remove('step--current');
@@ -5030,6 +5050,7 @@ function clearListing() {
   clearAllListingAutofill();
   delete uploadedFiles['l-deal-documents'];
   listingDocumentDetection = listingDocumentDefaults();
+  listingAnalysisStatus = { state: 'idle', error: '' };
   Object.keys(listingAiFieldSources).forEach((k) => delete listingAiFieldSources[k]);
   safeRenderListingDealDocumentsStatusMessage();
   safeUpdateListingRequiredDocStatus();
@@ -11584,7 +11605,7 @@ function renderListingDealDocumentsStatusMessage() {
     if (file.pendingRemoval) {
       return `<div class="upload-file-item upload-file-item-confirm">
         <span class="upload-file-name">${fileLabel}</span>
-        <span class="upload-remove-confirm-copy">Remove ${fileLabel}? Autofilled fields from this document will be cleared.</span>
+        <span class="upload-remove-confirm-copy">Remove ${fileLabel}? Autofilled values stay in place, but their Gemini markers will be removed.</span>
         <span class="upload-remove-confirm-actions">
           <button type="button" class="upload-remove-confirm-btn" onclick="confirmRemoveListingDealDocument(${i})">Remove</button>
           <button type="button" class="upload-remove-cancel-btn" onclick="cancelRemoveListingDealDocument(${i})">Cancel</button>
@@ -11699,9 +11720,9 @@ async function confirmRemoveListingDealDocument(index) {
   uploadedFiles['l-deal-documents'].splice(index, 1);
   clearListingAutofillFromSource(sourceKey);
   if (uploadedFiles['l-deal-documents'].length === 0) {
-    clearAllListingAutofill();
     delete uploadedFiles['l-deal-documents'];
     listingDocumentDetection = listingDocumentDefaults();
+    listingAnalysisStatus = { state: 'idle', error: '' };
     const zone = document.getElementById('l-deal-docs-zone');
     if (zone) zone.classList.remove('upload-zone-success');
   } else {
@@ -11732,13 +11753,31 @@ async function uploadAndParseListingDealDocuments(fileList) {
     .filter(file => file && file.size <= MAX_CLIENT_BYTES)
     .filter(file => ALLOWED_MIME_TYPES.has(String(file.type || '').toLowerCase()));
   if (!validList.length) {
-    if (status) status.innerHTML = '<span class="text-error">Upload PDF, JPG, or PNG up to 25MB per file.</span>';
+    const firstFile = fileList[0];
+    const isTooLarge = firstFile && firstFile.size > MAX_CLIENT_BYTES;
+    const message = isTooLarge
+      ? 'File too large — Max 25MB per file'
+      : "Couldn't read this file — Try a different format or remove password protection";
+    if (status) status.innerHTML = '<span class="text-error">' + escHtml(message) + '</span>';
+    showFormOverlayError(message, isTooLarge ? 'Choose a smaller PDF, JPG, or PNG.' : 'Try a PDF, JPG, or PNG that is not password-protected.', {
+      tryLabel: isTooLarge ? 'Choose Smaller File' : 'Try Another File',
+      manualLabel: 'Fill Manually',
+      tryAgain: () => document.getElementById('l-deal-documents-file')?.click(),
+      fillManually: () => {
+        listingAnalysisStatus = { state: 'manual', error: '' };
+        updateListingRequiredDocStatus();
+        const flow = window.__stepFlows && window.__stepFlows['listing-main'];
+        if (flow && typeof flow.next === 'function') flow.next();
+      }
+    });
     return;
   }
 
+  listingAnalysisStatus = { state: 'analyzing', error: '' };
+  updateListingRequiredDocStatus();
   if (status) status.innerHTML = '<span class="text-muted-sm">Analyzing with Gemini…</span>';
   if (zone) zone.classList.add('upload-zone-active');
-  showFormOverlay('Uploading documents...', { step: 1, totalSteps: 3, stepLabel: 'Uploading' });
+  showFormOverlay(`Uploading ${validList.length === 1 ? validList[0].name : validList.length + ' documents'}...`, { step: 1, totalSteps: 4, stepLabel: 'Uploading' });
   let keepOverlayOpen = false;
 
   try {
@@ -11813,6 +11852,8 @@ async function uploadAndParseListingDealDocuments(fileList) {
       zone.classList.remove('upload-zone-active');
     }
     if (uploadedCount > 0) {
+      listingAnalysisStatus = { state: 'complete', error: '' };
+      updateListingRequiredDocStatus();
       showToast('✓ Documents analyzed');
     } else if (status) {
       status.innerHTML = '<span class="text-error">Upload failed. Please retry.</span>';
@@ -11823,6 +11864,7 @@ async function uploadAndParseListingDealDocuments(fileList) {
     const configErr = errMsg.includes('no llm backend') || errMsg.includes('gemini_api_key') || errMsg.includes('api key');
     if (status) status.innerHTML = `<span class="text-error">${configErr ? 'AI not configured — add GEMINI_API_KEY to server .env.' : 'Upload failed. Please retry.'}</span>`;
     listingDocumentDetection = listingDocumentDefaults();
+    listingAnalysisStatus = { state: 'error', error: err?.message || 'Upload failed. Please retry.' };
     updateListingRequiredDocStatus();
     if (zone) zone.classList.remove('upload-zone-active');
     keepOverlayOpen = true;
@@ -11834,6 +11876,8 @@ async function uploadAndParseListingDealDocuments(fileList) {
         manualLabel: 'Fill Manually',
         tryAgain: () => uploadAndParseListingDealDocuments(fileList),
         fillManually: () => {
+          listingAnalysisStatus = { state: 'manual', error: '' };
+          updateListingRequiredDocStatus();
           const flow = window.__stepFlows && window.__stepFlows['listing-main'];
           if (flow && typeof flow.next === 'function') flow.next();
         }
@@ -12005,7 +12049,7 @@ function renderVoucherDealDocumentsStatusMessage(messageHtml) {
       `<button type="button" class="voucher-file-remove" onclick="requestVoucherDealDocumentRemoval(${index})">Remove</button>` +
       '</div>';
     if (voucherPendingRemovalIndex === index) {
-      html += `<div class="voucher-remove-confirm">Remove ${escHtml(file.filename || 'document')}? Autofilled fields from this document will be cleared. <button type="button" class="voucher-remove-confirm-btn" onclick="confirmVoucherDealDocumentRemoval(${index})">Remove</button> <button type="button" class="voucher-remove-confirm-btn" onclick="cancelVoucherDealDocumentRemoval()">Cancel</button></div>`;
+      html += `<div class="voucher-remove-confirm">Remove ${escHtml(file.filename || 'document')}? Autofilled values stay in place, but their Gemini markers will be removed. <button type="button" class="voucher-remove-confirm-btn" onclick="confirmVoucherDealDocumentRemoval(${index})">Remove</button> <button type="button" class="voucher-remove-confirm-btn" onclick="cancelVoucherDealDocumentRemoval()">Cancel</button></div>`;
     }
     if (disclosureSource) {
       html += `<div class="voucher-file-doc-status">• Agency Disclosure <span class="${getVoucherDocDisplayState('agencyDisclosure').colorClass}">${escHtml(getVoucherDocDisplayState('agencyDisclosure').label)}</span></div>`;
@@ -12147,12 +12191,9 @@ function clearVoucherAutofillFromSource(sourceToken) {
     if (token !== sourceToken) return;
     const el = document.getElementById(fieldId);
     if (el && el.classList.contains('ai-filled')) {
-      el.value = '';
       el.classList.remove('ai-filled', 'ai-smart');
       const badge = el.parentNode?.querySelector('.ai-filled-badge');
       if (badge) badge.remove();
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-      el.dispatchEvent(new Event('input', { bubbles: true }));
     }
     delete voucherAutofillFieldSource[fieldId];
   });
@@ -12344,11 +12385,32 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
     if (status) status.innerHTML = `<span class="text-error">${escHtml(validationError)}</span>`;
   }
 
-  if (!validList.length) return;
+  if (!validList.length) {
+    const message = status?.textContent || 'Upload PDF, JPG, or PNG up to 25MB per file.';
+    const isTooLarge = message.toLowerCase().includes('too large');
+    showFormOverlayError(
+      isTooLarge ? 'File too large — Max 25MB per file' : "Couldn't read this file — Try a different format or remove password protection",
+      isTooLarge ? 'Choose a smaller PDF, JPG, or PNG.' : 'Try a PDF, JPG, or PNG that is not password-protected.',
+      {
+        tryLabel: isTooLarge ? 'Choose Smaller File' : 'Try Another File',
+        manualLabel: 'Fill Manually',
+        tryAgain: () => document.getElementById('v-brochure-file')?.click(),
+        fillManually: () => {
+          voucherAnalysisStatus = { state: 'manual', error: '' };
+          updateVoucherRequiredDocStatus();
+          const flow = window.__stepFlows && window.__stepFlows['voucher-main'];
+          if (flow && typeof flow.next === 'function') flow.next();
+        }
+      }
+    );
+    return;
+  }
 
   if (status) status.innerHTML = '<span class="text-muted-sm">Uploading documents…</span>';
   if (zone) zone.classList.add('upload-zone-active');
-  showFormOverlay('Uploading documents...', { step: 1, totalSteps: 3, stepLabel: 'Uploading' });
+  voucherAnalysisStatus = { state: 'analyzing', error: '' };
+  updateVoucherRequiredDocStatus();
+  showFormOverlay(`Uploading ${validList.length === 1 ? validList[0].name : validList.length + ' documents'}...`, { step: 1, totalSteps: 4, stepLabel: 'Uploading' });
   let keepOverlayOpen = false;
 
   try {
@@ -12395,6 +12457,33 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
     updateFormOverlay('Analyzing documents with Gemini', 2, 3, 'Extracting field data...');
     const analysis = await runVoucherGeminiAnalysis();
     updateFormOverlay('Analyzing documents with Gemini', 3, 3, 'Checking signatures...');
+    if (analysis.hadTimeout || analysis.hadUnreadable || analysis.hadConfigError || analysis.hadFailures) {
+      keepOverlayOpen = true;
+      let title = 'Analysis failed';
+      let body = "We couldn't analyze your documents. You can fill the form manually or try re-uploading.";
+      let tryLabel = 'Try Again';
+      if (analysis.hadTimeout) {
+        title = 'Analysis taking longer than expected';
+        body = 'You can wait or fill manually.';
+        tryLabel = 'Keep Waiting';
+      } else if (analysis.hadUnreadable) {
+        title = "Couldn't read this file";
+        body = 'Try a different format or remove password protection.';
+        tryLabel = 'Try Another File';
+      }
+      showFormOverlayError(title, body, {
+        tryLabel,
+        manualLabel: 'Fill Manually',
+        tryAgain: () => analysis.hadTimeout ? runVoucherGeminiAnalysis() : document.getElementById('v-brochure-file')?.click(),
+        fillManually: () => {
+          voucherAnalysisStatus = { state: 'manual', error: '' };
+          updateVoucherRequiredDocStatus();
+          const flow = window.__stepFlows && window.__stepFlows['voucher-main'];
+          if (flow && typeof flow.next === 'function') flow.next();
+        }
+      });
+      return;
+    }
     if (analysis.appliedCount > 0) {
       showToast('✓ Documents analyzed');
     } else {
@@ -12412,6 +12501,8 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
         manualLabel: 'Fill Manually',
         tryAgain: () => uploadAndParseVoucherDealDocuments(fileList),
         fillManually: () => {
+          voucherAnalysisStatus = { state: 'manual', error: '' };
+          updateVoucherRequiredDocStatus();
           const flow = window.__stepFlows && window.__stepFlows['voucher-main'];
           if (flow && typeof flow.next === 'function') flow.next();
         }
@@ -12438,6 +12529,7 @@ function handleDealDocSelection(input, options) {
   if (btn) setHiddenState(btn, true);
   options.setUrl(null);
   options.setMime(file.type === 'application/pdf' ? 'application/pdf' : (file.type?.startsWith('image/') ? file.type : 'application/pdf'));
+  showFormOverlay(`Uploading ${file.name}...`, { step: 1, totalSteps: 4, stepLabel: 'Uploading' });
 
   function clear() {
     options.setUrl(null);
@@ -12463,6 +12555,7 @@ function handleDealDocSelection(input, options) {
       });
       if (uploadResult?.url) {
         options.setUrl(uploadResult.url);
+        hideFormOverlay();
         if (status) {
           if (options.fileId) {
             status.innerHTML = `<span class="upload-file-name">${escHtml(file.name)}</span> <button type="button" class="upload-remove-link">Remove</button>`;
@@ -12477,10 +12570,37 @@ function handleDealDocSelection(input, options) {
         }
       } else if (status) {
         status.textContent = 'Upload failed. Please try again.';
+        showFormOverlayError('Upload failed — Check your connection', 'Please try again.', {
+          tryLabel: 'Retry Upload',
+          manualLabel: 'Cancel',
+          tryAgain: () => document.getElementById(options.fileId)?.click(),
+          fillManually: hideFormOverlay
+        });
       }
     } catch (err) {
       if (status) status.textContent = 'Upload error: ' + err.message;
+      showFormOverlayError('Upload failed — Check your connection', err?.message || 'Please try again.', {
+        tryLabel: 'Retry Upload',
+        manualLabel: 'Cancel',
+        tryAgain: () => document.getElementById(options.fileId)?.click(),
+        fillManually: hideFormOverlay
+      });
     }
+  };
+  reader.onerror = function() {
+    if (status) status.textContent = 'Upload error: could not read this file.';
+    showFormOverlayError("Couldn't read this file — Try a different format or remove password protection", 'Try a PDF, JPG, or PNG that is not password-protected.', {
+      tryLabel: 'Try Another File',
+      manualLabel: 'Fill Manually',
+      tryAgain: () => document.getElementById(options.fileId)?.click(),
+      fillManually: () => {
+        hideFormOverlay();
+        if (options.reference === 'sign') {
+          const flow = window.__stepFlows && window.__stepFlows['sign-main'];
+          if (flow && typeof flow.next === 'function') flow.next();
+        }
+      }
+    });
   };
   reader.readAsDataURL(file);
 }
@@ -12493,14 +12613,16 @@ async function scrapeDealDocForTab(fileUrl, mimeType, tab, statusId, buttonId, d
     btn.classList.add('loading');
     btn.textContent = 'Analyzing document...';
   }
-  showFormOverlay('Analyzing with Gemini...', { step: 1, totalSteps: 2, stepLabel: 'Extracting fields' });
+  showFormOverlay('Analyzing documents with Gemini', { step: 1, totalSteps: 3, stepLabel: 'Reading documents...', detail: 'Reading documents...' });
   let keepOverlayOpen = false;
   try {
+    updateFormOverlay('Analyzing documents with Gemini', 2, 3, 'Extracting field data...');
     const result = await callTrpc('aiAssist.extractDocument', { fileUrl, mimeType, tab });
-    updateFormOverlay('Applying extracted fields...', 2, 2, 'Applying fields');
+    updateFormOverlay('Analyzing documents with Gemini', 3, 3, 'Checking signatures...');
     if (result && result.success) {
       const count = applyAiFields(tab, result.fields || {});
       if (status) status.textContent = `Filled ${count} field${count !== 1 ? 's' : ''} from document`;
+      showToast('✓ Documents analyzed');
     } else if (status) {
       status.textContent = 'Could not extract fields. Try a clearer document.';
     }
@@ -13343,12 +13465,9 @@ function clearListingAutofillFromSource(sourceKey) {
     if (fieldSource !== sourceKey) return;
     const el = document.getElementById(fieldId);
     if (el) {
-      el.value = '';
       el.classList.remove('ai-filled');
       const badge = el.parentNode ? el.parentNode.querySelector('.ai-filled-badge') : null;
       if (badge) badge.remove();
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-      el.dispatchEvent(new Event('input', { bubbles: true }));
     }
     delete listingAiFieldSources[fieldId];
   });
@@ -15843,6 +15962,7 @@ function showFormOverlay(msg, opts) {
   }
   overlay.classList.remove('is-hidden');
   overlay.setAttribute('aria-hidden', 'false');
+  overlay.dataset.processing = 'true';
 }
 
 function updateFormOverlay(msg, step, totalSteps, stepLabel) {
@@ -15879,6 +15999,7 @@ function hideFormOverlay() {
   const detail = document.getElementById('form-overlay-detail');
   overlay.classList.add('is-hidden');
   overlay.setAttribute('aria-hidden', 'true');
+  overlay.dataset.processing = 'false';
   if (spinner) spinner.style.display = '';
   if (errorIcon) errorIcon.classList.add('is-hidden');
   if (actions) {
@@ -15943,7 +16064,34 @@ function showFormOverlayError(mainMsg, subMsg, opts) {
   if (live) live.textContent = mainMsg || 'Analysis failed';
   overlay.classList.remove('is-hidden');
   overlay.setAttribute('aria-hidden', 'false');
+  overlay.dataset.processing = 'false';
+  const firstButton = actions?.querySelector('button');
+  if (firstButton) firstButton.focus();
 }
+
+document.addEventListener('keydown', function(event) {
+  const overlay = document.getElementById('form-overlay');
+  if (!overlay || overlay.classList.contains('is-hidden')) return;
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    return;
+  }
+  if (event.key !== 'Tab') return;
+  const focusable = Array.from(overlay.querySelectorAll('button:not([disabled])'));
+  if (!focusable.length) {
+    event.preventDefault();
+    return;
+  }
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+});
 
 // ── Inline field loading state helpers ──
 function setFieldLoading(fieldEl, loading) {

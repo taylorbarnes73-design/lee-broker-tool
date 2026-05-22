@@ -6270,6 +6270,11 @@ a:hover {
   background: #F4F5F7;
 }
 
+.stepper-item:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
 .stepper-num {
   width: 24px;
   height: 24px;
