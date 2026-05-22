@@ -6307,6 +6307,10 @@ a:hover {
 }
 
 .stepper-label {
+  display: block;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
   color: #6B7178;
   font-size: 11.5px;
@@ -6343,6 +6347,44 @@ a:hover {
 
 .stepper-bar.done {
   background: rgba(152, 0, 46, 0.45);
+}
+
+#tab-listing .stepper,
+#tab-sign .stepper,
+#tab-voucher .stepper {
+  justify-content: flex-start;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+#tab-listing .stepper::-webkit-scrollbar,
+#tab-sign .stepper::-webkit-scrollbar,
+#tab-voucher .stepper::-webkit-scrollbar {
+  display: none;
+}
+
+#tab-listing .stepper-item,
+#tab-sign .stepper-item,
+#tab-voucher .stepper-item {
+  flex: 0 0 auto;
+}
+
+#tab-listing .stepper-bar,
+#tab-sign .stepper-bar,
+#tab-voucher .stepper-bar {
+  flex: 0 0 28px;
+  min-width: 28px;
+  margin: 0 10px;
+}
+
+#tab-listing .stepper-label,
+#tab-sign .stepper-label,
+#tab-voucher .stepper-label {
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  max-width: 140px;
 }
 
 .card,
@@ -7185,33 +7227,6 @@ body.broker-active .sub-tab-bar {
 #tab-voucher .reference-card {
   background: #FBFCFD;
   border-color: #DDE2E8;
-}
-
-#tab-voucher .stepper {
-  justify-content: flex-start;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 4px;
-  scrollbar-width: none;
-}
-
-#tab-voucher .stepper::-webkit-scrollbar {
-  display: none;
-}
-
-#tab-voucher .stepper-item {
-  flex: 0 0 auto;
-}
-
-#tab-voucher .stepper-bar {
-  flex: 0 0 28px;
-  min-width: 28px;
-  margin: 0 10px;
-}
-
-#tab-voucher .stepper-label {
-  font-size: 10.5px;
-  letter-spacing: 0.06em;
 }
 
 #tab-queue .queue-status.queue-error {
