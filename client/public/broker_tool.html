@@ -11227,7 +11227,9 @@ function initFreeAutocomplete() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  initFreeAutocomplete();
+  // Newer address autocomplete (initAddressAutocompletes) is initialized later
+  // and covers all address fields. Avoid double-binding competing dropdown logic.
+  if (!window.__addrAutocompleteV2) initFreeAutocomplete();
   initZipMarketSubmarketAutofill();
 });
 
@@ -16296,11 +16298,23 @@ function deleteDraft(key) {
 // which keeps the API key server-side and returns { address, city, state, zip }.
 
 (function initAddressAutocompletes() {
+  window.__addrAutocompleteV2 = true;
   const configs = [
     { inputId: 'l-address', cityId: 'l-city', stateId: 'l-state', zipId: 'l-zip' },
+    { inputId: 'lm-address', cityId: null,     stateId: null,      zipId: null      },
     { inputId: 'v-address', cityId: 'v-city', stateId: 'v-state', zipId: 'v-zip' },
+    { inputId: 'v-ls-address', cityId: 'v-ls-city', stateId: 'v-ls-state', zipId: 'v-ls-zip' },
+    { inputId: 'v-lb-address', cityId: 'v-lb-city', stateId: 'v-lb-state', zipId: 'v-lb-zip' },
+    { inputId: 'v-inv-address', cityId: null,  stateId: null,      zipId: null      },
+    { inputId: 'v-la-address', cityId: null,   stateId: null,      zipId: null      },
+    { inputId: 'v-pa-address', cityId: null,   stateId: null,      zipId: null      },
     { inputId: 's-address', cityId: 's-city', stateId: null,      zipId: null      },
     { inputId: 'c-address', cityId: 'c-city', stateId: null,      zipId: null      },
+    { inputId: 'ci-party1-address', cityId: null, stateId: null,   zipId: null      },
+    { inputId: 'ci-agent-address', cityId: null, stateId: null,    zipId: null      },
+    { inputId: 'ci-prop-address', cityId: 'ci-prop-city', stateId: 'ci-prop-state', zipId: 'ci-prop-zip' },
+    { inputId: 'dx_address', cityId: null, stateId: null,          zipId: null      },
+    { inputId: 'bp-f-address', cityId: null, stateId: null,        zipId: null      },
   ];
 
   configs.forEach(function(cfg) {
