@@ -19,6 +19,12 @@ const listingFields = z.object({
   buildingSf: z.string().optional(),
   suiteSf: z.string().optional(),
   askingPrice: z.string().optional(),
+  listingExpiration: z.string().optional(),
+  dateEntered: z.string().optional(),
+  ownerName: z.string().optional(),
+  commissionRate: z.string().optional(),
+  crossStreets: z.string().optional(),
+  yearBuilt: z.string().optional(),
   listingAgentName: z.string().optional(),
   listingAgentLicense: z.string().optional(),
   comments: z.string().optional(),
@@ -832,16 +838,15 @@ async function buildDocumentUserContent(
       type: "text",
       text: await (async () => {
         try {
-          const { PDFParse } = await import("pdf-parse");
-          const parser = new PDFParse({ data: fileBuffer });
-          const textResult = await parser.getText();
-          await parser.destroy?.();
-          const cleaned = normalizeWhitespace(textResult.text || "");
+          const mod = await import("pdf-parse");
+          const parse = (mod as any).default ?? (mod as any);
+          const pdfParsed = await parse(fileBuffer);
+          const cleaned = normalizeWhitespace(pdfParsed.text || "");
           const trimmed = cleaned.slice(0, 40_000);
           return `${promptText}\n\nDocument text (extracted):\n${trimmed}`;
         } catch (e: any) {
           const message = e?.message ? String(e.message) : "Unknown PDF parse error";
-          return `${promptText}\n\nNote: PDF text extraction failed (${message}). Return an empty JSON object.`;
+          return `${promptText}\n\nNote: PDF text extraction failed (${message}). Return an empty fields object and set all documentDetection found values to false.`;
         }
       })(),
     },
@@ -1246,21 +1251,27 @@ async function extractListingDocumentWithDetection(
     parseDetection: parseListingDocumentDetection,
     emptyDetection: emptyListingDocumentDetection,
     systemPrompt:
-      "You extract listing form fields and classify listing compliance document execution status. Return only the requested JSON result.",
-    detectionPrompt: `Required documents:
-- Agency Disclosure (agent + principal signatures required)
-- Listing Agreement (listing broker + property owner/principal signatures required)
+      "You are an expert at reading California real estate listing documents. Extract all form fields and classify required compliance document execution status. Return only the requested JSON.",
+    detectionPrompt: `Identify whether this file contains the following documents and whether each is fully executed:
 
-For each document type return:
-- found: true only if the document appears in this file
-- executed: true only if required signatures appear complete
-- missingSignatures: list who is missing a signature when found is true and executed is false
+AGENCY DISCLOSURE
+- Also called: "Agency Disclosure", "C.A.R. Form AD", "Disclosure Regarding Real Estate Agency Relationships", "Agency Confirmation"
+- Found if: document clearly discloses agency relationship (selling agent, listing agent, or dual agent) between broker and client
+- Executed if: both the broker/agent AND the client/principal have signed, with dates present
+- Missing signatures: note if agent signature, client signature, or date is absent
 
-Execution signals:
-- Presence of signature blocks/lines
-- Signature image, typed signature, or DocuSign certificate
-- Date near signature
-- For DocuSign PDFs, Certificate of Completion is the strongest signal`,
+LISTING AGREEMENT
+- Also called: "Exclusive Authorization and Right to Lease", "Exclusive Listing Agreement", "Exclusive Right to Sell", "Residential Listing Agreement", "Commercial Listing Agreement", "C.A.R. Form RLA", "C.A.R. Form CLA", "AIR CRE Listing Authorization"
+- Found if: document grants a broker the exclusive right to list/lease/sell a specific property
+- Executed if: both the listing broker/agent AND the property owner/principal have signed, with dates present
+- Missing signatures: note if broker signature, owner signature, or date is absent
+
+For each document:
+- found: true only when that specific document is clearly present
+- executed: true only when ALL required signatures and dates are present and legible
+- missingSignatures: array of who is missing (e.g. ["Owner signature", "Date"]) — only when found=true and executed=false
+
+A DocuSign Certificate of Completion means the document is executed. If DocuSign envelope shows "Completed" status, set executed=true for any documents in the envelope.`,
   });
 }
 
