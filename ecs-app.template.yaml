@@ -83,6 +83,13 @@ Parameters:
     Type: String
     NoEcho: true
     Default: ""
+  OpenaiApiKey:
+    Type: String
+    NoEcho: true
+    Default: ""
+  OpenaiModel:
+    Type: String
+    Default: "o4-mini"
   AwsRegion:
     Type: String
     Default: ""
@@ -319,6 +326,10 @@ Resources:
               Value: !Ref BuiltInForgeApiUrl
             - Name: BUILT_IN_FORGE_API_KEY
               Value: !Ref BuiltInForgeApiKey
+            - Name: OPENAI_API_KEY
+              Value: !Ref OpenaiApiKey
+            - Name: OPENAI_MODEL
+              Value: !Ref OpenaiModel
             - Name: AWS_REGION
               Value: !Ref AwsRegion
             - Name: AWS_COGNITO_USER_POOL_ID
