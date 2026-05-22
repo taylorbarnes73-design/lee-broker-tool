@@ -11760,7 +11760,7 @@ async function uploadAndParseListingDealDocuments(fileList) {
             combineListingDocumentState(listingDocumentDetection.listingAgreement, parsed.documentDetection?.listingAgreement)
           );
         }).catch((parseErr) => {
-          console.warn('Listing document parse failed:', parseErr);
+          console.error('[AI] Listing document parse failed:', parseErr?.message || parseErr);
         })
       );
     });
@@ -11783,7 +11783,10 @@ async function uploadAndParseListingDealDocuments(fileList) {
       status.innerHTML = '<span class="text-error">Upload failed. Please retry.</span>';
     }
   } catch (err) {
-    if (status) status.innerHTML = '<span class="text-error">Auto-fill unavailable — fill manually.</span>';
+    console.error('[AI] Listing upload/analysis failed:', err?.message || err);
+    const errMsg = String(err?.message || '').toLowerCase();
+    const configErr = errMsg.includes('no llm backend') || errMsg.includes('gemini_api_key') || errMsg.includes('api key');
+    if (status) status.innerHTML = `<span class="text-error">${configErr ? 'AI not configured — add GEMINI_API_KEY to server .env.' : 'Upload failed. Please retry.'}</span>`;
     listingDocumentDetection = listingDocumentDefaults();
     updateListingRequiredDocStatus();
     if (zone) zone.classList.remove('upload-zone-active');
@@ -12110,6 +12113,7 @@ function buildEmptyVoucherDetectionResult() {
     hadFailures: false,
     hadTimeout: false,
     hadUnreadable: false,
+    hadConfigError: false,
   };
 }
 
@@ -12163,9 +12167,11 @@ async function runVoucherGeminiAnalysis() {
       });
     } catch (error) {
       const msg = String(error?.message || error || '').toLowerCase();
+      console.error('[AI] Voucher document analysis failed:', error?.message || error);
       result.hadFailures = true;
       if (msg.includes('timeout')) result.hadTimeout = true;
       if (msg.includes('password') || msg.includes('corrupt') || msg.includes('read')) result.hadUnreadable = true;
+      if (msg.includes('no llm backend') || msg.includes('gemini_api_key') || msg.includes('openai_api_key') || msg.includes('api key')) result.hadConfigError = true;
     }
   }
 
@@ -12184,6 +12190,8 @@ async function runVoucherGeminiAnalysis() {
     voucherAnalysisStatus = { state: 'error', error: 'Auto-fill unavailable — fill manually.' };
   } else if (result.hadUnreadable) {
     voucherAnalysisStatus = { state: 'error', error: "Couldn't read this file. Try a different format or remove password protection." };
+  } else if (result.hadConfigError) {
+    voucherAnalysisStatus = { state: 'error', error: 'AI not configured — add GEMINI_API_KEY to server .env to enable auto-fill.' };
   } else if (result.hadFailures) {
     voucherAnalysisStatus = { state: 'error', error: 'Auto-fill unavailable — fill manually.' };
   } else {
