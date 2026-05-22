@@ -13460,7 +13460,7 @@ const AI_FIELD_MAP = {
   voucher: {
     representationType: 'v-rep-type',
     clientName: 'v-on-behalf',
-    transactionType: 'v-trans-type',
+    transactionType: 'v-txn-type',
     address: 'v-address',
     city: 'v-city',
     state: 'v-state',
@@ -13520,6 +13520,21 @@ function addAiBadge(el) {
   return badge;
 }
 
+function resolveAiSelectValue(el, value) {
+  const opts = Array.from(el.options);
+  const rawValue = String(value ?? '');
+  const normalized = rawValue.trim().toLowerCase();
+  const collapsed = normalized.replace(/[^a-z0-9]/g, '');
+  return (
+    opts.find(o => o.value === rawValue) ||
+    opts.find(o => o.value.toLowerCase() === normalized) ||
+    opts.find(o => String(o.textContent || '').trim().toLowerCase() === normalized) ||
+    opts.find(o => o.value.toLowerCase().replace(/[^a-z0-9]/g, '') === collapsed) ||
+    opts.find(o => String(o.textContent || '').toLowerCase().replace(/[^a-z0-9]/g, '') === collapsed) ||
+    null
+  );
+}
+
 function applyAiFields(tab, fields, options = {}) {
   const map = AI_FIELD_MAP[tab] || {};
   const sourceToken = options && typeof options.sourceToken === 'string' ? options.sourceToken : '';
@@ -13535,9 +13550,7 @@ function applyAiFields(tab, fields, options = {}) {
 
     if (el.tagName === 'SELECT') {
       // Match option values case-insensitively so AI output ("Lease") matches option value ("lease")
-      const opts = Array.from(el.options);
-      const match = opts.find(o => o.value === value) ||
-                    opts.find(o => o.value.toLowerCase() === String(value).toLowerCase());
+      const match = resolveAiSelectValue(el, value);
       if (!match) return; // skip if no matching option — don't leave the select in an invalid state
       el.value = match.value;
     } else {
@@ -13609,9 +13622,7 @@ function applyAiFieldsForce(tab, fields) {
     if (!el) return;
     if (el.value && el.value.trim() !== '') return; // still don't overwrite user input
     if (el.tagName === 'SELECT') {
-      const opts = Array.from(el.options);
-      const match = opts.find(o => o.value === value) ||
-                    opts.find(o => o.value.toLowerCase() === String(value).toLowerCase());
+      const match = resolveAiSelectValue(el, value);
       if (!match) return;
       el.value = match.value;
     } else {
