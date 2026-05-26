@@ -34,7 +34,7 @@ vi.mock("pdf-parse", () => ({
   default: mockPdfParse,
 }));
 
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable } from "../_core/llm";
 
 function createCtx(): TrpcContext {
   return {
@@ -594,6 +594,115 @@ describe("aiAssist.extractDocument", () => {
         executed: false,
         missingSignatures: ["Property owner/principal"],
       },
+    });
+  });
+
+  it("uses Gemini direct file parsing for listing document fields and detection when available", async () => {
+    vi.mocked(isGeminiDirectAvailable).mockReturnValueOnce(true);
+    vi.mocked(invokeLLMWithFile).mockResolvedValueOnce(
+      JSON.stringify({
+        fields: {
+          address: "16520 Bake Pkwy, Suite 115",
+          city: "Irvine",
+          listingAgentName: "Stephen A. Madigan",
+        },
+        documentDetection: {
+          agencyDisclosure: { found: false, executed: false, missingSignatures: [] },
+          listingAgreement: { found: true, executed: true, missingSignatures: [] },
+        },
+      })
+    );
+
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.extractListingDocument({
+      fileUrl: "https://example.com/executed-listing-agreement.pdf",
+      mimeType: "application/pdf",
+    });
+
+    expect(invokeLLMWithFile).toHaveBeenCalledTimes(1);
+    expect(invokeLLM).not.toHaveBeenCalled();
+    expect(result.fields.address).toBe("16520 Bake Pkwy, Suite 115");
+    expect(result.documentDetection.listingAgreement).toEqual({
+      found: true,
+      executed: true,
+      missingSignatures: [],
+    });
+  });
+
+  it("uses extracted AIR CRE DocuSign text to recognize executed listing documents", async () => {
+    mockPdfParse.mockResolvedValueOnce({
+      text: `
+        EXCLUSIVE RIGHT TO REPRESENT OWNER FOR SALE OR LEASE OF REAL PROPERTY
+        Dr. Marco M. Zahedi Owner Stephen A. Madigan Agent
+        Docusign Envelope ID: 784C9DE7-AC3F-4683-8ED8-AE518BCD3D41
+        By: Dr. Marco M. Zahedi By: Stephen A. Madigan
+        May 20, 2026 | 8:58 AM PDT May 6, 2026 | 4:37 PM PDT
+      `,
+    });
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              fields: {},
+              documentDetection: {
+                agencyDisclosure: { found: false, executed: false, missingSignatures: [] },
+                listingAgreement: { found: false, executed: false, missingSignatures: [] },
+              },
+            }),
+          },
+        },
+      ],
+    } as any);
+
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.extractListingDocument({
+      fileUrl: "https://example.com/exclusive-right.pdf",
+      mimeType: "application/pdf",
+    });
+
+    expect(result.documentDetection.listingAgreement).toEqual({
+      found: true,
+      executed: true,
+      missingSignatures: [],
+    });
+  });
+
+  it("uses extracted AIR CRE DocuSign text to recognize executed agency disclosures", async () => {
+    mockPdfParse.mockResolvedValueOnce({
+      text: `
+        DISCLOSURE REGARDING REAL ESTATE AGENCY RELATIONSHIP
+        Buyer Dr. Marco M. Zahedi Buyer Agent Lee & Associates - Newport Beach
+        Docusign Envelope ID: 784C9DE7-AC3F-4683-8ED8-AE518BCD3D41
+        May 20, 2026 | 8:58 AM PDT May 6, 2026 | 4:37 PM PDT
+      `,
+    });
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              fields: {},
+              documentDetection: {
+                agencyDisclosure: { found: true, executed: false, missingSignatures: ["Client signature"] },
+                listingAgreement: { found: false, executed: false, missingSignatures: [] },
+              },
+            }),
+          },
+        },
+      ],
+    } as any);
+
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.extractListingDocument({
+      fileUrl: "https://example.com/agency-disclosure.pdf",
+      mimeType: "application/pdf",
+    });
+
+    expect(result.documentDetection.agencyDisclosure).toEqual({
+      found: true,
+      executed: true,
+      missingSignatures: [],
     });
   });
 });

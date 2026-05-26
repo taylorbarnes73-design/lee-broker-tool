@@ -11600,9 +11600,17 @@ function listingDocumentStateFromApi(value) {
 
 function combineListingDocumentState(currentValue, nextValue) {
   const current = normalizeListingDocumentState(currentValue);
-  const next = normalizeListingDocumentState(nextValue);
-  if (current.found) return current;
-  return listingDocumentStateFromApi(next);
+  const next = listingDocumentStateFromApi(nextValue);
+  if (!current.found) return next;
+  if (!next.found) return current;
+  if (!current.executed && next.executed) return next;
+  if (current.executed) return current;
+  return {
+    found: true,
+    executed: false,
+    missingSignatures: Array.from(new Set([...(current.missingSignatures || []), ...(next.missingSignatures || [])])),
+    manualOverride: Boolean(current.manualOverride),
+  };
 }
 
 function getListingDetectionAnnouncement() {

@@ -815,7 +815,8 @@ async function fetchDocumentBuffer(fileUrl: string) {
 async function buildDocumentUserContent(
   fileBuffer: Buffer,
   mimeType: AiDocumentMime,
-  promptText: string
+  promptText: string,
+  extractedPdfText?: string
 ) {
   if (mimeType !== "application/pdf") {
     return [
@@ -838,10 +839,7 @@ async function buildDocumentUserContent(
       type: "text",
       text: await (async () => {
         try {
-          const mod = await import("pdf-parse");
-          const parse = (mod as any).default ?? (mod as any);
-          const pdfParsed = await parse(fileBuffer);
-          const cleaned = normalizeWhitespace(pdfParsed.text || "");
+          const cleaned = extractedPdfText ?? await extractPdfTextFromBuffer(fileBuffer);
           const trimmed = cleaned.slice(0, 40_000);
           return `${promptText}\n\nDocument text (extracted):\n${trimmed}`;
         } catch (e: any) {
@@ -851,6 +849,28 @@ async function buildDocumentUserContent(
       })(),
     },
   ];
+}
+
+async function extractPdfTextFromBuffer(fileBuffer: Buffer) {
+  const mod = await import("pdf-parse");
+  const callableParse = (mod as any).default ?? (typeof (mod as any) === "function" ? (mod as any) : null);
+  if (callableParse) {
+    const parsed = await callableParse(fileBuffer);
+    return normalizeWhitespace(parsed?.text || "");
+  }
+
+  const Parser = (mod as any).PDFParse;
+  if (typeof Parser !== "function") {
+    throw new Error("pdf-parse did not expose a supported parser");
+  }
+
+  const parser = new Parser({ data: fileBuffer });
+  try {
+    const parsed = await parser.getText();
+    return normalizeWhitespace(parsed?.text || "");
+  } finally {
+    await parser.destroy?.();
+  }
 }
 
 async function extractDocumentFields(
@@ -1105,6 +1125,65 @@ function parseListingDocumentDetection(value: unknown): ListingDocumentDetection
   };
 }
 
+function hasDocuSignExecutionEvidence(text: string) {
+  if (!/docusign envelope id/i.test(text) && !/certificate of completion/i.test(text)) return false;
+  if (/certificate of completion/i.test(text) && /completed/i.test(text)) return true;
+  const timestampMatches = text.match(/[A-Z][a-z]+ \d{1,2}, \d{4}\s*\|\s*\d{1,2}:\d{2}\s*(?:AM|PM)\s*(?:[A-Z]{2,4})?/g) || [];
+  return timestampMatches.length >= 2;
+}
+
+function inferListingDocumentDetectionFromText(text: string): ListingDocumentDetectionResult {
+  const normalized = normalizeWhitespace(text || "");
+  const lower = normalized.toLowerCase();
+  const executedByDocuSign = hasDocuSignExecutionEvidence(normalized);
+  const hasAgencyDisclosure =
+    /disclosure regarding real estate agency relationship/i.test(normalized) ||
+    (/agency relationship/i.test(lower) && /civil code/i.test(lower) && /seller'?s agent|buyer'?s agent|lessor|lessee/i.test(normalized));
+  const hasListingAgreement =
+    /exclusive right to represent owner/i.test(normalized) ||
+    /exclusive authorization and right to (?:lease|sell)/i.test(normalized) ||
+    /exclusive listing agreement/i.test(normalized) ||
+    (/listing agreement/i.test(lower) && /owner|seller|lessor/i.test(lower) && /agent|broker/i.test(lower));
+
+  return {
+    agencyDisclosure: {
+      found: hasAgencyDisclosure,
+      executed: hasAgencyDisclosure && executedByDocuSign,
+      missingSignatures: hasAgencyDisclosure && !executedByDocuSign ? ["Signature/date confirmation unclear"] : [],
+    },
+    listingAgreement: {
+      found: hasListingAgreement,
+      executed: hasListingAgreement && executedByDocuSign,
+      missingSignatures: hasListingAgreement && !executedByDocuSign ? ["Signature/date confirmation unclear"] : [],
+    },
+  };
+}
+
+function mergeListingDetectionState(
+  modelState: ListingDocumentDetectionState,
+  inferredState: ListingDocumentDetectionState
+): ListingDocumentDetectionState {
+  if (!inferredState.found) return modelState;
+  if (!modelState.found) return inferredState;
+  if (!modelState.executed && inferredState.executed) return inferredState;
+  if (modelState.executed) return { ...modelState, missingSignatures: [] };
+  return {
+    found: true,
+    executed: false,
+    missingSignatures: [...new Set([...modelState.missingSignatures, ...inferredState.missingSignatures])],
+  };
+}
+
+function mergeListingDocumentDetection(
+  modelDetection: ListingDocumentDetectionResult,
+  inferredDetection: ListingDocumentDetectionResult
+): ListingDocumentDetectionResult {
+  return {
+    agencyDisclosure: mergeListingDetectionState(modelDetection.agencyDisclosure, inferredDetection.agencyDisclosure),
+    listingAgreement: mergeListingDetectionState(modelDetection.listingAgreement, inferredDetection.listingAgreement),
+  };
+}
+
 function emptyVoucherDocumentDetection() {
   return {
     agencyDisclosure: { found: false, executed: false, missingSignatures: [] as string[] },
@@ -1160,6 +1239,20 @@ Return one JSON object with:
   );
 
   let raw = "";
+  let extractedPdfText = "";
+  const ensureExtractedPdfText = async () => {
+    if (params.mimeType !== "application/pdf" || extractedPdfText) return extractedPdfText;
+    try {
+      extractedPdfText = await extractPdfTextFromBuffer(fetched.fileBuffer);
+    } catch (parseErr: unknown) {
+      console.warn(
+        "[aiAssist] PDF text extraction failed:",
+        parseErr instanceof Error ? parseErr.message : String(parseErr)
+      );
+    }
+    return extractedPdfText;
+  };
+
   if (isGeminiDirectAvailable()) {
     try {
       raw = await invokeLLMWithFile({
@@ -1178,10 +1271,12 @@ Return one JSON object with:
   }
 
   if (!raw) {
+    await ensureExtractedPdfText();
     const userContent = await buildDocumentUserContent(
       fetched.fileBuffer,
       params.mimeType,
-      promptText
+      promptText,
+      extractedPdfText
     );
     const response = await invokeLLM({
       messages: [
@@ -1203,12 +1298,22 @@ Return one JSON object with:
       ? (parsed.fields as Record<string, unknown>)
       : parsed;
   const fields = sanitizeAiFields(params.tab, fieldSource);
+  const modelDetection = params.parseDetection(parsed.documentDetection);
+  if (params.tab === "listing") await ensureExtractedPdfText();
+  const documentDetection =
+    params.tab === "listing" && extractedPdfText
+      ? mergeListingDocumentDetection(
+          modelDetection as ListingDocumentDetectionResult,
+          inferListingDocumentDetectionFromText(extractedPdfText)
+        )
+      : modelDetection;
+
   return {
     success: true as const,
     fields,
     tab: params.tab,
     fieldCount: Object.keys(fields).length,
-    documentDetection: params.parseDetection(parsed.documentDetection),
+    documentDetection,
   };
 }
 
