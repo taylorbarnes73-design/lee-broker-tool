@@ -240,7 +240,7 @@
         <div class="field"><label id="lbl-name" class="req">Address</label><input id="l-address"></div>
         <div class="field is-hidden" id="field-project-name"><label>Project / Property Name</label><input id="l-project-name" placeholder="Optional"></div>
       </div>
-      <div class="row c3">
+      <div class="row c-addr">
         <div class="field"><label class="req">City</label><input id="l-city"></div>
         <div class="field"><label class="req">State</label><input id="l-state" value="CA"></div>
         <div class="field"><label class="req">Zip</label><input id="l-zip" placeholder="92618"></div>
@@ -1349,7 +1349,7 @@
           <option value="sale">Sale Comp</option>
         </select>
       </div>
-      <div class="field"><label class="req">LANB Source</label><input id="c-source" list="comp-source-options"><div class="field-hint">Start typing broker name...</div></div>
+      <div class="field"><label class="req">Broker Source</label><input id="c-source" list="comp-source-options"><div class="field-hint">Autofills from the signed-in broker; edit if needed.</div></div>
       <div class="field"><label>Date</label><input id="c-date" type="date"></div>
     </div>
 
@@ -3799,7 +3799,7 @@ function reviewSnapshotRowsFor(context) {
   }
   return [
     ['Comp Type', document.getElementById('c-comp-type')?.value || '—'],
-    ['LANB Source', document.getElementById('c-source')?.value || '—'],
+    ['Broker Source', document.getElementById('c-source')?.value || '—'],
     ['Address', document.getElementById('c-address')?.value || '—'],
     ['City', document.getElementById('c-city')?.value || '—'],
     ['Property Type', document.getElementById('c-prop-type')?.value || '—'],
@@ -4213,7 +4213,9 @@ function ensureBrokerStepper(flow) {
       item.innerHTML =
         '<div class="stepper-num">' + (idx + 1) + '</div>' +
         '<div class="stepper-label"></div>';
-      item.querySelector('.stepper-label').textContent = getBrokerCardHeading(card, 'Step ' + (idx + 1));
+      const label = getBrokerCardHeading(card, 'Step ' + (idx + 1));
+      item.querySelector('.stepper-label').textContent = label;
+      item.title = label;
       item.addEventListener('click', () => flow.go(idx));
       stepper.appendChild(item);
       if (idx < flow.cards.length - 1) {
@@ -6868,12 +6870,12 @@ function exportLeaseCompPdf() {
   function rightHeader(label) { drawCell(midX, rightW, label, undefined, true); }
   function nextRow(h) { y += (h || LH); }
 
-  /* ── LANB Source / Date ── */
+  /* ── Broker Source / Date ── */
   doc.setDrawColor(180,180,180); doc.setLineWidth(0.5);
-  // LANB Source row
+  // Broker Source row
   doc.rect(M, y, cw, LH);
   doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(60);
-  doc.text('LANB Source:', M + 4, y + 11);
+  doc.text('Broker Source:', M + 4, y + 11);
   doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
   doc.text(gv('c-source'), M + 70, y + 11);
   y += LH;
@@ -7069,11 +7071,11 @@ function exportSaleCompPdf() {
   doc.text('INDUSTRIAL SALE COMP INPUT FORM', M, 40);
   y = 58;
 
-  /* ── LANB Source / Date ── */
+  /* ── Broker Source / Date ── */
   doc.setDrawColor(180,180,180); doc.setLineWidth(0.5);
   doc.rect(M, y, cw, LH);
   doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(60);
-  doc.text('LANB Source:', M + 4, y + 11);
+  doc.text('Broker Source:', M + 4, y + 11);
   doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
   doc.text(gv('c-source'), M + 70, y + 11);
   y += LH;
@@ -13778,7 +13780,7 @@ function renderBrokerQueueError() {
   const list = document.getElementById('broker-queue-list');
   setQueueStatus('We couldn’t load your active queue right now. Try refreshing again in a moment.', true);
   if (!list) return;
-  list.innerHTML = '<div class="empty-state queue-empty"><div class="empty-icon"></div><h3>Queue unavailable</h3><p>Your submissions are still saved, but the live queue could not be loaded right now. Please refresh again in a moment.</p></div>';
+  list.innerHTML = '<div class="empty-state queue-empty"><div class="empty-icon"></div><h3>Queue unavailable</h3><p>Your submissions are still saved, but the live queue could not be loaded right now.</p><button type="button" class="btn btn-gray btn-sm" onclick="refreshBrokerQueue()">Try Again</button></div>';
 }
 
 function renderBrokerQueue(data) {

@@ -6308,10 +6308,9 @@ a:hover {
 
 .stepper-label {
   display: block;
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: 220px;
+  overflow: visible;
+  white-space: normal;
   color: #6B7178;
   font-size: 11.5px;
   font-weight: 700;
@@ -6384,7 +6383,8 @@ a:hover {
 #tab-voucher .stepper-label {
   font-size: 10.5px;
   letter-spacing: 0.06em;
-  max-width: 140px;
+  max-width: 220px;
+  line-height: 1.25;
 }
 
 .card,
@@ -7124,6 +7124,21 @@ body.broker-active .sub-tab-bar {
 
 #tab-listing .listing-core-row {
   align-items: end;
+}
+
+#tab-listing .listing-pricing-row {
+  align-items: end;
+}
+
+#tab-listing .pricing-visibility-field {
+  padding: 12px;
+  border: 1px solid #F2C94C;
+  border-radius: 8px;
+  background: #FFF8E5;
+}
+
+#tab-listing .pricing-visibility-field label {
+  color: #7A4B00;
 }
 
 #tab-listing .listing-type-grid {
