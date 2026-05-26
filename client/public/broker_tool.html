@@ -150,10 +150,10 @@
     <div class="deal-shell" id="l-deal-shell">
     <div class="deal-main" id="listing-main">
     <div class="card" id="lstep-upload" data-lstep="0" data-step-label="Upload Deal Documents">
-      <h2>Upload Deal Documents <span class="inline-badge">AI Auto-Fill</span></h2>
-      <p class="micro-copy">Upload deal documents and let AI extract key details into the listing form.</p>
+      <h2>Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></h2>
+      <p class="micro-copy">Upload deal documents and let Gemini extract key details into the listing form.</p>
       <div class="field field-stack-gap">
-        <label class="inline-flex-label">Upload Deal Documents <span class="inline-badge">AI Auto-Fill</span></label>
+        <label class="inline-flex-label">Upload Deal Documents <span class="inline-badge">Gemini Auto-Fill</span></label>
         <div class="brochure-zone" id="l-deal-docs-zone" role="button" tabindex="0" aria-label="Upload deal documents" onclick="document.getElementById('l-deal-documents-file').click()">
           <input type="file" id="l-deal-documents-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" multiple onchange="onListingDealDocumentsSelected(this)">
           <div class="brochure-zone-inner">
@@ -252,26 +252,9 @@
         </div>
       </div>
 
-      <div id="size-building" class="type-section visible">
-        <div class="row c3">
-          <div class="field"><label id="lbl-sf" class="req">Building / GLA SF</label><input id="l-bldg-sf" oninput="calcSaleSF()"></div>
-          <div class="field"><label>Year Built</label><input id="l-year-built"></div>
-          <div class="field"><label>Parking Ratio</label><input id="l-parking-ratio"></div>
-        </div>
-      </div>
-
-      <div id="size-land" class="type-section">
-        <div class="row c4">
-          <div class="field"><label class="req">Gross Acres</label><input id="l-acres-gross" placeholder="0.00"></div>
-          <div class="field"><label>Net Acres</label><input id="l-acres-net" placeholder="0.00"></div>
-          <div class="field"><label>Gross SF</label><input id="l-land-sf-gross" placeholder="0"></div>
-          <div class="field"><label>Net SF</label><input id="l-land-sf-net" placeholder="0"></div>
-        </div>
-      </div>
-
       <div id="lease-pricing">
         <h3 class="section-heading-top">Lease Pricing</h3>
-        <div class="row c4">
+        <div class="row c3 listing-pricing-row">
           <div class="field"><label class="req">Rate $/SF/Mo</label><input id="l-lease-sf" placeholder="$0.00" oninput="calcLeaseMonthly()"></div>
           <div class="field"><label>Monthly Rent (auto)</label><input id="l-lease-mo" class="readonly-fill" placeholder="$0.00" readonly></div>
           <div class="field"><label>Term</label>
@@ -281,15 +264,16 @@
               <option value="custom">Custom</option>
             </select>
           </div>
-          <div class="field is-hidden" id="l-lease-term-custom-field"><label>Term (months)</label><input id="l-lease-term"></div>
         </div>
-        <div class="row c3">
-          <div class="field"><label>Lease Type</label>
+        <div class="row c3 listing-pricing-row">
+          <div class="field is-hidden" id="l-lease-term-custom-field"><label>Term (months)</label><input id="l-lease-term"></div>
+          <div class="field"><label class="req">Lease Type</label>
             <select id="l-lease-type">
+              <option value="">— Select —</option>
               <option value="NNN">NNN</option><option value="FSG">FSG (Full Service Gross)</option><option value="MG">MG (Modified Gross)</option><option value="G">Gross</option><option value="N">Net</option><option value="MN">Modified Net</option>
             </select>
           </div>
-          <div class="field">
+          <div class="field pricing-visibility-field">
             <label>Reveal Prices to MLS?</label>
             <div class="toggle-row">
               <label class="toggle-switch">
@@ -298,8 +282,25 @@
               </label>
               <span id="l-reveal-label" class="toggle-caption">Hidden from MLS</span>
             </div>
+            <div class="field-hint">Controls whether lease pricing appears in MLS exports.</div>
           </div>
-          <div class="field"></div>
+        </div>
+      </div>
+
+      <div id="size-building" class="type-section visible">
+        <div class="row c3">
+          <div class="field"><label id="lbl-sf" class="req">Building / GLA SF</label><input id="l-bldg-sf" oninput="calcSaleSF()"></div>
+          <div class="field"><label>Year Built</label><input id="l-year-built"></div>
+          <div class="field"><label>Parking Ratio</label><input id="l-parking-ratio"></div>
+        </div>
+      </div>
+
+      <div id="size-land" class="type-section">
+        <div class="row c3">
+          <div class="field"><label class="req">Gross Acres</label><input id="l-acres-gross" placeholder="0.00"></div>
+          <div class="field"><label>Net Acres</label><input id="l-acres-net" placeholder="0.00"></div>
+          <div class="field"><label>Gross SF</label><input id="l-land-sf-gross" placeholder="0"></div>
+          <div class="field"><label>Net SF</label><input id="l-land-sf-net" placeholder="0"></div>
         </div>
       </div>
 
@@ -312,7 +313,7 @@
           <div class="field"><label>Sale $/SF (auto)</label>
             <div class="currency-field"><span class="currency-prefix">$</span><input id="l-sale-sf" class="currency-input readonly-fill" placeholder="0.00" readonly></div>
           </div>
-          <div class="field">
+          <div class="field pricing-visibility-field">
             <label>Reveal Prices to MLS?</label>
             <div class="toggle-row">
               <label class="toggle-switch">
@@ -321,6 +322,7 @@
               </label>
               <span id="l-reveal-label-sale" class="toggle-caption">Hidden from MLS</span>
             </div>
+            <div class="field-hint">Controls whether sale pricing appears in MLS exports.</div>
           </div>
         </div>
         <div class="row c2">
@@ -11679,23 +11681,6 @@ function updateListingRequiredDocStatus() {
   if (flow && typeof flow.renderNav === 'function') flow.renderNav();
 }
 
-function autoMarkDetectedListingDocuments() {
-  ['agencyDisclosure', 'listingAgreement'].forEach(kind => {
-    const state = listingDocumentStatus(kind);
-    if (state.found && !state.executed && !state.manualOverride) {
-      setListingDocumentState(kind, {
-        found: true,
-        executed: true,
-        missingSignatures: state.missingSignatures || [],
-        manualOverride: true,
-        manualOverrideAt: new Date().toISOString(),
-        manualOverrideBy: 'AI Detection',
-        manualOverrideByEmail: '',
-      });
-    }
-  });
-}
-
 function markListingDocumentManual(kind) {
   const msg = 'Confirm this document is fully executed. This will be flagged in the submission for admin review.';
   if (!confirm(msg)) return;
@@ -11876,7 +11861,6 @@ async function uploadAndParseListingDealDocuments(fileList) {
     updateFormOverlay('Analyzing documents with AI', 2, 3, 'Extracting field data...');
     await Promise.all(parseTasks);
     updateFormOverlay('Analyzing documents with AI', 3, 3, 'Checking signatures...');
-    autoMarkDetectedListingDocuments();
     renderListingDealDocumentsStatusMessage();
     updateListingRequiredDocStatus();
     if (live) live.textContent = getListingDetectionAnnouncement();
@@ -11956,7 +11940,6 @@ async function reanalyzeListingDealDocuments() {
       console.warn('Listing document re-analysis failed:', err);
     }
   }));
-  autoMarkDetectedListingDocuments();
 }
 
 function initListingDealDocumentsUpload() {
