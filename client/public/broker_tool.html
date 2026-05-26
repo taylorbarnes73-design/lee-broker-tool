@@ -191,35 +191,29 @@
         <label class="req">Property Type</label>
           <div class="listing-type-grid" id="listing-type-picker">
             <button type="button" class="listing-type-opt" data-type="office" onclick="setListingType('office')">
-              <span class="lto-eyebrow">Office</span>
               <span class="lto-title">Office</span>
-              <span class="lto-sub">Class, floor, parking, and office-specific fields.</span>
             </button>
             <button type="button" class="listing-type-opt" data-type="industrial" onclick="setListingType('industrial')">
-              <span class="lto-eyebrow">Industrial</span>
               <span class="lto-title">Industrial</span>
-              <span class="lto-sub">Warehouse, loading, power, and yard details.</span>
             </button>
             <button type="button" class="listing-type-opt" data-type="retail" onclick="setListingType('retail')">
-              <span class="lto-eyebrow">Retail</span>
               <span class="lto-title">Retail</span>
-              <span class="lto-sub">Frontage, center type, anchor, and traffic fields.</span>
+            </button>
+            <button type="button" class="listing-type-opt" data-type="medical" onclick="setListingType('medical')">
+              <span class="lto-title">Medical</span>
             </button>
             <button type="button" class="listing-type-opt" data-type="land" onclick="setListingType('land')">
-              <span class="lto-eyebrow">Land</span>
               <span class="lto-title">Land</span>
-              <span class="lto-sub">Parcel-level details, zoning, and entitlement fields.</span>
             </button>
             <button type="button" class="listing-type-opt" data-type="multifamily" onclick="setListingType('multifamily')">
-              <span class="lto-eyebrow">Multifamily</span>
               <span class="lto-title">Multifamily</span>
-              <span class="lto-sub">Apartment and multifamily inventory details.</span>
             </button>
           </div>
           <select id="l-prop-type" class="picker-sync-select" onchange="onPropTypeChange()">
             <option value="industrial">Industrial</option>
             <option value="office">Office</option>
             <option value="retail">Retail</option>
+            <option value="medical">Medical</option>
             <option value="land">Land</option>
             <option value="multifamily">Multifamily</option>
           </select>
@@ -3351,7 +3345,7 @@ document.addEventListener('DOMContentLoaded', function () {
 // ═══════════════════════════════════════════════════════════════════════════════
 function onPropTypeChange() {
   const type = document.getElementById('l-prop-type').value;
-  const sectionType = type === 'multifamily' ? 'office' : type;
+  const sectionType = (type === 'multifamily' || type === 'medical') ? 'office' : type;
   const sections = { industrial: 'sec-industrial', office: 'sec-office', retail: 'sec-retail', land: 'sec-land' };
   Object.entries(sections).forEach(([key, id]) => {
     const el = document.getElementById(id);
@@ -3362,7 +3356,7 @@ function onPropTypeChange() {
   document.getElementById('size-building').classList.toggle('visible', sectionType !== 'land');
   document.getElementById('size-land').classList.toggle('visible', sectionType === 'land');
 
-  // Show/hide project name for office/retail
+  // Show/hide project name for office/medical/retail
   setHiddenState(document.getElementById('field-project-name'), !(sectionType === 'office' || sectionType === 'retail'));
 
   // State field is now always visible
@@ -13513,6 +13507,33 @@ function addAiBadge(el) {
   return badge;
 }
 
+function normalizeAiSelectText(value) {
+  return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+function findSelectOptionForAiValue(select, value) {
+  const wanted = normalizeAiSelectText(value);
+  const opts = Array.from(select.options);
+  return opts.find(o => o.value === value) ||
+         opts.find(o => normalizeAiSelectText(o.value) === wanted) ||
+         opts.find(o => normalizeAiSelectText(o.textContent) === wanted);
+}
+
+function shouldApplyAiField(tab, key, el, oldVal) {
+  const existing = String(oldVal || '').trim();
+  if (!existing) return true;
+  if (el.classList.contains('ai-filled') || el.classList.contains('ai-smart')) return true;
+
+  if (tab === 'listing') {
+    const normalizedExisting = existing.toLowerCase();
+    if (key === 'propertyType' && normalizedExisting === 'industrial') return true;
+    if (key === 'transactionType' && normalizedExisting === 'lease') return true;
+    if (key === 'listingExpiration' && el.getAttribute('data-lbt-auto-expiry') === '1') return true;
+  }
+
+  return false;
+}
+
 function applyAiFields(tab, fields, options = {}) {
   const map = AI_FIELD_MAP[tab] || {};
   const sourceToken = options && typeof options.sourceToken === 'string' ? options.sourceToken : '';
@@ -13524,13 +13545,11 @@ function applyAiFields(tab, fields, options = {}) {
     const el = document.getElementById(elId);
     if (!el) return;
     const oldVal = el.value || '';
-    if (oldVal.trim() !== '') return; // don't overwrite existing values
+    if (!shouldApplyAiField(tab, key, el, oldVal)) return;
 
     if (el.tagName === 'SELECT') {
-      // Match option values case-insensitively so AI output ("Lease") matches option value ("lease")
-      const opts = Array.from(el.options);
-      const match = opts.find(o => o.value === value) ||
-                    opts.find(o => o.value.toLowerCase() === String(value).toLowerCase());
+      // Match option values and labels so AI output ("Medical") maps to option value ("medical").
+      const match = findSelectOptionForAiValue(el, value);
       if (!match) return; // skip if no matching option — don't leave the select in an invalid state
       el.value = match.value;
     } else {
@@ -13600,11 +13619,9 @@ function applyAiFieldsForce(tab, fields) {
     if (!elId) return;
     const el = document.getElementById(elId);
     if (!el) return;
-    if (el.value && el.value.trim() !== '') return; // still don't overwrite user input
+    if (!shouldApplyAiField(tab, key, el, el.value || '')) return;
     if (el.tagName === 'SELECT') {
-      const opts = Array.from(el.options);
-      const match = opts.find(o => o.value === value) ||
-                    opts.find(o => o.value.toLowerCase() === String(value).toLowerCase());
+      const match = findSelectOptionForAiValue(el, value);
       if (!match) return;
       el.value = match.value;
     } else {

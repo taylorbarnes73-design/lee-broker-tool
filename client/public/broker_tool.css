@@ -7142,16 +7142,14 @@ body.broker-active .sub-tab-bar {
 }
 
 #tab-listing .listing-type-grid {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
 
 #tab-listing .listing-type-opt {
-  min-height: 116px;
-  justify-content: flex-start;
-}
-
-#tab-listing .listing-type-opt .lto-sub {
-  max-width: 28ch;
+  min-height: 56px;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
 }
 
 #tab-listing .suite-table,

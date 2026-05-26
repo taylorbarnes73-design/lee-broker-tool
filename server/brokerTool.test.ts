@@ -11,6 +11,47 @@ function collectMatches(pattern: RegExp) {
   return [...brokerToolHtml.matchAll(pattern)].map(match => match[1]);
 }
 
+function extractFunctionSource(name: string) {
+  const start = brokerToolHtml.indexOf(`function ${name}(`);
+  if (start === -1) throw new Error(`Missing function ${name}`);
+  const bodyStart = brokerToolHtml.indexOf("{", start);
+  let depth = 0;
+  for (let i = bodyStart; i < brokerToolHtml.length; i++) {
+    const char = brokerToolHtml[i];
+    if (char === "{") depth++;
+    if (char === "}") depth--;
+    if (depth === 0) return brokerToolHtml.slice(start, i + 1);
+  }
+  throw new Error(`Could not parse function ${name}`);
+}
+
+function getAiApplyHelpers() {
+  const source = [
+    "normalizeAiSelectText",
+    "findSelectOptionForAiValue",
+    "shouldApplyAiField",
+  ]
+    .map(extractFunctionSource)
+    .join("\n");
+  return new Function(
+    `${source}\nreturn { normalizeAiSelectText, findSelectOptionForAiValue, shouldApplyAiField };`
+  )() as {
+    findSelectOptionForAiValue: (
+      select: { options: Array<{ value: string; textContent: string }> },
+      value: string
+    ) => { value: string; textContent: string } | undefined;
+    shouldApplyAiField: (
+      tab: string,
+      key: string,
+      el: {
+        classList: { contains: (className: string) => boolean };
+        getAttribute: (name: string) => string | null;
+      },
+      oldVal: string
+    ) => boolean;
+  };
+}
+
 describe("broker_tool.html wiring", () => {
   it("keeps every inline onclick handler bound to a real function", () => {
     const handlers = collectMatches(/onclick="([A-Za-z0-9_]+)\(/g);
@@ -47,5 +88,42 @@ describe("broker_tool.html wiring", () => {
     );
 
     expect(missingPages).toEqual([]);
+  });
+
+  it("keeps Listing Entry property type cards concise and includes Medical", () => {
+    const pickerStart = brokerToolHtml.indexOf('id="listing-type-picker"');
+    const pickerEnd = brokerToolHtml.indexOf('id="l-prop-type"', pickerStart);
+    const pickerHtml = brokerToolHtml.slice(pickerStart, pickerEnd);
+
+    expect(pickerHtml).toContain('data-type="medical"');
+    expect(pickerHtml).toContain('<span class="lto-title">Medical</span>');
+    expect(pickerHtml).not.toContain("lto-sub");
+  });
+
+  it("lets AI overwrite untouched Listing Entry defaults and match select labels", () => {
+    const { findSelectOptionForAiValue, shouldApplyAiField } = getAiApplyHelpers();
+    const untouched = {
+      classList: { contains: () => false },
+      getAttribute: () => null,
+    };
+
+    expect(
+      shouldApplyAiField("listing", "propertyType", untouched, "industrial")
+    ).toBe(true);
+    expect(shouldApplyAiField("listing", "propertyType", untouched, "office")).toBe(
+      false
+    );
+
+    const match = findSelectOptionForAiValue(
+      {
+        options: [
+          { value: "industrial", textContent: "Industrial" },
+          { value: "medical", textContent: "Medical" },
+        ],
+      },
+      "Medical"
+    );
+
+    expect(match?.value).toBe("medical");
   });
 });

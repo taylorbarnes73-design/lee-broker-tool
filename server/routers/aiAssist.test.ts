@@ -141,6 +141,31 @@ describe("aiAssist.parse", () => {
     expect(result.fields.rateSfMo).toBeUndefined();
   });
 
+  it("keeps Medical as a listing property type from AI responses", async () => {
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              propertyType: "Medical",
+              transactionType: "Lease",
+              city: "Irvine",
+            }),
+          },
+        },
+      ],
+    } as any);
+
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.parse({
+      description: "Medical office lease in Irvine",
+      tab: "listing",
+    });
+
+    expect(result.fields.propertyType).toBe("Medical");
+    expect(result.fields.transactionType).toBe("Lease");
+  });
+
   it("handles malformed JSON from LLM gracefully", async () => {
     vi.mocked(invokeLLM).mockResolvedValueOnce({
       choices: [{ message: { content: "not valid json {{{" } }],

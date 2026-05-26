@@ -113,7 +113,14 @@ const propertyTypeMap: Record<string, string> = {
   industrial: "Industrial",
   office: "Office",
   retail: "Retail",
+  medical: "Medical",
+  "medical office": "Medical",
+  healthcare: "Medical",
+  "health care": "Medical",
   land: "Land",
+  multifamily: "Multi-Family",
+  "multi family": "Multi-Family",
+  "multi-family": "Multi-Family",
   other: "Other",
 };
 
@@ -712,7 +719,7 @@ CRITICAL RULES — follow exactly:
 - Include ONLY fields you can extract with high confidence. Omit uncertain fields entirely.
 - Monetary values: numbers as strings, no $ or commas. "1.25" not "$1.25/SF".
 - Dates: MM/DD/YYYY format only.
-- Property type: exactly one of Industrial, Office, Retail, Land, Other.
+- Property type: exactly one of Industrial, Office, Retail, Medical, Land, Multi-Family, Other.
 - Transaction type: exactly Lease or Sale.
 - Representation type: Tenant Rep, Landlord Rep, Buyer Rep, Seller Rep, or Dual.
 - Term: integer months as string. "60" = 5 years, "36" = 3 years. "5 years" → "60".
@@ -737,7 +744,7 @@ CRITICAL RULES — follow exactly:
 - Building/suite SF: numeric string without commas. "12,500 SF" → "12500".
 - Asking price for sales: numeric string. "$2,500,000" → "2500000".
 - Dates: MM/DD/YYYY format.
-- Property type: exactly one of Industrial, Office, Retail, Land, Other.
+- Property type: exactly one of Industrial, Office, Retail, Medical, Land, Multi-Family, Other.
 - Transaction type: Lease or Sale.
 - Lease type: NNN, FSG, MG, Gross, or Net.
 - Term: integer months as string if stated. "5 years" → "60".
@@ -760,7 +767,7 @@ CRITICAL RULES — follow exactly:
 - Monetary values: numeric strings without $ or commas. "$1.25/SF/Mo" -> "1.25".
 - Building/suite/deal SF: numeric string without commas. "12,500 SF" -> "12500".
 - Dates: MM/DD/YYYY format.
-- Property type: exactly one of Industrial, Office, Retail, Land, Other.
+- Property type: exactly one of Industrial, Office, Retail, Medical, Land, Multi-Family, Other.
 - Transaction type: Lease or Sale.
 - Representation type: Tenant Rep, Landlord Rep, Buyer Rep, Seller Rep, or Dual.
 - Lease type: NNN, FSG, MG, Gross, or Net.
