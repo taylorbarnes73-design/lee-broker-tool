@@ -3,7 +3,7 @@ import { hash } from "bcryptjs";
 import { and, asc, count, desc, eq, ne, or, like, sql, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/mysql-core";
 import type { Request } from "express";
-import { appUsers, auditLog } from "../../drizzle/schema";
+import { appUsers, auditLog, users } from "../../drizzle/schema";
 import type { PlatformAuthUser } from "../auth/platformAuthTypes";
 import { writeAuditLog } from "../auth/writeAuditLog";
 import { getDb } from "../db";
@@ -64,74 +64,203 @@ function likePattern(search: string): string | null {
   return `%${t}%`;
 }
 
-export async function listUsers(db: AppDb, query: ListUsersQuery) {
-  const creator = alias(appUsers, "creator");
-  const page = query.page;
-  const pageSize = query.page_size;
-  const offset = (page - 1) * pageSize;
+function sortText(value: string | null | undefined): string {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function normalizeLegacyRole(role: string | null | undefined): "admin" | "broker" {
+  return role === "admin" ? "admin" : "broker";
+}
+
+function sanitizeLegacyUsername(value: string): string {
+  const compact = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
+  const withLetterPrefix = /^[a-z]/.test(compact) ? compact : `user-${compact || "legacy"}`;
+  return withLetterPrefix.slice(0, 31);
+}
+
+function deriveLegacyUsername(row: {
+  id: number;
+  email: string | null;
+  openId: string;
+}) {
+  const emailLocalPart = row.email?.split("@")[0] ?? "";
+  if (emailLocalPart.trim()) return sanitizeLegacyUsername(emailLocalPart);
+  const openIdTail = row.openId.includes(":") ? row.openId.split(":").pop() ?? row.openId : row.openId;
+  const candidate = openIdTail.includes("@") ? openIdTail.split("@")[0] : openIdTail;
+  return sanitizeLegacyUsername(candidate || `legacy-${row.id}`);
+}
+
+function publicLegacyUser(row: {
+  id: number;
+  openId: string;
+  name: string | null;
+  email: string | null;
+  role: string;
+  createdAt: Date | string | number;
+  lastSignedIn: Date | string | number;
+}) {
+  const role = normalizeLegacyRole(row.role);
+  return {
+    id: `legacy:${row.id}`,
+    email: row.email ?? "",
+    username: deriveLegacyUsername(row),
+    full_name: row.name?.trim() || row.email?.trim() || row.openId || `Legacy User ${row.id}`,
+    role,
+    office: null,
+    phone: null,
+    is_active: true,
+    last_login_at: iso(row.lastSignedIn),
+    created_at: iso(row.createdAt)!,
+    created_by_name: null,
+    can_manage: false,
+  };
+}
+
+async function listLegacyUsers(db: AppDb, query: ListUsersQuery) {
+  if (query.is_active === "false" || query.role === "readonly") {
+    return {
+      users: [],
+      total: 0,
+      page: query.page,
+      page_size: query.page_size,
+      active_admin_count: 0,
+    };
+  }
 
   const conditions: SQL[] = [];
   const pat = query.search ? likePattern(query.search) : null;
   if (pat) {
-    conditions.push(
-      or(like(appUsers.username, pat), like(appUsers.email, pat), like(appUsers.fullName, pat))!
-    );
+    conditions.push(or(like(users.name, pat), like(users.email, pat), like(users.openId, pat))!);
   }
-  if (query.role) {
-    conditions.push(eq(appUsers.role, query.role));
-  }
-  if (query.is_active !== undefined) {
-    conditions.push(eq(appUsers.isActive, query.is_active === "true"));
-  }
+  if (query.role === "admin") conditions.push(eq(users.role, "admin"));
+  if (query.role === "broker") conditions.push(eq(users.role, "user"));
   const whereClause = conditions.length ? and(...conditions) : undefined;
-
-  const totalRow = await db
-    .select({ c: count() })
-    .from(appUsers)
-    .where(whereClause);
-  const total = Number(totalRow[0]?.c ?? 0);
-
-  const activeAdminsRow = await db
-    .select({ c: count() })
-    .from(appUsers)
-    .where(and(eq(appUsers.role, "admin"), eq(appUsers.isActive, true)));
-  const active_admin_count = Number(activeAdminsRow[0]?.c ?? 0);
-
-  const orderBy =
-    query.sort === "name_asc"
-      ? [asc(appUsers.fullName), asc(appUsers.email)]
-      : query.sort === "last_login"
-        ? [asc(sql`(${appUsers.lastLoginAt} IS NULL)`), desc(appUsers.lastLoginAt)]
-        : [desc(appUsers.createdAt)];
 
   const rows = await db
     .select({
-      id: appUsers.id,
-      email: appUsers.email,
-      username: appUsers.username,
-      fullName: appUsers.fullName,
-      role: appUsers.role,
-      office: appUsers.office,
-      phone: appUsers.phone,
-      isActive: appUsers.isActive,
-      lastLoginAt: appUsers.lastLoginAt,
-      createdAt: appUsers.createdAt,
-      createdByName: creator.fullName,
+      id: users.id,
+      openId: users.openId,
+      name: users.name,
+      email: users.email,
+      role: users.role,
+      createdAt: users.createdAt,
+      lastSignedIn: users.lastSignedIn,
     })
-    .from(appUsers)
-    .leftJoin(creator, eq(appUsers.createdBy, creator.id))
-    .where(whereClause)
-    .orderBy(...orderBy)
-    .limit(pageSize)
-    .offset(offset);
+    .from(users)
+    .where(whereClause);
+
+  const activeAdminsRow = await db
+    .select({ c: count() })
+    .from(users)
+    .where(eq(users.role, "admin"));
+  const active_admin_count = Number(activeAdminsRow[0]?.c ?? 0);
+
+  const sorted = rows.slice().sort((a, b) => {
+    if (query.sort === "name_asc") {
+      return (
+        sortText(a.name || a.email || a.openId).localeCompare(sortText(b.name || b.email || b.openId)) ||
+        sortText(a.email).localeCompare(sortText(b.email))
+      );
+    }
+    if (query.sort === "last_login") {
+      const aTime = a.lastSignedIn ? new Date(a.lastSignedIn).getTime() : -Infinity;
+      const bTime = b.lastSignedIn ? new Date(b.lastSignedIn).getTime() : -Infinity;
+      return bTime - aTime;
+    }
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  const total = sorted.length;
+  const offset = (query.page - 1) * query.page_size;
+  const pageRows = sorted.slice(offset, offset + query.page_size);
 
   return {
-    users: rows.map(r => publicUser(r)),
+    users: pageRows.map(r => publicLegacyUser(r)),
     total,
-    page,
-    page_size: pageSize,
+    page: query.page,
+    page_size: query.page_size,
     active_admin_count,
   };
+}
+
+export async function listUsers(db: AppDb, query: ListUsersQuery) {
+  try {
+    const creator = alias(appUsers, "creator");
+    const page = query.page;
+    const pageSize = query.page_size;
+    const offset = (page - 1) * pageSize;
+
+    const conditions: SQL[] = [];
+    const pat = query.search ? likePattern(query.search) : null;
+    if (pat) {
+      conditions.push(
+        or(like(appUsers.username, pat), like(appUsers.email, pat), like(appUsers.fullName, pat))!
+      );
+    }
+    if (query.role) {
+      conditions.push(eq(appUsers.role, query.role));
+    }
+    if (query.is_active !== undefined) {
+      conditions.push(eq(appUsers.isActive, query.is_active === "true"));
+    }
+    const whereClause = conditions.length ? and(...conditions) : undefined;
+
+    const totalRow = await db
+      .select({ c: count() })
+      .from(appUsers)
+      .where(whereClause);
+    const total = Number(totalRow[0]?.c ?? 0);
+
+    const activeAdminsRow = await db
+      .select({ c: count() })
+      .from(appUsers)
+      .where(and(eq(appUsers.role, "admin"), eq(appUsers.isActive, true)));
+    const active_admin_count = Number(activeAdminsRow[0]?.c ?? 0);
+
+    const orderBy =
+      query.sort === "name_asc"
+        ? [asc(appUsers.fullName), asc(appUsers.email)]
+        : query.sort === "last_login"
+          ? [asc(sql`(${appUsers.lastLoginAt} IS NULL)`), desc(appUsers.lastLoginAt)]
+          : [desc(appUsers.createdAt)];
+
+    const rows = await db
+      .select({
+        id: appUsers.id,
+        email: appUsers.email,
+        username: appUsers.username,
+        fullName: appUsers.fullName,
+        role: appUsers.role,
+        office: appUsers.office,
+        phone: appUsers.phone,
+        isActive: appUsers.isActive,
+        lastLoginAt: appUsers.lastLoginAt,
+        createdAt: appUsers.createdAt,
+        createdByName: creator.fullName,
+      })
+      .from(appUsers)
+      .leftJoin(creator, eq(appUsers.createdBy, creator.id))
+      .where(whereClause)
+      .orderBy(...orderBy)
+      .limit(pageSize)
+      .offset(offset);
+
+    return {
+      users: rows.map(r => publicUser(r)),
+      total,
+      page,
+      page_size: pageSize,
+      active_admin_count,
+    };
+  } catch (error) {
+    console.warn("Admin users list fallback to legacy users:", error);
+    return listLegacyUsers(db, query);
+  }
 }
 
 export async function getUserDetail(db: AppDb, id: string) {

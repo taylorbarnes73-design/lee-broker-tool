@@ -86,6 +86,12 @@ function Empty({ children }: { children: React.ReactNode }) {
   );
 }
 
+function formatDateTime(value: string | null | undefined): string {
+  if (!value) return "—";
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? "—" : parsed.toLocaleString();
+}
+
 function StatCard({ label, value, hint, loading }: { label: string; value: number | string; hint?: string; loading?: boolean }) {
   return (
     <Card padding="lg">
@@ -188,7 +194,7 @@ function BrokerSubmissions() {
         <Link key={s.id} href={`/portal/submissions/${s.id}`} style={{ textDecoration: "none", display: "flex", flexDirection: "column", gap: 4, padding: "12px 14px", borderRadius: 10, border: "1px solid var(--ink-200)", background: "white", color: "inherit" }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
             <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>#{s.id} · {s.reference || "(untitled)"}</div>
-            <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>{new Date(s.createdAt).toLocaleString()}</div>
+            <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>{formatDateTime(s.createdAt)}</div>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <span style={{ fontSize: 12, color: "var(--ink-500)" }}>{formatFormType(s.formType)}</span>
@@ -251,6 +257,7 @@ function AdminSubmissions() {
           <option value="voucher">Commission voucher</option>
           <option value="listing">Listing</option>
           <option value="sign">Sign request</option>
+          <option value="comp">Comp input</option>
           <option value="lease">Lease</option>
           <option value="sale">Sale</option>
         </select>
@@ -290,7 +297,7 @@ function AdminSubmissions() {
                   )}
                 </div>
               </div>
-              <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>{new Date(s.createdAt).toLocaleString()}</div>
+              <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>{formatDateTime(s.createdAt)}</div>
             </Link>
           ))}
         </div>
@@ -389,7 +396,7 @@ function AdminInbox() {
                   {r.fromEmail && <span style={{ fontSize: 12, color: "var(--ink-500)" }}>From: {r.fromEmail}</span>}
                 </div>
               </div>
-              <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>{new Date(r.createdAt).toLocaleString()}</div>
+              <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>{formatDateTime(r.createdAt)}</div>
             </Link>
           ))}
         </div>

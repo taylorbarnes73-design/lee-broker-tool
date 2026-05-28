@@ -330,6 +330,17 @@ function Router() {
           <PortalAdminUsers />
         </AdminPortalRoute>
       </Route>
+      <Route path="/portal/admin/audit-log">
+        <AdminPortalRoute>
+          <Redirect to="/portal/admin/users" />
+        </AdminPortalRoute>
+      </Route>
+      <Route path="/admin/audit-log">
+        <AdminPortalRoute>
+          <Redirect to="/portal/admin/users" />
+        </AdminPortalRoute>
+      </Route>
+
       {/* Tools group */}
       <Route path="/portal/admin/dealius-tools">
         <AdminPortalRoute>
