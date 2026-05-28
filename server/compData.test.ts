@@ -86,6 +86,7 @@ describe("comp data normalization", () => {
     expect(normalizeCompDateValue("2/10/26")).toBe("2026-02-10");
     expect(normalizeCompDateValue("20260210")).toBe("2026-02-10");
     expect(normalizeCompDateValue("02/10/0026")).toBe("2026-02-10");
+    expect(abbreviateRentTypeForReport("GRS")).toBe("G");
 
     const record = normalizeLeaseCompRecord(
       {

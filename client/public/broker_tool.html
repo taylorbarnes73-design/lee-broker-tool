@@ -13447,23 +13447,27 @@ const AI_FIELD_MAP = {
   voucher: {
     representationType: 'v-rep-type',
     clientName: 'v-on-behalf',
-    transactionType: 'v-trans-type',
+    transactionType: 'v-txn-type',
+    propertyType: 'v-prop-type',
     address: 'v-address',
     city: 'v-city',
     state: 'v-state',
     zip: 'v-zip',
-    dealSf: 'v-deal-sf',
-    commissionRate: 'v-comm-rate',
-    term: 'v-term',
-    commencementDate: 'v-commence',
-    expirationDate: 'v-expire',
-    baseRent: 'v-base-rent',
-    lessorName: 'v-lessor-name',
-    lesseeName: 'v-lessee-name',
+    suite: 'v-suite',
+    dealSf: 'v-l-dealsf',
+    commissionRate: 'v-l-comm-rate',
+    term: 'v-l-term',
+    commencementDate: 'v-l-start',
+    expirationDate: 'v-l-end',
+    baseRent: 'v-l-rate',
+    leaseType: 'v-l-rate-type',
+    lessorName: 'v-ls-company',
+    lesseeName: 'v-lb-company',
     listingAgentName: 'v-la-name',
     procuringAgentName: 'v-pa-name',
-    totalConsideration: 'v-total-consideration',
-    notes: 'v-notes',
+    totalConsideration: 'v-s-price',
+    salePrice: 'v-s-price',
+    notes: 'v-inv-instructions',
   },
   sign: {
     propertyAddress: 's-address',
@@ -13519,6 +13523,18 @@ function findSelectOptionForAiValue(select, value) {
          opts.find(o => normalizeAiSelectText(o.textContent) === wanted);
 }
 
+function normalizeAiDateValue(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+  const mmddyyyy = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (mmddyyyy) {
+    const [, mm, dd, yyyy] = mmddyyyy;
+    return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+  }
+  return '';
+}
+
 function shouldApplyAiField(tab, key, el, oldVal) {
   const existing = String(oldVal || '').trim();
   if (!existing) return true;
@@ -13529,6 +13545,15 @@ function shouldApplyAiField(tab, key, el, oldVal) {
     if (key === 'propertyType' && normalizedExisting === 'industrial') return true;
     if (key === 'transactionType' && normalizedExisting === 'lease') return true;
     if (key === 'listingExpiration' && el.getAttribute('data-lbt-auto-expiry') === '1') return true;
+  }
+
+  if (tab === 'voucher') {
+    const normalizedExisting = existing.toLowerCase();
+    if (key === 'representationType' && normalizedExisting === 'tenant_rep') return true;
+    if (key === 'transactionType' && normalizedExisting === 'lease') return true;
+    if (key === 'propertyType' && normalizedExisting === 'industrial') return true;
+    if (key === 'state' && normalizedExisting === 'ca') return true;
+    if (key === 'leaseType' && normalizedExisting === 'nnn') return true;
   }
 
   return false;
@@ -13552,6 +13577,10 @@ function applyAiFields(tab, fields, options = {}) {
       const match = findSelectOptionForAiValue(el, value);
       if (!match) return; // skip if no matching option — don't leave the select in an invalid state
       el.value = match.value;
+    } else if (el.type === 'date') {
+      const normalizedDate = normalizeAiDateValue(value);
+      if (!normalizedDate) return;
+      el.value = normalizedDate;
     } else {
       el.value = value;
     }
@@ -13583,6 +13612,17 @@ function applyAiFields(tab, fields, options = {}) {
     try { onPropTypeChange(); } catch(e) {}
     try { syncListingGlance(); } catch(e) {}
     const flow = window.__stepFlows && window.__stepFlows['listing-main'];
+    if (flow && typeof flow.renderNav === 'function') flow.renderNav();
+  }
+
+  if (tab === 'voucher' && applied > 0) {
+    try { onVoucherTxnChange(); } catch(e) {}
+    try { syncVoucherDealAliases(); } catch(e) {}
+    try { calcVoucherLease(); } catch(e) {}
+    try { calcVoucherSale(); } catch(e) {}
+    try { calcCommSummary(); } catch(e) {}
+    try { syncDealGlance(); } catch(e) {}
+    const flow = window.__stepFlows && window.__stepFlows['voucher-main'];
     if (flow && typeof flow.renderNav === 'function') flow.renderNav();
   }
 
@@ -13624,6 +13664,10 @@ function applyAiFieldsForce(tab, fields) {
       const match = findSelectOptionForAiValue(el, value);
       if (!match) return;
       el.value = match.value;
+    } else if (el.type === 'date') {
+      const normalizedDate = normalizeAiDateValue(value);
+      if (!normalizedDate) return;
+      el.value = normalizedDate;
     } else {
       el.value = value;
     }
@@ -13638,6 +13682,14 @@ function applyAiFieldsForce(tab, fields) {
     el.dispatchEvent(new Event('input', { bubbles: true }));
     applied++;
   });
+  if (tab === 'voucher' && applied > 0) {
+    try { onVoucherTxnChange(); } catch(e) {}
+    try { syncVoucherDealAliases(); } catch(e) {}
+    try { calcVoucherLease(); } catch(e) {}
+    try { calcVoucherSale(); } catch(e) {}
+    try { calcCommSummary(); } catch(e) {}
+    try { syncDealGlance(); } catch(e) {}
+  }
   return applied;
 }
 

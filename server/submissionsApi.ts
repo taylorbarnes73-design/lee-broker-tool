@@ -3,7 +3,7 @@ import { z } from "zod/v4";
 import { nanoid } from "nanoid";
 import { getDb } from "./db";
 import { submissions, uploads } from "../drizzle/schema";
-import { eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { resolvePortalRequestUser } from "./auth/resolvePortalRequestUser";
 import { pushVoucherSubmissionToDealius, validateVoucherPayloadForDealiusPush } from "./services/dealiusPush";
 import { pushDealEntryToDealius, pushListingEntryToDealius, validateListingEntryForDealiusPush } from "./services/dealiusEntry";
@@ -31,14 +31,20 @@ type SubmissionAttachment = {
   downloadUrl: string;
 };
 
-function parseSubmissionPayload(raw: string | null | undefined): Record<string, unknown> {
-  if (!raw) return {};
+function parseSubmissionObject(value: unknown): Record<string, unknown> {
+  if (!value) return {};
+  if (typeof value === "object") return value as Record<string, unknown>;
+  if (typeof value !== "string") return {};
   try {
-    const parsed = JSON.parse(raw);
+    const parsed = JSON.parse(value);
     return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
   } catch {
     return {};
   }
+}
+
+function parseSubmissionPayload(raw: unknown): Record<string, unknown> {
+  return parseSubmissionObject(raw);
 }
 
 function readSubmissionFile(entry: unknown): {
@@ -156,6 +162,60 @@ function downloadFileName(filename: string): string {
   return filename.replace(/[^a-zA-Z0-9._-]/g, "_") || "attachment";
 }
 
+function firstNonEmptyString(...values: unknown[]): string | null {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function objectValue(obj: Record<string, unknown>, key: string): unknown {
+  return Object.prototype.hasOwnProperty.call(obj, key) ? obj[key] : undefined;
+}
+
+function pickSubmissionString(obj: Record<string, unknown>, keys: string[]): string | null {
+  for (const key of keys) {
+    const value = objectValue(obj, key);
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function toIsoString(value: Date | string | null | undefined): string | null {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value.toISOString();
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}
+
+function normalizeSubmissionFormType(
+  formType: string | null | undefined,
+  payload: Record<string, unknown>,
+  parsedFields: Record<string, unknown>
+): string {
+  const raw =
+    firstNonEmptyString(
+      formType,
+      pickSubmissionString(payload, ["formType", "type"]),
+      pickSubmissionString(parsedFields, ["formType", "type"])
+    ) ?? "item";
+  if (raw === "sign-request") return "sign";
+  if (raw === "listing modification" || raw === "listing-modification") return "listing-mod";
+  return raw;
+}
+
+function deriveSubmissionReference(
+  reference: string | null | undefined,
+  payload: Record<string, unknown>,
+  parsedFields: Record<string, unknown>
+): string | null {
+  return firstNonEmptyString(
+    reference,
+    pickSubmissionString(payload, ["reference", "propertyAddress", "address", "subject", "title", "dealName", "projectName"]),
+    pickSubmissionString(parsedFields, ["reference", "propertyAddress", "address", "subject", "title", "dealName", "projectName"])
+  );
+}
+
 // Support the "title/body" shape (preferred), and keep backward compatibility
 // for older portal clients that still send { formType, reference, payload }.
 const createSchema = z
@@ -258,72 +318,76 @@ submissionsApiRouter.get("/", async (req, res) => {
   const submittedByOpenIdFilter = String(req.query.submittedByOpenId ?? "").trim();
   const submittedByEmailFilter = String(req.query.submittedByEmail ?? "").trim();
 
-  const whereClauses: any[] = [];
+  const whereClauses: SQL[] = [];
   if (!isAdmin) {
-    whereClauses.push(sql`${submissions.submittedByOpenId} = ${user.openId}`);
-    if (statusFilter) whereClauses.push(sql`${submissions.status} = ${statusFilter}`);
-    if (formTypeFilter) whereClauses.push(sql`${submissions.formType} = ${formTypeFilter}`);
+    whereClauses.push(eq(submissions.submittedByOpenId, user.openId));
+    if (statusFilter) whereClauses.push(eq(submissions.status, statusFilter));
+    if (formTypeFilter) whereClauses.push(eq(submissions.formType, formTypeFilter));
   } else {
-    if (statusFilter) whereClauses.push(sql`${submissions.status} = ${statusFilter}`);
-    if (formTypeFilter) whereClauses.push(sql`${submissions.formType} = ${formTypeFilter}`);
-    if (submittedByOpenIdFilter) whereClauses.push(sql`${submissions.submittedByOpenId} = ${submittedByOpenIdFilter}`);
-    if (submittedByEmailFilter) whereClauses.push(sql`${submissions.submittedByEmail} = ${submittedByEmailFilter}`);
+    if (statusFilter) whereClauses.push(eq(submissions.status, statusFilter));
+    if (formTypeFilter) whereClauses.push(eq(submissions.formType, formTypeFilter));
+    if (submittedByOpenIdFilter) whereClauses.push(eq(submissions.submittedByOpenId, submittedByOpenIdFilter));
+    if (submittedByEmailFilter) whereClauses.push(eq(submissions.submittedByEmail, submittedByEmailFilter));
   }
 
-  const whereSql = whereClauses.length ? sql`where ${sql.join(whereClauses, sql` and `)}` : sql``;
+  const whereClause = whereClauses.length ? and(...whereClauses) : undefined;
 
-  const baseSql = includeQueue
-    ? sql`
-        with queue as (
-          select
-            id,
-            row_number() over (order by createdAt asc, id asc) as queuePosition
-          from submissions
-          where status in (${sql.join(ACTIVE_QUEUE_STATUSES.map(s => sql`${s}`), sql`, `)})
-        )
-        select s.*, q.queuePosition as queuePosition
-        from submissions s
-        left join queue q on q.id = s.id
-        ${whereSql}
-        order by s.createdAt desc
-        limit ${limit}
-      `
-    : sql`
-        select s.*
-        from submissions s
-        ${whereSql}
-        order by s.createdAt desc
-        limit ${limit}
-      `;
+  const rows = await db
+    .select()
+    .from(submissions)
+    .where(whereClause)
+    .orderBy(desc(submissions.createdAt), desc(submissions.id))
+    .limit(limit);
 
-  const result = await db.execute(baseSql);
-  const rows = (result as any)?.rows ?? result;
+  let queuePositionById = new Map<number, number>();
+  if (includeQueue) {
+    const activeQueueRows = await db
+      .select({ id: submissions.id })
+      .from(submissions)
+      .where(inArray(submissions.status, [...ACTIVE_QUEUE_STATUSES]))
+      .orderBy(asc(submissions.createdAt), asc(submissions.id));
+    queuePositionById = new Map(activeQueueRows.map((row, index) => [row.id, index + 1]));
+  }
 
   res.json({
     success: true,
-    data: rows.map(r => ({
-      id: r.id,
-      formType: r.formType,
-      status: r.status,
-      reference: r.reference,
-      submittedBy: r.submittedBy,
-      submittedByEmail: r.submittedByEmail,
-      submittedByOpenId: r.submittedByOpenId,
-      createdAt: r.createdAt,
-      updatedAt: r.updatedAt,
-      queuePosition: includeQueue ? (r as any).queuePosition ?? null : null,
-      source: (r as any).source ?? "tool",
-      sourceEmailWebLink: (r as any).source_email_web_link ?? (r as any).sourceEmailWebLink ?? null,
+    data: rows.map(row => {
+      const payload = parseSubmissionObject(row.payload);
+      const parsedFields = parseSubmissionObject(row.parsedFields);
+      return {
+        id: row.id,
+        formType: normalizeSubmissionFormType(row.formType, payload, parsedFields),
+        status: row.status,
+        reference: deriveSubmissionReference(row.reference, payload, parsedFields),
+        submittedBy:
+          firstNonEmptyString(
+            row.submittedBy,
+            pickSubmissionString(payload, ["brokerName", "submittedBy", "senderName"]),
+            pickSubmissionString(parsedFields, ["brokerName", "submittedBy", "senderName"])
+          ) ?? null,
+        submittedByEmail:
+          firstNonEmptyString(
+            row.submittedByEmail,
+            pickSubmissionString(payload, ["brokerEmail", "submittedByEmail", "senderEmail"]),
+            pickSubmissionString(parsedFields, ["brokerEmail", "submittedByEmail", "senderEmail"])
+          ) ?? null,
+        submittedByOpenId: row.submittedByOpenId,
+        createdAt: toIsoString(row.createdAt),
+        updatedAt: toIsoString(row.updatedAt),
+        queuePosition: includeQueue && isActiveQueueStatus(row.status) ? queuePositionById.get(row.id) ?? null : null,
+        source: row.source ?? "tool",
+        sourceEmailWebLink: row.sourceEmailWebLink ?? null,
       // Assignment fields — only surfaced to admins so broker-facing views don't leak who's working on what
-      ...(isAdmin
-        ? {
-            assignedTo: (r as any).assignedTo ?? null,
-            assignedAt: (r as any).assignedAt ?? null,
-            completedBy: (r as any).completedBy ?? null,
-            completedAt: (r as any).completedAt ?? null,
-          }
-        : {}),
-    })),
+        ...(isAdmin
+          ? {
+              assignedTo: row.assignedTo ?? null,
+              assignedAt: toIsoString(row.assignedAt),
+              completedBy: row.completedBy ?? null,
+              completedAt: toIsoString(row.completedAt),
+            }
+          : {}),
+      };
+    }),
   });
 });
 

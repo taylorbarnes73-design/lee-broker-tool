@@ -38,6 +38,7 @@ type AppUserRow = {
   last_login_at: string | null;
   created_at: string;
   created_by_name: string | null;
+  can_manage?: boolean;
 };
 
 type ListResponse = {
@@ -140,6 +141,10 @@ function RolePill({ role }: { role: PlatformRole }) {
       </Badge>
     );
   return <Badge tone="neutral">{roleLabel(role)}</Badge>;
+}
+
+function canManageUser(user: AppUserRow): boolean {
+  return user.can_manage !== false;
 }
 
 export default function PortalAdminUsers() {
@@ -428,54 +433,58 @@ export default function PortalAdminUsers() {
                           )}
                         </td>
                         <td style={{ padding: "10px 12px", textAlign: "right" }}>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                type="button"
-                                aria-label={`Actions for ${u.full_name}`}
-                                style={{
-                                  width: 36,
-                                  height: 36,
-                                  borderRadius: 8,
-                                  border: "1px solid var(--ink-200)",
-                                  background: "var(--ink-0)",
-                                  cursor: "pointer",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  color: "var(--ink-600)",
-                                }}
-                              >
-                                <Icons.MoreV size={18} />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="min-w-[180px]">
-                              <DropdownMenuItem onClick={() => setEditUser(u)}>Edit</DropdownMenuItem>
-                              {u.is_active ? (
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onClick={() => setDeactivateUser(u)}
-                                >
-                                  Deactivate
-                                </DropdownMenuItem>
-                              ) : (
-                                <DropdownMenuItem
-                                  className="text-[var(--ok-600)] focus:text-[var(--ok-600)]"
-                                  onClick={async () => {
-                                    const r = await adminFetch<AppUserRow>(`/api/admin/users/${u.id}/reactivate`, { method: "POST" });
-                                    if (!r.ok) {
-                                      toast.error(r.error.message, { duration: TOAST_MS });
-                                      return;
-                                    }
-                                    toast.success(`${u.full_name} is active again.`, { duration: TOAST_MS });
-                                    await loadList();
+                          {canManageUser(u) ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  type="button"
+                                  aria-label={`Actions for ${u.full_name}`}
+                                  style={{
+                                    width: 36,
+                                    height: 36,
+                                    borderRadius: 8,
+                                    border: "1px solid var(--ink-200)",
+                                    background: "var(--ink-0)",
+                                    cursor: "pointer",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    color: "var(--ink-600)",
                                   }}
                                 >
-                                  Reactivate
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                                  <Icons.MoreV size={18} />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="min-w-[180px]">
+                                <DropdownMenuItem onClick={() => setEditUser(u)}>Edit</DropdownMenuItem>
+                                {u.is_active ? (
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    onClick={() => setDeactivateUser(u)}
+                                  >
+                                    Deactivate
+                                  </DropdownMenuItem>
+                                ) : (
+                                  <DropdownMenuItem
+                                    className="text-[var(--ok-600)] focus:text-[var(--ok-600)]"
+                                    onClick={async () => {
+                                      const r = await adminFetch<AppUserRow>(`/api/admin/users/${u.id}/reactivate`, { method: "POST" });
+                                      if (!r.ok) {
+                                        toast.error(r.error.message, { duration: TOAST_MS });
+                                        return;
+                                      }
+                                      toast.success(`${u.full_name} is active again.`, { duration: TOAST_MS });
+                                      await loadList();
+                                    }}
+                                  >
+                                    Reactivate
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
+                            <span style={{ fontSize: 12, color: "var(--ink-500)" }}>Legacy</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -852,5 +861,4 @@ function DeactivateDialog({
     </Dialog>
   );
 }
-
 
