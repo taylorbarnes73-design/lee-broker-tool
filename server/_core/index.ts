@@ -99,7 +99,6 @@ async function runMigrations() {
 }
 
 async function startServer() {
-  await runMigrations();
   const app = express();
   const server = createServer(app);
   // Configure body parser with larger size limit for file uploads
@@ -112,6 +111,7 @@ async function startServer() {
   });
 
   // Health check endpoint for AWS Application Load Balancer
+  // Must be registered before migrations run so ECS health checks pass during startup
   app.get(["/health", "/api/health"], (_req, res) => {
     res.status(200).send("OK");
   });
@@ -241,9 +241,13 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  server.listen(port, () => {
+  await new Promise<void>(resolve => server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
-  });
+    resolve();
+  }));
+
+  // Run migrations after the server is already listening so ECS health checks pass during startup.
+  await runMigrations();
 
   // BrokerAdmin email ingest poller — only schedules if Graph credentials are configured.
   startBrokerAdminIngestScheduler().catch(err =>
