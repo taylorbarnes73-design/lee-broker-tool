@@ -66,8 +66,6 @@
   </button>
 
   <div class="broker-sidebar-brand">
-    <img class="broker-sidebar-logo" src="lee-newport-beach-fullcolor.png" alt="Lee &amp; Associates Newport Beach">
-    <div class="broker-sidebar-rule" aria-hidden="true"></div>
     <div class="broker-sidebar-subtitle">Broker Tool</div>
   </div>
 
@@ -262,7 +260,7 @@
         <div class="row c3 listing-pricing-row">
           <div class="field is-hidden" id="l-lease-term-custom-field"><label>Term (months)</label><input id="l-lease-term"></div>
           <div class="field"><label class="req">Lease Type</label>
-            <select id="l-lease-type">
+            <select id="l-lease-type" required>
               <option value="">— Select —</option>
               <option value="NNN">NNN</option><option value="FSG">FSG (Full Service Gross)</option><option value="MG">MG (Modified Gross)</option><option value="G">Gross</option><option value="N">Net</option><option value="MN">Modified Net</option>
             </select>
@@ -276,7 +274,7 @@
               </label>
               <span id="l-reveal-label" class="toggle-caption">Hidden from MLS</span>
             </div>
-            <div class="field-hint">Controls whether lease pricing appears in MLS exports.</div>
+            <div class="field-hint">Only turn this on when lease pricing is approved for MLS visibility.</div>
           </div>
         </div>
       </div>
@@ -316,7 +314,7 @@
               </label>
               <span id="l-reveal-label-sale" class="toggle-caption">Hidden from MLS</span>
             </div>
-            <div class="field-hint">Controls whether sale pricing appears in MLS exports.</div>
+            <div class="field-hint">Only turn this on when sale pricing is approved for MLS visibility.</div>
           </div>
         </div>
         <div class="row c2">
@@ -3100,6 +3098,7 @@ function bootstrapStepFlowFor(name) {
         stepAttr: 'data-vstep',
         previewFor: voucherStepPreview,
         canProceed: canProceedVoucherStep,
+        blockingMessage: getVoucherStepBlockingMessage,
         onStep: () => { try { syncDealGlance(); } catch(e) {} }
       });
     }
@@ -3112,6 +3111,7 @@ function bootstrapStepFlowFor(name) {
         stepAttr: 'data-lstep',
         previewFor: listingStepPreview,
         canProceed: canProceedListingStep,
+        blockingMessage: getListingStepBlockingMessage,
         onStep: () => { try { syncListingGlance(); } catch(e) {} }
       });
     }
@@ -3262,12 +3262,77 @@ function canProceedVoucherStep(index, card) {
   return voucherDocExecuted('agencyDisclosure') && voucherDocExecuted('listingAgreement');
 }
 
+function getVoucherStepBlockingMessage(index, card) {
+  if (!card) return 'Complete required items before continuing.';
+  const n = String(card.getAttribute('data-vstep') || '');
+  if (n !== '0') return 'Complete required items before continuing.';
+  if (voucherAnalysisStatus.state === 'analyzing') return 'Wait for document analysis to finish before continuing.';
+  if (!voucherTransactionRequiresComplianceDocs()) return '';
+  return 'Both Agency Disclosure and Listing Agreement must be executed before continuing.';
+}
+
+function isFieldControlMissing(control) {
+  if (!control) return true;
+  if (control.type === 'checkbox' || control.type === 'radio') return !control.checked;
+  return !String(control.value || '').trim();
+}
+
+function isVisibleRequiredField(field) {
+  if (!field || field.closest('.is-hidden') || field.hidden) return false;
+  if (typeof field.getClientRects === 'function' && field.getClientRects().length === 0) return false;
+  return true;
+}
+
+function cleanRequiredLabel(label) {
+  return String(label || '').replace(/\s*\*+\s*$/, '').trim();
+}
+
+function formatMissingRequiredFields(labels) {
+  const clean = labels.filter(Boolean);
+  if (!clean.length) return '';
+  if (clean.length === 1) return clean[0];
+  if (clean.length === 2) return clean[0] + ' and ' + clean[1];
+  const shown = clean.slice(0, 3);
+  const remaining = clean.length - shown.length;
+  if (remaining > 0) return shown.join(', ') + ', and ' + remaining + ' more';
+  return shown.slice(0, -1).join(', ') + ', and ' + shown[shown.length - 1];
+}
+
+function getMissingRequiredFieldLabels(card) {
+  if (!card) return [];
+  return Array.from(card.querySelectorAll('.field')).reduce((missing, field) => {
+    if (!isVisibleRequiredField(field)) return missing;
+    const label = field.querySelector('label.req');
+    if (!label) return missing;
+    const control = field.querySelector('input:not([type="hidden"]), select, textarea');
+    if (isFieldControlMissing(control)) missing.push(cleanRequiredLabel(label.textContent));
+    return missing;
+  }, []);
+}
+
 function canProceedListingStep(index, card) {
   if (!card) return true;
   const n = String(card.getAttribute('data-lstep') || '');
-  if (n !== '0') return true;
-  if (listingAnalysisStatus.state === 'analyzing') return false;
-  return listingDocumentIsExecuted('agencyDisclosure') && listingDocumentIsExecuted('listingAgreement');
+  if (n === '0') {
+    if (listingAnalysisStatus.state === 'analyzing') return false;
+    return listingDocumentIsExecuted('agencyDisclosure') && listingDocumentIsExecuted('listingAgreement');
+  }
+  if (n === '1') return getMissingRequiredFieldLabels(card).length === 0;
+  return true;
+}
+
+function getListingStepBlockingMessage(index, card) {
+  if (!card) return 'Complete required items before continuing.';
+  const n = String(card.getAttribute('data-lstep') || '');
+  if (n === '0') {
+    if (listingAnalysisStatus.state === 'analyzing') return 'Wait for document analysis to finish before continuing.';
+    return 'Agency Disclosure and Listing Agreement must be executed before continuing.';
+  }
+  if (n === '1') {
+    const missing = getMissingRequiredFieldLabels(card);
+    if (missing.length) return 'Complete ' + formatMissingRequiredFields(missing) + ' before continuing.';
+  }
+  return 'Complete required items before continuing.';
 }
 
 // Listing Glance — sidebar sync
@@ -4210,6 +4275,7 @@ function ensureBrokerStepper(flow) {
       const label = getBrokerCardHeading(card, 'Step ' + (idx + 1));
       item.querySelector('.stepper-label').textContent = label;
       item.title = label;
+      item.setAttribute('aria-label', 'Step ' + (idx + 1) + ': ' + label);
       item.addEventListener('click', () => flow.go(idx));
       stepper.appendChild(item);
       if (idx < flow.cards.length - 1) {
@@ -4220,13 +4286,20 @@ function ensureBrokerStepper(flow) {
     });
   }
 
+  const windowSize = Math.min(2, flow.cards.length);
+  const windowStart = Math.min(flow.current, Math.max(flow.cards.length - windowSize, 0));
+
   stepper.querySelectorAll('.stepper-item').forEach((item, idx) => {
+    const isWindowVisible = idx >= windowStart && idx < windowStart + windowSize;
     item.classList.toggle('done', idx < flow.current);
     item.classList.toggle('current', idx === flow.current);
+    item.classList.toggle('is-window-visible', isWindowVisible);
+    item.setAttribute('aria-current', idx === flow.current ? 'step' : 'false');
     if (typeof flow.canAdvanceTo === 'function') item.disabled = !flow.canAdvanceTo(idx);
   });
   stepper.querySelectorAll('.stepper-bar').forEach((bar, idx) => {
     bar.classList.toggle('done', idx < flow.current);
+    bar.classList.toggle('is-window-visible', idx >= windowStart && idx < windowStart + windowSize - 1);
   });
 }
 
@@ -4333,10 +4406,19 @@ function initStepFlow(opts) {
           nextBtn.className = 'btn btn-red';
           nextBtn.textContent = 'Continue →';
           const canProceed = (typeof opts.canProceed === 'function') ? !!opts.canProceed(idx, c, this) : true;
+          const blockMessage = (typeof opts.blockingMessage === 'function')
+            ? opts.blockingMessage(idx, c, this)
+            : 'Complete required items before continuing.';
           nextBtn.disabled = !canProceed;
-          if (!canProceed) nextBtn.title = 'Complete required items before continuing.';
+          if (!canProceed) nextBtn.title = blockMessage;
           nextBtn.onclick = () => this.next();
           right.appendChild(nextBtn);
+          if (!canProceed) {
+            const hint = document.createElement('div');
+            hint.className = 'step-nav-blocker';
+            hint.textContent = blockMessage;
+            right.appendChild(hint);
+          }
         }
         nav.appendChild(left);
         nav.appendChild(count);
@@ -13856,11 +13938,23 @@ function setQueueStatus(message, isError) {
 function renderBrokerQueueError() {
   const list = document.getElementById('broker-queue-list');
   setQueueStatus('We couldn’t load your active queue right now. Try refreshing again in a moment.', true);
+  const btn = document.getElementById('btn-broker-queue-refresh');
+  if (btn) {
+    btn.classList.add('queue-retry-ready');
+    const label = btn.querySelector('.btn-label');
+    if (label) label.textContent = 'Try Again';
+  }
   if (!list) return;
   list.innerHTML = '<div class="empty-state queue-empty"><div class="empty-icon"></div><h3>Queue unavailable</h3><p>Your submissions are still saved, but the live queue could not be loaded right now.</p><button type="button" class="btn btn-gray btn-sm" onclick="refreshBrokerQueue()">Try Again</button></div>';
 }
 
 function renderBrokerQueue(data) {
+  const refreshBtn = document.getElementById('btn-broker-queue-refresh');
+  if (refreshBtn) {
+    refreshBtn.classList.remove('queue-retry-ready');
+    const label = refreshBtn.querySelector('.btn-label');
+    if (label) label.textContent = label.dataset.idle || 'Refresh Queue';
+  }
   const requests = Array.isArray(data?.requests) ? data.requests : [];
   const totalActive = Number(data?.totalActive ?? data?.totalPending ?? 0) || 0;
   const positions = requests.map(item => Number(item.position)).filter(Number.isFinite);
@@ -13929,6 +14023,7 @@ async function refreshBrokerQueue() {
   if (btn) {
     const label = btn.querySelector('.btn-label');
     if (label && !label.dataset.idle) label.dataset.idle = label.textContent;
+    btn.classList.remove('queue-retry-ready');
     setBtnLoading(btn, true, 'Refreshing…');
   }
   setQueueStatus('Loading queue...');

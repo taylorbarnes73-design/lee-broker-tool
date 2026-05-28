@@ -3444,7 +3444,7 @@ body {
   color: #fff;
   border-bottom: 1px solid var(--ink-800);
   box-shadow: none;
-  padding: 14px 28px;
+  padding: 18px 32px;
   backdrop-filter: none;
 }
 .header-main { gap: 18px; }
@@ -3472,14 +3472,14 @@ body {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: .22em;
-  margin: 0;
+  margin: 0 0 3px;
 }
 .header h1 {
   color: #fff;
   font-size: 20px;
   font-weight: 700;
   letter-spacing: -.02em;
-  line-height: 1.1;
+  line-height: 1.18;
   margin: 0;
 }
 .header .sub {
@@ -4481,10 +4481,32 @@ body {
   border-top: 1px solid var(--border, #E4E5E9);
 }
 .step-nav .step-nav-left { display: flex; gap: 8px; }
-.step-nav .step-nav-right { display: flex; gap: 8px; }
+.step-nav .step-nav-right {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  max-width: 420px;
+}
 .step-nav .step-count {
   font-size: 11px; font-weight: 700; color: #6b7178;
   letter-spacing: .06em; text-transform: uppercase;
+}
+.step-nav-blocker {
+  flex: 1 1 100%;
+  color: #6B7178;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: right;
+}
+
+.step-nav .btn:disabled {
+  background: #D7DBE1;
+  border-color: #D7DBE1;
+  color: #6B7178;
+  box-shadow: none;
+  opacity: 1;
+  transform: none;
 }
 
 
@@ -4499,6 +4521,18 @@ body {
 .step-flow .card[data-vstep].step--current > *,
 .step-flow .card[data-lstep].step--current > *,
 .step-flow .card[data-sstep].step--current > * { display: revert; }
+.step-flow .card[data-vstep].step--current > .row:not(.is-hidden),
+.step-flow .card[data-lstep].step--current > .row:not(.is-hidden),
+.step-flow .card[data-sstep].step--current > .row:not(.is-hidden) { display: grid; }
+.step-flow .card[data-vstep].step--current > .field:not(.is-hidden),
+.step-flow .card[data-lstep].step--current > .field:not(.is-hidden),
+.step-flow .card[data-sstep].step--current > .field:not(.is-hidden) { display: flex; }
+.step-flow .card[data-vstep].step--current > .type-section:not(.visible),
+.step-flow .card[data-lstep].step--current > .type-section:not(.visible),
+.step-flow .card[data-sstep].step--current > .type-section:not(.visible) { display: none; }
+.step-flow .card[data-vstep].step--current > .type-section.visible:not(.is-hidden),
+.step-flow .card[data-lstep].step--current > .type-section.visible:not(.is-hidden),
+.step-flow .card[data-sstep].step--current > .type-section.visible:not(.is-hidden) { display: block; }
 .step-flow .card[data-vstep].step--current > .is-hidden,
 .step-flow .card[data-lstep].step--current > .is-hidden,
 .step-flow .card[data-sstep].step--current > .is-hidden { display: none; }
@@ -6559,9 +6593,8 @@ a:hover {
 #tab-sign .stepper,
 #tab-voucher .stepper {
   justify-content: flex-start;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 4px;
+  overflow: visible;
+  padding-bottom: 0;
   scrollbar-width: none;
 }
 
@@ -6574,15 +6607,31 @@ a:hover {
 #tab-listing .stepper-item,
 #tab-sign .stepper-item,
 #tab-voucher .stepper-item {
-  flex: 0 0 auto;
+  display: none;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 6px 8px;
+}
+
+#tab-listing .stepper-item.is-window-visible,
+#tab-sign .stepper-item.is-window-visible,
+#tab-voucher .stepper-item.is-window-visible {
+  display: inline-flex;
 }
 
 #tab-listing .stepper-bar,
 #tab-sign .stepper-bar,
 #tab-voucher .stepper-bar {
-  flex: 0 0 28px;
-  min-width: 28px;
-  margin: 0 10px;
+  display: none;
+  flex: 0 0 48px;
+  min-width: 48px;
+  margin: 0 12px;
+}
+
+#tab-listing .stepper-bar.is-window-visible,
+#tab-sign .stepper-bar.is-window-visible,
+#tab-voucher .stepper-bar.is-window-visible {
+  display: block;
 }
 
 #tab-listing .stepper-label,
@@ -6590,8 +6639,12 @@ a:hover {
 #tab-voucher .stepper-label {
   font-size: 10.5px;
   letter-spacing: 0.06em;
-  max-width: 220px;
+  max-width: none;
   line-height: 1.25;
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+  overflow-wrap: break-word;
 }
 
 .card,
@@ -7079,21 +7132,9 @@ body.broker-active .sub-tab-bar {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
-  padding: 4px 6px 14px;
-  margin-bottom: 6px;
-}
-
-.broker-sidebar-logo {
-  height: 30px;
-  width: auto;
-}
-
-.broker-sidebar-rule {
-  width: 100%;
-  height: 1px;
-  background: var(--text2);
-  opacity: 0.3;
+  padding: 4px 6px 12px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
 }
 
 .broker-sidebar-subtitle {
@@ -7115,6 +7156,7 @@ body.broker-active .sub-tab-bar {
   display: flex;
   align-items: center;
   gap: 10px;
+  position: relative;
   padding: 9px 12px;
   border-radius: 8px;
   border-bottom: none !important;
@@ -7136,10 +7178,12 @@ body.broker-active .sub-tab-bar {
 }
 
 .broker-sidebar .tab.active {
-  background: rgba(152, 0, 46, 0.11);
-  color: var(--red);
+  background: rgba(152, 0, 46, 0.13);
+  color: var(--lee-crimson);
   border-bottom: none !important;
   border-radius: 8px;
+  box-shadow: inset 3px 0 0 var(--lee-crimson);
+  font-weight: 800;
 }
 
 .broker-sidebar .tab svg {
@@ -7310,7 +7354,30 @@ body.broker-active .sub-tab-bar {
 
 #tab-listing .sub-tab-bar {
   padding: 0 0 8px;
-  margin-bottom: 4px;
+  margin-bottom: 10px;
+}
+
+#tab-listing .sub-tab {
+  min-height: 40px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  border-color: #D9DDE3;
+  background: #fff;
+  color: #4E545B;
+  font-weight: 700;
+}
+
+#tab-listing .sub-tab:hover {
+  background: #F8F9FB;
+  border-color: #C8CDD3;
+  color: #0F1419;
+}
+
+#tab-listing .sub-tab.active {
+  background: var(--lee-crimson);
+  border-color: var(--lee-crimson);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(152, 0, 46,.16), 0 6px 14px rgba(152, 0, 46,.14);
 }
 
 #tab-listing .broker-page-head {
@@ -7333,19 +7400,30 @@ body.broker-active .sub-tab-bar {
   align-items: end;
 }
 
+#tab-listing .row.c-addr {
+  grid-template-columns: minmax(0, 5fr) minmax(96px, 2fr) minmax(120px, 3fr);
+}
+
 #tab-listing .listing-pricing-row {
   align-items: end;
 }
 
 #tab-listing .pricing-visibility-field {
-  padding: 12px;
-  border: 1px solid #F2C94C;
+  padding: 14px;
+  border: 1px solid #E7B93C;
   border-radius: 8px;
-  background: #FFF8E5;
+  background: #FFF7D8;
+  box-shadow: inset 3px 0 0 #D48806;
 }
 
 #tab-listing .pricing-visibility-field label {
+  color: #6A3F00;
+  font-weight: 800;
+}
+
+#tab-listing .pricing-visibility-field .field-hint {
   color: #7A4B00;
+  font-weight: 600;
 }
 
 #tab-listing .listing-type-grid {
@@ -7459,6 +7537,17 @@ body.broker-active .sub-tab-bar {
   line-height: 1.5;
 }
 
+#tab-queue #btn-broker-queue-refresh.queue-retry-ready {
+  border-color: rgba(152, 0, 46, 0.35);
+  background: #fff;
+  color: var(--lee-crimson);
+  box-shadow: 0 1px 2px rgba(152, 0, 46, 0.10);
+}
+
+#tab-queue .queue-empty .btn {
+  margin-top: 12px;
+}
+
 @media (max-width: 960px) {
   #tab-voucher .voucher-summary-row {
     grid-template-columns: 1fr;
@@ -7466,6 +7555,10 @@ body.broker-active .sub-tab-bar {
 }
 
 @media (max-width: 720px) {
+  #tab-listing .row.c-addr {
+    grid-template-columns: 1fr;
+  }
+
   #tab-listing .listing-type-opt {
     min-height: 0;
   }
