@@ -13949,7 +13949,7 @@ function setQueueStatus(message, isError) {
 
 function renderBrokerQueueError() {
   const list = document.getElementById('broker-queue-list');
-  setQueueStatus('We couldn't load your active queue right now. Try refreshing again in a moment.', true);
+  setQueueStatus("We couldn't load your active queue right now. Try refreshing again in a moment.", true);
   const btn = document.getElementById('btn-broker-queue-refresh');
   if (btn) {
     btn.classList.add('queue-retry-ready');
