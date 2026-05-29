@@ -2777,7 +2777,7 @@
     <div class="btn-bar">
       <button class="btn btn-gray" onclick="closeReviewSnapshot()">Back</button>
       <button class="btn btn-outline is-hidden" id="review-open-comp-reports" onclick="closeReviewSnapshot(); switchTab('comp-reports')">Open Comp Reports</button>
-      <button class="btn btn-red" id="review-submit-btn" onclick="submitReviewSnapshot()">Submit to Admin</button>
+      <button class="btn btn-red" id="review-submit-btn" onclick="submitReviewSnapshot()"><span class="btn-spinner"></span><span class="btn-label">Submit to Admin</span></button>
     </div>
   </div>
 </div>
@@ -3907,8 +3907,9 @@ function closeReviewSnapshot() {
   if (modal) modal.classList.remove('open');
 }
 
-function submitReviewSnapshot() {
+async function submitReviewSnapshot() {
   const context = reviewSnapshotContext;
+  const btn = document.getElementById('review-submit-btn');
   closeReviewSnapshot();
   if (context === 'sign' || context === 'voucher') {
     openSendToAdminModal(context);
@@ -3918,7 +3919,9 @@ function submitReviewSnapshot() {
     openEmailModal('listing-mod');
     return;
   }
-  submitCompDirect();
+  if (btn) { btn.classList.add('loading'); btn.disabled = true; const lbl = btn.querySelector('.btn-label'); if (lbl) lbl.textContent = 'Submitting…'; }
+  await submitCompDirect();
+  if (btn) { btn.classList.remove('loading'); btn.disabled = false; const lbl = btn.querySelector('.btn-label'); if (lbl) lbl.textContent = 'Submit to Admin'; }
 }
 
 function exportListingPdfWithSpinner(btn) {
@@ -4404,14 +4407,14 @@ function initStepFlow(opts) {
           const nextBtn = document.createElement('button');
           nextBtn.type = 'button';
           nextBtn.className = 'btn btn-red';
-          nextBtn.textContent = 'Continue →';
+          nextBtn.innerHTML = '<span class="btn-spinner"></span><span class="btn-label">Continue →</span>';
           const canProceed = (typeof opts.canProceed === 'function') ? !!opts.canProceed(idx, c, this) : true;
           const blockMessage = (typeof opts.blockingMessage === 'function')
             ? opts.blockingMessage(idx, c, this)
             : 'Complete required items before continuing.';
           nextBtn.disabled = !canProceed;
           if (!canProceed) nextBtn.title = blockMessage;
-          nextBtn.onclick = () => this.next();
+          nextBtn.onclick = () => { setBtnLoading(nextBtn, true, 'Loading...'); setTimeout(() => this.next(), 40); };
           right.appendChild(nextBtn);
           if (!canProceed) {
             const hint = document.createElement('div');
@@ -7805,6 +7808,7 @@ async function submitCompDirect() {
   }
   const payload = collectCompReportPayload();
   const badge = document.getElementById('comp-submit-badge');
+  showFormOverlay('Submitting comp report…', { subMsg: 'Saving your comp data…' });
   try {
     await ensureSharedBrokerSession();
     const result = await callTrpc('compData.submitComp', payload);
@@ -7814,6 +7818,8 @@ async function submitCompDirect() {
   } catch (e) {
     if (badge) { badge.textContent = 'Not saved — sign in required'; badge.className = 'comp-submit-badge error'; }
     console.warn('Comp DB save:', e?.message || e);
+  } finally {
+    hideFormOverlay();
   }
   openEmailModal('comp');
 }
@@ -9026,11 +9032,11 @@ function openSubmissionDetail(id) {
   }
   if (s.type === 'sign') {
     const disabled = s.status !== 'approved' ? 'disabled' : '';
-    actions += '<button class="btn btn-green" ' + disabled + ' onclick="adminSendSignToCimarron(\\\'' + s.id + '\\\')"><span class="btn-label">Send to Cimarron (PO #)</span></button>';
+    actions += '<button class="btn btn-green" ' + disabled + ' onclick="adminSendSignToCimarron(\\\'' + s.id + '\\\', this)"><span class="btn-spinner"></span><span class="btn-label">Send to Cimarron (PO #)</span></button>';
   }
-  actions += '<button class="btn btn-blue" ' + (s.status === 'in_review' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'in_review\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Review</button>';
-  actions += '<button class="btn btn-green" ' + (s.status === 'approved' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'approved\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Approve</button>';
-  actions += '<button class="btn btn-danger" ' + (s.status === 'rejected' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'rejected\')"><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Reject</button>';
+  actions += '<button class="btn btn-blue" ' + (s.status === 'in_review' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'in_review\', this)"><span class="btn-spinner"></span><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span class="btn-label">Review</span></button>';
+  actions += '<button class="btn btn-green" ' + (s.status === 'approved' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'approved\', this)"><span class="btn-spinner"></span><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span class="btn-label">Approve</span></button>';
+  actions += '<button class="btn btn-danger" ' + (s.status === 'rejected' ? 'disabled' : '') + ' onclick="updateSubStatus(\'' + s.id + '\',\'rejected\', this)"><span class="btn-spinner"></span><svg class="icon-inline-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><span class="btn-label">Reject</span></button>';
   document.getElementById('adm-detail-actions').innerHTML = actions;
 
   document.getElementById('admin-detail-modal').classList.add('open');
@@ -9064,18 +9070,19 @@ function _applySignFormDataToDom(formData) {
   }
 }
 
-async function adminSendSignToCimarron(id) {
+async function adminSendSignToCimarron(id, btn) {
   const sub = ADMIN_SUBMISSIONS.find(s => s.id === id);
   if (!sub || !sub.serverSubmissionId) {
-    alert('Missing server submission id.');
+    showToast('Missing server submission ID — cannot send.', 'error');
     return;
   }
   if (sub.status !== 'approved') {
-    alert('Approve the sign request first.');
+    showToast('Approve the sign request before sending to Cimarron.', 'warn');
     return;
   }
   const po = prompt('Enter PO # (required):');
   if (!po || !String(po).trim()) return;
+  setBtnLoading(btn, true, 'Sending…');
 
   // Populate the sign tab DOM so we can regenerate the PDF with PO #.
   const payload = sub.payload || {};
@@ -9107,10 +9114,12 @@ async function adminSendSignToCimarron(id) {
     const data = await resp.json().catch(() => ({}));
     const result = data?.result?.data?.json;
     if (!result?.success) throw new Error(result?.error || 'Send failed');
-    alert('✅ Sent to Cimarron. Broker was CC’d and PDF attached.');
+    setBtnLoading(btn, false);
+    showToast('Sent to Cimarron. Broker was CC\'d and PDF attached.');
   } catch (e) {
     console.warn('Send to Cimarron failed:', e && e.message ? e.message : e);
-    alert('❌ Send failed: ' + (e && e.message ? e.message : 'Unknown error'));
+    setBtnLoading(btn, false);
+    showToast('Send failed: ' + ((e && e.message) ? e.message : 'Unknown error'), 'error');
   }
 }
 
@@ -9122,13 +9131,15 @@ document.getElementById('admin-detail-modal').addEventListener('click', function
   if (e.target === this) closeAdminModal();
 });
 
-function updateSubStatus(id, status) {
+function updateSubStatus(id, status, btn) {
   const sub = ADMIN_SUBMISSIONS.find(s => s.id === id);
   if (sub) {
     sub.status = status;
     sub.updatedAt = new Date().toISOString();
   }
   persistSubmissions();
+  var labels = { in_review: 'Marking...', approved: 'Approving...', rejected: 'Rejecting...' };
+  setBtnLoading(btn, true, labels[status] || 'Saving...');
   Promise.resolve()
     .then(async function() {
       if (sub && sub.serverSubmissionId) {
@@ -9140,6 +9151,7 @@ function updateSubStatus(id, status) {
       console.warn('Submission status sync failed:', error && error.message ? error.message : error);
     })
     .finally(function() {
+      setBtnLoading(btn, false);
       renderDashboard();
       renderSubmissions();
       openSubmissionDetail(id);
@@ -13937,7 +13949,7 @@ function setQueueStatus(message, isError) {
 
 function renderBrokerQueueError() {
   const list = document.getElementById('broker-queue-list');
-  setQueueStatus('We couldn’t load your active queue right now. Try refreshing again in a moment.', true);
+  setQueueStatus('We couldn't load your active queue right now. Try refreshing again in a moment.', true);
   const btn = document.getElementById('btn-broker-queue-refresh');
   if (btn) {
     btn.classList.add('queue-retry-ready');
@@ -15054,7 +15066,7 @@ function openSendToAdminModal(formType) {
   title.textContent = formType === 'sign' ? `Submit ${label}` : `Send ${label} to Admin`;
   desc.textContent = formType === 'sign'
     ? 'This will submit the sign request into the admin submission queue. The admin will approve it, assign a PO #, and send it to Cimarron.'
-    : `This will submit the ${label} to the admin queue and send a copy to the office admin. You will be CC’d automatically.`;
+    : `This will submit the ${label} to the admin queue and send a copy to the office admin. You will be CC'd automatically.`;
   status.textContent = '';
   status.classList.remove('text-success', 'text-error', 'status-strong');
   btn.classList.remove('loading');
@@ -16097,14 +16109,14 @@ const HELP_PANEL_CONTENT = {
       <h4>Search</h4>
       <p>Filter by transaction type, city, market, submarket, property type, SF range, or date range, then run the search to update the report-ready grid.</p>
       <h4>Exports</h4>
-      <p>Use the export buttons above the table to download the current result set after you’ve narrowed it to the comps you want.</p>
+      <p>Use the export buttons above the table to download the current result set after you've narrowed it to the comps you want.</p>
     `,
   },
   'queue': {
     title: 'Submission Queue — how this page works',
     body: `
       <p>The queue shows your active submissions and where each one sits in the office processing line.</p>
-      <h4>What you’ll see</h4>
+      <h4>What you'll see</h4>
       <p>Each row includes the form type, submission reference, current status, and how many requests are ahead of it in line.</p>
     `,
   },
