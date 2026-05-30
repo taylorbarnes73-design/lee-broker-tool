@@ -34,6 +34,10 @@ export const requirePlatformAdmin: RequestHandler = async (req, res, next) => {
     } catch (error) {
       console.error("[requirePlatformAdmin] Could not resolve platform user for legacy session:", error);
     }
+    if (appUser && !appUser.isActive) {
+      sendAdminError(res, 401, "UNAUTHORIZED", "Authentication required.");
+      return;
+    }
     if (legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name, appUser?.username)) {
       req.user = {
         id: appUser?.id ?? String(legacyUser.id),

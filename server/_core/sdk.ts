@@ -289,6 +289,15 @@ class SDKServer {
 
     if (isLocalOpenId(sessionUserId)) {
       const email = session.email ?? emailFromLocalOpenId(sessionUserId);
+      let appUser: Awaited<ReturnType<typeof db.getAppUserByUsernameOrEmail>> | undefined;
+      try {
+        appUser = email ? await db.getAppUserByUsernameOrEmail(email) : undefined;
+      } catch (error) {
+        console.error("[Auth] Could not resolve app user for local session:", error);
+      }
+      if (appUser && !appUser.isActive) {
+        throw ForbiddenError("User account is inactive");
+      }
 
       if (!user) {
         await db.upsertUser({

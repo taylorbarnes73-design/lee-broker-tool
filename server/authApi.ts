@@ -82,6 +82,10 @@ authApiRouter.post("/login", async (req, res) => {
     console.error("[auth.login] Database query failed (fallback to hardcoded directory):", err);
   }
 
+  if (appUserRecord && !appUserRecord.isActive) {
+    res.status(403).json({ success: false, error: "Your account is inactive. Contact an administrator for access." });
+    return;
+  }
   if (!brokerEntry && !isFromDb) {
     res.status(400).json({ success: false, error: "Email not recognized. Use your @lee-associates.com email." });
     return;
@@ -202,6 +206,10 @@ authApiRouter.get("/me", async (req, res) => {
       }
     } catch (err) {
       console.error("[auth.me] Could not resolve app user for legacy session:", err);
+    }
+    if (appUserRecord && !appUserRecord.isActive) {
+      res.status(401).json({ success: false, error: "Not authenticated" });
+      return;
     }
     const resolvedRole: "admin" | "user" =
       user.role === "admin" || isAdminByPolicy(user.email, user.name, appUserRecord?.username)

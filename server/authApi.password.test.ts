@@ -18,7 +18,7 @@ vi.mock("./db", () => ({
   upsertUser: vi.fn(),
 }));
 
-import { getDb } from "./db";
+import { getDb, upsertUser } from "./db";
 
 function buildApp() {
   const app = express();
@@ -47,5 +47,39 @@ describe("password platform login", () => {
 
     expect(res.status).toBe(503);
     expect(res.body).toEqual({ error: "Sign-in service is temporarily unavailable." });
+  });
+
+  it("blocks local login when the matching app user is inactive", async () => {
+    vi.mocked(getDb).mockResolvedValue({
+      select: () => ({
+        from: () => ({
+          where: () => ({
+            limit: () =>
+              Promise.resolve([
+                {
+                  id: "inactive-user-id",
+                  email: "tbarnes@lee-associates.com",
+                  username: "tbarnes",
+                  fullName: "Taylor Barnes",
+                  role: "admin",
+                  office: null,
+                  isActive: false,
+                },
+              ]),
+          }),
+        }),
+      }),
+    } as never);
+
+    const res = await request(buildApp()).post("/api/auth/login").send({
+      email: "tbarnes",
+    });
+
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({
+      success: false,
+      error: "Your account is inactive. Contact an administrator for access.",
+    });
+    expect(upsertUser).not.toHaveBeenCalled();
   });
 });

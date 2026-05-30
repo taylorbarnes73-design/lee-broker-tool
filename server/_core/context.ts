@@ -3,7 +3,7 @@ import { parse as parseCookieHeader } from "cookie";
 import { COOKIE_NAME } from "@shared/const";
 import type { User } from "../../drizzle/schema";
 import { findAppUserByUsernameOrEmail, resolvePlatformUserFromRequest } from "../auth/platformSession";
-import { getDb, getUserByOpenId, upsertUser } from "../db";
+import { getAppUserByUsernameOrEmail, getDb, getUserByOpenId, upsertUser } from "../db";
 import { sdk, localAuth } from "./sdk";
 import { isAdminByPolicy } from "../auth/isAdminByPolicy";
 
@@ -27,6 +27,13 @@ async function resolveSignedLegacyCookie(
   const now = new Date();
   const email = session.email ?? emailFromLocalOpenId(session.openId);
   const name = session.name || email || "Broker";
+  let appUser: Awaited<ReturnType<typeof getAppUserByUsernameOrEmail>> | undefined;
+  try {
+    appUser = email ? await getAppUserByUsernameOrEmail(email) : undefined;
+  } catch (error) {
+    console.error("[trpc.context] Could not resolve app user for signed legacy session:", error);
+  }
+  if (appUser && !appUser.isActive) return null;
 
   return {
     id: 0,
@@ -34,7 +41,10 @@ async function resolveSignedLegacyCookie(
     name,
     email: email ?? null,
     loginMethod: "local",
-    role: isAdminByPolicy(email, name) ? "admin" : "user",
+    role:
+      appUser?.role === "admin" || isAdminByPolicy(email, name, appUser?.username)
+        ? "admin"
+        : "user",
     createdAt: now,
     updatedAt: now,
     lastSignedIn: now,
@@ -82,6 +92,14 @@ export async function createContext(
         appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
       } catch (error) {
         console.error("[trpc.context] Could not resolve platform user for legacy session:", error);
+      }
+      if (appUser && !appUser.isActive) {
+        user = null;
+        return {
+          req: opts.req,
+          res: opts.res,
+          user,
+        };
       }
       user = {
         ...legacyUser,

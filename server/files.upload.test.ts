@@ -19,6 +19,7 @@ vi.mock("./storage", () => ({
 
 // Mock getDb so tests don't need a real database
 vi.mock("./db", () => ({
+  getAppUserByUsernameOrEmail: vi.fn().mockResolvedValue(undefined),
   getDb: vi.fn().mockResolvedValue({
     insert: vi.fn().mockReturnValue({
       values: vi.fn().mockResolvedValue(undefined),

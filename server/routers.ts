@@ -5,7 +5,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { storagePut, storageGet, storagePublicUrl } from "./storage";
-import { getDb, getUserByOpenId, upsertUser } from "./db";
+import { getAppUserByUsernameOrEmail, getDb, getUserByOpenId, upsertUser } from "./db";
 import { uploads } from "../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod/v4";
@@ -139,16 +139,33 @@ export const appRouter = router({
           };
         }
 
+        let appUserRecord: Awaited<ReturnType<typeof getAppUserByUsernameOrEmail>> | undefined;
+        try {
+          appUserRecord = await getAppUserByUsernameOrEmail(email);
+        } catch (err) {
+          console.error("[auth.login] Could not resolve app user:", err);
+        }
+
+        if (appUserRecord && !appUserRecord.isActive) {
+          return {
+            success: false as const,
+            error: "Your account is inactive. Contact an administrator for access.",
+          };
+        }
+
         const brokerEntry = findBrokerDirectoryEntry(email);
-        if (!brokerEntry) {
+        if (!brokerEntry && !appUserRecord) {
           return {
             success: false as const,
             error: "Email not recognized. Use your @lee-associates.com email.",
           };
         }
-        const resolvedName = brokerEntry?.name || enteredName;
+        const resolvedName = appUserRecord?.fullName || brokerEntry?.name || enteredName;
         const openId = localAuth.toLocalOpenId(email);
-        const role = isAdminByPolicy(email, resolvedName) ? "admin" : "user";
+        const role =
+          appUserRecord?.role === "admin" || isAdminByPolicy(email, resolvedName, appUserRecord?.username)
+            ? "admin"
+            : "user";
 
         if (ENV.isProduction && !String(ENV.cookieSecret ?? "").trim()) {
           console.error("[auth.login] JWT_SECRET is not set; cannot sign session cookies.");
@@ -216,7 +233,7 @@ export const appRouter = router({
               name: resolvedName,
               email,
               role,
-              office: brokerEntry?.office ?? null,
+              office: appUserRecord?.office ?? brokerEntry?.office ?? null,
             },
           };
         } catch (err) {

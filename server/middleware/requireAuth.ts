@@ -29,6 +29,10 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
     } catch (error) {
       console.error("[requireAuth] Could not resolve platform user for legacy session:", error);
     }
+    if (appUser && !appUser.isActive) {
+      res.status(401).json({ error: "Not authenticated" });
+      return;
+    }
     const grantedRole: PlatformRole =
       legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name, appUser?.username)
         ? "admin"
