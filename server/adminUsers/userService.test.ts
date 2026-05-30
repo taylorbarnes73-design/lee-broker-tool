@@ -222,6 +222,10 @@ describe("softDeleteUser", () => {
       updatedAt: new Date(),
       lastLoginAt: null,
     };
+    const deleteWhere = vi.fn().mockResolvedValue(undefined);
+    const deleteMock = vi.fn(() => ({
+      where: deleteWhere,
+    }));
     const db = {
       select: (fields?: { c?: unknown }) => {
         if (fields && Object.prototype.hasOwnProperty.call(fields, "c")) {
@@ -256,8 +260,11 @@ describe("softDeleteUser", () => {
           where: async () => {},
         }),
       }),
+      delete: deleteMock,
     };
     await softDeleteUser(db as any, "u2", actor, { headers: {} } as any);
+    expect(deleteMock).toHaveBeenCalledTimes(1);
+    expect(deleteWhere).toHaveBeenCalledTimes(1);
     expect(writeAuditLog).toHaveBeenCalledWith(
       actor.id,
       "user.deactivated",
