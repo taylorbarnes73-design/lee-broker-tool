@@ -52,6 +52,24 @@ function getAiApplyHelpers() {
   };
 }
 
+function getVoucherDetectionHelpers() {
+  const source = [
+    "createEmptyVoucherDocStatus",
+    "normalizeVoucherDocStatus",
+    "combineVoucherDocumentStatus",
+  ]
+    .map(extractFunctionSource)
+    .join("\n");
+  return new Function(
+    `${source}\nreturn { combineVoucherDocumentStatus };`
+  )() as {
+    combineVoucherDocumentStatus: (
+      current: unknown,
+      next: unknown
+    ) => { found: boolean; executed: boolean; missingSignatures: string[] };
+  };
+}
+
 describe("broker_tool.html wiring", () => {
   it("keeps every inline onclick handler bound to a real function", () => {
     const handlers = collectMatches(/onclick="([A-Za-z0-9_]+)\(/g);
@@ -125,5 +143,27 @@ describe("broker_tool.html wiring", () => {
     );
 
     expect(match?.value).toBe("medical");
+  });
+
+  it("upgrades voucher document detection when a later file is executed", () => {
+    const { combineVoucherDocumentStatus } = getVoucherDetectionHelpers();
+
+    expect(
+      combineVoucherDocumentStatus(
+        { found: true, executed: false, missingSignatures: ["Principal signature"] },
+        { found: true, executed: true, missingSignatures: [] }
+      )
+    ).toEqual({ found: true, executed: true, missingSignatures: [] });
+
+    expect(
+      combineVoucherDocumentStatus(
+        { found: true, executed: false, missingSignatures: ["Principal signature"] },
+        { found: true, executed: false, missingSignatures: ["Broker signature"] }
+      )
+    ).toEqual({
+      found: true,
+      executed: false,
+      missingSignatures: ["Principal signature", "Broker signature"],
+    });
   });
 });
