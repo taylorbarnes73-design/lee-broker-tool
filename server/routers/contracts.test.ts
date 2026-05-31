@@ -33,6 +33,10 @@ vi.mock("../storage", () => ({
   ),
 }));
 
+vi.mock("../fileAccess", () => ({
+  assertCanAccessStoredFile: vi.fn(async ({ keyOrUrl }: { keyOrUrl: string }) => keyOrUrl),
+}));
+
 import { invokeLLM } from "../_core/llm";
 import { execSync } from "child_process";
 import { contractsRouter } from "./contracts";
@@ -66,7 +70,22 @@ async function callMutation(procedure: string, input: unknown) {
       : node[part] as Record<string, unknown>;
   }
   const resolver = (node as { _def: { resolver: (opts: { input: unknown; ctx: unknown }) => unknown } })._def.resolver;
-  return resolver({ input, ctx: {} });
+  return resolver({
+    input,
+    ctx: {
+      user: {
+        id: 1,
+        openId: "local:broker@example.test",
+        name: "Broker Person",
+        email: "broker@example.test",
+        loginMethod: "local",
+        role: "user",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        lastSignedIn: new Date(),
+      },
+    },
+  });
 }
 
 // ── extractContract tests ──

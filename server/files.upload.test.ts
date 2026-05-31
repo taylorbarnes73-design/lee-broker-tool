@@ -19,46 +19,89 @@ vi.mock("./storage", () => ({
 
 // Mock getDb so tests don't need a real database
 vi.mock("./db", () => ({
-  getDb: vi.fn().mockResolvedValue({
-    insert: vi.fn().mockReturnValue({
-      values: vi.fn().mockResolvedValue(undefined),
-    }),
-    select: vi.fn().mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        orderBy: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([
-            {
-              id: 1,
-              fileKey: "broker-docs/listing_agreement/test-file.txt",
-              url: "https://cdn.example.com/broker-docs/listing_agreement/test-file.txt",
-              filename: "test-file.txt",
-              mimeType: "text/plain",
-              fileSize: 11,
-              category: "listing_agreement",
-              reference: "123 Main St",
-              uploaderName: "Test User",
-              createdAt: new Date("2026-01-01T00:00:00Z"),
-            },
-          ]),
-        }),
-      }),
-    }),
-  }),
+  getDb: vi.fn(),
 }));
 
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 import { getDb } from "./db";
 
-function createCtx(): TrpcContext {
+const testUser = {
+  id: 1,
+  openId: "local:broker@example.test",
+  name: "Test User",
+  email: "broker@example.test",
+  loginMethod: "local",
+  role: "user",
+  createdAt: new Date("2026-01-01T00:00:00Z"),
+  updatedAt: new Date("2026-01-01T00:00:00Z"),
+  lastSignedIn: new Date("2026-01-01T00:00:00Z"),
+} as TrpcContext["user"];
+
+const uploadRow = {
+  id: 1,
+  fileKey: "broker-docs/listing_agreement/test-file.txt",
+  url: "https://cdn.example.com/broker-docs/listing_agreement/test-file.txt",
+  filename: "test-file.txt",
+  mimeType: "text/plain",
+  fileSize: 11,
+  category: "listing_agreement",
+  reference: "123 Main St",
+  uploaderName: "Test User",
+  uploaderOpenId: "local:broker@example.test",
+  createdAt: new Date("2026-01-01T00:00:00Z"),
+};
+
+function makeSelectBuilder(rows: unknown[]) {
+  const builder = {
+    from: vi.fn(() => builder),
+    where: vi.fn(() => builder),
+    orderBy: vi.fn(() => builder),
+    limit: vi.fn().mockResolvedValue(rows),
+  };
+  return builder;
+}
+
+function makeDb(uploadRows: unknown[] = [uploadRow]) {
   return {
-    user: null,
+    insert: vi.fn().mockReturnValue({
+      values: vi.fn().mockResolvedValue(undefined),
+    }),
+    select: vi.fn((fields?: Record<string, unknown>) => {
+      if (fields && Object.prototype.hasOwnProperty.call(fields, "uploaderOpenId")) {
+        return makeSelectBuilder(uploadRows.map((row: any) => ({ uploaderOpenId: row.uploaderOpenId })));
+      }
+      return makeSelectBuilder(uploadRows);
+    }),
+  };
+}
+
+function createCtx(user: TrpcContext["user"] = testUser): TrpcContext {
+  return {
+    user,
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: { clearCookie: vi.fn() } as unknown as TrpcContext["res"],
   };
 }
 
 describe("files.upload", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getDb).mockResolvedValue(makeDb() as any);
+  });
+
+  it("rejects unauthenticated uploads", async () => {
+    const caller = appRouter.createCaller(createCtx(null));
+    await expect(
+      caller.files.upload({
+        filename: "test-file.txt",
+        mimeType: "text/plain",
+        base64Data: Buffer.from("Hello World").toString("base64"),
+        category: "listing_agreement",
+      })
+    ).rejects.toThrow(/not authenticated/i);
+  });
+
   it("uploads a file and returns success with url", async () => {
     const caller = appRouter.createCaller(createCtx());
     const result = await caller.files.upload({
@@ -72,8 +115,8 @@ describe("files.upload", () => {
 
     expect(result.success).toBe(true);
     expect(result.filename).toBe("test-file.txt");
-    // URL is either an S3 signed URL (https://) or a local-storage path (/local-uploads/)
-    expect(result.url).toMatch(/^https?:\/\/|^\/local-uploads\//);
+    // storageGet returns a browser URL after the upload succeeds.
+    expect(result.url).toMatch(/^https?:\/\/|^\/api\/files\/content/);
     expect(result.fileKey).toContain("broker-docs/listing_agreement/");
   });
 
@@ -154,6 +197,11 @@ describe("files.upload", () => {
 });
 
 describe("files.uploadBatch", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getDb).mockResolvedValue(makeDb() as any);
+  });
+
   it("uploads multiple files and returns per-file results", async () => {
     const caller = appRouter.createCaller(createCtx());
     const result = await caller.files.uploadBatch({
@@ -180,7 +228,7 @@ describe("files.uploadBatch", () => {
     result.results.forEach(r => {
       expect(r.success).toBe(true);
       if (r.success) {
-        expect(r.url).toMatch(/^https?:\/\/|^\/local-uploads\//);
+        expect(r.url).toMatch(/^https?:\/\/|^\/api\/files\/content/);
         expect(r.fileKey).toContain("broker-docs/");
       }
     });
@@ -250,7 +298,18 @@ describe("files.uploadBatch", () => {
 });
 
 describe("files.list", () => {
-  it("returns a list of uploaded files", async () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("rejects unauthenticated listing", async () => {
+    const caller = appRouter.createCaller(createCtx(null));
+    await expect(caller.files.list({})).rejects.toThrow(/not authenticated/i);
+  });
+
+  it("returns a list of files uploaded by the current broker", async () => {
+    const db = makeDb([uploadRow]);
+    vi.mocked(getDb).mockResolvedValue(db as any);
     const caller = appRouter.createCaller(createCtx());
     const result = await caller.files.list({});
     expect(Array.isArray(result)).toBe(true);
@@ -262,11 +321,37 @@ describe("files.list", () => {
 });
 
 describe("files.getUrl", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("rejects unauthenticated URL requests", async () => {
+    const caller = appRouter.createCaller(createCtx(null));
+    await expect(
+      caller.files.getUrl({
+        fileKey: "broker-docs/listing_agreement/test-file.txt",
+      })
+    ).rejects.toThrow(/not authenticated/i);
+  });
+
   it("returns a download url for a given file key", async () => {
+    vi.mocked(getDb).mockResolvedValue(makeDb([uploadRow]) as any);
     const caller = appRouter.createCaller(createCtx());
     const result = await caller.files.getUrl({
       fileKey: "broker-docs/listing_agreement/test-file.txt",
     });
     expect(result.url).toContain("https://");
+  });
+
+  it("rejects files owned by a different broker", async () => {
+    vi.mocked(getDb).mockResolvedValue(
+      makeDb([{ ...uploadRow, uploaderOpenId: "local:other@example.test" }]) as any
+    );
+    const caller = appRouter.createCaller(createCtx());
+    await expect(
+      caller.files.getUrl({
+        fileKey: "broker-docs/listing_agreement/test-file.txt",
+      })
+    ).rejects.toThrow(/not authorized/i);
   });
 });

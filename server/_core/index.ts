@@ -5,7 +5,6 @@ if (!globalThis.crypto) {
 }
 import express from "express";
 import type { RequestHandler } from "express";
-import fs from "node:fs";
 import path from "node:path";
 
 process.on("unhandledRejection", (reason, promise) => {
@@ -39,6 +38,7 @@ import { uploads } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "../middleware/requireAuth";
 import { migrate } from "drizzle-orm/mysql2/migrator";
+import { canAccessStoredFile, normalizedStoredFileKey } from "../fileAccess";
 
 const FILE_CONTENT_RATE_LIMIT_WINDOW_MS = 60_000;
 const FILE_CONTENT_RATE_LIMIT_MAX = 120;
@@ -117,18 +117,29 @@ async function startServer() {
   });
 
   app.get("/api/files/content", requireAuth, requireFileContentRateLimit, async (req, res) => {
-    const key = String(req.query.key ?? "").trim();
-    if (!key) {
+    const rawKey = String(req.query.key ?? "").trim();
+    if (!rawKey) {
       res.status(400).json({ success: false, error: "key query parameter is required" });
       return;
     }
 
     try {
+      const key = normalizedStoredFileKey(rawKey);
+      const db = await getDb();
+      const allowed = await canAccessStoredFile({
+        user: req.user as any,
+        keyOrUrl: key,
+        db,
+      });
+      if (!allowed) {
+        res.status(403).json({ success: false, error: "Forbidden" });
+        return;
+      }
+
       const { bytes } = await storageGetBytes(key);
       let filename = key.split("/").pop() || "file";
       let mimeType = "application/octet-stream";
 
-      const db = await getDb();
       if (db) {
         const rows = await db
           .select({ filename: uploads.filename, mimeType: uploads.mimeType })
@@ -189,20 +200,9 @@ async function startServer() {
       createContext,
     })
   );
-  // Serve locally-stored uploads when AWS S3 is not configured (dev / no-S3 mode).
-  // The directory is created on first upload; this is a no-op when S3 is in use.
-  app.use(
-    "/local-uploads",
-    (req, _res, next) => {
-      // Block path-traversal attempts before they reach the static handler
-      if (req.path.includes("..")) {
-        next(new Error("Invalid path"));
-        return;
-      }
-      next();
-    },
-    express.static(path.join(process.cwd(), "local-uploads"), { fallthrough: false })
-  );
+  app.use("/local-uploads", (_req, res) => {
+    res.status(404).json({ success: false, error: "Use the authenticated file endpoint." });
+  });
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);

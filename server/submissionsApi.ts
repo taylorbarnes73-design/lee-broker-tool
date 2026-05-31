@@ -12,6 +12,7 @@ import { listingFormPatchFromParsed, parseListingFormPdfBuffer } from "./service
 import { DealiusClient } from "./services/dealiusClient";
 import { authenticateConfiguredDealius } from "./services/dealiusAuth";
 import { storageGetBytes, storagePut } from "./storage";
+import { canAccessStoredFile, normalizedStoredFileKey } from "./fileAccess";
 
 const ACTIVE_QUEUE_STATUSES = ["pending", "in_review"] as const;
 type ActiveQueueStatus = (typeof ACTIVE_QUEUE_STATUSES)[number];
@@ -543,7 +544,14 @@ submissionsApiRouter.get("/:id/attachments/:index/download", async (req, res) =>
   }
 
   try {
-    const { bytes } = await storageGetBytes(storageKey);
+    const authorizedKey = normalizedStoredFileKey(storageKey);
+    const allowed = await canAccessStoredFile({ user, keyOrUrl: authorizedKey, db });
+    if (!allowed) {
+      res.status(403).json({ success: false, error: "Forbidden" });
+      return;
+    }
+
+    const { bytes } = await storageGetBytes(authorizedKey);
     res.setHeader("Content-Type", attachment.mimeType || mimeTypeFromFilename(attachment.filename));
     res.setHeader("Content-Length", String(bytes.length));
     res.setHeader("Content-Disposition", `attachment; filename=\"${downloadFileName(attachment.filename)}\"`);

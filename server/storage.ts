@@ -5,8 +5,9 @@ import path from "node:path";
 import { ENV } from "./_core/env";
 
 // ── Local filesystem fallback (used when AWS_S3_BUCKET is not set) ───────────
-// Files are stored under <cwd>/local-uploads/ and served by Express at /local-uploads/.
-// This is intended for development and single-instance deployments without S3.
+// Files are stored under <cwd>/local-uploads/ and served through the authenticated
+// /api/files/content proxy. This is intended for development and single-instance
+// deployments without S3.
 
 const LOCAL_UPLOADS_DIR = path.join(process.cwd(), "local-uploads");
 const LOCAL_URL_PREFIX = "/local-uploads/";
@@ -49,22 +50,20 @@ async function localPut(
   const filePath = path.join(LOCAL_UPLOADS_DIR, ...safeKey.split("/"));
   await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
   await fs.promises.writeFile(filePath, data);
-  return { key: safeKey, url: LOCAL_URL_PREFIX + safeKey };
+  return { key: safeKey, url: storagePublicUrl(safeKey) };
 }
 
 function localGet(relKey: string): { key: string; url: string } {
   const safeKey = sanitizeStorageKey(relKey);
-  return { key: safeKey, url: LOCAL_URL_PREFIX + safeKey };
+  return { key: safeKey, url: storagePublicUrl(safeKey) };
 }
 
 export function storagePublicUrl(relKey: string): string {
   const safeKey = sanitizeStorageKey(relKey);
-  return isLocalStorage()
-    ? LOCAL_URL_PREFIX + safeKey
-    : `${PUBLIC_FILE_PROXY_PREFIX}${encodeURIComponent(safeKey)}`;
+  return `${PUBLIC_FILE_PROXY_PREFIX}${encodeURIComponent(safeKey)}`;
 }
 
-function tryParseStoredKey(input: string): string | null {
+export function resolveStoredFileKey(input: string): string | null {
   const value = input.trim();
   if (!value) return null;
 
@@ -122,7 +121,7 @@ function tryParseStoredKey(input: string): string | null {
 export function isStoredFileReference(input: string | null | undefined): boolean {
   const value = String(input ?? "").trim();
   if (!value) return false;
-  return Boolean(tryParseStoredKey(value));
+  return Boolean(resolveStoredFileKey(value));
 }
 
 export function normalizeStoredFileUrl(urlOrKey: string | null | undefined, fileKey?: string | null): string | null {
@@ -132,7 +131,7 @@ export function normalizeStoredFileUrl(urlOrKey: string | null | undefined, file
   const raw = String(urlOrKey ?? "").trim();
   if (!raw) return null;
 
-  const parsedKey = tryParseStoredKey(raw);
+  const parsedKey = resolveStoredFileKey(raw);
   return parsedKey ? storagePublicUrl(parsedKey) : raw;
 }
 
@@ -149,7 +148,7 @@ async function localGetBytes(relKey: string): Promise<{ key: string; bytes: Buff
  * Can also be called with a `/local-uploads/…` URL path directly.
  */
 export async function storageGetBytes(urlOrKey: string): Promise<{ key: string; bytes: Buffer }> {
-  const relKey = sanitizeStorageKey(tryParseStoredKey(urlOrKey) ?? urlOrKey);
+  const relKey = sanitizeStorageKey(resolveStoredFileKey(urlOrKey) ?? urlOrKey);
 
   if (isLocalStorage()) {
     return localGetBytes(relKey);

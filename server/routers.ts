@@ -3,7 +3,7 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { findBrokerDirectoryEntry } from "@shared/brokerDirectory";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { storagePut, storageGet, storagePublicUrl } from "./storage";
 import { getDb, getUserByOpenId, upsertUser } from "./db";
 import { uploads } from "../drizzle/schema";
@@ -22,6 +22,7 @@ import { ENV } from "./_core/env";
 import { handlePlatformLogout } from "./auth/passwordPlatformAuth";
 import { linkPlatformSessionAfterLegacyLogin } from "./auth/linkPlatformSessionAfterLegacyLogin";
 import { isAdminByPolicy } from "./auth/isAdminByPolicy";
+import { assertCanAccessStoredFile } from "./fileAccess";
 
 const MAX_UPLOAD_BYTES = 100 * 1024 * 1024; // 100 MB per file
 const MAX_BATCH_FILES = 20; // maximum files accepted in a single batch request
@@ -241,7 +242,7 @@ export const appRouter = router({
      * Upload a file to S3 and record metadata in the database.
      * The client sends the file as a base64-encoded string.
      */
-    upload: publicProcedure
+    upload: protectedProcedure
       .input(
         z.object({
           filename: z.string(),
@@ -317,7 +318,7 @@ export const appRouter = router({
      * (capped at MAX_BATCH_CONCURRENCY to avoid overwhelming storage).
      * A per-file result is returned so the client can show partial success.
      */
-    uploadBatch: publicProcedure
+    uploadBatch: protectedProcedure
       .input(
         z.object({
           files: z
@@ -429,17 +430,18 @@ export const appRouter = router({
     /**
      * Get a fresh download URL for a file by its key.
      */
-    getUrl: publicProcedure
+    getUrl: protectedProcedure
       .input(z.object({ fileKey: z.string() }))
-      .query(async ({ input }) => {
-        const { url } = await storageGet(input.fileKey);
+      .query(async ({ ctx, input }) => {
+        const fileKey = await assertCanAccessStoredFile({ user: ctx.user, keyOrUrl: input.fileKey });
+        const { url } = await storageGet(fileKey);
         return { url };
       }),
 
     /**
      * List recent uploads, optionally filtered by category or reference.
      */
-    list: publicProcedure
+    list: protectedProcedure
       .input(
         z.object({
           category: z.string().optional(),
@@ -447,15 +449,23 @@ export const appRouter = router({
           limit: z.number().default(50),
         })
       )
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) return [];
 
-        const rows = await db
-          .select()
-          .from(uploads)
-          .orderBy(desc(uploads.createdAt))
-          .limit(input.limit);
+        const rows =
+          ctx.user.role === "admin"
+            ? await db
+                .select()
+                .from(uploads)
+                .orderBy(desc(uploads.createdAt))
+                .limit(input.limit)
+            : await db
+                .select()
+                .from(uploads)
+                .where(eq(uploads.uploaderOpenId, ctx.user.openId))
+                .orderBy(desc(uploads.createdAt))
+                .limit(input.limit);
 
         // Filter in JS if needed (simple approach)
         return rows.filter(r => {

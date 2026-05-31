@@ -34,7 +34,7 @@ vi.mock("./storage", () => ({
 
 vi.mock("../drizzle/schema", () => ({
   submissions: { id: "id" },
-  uploads: {},
+  uploads: { fileKey: "fileKey", uploaderOpenId: "uploaderOpenId" },
 }));
 
 vi.mock("drizzle-orm", () => ({
@@ -57,14 +57,22 @@ function buildApp() {
   return app;
 }
 
-function makeDb(row: Record<string, unknown> | null) {
+function makeSelectBuilder(rows: unknown[]) {
+  const builder = {
+    from: vi.fn(() => builder),
+    where: vi.fn(() => builder),
+    limit: vi.fn().mockResolvedValue(rows),
+  };
+  return builder;
+}
+
+function makeDb(row: Record<string, unknown> | null, uploadRows: Array<Record<string, unknown>> = []) {
   return {
-    select: vi.fn().mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue(row ? [row] : []),
-        }),
-      }),
+    select: vi.fn((fields?: Record<string, unknown>) => {
+      if (fields && Object.prototype.hasOwnProperty.call(fields, "uploaderOpenId")) {
+        return makeSelectBuilder(uploadRows);
+      }
+      return makeSelectBuilder(row ? [row] : []);
     }),
   };
 }
@@ -112,6 +120,10 @@ const submissionRow = {
   }),
 };
 
+const ownedUploadRows = [
+  { uploaderOpenId: "local:broker@example.test" },
+];
+
 describe("submissions attachments", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -127,7 +139,7 @@ describe("submissions attachments", () => {
       updatedAt: new Date(),
       lastSignedIn: new Date(),
     } as any);
-    getDbMock.mockResolvedValue(makeDb(submissionRow));
+    getDbMock.mockResolvedValue(makeDb(submissionRow, ownedUploadRows));
     storageGetBytesMock.mockResolvedValue({
       key: "broker-docs/submissions/voucher/generated.xlsm",
       bytes: Buffer.from("excel-bytes"),
@@ -175,5 +187,31 @@ describe("submissions attachments", () => {
     expect(res.header["content-disposition"]).toContain('attachment; filename="Filled_Voucher.xlsm"');
     expect(Buffer.isBuffer(res.body)).toBe(true);
     expect(Buffer.from(res.body).toString()).toBe("excel-bytes");
+  });
+
+  it("rejects a submission attachment key owned by a different broker", async () => {
+    const forgedSubmissionRow = {
+      ...submissionRow,
+      pdfFileKey: null,
+      pdfUrl: null,
+      payload: JSON.stringify({
+        supportingFiles: [
+          {
+            fileKey: "broker-admin/12/secret.pdf",
+            url: "/api/files/content?key=broker-admin%2F12%2Fsecret.pdf",
+            filename: "secret.pdf",
+            mimeType: "application/pdf",
+            category: "inbox",
+            label: "Forged admin document",
+          },
+        ],
+      }),
+    };
+    getDbMock.mockResolvedValue(makeDb(forgedSubmissionRow, [{ uploaderOpenId: "local:other@example.test" }]));
+
+    const res = await request(buildApp()).get("/api/submissions/42/attachments/0/download");
+
+    expect(res.status).toBe(403);
+    expect(storageGetBytesMock).not.toHaveBeenCalled();
   });
 });

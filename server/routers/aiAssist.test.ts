@@ -25,6 +25,10 @@ vi.mock("../storage", () => ({
   ),
 }));
 
+vi.mock("../fileAccess", () => ({
+  assertCanAccessStoredFile: vi.fn(async ({ keyOrUrl }: { keyOrUrl: string }) => keyOrUrl),
+}));
+
 // Mock PDF parsing so brochure tests don't need real PDFs.
 // The production code uses the default export as a callable: (mod.default ?? mod)(buffer)
 const mockPdfParse = vi.fn().mockResolvedValue({
@@ -38,7 +42,17 @@ import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable } from "../_core/
 
 function createCtx(): TrpcContext {
   return {
-    user: null,
+    user: {
+      id: 1,
+      openId: "local:broker@example.test",
+      name: "Broker Person",
+      email: "broker@example.test",
+      loginMethod: "local",
+      role: "user",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+    },
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: {} as TrpcContext["res"],
   };
