@@ -15,6 +15,13 @@ vi.mock("./storage", () => ({
     })
   ),
   storagePublicUrl: vi.fn((key: string) => `/api/files/content?key=${encodeURIComponent(key)}`),
+  resolveStoredFileKey: vi.fn((value: string) => {
+    if (value.startsWith("/api/files/content")) {
+      return new URLSearchParams(value.split("?", 2)[1] ?? "").get("key");
+    }
+    if (/^(broker-docs|broker-admin|broker-docusign)\//.test(value)) return value;
+    return null;
+  }),
 }));
 
 // Mock getDb so tests don't need a real database
@@ -99,7 +106,7 @@ describe("files.upload", () => {
         base64Data: Buffer.from("Hello World").toString("base64"),
         category: "listing_agreement",
       })
-    ).rejects.toThrow(/not authenticated/i);
+    ).rejects.toThrow(/login/i);
   });
 
   it("uploads a file and returns success with url", async () => {
@@ -304,7 +311,7 @@ describe("files.list", () => {
 
   it("rejects unauthenticated listing", async () => {
     const caller = appRouter.createCaller(createCtx(null));
-    await expect(caller.files.list({})).rejects.toThrow(/not authenticated/i);
+    await expect(caller.files.list({})).rejects.toThrow(/login/i);
   });
 
   it("returns a list of files uploaded by the current broker", async () => {
@@ -331,7 +338,7 @@ describe("files.getUrl", () => {
       caller.files.getUrl({
         fileKey: "broker-docs/listing_agreement/test-file.txt",
       })
-    ).rejects.toThrow(/not authenticated/i);
+    ).rejects.toThrow(/login/i);
   });
 
   it("returns a download url for a given file key", async () => {

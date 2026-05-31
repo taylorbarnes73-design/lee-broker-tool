@@ -30,6 +30,14 @@ vi.mock("./db", () => ({
 vi.mock("./storage", () => ({
   storagePut: vi.fn(),
   storageGetBytes: storageGetBytesMock,
+  resolveStoredFileKey: vi.fn((value: string) => {
+    if (value.startsWith("/api/files/content")) {
+      return new URLSearchParams(value.split("?", 2)[1] ?? "").get("key");
+    }
+    if (value.startsWith("/local-uploads/")) return value.slice("/local-uploads/".length);
+    if (/^(broker-docs|broker-admin|broker-docusign)\//.test(value)) return value;
+    return null;
+  }),
 }));
 
 vi.mock("../drizzle/schema", () => ({
