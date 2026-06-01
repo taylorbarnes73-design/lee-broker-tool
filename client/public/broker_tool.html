@@ -11891,10 +11891,10 @@ async function confirmRemoveListingDealDocument(index) {
   updateListingRequiredDocStatus();
 }
 
-async function onListingDealDocumentsSelected(input) {
+function onListingDealDocumentsSelected(input) {
   const files = input?.files;
   if (!files || files.length === 0) return;
-  await uploadAndParseListingDealDocuments(Array.from(files));
+  stageFilesForZone('listing', Array.from(files), input);
   input.value = '';
 }
 
@@ -12313,10 +12313,10 @@ async function onVoucherMissingDocUploaded(kind, input) {
   }
 }
 
-async function onVoucherDealDocumentsSelected(input) {
+function onVoucherDealDocumentsSelected(input) {
   const files = input?.files;
   if (!files || files.length === 0) return;
-  await uploadAndParseVoucherDealDocuments(Array.from(files));
+  stageFilesForZone('voucher', Array.from(files), input);
   input.value = '';
 }
 
@@ -12757,6 +12757,11 @@ function updateDealDocSelectionStatus(statusId, detailText) {
 function handleDealDocSelection(input, options) {
   const file = input.files[0];
   if (!file) return;
+  // Stage the file — do NOT upload yet
+  stageSingleFileForZone(file, options);
+}
+
+async function _doHandleDealDocUpload(file, options) {
   const status = document.getElementById(options.statusId);
   const btn = document.getElementById(options.buttonId);
   if (status) {
@@ -12764,13 +12769,11 @@ function handleDealDocSelection(input, options) {
     status.dataset.uploadFileId = options.fileId || '';
     status.dataset.uploadButtonId = options.buttonId || '';
     status.dataset.uploadReference = options.reference || '';
-    status.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(0)} KB) — uploading...`;
   }
   if (btn) setHiddenState(btn, true);
   options.setUrl(null);
   options.setMime(file.type === 'application/pdf' ? 'application/pdf' : (file.type?.startsWith('image/') ? file.type : 'application/pdf'));
   showFormOverlay(`Uploading ${file.name}...`, { step: 1, totalSteps: 4, stepLabel: 'Uploading' });
-
   const reader = new FileReader();
   reader.onload = async function(e) {
     try {
@@ -12787,9 +12790,7 @@ function handleDealDocSelection(input, options) {
         hideFormOverlay();
         if (status) renderDealDocSelectionStatus(options.statusId, options.buttonId, options.fileId, options.reference, file.name);
         if (btn) setHiddenState(btn, false);
-        if (options.reference === 'sign') {
-          Promise.resolve().then(() => scrapeSignBrochure());
-        }
+        // Upload complete — parse button is now visible; user must click it
       } else if (status) {
         updateDealDocSelectionStatus(options.statusId, 'Upload failed. Please try again.');
         showFormOverlayError('Upload failed — Check your connection', 'Please try again.', {
@@ -12826,6 +12827,142 @@ function handleDealDocSelection(input, options) {
   };
   reader.readAsDataURL(file);
 }
+
+
+// ── Two-step upload helpers ──────────────────────────────────────────────────
+
+/**
+ * Stage multiple files for the listing or voucher deal-doc zones.
+ * Shows a file list with Remove buttons and a "Process Files" confirm button.
+ * Actual upload + parse only happens when the user clicks the confirm button.
+ */
+function stageFilesForZone(tab, fileList, input) {
+  const zoneId = tab === 'listing' ? 'l-deal-docs-zone' : 'v-brochure-zone';
+  const statusId = tab === 'listing' ? 'l-deal-docs-status' : 'v-brochure-status';
+  const zone = document.getElementById(zoneId);
+  const status = document.getElementById(statusId);
+  if (!zone || !fileList.length) return;
+
+  // Remove any existing staged UI (children and siblings after zone)
+  zone.querySelectorAll('.upload-staged-list, .upload-confirm-btn').forEach(el => el.remove());
+  let _sib = zone.nextElementSibling;
+  while (_sib && (_sib.classList.contains('upload-staged-list') || _sib.classList.contains('upload-confirm-btn'))) {
+    const _next = _sib.nextElementSibling; _sib.remove(); _sib = _next;
+  }
+  if (status) status.innerHTML = '';
+
+  let staged = [...fileList];
+
+  function renderStaged() {
+    // Remove sibling staged UI
+    let _s = zone.nextElementSibling;
+    while (_s && (_s.classList.contains('upload-staged-list') || _s.classList.contains('upload-confirm-btn'))) {
+      const _n = _s.nextElementSibling; _s.remove(); _s = _n;
+    }
+    if (!staged.length) return;
+
+    const list = document.createElement('div');
+    list.className = 'upload-staged-list';
+    staged.forEach((file, i) => {
+      const bar = document.createElement('div');
+      bar.className = 'upload-staged-bar';
+      bar.innerHTML = `
+        <div class="upload-staged-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#98002e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <span class="upload-staged-name" title="${escHtml(file.name)}">${escHtml(file.name)}</span>
+        <span class="upload-staged-size">${(file.size / 1024).toFixed(0)} KB</span>
+        <button type="button" class="upload-staged-remove">Remove</button>
+      `;
+      bar.querySelector('.upload-staged-remove').addEventListener('click', () => {
+        staged.splice(i, 1);
+        renderStaged();
+      });
+      list.appendChild(bar);
+    });
+    zone.after(list);
+
+    const label = staged.length === 1 ? `Process ${staged.length} File` : `Process ${staged.length} Files`;
+    const confirmBtn = document.createElement('button');
+    confirmBtn.type = 'button';
+    confirmBtn.className = 'upload-confirm-btn';
+    confirmBtn.innerHTML = `<span class="btn-spinner"></span><span class="btn-label">${label}</span>`;
+    confirmBtn.addEventListener('click', () => {
+      confirmBtn.classList.add('loading');
+      confirmBtn.disabled = true;
+      list.remove();
+      confirmBtn.remove();
+      if (tab === 'listing') {
+        uploadAndParseListingDealDocuments(staged);
+      } else {
+        uploadAndParseVoucherDealDocuments(staged);
+      }
+    });
+    list.after(confirmBtn);
+  }
+
+  renderStaged();
+}
+
+/**
+ * Stage a single file for the brochure upload zones (Listing Mod, Sign, Comp).
+ * Shows a staged preview bar and a "Process File" confirm button.
+ * Actual upload happens when the user clicks confirm.
+ */
+function stageSingleFileForZone(file, options) {
+  const status = document.getElementById(options.statusId);
+  const zoneEl = document.getElementById(options.fileId)?.closest('.brochure-zone');
+  if (!zoneEl) return;
+
+  // Remove any existing staged UI
+  zoneEl.querySelectorAll('.upload-staged-bar, .upload-confirm-btn').forEach(el => el.remove());
+  const existingBar = zoneEl.parentNode.querySelector('.upload-staged-bar, .upload-confirm-btn');
+  if (existingBar) existingBar.remove();
+
+  // Clear status
+  if (status) status.innerHTML = '';
+
+  // Build staged bar
+  const bar = document.createElement('div');
+  bar.className = 'upload-staged-bar';
+  bar.innerHTML = `
+    <div class="upload-staged-icon">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#98002e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    </div>
+    <span class="upload-staged-name" title="${escHtml(file.name)}">${escHtml(file.name)}</span>
+    <span class="upload-staged-size">${(file.size / 1024).toFixed(0)} KB</span>
+    <button type="button" class="upload-staged-remove">Remove</button>
+  `;
+
+  // Build confirm button
+  const confirmBtn = document.createElement('button');
+  confirmBtn.type = 'button';
+  confirmBtn.className = 'upload-confirm-btn';
+  confirmBtn.innerHTML = '<span class="btn-spinner"></span><span class="btn-label">Process File</span>';
+
+  bar.querySelector('.upload-staged-remove').addEventListener('click', () => {
+    bar.remove();
+    confirmBtn.remove();
+    const fileInput = document.getElementById(options.fileId);
+    if (fileInput) fileInput.value = '';
+    if (status) status.innerHTML = '';
+    // Re-hide the parse button
+    const parseBtn = document.getElementById(options.buttonId);
+    if (parseBtn) setHiddenState(parseBtn, true);
+  });
+
+  confirmBtn.addEventListener('click', () => {
+    confirmBtn.classList.add('loading');
+    confirmBtn.disabled = true;
+    bar.remove();
+    confirmBtn.remove();
+    _doHandleDealDocUpload(file, options);
+  });
+
+  zoneEl.after(bar);
+  bar.after(confirmBtn);
+}
+// ── End two-step upload helpers ──────────────────────────────────────────────
 
 async function scrapeDealDocForTab(fileUrl, mimeType, tab, statusId, buttonId, doneText) {
   if (!fileUrl) return;
@@ -15623,7 +15760,45 @@ function ciHandleDrop(event) {
 
 function ciHandleFileSelect(input) {
   const file = input.files[0];
-  if (file) ciProcessPdf(file);
+  if (!file) return;
+  // Stage the file — show preview, wait for user to confirm
+  const zone = document.getElementById('ci-upload-zone');
+  const statusEl = document.getElementById('ci-upload-status');
+  // Remove any existing staged bar
+  zone.querySelectorAll('.upload-staged-bar, .upload-confirm-btn').forEach(el => el.remove());
+  setHiddenState(statusEl, true);
+  // Build staged bar
+  const bar = document.createElement('div');
+  bar.className = 'upload-staged-bar';
+  bar.innerHTML = `
+    <div class="upload-staged-icon">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#98002e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    </div>
+    <span class="upload-staged-name" title="${escHtml(file.name)}">${escHtml(file.name)}</span>
+    <span class="upload-staged-size">${(file.size / 1024).toFixed(0)} KB</span>
+    <button type="button" class="upload-staged-remove">Remove</button>
+  `;
+  bar.querySelector('.upload-staged-remove').addEventListener('click', () => {
+    bar.remove();
+    confirmBtn.remove();
+    input.value = '';
+    setHiddenState(statusEl, true);
+  });
+  // Build confirm button
+  const confirmBtn = document.createElement('button');
+  confirmBtn.type = 'button';
+  confirmBtn.className = 'upload-confirm-btn';
+  confirmBtn.innerHTML = '<span class="btn-spinner"></span><span class="btn-label">Process File</span>';
+  confirmBtn.addEventListener('click', () => {
+    confirmBtn.classList.add('loading');
+    confirmBtn.disabled = true;
+    bar.remove();
+    confirmBtn.remove();
+    ciProcessPdf(file);
+  });
+  zone.after(bar);
+  bar.after(confirmBtn);
+  input.value = '';
 }
 
 async function ciProcessPdf(file) {

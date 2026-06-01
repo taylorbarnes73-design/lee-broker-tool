@@ -7869,3 +7869,94 @@ body.broker-active .sub-tab-bar {
   gap: 8px;
   margin-top: 2px;
 }
+
+/* ── Two-step upload: staged file preview ── */
+.upload-staged-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--card, #fff);
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.upload-staged-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  background: #fce8ed;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.upload-staged-icon svg { display: block; }
+.upload-staged-name {
+  flex: 1;
+  font-weight: 600;
+  color: var(--text, #1a1a1a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.upload-staged-size {
+  font-size: 11px;
+  color: var(--text3, #888);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.upload-staged-remove {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text3, #888);
+  font-size: 11px;
+  text-decoration: underline;
+  padding: 0;
+  line-height: 1;
+}
+.upload-staged-remove:hover { color: #b42318; }
+.upload-confirm-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 10px;
+  width: 100%;
+  padding: 11px 16px;
+  background: var(--red, #98002e);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 14px rgba(152,0,46,0.22);
+  letter-spacing: -0.01em;
+}
+.upload-confirm-btn:hover { opacity: 0.92; box-shadow: 0 6px 20px rgba(152,0,46,0.32); }
+.upload-confirm-btn:disabled { opacity: 0.55; pointer-events: none; }
+.upload-confirm-btn .btn-spinner {
+  display: none;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255,255,255,0.5);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btnSpin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+.upload-confirm-btn.loading .btn-spinner { display: inline-block; }
+.upload-confirm-btn.loading { opacity: 0.7; pointer-events: none; }
+.upload-staged-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+.upload-staged-list .upload-staged-bar { margin-top: 0; }
