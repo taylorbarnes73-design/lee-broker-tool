@@ -196,3 +196,6 @@
 .lee-app ::-webkit-scrollbar-thumb { background: var(--ink-200); border-radius: 8px; border: 2px solid var(--ink-50); }
 .lee-app ::-webkit-scrollbar-thumb:hover { background: var(--ink-300); }
 .lee-app ::-webkit-scrollbar-track { background: transparent; }
+
+/* Button loading spinner keyframe */
+@keyframes btn-spin { to { transform: rotate(360deg); } }

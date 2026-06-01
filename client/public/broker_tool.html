@@ -138,7 +138,7 @@
       <h1 class="page-h1">Listing Entry</h1>
     </div>
     <div class="page-head-right">
-      <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('listing')">Save Draft</button>
+      <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('listing', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
     </div>
   </div>
 
@@ -486,17 +486,17 @@
 
       <div class="deal-actions">
         <button class="btn btn-gray" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
-        <button class="btn btn-red" onclick="showListingReview()">Review</button>
-        <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing')">Save Draft</button>
+        <button class="btn btn-red" onclick="showListingReviewWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
+        <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
       </div>
     </aside>
     </div><!-- /deal-shell -->
 
     <div class="btn-bar is-hidden" id="listing-form-actions">
-      <button class="btn btn-red" onclick="showListingReview()"><span class="btn-label">Review</span></button>
+      <button class="btn btn-red" onclick="showListingReviewWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
       <button class="btn btn-gray" id="btn-listing-pdf" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
-    <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing')"><span class="btn-label">Save Draft</span></button>
-      <button class="btn btn-gray" onclick="clearListing()"><span class="btn-label">Clear Form</span></button>
+    <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
+      <button class="btn btn-gray" onclick="setBtnLoading(this,true,'Clearing…');setTimeout(()=>{clearListing();setBtnLoading(this,false);},80)"><span class="btn-spinner"></span><span class="btn-label">Clear Form</span></button>
     </div>
 
     <!-- ── REVIEW & CONFIRM PAGE ── -->
@@ -519,7 +519,7 @@
         <p class="success-copy">Your listing has been sent to admin. Would you like to create a sign order for this property?</p>
         <div class="btn-bar btn-bar-compact">
           <button class="btn btn-red" onclick="copyToSign()">Create Sign Order &rarr;</button>
-          <button class="btn btn-gray" onclick="exportListingPdf()">Download PDF</button>
+          <button class="btn btn-gray" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
           <button class="btn btn-outline" onclick="hideListingReview()">Return to Form</button>
         </div>
       </div>
@@ -561,8 +561,8 @@
       </div>
     </div>
     <div class="btn-bar" id="listing-mod-form-actions">
-      <button class="btn btn-red" onclick="openReviewSnapshot('listing-mod')">Review</button>
-      <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing-mod')">Save Draft</button>
+      <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'listing-mod')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
+      <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing-mod', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
       <button class="btn btn-gray" onclick="document.getElementById('lm-notes').value='';document.getElementById('lm-address').value='';">Clear</button>
     </div>
   </div><!-- end listing-mod-mode -->
@@ -776,15 +776,15 @@
       </ol>
     </div>
     <div class="deal-actions">
-      <button class="btn btn-gray" onclick="exportSignPdf()">Download PDF</button>
-      <button class="btn btn-red" onclick="openReviewSnapshot('sign')">Review</button>
+      <button class="btn btn-gray" onclick="exportSignPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
+      <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'sign')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
     </div>
   </aside>
   </div><!-- /deal-shell -->
   <div class="btn-bar btn-bar-top-md">
-    <button class="btn btn-gray" onclick="exportSignPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
-    <button class="btn btn-red" onclick="openReviewSnapshot('sign')">Review</button>
-    <button class="btn btn-gray" onclick="clearSign()">Clear Form</button>
+    <button class="btn btn-gray" onclick="exportSignPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
+    <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'sign')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
+    <button class="btn btn-gray" onclick="setBtnLoading(this,true,'Clearing…');setTimeout(()=>{clearSign();setBtnLoading(this,false);},80)"><span class="btn-spinner"></span><span class="btn-label">Clear Form</span></button>
   </div>
 </div>
 
@@ -796,7 +796,7 @@
       <h1 class="page-h1">Commission Voucher</h1>
     </div>
     <div class="page-head-right">
-      <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('voucher')">Save Draft</button>
+      <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('voucher', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
     </div>
   </div>
   <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete all steps in order for fastest processing.</div>
@@ -1229,10 +1229,10 @@
 
   <div class="btn-bar">
     <button class="btn btn-gray" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Excel Voucher</span></button>
-    <button class="btn btn-red" onclick="openReviewSnapshot('voucher')">Review</button>
-    <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('voucher')">Save Draft</button>
+    <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'voucher')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
+    <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('voucher', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
     <button class="btn btn-outline" onclick="switchTab('sign')">Remove Signs &rarr;</button>
-    <button class="btn btn-gray" onclick="clearVoucher()">Clear Form</button>
+    <button class="btn btn-gray" onclick="setBtnLoading(this,true,'Clearing…');setTimeout(()=>{clearVoucher();setBtnLoading(this,false);},80)"><span class="btn-spinner"></span><span class="btn-label">Clear Form</span></button>
   </div>
     </div><!-- end optional-body -->
   </div><!-- end optional-wrapper -->
@@ -1287,7 +1287,7 @@
 
     <div class="deal-actions">
       <button class="btn btn-gray" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Excel Voucher</span></button>
-      <button class="btn btn-red" onclick="openReviewSnapshot('voucher')">Review</button>
+      <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'voucher')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
     </div>
   </aside>
   </div><!-- /deal-shell -->
@@ -1302,7 +1302,7 @@
       <h1 class="page-h1">Comp Input</h1>
     </div>
     <div class="page-head-right">
-      <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('comp')">Save Draft</button>
+      <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('comp', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
     </div>
   </div>
   <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections for additional detail.</div>
@@ -1585,10 +1585,10 @@
   </div><!-- end optional-wrapper -->
 
   <div class="btn-bar btn-bar-top-md">
-    <button class="btn btn-gray" onclick="exportCompPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
-    <button class="btn btn-red" onclick="openReviewSnapshot('comp')">Review</button>
-    <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('comp')">Save Draft</button>
-    <button class="btn btn-gray" onclick="clearComp()">Clear Form</button>
+    <button class="btn btn-gray" onclick="exportCompPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
+    <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'comp')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
+    <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('comp', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
+    <button class="btn btn-gray" onclick="setBtnLoading(this,true,'Clearing…');setTimeout(()=>{clearComp();setBtnLoading(this,false);},80)"><span class="btn-spinner"></span><span class="btn-label">Clear Form</span></button>
   </div>
   <div id="comp-submit-badge" class="comp-submit-badge"></div>
 
@@ -1688,7 +1688,7 @@
           <div class="cr-filters-note" id="cr-search-note"></div>
           <div class="cr-filters-actions-right">
             <button class="btn btn-gray" type="button" onclick="compReportResetFilters()">Clear</button>
-            <button class="btn btn-red" type="submit">Search</button>
+            <button class="btn btn-red" type="submit" id="cr-search-btn"><span class="btn-spinner"></span><span class="btn-label">Search</span></button>
           </div>
         </div>
       </form>
@@ -1697,8 +1697,8 @@
     <div class="cr-results-meta">
       <div id="cr-results-count">No results loaded.</div>
       <div class="cr-filters-actions-right">
-        <button class="btn btn-gray" type="button" onclick="compReportExportCsv()">Excel file</button>
-        <button class="btn btn-outline" type="button" onclick="compReportExportPdf()">Download Comp Report</button>
+        <button class="btn btn-gray" type="button" id="cr-export-csv-btn" onclick="compReportExportCsvWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Excel file</span></button>
+        <button class="btn btn-outline" type="button" id="cr-export-pdf-btn" onclick="compReportExportPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Comp Report</span></button>
       </div>
     </div>
 
@@ -1712,9 +1712,9 @@
     </div>
 
     <div class="cr-pagination" id="cr-pagination" aria-label="Comp report result pages">
-      <button class="btn btn-gray" type="button" id="cr-prev-page" onclick="compReportPreviousPage()" disabled>&larr; Previous</button>
+      <button class="btn btn-gray" type="button" id="cr-prev-page" onclick="compReportPreviousPage()" disabled><span class="btn-spinner"></span><span class="btn-label">&larr; Previous</span></button>
       <span id="cr-page-label">Page 1</span>
-      <button class="btn btn-gray" type="button" id="cr-next-page" onclick="compReportNextPage()" disabled>Next &rarr;</button>
+      <button class="btn btn-gray" type="button" id="cr-next-page" onclick="compReportNextPage()" disabled><span class="btn-spinner"></span><span class="btn-label">Next &rarr;</span></button>
     </div>
 
     <!-- Legacy empty-state kept for compatibility with existing JS; hidden visually -->
@@ -2261,7 +2261,7 @@
     <div class="btn-bar btn-bar-top-lg">
       <button class="btn btn-green" id="btn-ci-send" onclick="ciSubmitToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Send Contract to Admin</span></button>
       <button class="btn btn-outline" onclick="ciDownloadDataSheet()" title="Download a formatted AIR CRE Data Sheet as a text file">Download AIR CRE Data Sheet</button>
-      <button class="btn btn-gray" onclick="ciReset()">Clear Form</button>
+      <button class="btn btn-gray" onclick="setBtnLoading(this,true,'Clearing…');setTimeout(()=>{ciReset();setBtnLoading(this,false);},80)"><span class="btn-spinner"></span><span class="btn-label">Clear Form</span></button>
     </div>
     <div id="ci-submit-status" class="status-copy"></div>
   </div>
@@ -3792,7 +3792,17 @@ function restoreListingUploadDraftState(state) {
   safeUpdateListingRequiredDocStatus();
 }
 
-function saveCurrentDraft(context) {
+function saveCurrentDraft(context, btn) {
+  if (btn) { setBtnLoading(btn, true, 'Saving…'); btn.disabled = true; }
+  setTimeout(() => {
+    try {
+      _saveCurrentDraftCore(context);
+    } finally {
+      if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
+    }
+  }, 30);
+}
+function _saveCurrentDraftCore(context) {
   try {
     if (context === 'listing') {
       localStorage.setItem(LBT_AUTOSAVE_KEYS.listing, JSON.stringify({
@@ -3819,6 +3829,24 @@ function saveCurrentDraft(context) {
   }
 }
 
+// ── Wrapper: openReviewSnapshot with loading spinner ──
+function openReviewSnapshotWithSpinner(btn, context) {
+  if (btn) { setBtnLoading(btn, true, 'Loading…'); btn.disabled = true; }
+  setTimeout(() => {
+    try { openReviewSnapshot(context); } finally {
+      if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
+    }
+  }, 40);
+}
+// ── Wrapper: showListingReview with loading spinner ──
+function showListingReviewWithSpinner(btn) {
+  if (btn) { setBtnLoading(btn, true, 'Loading…'); btn.disabled = true; }
+  setTimeout(() => {
+    try { showListingReview(); } finally {
+      if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
+    }
+  }, 40);
+}
 function reviewSnapshotRowsFor(context) {
   if (context === 'listing-mod') {
     return [
@@ -5687,6 +5715,14 @@ function exportLandPdf() {
 // ═══════════════════════════════════════════════════════════════════════════════
 // PDF EXPORT: SIGN REQUEST — matches original Cimarron form layout
 // ═══════════════════════════════════════════════════════════════════════════════
+function exportSignPdfWithSpinner(btn) {
+  if (btn) { setBtnLoading(btn, true, 'Generating…'); btn.disabled = true; }
+  setTimeout(() => {
+    try { exportSignPdf(); } finally {
+      if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
+    }
+  }, 80);
+}
 function exportSignPdf() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
@@ -6715,6 +6751,14 @@ function clearComp() {
   renderCompPhotoPreview();
 }
 
+function exportCompPdfWithSpinner(btn) {
+  if (btn) { setBtnLoading(btn, true, 'Generating…'); btn.disabled = true; }
+  setTimeout(() => {
+    try { exportCompPdf(); } finally {
+      if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
+    }
+  }, 80);
+}
 function exportCompPdf() {
   const compType = document.getElementById('c-comp-type').value;
   if (compType === 'sale') { exportSaleCompPdf(); }
@@ -14528,6 +14572,22 @@ function compReportToggleSelectAll(isChecked) {
   compReportUpdateSelectAllState();
 }
 
+function compReportExportCsvWithSpinner(btn) {
+  if (btn) { setBtnLoading(btn, true, 'Exporting…'); btn.disabled = true; }
+  setTimeout(() => {
+    try { compReportExportCsv(); } finally {
+      if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
+    }
+  }, 80);
+}
+function compReportExportPdfWithSpinner(btn) {
+  if (btn) { setBtnLoading(btn, true, 'Generating…'); btn.disabled = true; }
+  void (async () => {
+    try { await compReportExportPdf(); } catch(e) { /* handled inside */ } finally {
+      if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
+    }
+  })();
+}
 function compReportExportCsv() {
   const rows = compReportSelectedRows();
   if (!rows.length) {
@@ -14675,19 +14735,26 @@ function compReportGetFilters() {
 
 function compReportRunSearch() {
   compReportsPageOffset = 0;
-  void compReportSearch();
+  const btn = document.getElementById('cr-search-btn');
+  if (btn) { setBtnLoading(btn, true, 'Searching…'); btn.disabled = true; }
+  void compReportSearch().finally(() => {
+    if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
+  });
 }
 
 function compReportNextPage() {
   if (!compReportsPageInfo?.hasNext) return;
   compReportsPageOffset = Number(compReportsPageInfo.nextOffset ?? (compReportsPageInfo.offset + compReportsPageInfo.limit));
-  void compReportSearch();
+  const btn = document.getElementById('cr-next-page');
+  if (btn) { setBtnLoading(btn, true, 'Loading…'); btn.disabled = true; }
+  void compReportSearch().finally(() => { if (btn) { setBtnLoading(btn, false); btn.disabled = false; } });
 }
-
 function compReportPreviousPage() {
   if (!compReportsPageInfo?.hasPrevious) return;
   compReportsPageOffset = Number(compReportsPageInfo.previousOffset ?? Math.max(0, compReportsPageInfo.offset - compReportsPageInfo.limit));
-  void compReportSearch();
+  const btn = document.getElementById('cr-prev-page');
+  if (btn) { setBtnLoading(btn, true, 'Loading…'); btn.disabled = true; }
+  void compReportSearch().finally(() => { if (btn) { setBtnLoading(btn, false); btn.disabled = false; } });
 }
 
 function compReportResetFilters() {

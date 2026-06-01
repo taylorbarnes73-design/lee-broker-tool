@@ -532,6 +532,7 @@ export default function PortalSubmissionDetail() {
                     <Button
                       variant={item.status === "pending" ? "primary" : "secondary"}
                       disabled={updatingStatus !== null || item.status === "pending"}
+                      loading={updatingStatus === "pending"}
                       onClick={() => updateStatus("pending")}
                     >
                       {updatingStatus === "pending" ? "Updating…" : "Requeue"}
@@ -539,6 +540,7 @@ export default function PortalSubmissionDetail() {
                     <Button
                       variant={item.status === "in_review" ? "primary" : "secondary"}
                       disabled={updatingStatus !== null || item.status === "in_review"}
+                      loading={updatingStatus === "in_review"}
                       onClick={() => updateStatus("in_review")}
                     >
                       {updatingStatus === "in_review" ? "Updating…" : item.assignedTo ? "Reassign to me" : "Claim & start"}
@@ -546,6 +548,7 @@ export default function PortalSubmissionDetail() {
                     <Button
                       variant={item.status === "approved" ? "primary" : "secondary"}
                       disabled={updatingStatus !== null || item.status === "approved"}
+                      loading={updatingStatus === "approved"}
                       onClick={() => updateStatus("approved")}
                     >
                       {updatingStatus === "approved" ? "Updating…" : "Mark complete"}
@@ -553,6 +556,7 @@ export default function PortalSubmissionDetail() {
                     <Button
                       variant={item.status === "rejected" ? "primary" : "secondary"}
                       disabled={updatingStatus !== null || item.status === "rejected"}
+                      loading={updatingStatus === "rejected"}
                       onClick={() => updateStatus("rejected")}
                     >
                       {updatingStatus === "rejected" ? "Updating…" : "Reject"}
@@ -649,7 +653,7 @@ export default function PortalSubmissionDetail() {
                       e.target.value = "";
                     }}
                   />
-                  <Button variant="secondary" disabled={!item || importingExcel} onClick={() => excelFileInputRef.current?.click()}>
+                  <Button variant="secondary" disabled={!item || importingExcel} loading={importingExcel} onClick={() => excelFileInputRef.current?.click()}>
                     {importingExcel ? "Importing…" : "Upload .xlsx / .xlsm voucher"}
                   </Button>
                   <span style={{ fontSize: 12, color: "var(--ink-500)" }}>
@@ -696,7 +700,7 @@ export default function PortalSubmissionDetail() {
                       e.target.value = "";
                     }}
                   />
-                  <Button variant="secondary" disabled={!item || extracting} onClick={() => fileInputRef.current?.click()}>
+                  <Button variant="secondary" disabled={!item || extracting} loading={extracting} onClick={() => fileInputRef.current?.click()}>
                     {extracting ? "Extracting…" : "Upload PDF and extract"}
                   </Button>
                   <span style={{ fontSize: 12, color: "var(--ink-500)" }}>
