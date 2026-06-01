@@ -210,6 +210,17 @@ const normalizeToolChoice = (
 };
 
 /**
+ * Returns true when the model name indicates an OpenAI o-series reasoning model
+ * (o1, o3, o4-mini, etc.). These models:
+ *   - Use `max_completion_tokens` instead of `max_tokens`
+ *   - Do not support `response_format: json_schema` (use json_object or prompt-based JSON)
+ *   - Do not support `system` role messages (use `developer` role instead)
+ */
+function isOSeriesModel(model: string): boolean {
+  return /^o\d/i.test(model.trim());
+}
+
+/**
  * Choose an OpenAI-compatible LLM backend.
  *   1. If both BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY are set,
  *      use the Forge proxy.
@@ -305,7 +316,7 @@ export function isGeminiDirectAvailable(): boolean {
 }
 
 /**
- * Invoke the native AI generateContent API with an inline file (PDF or image).
+ * Invoke the native Gemini generateContent API with an inline file (PDF or image).
  *
  * Unlike the OpenAI-compatible endpoint, the native API accepts PDFs as inline base64
  * data — meaning the AI reads the document directly rather than relying on pre-extracted
@@ -333,13 +344,15 @@ export async function invokeLLMWithFile(params: {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${ENV.geminiApiKey}`;
 
   const generationConfig: Record<string, unknown> = {
-    maxOutputTokens: 4096,
+    maxOutputTokens: 8192,
   };
 
   if (outputSchema) {
     generationConfig.responseMimeType = "application/json";
-    // responseSchema follows a subset of JSON Schema; supply the inner schema object
-    generationConfig.responseSchema = outputSchema.schema;
+    // responseSchema follows a subset of JSON Schema; supply the inner schema object.
+    // Strip additionalProperties — Gemini's responseSchema does not support it.
+    const cleanSchema = stripAdditionalProperties(outputSchema.schema);
+    generationConfig.responseSchema = cleanSchema;
   }
 
   const body = {
@@ -372,7 +385,7 @@ export async function invokeLLMWithFile(params: {
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(
-      `AI native file API failed: ${response.status} ${response.statusText} – ${errorText.slice(0, 500)}`
+      `Gemini native file API failed: ${response.status} ${response.statusText} – ${errorText.slice(0, 800)}`
     );
   }
 
@@ -381,13 +394,50 @@ export async function invokeLLMWithFile(params: {
       content?: { parts?: Array<{ text?: string }> };
       finishReason?: string;
     }>;
+    error?: { message?: string };
   };
 
-  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+  if (data.error?.message) {
+    throw new Error(`Gemini API error: ${data.error.message}`);
+  }
+
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+  const finishReason = data.candidates?.[0]?.finishReason;
+
+  // SAFETY / RECITATION finish reasons mean no usable output — throw so caller can fallback
+  if (!text && finishReason && finishReason !== "STOP" && finishReason !== "MAX_TOKENS") {
+    throw new Error(`Gemini returned no content (finishReason: ${finishReason})`);
+  }
+
+  return text;
+}
+
+/**
+ * Recursively remove `additionalProperties` keys from a JSON Schema object.
+ * Gemini's responseSchema does not support this keyword and will return a 400 error.
+ */
+function stripAdditionalProperties(schema: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(schema)) {
+    if (key === "additionalProperties") continue;
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      result[key] = stripAdditionalProperties(value as Record<string, unknown>);
+    } else if (Array.isArray(value)) {
+      result[key] = value.map(item =>
+        item && typeof item === "object" && !Array.isArray(item)
+          ? stripAdditionalProperties(item as Record<string, unknown>)
+          : item
+      );
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
 }
 
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   const backend = resolveBackend();
+  const oSeries = isOSeriesModel(backend.model);
 
   const {
     messages,
@@ -400,9 +450,17 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     response_format,
   } = params;
 
+  // o-series models do not support the `system` role — convert to `developer`
+  const normalizedMessages = messages.map(normalizeMessage).map(msg => {
+    if (oSeries && msg.role === "system") {
+      return { ...msg, role: "developer" as const };
+    }
+    return msg;
+  });
+
   const payload: Record<string, unknown> = {
     model: backend.model,
-    messages: messages.map(normalizeMessage),
+    messages: normalizedMessages,
   };
 
   if (tools && tools.length > 0) {
@@ -417,14 +475,26 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.tool_choice = normalizedToolChoice;
   }
 
-  payload.max_tokens = params.maxTokens ?? params.max_tokens ?? 4096;
+  const tokenLimit = params.maxTokens ?? params.max_tokens ?? 4096;
+  if (oSeries) {
+    // o-series models use max_completion_tokens, not max_tokens
+    payload.max_completion_tokens = tokenLimit;
+  } else {
+    payload.max_tokens = tokenLimit;
+  }
 
-  const normalizedResponseFormat = normalizeResponseFormat({
+  let normalizedResponseFormat = normalizeResponseFormat({
     responseFormat,
     response_format,
     outputSchema,
     output_schema,
   });
+
+  // o-series models do not support json_schema response format — downgrade to json_object
+  // and rely on the system/developer prompt to enforce JSON structure
+  if (oSeries && normalizedResponseFormat?.type === "json_schema") {
+    normalizedResponseFormat = { type: "json_object" };
+  }
 
   if (normalizedResponseFormat) {
     payload.response_format = normalizedResponseFormat;
