@@ -25,6 +25,23 @@ vi.mock("../storage", () => ({
   ),
 }));
 
+vi.mock("../db", () => ({
+  getDb: vi.fn().mockResolvedValue({}),
+}));
+
+vi.mock("../fileAccess", () => ({
+  requireStoredFileAccess: vi.fn(async (_db: unknown, _user: unknown, key: string) => ({
+    key,
+    upload: {
+      fileKey: key,
+      filename: "sample.pdf",
+      mimeType: "application/pdf",
+      uploaderOpenId: "local:test@example.com",
+      reference: null,
+    },
+  })),
+}));
+
 // Mock PDF parsing so brochure tests don't need real PDFs.
 // The production code uses the default export as a callable: (mod.default ?? mod)(buffer)
 const mockPdfParse = vi.fn().mockResolvedValue({
@@ -36,9 +53,19 @@ vi.mock("pdf-parse", () => ({
 
 import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable } from "../_core/llm";
 
-function createCtx(): TrpcContext {
+function createCtx(user: TrpcContext["user"] = {
+  id: 1,
+  openId: "local:test@example.com",
+  name: "Test User",
+  email: "test@example.com",
+  loginMethod: "local",
+  role: "user",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  lastSignedIn: new Date(),
+} as any): TrpcContext {
   return {
-    user: null,
+    user,
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: {} as TrpcContext["res"],
   };

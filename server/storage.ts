@@ -5,8 +5,8 @@ import path from "node:path";
 import { ENV } from "./_core/env";
 
 // ── Local filesystem fallback (used when AWS_S3_BUCKET is not set) ───────────
-// Files are stored under <cwd>/local-uploads/ and served by Express at /local-uploads/.
-// This is intended for development and single-instance deployments without S3.
+// Files are stored under <cwd>/local-uploads/ and served through the authenticated
+// /api/files/content proxy. /local-uploads/ is still parsed for legacy stored URLs.
 
 const LOCAL_UPLOADS_DIR = path.join(process.cwd(), "local-uploads");
 const LOCAL_URL_PREFIX = "/local-uploads/";
@@ -49,19 +49,23 @@ async function localPut(
   const filePath = path.join(LOCAL_UPLOADS_DIR, ...safeKey.split("/"));
   await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
   await fs.promises.writeFile(filePath, data);
-  return { key: safeKey, url: LOCAL_URL_PREFIX + safeKey };
+  return { key: safeKey, url: storagePublicUrl(safeKey) };
 }
 
 function localGet(relKey: string): { key: string; url: string } {
   const safeKey = sanitizeStorageKey(relKey);
-  return { key: safeKey, url: LOCAL_URL_PREFIX + safeKey };
+  return { key: safeKey, url: storagePublicUrl(safeKey) };
 }
 
 export function storagePublicUrl(relKey: string): string {
   const safeKey = sanitizeStorageKey(relKey);
-  return isLocalStorage()
-    ? LOCAL_URL_PREFIX + safeKey
-    : `${PUBLIC_FILE_PROXY_PREFIX}${encodeURIComponent(safeKey)}`;
+  return `${PUBLIC_FILE_PROXY_PREFIX}${encodeURIComponent(safeKey)}`;
+}
+
+export function storedFileKeyFromReference(input: string | null | undefined): string | null {
+  const raw = String(input ?? "");
+  if (!raw.trim()) return null;
+  return tryParseStoredKey(raw);
 }
 
 function tryParseStoredKey(input: string): string | null {

@@ -1,8 +1,10 @@
-import { publicProcedure, router } from "../_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable } from "../_core/llm";
 import { z } from "zod/v4";
 import { getSetting } from "../settings/getSetting";
 import { isStoredFileReference, storageGetBytes } from "../storage";
+import { getDb } from "../db";
+import { requireStoredFileAccess, type StoredFileAccessUser } from "../fileAccess";
 
 // ── Field schemas per tab ──
 
@@ -800,7 +802,7 @@ function buildJsonSchema(name: string, fieldNames: string[]) {
   };
 }
 
-async function fetchDocumentBuffer(fileUrl: string) {
+async function fetchDocumentBuffer(fileUrl: string, user?: StoredFileAccessUser) {
   const target = fileUrl.trim();
   const isHttp = /^https?:\/\//i.test(target);
   const isDataUrl = /^data:[^;]+;base64,/i.test(target);
@@ -808,7 +810,11 @@ async function fetchDocumentBuffer(fileUrl: string) {
 
   try {
     if (isStoredPath) {
-      const { bytes } = await storageGetBytes(target);
+      if (!user) return { fileBuffer: null, error: "Not authenticated" };
+      const db = await getDb();
+      if (!db) return { fileBuffer: null, error: "Database unavailable" };
+      const { key } = await requireStoredFileAccess(db, user, target);
+      const { bytes } = await storageGetBytes(key);
       return { fileBuffer: bytes, error: null };
     }
     if (!isHttp && !isDataUrl) {
@@ -888,10 +894,11 @@ async function extractDocumentFields(
   tab: FormTab,
   fileUrl: string,
   mimeType: AiDocumentMime,
+  user: StoredFileAccessUser,
   options: { listingBrochurePrompt?: boolean } = {}
 ) {
   const fieldNames = Object.keys(tabFieldSchemas[tab].shape);
-  const fetched = await fetchDocumentBuffer(fileUrl);
+  const fetched = await fetchDocumentBuffer(fileUrl, user);
 
   if (!fetched.fileBuffer) {
     return {
@@ -1206,6 +1213,7 @@ async function extractDocumentFieldsAndDetection<TDetection>(params: {
   tab: "voucher" | "listing";
   fileUrl: string;
   mimeType: AiDocumentMime;
+  user: StoredFileAccessUser;
   detectionPrompt: string;
   systemPrompt: string;
   schemaName: string;
@@ -1214,7 +1222,7 @@ async function extractDocumentFieldsAndDetection<TDetection>(params: {
   emptyDetection: () => TDetection;
 }) {
   const fieldNames = Object.keys(tabFieldSchemas[params.tab].shape);
-  const fetched = await fetchDocumentBuffer(params.fileUrl);
+  const fetched = await fetchDocumentBuffer(params.fileUrl, params.user);
 
   if (!fetched.fileBuffer) {
     return {
@@ -1330,12 +1338,14 @@ Return one JSON object with:
 
 async function extractVoucherDocumentWithDetection(
   fileUrl: string,
-  mimeType: AiDocumentMime
+  mimeType: AiDocumentMime,
+  user: StoredFileAccessUser
 ) {
   return extractDocumentFieldsAndDetection({
     tab: "voucher",
     fileUrl,
     mimeType,
+    user,
     schemaName: "voucher_document_fields_and_detection",
     detectionSchema: voucherDocumentDetectionSchema,
     parseDetection: parseVoucherDocumentDetection,
@@ -1356,12 +1366,14 @@ Rules:
 
 async function extractListingDocumentWithDetection(
   fileUrl: string,
-  mimeType: AiDocumentMime
+  mimeType: AiDocumentMime,
+  user: StoredFileAccessUser
 ) {
   return extractDocumentFieldsAndDetection({
     tab: "listing",
     fileUrl,
     mimeType,
+    user,
     schemaName: "listing_document_fields_and_detection",
     detectionSchema: listingDocumentDetectionSchema,
     parseDetection: parseListingDocumentDetection,
@@ -1479,7 +1491,7 @@ export const aiAssistRouter = router({
    * Scrape a property brochure (PDF or image) and extract listing fields.
    * Fetches the file server-side and sends the content as base64.
    */
-  scrapeBrochure: publicProcedure
+  scrapeBrochure: protectedProcedure
     .input(
       z.object({
         // Accept either a public http(s) URL (e.g. an S3 object) or a data:
@@ -1503,11 +1515,12 @@ export const aiAssistRouter = router({
           .default("application/pdf"),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       return extractDocumentFields(
         "listing",
         input.fileUrl,
         input.mimeType,
+        ctx.user,
         { listingBrochurePrompt: true }
       );
     }),
@@ -1516,7 +1529,7 @@ export const aiAssistRouter = router({
    * Extract fields from a broker document for any supported tool tab.
    * This keeps client-side AI document workflows behind the broker tool API.
    */
-  extractDocument: publicProcedure
+  extractDocument: protectedProcedure
     .input(
       z.object({
         fileUrl: z
@@ -1539,11 +1552,11 @@ export const aiAssistRouter = router({
         tab: z.enum(["listing", "voucher", "sign", "comp"]),
       })
     )
-    .mutation(async ({ input }) =>
-      extractDocumentFields(input.tab, input.fileUrl, input.mimeType)
+    .mutation(async ({ ctx, input }) =>
+      extractDocumentFields(input.tab, input.fileUrl, input.mimeType, ctx.user)
     ),
 
-  extractVoucherDocument: publicProcedure
+  extractVoucherDocument: protectedProcedure
     .input(
       z.object({
         fileUrl: z
@@ -1563,11 +1576,11 @@ export const aiAssistRouter = router({
         mimeType: aiDocumentMimeSchema,
       })
     )
-    .mutation(async ({ input }) =>
-      extractVoucherDocumentWithDetection(input.fileUrl, input.mimeType)
+    .mutation(async ({ ctx, input }) =>
+      extractVoucherDocumentWithDetection(input.fileUrl, input.mimeType, ctx.user)
     ),
 
-  extractListingDocument: publicProcedure
+  extractListingDocument: protectedProcedure
     .input(
       z.object({
         fileUrl: z
@@ -1587,8 +1600,8 @@ export const aiAssistRouter = router({
         mimeType: aiDocumentMimeSchema,
       })
     )
-    .mutation(async ({ input }) =>
-      extractListingDocumentWithDetection(input.fileUrl, input.mimeType)
+    .mutation(async ({ ctx, input }) =>
+      extractListingDocumentWithDetection(input.fileUrl, input.mimeType, ctx.user)
     ),
 
   /**
