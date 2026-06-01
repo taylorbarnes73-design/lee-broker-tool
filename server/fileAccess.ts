@@ -38,15 +38,7 @@ export function storedKeyForAccess(input: string): string {
 }
 
 export async function requireStoredFileAccess(
-  db: {
-    select: (selection?: unknown) => {
-      from: (table: unknown) => {
-        where: (condition: unknown) => {
-          limit: (limit: number) => Promise<StoredFileAccessRecord[]>;
-        };
-      };
-    };
-  },
+  db: any,
   user: StoredFileAccessUser,
   keyOrUrl: string
 ): Promise<{ key: string; upload: StoredFileAccessRecord }> {
