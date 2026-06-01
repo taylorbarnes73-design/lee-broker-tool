@@ -15,6 +15,16 @@ vi.mock("./storage", () => ({
     })
   ),
   storagePublicUrl: vi.fn((key: string) => `/api/files/content?key=${encodeURIComponent(key)}`),
+  sanitizeStorageKey: vi.fn((key: string) => String(key).trim().replace(/^\/+/, "")),
+  storedFileKeyFromReference: vi.fn((value: string) => {
+    const raw = String(value ?? "").trim();
+    if (raw.startsWith("/api/files/content")) {
+      return new URLSearchParams(raw.split("?", 2)[1] ?? "").get("key");
+    }
+    if (raw.startsWith("/local-uploads/")) return raw.slice("/local-uploads/".length);
+    if (/^broker-docs\//.test(raw)) return raw;
+    return null;
+  }),
 }));
 
 const { uploadRows } = vi.hoisted(() => ({
@@ -119,7 +129,7 @@ describe("files.upload", () => {
         base64Data: Buffer.from("Hello World").toString("base64"),
         category: "listing_agreement",
       })
-    ).rejects.toThrow(/not authenticated|logged in|unauthorized/i);
+    ).rejects.toThrow(/login|not authenticated|logged in|unauthorized/i);
   });
 
   it("uploads a file and returns success with url", async () => {
