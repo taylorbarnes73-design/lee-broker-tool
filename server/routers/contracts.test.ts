@@ -33,6 +33,23 @@ vi.mock("../storage", () => ({
   ),
 }));
 
+vi.mock("../db", () => ({
+  getDb: vi.fn().mockResolvedValue({}),
+}));
+
+vi.mock("../fileAccess", () => ({
+  requireStoredFileAccess: vi.fn(async (_db: unknown, _user: unknown, key: string) => ({
+    key,
+    upload: {
+      fileKey: key,
+      filename: "test.pdf",
+      mimeType: "application/pdf",
+      uploaderOpenId: "local:test@example.com",
+      reference: null,
+    },
+  })),
+}));
+
 import { invokeLLM } from "../_core/llm";
 import { execSync } from "child_process";
 import { contractsRouter } from "./contracts";
@@ -58,15 +75,22 @@ global.fetch = vi.fn().mockImplementation(async (url: string) => {
 
 /** Call a tRPC mutation directly (no HTTP) */
 async function callMutation(procedure: string, input: unknown) {
-  const parts = procedure.split(".");
-  let node: Record<string, unknown> = contractsRouter._def.procedures as Record<string, unknown>;
-  for (const part of parts) {
-    node = (node[part] as Record<string, unknown>)?._def?.resolver
-      ? node[part] as Record<string, unknown>
-      : node[part] as Record<string, unknown>;
-  }
-  const resolver = (node as { _def: { resolver: (opts: { input: unknown; ctx: unknown }) => unknown } })._def.resolver;
-  return resolver({ input, ctx: {} });
+  const caller = contractsRouter.createCaller({
+    user: {
+      id: 1,
+      openId: "local:test@example.com",
+      name: "Test User",
+      email: "test@example.com",
+      loginMethod: "local",
+      role: "user",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+    },
+    req: { protocol: "https", headers: {} },
+    res: {},
+  } as any);
+  return (caller as Record<string, (input: unknown) => Promise<unknown>>)[procedure](input);
 }
 
 // ── extractContract tests ──
