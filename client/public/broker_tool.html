@@ -13722,7 +13722,7 @@ input.ai-smart, select.ai-smart, textarea.ai-smart { animation: ai-pulse-amber 0
 </div>
 
 <!-- Feature 5: AI parsed fields confirmation modal -->
-<div class="ai-confirm-modal-overlay" id="ai-confirm-overlay" style="display:none" onclick="if(event.target===this)aiConfirmCancel()">
+<div class="ai-confirm-modal-overlay" id="ai-confirm-overlay" style="display:none" onclick="aiConfirmOverlayClick(event)">
   <div class="ai-confirm-modal">
     <div class="ai-confirm-modal-header">
       <span class="ai-confirm-modal-title">Review AI-Extracted Fields</span>

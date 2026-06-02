@@ -661,6 +661,10 @@ window.aiConfirmCancel = function() {
   const overlay = document.getElementById('ai-confirm-overlay');
   if (overlay) overlay.style.display = 'none';
 };
+// Close modal when clicking the backdrop (outside the modal box)
+window.aiConfirmOverlayClick = function(event) {
+  if (event.target === event.currentTarget) window.aiConfirmCancel();
+};
 function escHtmlAi(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ── Feature 4: Parse from pasted text ──
