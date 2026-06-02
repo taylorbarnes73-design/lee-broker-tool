@@ -2,6 +2,24 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // Mock storagePut so tests don't hit real S3
 vi.mock("./storage", () => ({
+  sanitizeStorageKey: vi.fn((rawKey: string) =>
+    String(rawKey).trim().replace(/\\/g, "/").replace(/^\/+/, "")
+  ),
+  storedFileKeyFromReference: vi.fn((input: string | null | undefined) => {
+    const raw = String(input ?? "").trim();
+    if (!raw) return null;
+    if (raw.startsWith("/api/files/content")) {
+      const [, query = ""] = raw.split("?", 2);
+      return new URLSearchParams(query).get("key");
+    }
+    if (raw.startsWith("/local-uploads/")) {
+      return raw.slice("/local-uploads/".length);
+    }
+    if (/^(broker-docs|broker-admin|broker-docusign)\//.test(raw)) {
+      return raw;
+    }
+    return null;
+  }),
   storagePut: vi.fn((key: string) =>
     Promise.resolve({
       key,
@@ -119,7 +137,7 @@ describe("files.upload", () => {
         base64Data: Buffer.from("Hello World").toString("base64"),
         category: "listing_agreement",
       })
-    ).rejects.toThrow(/not authenticated|logged in|unauthorized/i);
+    ).rejects.toThrow(/login|not authenticated|logged in|unauthorized/i);
   });
 
   it("uploads a file and returns success with url", async () => {
