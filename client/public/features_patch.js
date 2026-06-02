@@ -323,13 +323,34 @@ window.onSignLocationPhotoChange = function(input) {
     }
   };
 
+  function getCrMapOverlay() {
+    let overlay = document.getElementById('cr-map-overlay-msg');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'cr-map-overlay-msg';
+      overlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.85);z-index:500;border-radius:8px;pointer-events:none;font-size:14px;color:#6B7178;';
+      const container = document.getElementById('cr-map-container');
+      if (container) {
+        if (getComputedStyle(container).position === 'static') container.style.position = 'relative';
+        container.appendChild(overlay);
+      }
+    }
+    return overlay;
+  }
+
   function renderCompReportMap() {
     const container = document.getElementById('cr-map-container');
     if (!container) return;
     // Ensure Leaflet is loaded
     if (typeof L === 'undefined') {
-      container.innerHTML = '<div style="padding:40px;text-align:center;color:#6B7178">Map requires Leaflet. Please reload the page.</div>';
+      const ov = getCrMapOverlay();
+      if (ov) { ov.textContent = 'Map requires Leaflet. Please reload the page.'; ov.style.display = 'flex'; }
       return;
+    }
+    // If crMap was destroyed (e.g. by a previous innerHTML overwrite), reset it
+    if (crMap && !container.querySelector('.leaflet-container')) {
+      try { crMap.remove(); } catch(e) {}
+      crMap = null;
     }
     // Init map if not already
     if (!crMap) {
@@ -343,10 +364,13 @@ window.onSignLocationPhotoChange = function(input) {
     crMarkers.forEach(function(m) { m.remove(); });
     crMarkers = [];
     const results = window.compReportsResultsCache || [];
+    const overlay = getCrMapOverlay();
     if (!results.length) {
-      container.innerHTML = '<div style="padding:40px;text-align:center;color:#6B7178">No results to map. Run a search first.</div>';
+      if (overlay) { overlay.textContent = 'No results to map. Run a search first.'; overlay.style.display = 'flex'; }
+      setTimeout(function() { if (crMap) crMap.invalidateSize(); }, 150);
       return;
     }
+    if (overlay) overlay.style.display = 'none';
     // Geocode addresses and add markers
     const bounds = [];
     let pending = 0;
@@ -380,8 +404,10 @@ window.onSignLocationPhotoChange = function(input) {
         pending--;
       });
     });
-    // Invalidate size after render
-    setTimeout(function() { if (crMap) crMap.invalidateSize(); }, 200);
+    // Invalidate size after render — use a longer delay to ensure the container
+    // is fully visible and has its final dimensions before Leaflet measures it
+    setTimeout(function() { if (crMap) crMap.invalidateSize(); }, 300);
+    setTimeout(function() { if (crMap) crMap.invalidateSize(); }, 800);
   }
 
   // Patch compReportRenderResults to also refresh map if in map view
@@ -601,6 +627,17 @@ window.onSignLocationPhotoChange = function(input) {
           el.classList.remove('ai-confidence-high','ai-confidence-medium','ai-confidence-low');
         }, { once: true });
       });
+      // After AI fills voucher fields, reset the step flow to step 1 so the user
+      // can click Continue to review each pre-filled step. Without this, fields
+      // in steps 2-4 are display:none and appear to the user as if they weren't filled.
+      if (tab === 'voucher' && count > 0) {
+        setTimeout(function() {
+          try {
+            const flow = window.__stepFlows && window.__stepFlows['voucher-main'];
+            if (flow && typeof flow.go === 'function') flow.go(0);
+          } catch(e) {}
+        }, 50);
+      }
       return count;
     };
   });
