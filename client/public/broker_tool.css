@@ -7115,7 +7115,8 @@ body.broker-active .sub-tab-bar {
   flex-shrink: 0;
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: 100dvh; /* dynamic viewport height — fits within window, no overflow */
+  max-height: 100vh; /* fallback for browsers without dvh support */
   overflow-y: auto;
   display: flex;
   flex-direction: column;

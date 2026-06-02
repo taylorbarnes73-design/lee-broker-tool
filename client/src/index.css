@@ -266,7 +266,8 @@
   --admin-accent: var(--lee-crimson, #01696f);
   display: grid;
   grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
-  min-height: 100vh;
+  grid-template-rows: 1fr; /* single row that fills full height */
+  min-height: 100dvh;
   background: var(--ink-50);
   color: var(--ink-900);
 }
@@ -367,8 +368,9 @@
 .admin-portal-sidebar {
   position: sticky;
   top: 0;
-  align-self: start;
-  max-height: 100vh;
+  align-self: stretch; /* stretch to fill the full grid row height */
+  height: 100dvh; /* fill the full viewport height */
+  max-height: 100vh; /* fallback for browsers without dvh support */
   overflow-y: auto;
   border-right: 1px solid var(--ink-200);
   background: rgba(255, 255, 255, 0.96);

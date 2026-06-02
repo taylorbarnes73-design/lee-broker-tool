@@ -908,7 +908,6 @@
           </div>
         </div>
         <div class="field"><label>House</label><input id="v-la-house"></div>
-        <div class="field"><label>City</label><input id="v-la-city"></div>
       </div>
       <div id="procuring-section">
         <div class="sub-divider-label">Procuring Agent</div>
@@ -919,7 +918,6 @@
           </div>
         </div>
         <div class="field"><label>House</label><input id="v-pa-house"><div class="field-hint">Brokerage name</div></div>
-        <div class="field"><label>City</label><input id="v-pa-city"></div>
       </div>
     </div>
     <div class="top-gap-md voucher-subsection">
@@ -1116,7 +1114,7 @@
     <h2>Step 6 — Monthly &amp; Free Rent Schedule</h2>
     <p class="review-copy micro-copy-bottom-sm">Enter $0 for free rent months so effective rates calculate correctly.</p>
     <table class="rent-table" id="v-rent-table">
-      <thead><tr><th class="table-col-compact">#</th><th>Monthly Rent $</th><th>Rate/SF/Mo</th><th>Comm %</th><th>Months</th><th>Consideration</th><th class="table-col-compact"></th></tr></thead>
+      <thead><tr><th class="table-col-compact">#</th><th>Monthly Rent $</th><th>Rate/SF/Mo</th><th>Months</th><th>Consideration</th><th class="table-col-compact"></th></tr></thead>
       <tbody id="v-rent-body"></tbody>
     </table>
     <button class="btn btn-gray top-gap-sm" onclick="addRentRow()">+ Add Period</button>
@@ -3636,7 +3634,7 @@ function hideListingReview() {
   const formActions = document.getElementById('listing-form-actions');
   setHiddenState(reviewPage, true);
   setHiddenState(formShell, false);
-  setHiddenState(formActions, true);
+  setHiddenState(formActions, false);
 }
 
 function submitListingToAdmin(btn) {
@@ -3833,19 +3831,17 @@ function _saveCurrentDraftCore(context) {
 function openReviewSnapshotWithSpinner(btn, context) {
   if (btn) { setBtnLoading(btn, true, 'Loading…'); btn.disabled = true; }
   setTimeout(() => {
-    try { openReviewSnapshot(context); } finally {
-      if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
-    }
-  }, 40);
+    openReviewSnapshot(context);
+    if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
+  }, 80);
 }
 // ── Wrapper: showListingReview with loading spinner ──
 function showListingReviewWithSpinner(btn) {
   if (btn) { setBtnLoading(btn, true, 'Loading…'); btn.disabled = true; }
   setTimeout(() => {
-    try { showListingReview(); } finally {
-      if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
-    }
-  }, 40);
+    showListingReview();
+    if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
+  }, 80);
 }
 function reviewSnapshotRowsFor(context) {
   if (context === 'listing-mod') {
@@ -4741,7 +4737,9 @@ function updateDistPctTotal() {
 
   let total = 0;
   document.querySelectorAll('#v-dist-body tr').forEach(tr => {
-    const pctInput = tr.querySelectorAll('input')[1];
+    // inputs[0]=agent name, inputs[1]=hidden select (no), inputs[2]=gross %
+    // Use the placeholder to find the correct % input reliably
+    const pctInput = tr.querySelector('input[placeholder="%"]');
     if (pctInput) total += parseFloat(pctInput.value) || 0;
   });
   if (!indicator) {
@@ -6392,23 +6390,23 @@ function voucherWorkbookOutsideRows() {
 
 function voucherWorkbookDistributionSide(side) {
   const normalized = String(side || '').trim().toLowerCase();
-  if (normalized === 'procuring') return 'Procurring';
+  if (normalized === 'procuring') return 'Procuring';
   if (normalized === 'both') return 'Both';
   if (normalized === 'other') return 'Other';
   if (normalized === 'referring') return 'Referring';
   if (normalized === 'listing') return 'Listing';
   return '';
 }
-
 function voucherWorkbookDistributionRows() {
   return Array.from(document.querySelectorAll('#v-dist-body tr'))
     .map(tr => {
-      const inputs = tr.querySelectorAll('input');
+      const nameInput = tr.querySelector('input[placeholder="Agent name"]');
+      const pctInput = tr.querySelector('input[placeholder="%"]');
       const select = tr.querySelector('select');
       return {
-        name: String(inputs[0]?.value || '').trim(),
+        name: String(nameInput?.value || '').trim(),
         side: voucherWorkbookDistributionSide(select?.value || ''),
-        pct: voucherWorkbookPercentNumber(inputs[1]?.value),
+        pct: voucherWorkbookPercentNumber(pctInput?.value),
       };
     })
     .filter(row => row.name || row.side || row.pct != null);
