@@ -1402,19 +1402,31 @@ export const aiAssistRouter = router({
       z.object({
         description: z.string().min(5).max(3000),
         tab: z.enum(["listing", "voucher", "sign", "comp"]),
+        // Optional deal-type context hint from the client (e.g. "lease", "sale")
+        dealTypeHint: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
-      const { description, tab } = input;
+      const { description, tab, dealTypeHint } = input;
       const schema = tabFieldSchemas[tab];
       const fieldNames = Object.keys(schema.shape);
+
+      // Build a tab-specific context prefix for the user message
+      const tabContextMap: Record<string, string> = {
+        listing: "You are extracting data for a commercial real estate LISTING form. Focus on property address, type, lease rate, term, building SF, suite SF, expiration date, and listing agent details.",
+        voucher: "You are extracting data for a commercial real estate COMMISSION VOUCHER. Focus on parties (lessor/lessee or buyer/seller), deal SF, commencement/expiration dates, rent schedule, commission rate, and agent names.",
+        sign: "You are extracting data for a SIGN REQUEST form. Focus on property address, sign type, size, quantity, name rider, and any special placement instructions.",
+        comp: "You are extracting data for a COMPARABLE TRANSACTION (comp) entry. Focus on address, deal SF, lease rate or sale price, term, tenant/landlord names, and transaction date.",
+      };
+      const tabContext = tabContextMap[tab] ?? "";
+      const dealHintLine = dealTypeHint ? `\nDeal type context: ${dealTypeHint}` : "";
 
       const response = await invokeLLM({
         messages: [
           { role: "system", content: await parseSystemPrompt() },
           {
             role: "user",
-            content: `Extract fields for the "${tab}" form tab.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nDeal description:\n"${description}"\n\nReturn JSON:`,
+            content: `${tabContext}${dealHintLine}\n\nExtract fields for the "${tab}" form tab.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nDeal description:\n"${description}"\n\nReturn JSON:`,
           },
         ],
         response_format: {

@@ -7961,3 +7961,188 @@ body.broker-active .sub-tab-bar {
   margin-top: 10px;
 }
 .upload-staged-list .upload-staged-bar { margin-top: 0; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FEATURE ADDITIONS — Features 1,3,4,5,6,7,8,9,10,11,12,13,14,16,17,18,25,27
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Feature 13: Listing expiration alert ── */
+.expiry-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 8px;
+  line-height: 1.35;
+}
+.expiry-alert.expiry-expired { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+.expiry-alert.expiry-soon    { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+.expiry-alert.expiry-ok      { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
+
+/* ── Feature 14: Copy to Voucher button ── */
+.btn-copy-to-voucher { background: #003146; color: #fff; border: 1.5px solid #003146; }
+.btn-copy-to-voucher:hover { background: #004466; border-color: #004466; }
+
+/* ── Feature 10: Duplicate rent row button ── */
+.rent-dup-btn {
+  background: none; border: none; cursor: pointer; color: #6B7178;
+  padding: 0 4px; font-size: 13px; line-height: 1; transition: color 0.15s;
+}
+.rent-dup-btn:hover { color: #A9223B; }
+
+/* ── Feature 9: Per-row commission rate ── */
+.rent-comm-rate { width: 56px !important; text-align: center; }
+
+/* ── Feature 27: Inline validation tooltips ── */
+.field-has-error input,
+.field-has-error select,
+.field-has-error textarea { border-color: #DC2626 !important; background: #FFF5F5 !important; }
+.field-tooltip {
+  position: absolute; bottom: calc(100% + 5px); left: 0;
+  background: #1F2937; color: #fff; font-size: 11px; padding: 4px 8px;
+  border-radius: 5px; white-space: nowrap; pointer-events: none; z-index: 200;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18); line-height: 1.4;
+}
+.field-tooltip::after {
+  content: ''; position: absolute; top: 100%; left: 12px;
+  border: 5px solid transparent; border-top-color: #1F2937;
+}
+.field.field-has-error { position: relative; }
+
+/* ── Feature 17: Map view in comp report ── */
+.cr-view-toggle { display: flex; gap: 4px; align-items: center; }
+.cr-view-btn {
+  padding: 5px 12px; border: 1px solid #D7DBE1; background: #fff;
+  border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer;
+  color: #6B7178; transition: all 0.15s;
+}
+.cr-view-btn.active { background: #A9223B; border-color: #A9223B; color: #fff; }
+.cr-view-btn:hover:not(.active) { background: #F3F4F6; }
+#cr-map-container {
+  width: 100%; height: 480px; border-radius: 8px; border: 1px solid #E5E7EB;
+  margin-top: 12px; overflow: hidden; display: none;
+}
+#cr-map-container.is-visible { display: block; }
+.cr-map-popup { font-size: 12px; line-height: 1.5; min-width: 160px; }
+.cr-map-popup strong { font-size: 13px; display: block; margin-bottom: 2px; }
+
+/* ── Feature 25: Global search bar ── */
+.global-search-wrap { position: relative; display: flex; align-items: center; }
+.global-search-input {
+  width: 220px; padding: 6px 10px 6px 32px; border: 1px solid #D7DBE1;
+  border-radius: 20px; font-size: 13px; background: #F9FAFB;
+  transition: all 0.2s; outline: none; font-family: inherit;
+}
+.global-search-input:focus {
+  width: 280px; border-color: #A9223B; background: #fff;
+  box-shadow: 0 0 0 3px rgba(169,34,59,0.1);
+}
+.global-search-icon { position: absolute; left: 10px; color: #9CA3AF; pointer-events: none; }
+.global-search-results {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: #fff; border: 1px solid #E5E7EB; border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 500;
+  max-height: 360px; overflow-y: auto; display: none;
+}
+.global-search-results.is-open { display: block; }
+.gs-result-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 14px;
+  cursor: pointer; border-bottom: 1px solid #F3F4F6; transition: background 0.1s;
+}
+.gs-result-item:last-child { border-bottom: none; }
+.gs-result-item:hover { background: #F9FAFB; }
+.gs-result-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+  flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.gs-result-badge.listing { background: #DBEAFE; color: #1E40AF; }
+.gs-result-badge.voucher { background: #D1FAE5; color: #065F46; }
+.gs-result-badge.sign    { background: #FCE7F3; color: #9D174D; }
+.gs-result-badge.comp    { background: #FEF3C7; color: #92400E; }
+.gs-result-text { flex: 1; min-width: 0; }
+.gs-result-title { font-size: 13px; font-weight: 600; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gs-result-sub   { font-size: 11px; color: #6B7178; }
+.gs-no-results   { padding: 16px; text-align: center; color: #9CA3AF; font-size: 13px; }
+
+/* ── Feature 5: AI parsed fields confirmation modal ── */
+.ai-confirm-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.ai-confirm-modal {
+  background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+  width: 100%; max-width: 560px; max-height: 80vh;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.ai-confirm-modal-header {
+  padding: 18px 20px 14px; border-bottom: 1px solid #E5E7EB;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.ai-confirm-modal-title { font-size: 15px; font-weight: 700; color: #111827; }
+.ai-confirm-modal-close { background: none; border: none; cursor: pointer; color: #6B7178; font-size: 20px; line-height: 1; padding: 0; }
+.ai-confirm-modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+.ai-confirm-modal-hint { font-size: 12px; color: #6B7178; margin-bottom: 12px; }
+.ai-confirm-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ai-confirm-table th {
+  text-align: left; padding: 6px 10px; background: #F3F4F6; color: #374151;
+  font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.ai-confirm-table td { padding: 7px 10px; border-bottom: 1px solid #F3F4F6; vertical-align: middle; }
+.ai-confirm-table tr:last-child td { border-bottom: none; }
+.ai-confirm-table tr:hover td { background: #F9FAFB; }
+.ai-confirm-check { width: 16px; height: 16px; cursor: pointer; accent-color: #A9223B; }
+.ai-confirm-field-name  { font-weight: 600; color: #374151; }
+.ai-confirm-field-value { color: #111827; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+.ai-confirm-modal-footer { padding: 14px 20px; border-top: 1px solid #E5E7EB; display: flex; justify-content: flex-end; gap: 10px; }
+
+/* ── Feature 11: Deal summary card in voucher review ── */
+.voucher-summary-card {
+  background: #F8FAFC; border: 1px solid #E5E7EB; border-radius: 10px;
+  padding: 20px 24px; margin-bottom: 20px;
+}
+.voucher-summary-card-title {
+  font-size: 13px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: #6B7178; margin-bottom: 14px;
+}
+.voucher-summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; }
+.voucher-summary-item dt { font-size: 11px; color: #9CA3AF; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.voucher-summary-item dd { font-size: 14px; font-weight: 700; color: #111827; margin-top: 2px; }
+.voucher-summary-item dd.mono { font-family: 'JetBrains Mono', monospace; }
+.voucher-summary-item.full-width { grid-column: 1 / -1; }
+.voucher-summary-divider { grid-column: 1 / -1; border: none; border-top: 1px solid #E5E7EB; margin: 4px 0; }
+.voucher-summary-highlight dd { color: #A9223B; font-size: 16px; }
+
+/* ── Feature 16: Sign photo upload location pin ── */
+.sign-map-pin-field { margin-top: 12px; }
+.sign-photo-preview { max-width: 100%; max-height: 200px; border-radius: 6px; margin-top: 8px; border: 1px solid #E5E7EB; display: none; }
+.sign-photo-preview.has-image { display: block; }
+
+/* ── Feature 12: Auto-save indicator pulse ── */
+@keyframes autosavePulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.autosave-saving { animation: autosavePulse 1s ease-in-out 2; }
+
+/* ── Feature 4: Parse-from-text fallback ── */
+.ai-paste-fallback { margin-top: 10px; padding-top: 10px; border-top: 1px solid #E5E7EB; }
+.ai-paste-fallback-label { font-size: 11px; color: #6B7178; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.ai-paste-fallback-textarea {
+  width: 100%; min-height: 80px; font-size: 12px; border: 1px solid #D7DBE1;
+  border-radius: 6px; padding: 8px; resize: vertical; font-family: inherit;
+  color: #374151; background: #F9FAFB;
+}
+.ai-paste-fallback-textarea:focus { outline: none; border-color: #A9223B; background: #fff; }
+
+/* ── Feature 1: AI confidence indicators ── */
+.ai-confidence-high   { border-left: 3px solid #10B981 !important; }
+.ai-confidence-medium { border-left: 3px solid #F59E0B !important; }
+.ai-confidence-low    { border-left: 3px solid #EF4444 !important; }
+
+/* ── Responsive tweaks ── */
+@media (max-width: 640px) {
+  .global-search-input { width: 160px; }
+  .global-search-input:focus { width: 200px; }
+  .voucher-summary-grid { grid-template-columns: 1fr; }
+  #cr-map-container { height: 320px; }
+}

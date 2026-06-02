@@ -10,6 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,600;0,6..12,700;0,6..12,800&family=Source+Serif+4:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -40,6 +42,11 @@
         <a class="header-portal-link" href="/portal">Portal</a>
         <button type="button" class="header-sign-out-btn" onclick="signOut()">Sign Out</button>
       </nav>
+    </div>
+    <div class="global-search-wrap" id="global-search-wrap">
+      <svg class="global-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" class="global-search-input" id="global-search-input" placeholder="Search drafts, comps, agents…" autocomplete="off" oninput="globalSearchQuery(this.value)" onfocus="globalSearchOpen()" onblur="setTimeout(globalSearchClose,200)">
+      <div class="global-search-results" id="global-search-results"></div>
     </div>
     <button type="button" class="iconbtn header-help-btn" id="help-btn" aria-label="Help for this page" title="Help">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.5V14"></path><circle cx="12" cy="17" r="0.9" fill="currentColor" stroke="none"></circle></svg>
@@ -454,6 +461,7 @@
         <div class="deal-title" id="lg-title">New listing</div>
         <div class="deal-subtitle" id="lg-subtitle">Fill Step 1 to begin</div>
         <div class="micro-copy micro-copy-top" id="lg-autosave" aria-live="polite"></div>
+        <div id="lg-expiry-alert" aria-live="polite"></div>
         <div class="deal-chips" id="lg-chips"></div>
         <dl class="deal-kv">
           <div><dt>Property</dt><dd id="lg-address">—</dd></div>
@@ -488,6 +496,7 @@
         <button class="btn btn-gray" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
         <button class="btn btn-red" onclick="showListingReviewWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
         <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
+        <button class="btn btn-copy-to-voucher" type="button" onclick="copyListingToVoucher(this)"><span class="btn-spinner"></span><span class="btn-label">Copy to Voucher</span></button>
       </div>
     </aside>
     </div><!-- /deal-shell -->
@@ -496,6 +505,7 @@
       <button class="btn btn-red" onclick="showListingReviewWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
       <button class="btn btn-gray" id="btn-listing-pdf" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
     <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
+      <button class="btn btn-copy-to-voucher" type="button" onclick="copyListingToVoucher(this)"><span class="btn-spinner"></span><span class="btn-label">Copy to Voucher</span></button>
       <button class="btn btn-gray" onclick="setBtnLoading(this,true,'Clearing…');setTimeout(()=>{clearListing();setBtnLoading(this,false);},80)"><span class="btn-spinner"></span><span class="btn-label">Clear Form</span></button>
     </div>
 
@@ -738,6 +748,21 @@
       <div class="field"><label>Access Contact</label><input id="s-access-contact"><div class="field-hint">Contact name / phone</div></div>
     </div>
     <div class="field"><label>Comments</label><textarea id="s-comments" rows="3"></textarea><div class="field-hint">Additional comments or special instructions...</div></div>
+    <div class="sign-map-pin-field">
+      <div class="row c2">
+        <div class="field">
+          <label>Google Maps Pin URL <span class="optional-note">(Optional)</span></label>
+          <input id="s-maps-pin" type="url" placeholder="https://maps.google.com/...">
+          <div class="field-hint">Paste a Google Maps link to the exact sign location</div>
+        </div>
+        <div class="field">
+          <label>Sign Location Photo <span class="optional-note">(Optional)</span></label>
+          <input type="file" id="s-location-photo" accept="image/*" onchange="onSignLocationPhotoChange(this)">
+          <img id="s-location-photo-preview" class="sign-photo-preview" alt="Sign location preview">
+          <div class="field-hint">Photo of where the sign should be installed</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   </div><!-- /sign-main -->
@@ -1114,7 +1139,7 @@
     <h2>Step 6 — Monthly &amp; Free Rent Schedule</h2>
     <p class="review-copy micro-copy-bottom-sm">Enter $0 for free rent months so effective rates calculate correctly.</p>
     <table class="rent-table" id="v-rent-table">
-      <thead><tr><th class="table-col-compact">#</th><th>Monthly Rent $</th><th>Rate/SF/Mo</th><th>Months</th><th>Consideration</th><th class="table-col-compact"></th></tr></thead>
+      <thead><tr><th class="table-col-compact">#</th><th>Monthly Rent $</th><th>Rate/SF/Mo</th><th>Months</th><th>Consideration</th><th title="Commission rate override for this period">Comm %</th><th class="table-col-compact"></th></tr></thead>
       <tbody id="v-rent-body"></tbody>
     </table>
     <button class="btn btn-gray top-gap-sm" onclick="addRentRow()">+ Add Period</button>
@@ -1195,7 +1220,8 @@
       <div class="collapse-body" id="cb-listing-agent">
         <div class="field"><label>Invoice Listing Agent?</label><select id="v-la-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
         <div class="field"><label>Address</label><input id="v-la-address"></div>
-        <div class="row c2">
+        <div class="row c3">
+          <div class="field"><label>City</label><input id="v-la-city"></div>
           <div class="field"><label>State</label><input id="v-la-state" value="CA"></div>
           <div class="field"><label>Zip</label><input id="v-la-zip"></div>
         </div>
@@ -1213,7 +1239,8 @@
       <div class="collapse-body" id="cb-procuring-agent">
         <div class="field"><label>Invoice Procuring Agent?</label><select id="v-pa-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
         <div class="field"><label>Address</label><input id="v-pa-address"></div>
-        <div class="row c2">
+        <div class="row c3">
+          <div class="field"><label>City</label><input id="v-pa-city"></div>
           <div class="field"><label>State</label><input id="v-pa-state" value="CA"></div>
           <div class="field"><label>Zip</label><input id="v-pa-zip"></div>
         </div>
@@ -1695,10 +1722,15 @@
     <div class="cr-results-meta">
       <div id="cr-results-count">No results loaded.</div>
       <div class="cr-filters-actions-right">
+        <div class="cr-view-toggle">
+          <button class="cr-view-btn active" id="cr-view-table-btn" type="button" onclick="crSetView('table')">Table</button>
+          <button class="cr-view-btn" id="cr-view-map-btn" type="button" onclick="crSetView('map')">Map</button>
+        </div>
         <button class="btn btn-gray" type="button" id="cr-export-csv-btn" onclick="compReportExportCsvWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Excel file</span></button>
         <button class="btn btn-outline" type="button" id="cr-export-pdf-btn" onclick="compReportExportPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Comp Report</span></button>
       </div>
     </div>
+    <div id="cr-map-container"></div>
 
     <div class="cr-table-wrap">
       <table class="cr-table" id="cr-table">
@@ -4640,7 +4672,8 @@ function addRentRow() {
     '<td><input class="rent-rate-sf readonly-fill" placeholder="$0.00" readonly></td>' +
     '<td><input class="rent-months" placeholder="12" value="12" oninput="calcRentRow(this)"></td>' +
     '<td><input class="rent-consideration readonly-fill" placeholder="$0" readonly></td>' +
-    '<td><button class="remove-row" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
+    '<td><input class="rent-row-comm-rate" placeholder="—" style="width:52px;text-align:center" oninput="calcCommSummary()" title="Override commission rate for this period (%)"></td>' +
+    '<td style="white-space:nowrap"><button class="remove-row" onclick="this.closest(\'tr\').remove();calcCommSummary()" title="Remove row">&times;</button><button class="btn-icon-sm" onclick="duplicateRentRow(this)" title="Duplicate row" style="margin-left:4px">&#10063;</button></td>';
   body.appendChild(tr);
 }
 
@@ -4950,10 +4983,19 @@ function calcCommSummary() {
       const months = parseInt(tr.querySelector('.rent-months')?.value) || 0;
       totalConsideration += monthly * months;
     });
-    document.getElementById('v-l-consideration').value = totalConsideration > 0 ? '$' + totalConsideration.toLocaleString() : '';
-
-    const commRate = parseFloat(document.getElementById('v-l-comm-rate').value) || 0;
-    leaseComm = totalConsideration * (commRate / 100);
+        document.getElementById('v-l-consideration').value = totalConsideration > 0 ? '$' + totalConsideration.toLocaleString() : '';
+    const globalCommRate = parseFloat(document.getElementById('v-l-comm-rate').value) || 0;
+    // Per-row commission: use row-level rate if set, else fall back to global rate
+    leaseComm = 0;
+    document.querySelectorAll('#v-rent-body tr').forEach(tr => {
+      const monthly = parseFloat(tr.querySelector('.rent-monthly')?.value.replace(/[^0-9.\-]/g, '')) || 0;
+      const months = parseInt(tr.querySelector('.rent-months')?.value) || 0;
+      const rowConsideration = monthly * months;
+      const rowRateEl = tr.querySelector('.rent-row-comm-rate');
+      const rowRate = rowRateEl && rowRateEl.value.trim() ? (parseFloat(rowRateEl.value) || 0) : globalCommRate;
+      leaseComm += rowConsideration * (rowRate / 100);
+    });
+    const commRate = globalCommRate;
     document.getElementById('v-l-comm-due').value = leaseComm > 0 ? '$' + leaseComm.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '';
 
     // Average rate/sf and monthly
@@ -13655,6 +13697,16 @@ input.ai-smart, select.ai-smart, textarea.ai-smart { animation: ai-pulse-amber 0
       </button>
     </div>
     <div class="ai-status" id="ai-parse-status"></div>
+    <div class="ai-paste-fallback">
+      <div class="ai-paste-fallback-label">Or paste raw text from a document</div>
+      <textarea class="ai-paste-fallback-textarea" id="ai-paste-text" placeholder="Paste listing agreement text, email, or any document text here…"></textarea>
+      <div class="ai-btn-row" style="margin-top:6px">
+        <button class="ai-btn ai-btn-secondary" id="ai-paste-btn" onclick="aiParseFromPaste()">
+          <span id="ai-paste-icon"></span> Parse Pasted Text
+        </button>
+      </div>
+      <div class="ai-status" id="ai-paste-status"></div>
+    </div>
 
     <hr class="ai-divider">
 
@@ -13666,6 +13718,27 @@ input.ai-smart, select.ai-smart, textarea.ai-smart { animation: ai-pulse-amber 0
       </button>
     </div>
     <div class="ai-status" id="ai-smart-status"></div>
+  </div>
+</div>
+
+<!-- Feature 5: AI parsed fields confirmation modal -->
+<div class="ai-confirm-modal-overlay" id="ai-confirm-overlay" style="display:none" onclick="if(event.target===this)aiConfirmCancel()">
+  <div class="ai-confirm-modal">
+    <div class="ai-confirm-modal-header">
+      <span class="ai-confirm-modal-title">Review AI-Extracted Fields</span>
+      <button class="ai-confirm-modal-close" onclick="aiConfirmCancel()">&#215;</button>
+    </div>
+    <div class="ai-confirm-modal-body">
+      <p class="ai-confirm-modal-hint">Uncheck any fields you do not want auto-filled, then click Apply.</p>
+      <table class="ai-confirm-table">
+        <thead><tr><th style="width:28px"></th><th>Field</th><th>Extracted Value</th></tr></thead>
+        <tbody id="ai-confirm-tbody"></tbody>
+      </table>
+    </div>
+    <div class="ai-confirm-modal-footer">
+      <button class="btn btn-gray" onclick="aiConfirmCancel()">Cancel</button>
+      <button class="btn btn-red" onclick="aiConfirmApply()">Apply Selected</button>
+    </div>
   </div>
 </div>
 
@@ -16873,5 +16946,6 @@ function deleteDraft(key) {
   });
 })();
 </script>
+<script src="/features_patch.js"></script>
 </body>
 </html>
