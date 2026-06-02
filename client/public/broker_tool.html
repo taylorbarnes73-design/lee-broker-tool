@@ -4431,16 +4431,23 @@ function initStepFlow(opts) {
           const nextBtn = document.createElement('button');
           nextBtn.type = 'button';
           nextBtn.className = 'btn btn-red';
-          nextBtn.innerHTML = '<span class="btn-spinner"></span><span class="btn-label">Continue →</span>';
           const canProceed = (typeof opts.canProceed === 'function') ? !!opts.canProceed(idx, c, this) : true;
           const blockMessage = (typeof opts.blockingMessage === 'function')
             ? opts.blockingMessage(idx, c, this)
             : 'Complete required items before continuing.';
+          // Detect analyzing state to show spinner + label on Continue button
+          const isAnalyzing = blockMessage && blockMessage.toLowerCase().includes('analysis');
+          if (isAnalyzing) {
+            nextBtn.innerHTML = '<span class="btn-spinner" style="display:inline-block"></span><span class="btn-label"> Analyzing…</span>';
+            nextBtn.classList.add('loading');
+          } else {
+            nextBtn.innerHTML = '<span class="btn-spinner"></span><span class="btn-label">Continue →</span>';
+          }
           nextBtn.disabled = !canProceed;
           if (!canProceed) nextBtn.title = blockMessage;
-          nextBtn.onclick = () => { setBtnLoading(nextBtn, true, 'Loading...'); setTimeout(() => this.next(), 40); };
+          nextBtn.onclick = () => { setBtnLoading(nextBtn, true, 'Loading…'); setTimeout(() => this.next(), 80); };
           right.appendChild(nextBtn);
-          if (!canProceed) {
+          if (!canProceed && !isAnalyzing) {
             const hint = document.createElement('div');
             hint.className = 'step-nav-blocker';
             hint.textContent = blockMessage;
@@ -6390,7 +6397,7 @@ function voucherWorkbookOutsideRows() {
 
 function voucherWorkbookDistributionSide(side) {
   const normalized = String(side || '').trim().toLowerCase();
-  if (normalized === 'procuring') return 'Procuring';
+  if (normalized === 'procuring') return 'Procurring'; // Excel template uses double-r spelling
   if (normalized === 'both') return 'Both';
   if (normalized === 'other') return 'Other';
   if (normalized === 'referring') return 'Referring';
@@ -11932,7 +11939,7 @@ async function uploadAndParseListingDealDocuments(fileList) {
 
   listingAnalysisStatus = { state: 'analyzing', error: '' };
   updateListingRequiredDocStatus();
-  if (status) status.innerHTML = '<span class="text-muted-sm">Analyzing with AI…</span>';
+  if (status) status.innerHTML = '';
   if (zone) zone.classList.add('upload-zone-active');
   showFormOverlay(`Uploading ${validList.length === 1 ? validList[0].name : validList.length + ' documents'}...`, { step: 1, totalSteps: 4, stepLabel: 'Uploading' });
   let keepOverlayOpen = false;
@@ -11959,7 +11966,7 @@ async function uploadAndParseListingDealDocuments(fileList) {
     });
     if (!batchResult || !Array.isArray(batchResult.results)) throw new Error('Unexpected upload response');
 
-    updateFormOverlay('Analyzing documents with AI', 1, 3, 'Reading documents...');
+    updateFormOverlay('Analyzing…', 1, 3, 'Reading documents...');
 
     if (!Array.isArray(uploadedFiles['l-deal-documents'])) uploadedFiles['l-deal-documents'] = [];
     const parseTasks = [];
@@ -11998,9 +12005,9 @@ async function uploadAndParseListingDealDocuments(fileList) {
       );
     });
 
-    updateFormOverlay('Analyzing documents with AI', 2, 3, 'Extracting field data...');
+    updateFormOverlay('Analyzing…', 2, 3, 'Extracting field data...');
     await Promise.all(parseTasks);
-    updateFormOverlay('Analyzing documents with AI', 3, 3, 'Checking signatures...');
+    updateFormOverlay('Analyzing…', 3, 3, 'Checking signatures...');
     renderListingDealDocumentsStatusMessage();
     updateListingRequiredDocStatus();
     if (live) live.textContent = getListingDetectionAnnouncement();
@@ -12187,7 +12194,7 @@ function renderVoucherDealDocumentsStatusMessage(messageHtml) {
   const files = Array.isArray(uploadedFiles['v-deal-documents']) ? uploadedFiles['v-deal-documents'] : [];
   const notices = [];
   if (voucherAnalysisStatus.state === 'analyzing') {
-    notices.push('<div class="voucher-analysis-inline">Analyzing with AI…</div>');
+    notices.push('<div class="voucher-analysis-inline">Analyzing…</div>');
   } else if (voucherAnalysisStatus.error) {
     notices.push('<div class="text-error">' + escHtml(voucherAnalysisStatus.error) + '</div>');
   }
@@ -12590,7 +12597,7 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
     });
     if (!batchResult || !Array.isArray(batchResult.results)) throw new Error('Upload failed.');
 
-    updateFormOverlay('Analyzing documents with AI', 1, 3, 'Reading documents...');
+    updateFormOverlay('Analyzing…', 1, 3, 'Reading documents...');
 
     if (!Array.isArray(uploadedFiles['v-deal-documents'])) uploadedFiles['v-deal-documents'] = [];
     let uploadedCount = 0;
@@ -12611,9 +12618,9 @@ async function uploadAndParseVoucherDealDocuments(fileList) {
       zone.classList.remove('upload-zone-active');
     }
 
-    updateFormOverlay('Analyzing documents with AI', 2, 3, 'Extracting field data...');
+    updateFormOverlay('Analyzing…', 2, 3, 'Extracting field data...');
     const analysis = await runVoucherAiAnalysis();
-    updateFormOverlay('Analyzing documents with AI', 3, 3, 'Checking signatures...');
+    updateFormOverlay('Analyzing…', 3, 3, 'Checking signatures...');
     if (analysis.hadTimeout || analysis.hadUnreadable || analysis.hadConfigError || analysis.hadFailures) {
       keepOverlayOpen = true;
       let title = 'Analysis failed';
@@ -12968,14 +12975,14 @@ async function scrapeDealDocForTab(fileUrl, mimeType, tab, statusId, buttonId, d
   const status = document.getElementById(statusId);
   if (btn) {
     btn.classList.add('loading');
-    btn.textContent = 'Analyzing document...';
+    btn.textContent = 'Analyzing…';
   }
-  showFormOverlay('Analyzing documents with AI', { step: 1, totalSteps: 3, stepLabel: 'Reading documents...', detail: 'Reading documents...' });
+  showFormOverlay('Analyzing…', { step: 1, totalSteps: 3, stepLabel: 'Reading documents...', detail: 'Reading documents...' });
   let keepOverlayOpen = false;
   try {
-    updateFormOverlay('Analyzing documents with AI', 2, 3, 'Extracting field data...');
+    updateFormOverlay('Analyzing…', 2, 3, 'Extracting field data...');
     const result = await callTrpc('aiAssist.extractDocument', { fileUrl, mimeType, tab });
-    updateFormOverlay('Analyzing documents with AI', 3, 3, 'Checking signatures...');
+    updateFormOverlay('Analyzing…', 3, 3, 'Checking signatures...');
     if (result && result.success) {
       const count = applyAiFields(tab, result.fields || {});
       if (status) updateDealDocSelectionStatus(statusId, `Filled ${count} field${count !== 1 ? 's' : ''} from document`);
