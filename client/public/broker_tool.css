@@ -8023,9 +8023,8 @@ body.broker-active .sub-tab-bar {
 .cr-view-btn:hover:not(.active) { background: #F3F4F6; }
 #cr-map-container {
   width: 100%; height: 480px; border-radius: 8px; border: 1px solid #E5E7EB;
-  margin-top: 12px; overflow: hidden; display: none;
+  margin-top: 12px; overflow: hidden;
 }
-#cr-map-container.is-visible { display: block; }
 .cr-map-popup { font-size: 12px; line-height: 1.5; min-width: 160px; }
 .cr-map-popup strong { font-size: 13px; display: block; margin-bottom: 2px; }
 

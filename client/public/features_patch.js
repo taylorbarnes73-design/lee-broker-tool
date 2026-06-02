@@ -393,6 +393,9 @@ window.onSignLocationPhotoChange = function(input) {
         setTimeout(renderCompReportMap, 200);
       }
     };
+    // Ensure initial state: table visible, map hidden
+    const mapContainer = document.getElementById('cr-map-container');
+    if (mapContainer) mapContainer.classList.add('is-hidden');
   });
 })();
 
@@ -759,8 +762,7 @@ window.aiParseFromPaste = async function() {
 .cr-view-btn { padding: 5px 14px; font-size: 12px; font-weight: 600; border: 1px solid #D7DBE1; border-radius: 6px; background: #fff; cursor: pointer; color: #6B7178; transition: all 0.15s; }
 .cr-view-btn.active { background: #A9223B; color: #fff; border-color: #A9223B; }
 .cr-view-btn:hover:not(.active) { background: #F3F4F6; }
-#cr-map-container { height: 480px; border-radius: 8px; overflow: hidden; border: 1px solid #E5E7EB; margin-bottom: 12px; display: none; }
-#cr-map-container.is-visible { display: block; }
+
 .btn-copy-to-voucher { background: #1D4ED8; color: #fff; border: none; }
 .btn-copy-to-voucher:hover { background: #1E40AF; }
 .rent-row-comm-rate { font-size: 12px; }
