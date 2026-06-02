@@ -8145,3 +8145,20 @@ body.broker-active .sub-tab-bar {
   .voucher-summary-grid { grid-template-columns: 1fr; }
   #cr-map-container { height: 320px; }
 }
+/* ── Voucher progress bar ── */
+.voucher-progress {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 20px; background: var(--ink-0, #fff);
+  border-bottom: 1px solid var(--ink-200, var(--border));
+  margin-bottom: 4px;
+}
+.voucher-progress-bar {
+  flex: 1; height: 6px; background: var(--ink-200, #E5E7EB);
+  border-radius: 3px; overflow: hidden;
+}
+.voucher-progress-fill {
+  height: 100%; background: var(--lee-crimson, var(--red));
+  border-radius: 3px; transition: width 0.3s ease;
+}
+.voucher-progress-label { font-size: 12px; color: var(--text2); white-space: nowrap; }
+.voucher-progress-pct { font-size: 12px; font-weight: 700; color: var(--lee-crimson, var(--red)); white-space: nowrap; }

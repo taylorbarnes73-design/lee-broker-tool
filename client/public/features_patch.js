@@ -194,7 +194,7 @@ window.duplicateRentRow = function(btn) {
       const saleSection = document.getElementById('v-sale-section');
       if (saleSection) setHiddenState(saleSection, !isSale);
       // Hide/show lease section
-      const leaseSection = document.getElementById('v-lease-section');
+      const leaseSection = document.getElementById('v-req-lease');
       if (leaseSection) setHiddenState(leaseSection, !isLease);
     };
     // Run once on load
