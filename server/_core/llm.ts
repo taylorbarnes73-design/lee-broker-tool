@@ -346,15 +346,20 @@ export async function invokeLLMWithFile(params: {
   const generationConfig: Record<string, unknown> = {
     maxOutputTokens: 8192,
     temperature: 0,
-    thinkingConfig: { thinkingBudget: 2048 },
   };
 
   if (outputSchema) {
+    // Note: thinkingConfig is incompatible with responseSchema in Gemini 2.5 Flash.
+    // When both are set, the model ignores thinking or structured output breaks.
+    // So we only use responseSchema (structured output) without thinking.
     generationConfig.responseMimeType = "application/json";
     // responseSchema follows a subset of JSON Schema; supply the inner schema object.
     // Strip additionalProperties — Gemini's responseSchema does not support it.
     const cleanSchema = stripAdditionalProperties(outputSchema.schema);
     generationConfig.responseSchema = cleanSchema;
+  } else {
+    // Enable thinking only when NOT using structured output
+    generationConfig.thinkingConfig = { thinkingBudget: 2048 };
   }
 
   const body = {
