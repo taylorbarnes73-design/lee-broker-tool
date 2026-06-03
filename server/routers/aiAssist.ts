@@ -1009,8 +1009,13 @@ Return the JSON object now:`;
         userPrompt: promptText,
         outputSchema: buildJsonSchema(`${tab}_document_fields`, fieldNames),
       });
+      console.info(`[aiAssist] Gemini raw response length: ${typeof raw === 'string' ? raw.length : 0}`);
+      console.info(`[aiAssist] Gemini raw response (first 2000 chars): ${typeof raw === 'string' ? raw.slice(0, 2000) : JSON.stringify(raw)}`);
       const parsed = parseJsonObject(raw);
+      console.info(`[aiAssist] Parsed object keys: ${Object.keys(parsed).join(', ')}`);
+      console.info(`[aiAssist] Parsed object: ${JSON.stringify(parsed).slice(0, 2000)}`);
       geminiFields = sanitizeAiFields(tab, parsed);
+      console.info(`[aiAssist] Sanitized fields (${Object.keys(geminiFields).length}): ${JSON.stringify(geminiFields).slice(0, 2000)}`);
       geminiSucceeded = true;
     } catch (aiErr: unknown) {
       console.warn(
