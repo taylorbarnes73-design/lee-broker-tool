@@ -13,10 +13,10 @@ afterEach(() => {
 });
 
 describe("storagePublicUrl", () => {
-  it("returns a local uploads path when S3 is not configured", () => {
+  it("returns the authenticated proxy path when S3 is not configured", () => {
     ENV.awsS3Bucket = "";
     expect(storagePublicUrl("broker-docs/contracts/test file.pdf")).toBe(
-      "/local-uploads/broker-docs/contracts/test file.pdf"
+      "/api/files/content?key=broker-docs%2Fcontracts%2Ftest%20file.pdf"
     );
   });
 
@@ -56,10 +56,10 @@ describe("normalizeStoredFileUrl", () => {
     ).toBe("/api/files/content?key=broker-docs%2Fcontracts%2Flease.pdf");
   });
 
-  it("leaves local and already-normalized URLs unchanged", () => {
+  it("normalizes legacy local URLs and leaves already-normalized URLs unchanged", () => {
     ENV.awsS3Bucket = "";
     expect(normalizeStoredFileUrl("/local-uploads/broker-docs/contracts/lease.pdf")).toBe(
-      "/local-uploads/broker-docs/contracts/lease.pdf"
+      "/api/files/content?key=broker-docs%2Fcontracts%2Flease.pdf"
     );
 
     ENV.awsS3Bucket = "test-bucket";

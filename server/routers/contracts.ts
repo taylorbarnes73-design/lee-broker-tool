@@ -1,10 +1,12 @@
 import { z } from "zod/v4";
-import { publicProcedure, router } from "../_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable, type Message } from "../_core/llm";
 import { execSync } from "child_process";
 import { ENV } from "../_core/env";
 import { getSetting } from "../settings/getSetting";
 import { isStoredFileReference, storageGetBytes } from "../storage";
+import { getDb } from "../db";
+import { requireStoredFileAccess } from "../fileAccess";
 import { notifyAdminOfSubmission } from "../services/adminNotification";
 
 // ── Types ──
@@ -162,7 +164,7 @@ export const contractsRouter = router({
   /**
    * Extract contract fields and redlines from an uploaded PDF using AI vision.
    */
-  extractContract: publicProcedure
+  extractContract: protectedProcedure
     .input(
         z.object({
           /** URL of the uploaded PDF (S3 signed URL or /local-uploads/ path) */
@@ -180,7 +182,7 @@ export const contractsRouter = router({
           contractType: z.string(),
         })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const systemPrompt = `You are an expert real estate contract analyst. You will be given an AIR CRE contract PDF that a broker has filled out in Adobe Acrobat. Your job is to:
 1. Extract every filled field value exactly as written.
 2. Identify any redlined (struck-through) text and any added/modified text, noting the paragraph number and a brief description.
@@ -241,7 +243,10 @@ Return JSON with these fields (omit any that are blank):
         // Fetch the PDF server-side — use direct FS read for local storage paths
         let pdfBuffer: Buffer;
         if (isStoredFileReference(input.pdfUrl)) {
-          const { bytes } = await storageGetBytes(input.pdfUrl);
+          const db = await getDb();
+          if (!db) throw new Error("Database unavailable");
+          const { key } = await requireStoredFileAccess(db, ctx.user, input.pdfUrl);
+          const { bytes } = await storageGetBytes(key);
           pdfBuffer = bytes;
         } else {
           const pdfResp = await fetch(input.pdfUrl, { signal: AbortSignal.timeout(30_000) });

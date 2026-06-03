@@ -37,6 +37,23 @@ vi.mock("../storage", () => ({
   ),
 }));
 
+vi.mock("../db", () => ({
+  getDb: vi.fn().mockResolvedValue({}),
+}));
+
+vi.mock("../fileAccess", () => ({
+  requireStoredFileAccess: vi.fn(async (_db: unknown, _user: unknown, key: string) => ({
+    key,
+    upload: {
+      fileKey: key,
+      filename: "test.pdf",
+      mimeType: "application/pdf",
+      uploaderOpenId: "local:test@example.com",
+      reference: null,
+    },
+  })),
+}));
+
 import { invokeLLM } from "../_core/llm";
 import { execSync } from "child_process";
 import { contractsRouter } from "./contracts";
@@ -62,15 +79,22 @@ global.fetch = vi.fn().mockImplementation(async (url: string) => {
 
 /** Call a tRPC mutation directly (no HTTP) */
 async function callMutation(procedure: string, input: unknown) {
-  const parts = procedure.split(".");
-  let node: Record<string, unknown> = contractsRouter._def.procedures as Record<string, unknown>;
-  for (const part of parts) {
-    node = (node[part] as Record<string, unknown>)?._def?.resolver
-      ? node[part] as Record<string, unknown>
-      : node[part] as Record<string, unknown>;
-  }
-  const resolver = (node as { _def: { resolver: (opts: { input: unknown; ctx: unknown }) => unknown } })._def.resolver;
-  return resolver({ input, ctx: {} });
+  const caller = contractsRouter.createCaller({
+    user: {
+      id: 1,
+      openId: "local:test@example.com",
+      name: "Test User",
+      email: "test@example.com",
+      loginMethod: "local",
+      role: "user",
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      updatedAt: new Date("2026-01-01T00:00:00Z"),
+      lastSignedIn: new Date("2026-01-01T00:00:00Z"),
+    },
+    req: { protocol: "https", headers: {} },
+    res: {},
+  } as any);
+  return (caller as any)[procedure](input);
 }
 
 // ── extractContract tests ──
@@ -82,6 +106,21 @@ describe("contracts.extractContract", () => {
       key: "broker-docs/submissions/contracts/test.pdf",
       bytes: mockPdfBuffer,
     });
+  });
+
+  it("requires authentication", async () => {
+    const caller = contractsRouter.createCaller({
+      user: null,
+      req: { protocol: "https", headers: {} },
+      res: {},
+    } as any);
+
+    await expect(
+      caller.extractContract({
+        pdfUrl: "/api/files/content?key=broker-docs%2Fsubmissions%2Fcontracts%2Ftest.pdf",
+        contractType: "excl-sublease",
+      })
+    ).rejects.toThrow(/login|not authenticated|logged in|unauthorized/i);
   });
 
   it("returns extracted data on successful AI response", async () => {
