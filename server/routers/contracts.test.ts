@@ -15,6 +15,10 @@ vi.mock("child_process", () => ({
   execSync: vi.fn(),
 }));
 
+vi.mock("../services/adminNotification", () => ({
+  notifyAdminOfSubmission: vi.fn(),
+}));
+
 vi.mock("../_core/env", () => ({
   ENV: {
     adminEmail: "admin@lee-associates.com",
