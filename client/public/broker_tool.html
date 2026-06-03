@@ -3870,7 +3870,7 @@ function openReviewSnapshotWithSpinner(btn, context) {
   if (btn) { setBtnLoading(btn, true, 'Loading…'); btn.disabled = true; }
   setTimeout(() => {
     try {
-      openReviewSnapshot(context);
+      (window.openReviewSnapshot || openReviewSnapshot)(context);
     } catch (err) {
       console.error('Review snapshot error:', err);
     } finally {
