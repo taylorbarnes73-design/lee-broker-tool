@@ -393,7 +393,7 @@ export async function invokeLLMWithFile(params: {
 
   const data = (await response.json()) as {
     candidates?: Array<{
-      content?: { parts?: Array<{ text?: string }> };
+      content?: { parts?: Array<{ text?: string; thought?: boolean }> };
       finishReason?: string;
     }>;
     error?: { message?: string };
@@ -403,7 +403,12 @@ export async function invokeLLMWithFile(params: {
     throw new Error(`Gemini API error: ${data.error.message}`);
   }
 
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+  // When thinking is enabled, the response may contain multiple parts:
+  // thought parts (thought: true) and the actual answer (thought: false/undefined).
+  // We need to extract only the non-thought text part.
+  const parts = data.candidates?.[0]?.content?.parts ?? [];
+  const answerPart = parts.find(p => !p.thought && p.text) ?? parts.find(p => p.text);
+  const text = answerPart?.text ?? "";
   const finishReason = data.candidates?.[0]?.finishReason;
 
   // SAFETY / RECITATION finish reasons mean no usable output — throw so caller can fallback

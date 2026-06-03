@@ -1392,25 +1392,46 @@ Return one JSON object with:
   }
 
   if (!raw) {
-    await ensureExtractedPdfText();
-    const userContent = await buildDocumentUserContent(
-      fetched.fileBuffer,
-      params.mimeType,
-      promptText,
-      extractedPdfText
-    );
-    const response = await invokeLLM({
-      messages: [
-        { role: "system", content: params.systemPrompt },
-        { role: "user", content: userContent as any[] },
-      ],
-      response_format: {
-        type: "json_schema",
-        json_schema: outputSchema,
-      },
-    });
-    const content = response.choices?.[0]?.message?.content;
-    raw = typeof content === "string" ? content : "";
+    // Try Claude fallback first if available (better at reading image-heavy PDFs)
+    if (isClaudeFallbackAvailable()) {
+      try {
+        console.info("[aiAssist] Gemini failed, trying Claude fallback for combined extraction...");
+        raw = await invokeClaudeWithFile({
+          fileBuffer: fetched.fileBuffer,
+          mimeType: params.mimeType,
+          systemPrompt: params.systemPrompt,
+          userPrompt: promptText,
+        });
+      } catch (claudeErr: unknown) {
+        console.warn(
+          "[aiAssist] Claude fallback also failed:",
+          claudeErr instanceof Error ? claudeErr.message : String(claudeErr)
+        );
+      }
+    }
+
+    // Final fallback: text extraction + OpenAI-compatible endpoint
+    if (!raw) {
+      await ensureExtractedPdfText();
+      const userContent = await buildDocumentUserContent(
+        fetched.fileBuffer,
+        params.mimeType,
+        promptText,
+        extractedPdfText
+      );
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: params.systemPrompt },
+          { role: "user", content: userContent as any[] },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: outputSchema,
+        },
+      });
+      const content = response.choices?.[0]?.message?.content;
+      raw = typeof content === "string" ? content : "";
+    }
   }
 
   const parsed = parseJsonObject(raw) as Record<string, unknown>;
@@ -1418,7 +1439,32 @@ Return one JSON object with:
     parsed.fields && typeof parsed.fields === "object" && !Array.isArray(parsed.fields)
       ? (parsed.fields as Record<string, unknown>)
       : parsed;
-  const fields = sanitizeAiFields(params.tab, fieldSource);
+  let fields = sanitizeAiFields(params.tab, fieldSource);
+
+  // If primary extraction returned few fields, try Claude as a second opinion
+  if (Object.keys(fields).length < 3 && isClaudeFallbackAvailable() && raw) {
+    try {
+      console.info(`[aiAssist] Only ${Object.keys(fields).length} fields extracted, trying Claude for better results...`);
+      const claudeRaw = await invokeClaudeWithFile({
+        fileBuffer: fetched.fileBuffer,
+        mimeType: params.mimeType,
+        systemPrompt: params.systemPrompt,
+        userPrompt: promptText,
+      });
+      const claudeParsed = parseJsonObject(claudeRaw) as Record<string, unknown>;
+      const claudeFieldSource =
+        claudeParsed.fields && typeof claudeParsed.fields === "object" && !Array.isArray(claudeParsed.fields)
+          ? (claudeParsed.fields as Record<string, unknown>)
+          : claudeParsed;
+      const claudeFields = sanitizeAiFields(params.tab, claudeFieldSource);
+      if (Object.keys(claudeFields).length > Object.keys(fields).length) {
+        fields = claudeFields;
+      }
+    } catch (claudeErr: unknown) {
+      console.warn("[aiAssist] Claude second-opinion failed:", claudeErr instanceof Error ? claudeErr.message : String(claudeErr));
+    }
+  }
+
   const modelDetection = params.parseDetection(parsed.documentDetection);
   if (params.tab === "listing") await ensureExtractedPdfText();
   const documentDetection =
