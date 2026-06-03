@@ -10394,3 +10394,76 @@ body.broker-active .broker-hamburger {
 .cr-filters-actions {
   display: none !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Section 33 — Export Progress Overlay
+   ═══════════════════════════════════════════════════════════════════════════ */
+#cr-export-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+#cr-export-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.cr-export-overlay-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px 48px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  min-width: 320px;
+}
+.cr-export-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #E5E7EB;
+  border-top-color: #98002E;
+  border-radius: 50%;
+  animation: btnSpin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+.cr-export-status {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1F2937;
+  margin-bottom: 12px;
+}
+#cr-export-progress {
+  height: 4px;
+  background: #98002E;
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Section 34 — Calendar Date Picker Enhancement
+   ═══════════════════════════════════════════════════════════════════════════ */
+.cr-date-input {
+  position: relative;
+}
+.cr-date-input::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'/%3E%3C/svg%3E");
+  background-size: contain;
+  pointer-events: none;
+  opacity: 0.6;
+}
+.cr-date-input:focus-within::after {
+  opacity: 1;
+}
