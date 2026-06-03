@@ -4869,7 +4869,9 @@ function calcVoucherTermFromDates() {
   const start = startEl.value ? new Date(startEl.value) : null;
   const end = endEl.value ? new Date(endEl.value) : null;
   if (!start || !end || end <= start) return;
-  const months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+  let months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+  // If end day >= start day, the final month is complete (e.g., Jan 1 to Dec 31 = 12 months)
+  if (end.getDate() >= start.getDate()) months += 1;
   if (months > 0) {
     termEl.value = String(months);
     calcVoucherLease();

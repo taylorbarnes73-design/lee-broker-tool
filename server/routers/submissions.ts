@@ -497,20 +497,23 @@ export const submissionsRouter = router({
       // Ordering rule: createdAt ASC, then id ASC for stable tie-break.
       const requests = await Promise.all(
         myQueueRows.map(async row => {
-          const aheadRows = await db
-            .select({ count: sql<number>`count(*)` })
-            .from(submissions)
-            .where(
-              and(
-                activeQueueStatusCondition(),
-                or(
-                  sql`${submissions.createdAt} < ${row.createdAt}`,
-                  and(sql`${submissions.createdAt} = ${row.createdAt}`, sql`${submissions.id} < ${row.id}`)
+          let aheadCount = 0;
+          // Only compute position if createdAt is available (column may not exist in older schemas)
+          if (row.createdAt != null && row.id != null) {
+            const aheadRows = await db
+              .select({ count: sql<number>`count(*)` })
+              .from(submissions)
+              .where(
+                and(
+                  activeQueueStatusCondition(),
+                  or(
+                    sql`${submissions.createdAt} < ${row.createdAt}`,
+                    and(sql`${submissions.createdAt} = ${row.createdAt}`, sql`${submissions.id} < ${row.id}`)
+                  )
                 )
-              )
-            );
-
-          const aheadCount = numberFromCount(aheadRows[0]?.count);
+              );
+            aheadCount = numberFromCount(aheadRows[0]?.count);
+          }
           return {
             id: row.id,
             formType: row.formType,
