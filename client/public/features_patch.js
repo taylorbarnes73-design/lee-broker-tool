@@ -451,43 +451,44 @@ window.onSignLocationPhotoChange = function(input) {
     }
   };
 
-  // Fetch ALL results for the current filters (no page limit) and render on map
+  // Fetch results for map (capped at 150 to keep geocoding fast)
+  var CR_MAP_MAX = 150;
   function fetchAllAndRenderMap() {
     var overlay = getCrMapOverlay();
-    if (overlay) { overlay.textContent = 'Loading all results for map...'; overlay.style.display = 'flex'; }
+    if (overlay) { overlay.textContent = 'Loading results for map...'; overlay.style.display = 'flex'; }
 
-    // Fetch all pages using the same API the export uses
+    // Fetch up to CR_MAP_MAX results using the same API
     var base = typeof compReportGetFilters === 'function' ? compReportGetFilters() : {};
-    var limit = 100;
-    var all = [];
-    var offset = 0;
+    var limit = CR_MAP_MAX;
+    var params = Object.assign({}, base, { limit: limit, offset: 0 });
 
-    function fetchPage() {
-      var params = Object.assign({}, base, { limit: limit, offset: offset });
-      callTrpc('compData.search', params).then(function(data) {
-        var batch = Array.isArray(data && data.results) ? data.results : [];
-        var info = data && data.pageInfo;
-        all = all.concat(batch);
-        var total = (info && typeof info.total === 'number') ? info.total : Infinity;
-        offset += limit;
-        // Update loading message
-        if (overlay) overlay.textContent = 'Loading comps for map... ' + all.length + (Number.isFinite(total) ? ' of ' + total : '');
-        // Continue fetching if more pages exist
-        if (batch.length && all.length < total && all.length < 5000 && !(info && info.hasNext === false)) {
-          fetchPage();
-        } else {
-          // Done fetching — store and render
-          crMapAllResults = all;
-          renderCompReportMap();
+    callTrpc('compData.search', params).then(function(data) {
+      var batch = Array.isArray(data && data.results) ? data.results : [];
+      var info = data && data.pageInfo;
+      var total = (info && typeof info.total === 'number') ? info.total : batch.length;
+      crMapAllResults = batch;
+      renderCompReportMap();
+      // Show a note if results were capped
+      if (total > CR_MAP_MAX) {
+        var note = document.getElementById('cr-map-cap-note');
+        if (!note) {
+          note = document.createElement('div');
+          note.id = 'cr-map-cap-note';
+          note.style.cssText = 'position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);color:#fff;padding:6px 14px;border-radius:6px;font-size:12px;z-index:600;pointer-events:none;';
+          var container = document.getElementById('cr-map-container');
+          if (container) container.appendChild(note);
         }
-      }).catch(function() {
-        // Fall back to current page results
-        crMapAllResults = null;
-        renderCompReportMap();
-      });
-    }
-
-    fetchPage();
+        note.textContent = 'Showing first ' + batch.length + ' of ' + total.toLocaleString() + ' results. Apply filters to narrow.';
+        note.style.display = 'block';
+      } else {
+        var note = document.getElementById('cr-map-cap-note');
+        if (note) note.style.display = 'none';
+      }
+    }).catch(function() {
+      // Fall back to current page results
+      crMapAllResults = null;
+      renderCompReportMap();
+    });
   }
 
   function getCrMapOverlay() {
