@@ -6495,6 +6495,7 @@ a:hover {
 .deal-main {
   min-width: 0;
   padding-right: 0;
+  overflow: hidden;
 }
 
 .stepper {
@@ -7488,6 +7489,20 @@ body.broker-active .sub-tab-bar {
 #tab-voucher .voucher-agent-grid,
 #tab-voucher .voucher-party-grid {
   gap: 18px;
+}
+#tab-voucher .voucher-party-grid {
+  grid-template-columns: 1fr 1fr;
+}
+#tab-voucher .voucher-party-grid .row.c2 {
+  grid-template-columns: 1fr 1fr;
+}
+#tab-voucher .voucher-party-grid .row.c3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+@media (max-width: 1200px) {
+  #tab-voucher .voucher-party-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 #tab-voucher .voucher-agent-grid > div,
