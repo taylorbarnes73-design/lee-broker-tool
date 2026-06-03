@@ -345,6 +345,8 @@ export async function invokeLLMWithFile(params: {
 
   const generationConfig: Record<string, unknown> = {
     maxOutputTokens: 8192,
+    temperature: 0,
+    thinkingConfig: { thinkingBudget: 2048 },
   };
 
   if (outputSchema) {

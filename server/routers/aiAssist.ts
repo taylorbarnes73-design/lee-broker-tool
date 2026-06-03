@@ -739,47 +739,84 @@ CRITICAL RULES — follow exactly:
 async function brochureSystemPrompt(): Promise<string> {
   const company = String(await getSetting("branding.company_name"));
   return `You are a commercial real estate data extraction specialist for ${company}.
-Extract structured listing data from a property marketing brochure or flyer.
+You extract structured listing data from property marketing brochures, flyers, and offering memoranda.
 
-CRITICAL RULES — follow exactly:
+Your task: Read the entire brochure carefully, identify every relevant data point, and return a JSON object with the extracted values.
+
+FIELD EXTRACTION GUIDE:
+- address: Street address ONLY (e.g. "1234 Main St" or "1234 Main St Ste 200"). Never include city, state, or zip.
+- city: City name only, title case (e.g. "Irvine").
+- state: Two-letter abbreviation (e.g. "CA").
+- zip: 5-digit zip code.
+- propertyType: Exactly one of: Industrial, Office, Retail, Medical, Land, Multi-Family, Other. Determine from building use, zoning, or description.
+- transactionType: "Lease" or "Sale" — if brochure shows rental rates, it's Lease. If it shows a sale price, it's Sale. If both, use the primary offering.
+- leaseType: "NNN" (triple net), "FSG" (full service gross), "MG" (modified gross), "Gross", or "Net". Look for these abbreviations near the rate.
+- buildingSf: Total building square footage as integer string. "12,500 SF" → "12500".
+- suiteSf: Available suite/space square footage as integer string.
+- rateSfMo: Monthly rate per SF as decimal string. "$1.25/SF/Mo" → "1.25". IMPORTANT: If the rate is ANNUAL (e.g. "$15.00/SF/Yr NNN"), divide by 12 and return the monthly figure ("1.25").
+- askingPrice: Sale price as integer string. "$2,500,000" → "2500000".
+- term: Lease term in MONTHS as integer string. "5 years" → "60".
+- listingExpiration: Listing expiration date in MM/DD/YYYY format.
+- dateEntered: Date listing was entered/created in MM/DD/YYYY format.
+- ownerName: Property owner's full name or entity name.
+- commissionRate: Commission percentage as decimal. "6%" → "6".
+- crossStreets: Nearby cross streets or intersection.
+- yearBuilt: Year the building was constructed as string (e.g. "1985").
+- listingAgentName: Full name of the listing agent/broker. No phone or email.
+- listingAgentLicense: DRE license number.
+- comments: Key property highlights, features, and amenities as a concise bullet list.
+
+CRITICAL RULES:
 - Return ONLY a valid JSON object. No markdown fences, no explanation.
-- Extract ONLY fields you can identify with high confidence. Omit everything else.
-- Monetary values: numeric strings without $ or commas. "$1.25/SF/Mo" → "1.25".
-- Building/suite SF: numeric string without commas. "12,500 SF" → "12500".
-- Asking price for sales: numeric string. "$2,500,000" → "2500000".
-- Dates: MM/DD/YYYY format.
-- Property type: exactly one of Industrial, Office, Retail, Medical, Land, Multi-Family, Other.
-- Transaction type: Lease or Sale.
-- Lease type: NNN, FSG, MG, Gross, or Net.
-- Term: integer months as string if stated. "5 years" → "60".
-- Address: street only (no city/state). Put city and state in separate fields.
-- State: two-letter abbreviation.
-- Extract agent/broker full name if visible.
-- Extract all highlights/features into comments as a concise bullet list.
-- If the brochure is ambiguous or promotional without a precise field value, omit that field.`;
+- Extract ONLY values you can identify with HIGH CONFIDENCE from the document.
+- Read ALL pages — brochures often have key data on back pages, in fine print, or in contact sections.
+- Look carefully at headers, footers, and sidebar panels for rates, SF, and property details.
+- If a rate is shown as annual (per year), convert to monthly by dividing by 12.
+- If the brochure is promotional without precise values, OMIT those fields.
+- Never guess or infer values not explicitly stated.`;
 }
 
 async function documentSystemPrompt(): Promise<string> {
   const company = String(await getSetting("branding.company_name"));
   return `You are a commercial real estate data extraction specialist for ${company}.
-Extract structured form data from broker-provided documents such as brochures, offering memoranda, commission agreements, sign requests, and comp sheets.
+You extract structured form data from broker-provided documents such as brochures, offering memoranda, commission agreements, sign requests, lease abstracts, and comp sheets.
 
-CRITICAL RULES — follow exactly:
-- Return ONLY a valid JSON object. No markdown fences, no explanation.
-- Include ONLY fields listed in the user's available fields list.
-- Extract ONLY values you can identify with high confidence. Omit uncertain fields entirely.
-- Monetary values: numeric strings without $ or commas. "$1.25/SF/Mo" -> "1.25".
-- Building/suite/deal SF: numeric string without commas. "12,500 SF" -> "12500".
-- Dates: MM/DD/YYYY format.
-- Property type: exactly one of Industrial, Office, Retail, Medical, Land, Multi-Family, Other.
-- Transaction type: Lease or Sale.
-- Representation type: Tenant Rep, Landlord Rep, Buyer Rep, Seller Rep, or Dual.
-- Lease type: NNN, FSG, MG, Gross, or Net.
-- Term: integer months as string if stated. "5 years" -> "60".
-- Address: street only (no city/state). Put city and state in separate fields.
-- State: two-letter abbreviation.
-- Broker/agent names: full name only, no phone or email.
-- If the document is ambiguous or promotional without a precise field value, omit that field.`;
+Your task: Read the entire document carefully, identify every relevant data point, and return a JSON object with the extracted values.
+
+FIELD EXTRACTION GUIDE:
+- address: Street address ONLY (e.g. "1234 Main St" or "1234 Main St Ste 200"). Never include city, state, or zip in this field.
+- city: City name only (e.g. "Irvine" or "Costa Mesa"). Title case.
+- state: Two-letter state abbreviation (e.g. "CA").
+- zip: 5-digit zip code (e.g. "92618").
+- propertyType: Classify as exactly one of: Industrial, Office, Retail, Medical, Land, Multi-Family, Other.
+- transactionType: "Lease" or "Sale" — determine from context (rental terms = Lease, purchase price = Sale).
+- representationType: "Tenant Rep", "Landlord Rep", "Buyer Rep", "Seller Rep", or "Dual".
+- leaseType: "NNN" (triple net), "FSG" (full service gross), "MG" (modified gross), "Gross", or "Net".
+- buildingSf / suiteSf / dealSf: Total square footage as integer string without commas. "12,500 SF" → "12500".
+- rateSfMo / leaseRate / baseRent: Monthly rate per SF as decimal string. "$1.25/SF/Mo" → "1.25". If annual, divide by 12. If rate says "$15.00 NNN" (annual), return "1.25".
+- term: Lease duration in MONTHS as integer string. "5 years" → "60". "36 months" → "36".
+- commencementDate / expirationDate / listingExpiration / dateEntered: Dates in MM/DD/YYYY format.
+- askingPrice / salePrice / totalConsideration: Dollar amount as integer string without $ or commas. "$2,500,000" → "2500000".
+- pricePerSf: Price per square foot as decimal string. "$250.00/SF" → "250.00".
+- commissionRate: Commission percentage as decimal string. "6%" → "6". "3.5%" → "3.5".
+- ownerName / clientName / lessorName / lesseeName / tenantName / landlordName: Full name of the person or entity.
+- listingAgentName / procuringAgentName / brokerName: Full name only, no phone/email/license.
+- listingAgentLicense: DRE license number if visible.
+- comments / notes: Brief summary of key deal terms, highlights, or special conditions.
+- signType: Type of sign (e.g. "For Lease", "For Sale", "Sold").
+- signSize: Dimensions (e.g. "4x8").
+- nameRider: Name rider text.
+- specialInstructions / accessInstructions: Verbatim instructions from the document.
+
+CRITICAL RULES:
+- Return ONLY a valid JSON object. No markdown fences, no explanation, no extra text.
+- Include ONLY fields from the user's available fields list.
+- Extract ONLY values you can identify with HIGH CONFIDENCE. Omit uncertain fields entirely.
+- Read the ENTIRE document — important data may be on any page, in headers, footers, signature blocks, or fine print.
+- For multi-page documents, cross-reference data across pages to ensure accuracy.
+- If a value appears in multiple places, prefer the most specific/detailed version.
+- If the document is ambiguous or promotional without a precise field value, OMIT that field.
+- Never guess or infer values that are not explicitly stated in the document.`;
 }
 
 // ── Shared JSON schema builder ──
@@ -903,9 +940,36 @@ async function extractDocumentFields(
     };
   }
 
+  const docDesc = mimeType === "application/pdf" ? "PDF document" : "document image";
   const promptText = options.listingBrochurePrompt
-    ? `Extract all listing fields you can identify from this ${mimeType === "application/pdf" ? "PDF brochure" : "brochure image"}.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nReturn JSON with only fields you can confidently extract:`
-    : `Extract all fields you can identify for the "${tab}" form from this ${mimeType === "application/pdf" ? "PDF document" : "document image"}.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nReturn JSON with only fields you can confidently extract:`;
+    ? `Carefully read this entire ${docDesc} (all pages) and extract listing data into the fields below.
+
+Fields to extract: ${fieldNames.join(", ")}
+
+Instructions:
+- Read every page, header, footer, sidebar, and fine print.
+- For rates: if shown as annual ($/SF/Yr), divide by 12 to get monthly.
+- For SF: remove commas, return as integer string.
+- For dates: return as MM/DD/YYYY.
+- For addresses: street only, put city/state/zip in their own fields.
+- Only include fields you find explicitly stated. Omit anything uncertain.
+
+Return the JSON object now:`
+    : `Carefully read this entire ${docDesc} (all pages) and extract data for the "${tab}" form into the fields below.
+
+Fields to extract: ${fieldNames.join(", ")}
+
+Instructions:
+- Read every page, header, footer, sidebar, signature block, and fine print.
+- For rates: if shown as annual ($/SF/Yr), divide by 12 to get monthly.
+- For SF: remove commas, return as integer string.
+- For monetary amounts: remove $ and commas, return as integer string.
+- For dates: return as MM/DD/YYYY.
+- For term: convert to months ("5 years" = "60").
+- For addresses: street only, put city/state/zip in their own fields.
+- Only include fields you find explicitly stated. Omit anything uncertain.
+
+Return the JSON object now:`;
 
   const systemContent = options.listingBrochurePrompt
     ? await brochureSystemPrompt()
