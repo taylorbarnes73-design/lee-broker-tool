@@ -105,8 +105,8 @@
    * Brand-approved web alternative to Avenir Next is Nunito Sans.
    * Minion Pro is the brand serif; Source Serif 4 is the free alternative.
    */
-  --font-sans: 'Nunito Sans', 'Avenir Next', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-serif: 'Source Serif 4', 'Minion Pro', Georgia, serif;
+  --font-sans: 'Manrope', 'Avenir Next', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-serif: 'Cormorant Garamond', 'Minion Pro', Georgia, serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
 
   /* Type scale */
