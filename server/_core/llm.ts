@@ -437,6 +437,91 @@ function stripAdditionalProperties(schema: Record<string, unknown>): Record<stri
   return result;
 }
 
+/**
+ * Returns true when an Anthropic API key is configured for Claude fallback.
+ */
+export function isClaudeFallbackAvailable(): boolean {
+  return Boolean(ENV.anthropicApiKey?.trim());
+}
+
+/**
+ * Invoke Claude as a fallback for document extraction when Gemini returns poor results.
+ * Uses the Anthropic Messages API with base64 document content.
+ */
+export async function invokeClaudeWithFile(params: {
+  fileBuffer: Buffer;
+  mimeType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp";
+  systemPrompt: string;
+  userPrompt: string;
+}): Promise<string> {
+  const { fileBuffer, mimeType, systemPrompt, userPrompt } = params;
+
+  if (!ENV.anthropicApiKey?.trim()) {
+    throw new Error("invokeClaudeWithFile requires ANTHROPIC_API_KEY.");
+  }
+
+  const model = ENV.anthropicModel || "claude-sonnet-4-20250514";
+  const url = "https://api.anthropic.com/v1/messages";
+
+  // Claude uses a different content format for documents/images
+  const mediaType = mimeType === "application/pdf" ? "document" : "image";
+  const sourceType = "base64";
+
+  const body = {
+    model,
+    max_tokens: 8192,
+    system: systemPrompt,
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: mediaType,
+            source: {
+              type: sourceType,
+              media_type: mimeType,
+              data: fileBuffer.toString("base64"),
+            },
+          },
+          {
+            type: "text",
+            text: userPrompt,
+          },
+        ],
+      },
+    ],
+  };
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": ENV.anthropicApiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Claude API failed: ${response.status} ${response.statusText} – ${errorText.slice(0, 800)}`
+    );
+  }
+
+  const data = (await response.json()) as {
+    content?: Array<{ type: string; text?: string }>;
+    error?: { message?: string };
+  };
+
+  if (data.error?.message) {
+    throw new Error(`Claude API error: ${data.error.message}`);
+  }
+
+  const text = data.content?.find(b => b.type === "text")?.text ?? "";
+  return text;
+}
+
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   const backend = resolveBackend();
   const oSeries = isOSeriesModel(backend.model);

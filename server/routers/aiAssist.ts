@@ -1,5 +1,5 @@
 import { publicProcedure, router } from "../_core/trpc";
-import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable } from "../_core/llm";
+import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable, isClaudeFallbackAvailable, invokeClaudeWithFile } from "../_core/llm";
 import { z } from "zod/v4";
 import { getSetting } from "../settings/getSetting";
 import { isStoredFileReference, storageGetBytes } from "../storage";
@@ -978,6 +978,9 @@ Return the JSON object now:`;
   // ── Preferred path: native AI inline file (no text extraction) ──
   // The AI reads the document directly, giving much better results on scanned PDFs
   // and image-heavy brochures. Only available when GEMINI_API_KEY is configured.
+  let geminiFields: Record<string, string> = {};
+  let geminiSucceeded = false;
+
   if (isGeminiDirectAvailable()) {
     try {
       const raw = await invokeLLMWithFile({
@@ -988,24 +991,67 @@ Return the JSON object now:`;
         outputSchema: buildJsonSchema(`${tab}_document_fields`, fieldNames),
       });
       const parsed = parseJsonObject(raw);
-      const fields = sanitizeAiFields(tab, parsed);
-      return {
-        success: true as const,
-        fields,
-        tab,
-        fieldCount: Object.keys(fields).length,
-      };
+      geminiFields = sanitizeAiFields(tab, parsed);
+      geminiSucceeded = true;
     } catch (aiErr: unknown) {
-      // Log and fall through to the text-extraction fallback so the user always
-      // gets a result even if the native AI call unexpectedly fails.
       console.warn(
-        "[aiAssist] AI native file invocation failed, falling back to text extraction:",
+        "[aiAssist] Gemini native file invocation failed:",
         aiErr instanceof Error ? aiErr.message : String(aiErr)
       );
     }
   }
 
-  // ── Fallback path: extract text from PDF, then call via the regular LLM ──
+  // If Gemini returned a good result (3+ fields), use it
+  if (geminiSucceeded && Object.keys(geminiFields).length >= 3) {
+    return {
+      success: true as const,
+      fields: geminiFields,
+      tab,
+      fieldCount: Object.keys(geminiFields).length,
+    };
+  }
+
+  // ── Claude fallback: try Claude when Gemini returned few/no fields ──
+  if (isClaudeFallbackAvailable()) {
+    try {
+      console.info(
+        `[aiAssist] Gemini returned ${Object.keys(geminiFields).length} fields, trying Claude fallback...`
+      );
+      const claudeRaw = await invokeClaudeWithFile({
+        fileBuffer: fetched.fileBuffer,
+        mimeType,
+        systemPrompt: systemContent,
+        userPrompt: promptText,
+      });
+      const claudeParsed = parseJsonObject(claudeRaw);
+      const claudeFields = sanitizeAiFields(tab, claudeParsed);
+      if (Object.keys(claudeFields).length > Object.keys(geminiFields).length) {
+        return {
+          success: true as const,
+          fields: claudeFields,
+          tab,
+          fieldCount: Object.keys(claudeFields).length,
+        };
+      }
+    } catch (claudeErr: unknown) {
+      console.warn(
+        "[aiAssist] Claude fallback also failed:",
+        claudeErr instanceof Error ? claudeErr.message : String(claudeErr)
+      );
+    }
+  }
+
+  // If Gemini got something (even if < 3 fields), return it
+  if (geminiSucceeded && Object.keys(geminiFields).length > 0) {
+    return {
+      success: true as const,
+      fields: geminiFields,
+      tab,
+      fieldCount: Object.keys(geminiFields).length,
+    };
+  }
+
+  // ── Last resort: extract text from PDF, then call via the regular LLM ──
   const userContent = await buildDocumentUserContent(
     fetched.fileBuffer,
     mimeType,

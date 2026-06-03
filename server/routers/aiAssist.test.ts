@@ -11,6 +11,8 @@ vi.mock("../_core/llm", () => ({
   invokeLLM: vi.fn(),
   invokeLLMWithFile: vi.fn(),
   isGeminiDirectAvailable: vi.fn().mockReturnValue(false),
+  isClaudeFallbackAvailable: vi.fn().mockReturnValue(false),
+  invokeClaudeWithFile: vi.fn(),
 }));
 
 vi.mock("../storage", () => ({
