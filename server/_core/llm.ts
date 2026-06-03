@@ -316,11 +316,12 @@ export function isGeminiDirectAvailable(): boolean {
 }
 
 /**
- * Invoke the native Gemini generateContent API with an inline file (PDF or image).
+ * Invoke Gemini via the OpenAI-compatible endpoint with an inline file (PDF or image).
  *
- * Unlike the OpenAI-compatible endpoint, the native API accepts PDFs as inline base64
- * data — meaning the AI reads the document directly rather than relying on pre-extracted
- * text. This produces significantly better results for scanned or form-heavy PDFs.
+ * Sends the file as a base64 data URL in an image_url content part, which the
+ * Gemini OpenAI-compatible endpoint handles for PDFs and images alike.
+ * This approach is more reliable than the native generateContent API for
+ * structured JSON extraction.
  *
  * Falls back to the regular `invokeLLM` path when GEMINI_API_KEY is not set.
  */
@@ -332,7 +333,7 @@ export async function invokeLLMWithFile(params: {
   /** Optional JSON Schema — when provided the AI will return structured JSON. */
   outputSchema?: OutputSchema;
 }): Promise<string> {
-  const { fileBuffer, mimeType, systemPrompt, userPrompt, outputSchema } = params;
+  const { fileBuffer, mimeType, systemPrompt, userPrompt } = params;
 
   if (!ENV.geminiApiKey?.trim()) {
     throw new Error(
@@ -341,57 +342,60 @@ export async function invokeLLMWithFile(params: {
   }
 
   const model = (ENV.geminiModel || "gemini-2.5-flash").trim();
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${ENV.geminiApiKey}`;
+  const base64Data = fileBuffer.toString("base64");
+  const dataUrl = `data:${mimeType};base64,${base64Data}`;
 
-  const generationConfig: Record<string, unknown> = {
-    maxOutputTokens: 8192,
+  // Use the OpenAI-compatible Gemini endpoint
+  const url = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+
+  const payload = {
+    model,
+    max_tokens: 8192,
     temperature: 0,
-  };
-
-  // Always request JSON output for extraction calls.
-  // We do NOT use responseSchema because it's unreliable with Gemini 2.5 Flash
-  // (causes empty responses, incompatible with thinking, and overly constrains output).
-  // Instead, we just set responseMimeType to get JSON and parse it ourselves.
-  generationConfig.responseMimeType = "application/json";
-
-  const body = {
-    contents: [
+    response_format: { type: "json_object" as const },
+    messages: [
+      {
+        role: "system",
+        content: systemPrompt,
+      },
       {
         role: "user",
-        parts: [
+        content: [
           {
-            inlineData: {
-              mimeType,
-              data: fileBuffer.toString("base64"),
+            type: "image_url",
+            image_url: {
+              url: dataUrl,
             },
           },
-          { text: userPrompt },
+          {
+            type: "text",
+            text: userPrompt,
+          },
         ],
       },
     ],
-    systemInstruction: {
-      parts: [{ text: systemPrompt }],
-    },
-    generationConfig,
   };
 
   const response = await fetch(url, {
     method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${ENV.geminiApiKey}`,
+    },
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(
-      `Gemini native file API failed: ${response.status} ${response.statusText} – ${errorText.slice(0, 800)}`
+      `Gemini OpenAI-compat file API failed: ${response.status} ${response.statusText} – ${errorText.slice(0, 800)}`
     );
   }
 
   const data = (await response.json()) as {
-    candidates?: Array<{
-      content?: { parts?: Array<{ text?: string; thought?: boolean }> };
-      finishReason?: string;
+    choices?: Array<{
+      message?: { content?: string };
+      finish_reason?: string;
     }>;
     error?: { message?: string };
   };
@@ -400,19 +404,7 @@ export async function invokeLLMWithFile(params: {
     throw new Error(`Gemini API error: ${data.error.message}`);
   }
 
-  // When thinking is enabled, the response may contain multiple parts:
-  // thought parts (thought: true) and the actual answer (thought: false/undefined).
-  // We need to extract only the non-thought text part.
-  const parts = data.candidates?.[0]?.content?.parts ?? [];
-  const answerPart = parts.find(p => !p.thought && p.text) ?? parts.find(p => p.text);
-  const text = answerPart?.text ?? "";
-  const finishReason = data.candidates?.[0]?.finishReason;
-
-  // SAFETY / RECITATION finish reasons mean no usable output — throw so caller can fallback
-  if (!text && finishReason && finishReason !== "STOP" && finishReason !== "MAX_TOKENS") {
-    throw new Error(`Gemini returned no content (finishReason: ${finishReason})`);
-  }
-
+  const text = data.choices?.[0]?.message?.content ?? "";
   return text;
 }
 
