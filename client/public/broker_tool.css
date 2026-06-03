@@ -9089,3 +9089,328 @@ textarea:focus-visible {
   font-size: 11px;
   color: #6B7280;
 }
+
+/* ── 27. Sidebar label truncation fix ────────────────────────────────── */
+.broker-sidebar .nav-item,
+.broker-sidebar .tab-item,
+.broker-sidebar [data-tab] {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* Widen sidebar slightly so common labels don't clip */
+@media (min-width: 881px) {
+  .broker-sidebar {
+    width: 200px;
+    min-width: 200px;
+  }
+
+  .broker-main,
+  .main-content {
+    margin-left: 200px;
+  }
+}
+
+/* ── 28. Comp Reports filter row — responsive grid ───────────────────── */
+.filter-bar,
+.cr-filter-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px 12px;
+  align-items: end;
+}
+
+.filter-bar label,
+.cr-filter-row label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6B7280;
+  margin-bottom: 4px;
+  display: block;
+}
+
+/* Make the search field span 2 columns when space allows */
+@media (min-width: 1000px) {
+  .filter-bar .filter-search-col,
+  .cr-filter-row .filter-search-col {
+    grid-column: span 2;
+  }
+}
+
+/* ── 29. Filter pill buttons (City: All, Market: All, etc.) ──────────── */
+.filter-bar button,
+.cr-filter-row button {
+  min-height: 36px;
+  padding: 6px 14px;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  background: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.filter-bar button:hover,
+.cr-filter-row button:hover {
+  border-color: #9CA3AF;
+  background: #F9FAFB;
+}
+
+/* ── 30. Date inputs — better sizing ────────────────────────────────── */
+input[type="date"],
+.filter-bar input[type="text"][placeholder*="MM/DD"] {
+  min-width: 130px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 31. Document status row — better alignment ─────────────────────── */
+.doc-status-row,
+.doc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #F3F4F6;
+  gap: 12px;
+}
+
+.doc-status-row:last-child,
+.doc-row:last-child {
+  border-bottom: none;
+}
+
+.doc-status-row .doc-name,
+.doc-row .doc-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  flex: 1;
+  min-width: 0;
+}
+
+.doc-status-row .doc-actions,
+.doc-row .doc-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ── 32. Table/Map toggle — segmented control ────────────────────────── */
+.view-toggle,
+.cr-view-toggle {
+  display: inline-flex;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #F9FAFB;
+}
+
+.view-toggle button,
+.cr-view-toggle button {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B7280;
+  background: transparent;
+  border: none;
+  border-right: 1px solid #E5E7EB;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.view-toggle button:last-child,
+.cr-view-toggle button:last-child {
+  border-right: none;
+}
+
+.view-toggle button.active,
+.cr-view-toggle button.active,
+.view-toggle button[aria-pressed="true"],
+.cr-view-toggle button[aria-pressed="true"] {
+  background: #1F2937;
+  color: #FFFFFF;
+}
+
+.view-toggle button:hover:not(.active),
+.cr-view-toggle button:hover:not(.active) {
+  background: #FFFFFF;
+  color: #1F2937;
+}
+
+/* ── 33. Pagination — cleaner ────────────────────────────────────────── */
+.pagination,
+.cr-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 0;
+  margin-top: 12px;
+}
+
+.pagination button,
+.cr-pagination button {
+  padding: 8px 16px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  background: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pagination button:hover,
+.cr-pagination button:hover {
+  border-color: #9CA3AF;
+  background: #F9FAFB;
+}
+
+.pagination button:disabled,
+.cr-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination .page-info,
+.cr-pagination .page-info {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4B5563;
+}
+
+/* ── 34. Empty state / loading state ─────────────────────────────────── */
+.empty-state,
+.loading-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9CA3AF;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.empty-state::before {
+  content: "";
+  display: block;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 12px;
+  background: #F3F4F6;
+  border-radius: 50%;
+}
+
+/* ── 35. Upload drop zone — cleaner ─────────────────────────────────── */
+.drop-zone,
+[id$="-zone"] {
+  border: 2px dashed #D1D5DB;
+  border-radius: 12px;
+  padding: 28px 20px;
+  text-align: center;
+  background: #FAFBFC;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.drop-zone:hover,
+[id$="-zone"]:hover {
+  border-color: #98002E;
+  background: #FEF7F9;
+}
+
+.drop-zone.drag-over,
+[id$="-zone"].drag-over {
+  border-color: #98002E;
+  background: #FEF2F2;
+  box-shadow: inset 0 0 0 2px rgba(152, 0, 46, 0.08);
+}
+
+.drop-zone-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.drop-zone-hint {
+  font-size: 12px;
+  color: #9CA3AF;
+}
+
+/* ── 36. Sidebar user info — cleaner ────────────────────────────────── */
+.sidebar-user {
+  padding: 14px 16px;
+  border-top: 1px solid #E5E7EB;
+  margin-top: auto;
+}
+
+.sidebar-user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1F2937;
+  line-height: 1.3;
+}
+
+.sidebar-user-email {
+  font-size: 11px;
+  color: #6B7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── 37. Consistent spacing between form sections ────────────────────── */
+.field-group + .field-group,
+.form-section + .form-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #F3F4F6;
+}
+
+/* ── 38. Badge / tag consistency ─────────────────────────────────────── */
+.badge,
+.tag,
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+.badge-success {
+  background: #ECFDF5;
+  color: #065F46;
+}
+
+.badge-warning {
+  background: #FFFBEB;
+  color: #92400E;
+}
+
+.badge-error {
+  background: #FEF2F2;
+  color: #98002E;
+}
+
+.badge-info {
+  background: #EFF6FF;
+  color: #1E40AF;
+}
+
+.badge-neutral {
+  background: #F3F4F6;
+  color: #4B5563;
+}
