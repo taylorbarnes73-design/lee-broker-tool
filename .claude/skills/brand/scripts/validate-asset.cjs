@@ -181,6 +181,163 @@ function validateFormat(extension) {
 }
 
 /**
+ * Read dimensions for common image formats without external dependencies.
+ */
+function getImageDimensions(filepath, extension) {
+  const buffer = fs.readFileSync(filepath);
+
+  if (extension === "png" && buffer.toString("ascii", 1, 4) === "PNG") {
+    return {
+      width: buffer.readUInt32BE(16),
+      height: buffer.readUInt32BE(20),
+    };
+  }
+
+  if (extension === "gif" && buffer.toString("ascii", 0, 3) === "GIF") {
+    return {
+      width: buffer.readUInt16LE(6),
+      height: buffer.readUInt16LE(8),
+    };
+  }
+
+  if (["jpg", "jpeg"].includes(extension)) {
+    return getJpegDimensions(buffer);
+  }
+
+  if (extension === "webp") {
+    return getWebpDimensions(buffer);
+  }
+
+  if (extension === "svg") {
+    return getSvgDimensions(buffer.toString("utf-8"));
+  }
+
+  return null;
+}
+
+function getJpegDimensions(buffer) {
+  if (buffer.length < 4 || buffer.readUInt16BE(0) !== 0xffd8) return null;
+
+  let offset = 2;
+  while (offset < buffer.length) {
+    if (buffer[offset] !== 0xff) return null;
+
+    const marker = buffer[offset + 1];
+    const length = buffer.readUInt16BE(offset + 2);
+    const isStartOfFrame =
+      (marker >= 0xc0 && marker <= 0xc3) ||
+      (marker >= 0xc5 && marker <= 0xc7) ||
+      (marker >= 0xc9 && marker <= 0xcb) ||
+      (marker >= 0xcd && marker <= 0xcf);
+
+    if (isStartOfFrame) {
+      return {
+        height: buffer.readUInt16BE(offset + 5),
+        width: buffer.readUInt16BE(offset + 7),
+      };
+    }
+
+    offset += 2 + length;
+  }
+
+  return null;
+}
+
+function getWebpDimensions(buffer) {
+  if (
+    buffer.toString("ascii", 0, 4) !== "RIFF" ||
+    buffer.toString("ascii", 8, 12) !== "WEBP"
+  ) {
+    return null;
+  }
+
+  const chunkType = buffer.toString("ascii", 12, 16);
+  if (chunkType === "VP8X") {
+    return {
+      width: 1 + buffer.readUIntLE(24, 3),
+      height: 1 + buffer.readUIntLE(27, 3),
+    };
+  }
+
+  if (chunkType === "VP8L") {
+    const bits = buffer.readUInt32LE(21);
+    return {
+      width: (bits & 0x3fff) + 1,
+      height: ((bits >> 14) & 0x3fff) + 1,
+    };
+  }
+
+  if (chunkType === "VP8 ") {
+    return {
+      width: buffer.readUInt16LE(26) & 0x3fff,
+      height: buffer.readUInt16LE(28) & 0x3fff,
+    };
+  }
+
+  return null;
+}
+
+function getSvgDimensions(svg) {
+  const widthMatch = svg.match(/\bwidth=["']?([0-9.]+)/i);
+  const heightMatch = svg.match(/\bheight=["']?([0-9.]+)/i);
+  if (widthMatch && heightMatch) {
+    return {
+      width: Number(widthMatch[1]),
+      height: Number(heightMatch[1]),
+    };
+  }
+
+  const viewBoxMatch = svg.match(
+    /\bviewBox=["'][^"']*\s([0-9.]+)\s([0-9.]+)["']/i
+  );
+  if (viewBoxMatch) {
+    return {
+      width: Number(viewBoxMatch[1]),
+      height: Number(viewBoxMatch[2]),
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Validate image dimensions against asset type minimums.
+ */
+function validateDimensions(filepath, extension, assetType, category) {
+  const issues = [];
+  const warnings = [];
+
+  if (!["image", "vector"].includes(category)) {
+    return { valid: true, issues, warnings, dimensions: null, required: null };
+  }
+
+  const required = RULES.dimensions[assetType] || RULES.dimensions.default;
+  const dimensions = getImageDimensions(filepath, extension);
+
+  if (!dimensions) {
+    warnings.push("Unable to read image dimensions");
+    return { valid: true, issues, warnings, dimensions: null, required };
+  }
+
+  if (
+    dimensions.width < required.minWidth ||
+    dimensions.height < required.minHeight
+  ) {
+    issues.push(
+      `Dimensions (${dimensions.width}x${dimensions.height}) are below minimum (${required.minWidth}x${required.minHeight})`
+    );
+  }
+
+  return {
+    valid: issues.length === 0,
+    issues,
+    warnings,
+    dimensions,
+    required,
+  };
+}
+
+/**
  * Check if asset exists in manifest
  */
 function checkManifest(filepath) {
@@ -333,7 +490,21 @@ function validateAsset(assetPath) {
     results.issues.push(...formatResult.issues);
   }
 
-  // 3. Validate file size
+  // 3. Validate dimensions
+  const assetType = filenameResult.parsed?.type || "default";
+  const dimensionsResult = validateDimensions(
+    assetPath,
+    extension,
+    assetType,
+    formatResult.info.category
+  );
+  results.checks.dimensions = dimensionsResult;
+  if (!dimensionsResult.valid) {
+    results.issues.push(...dimensionsResult.issues);
+  }
+  results.warnings.push(...dimensionsResult.warnings);
+
+  // 4. Validate file size
   const sizeResult = validateFileSize(assetPath, extension);
   results.checks.fileSize = sizeResult;
   if (!sizeResult.valid) {
@@ -341,7 +512,7 @@ function validateAsset(assetPath) {
   }
   results.warnings.push(...sizeResult.warnings);
 
-  // 4. Check manifest registration
+  // 5. Check manifest registration
   const manifestResult = checkManifest(assetPath);
   results.checks.manifest = manifestResult;
   if (!manifestResult.registered) {
@@ -351,7 +522,7 @@ function validateAsset(assetPath) {
     );
   }
 
-  // 5. Suggest corrected filename if needed
+  // 6. Suggest corrected filename if needed
   if (!filenameResult.valid && filenameResult.parsed) {
     const suggested = suggestFilename(filename, filenameResult.parsed);
     if (suggested) {
@@ -401,6 +572,11 @@ function formatOutput(results) {
   // File size info
   if (results.checks.fileSize?.size) {
     lines.push(`\nFile Size: ${formatBytes(results.checks.fileSize.size)}`);
+  }
+
+  if (results.checks.dimensions?.dimensions) {
+    const { width, height } = results.checks.dimensions.dimensions;
+    lines.push(`Dimensions: ${width}x${height}`);
   }
 
   lines.push("\n" + "=".repeat(60));

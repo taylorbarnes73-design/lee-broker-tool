@@ -198,9 +198,12 @@ function generateColorScale(baseHex, darkHex, lightHex, label = "color") {
   const validLightHex = isValidHexColor(lightHex) ? lightHex : null;
 
   // Use provided shades or generate approximations
+  const lightestHex = validLightHex
+    ? adjustBrightness(validLightHex, 0.1)
+    : adjustBrightness(baseHex, 0.9);
   return {
     50: {
-      $value: validLightHex || adjustBrightness(baseHex, 0.9),
+      $value: lightestHex,
       $type: "color",
     },
     100: {
@@ -286,6 +289,7 @@ function updateDesignTokens(tokens, colors) {
   }
 
   // Update primitive colors with new names
+  tokens.primitive = tokens.primitive || {};
   const primitiveColors = tokens.primitive?.color || {};
 
   // Remove previously synced brand palette keys, then add the current palette.
@@ -316,96 +320,105 @@ function updateDesignTokens(tokens, colors) {
   tokens.primitive.color = primitiveColors;
 
   // Update ALL semantic color references
-  if (tokens.semantic?.color) {
-    const sem = tokens.semantic.color;
-    const p = colors.primary.name;
-    const s = colors.secondary.name;
-    const a = colors.accent.name;
+  tokens.semantic = tokens.semantic || {};
+  const sem = tokens.semantic.color || {};
+  const p = colors.primary.name;
+  const s = colors.secondary.name;
+  const a = colors.accent.name;
 
-    // Primary variants
-    sem.primary = { $value: `{primitive.color.${p}.500}`, $type: "color" };
-    sem["primary-hover"] = {
-      $value: `{primitive.color.${p}.600}`,
-      $type: "color",
-    };
-    sem["primary-active"] = {
-      $value: `{primitive.color.${p}.700}`,
-      $type: "color",
-    };
-    sem["primary-light"] = {
-      $value: `{primitive.color.${p}.400}`,
-      $type: "color",
-    };
-    sem["primary-lighter"] = {
-      $value: `{primitive.color.${p}.100}`,
-      $type: "color",
-    };
-    sem["primary-dark"] = {
-      $value: `{primitive.color.${p}.600}`,
-      $type: "color",
-    };
+  // Primary variants
+  sem.primary = { $value: `{primitive.color.${p}.500}`, $type: "color" };
+  sem["primary-hover"] = {
+    $value: `{primitive.color.${p}.600}`,
+    $type: "color",
+  };
+  sem["primary-active"] = {
+    $value: `{primitive.color.${p}.700}`,
+    $type: "color",
+  };
+  sem["primary-light"] = {
+    $value: `{primitive.color.${p}.400}`,
+    $type: "color",
+  };
+  sem["primary-lighter"] = {
+    $value: `{primitive.color.${p}.100}`,
+    $type: "color",
+  };
+  sem["primary-dark"] = {
+    $value: `{primitive.color.${p}.600}`,
+    $type: "color",
+  };
 
-    // Secondary variants
-    sem.secondary = { $value: `{primitive.color.${s}.500}`, $type: "color" };
-    sem["secondary-hover"] = {
-      $value: `{primitive.color.${s}.600}`,
-      $type: "color",
-    };
-    sem["secondary-light"] = {
-      $value: `{primitive.color.${s}.300}`,
-      $type: "color",
-    };
-    sem["secondary-dark"] = {
-      $value: `{primitive.color.${s}.600}`,
-      $type: "color",
-    };
+  // Secondary variants
+  sem.secondary = { $value: `{primitive.color.${s}.500}`, $type: "color" };
+  sem["secondary-hover"] = {
+    $value: `{primitive.color.${s}.600}`,
+    $type: "color",
+  };
+  sem["secondary-light"] = {
+    $value: `{primitive.color.${s}.300}`,
+    $type: "color",
+  };
+  sem["secondary-dark"] = {
+    $value: `{primitive.color.${s}.600}`,
+    $type: "color",
+  };
 
-    // Accent variants
-    sem.accent = { $value: `{primitive.color.${a}.500}`, $type: "color" };
-    sem["accent-hover"] = {
-      $value: `{primitive.color.${a}.600}`,
-      $type: "color",
-    };
-    sem["accent-light"] = {
-      $value: `{primitive.color.${a}.300}`,
-      $type: "color",
-    };
+  // Accent variants
+  sem.accent = { $value: `{primitive.color.${a}.500}`, $type: "color" };
+  sem["accent-hover"] = {
+    $value: `{primitive.color.${a}.600}`,
+    $type: "color",
+  };
+  sem["accent-light"] = {
+    $value: `{primitive.color.${a}.300}`,
+    $type: "color",
+  };
 
-    // Status colors come from the Semantic Colors section, not the brand palette.
-    const statusColors = { ...DEFAULT_SEMANTIC_COLORS, ...colors.semantic };
-    sem.success = { $value: statusColors.success, $type: "color" };
-    sem["success-light"] = {
-      $value: adjustBrightness(statusColors.success, 0.35),
-      $type: "color",
-    };
-    sem.warning = { $value: statusColors.warning, $type: "color" };
-    sem["warning-light"] = {
-      $value: adjustBrightness(statusColors.warning, 0.35),
-      $type: "color",
-    };
-    sem.error = { $value: statusColors.error, $type: "color" };
-    sem["error-light"] = {
-      $value: adjustBrightness(statusColors.error, 0.35),
-      $type: "color",
-    };
-    sem.info = { $value: statusColors.info, $type: "color" };
-    sem["info-light"] = {
-      $value: adjustBrightness(statusColors.info, 0.35),
-      $type: "color",
-    };
-  }
+  // Status colors come from the Semantic Colors section, not the brand palette.
+  const statusColors = { ...DEFAULT_SEMANTIC_COLORS, ...colors.semantic };
+  sem.success = { $value: statusColors.success, $type: "color" };
+  sem["success-light"] = {
+    $value: adjustBrightness(statusColors.success, 0.35),
+    $type: "color",
+  };
+  sem.warning = { $value: statusColors.warning, $type: "color" };
+  sem["warning-light"] = {
+    $value: adjustBrightness(statusColors.warning, 0.35),
+    $type: "color",
+  };
+  sem.error = { $value: statusColors.error, $type: "color" };
+  sem["error-light"] = {
+    $value: adjustBrightness(statusColors.error, 0.35),
+    $type: "color",
+  };
+  sem.info = { $value: statusColors.info, $type: "color" };
+  sem["info-light"] = {
+    $value: adjustBrightness(statusColors.info, 0.35),
+    $type: "color",
+  };
+  tokens.semantic.color = sem;
 
   // Update component references (button uses primary color with opacity)
-  if (tokens.component?.button?.secondary) {
-    const primaryBase = colors.primary.base;
-    if (!isValidHexColor(primaryBase)) {
-      throw new Error("Missing valid base hex color for primary");
-    }
-    tokens.component.button.secondary["bg-hover"] = {
-      $value: `${primaryBase}1A`,
-      $type: "color",
-    };
+  tokens.component = tokens.component || {};
+  tokens.component.button = tokens.component.button || {};
+  tokens.component.button.primary = tokens.component.button.primary || {
+    bg: { $value: "{semantic.color.primary}", $type: "color" },
+    "bg-hover": { $value: "{semantic.color.primary-hover}", $type: "color" },
+    "bg-active": { $value: "{semantic.color.primary-active}", $type: "color" },
+  };
+  tokens.component.button.secondary = tokens.component.button.secondary || {
+    bg: { $value: "{semantic.color.secondary}", $type: "color" },
+  };
+
+  const primaryBase = colors.primary.base;
+  if (!isValidHexColor(primaryBase)) {
+    throw new Error("Missing valid base hex color for primary");
   }
+  tokens.component.button.secondary["bg-hover"] = {
+    $value: `${primaryBase}1A`,
+    $type: "color",
+  };
 
   return tokens;
 }
@@ -466,6 +479,7 @@ function main() {
   }
 
   // Write updated tokens
+  fs.mkdirSync(path.dirname(tokensPath), { recursive: true });
   fs.writeFileSync(tokensPath, JSON.stringify(tokens, null, 2));
   console.log(`✅ Updated: ${DESIGN_TOKENS_JSON}`);
 
