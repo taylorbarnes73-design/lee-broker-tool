@@ -1337,11 +1337,14 @@ async function extractDocumentFieldsAndDetection<TDetection>(params: {
     };
   }
 
-  const fieldPrompt = `Extract all fields you can identify for the "${params.tab}" form from this ${params.mimeType === "application/pdf" ? "PDF document" : "document image"}.
+  const fieldPrompt = `You are analyzing a ${params.mimeType === "application/pdf" ? "PDF document" : "document image"} for a commercial real estate ${params.tab} form.
 
-Available fields: ${fieldNames.join(", ")}
+READ THE ENTIRE DOCUMENT CAREFULLY. Extract every field you can identify with confidence.
 
-Return fields only when you can confidently extract them.`;
+Available fields to extract: ${fieldNames.join(", ")}
+
+For each field, extract the value EXACTLY as described in the system prompt's FIELD EXTRACTION GUIDE.
+Only include fields you can confidently identify. Omit any field you're unsure about.`;
 
   const promptText = `${fieldPrompt}
 
@@ -1349,9 +1352,14 @@ Also check required compliance document status:
 
 ${params.detectionPrompt}
 
-Return one JSON object with:
-- fields: object of extracted form fields
-- documentDetection: required document status`;
+Return ONE JSON object with exactly this structure:
+{
+  "fields": { ...extracted form field values... },
+  "documentDetection": { ...compliance document status... }
+}
+
+The "fields" object should contain the extracted values. The "documentDetection" object should follow the compliance rules above.
+Return ONLY valid JSON. No markdown fences, no explanation.`;
 
   const outputSchema = buildFieldsWithDetectionSchema(
     params.schemaName,
@@ -1488,6 +1496,7 @@ async function extractVoucherDocumentWithDetection(
   fileUrl: string,
   mimeType: AiDocumentMime
 ) {
+  const sysPrompt = await documentSystemPrompt();
   return extractDocumentFieldsAndDetection({
     tab: "voucher",
     fileUrl,
@@ -1496,8 +1505,7 @@ async function extractVoucherDocumentWithDetection(
     detectionSchema: voucherDocumentDetectionSchema,
     parseDetection: parseVoucherDocumentDetection,
     emptyDetection: emptyVoucherDocumentDetection,
-    systemPrompt:
-      "You extract real estate form fields and classify compliance document execution status. Return only the requested JSON result.",
+    systemPrompt: sysPrompt + "\n\nIn addition to extracting fields, you must also classify compliance document status as described in the user prompt.",
     detectionPrompt: `Determine whether this file includes either of these documents and whether each one appears fully executed:
 - Agency Disclosure
 - Listing Agreement
@@ -1514,6 +1522,7 @@ async function extractListingDocumentWithDetection(
   fileUrl: string,
   mimeType: AiDocumentMime
 ) {
+  const sysPrompt = await brochureSystemPrompt();
   return extractDocumentFieldsAndDetection({
     tab: "listing",
     fileUrl,
@@ -1522,8 +1531,7 @@ async function extractListingDocumentWithDetection(
     detectionSchema: listingDocumentDetectionSchema,
     parseDetection: parseListingDocumentDetection,
     emptyDetection: emptyListingDocumentDetection,
-    systemPrompt:
-      "You are an expert at reading California real estate listing documents. Extract all form fields and classify required compliance document execution status. Return only the requested JSON.",
+    systemPrompt: sysPrompt + "\n\nIn addition to extracting fields, you must also classify compliance document status as described in the user prompt.",
     detectionPrompt: `Identify whether this file contains the following documents and whether each is fully executed:
 
 AGENCY DISCLOSURE
