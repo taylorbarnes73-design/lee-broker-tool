@@ -10387,13 +10387,6 @@ body.broker-active .broker-hamburger {
   }
 }
 
-/* ── J. Hide old filter grid styling when new bar is present ──────────────── */
-.cr-filters-grid {
-  display: none !important;
-}
-.cr-filters-actions {
-  display: none !important;
-}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Section 33 — Export Progress Overlay
