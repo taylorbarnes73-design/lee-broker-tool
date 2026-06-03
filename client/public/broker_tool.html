@@ -168,16 +168,7 @@
           </div>
           <div class="brochure-status" id="l-deal-docs-status" onclick="event.stopPropagation()"></div>
         </div>
-        <div class="required-doc-status-list" id="l-required-doc-status-list" style="margin-top:8px;">
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;margin-bottom:4px;">
-            <input type="checkbox" id="l-doc-check-disclosure" onchange="onListingDocCheckChange()">
-            Agency Disclosure included
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
-            <input type="checkbox" id="l-doc-check-agreement" onchange="onListingDocCheckChange()">
-            Listing Agreement included
-          </label>
-        </div>
+        <p style="margin-top:8px;font-size:13px;color:#555;font-style:italic;">*Please provide all executed deal documents (Agency Disclosure, Listing Agreement, etc.)</p>
         <div class="sr-only" id="l-doc-analysis-live" aria-live="polite"></div>
       </div>
     </div>
@@ -11921,9 +11912,7 @@ function combineListingDocumentState(currentValue, nextValue) {
 }
 
 function getListingDetectionAnnouncement() {
-  const disclosure = getListingDocumentStatusLabel('agencyDisclosure').toLowerCase();
-  const agreement = getListingDocumentStatusLabel('listingAgreement').toLowerCase();
-  return `Analysis complete. Agency Disclosure ${disclosure}. Listing Agreement ${agreement}.`;
+  return `Analysis complete.`;
 }
 
 function renderListingDealDocumentsStatusMessage() {
@@ -11955,27 +11944,13 @@ function renderListingDealDocumentsStatusMessage() {
 }
 
 function updateListingRequiredDocStatus() {
-  // Auto-check boxes if AI detected the documents as executed
-  const disclosureCheck = document.getElementById('l-doc-check-disclosure');
-  const agreementCheck = document.getElementById('l-doc-check-agreement');
-  if (disclosureCheck && listingDocumentIsExecuted('agencyDisclosure')) disclosureCheck.checked = true;
-  if (agreementCheck && listingDocumentIsExecuted('listingAgreement')) agreementCheck.checked = true;
+  // Checkboxes removed — just refresh nav
   const flow = window.__stepFlows && window.__stepFlows['listing-main'];
   if (flow && typeof flow.renderNav === 'function') flow.renderNav();
 }
 
 function onListingDocCheckChange() {
-  // Update internal state when user manually checks/unchecks
-  const disclosureCheck = document.getElementById('l-doc-check-disclosure');
-  const agreementCheck = document.getElementById('l-doc-check-agreement');
-  if (disclosureCheck && disclosureCheck.checked) {
-    setListingDocumentState('agencyDisclosure', { found: true, executed: true, missingSignatures: [], manualOverride: true, manualOverrideAt: new Date().toISOString(), manualOverrideBy: getSignedInBrokerIdentity()?.name || '', manualOverrideByEmail: getSignedInBrokerIdentity()?.email || '' });
-  }
-  if (agreementCheck && agreementCheck.checked) {
-    setListingDocumentState('listingAgreement', { found: true, executed: true, missingSignatures: [], manualOverride: true, manualOverrideAt: new Date().toISOString(), manualOverrideBy: getSignedInBrokerIdentity()?.name || '', manualOverrideByEmail: getSignedInBrokerIdentity()?.email || '' });
-  }
-  const flow = window.__stepFlows && window.__stepFlows['listing-main'];
-  if (flow && typeof flow.renderNav === 'function') flow.renderNav();
+  // No-op: checkboxes removed
 }
 
 function markListingDocumentManual(kind) {
