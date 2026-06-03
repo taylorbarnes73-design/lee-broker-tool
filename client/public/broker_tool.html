@@ -806,7 +806,7 @@
       <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('voucher', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
     </div>
   </div>
-  <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete all steps in order for fastest processing.</div>
+  <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete all sections for fastest processing.</div>
 
   <div class="voucher-progress is-hidden" id="progress-bar-wrap">
     <div class="voucher-progress-bar"><div class="voucher-progress-fill" id="progress-bar-fill" style="width:0%"></div></div>
@@ -817,7 +817,7 @@
   <div class="deal-shell" id="v-deal-shell">
   <div class="deal-main" id="voucher-main">
 
-  <!-- AI Auto-fill (optional shortcut, sits above Step 1) -->
+  <!-- Upload Deal Documents -->
   <div class="card ai-shortcut-card" id="vstep-upload" data-vstep="0" data-step-label="Upload Deal Documents">
     <h2>Upload Deal Documents <span class="inline-badge">AI Auto-Fill</span></h2>
     <div class="brochure-zone" id="v-brochure-zone" tabindex="0" role="button" aria-label="Upload deal documents" onclick="document.getElementById('v-brochure-file').click()" onkeydown="onVoucherDocZoneKeydown(event)">
@@ -845,10 +845,28 @@
 
   <div class="stepper" data-stepper-for="voucher-main"></div>
 
-  <div class="card required-section" id="vstep-1" data-vstep="1" data-step-label="Deal Basics" data-card-eyebrow="Step 1 of 5">
-    <h2>Deal Basics <span class="required-badge">Required</span></h2>
+  <!-- ═══ SECTION 1: DEAL BASICS (matches Excel rows 1-9) ═══ -->
+  <div class="card required-section voucher-section" id="vstep-1" data-vstep="1" data-step-label="Deal Basics" data-card-eyebrow="Deal Basics">
+    <div class="voucher-section-header">Deal Basics</div>
     <div class="tip is-hidden top-gap-sm" id="voucher-confidential-warning"></div>
-    <h3 class="section-heading-tight" style="margin-bottom:12px">Property Address</h3>
+    <div class="row c4">
+      <div class="field"><label class="req">Transaction Type</label>
+        <select id="v-txn-type" onchange="onVoucherTxnChange()"><option value="lease">Lease</option><option value="sale">Sale</option><option value="referral">Referral</option><option value="sublease">Sublease</option><option value="renewal">Renewal</option><option value="other">Other</option></select>
+      </div>
+      <div class="field"><label class="req">Property Type</label>
+        <select id="v-prop-type"><option value="industrial">Industrial</option><option value="office">Office</option><option value="retail">Retail</option><option value="land">Land</option><option value="other">Other</option></select>
+      </div>
+      <div class="field"><label class="req">Active Listing?</label><select id="v-active-listing"><option value="yes">Yes</option><option value="no">No</option></select></div>
+      <div class="field"><label>Close this Listing?</label><select id="v-close-listing"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+    </div>
+    <div class="row c4">
+      <div class="field"><label class="req">Confidential?</label><select id="v-confidential"><option value="no">No</option><option value="yes">Yes</option></select></div>
+      <div class="field"><label class="req">Date Filled</label><input id="v-date-filled" type="date"></div>
+      <div class="field is-hidden" id="v-other-type-field"><label>If Other, Explain</label><input id="v-other-type"></div>
+      <div class="field"></div>
+    </div>
+
+    <div class="voucher-sub-header">Property Address</div>
     <div class="row c23">
       <div class="field"><label class="req">Street Address</label><input id="v-address"></div>
       <div class="field"><label>APN / Parcel</label><input id="v-apn" placeholder="Optional"></div>
@@ -861,10 +879,10 @@
     </div>
     <input id="v-deal-sf" type="hidden">
     <input id="v-land-sf" type="hidden">
-    <div class="section-divider top-gap-md">
-      <h3 class="section-heading-tight">Deal Details</h3>
-      <div class="row c4">
-        <div class="field"><label class="req">Representation Type</label>
+
+    <div class="voucher-sub-header">Deal Details</div>
+    <div class="row c4">
+      <div class="field"><label class="req">Representation Type</label>
         <select id="v-rep-type">
           <option value="tenant_rep">Tenant Rep</option>
           <option value="landlord_rep">Landlord Rep</option>
@@ -873,15 +891,6 @@
           <option value="other">Other</option>
         </select>
       </div>
-      <div class="field"><label class="req">Transaction Type</label>
-        <select id="v-txn-type" onchange="onVoucherTxnChange()"><option value="lease">Lease</option><option value="sale">Sale</option><option value="referral">Referral</option><option value="sublease">Sublease</option><option value="renewal">Renewal</option><option value="other">Other</option></select>
-      </div>
-      <div class="field"><label class="req">Property Type</label>
-        <select id="v-prop-type"><option value="industrial">Industrial</option><option value="office">Office</option><option value="retail">Retail</option><option value="land">Land</option><option value="other">Other</option></select>
-      </div>
-      <div class="field"><label class="req">Date Filled</label><input id="v-date-filled" type="date"></div>
-    </div>
-    <div class="row c3">
       <div class="field"><label class="req">Suite / Unit</label><input id="v-suite" placeholder="Ste 100"></div>
       <div class="field"><label class="req">Deal Type</label>
         <select id="v-deal-type-req">
@@ -889,17 +898,233 @@
           <option>New</option><option>Renewal</option><option>Expansion</option><option>Relocation</option><option>Blend &amp; Extend</option>
         </select>
       </div>
-      <div class="field is-hidden" id="v-other-type-field"><label>If Other, Explain</label><input id="v-other-type"><div class="field-hint">Describe property type</div></div>
-    </div>
-    <div class="row c2 top-gap-sm">
       <div class="field"><label class="req">Client Name</label><input id="v-on-behalf"><div class="field-hint">Client / Company name</div></div>
-      <div class="field"></div>
-    </div>
     </div>
   </div>
 
-  <div class="card" id="vstep-2" data-vstep="2" data-step-label="Broker Information" data-card-eyebrow="Step 2 of 5">
-    <h2>Step 2 — Broker Information</h2>
+  <!-- ═══ SECTION 2: LESSOR/SELLER & LESSEE/BUYER (matches Excel rows 11-18) ═══ -->
+  <div class="card voucher-section" id="vstep-3" data-vstep="3" data-step-label="Client & Property Info" data-card-eyebrow="Parties">
+    <div class="voucher-section-header">Lessor/Seller &amp; Lessee/Buyer</div>
+    <div class="row c2 voucher-party-grid">
+      <div>
+        <div class="sub-divider-label" id="v-lbl-lessor">Lessor / Seller</div>
+        <div class="row c2">
+          <div class="field"><label>Invoice?</label><select id="v-ls-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
+          <div class="field"></div>
+        </div>
+        <div class="field"><label class="req">Contact Name</label><input id="v-ls-contact"><div class="field-hint">Full name</div></div>
+        <div class="field"><label class="req">Company</label><input id="v-ls-company"><div class="field-hint">Company name</div></div>
+        <div class="row c2">
+          <div class="field"><label>Email</label><input id="v-ls-email" type="email"><div class="field-hint">email@company.com</div></div>
+          <div class="field"><label>Phone</label><input id="v-ls-phone" type="tel"></div>
+        </div>
+        <div class="field"><label>Address</label><input id="v-ls-address"><div class="field-hint">Street address</div></div>
+        <div class="row c3">
+          <div class="field"><label>City</label><input id="v-ls-city"></div>
+          <div class="field"><label>State</label><input id="v-ls-state" value="CA"></div>
+          <div class="field"><label>Zip</label><input id="v-ls-zip"></div>
+        </div>
+      </div>
+      <div>
+        <div class="sub-divider-label" id="v-lbl-lessee">Lessee / Buyer</div>
+        <div class="row c2">
+          <div class="field"><label>Invoice?</label><select id="v-lb-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
+          <div class="field"></div>
+        </div>
+        <div class="field"><label class="req">Contact Name</label><input id="v-lb-contact"><div class="field-hint">Full name</div></div>
+        <div class="field"><label class="req">Company</label><input id="v-lb-company"><div class="field-hint">Company name</div></div>
+        <div class="row c2">
+          <div class="field"><label>Email</label><input id="v-lb-email" type="email"><div class="field-hint">email@company.com</div></div>
+          <div class="field"><label>Phone</label><input id="v-lb-phone" type="tel"></div>
+        </div>
+        <div class="field"><label>Address</label><input id="v-lb-address"><div class="field-hint">Street address</div></div>
+        <div class="row c3">
+          <div class="field"><label>City</label><input id="v-lb-city"></div>
+          <div class="field"><label>State</label><input id="v-lb-state" value="CA"></div>
+          <div class="field"><label>Zip</label><input id="v-lb-zip"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SECTION 3: PROPERTY INFORMATION (matches Excel rows 20-31) ═══ -->
+  <div class="card voucher-section">
+    <div class="voucher-section-header">Property Information</div>
+    <div class="row c4 compact">
+      <div class="field"><label>Occ. Type</label><select id="v-occ-type"><option value="">—</option><option>Direct</option><option>Sublease</option><option>Renewal</option><option>Expansion</option></select></div>
+      <div class="field"><label>Sub-Market</label><input id="v-submarket"></div>
+      <div class="field"><label>Prior Tenant Location</label><input id="v-prior-loc"><div class="field-hint">City or address</div></div>
+      <div class="field"><label>Land SF</label><input id="v-land-sf-input" placeholder="0" oninput="document.getElementById('v-land-sf').value=this.value;calcVoucherSale()"></div>
+    </div>
+    <div class="row c4 compact">
+      <div class="field"><label>Total Bldg SF</label><input id="v-bldg-sf" placeholder="0"></div>
+      <div class="field"><label>Bldg Class</label><select id="v-bldg-class"><option value="">—</option><option>A</option><option>B</option><option>C</option></select></div>
+      <div class="field"><label>Year Built</label><input id="v-year-built" placeholder="1995"></div>
+      <div class="field"><label># of Floors</label><input id="v-floors"></div>
+    </div>
+    <div class="row c4 compact">
+      <div class="field"><label>Parking Type</label><input id="v-parking-type"></div>
+      <div class="field"><label># of Spaces</label><input id="v-parking-spaces"></div>
+      <div class="field"><label>Park Ratio</label><input id="v-park-ratio"></div>
+      <div class="field"><label>Load Factor</label><input id="v-load-factor"></div>
+    </div>
+    <div class="field" style="margin-top:12px"><label>Additional Comp Comments</label><textarea id="v-comp-comments" rows="2" placeholder="HVAC, expenses, maintenance, taxes, anything you would like to add"></textarea></div>
+  </div>
+
+  <!-- ═══ SECTION 4: LEASE TRANSACTION DETAILS (matches Excel rows 34-48) ═══ -->
+  <div class="card voucher-section" id="vstep-4" data-vstep="4" data-step-label="Financial Details" data-card-eyebrow="Financials" data-card-control=".branch-toggle-wrap">
+    <div class="voucher-section-header">Transaction Details &amp; Commission</div>
+    <div class="branch-toggle-wrap">
+      <label class="branch-toggle-label">Deal Branch</label>
+      <div class="branch-toggle" id="voucher-branch-toggle">
+        <button type="button" data-branch="lease" onclick="setVoucherBranch('lease')">Lease</button>
+        <button type="button" data-branch="sale" onclick="setVoucherBranch('sale')">Sale</button>
+      </div>
+    </div>
+
+    <!-- Lease Details -->
+    <div id="v-req-lease">
+      <div class="voucher-sub-header">Lease Terms</div>
+      <div class="row c4">
+        <div class="field"><label class="req">Start Date</label><input id="v-l-start" type="date" onchange="calcVoucherTermFromDates()"></div>
+        <div class="field"><label class="req">End Date</label><input id="v-l-end" type="date" onchange="calcVoucherTermFromDates()"></div>
+        <div class="field"><label>Occupancy Date</label><input id="v-l-occ" type="date"></div>
+        <div class="field"><label>Term (months)</label><input id="v-l-term" oninput="calcVoucherLease()"></div>
+      </div>
+      <div class="row c4">
+        <div class="field"><label class="req">Rate per SF/Mo</label><input id="v-l-rate" placeholder="$0.00" oninput="calcVoucherLease()"></div>
+        <div class="field"><label>Rate Type</label><select id="v-l-rate-type"><option value="NNN">NNN</option><option value="FSG">FSG</option><option value="MG">MG</option><option value="G">Gross</option></select></div>
+        <div class="field"><label>Asking Rate/SF</label><input id="v-l-asking-rate" placeholder="$0.00"></div>
+        <div class="field"><label>Total Consideration</label><input id="v-l-consideration" class="readonly-fill-strong" placeholder="$0" readonly></div>
+      </div>
+      <div class="row c4">
+        <div class="field"><label>Property Taxes</label><input id="v-l-taxes" placeholder="$0.00" oninput="calcNNNTotal()"></div>
+        <div class="field"><label>Insurance</label><input id="v-l-insurance" placeholder="$0.00" oninput="calcNNNTotal()"></div>
+        <div class="field"><label>Miscellaneous</label><input id="v-l-misc" placeholder="$0.00" oninput="calcNNNTotal()"></div>
+        <div class="field"><label>Total NNN Charges</label><input id="v-l-nnn-total" class="readonly-fill" placeholder="$0.00" readonly></div>
+      </div>
+      <div class="row c4">
+        <div class="field"><label>TI Allow $/SF</label><input id="v-l-ti-sf" placeholder="$0.00"></div>
+        <div class="field"><label>TI Allow $</label><input id="v-l-ti-total" placeholder="$0"></div>
+        <div class="field"><label>Escalations</label><input id="v-l-escalations" placeholder="e.g. 3% annual"></div>
+        <div class="field"><label>Options</label><input id="v-l-options" placeholder="e.g. 2x5yr options"></div>
+      </div>
+      <div class="row c3">
+        <div class="field"><label>Gross Eff Rate</label><input id="v-l-grs-eff" placeholder="$0.00"></div>
+        <div class="field"><label>IG Eff Rate</label><input id="v-l-ig-eff" placeholder="$0.00"></div>
+        <div class="field"><label>NNN Eff Rate</label><input id="v-l-nnn-eff" placeholder="$0.00"></div>
+      </div>
+
+      <!-- Rent Schedule -->
+      <div id="v-req-rent-inline" class="top-gap-sm">
+        <div class="voucher-sub-header">Monthly &amp; Free Rent Schedule</div>
+        <p class="review-copy micro-copy-bottom-sm">Enter $0 for free rent months so effective rates calculate correctly.</p>
+        <table class="rent-table" id="v-rent-table">
+          <thead><tr><th class="table-col-compact">#</th><th>Monthly Rent $</th><th>Rate/SF/Mo</th><th>Months</th><th>Consideration</th><th title="Commission rate override for this period">Comm %</th><th class="table-col-compact"></th></tr></thead>
+          <tbody id="v-rent-body"></tbody>
+        </table>
+        <button class="btn btn-gray top-gap-sm" onclick="addRentRow()">+ Add Period</button>
+        <div class="row c4" style="margin-top:14px">
+          <div class="field"><label>Average Rate/SF/Mo</label><input id="v-avg-rate-sf" class="readonly-fill" placeholder="$0.00" readonly></div>
+          <div class="field"><label>Average Monthly Rent</label><input id="v-avg-monthly" class="readonly-fill" placeholder="$0" readonly></div>
+          <div class="field"></div>
+          <div class="field"></div>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:12px"><label>Additional Lease Comments</label><textarea id="v-lease-comments" rows="2" placeholder="Additional lease terms or notes"></textarea></div>
+    </div>
+
+    <!-- Sale Details -->
+    <div id="v-req-sale" class="is-hidden">
+      <div class="voucher-sub-header">Sale Terms</div>
+      <div class="row c3">
+        <div class="field"><label class="req">Total Consideration / Sale Price</label><input id="v-s-price" placeholder="$0" oninput="calcVoucherSale()"></div>
+        <div class="field"><label>Price / SF</label><input id="v-s-price-sf" class="readonly-fill" placeholder="$0.00" readonly></div>
+        <div class="field"><label>Land Price / SF</label><input id="v-s-land-sf" class="readonly-fill" placeholder="$0.00" readonly></div>
+      </div>
+      <div class="row c3">
+        <div class="field"><label>User, Investor, or Developer</label><select id="v-s-buyer-type"><option value="">—</option><option>User</option><option>Investor</option><option>Developer</option></select></div>
+        <div class="field"><label>Asking Price</label><input id="v-s-asking" placeholder="$0"></div>
+        <div class="field"><label>CAP Rate %</label><input id="v-s-cap"></div>
+      </div>
+      <div class="row c2">
+        <div class="field"><label>Escrow Company</label><input id="v-s-escrow"><div class="field-hint">Company name</div></div>
+        <div class="field"><label>Check/Wire from Escrow?</label><select id="v-s-escrow-check"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+      </div>
+      <div class="field"><label>Months on Market</label><input id="v-s-months-mkt" placeholder="0"></div>
+    </div>
+
+    <!-- Commission Section -->
+    <div class="voucher-sub-header" style="margin-top:20px">Commission &amp; Invoice</div>
+    <div id="v-req-comm-lease">
+      <div class="row c4">
+        <div class="field"><label class="req">Commission Rate %</label><input id="v-l-comm-rate" oninput="calcCommSummary()"></div>
+        <div class="field"><label>Lease Commission Due</label><input id="v-l-comm-due" class="readonly-fill-strong" placeholder="$0" readonly></div>
+        <div class="field"><label>Additional Bonus / (Adjustment)</label><input id="v-comm-bonus" placeholder="$0" oninput="calcCommSummary()"></div>
+        <div class="field"><label class="invoice-highlight-label">TOTAL INVOICE</label><input id="v-total-invoice" class="invoice-highlight-input" placeholder="$0" readonly></div>
+      </div>
+      <div class="row c3">
+        <div class="field"><label>Consulting/Referral / Flat Fee</label><input id="v-comm-consulting" placeholder="$0" oninput="calcCommSummary()"></div>
+        <div class="field"></div>
+        <div class="field"></div>
+      </div>
+    </div>
+    <div id="v-req-comm-sale" class="is-hidden">
+      <div class="row c4">
+        <div class="field"><label class="req">Commission %</label><input id="v-s-comm-pct" oninput="calcVoucherSale()"></div>
+        <div class="field"><label>Sale Commission Due</label><input id="v-s-comm-due" class="readonly-fill-strong" placeholder="$0" readonly></div>
+        <div class="field"><label>SALE Commission (auto)</label><input id="v-comm-sale" class="readonly-fill" placeholder="$0" readonly></div>
+        <div class="field"><label class="invoice-highlight-label">TOTAL INVOICE</label><input id="v-total-invoice-sale" class="invoice-highlight-input" placeholder="$0" readonly></div>
+      </div>
+    </div>
+
+    <!-- Invoice To -->
+    <div class="voucher-sub-header">Invoice To</div>
+    <div class="row c3">
+      <div class="field">
+        <label>Invoice To (Party)</label>
+        <select id="v-invoice-to">
+          <option value="">— Select Party —</option>
+          <option value="lessor">Lessor / Seller</option>
+          <option value="lessee">Lessee / Buyer</option>
+          <option value="listing_agent">Listing Agent</option>
+          <option value="procuring_agent">Procuring Agent</option>
+          <option value="third_party">Third Party (see below)</option>
+        </select>
+      </div>
+      <div class="field is-hidden" id="v-third-party-section">
+        <label>Third-Party Company Name</label>
+        <input id="v-inv-company"><div class="field-hint">Company name</div>
+      </div>
+      <div class="field is-hidden" id="v-third-party-addr">
+        <label>Third-Party Address</label>
+        <input id="v-inv-address"><div class="field-hint">Address</div>
+      </div>
+    </div>
+    <div class="field"><label>Special Invoice Instructions</label><textarea id="v-inv-instructions" rows="2"></textarea><div class="field-hint">Payment schedule, split payments, etc.</div></div>
+    <div class="voucher-sub-header">Payment Schedule</div>
+    <table class="broker-table" id="v-payment-table">
+      <thead><tr><th>Date Due</th><th>Amount Due</th><th>Date Due</th><th>Amount Due</th><th class="table-col-compact"></th></tr></thead>
+      <tbody id="v-payment-body"></tbody>
+    </table>
+    <button class="btn btn-gray top-gap-sm" onclick="addPaymentRow()">+ Add Payment</button>
+
+    <!-- AI Deal Analysis -->
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #E7EAEE">
+      <div class="voucher-sub-header">AI Deal Analysis</div>
+      <p class="micro-copy">Let AI verify the financials and flag anything that looks off.</p>
+      <button class="btn btn-outline" id="v-ai-calc-btn" onclick="runVoucherAICalculate()">
+        <svg class="ui-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:5px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Analyze with AI
+      </button>
+      <div id="v-ai-calc-panel" class="is-hidden" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- ═══ SECTION 5: BROKER REPRESENTATION (matches Excel rows 78-92) ═══ -->
+  <div class="card voucher-section" id="vstep-2" data-vstep="2" data-step-label="Broker Information" data-card-eyebrow="Brokers">
+    <div class="voucher-section-header">Broker Representation</div>
     <div class="row c2 micro-copy-bottom-sm">
       <div class="field"><label>Same Listing &amp; Procuring Agent?</label>
         <select id="v-same-agent" onchange="onSameAgentChange()"><option value="no">No</option><option value="yes">Yes</option></select>
@@ -916,6 +1141,17 @@
           </div>
         </div>
         <div class="field"><label>House</label><input id="v-la-house"></div>
+        <div class="field"><label>Invoice Listing Agent?</label><select id="v-la-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div class="field"><label>Address</label><input id="v-la-address"></div>
+        <div class="row c3">
+          <div class="field"><label>City</label><input id="v-la-city"></div>
+          <div class="field"><label>State</label><input id="v-la-state" value="CA"></div>
+          <div class="field"><label>Zip</label><input id="v-la-zip"></div>
+        </div>
+        <div class="row c2">
+          <div class="field"><label>Phone</label><input id="v-la-phone" type="tel"></div>
+          <div class="field"><label>Pay fee from commission?</label><select id="v-la-pay-fee"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        </div>
       </div>
       <div id="procuring-section">
         <div class="sub-divider-label">Procuring Agent</div>
@@ -926,6 +1162,17 @@
           </div>
         </div>
         <div class="field"><label>House</label><input id="v-pa-house"><div class="field-hint">Brokerage name</div></div>
+        <div class="field"><label>Invoice Procuring Agent?</label><select id="v-pa-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div class="field"><label>Address</label><input id="v-pa-address"></div>
+        <div class="row c3">
+          <div class="field"><label>City</label><input id="v-pa-city"></div>
+          <div class="field"><label>State</label><input id="v-pa-state" value="CA"></div>
+          <div class="field"><label>Zip</label><input id="v-pa-zip"></div>
+        </div>
+        <div class="row c2">
+          <div class="field"><label>Phone</label><input id="v-pa-phone" type="tel"></div>
+          <div class="field"><label>Pay fee from commission?</label><select id="v-pa-pay-fee"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        </div>
       </div>
     </div>
     <div class="top-gap-md voucher-subsection">
@@ -936,209 +1183,38 @@
       </table>
       <button class="btn btn-gray top-gap-sm" onclick="addVoucherCollab()">+ Add Agent</button>
     </div>
-    <div class="section-divider voucher-subsection">
-      <div class="toggle-row">
-        <label class="section-label">Outside Agents?</label>
-        <label class="toggle-switch">
-          <input type="checkbox" id="v-outside-toggle" onchange="toggleOutsideAgents(this.checked)">
-          <span class="toggle-slider"></span>
-        </label>
-        <span id="v-outside-toggle-label" class="toggle-caption">Off</span>
-      </div>
-      <div id="v-outside-section" class="is-hidden top-gap-md">
-        <table class="broker-table" id="v-outside-table">
-          <thead><tr><th class="table-col-side">Side</th><th>Name</th><th>Address</th><th class="table-col-amount">Amount to Pay</th><th class="table-col-compact"></th></tr></thead>
-          <tbody id="v-outside-body"></tbody>
-        </table>
-        <button class="btn btn-gray top-gap-sm" onclick="addOutsideAgent()">+ Add Outside Agent</button>
-        <div class="row c2 top-gap-md">
-          <div class="field"><label>Total to Outside Agents</label><input id="v-total-outside" class="readonly-fill-strong" placeholder="$0" readonly></div>
-          <div></div>
-        </div>
-        <p class="micro-copy micro-copy-top-xs">Note: A completed W9 must be received on all new co-ops/referrals before commissions can be processed.</p>
-      </div>
-    </div>
   </div>
 
-  <div class="card" id="vstep-3" data-vstep="3" data-step-label="Client & Property Info" data-card-eyebrow="Step 3 of 5">
-    <h2>Step 3 — Client &amp; Property Info</h2>
-    <div class="card reference-card" id="v-addr-ref">
-      <p class="reference-copy">&#8593; Property address and Deal SF are entered in Step 1 above.</p>
+  <!-- ═══ SECTION 6: OUTSIDE AGENTS (matches Excel rows 94-103) ═══ -->
+  <div class="card voucher-section">
+    <div class="voucher-section-header">Outside Agents</div>
+    <p class="micro-copy">Co-operating brokers, referrals, etc.</p>
+    <div class="toggle-row" style="margin-top:8px">
+      <label class="section-label">Has Outside Agents?</label>
+      <label class="toggle-switch">
+        <input type="checkbox" id="v-outside-toggle" onchange="toggleOutsideAgents(this.checked)">
+        <span class="toggle-slider"></span>
+      </label>
+      <span id="v-outside-toggle-label" class="toggle-caption">Off</span>
     </div>
-    <div class="section-heading-top">
-      <div class="row c2 voucher-party-grid">
-        <div>
-          <div class="sub-divider-label" id="v-lbl-lessor">Lessor / Seller</div>
-          <div class="field"><label class="req">Contact Name</label><input id="v-ls-contact"><div class="field-hint">Full name</div></div>
-          <div class="field"><label class="req">Company</label><input id="v-ls-company"><div class="field-hint">Company name</div></div>
-          <div class="collapse-section collapse-section-top-sm">
-            <div class="collapse-toggle collapse-toggle-compact" onclick="toggleCollapse(this)">
-              <span class="micro-copy">Additional Info</span>
-              <span class="chevron chevron-sm">&#9662;</span>
-            </div>
-            <div class="collapse-body" id="cb-lessor">
-              <div class="field"><label>Invoice Lessor/Seller?</label><select id="v-ls-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
-              <div class="row c2">
-                <div class="field"><label>Email</label><input id="v-ls-email" type="email"><div class="field-hint">email@company.com</div></div>
-                <div class="field"><label>Phone</label><input id="v-ls-phone" type="tel"></div>
-              </div>
-              <div class="field"><label>Address</label><input id="v-ls-address"><div class="field-hint">Street address</div></div>
-              <div class="row c3">
-                <div class="field"><label>City</label><input id="v-ls-city"></div>
-                <div class="field"><label>State</label><input id="v-ls-state" value="CA"></div>
-                <div class="field"><label>Zip</label><input id="v-ls-zip"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div>
-          <div class="sub-divider-label" id="v-lbl-lessee">Lessee / Buyer</div>
-          <div class="field"><label class="req">Contact Name</label><input id="v-lb-contact"><div class="field-hint">Full name</div></div>
-          <div class="field"><label class="req">Company</label><input id="v-lb-company"><div class="field-hint">Company name</div></div>
-          <div class="collapse-section collapse-section-top-sm">
-            <div class="collapse-toggle collapse-toggle-compact" onclick="toggleCollapse(this)">
-              <span class="micro-copy">Additional Info</span>
-              <span class="chevron chevron-sm">&#9662;</span>
-            </div>
-            <div class="collapse-body" id="cb-lessee">
-              <div class="field"><label>Invoice Lessee/Buyer?</label><select id="v-lb-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
-              <div class="row c2">
-                <div class="field"><label>Email</label><input id="v-lb-email" type="email"><div class="field-hint">email@company.com</div></div>
-                <div class="field"><label>Phone</label><input id="v-lb-phone" type="tel"></div>
-              </div>
-              <div class="field"><label>Address</label><input id="v-lb-address"><div class="field-hint">Street address</div></div>
-              <div class="row c3">
-                <div class="field"><label>City</label><input id="v-lb-city"></div>
-                <div class="field"><label>State</label><input id="v-lb-state" value="CA"></div>
-                <div class="field"><label>Zip</label><input id="v-lb-zip"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card" id="vstep-4" data-vstep="4" data-step-label="Financial Details" data-card-eyebrow="Step 4 of 5" data-card-control=".branch-toggle-wrap">
-    <h2>Step 4 — Financial Details &amp; Commission</h2>
-    <div class="branch-toggle-wrap">
-      <label class="branch-toggle-label">Deal Branch</label>
-      <div class="branch-toggle" id="voucher-branch-toggle">
-        <button type="button" data-branch="lease" onclick="setVoucherBranch('lease')">Lease</button>
-        <button type="button" data-branch="sale" onclick="setVoucherBranch('sale')">Sale</button>
-      </div>
-    </div>
-    <div id="v-req-lease">
-      <h3>Key Lease Terms</h3>
-      <div class="row c3">
-        <div class="field"><label class="req">Start Date</label><input id="v-l-start" type="date" onchange="calcVoucherTermFromDates()"></div>
-        <div class="field"><label class="req">End Date</label><input id="v-l-end" type="date" onchange="calcVoucherTermFromDates()"></div>
-        <div class="field"><label>Occupancy Date</label><input id="v-l-occ" type="date"></div>
-      </div>
-      <div class="row c4">
-        <div class="field"><label class="req">Rate per SF per Month</label><input id="v-l-rate" placeholder="$0.00" oninput="calcVoucherLease()"></div>
-        <div class="field"><label>Rate Type</label><select id="v-l-rate-type"><option value="NNN">NNN</option><option value="FSG">FSG</option><option value="MG">MG</option><option value="G">Gross</option></select></div>
-        <div class="field"><label>Term (months)</label><input id="v-l-term" oninput="calcVoucherLease()"></div>
-        <div class="field"><label>Total Consideration</label><input id="v-l-consideration" class="readonly-fill-strong" placeholder="$0" readonly></div>
-      </div>
-      <!-- Rent Schedule (inline) -->
-      <div id="v-req-rent-inline" class="top-gap-sm">
-        <h3>Monthly &amp; Free Rent Schedule</h3>
-        <p class="review-copy micro-copy-bottom-sm">Enter $0 for free rent months so effective rates calculate correctly.</p>
-        <table class="rent-table" id="v-rent-table">
-          <thead><tr><th class="table-col-compact">#</th><th>Monthly Rent $</th><th>Rate/SF/Mo</th><th>Months</th><th>Consideration</th><th title="Commission rate override for this period">Comm %</th><th class="table-col-compact"></th></tr></thead>
-          <tbody id="v-rent-body"></tbody>
-        </table>
-        <button class="btn btn-gray top-gap-sm" onclick="addRentRow()">+ Add Period</button>
-        <div class="section-divider">
-          <div class="row c4">
-            <div class="field"><label>Average Rate/SF/Mo</label><input id="v-avg-rate-sf" class="readonly-fill" placeholder="$0.00" readonly></div>
-            <div class="field"><label>Average Monthly Rent</label><input id="v-avg-monthly" class="readonly-fill" placeholder="$0" readonly></div>
-            <div class="field"></div>
-            <div class="field"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div id="v-req-sale" class="is-hidden">
-      <h3>Key Sale Terms</h3>
-      <div class="row c3">
-        <div class="field"><label class="req">Total Consideration / Sale Price</label><input id="v-s-price" placeholder="$0" oninput="calcVoucherSale()"></div>
-        <div class="field"><label>Price / SF</label><input id="v-s-price-sf" class="readonly-fill" placeholder="$0.00" readonly></div>
-        <div class="field"><label>Land Price / SF</label><input id="v-s-land-sf" class="readonly-fill" placeholder="$0.00" readonly></div>
-      </div>
-    </div>
-    <div class="section-divider top-gap-md">
-      <h3>Commission &amp; Invoice</h3>
-    </div>
-    <div id="v-req-comm-lease">
-      <div class="row c4">
-        <div class="field"><label class="req">Commission Rate %</label><input id="v-l-comm-rate" oninput="calcCommSummary()"></div>
-        <div class="field"><label>Lease Commission Due</label><input id="v-l-comm-due" class="readonly-fill-strong" placeholder="$0" readonly></div>
-        <div class="field"><label>Additional Bonus / (Adjustment)</label><input id="v-comm-bonus" placeholder="$0" oninput="calcCommSummary()"></div>
-        <div class="field"><label class="invoice-highlight-label">TOTAL INVOICE</label><input id="v-total-invoice" class="invoice-highlight-input" placeholder="$0" readonly></div>
-      </div>
-      <div class="row c3">
-        <div class="field"><label>Consulting/Referral / Flat Fee</label><input id="v-comm-consulting" placeholder="$0" oninput="calcCommSummary()"></div>
-        <div class="field"></div>
-        <div class="field"></div>
-      </div>
-    </div>
-    <div id="v-req-comm-sale" class="is-hidden">
-      <div class="row c3">
-        <div class="field"><label class="req">Commission %</label><input id="v-s-comm-pct" oninput="calcVoucherSale()"></div>
-        <div class="field"><label>Commission Due $</label><input id="v-s-comm-due" class="readonly-fill-strong" placeholder="$0" readonly></div>
-        <div class="field"><label>SALE Commission (auto)</label><input id="v-comm-sale" class="readonly-fill" placeholder="$0" readonly></div>
-      </div>
-    </div>
-    <div class="section-divider voucher-subsection">
-      <h3>Invoice To</h3>
-      <div class="row c3">
-        <div class="field">
-          <label>Invoice To (Party)</label>
-          <select id="v-invoice-to">
-            <option value="">— Select Party —</option>
-            <option value="lessor">Lessor / Seller</option>
-            <option value="lessee">Lessee / Buyer</option>
-            <option value="listing_agent">Listing Agent</option>
-            <option value="procuring_agent">Procuring Agent</option>
-            <option value="third_party">Third Party (see below)</option>
-          </select>
-        </div>
-        <div class="field is-hidden" id="v-third-party-section">
-          <label>Third-Party Company Name</label>
-          <input id="v-inv-company"><div class="field-hint">Company name</div>
-        </div>
-        <div class="field is-hidden" id="v-third-party-addr">
-          <label>Third-Party Address</label>
-          <input id="v-inv-address"><div class="field-hint">Address</div>
-        </div>
-      </div>
-      <div class="field"><label>Special Invoice Instructions</label><textarea id="v-inv-instructions" rows="2"></textarea><div class="field-hint">Payment schedule, split payments, etc.</div></div>
-      <h3 class="top-gap-md">Payment Schedule</h3>
-      <table class="broker-table" id="v-payment-table">
-        <thead><tr><th>Date Due</th><th>Amount Due</th><th>Date Due</th><th>Amount Due</th><th class="table-col-compact"></th></tr></thead>
-        <tbody id="v-payment-body"></tbody>
+    <div id="v-outside-section" class="is-hidden top-gap-md">
+      <table class="broker-table" id="v-outside-table">
+        <thead><tr><th class="table-col-side">Side</th><th>Name</th><th>Address</th><th class="table-col-amount">Amount to Pay</th><th class="table-col-compact"></th></tr></thead>
+        <tbody id="v-outside-body"></tbody>
       </table>
-      <button class="btn btn-gray top-gap-sm" onclick="addPaymentRow()">+ Add Payment</button>
-
-      <!-- AI Deal Analysis -->
-      <div class="section-divider">
-        <h3>AI Deal Analysis</h3>
-        <p class="micro-copy">Let AI verify the financials and flag anything that looks off. Results are suggestions only — all calculated fields above are authoritative.</p>
-        <button class="btn btn-outline" id="v-ai-calc-btn" onclick="runVoucherAICalculate()">
-          <svg class="ui-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:5px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          Analyze with AI
-        </button>
-        <div id="v-ai-calc-panel" class="is-hidden" style="margin-top:14px;"></div>
+      <button class="btn btn-gray top-gap-sm" onclick="addOutsideAgent()">+ Add Outside Agent</button>
+      <div class="row c2 top-gap-md">
+        <div class="field"><label>Total to Outside Agents</label><input id="v-total-outside" class="readonly-fill-strong" placeholder="$0" readonly></div>
+        <div></div>
       </div>
+      <p class="micro-copy micro-copy-top-xs">Note: A completed W9 must be received on all new co-ops/referrals before commissions can be processed.</p>
     </div>
   </div>
 
-  <div class="card" id="vstep-8" data-vstep="8" data-step-label="Review" data-card-eyebrow="Step 5 of 5">
-    <h2>Step 5 — Commission Distribution</h2>
+  <!-- ═══ SECTION 7: COMMISSION DISTRIBUTION (matches Excel rows 116-131) ═══ -->
+  <div class="card voucher-section" id="vstep-8" data-vstep="8" data-step-label="Review" data-card-eyebrow="Distribution">
+    <div class="voucher-section-header">Commission Distribution</div>
     <div id="voucher-attachment-required-msg" class="tip text-error is-hidden" role="alert"></div>
-    <h3 class="section-divider section-heading-top-lg">Commission Distribution</h3>
     <div class="row c3 field-stack-gap-sm voucher-summary-row">
       <div class="field"><label>Total Invoice</label><input id="v-dist-total-invoice" class="readonly-fill-strong" placeholder="$0" readonly></div>
       <div class="field"><label>Total to Outside Agents</label><input id="v-dist-total-outside" class="readonly-fill" placeholder="$0" readonly></div>
@@ -1151,89 +1227,7 @@
     <button class="btn btn-gray top-gap-sm" onclick="addDistRow()">+ Add Agent</button>
   </div>
 
-  <div class="optional-wrapper">
-    <div class="optional-toggle" onclick="toggleOptional(this)">
-      <h2>Additional Details</h2>
-      <span class="opt-chevron">&#9662;</span>
-    </div>
-    <div class="optional-body">
-
-  <div class="card">
-    <h2>Listing Status</h2>
-    <div class="row c3">
-      <div class="field"><label>Active Listing?</label><select id="v-active-listing"><option value="yes">Yes</option><option value="no">No</option></select></div>
-      <div class="field"><label>Close this Listing?</label><select id="v-close-listing"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
-      <div class="field"><label>Confidential?</label><select id="v-confidential"><option value="no">No</option><option value="yes">Yes</option></select></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>Property Information (Comp Data)</h2>
-    <div class="row c3 compact">
-      <div class="field"><label>Occ. Type</label><select id="v-occ-type"><option value="">—</option><option>Direct</option><option>Sublease</option><option>Renewal</option><option>Expansion</option></select></div>
-      <div class="field"><label>Sub-Market</label><input id="v-submarket"></div>
-      <div class="field"><label>Prior Tenant Location</label><input id="v-prior-loc"><div class="field-hint">City or address</div></div>
-    </div>
-    <div class="row c3 compact">
-      <div class="field"><label>Total Bldg SF</label><input id="v-bldg-sf" placeholder="0"></div>
-      <div class="field"><label>Bldg Class</label><select id="v-bldg-class"><option value="">—</option><option>A</option><option>B</option><option>C</option></select></div>
-      <div class="field"><label>Year Built</label><input id="v-year-built" placeholder="1995"></div>
-    </div>
-  </div>
-
-  <div id="v-sale-section" class="card is-hidden">
-    <h2>Sale Transaction Details (Extended)</h2>
-    <div class="row c3">
-      <div class="field"><label>User, Investor, or Developer</label><select id="v-s-buyer-type"><option value="">—</option><option>User</option><option>Investor</option><option>Developer</option></select></div>
-      <div class="field"><label>Asking Price</label><input id="v-s-asking" placeholder="$0"></div>
-      <div class="field"><label>CAP Rate %</label><input id="v-s-cap"></div>
-    </div>
-    <div class="field"><label>Escrow Company</label><input id="v-s-escrow"><div class="field-hint">Company name</div></div>
-    <div class="field"><label>Check/Wire from Escrow?</label><select id="v-s-escrow-check"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
-  </div>
-
-  <div class="card">
-    <h2>Broker Details (Extended)</h2>
-    <div class="collapse-section">
-      <div class="collapse-toggle" onclick="toggleCollapse(this)">
-        <h3>Listing Agent — Full Details</h3>
-        <span class="chevron">&#9662;</span>
-      </div>
-      <div class="collapse-body" id="cb-listing-agent">
-        <div class="field"><label>Invoice Listing Agent?</label><select id="v-la-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
-        <div class="field"><label>Address</label><input id="v-la-address"></div>
-        <div class="row c3">
-          <div class="field"><label>City</label><input id="v-la-city"></div>
-          <div class="field"><label>State</label><input id="v-la-state" value="CA"></div>
-          <div class="field"><label>Zip</label><input id="v-la-zip"></div>
-        </div>
-        <div class="row c2">
-          <div class="field"><label>Phone</label><input id="v-la-phone" type="tel"></div>
-          <div class="field"><label>Pay fee from commission?</label><select id="v-la-pay-fee"><option value="no">No</option><option value="yes">Yes — agent is not from Lee NB, pay from this commission</option></select></div>
-        </div>
-      </div>
-    </div>
-    <div class="collapse-section">
-      <div class="collapse-toggle" onclick="toggleCollapse(this)">
-        <h3>Procuring Agent — Full Details</h3>
-        <span class="chevron">&#9662;</span>
-      </div>
-      <div class="collapse-body" id="cb-procuring-agent">
-        <div class="field"><label>Invoice Procuring Agent?</label><select id="v-pa-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
-        <div class="field"><label>Address</label><input id="v-pa-address"></div>
-        <div class="row c3">
-          <div class="field"><label>City</label><input id="v-pa-city"></div>
-          <div class="field"><label>State</label><input id="v-pa-state" value="CA"></div>
-          <div class="field"><label>Zip</label><input id="v-pa-zip"></div>
-        </div>
-        <div class="row c2">
-          <div class="field"><label>Phone</label><input id="v-pa-phone" type="tel"></div>
-          <div class="field"><label>Pay fee from commission?</label><select id="v-pa-pay-fee"><option value="no">No</option><option value="yes">Yes — agent is not from Lee NB, pay from this commission</option></select></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
+  <!-- Action Buttons -->
   <div class="btn-bar">
     <button class="btn btn-gray" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Excel Voucher</span></button>
     <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'voucher')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
@@ -1241,8 +1235,6 @@
     <button class="btn btn-outline" onclick="switchTab('sign')">Remove Signs &rarr;</button>
     <button class="btn btn-gray" onclick="setBtnLoading(this,true,'Clearing…');setTimeout(()=>{clearVoucher();setBtnLoading(this,false);},80)"><span class="btn-spinner"></span><span class="btn-label">Clear Form</span></button>
   </div>
-    </div><!-- end optional-body -->
-  </div><!-- end optional-wrapper -->
 
   </div><!-- /deal-main -->
 
@@ -1250,7 +1242,7 @@
     <div class="deal-card deal-card-primary">
       <div class="deal-eyebrow">Deal at a Glance</div>
       <div class="deal-title" id="dg-title">New voucher</div>
-      <div class="deal-subtitle" id="dg-subtitle">Fill Step 1 to begin</div>
+      <div class="deal-subtitle" id="dg-subtitle">Fill Deal Basics to begin</div>
       <div class="micro-copy micro-copy-top" id="dg-autosave" aria-live="polite"></div>
       <div class="deal-chips" id="dg-chips"></div>
       <dl class="deal-kv">
@@ -1282,12 +1274,10 @@
       <div class="deal-eyebrow">Progress</div>
       <ol class="deal-steps" id="dg-steps">
         <li data-step="0"><span class="deal-step-dot"></span><span class="deal-step-label">Upload Docs</span></li>
-        <li data-step="1"><span class="deal-step-dot"></span><span class="deal-step-label">Transaction Type</span></li>
-        <li data-step="2"><span class="deal-step-dot"></span><span class="deal-step-label">Broker Information</span></li>
-        <li data-step="3"><span class="deal-step-dot"></span><span class="deal-step-label">Client &amp; Property</span></li>
+        <li data-step="1"><span class="deal-step-dot"></span><span class="deal-step-label">Deal Basics</span></li>
+        <li data-step="2"><span class="deal-step-dot"></span><span class="deal-step-label">Broker Info</span></li>
+        <li data-step="3"><span class="deal-step-dot"></span><span class="deal-step-label">Parties</span></li>
         <li data-step="4"><span class="deal-step-dot"></span><span class="deal-step-label">Financials</span></li>
-        
-        
         <li data-step="8"><span class="deal-step-dot"></span><span class="deal-step-label">Distribution</span></li>
       </ol>
     </div>
@@ -1299,6 +1289,7 @@
   </aside>
   </div><!-- /deal-shell -->
 </div>
+
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
@@ -14022,7 +14013,21 @@ function applyAiFields(tab, fields, options = {}) {
       if (!normalizedDate) return;
       el.value = normalizedDate;
     } else {
-      el.value = value;
+      // Fix: If AI returns monthly base rent instead of rate/SF, auto-convert
+      if (tab === 'voucher' && key === 'baseRent') {
+        const numVal = parseFloat(String(value).replace(/[^0-9.\-]/g, '')) || 0;
+        const dealSfEl = document.getElementById('v-l-dealsf');
+        const dealSfVal = parseFloat(dealSfEl?.value?.replace(/[^0-9.]/g, '') || fields.dealSf || '0') || 0;
+        // If value > 50, it's almost certainly a monthly rent amount, not rate/SF
+        // Typical rate/SF ranges from $0.50 to $50.00; monthly rents are $1000+
+        if (numVal > 50 && dealSfVal > 0) {
+          el.value = (numVal / dealSfVal).toFixed(4);
+        } else {
+          el.value = value;
+        }
+      } else {
+        el.value = value;
+      }
     }
 
     el.classList.add('ai-filled');

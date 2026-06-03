@@ -815,7 +815,7 @@ FIELD EXTRACTION GUIDE:
 - representationType: "Tenant Rep", "Landlord Rep", "Buyer Rep", "Seller Rep", or "Dual".
 - leaseType: "NNN" (triple net), "FSG" (full service gross), "MG" (modified gross), "Gross", or "Net".
 - buildingSf / suiteSf / dealSf: Total square footage as integer string without commas. "12,500 SF" → "12500".
-- rateSfMo / leaseRate / baseRent: Monthly rate per SF as decimal string. "$1.25/SF/Mo" → "1.25". If annual, divide by 12. If rate says "$15.00 NNN" (annual), return "1.25".
+- rateSfMo / leaseRate / baseRent: Monthly rate PER SQUARE FOOT as decimal string (NOT the total monthly rent). "$1.25/SF/Mo" → "1.25". If annual, divide by 12. If rate says "$15.00 NNN" (annual), return "1.25". IMPORTANT: If the document states a total monthly rent (e.g. "$15,000/month"), you MUST divide by the square footage to get the per-SF rate. For example, $15,000/month on 10,000 SF = "1.50".
 - term: Lease duration in MONTHS as integer string. "5 years" → "60". "36 months" → "36".
 - commencementDate / expirationDate / listingExpiration / dateEntered: Dates in MM/DD/YYYY format.
 - askingPrice / salePrice / totalConsideration: Dollar amount as integer string without $ or commas. "$2,500,000" → "2500000".

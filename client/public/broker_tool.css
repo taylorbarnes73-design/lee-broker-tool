@@ -7528,6 +7528,44 @@ body.broker-active .sub-tab-bar {
   border-color: #DDE2E8;
 }
 
+/* Voucher section headers - match Excel voucher section dividers */
+#tab-voucher .voucher-section {
+  border-left: 3px solid var(--lee-crimson, #98002E);
+}
+
+#tab-voucher .voucher-section-header {
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--lee-crimson, #98002E);
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E7EAEE;
+}
+
+#tab-voucher .voucher-sub-header {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text1, #1A1D21);
+  margin: 18px 0 10px 0;
+  padding-top: 12px;
+  border-top: 1px solid #F0F2F5;
+}
+
+#tab-voucher .voucher-sub-header:first-child,
+#tab-voucher .voucher-section-header + .voucher-sub-header {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+#tab-voucher .voucher-section .row.compact .field {
+  margin-bottom: 4px;
+}
+
 #tab-queue .queue-status.queue-error {
   margin-bottom: 16px;
   padding: 12px 14px;
