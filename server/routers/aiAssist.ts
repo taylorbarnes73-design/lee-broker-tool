@@ -994,14 +994,58 @@ Return the JSON object now:`;
     ? await brochureSystemPrompt()
     : await documentSystemPrompt();
 
-  // ── Preferred path: native AI inline file (no text extraction) ──
-  // The AI reads the document directly, giving much better results on scanned PDFs
-  // and image-heavy brochures. Only available when GEMINI_API_KEY is configured.
+  // ── Preferred path: Claude (Anthropic) as primary extractor ──
+  // Claude provides superior accuracy for document field extraction, especially
+  // for pricing, SF, and agent details. Gemini serves as fallback.
+  let primaryFields: Record<string, string> = {};
+  let primarySucceeded = false;
+  let primaryProvider = "";
+
+  if (isClaudeFallbackAvailable()) {
+    try {
+      console.info(`[aiAssist] Trying Claude as primary extractor...`);
+      const claudeRaw = await invokeClaudeWithFile({
+        fileBuffer: fetched.fileBuffer,
+        mimeType,
+        systemPrompt: systemContent,
+        userPrompt: promptText,
+      });
+      console.info(`[aiAssist] Claude raw response length: ${typeof claudeRaw === 'string' ? claudeRaw.length : 0}`);
+      console.info(`[aiAssist] Claude raw response (first 2000 chars): ${typeof claudeRaw === 'string' ? claudeRaw.slice(0, 2000) : JSON.stringify(claudeRaw)}`);
+      const claudeParsed = parseJsonObject(claudeRaw);
+      console.info(`[aiAssist] Claude parsed keys: ${Object.keys(claudeParsed).join(', ')}`);
+      primaryFields = sanitizeAiFields(tab, claudeParsed);
+      console.info(`[aiAssist] Claude sanitized fields (${Object.keys(primaryFields).length}): ${JSON.stringify(primaryFields).slice(0, 2000)}`);
+      primarySucceeded = true;
+      primaryProvider = "Claude";
+    } catch (claudeErr: unknown) {
+      console.warn(
+        "[aiAssist] Claude primary extraction failed:",
+        claudeErr instanceof Error ? claudeErr.message : String(claudeErr)
+      );
+    }
+  }
+
+  // If Claude returned a good result (3+ fields), use it
+  if (primarySucceeded && Object.keys(primaryFields).length >= 3) {
+    console.info(`[aiAssist] ${primaryProvider} returned ${Object.keys(primaryFields).length} fields — using as final result.`);
+    return {
+      success: true as const,
+      fields: primaryFields,
+      tab,
+      fieldCount: Object.keys(primaryFields).length,
+    };
+  }
+
+  // ── Gemini fallback: try Gemini when Claude returned few/no fields ──
   let geminiFields: Record<string, string> = {};
   let geminiSucceeded = false;
 
   if (isGeminiDirectAvailable()) {
     try {
+      console.info(
+        `[aiAssist] Claude returned ${Object.keys(primaryFields).length} fields, trying Gemini fallback...`
+      );
       const raw = await invokeLLMWithFile({
         fileBuffer: fetched.fileBuffer,
         mimeType,
@@ -1009,69 +1053,36 @@ Return the JSON object now:`;
         userPrompt: promptText,
         outputSchema: buildJsonSchema(`${tab}_document_fields`, fieldNames),
       });
-      console.info(`[aiAssist] Gemini raw response length: ${typeof raw === 'string' ? raw.length : 0}`);
-      console.info(`[aiAssist] Gemini raw response (first 2000 chars): ${typeof raw === 'string' ? raw.slice(0, 2000) : JSON.stringify(raw)}`);
       const parsed = parseJsonObject(raw);
-      console.info(`[aiAssist] Parsed object keys: ${Object.keys(parsed).join(', ')}`);
-      console.info(`[aiAssist] Parsed object: ${JSON.stringify(parsed).slice(0, 2000)}`);
       geminiFields = sanitizeAiFields(tab, parsed);
-      console.info(`[aiAssist] Sanitized fields (${Object.keys(geminiFields).length}): ${JSON.stringify(geminiFields).slice(0, 2000)}`);
       geminiSucceeded = true;
+      console.info(`[aiAssist] Gemini fallback returned ${Object.keys(geminiFields).length} fields.`);
+      if (Object.keys(geminiFields).length > Object.keys(primaryFields).length) {
+        return {
+          success: true as const,
+          fields: geminiFields,
+          tab,
+          fieldCount: Object.keys(geminiFields).length,
+        };
+      }
     } catch (aiErr: unknown) {
       console.warn(
-        "[aiAssist] Gemini native file invocation failed:",
+        "[aiAssist] Gemini fallback also failed:",
         aiErr instanceof Error ? aiErr.message : String(aiErr)
       );
     }
   }
 
-  // If Gemini returned a good result (3+ fields), use it
-  if (geminiSucceeded && Object.keys(geminiFields).length >= 3) {
+  // Return whichever provider got more fields
+  const bestFields = Object.keys(primaryFields).length >= Object.keys(geminiFields).length
+    ? primaryFields
+    : geminiFields;
+  if (Object.keys(bestFields).length > 0) {
     return {
       success: true as const,
-      fields: geminiFields,
+      fields: bestFields,
       tab,
-      fieldCount: Object.keys(geminiFields).length,
-    };
-  }
-
-  // ── Claude fallback: try Claude when Gemini returned few/no fields ──
-  if (isClaudeFallbackAvailable()) {
-    try {
-      console.info(
-        `[aiAssist] Gemini returned ${Object.keys(geminiFields).length} fields, trying Claude fallback...`
-      );
-      const claudeRaw = await invokeClaudeWithFile({
-        fileBuffer: fetched.fileBuffer,
-        mimeType,
-        systemPrompt: systemContent,
-        userPrompt: promptText,
-      });
-      const claudeParsed = parseJsonObject(claudeRaw);
-      const claudeFields = sanitizeAiFields(tab, claudeParsed);
-      if (Object.keys(claudeFields).length > Object.keys(geminiFields).length) {
-        return {
-          success: true as const,
-          fields: claudeFields,
-          tab,
-          fieldCount: Object.keys(claudeFields).length,
-        };
-      }
-    } catch (claudeErr: unknown) {
-      console.warn(
-        "[aiAssist] Claude fallback also failed:",
-        claudeErr instanceof Error ? claudeErr.message : String(claudeErr)
-      );
-    }
-  }
-
-  // If Gemini got something (even if < 3 fields), return it
-  if (geminiSucceeded && Object.keys(geminiFields).length > 0) {
-    return {
-      success: true as const,
-      fields: geminiFields,
-      tab,
-      fieldCount: Object.keys(geminiFields).length,
+      fieldCount: Object.keys(bestFields).length,
     };
   }
 
