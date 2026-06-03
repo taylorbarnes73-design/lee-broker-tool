@@ -9818,7 +9818,7 @@ input[type="date"],
 /* ── E. Comp Reports filter grid — ensure proper spacing ──────────────── */
 .cr-filters-grid {
   display: grid;
-  grid-template-columns: 120px 1.5fr repeat(4, 1fr) 1.5fr;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   gap: 12px 14px;
   align-items: end;
 }
@@ -9836,22 +9836,22 @@ input[type="date"],
   white-space: nowrap;
 }
 
-/* Date range row on its own line */
+/* Date range field — sits inline spanning 2 columns like SF Range */
 .cr-filters-grid .cr-date-range-field {
-  grid-column: 1 / -1;
-  max-width: 360px;
+  grid-column: span 2;
+  min-width: 0;
 }
 
 /* SF Range field */
 .cr-filters-grid .cr-span-2 {
-  grid-column: span 1;
+  grid-column: span 2;
 }
 
 /* Range row inputs */
 .cr-range-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 .cr-range-row input {
   flex: 1;
@@ -9862,16 +9862,22 @@ input[type="date"],
   border-radius: 8px;
   font-size: 13px;
   background: #FFFFFF;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 .cr-range-row input:focus {
   border-color: #98002E;
   box-shadow: 0 0 0 3px rgba(152, 0, 46, 0.10);
   outline: none;
 }
+.cr-range-row input::placeholder {
+  color: #9CA3AF;
+  font-size: 12px;
+}
 .cr-range-sep {
   color: #9CA3AF;
   font-size: 14px;
   flex-shrink: 0;
+  font-weight: 500;
 }
 
 /* Filter actions row */
@@ -9895,16 +9901,17 @@ input[type="date"],
   .cr-filters-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
-  .cr-filters-grid .cr-date-range-field {
+  .cr-filters-grid .cr-date-range-field,
+  .cr-filters-grid .cr-span-2 {
     grid-column: span 2;
-    max-width: none;
   }
 }
 @media (max-width: 640px) {
   .cr-filters-grid {
     grid-template-columns: 1fr 1fr;
   }
-  .cr-filters-grid .cr-date-range-field {
+  .cr-filters-grid .cr-date-range-field,
+  .cr-filters-grid .cr-span-2 {
     grid-column: 1 / -1;
   }
 }

@@ -307,19 +307,101 @@ window.onSignLocationPhotoChange = function(input) {
   }
 };
 
-// ── Feature 17: Map view for comp report ──
+// ── Feature 17: Map view for comp report (Google Maps + selectable pins) ──
 (function initCompReportMap() {
   let crMap = null;
-  let crMarkers = [];
+  let crMarkers = []; // Array of { marker, idx, infoWindow }
   let crCurrentView = 'table';
+  let crGeocoder = null;
+  let crGoogleLoaded = false;
+  const CR_MAPS_JS_KEY = 'AIzaSyDVpoCmrINWXAb8Imw1z6hIcxU_fG8drho';
+
+  // Load Google Maps JS API dynamically
+  function loadGoogleMapsApi(callback) {
+    if (crGoogleLoaded || (window.google && window.google.maps)) {
+      crGoogleLoaded = true;
+      callback();
+      return;
+    }
+    var script = document.createElement('script');
+    script.src = 'https://maps.googleapis.com/maps/api/js?key=' + CR_MAPS_JS_KEY + '&libraries=marker';
+    script.async = true;
+    script.defer = true;
+    script.onload = function() { crGoogleLoaded = true; callback(); };
+    script.onerror = function() { console.warn('Google Maps JS API failed to load'); };
+    document.head.appendChild(script);
+  }
+
+  // Marker SVG icons
+  function makeMarkerIcon(selected) {
+    var color = selected ? '#98002E' : '#9CA3AF';
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="40" viewBox="0 0 28 40">' +
+      '<path d="M14 0C6.27 0 0 6.27 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.27 21.73 0 14 0z" fill="' + color + '"/>' +
+      '<circle cx="14" cy="14" r="6" fill="#fff"/>' +
+      (selected ? '<circle cx="14" cy="14" r="3.5" fill="' + color + '"/>' : '') +
+      '</svg>';
+    return {
+      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+      scaledSize: new google.maps.Size(28, 40),
+      anchor: new google.maps.Point(14, 40)
+    };
+  }
+
+  // Update marker icon based on selection state
+  function updateMarkerAppearance(markerObj) {
+    var isSelected = !window.compReportsDeselected || !window.compReportsDeselected.has(markerObj.idx);
+    markerObj.marker.setIcon(makeMarkerIcon(isSelected));
+    markerObj.marker.setZIndex(isSelected ? 100 : 1);
+  }
+
+  // Update all marker appearances
+  function updateAllMarkerAppearances() {
+    crMarkers.forEach(updateMarkerAppearance);
+    updateMapToolbar();
+  }
+
+  // Create or update the floating map toolbar
+  function updateMapToolbar() {
+    var container = document.getElementById('cr-map-container');
+    if (!container) return;
+    var toolbar = document.getElementById('cr-map-toolbar');
+    if (!toolbar) {
+      toolbar = document.createElement('div');
+      toolbar.id = 'cr-map-toolbar';
+      toolbar.className = 'cr-map-toolbar';
+      container.appendChild(toolbar);
+    }
+    var total = (window.compReportsResultsCache || []).length;
+    var deselected = window.compReportsDeselected ? window.compReportsDeselected.size : 0;
+    var selected = total - deselected;
+    toolbar.innerHTML = '<div class="cr-map-toolbar-left">' +
+      '<span class="cr-map-toolbar-count">' + selected + ' of ' + total + ' selected</span>' +
+      '<button class="cr-map-toolbar-btn" onclick="crMapSelectAll()" title="Select All">Select All</button>' +
+      '<button class="cr-map-toolbar-btn" onclick="crMapDeselectAll()" title="Deselect All">Deselect All</button>' +
+      '</div>' +
+      '<div class="cr-map-toolbar-right">' +
+      '<button class="btn btn-gray cr-map-toolbar-export" onclick="compReportExportCsvWithSpinner(this)"' + (selected ? '' : ' disabled') + '>Excel</button>' +
+      '<button class="btn btn-outline cr-map-toolbar-export" onclick="compReportExportPdfWithSpinner(this)"' + (selected ? '' : ' disabled') + '>PDF Report</button>' +
+      '</div>';
+  }
+
+  // Select/deselect all from map toolbar
+  window.crMapSelectAll = function() {
+    if (typeof compReportToggleSelectAll === 'function') compReportToggleSelectAll(true);
+    updateAllMarkerAppearances();
+  };
+  window.crMapDeselectAll = function() {
+    if (typeof compReportToggleSelectAll === 'function') compReportToggleSelectAll(false);
+    updateAllMarkerAppearances();
+  };
 
   window.crSetView = function(view) {
     crCurrentView = view;
-    const tableBtn = document.getElementById('cr-view-table-btn');
-    const mapBtn = document.getElementById('cr-view-map-btn');
-    const tableWrap = document.querySelector('.cr-table-wrap');
-    const mapContainer = document.getElementById('cr-map-container');
-    const pagination = document.getElementById('cr-pagination');
+    var tableBtn = document.getElementById('cr-view-table-btn');
+    var mapBtn = document.getElementById('cr-view-map-btn');
+    var tableWrap = document.querySelector('.cr-table-wrap');
+    var mapContainer = document.getElementById('cr-map-container');
+    var pagination = document.getElementById('cr-pagination');
     if (tableBtn) tableBtn.classList.toggle('active', view === 'table');
     if (mapBtn) mapBtn.classList.toggle('active', view === 'map');
     if (tableWrap) setHiddenState(tableWrap, view !== 'table');
@@ -327,18 +409,20 @@ window.onSignLocationPhotoChange = function(input) {
     if (mapContainer) {
       setHiddenState(mapContainer, view !== 'map');
       if (view === 'map') {
-        setTimeout(function() { renderCompReportMap(); }, 100);
+        loadGoogleMapsApi(function() {
+          setTimeout(function() { renderCompReportMap(); }, 100);
+        });
       }
     }
   };
 
   function getCrMapOverlay() {
-    let overlay = document.getElementById('cr-map-overlay-msg');
+    var overlay = document.getElementById('cr-map-overlay-msg');
     if (!overlay) {
       overlay = document.createElement('div');
       overlay.id = 'cr-map-overlay-msg';
       overlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.85);z-index:500;border-radius:8px;pointer-events:none;font-size:14px;color:#6B7178;';
-      const container = document.getElementById('cr-map-container');
+      var container = document.getElementById('cr-map-container');
       if (container) {
         if (getComputedStyle(container).position === 'static') container.style.position = 'relative';
         container.appendChild(overlay);
@@ -348,122 +432,207 @@ window.onSignLocationPhotoChange = function(input) {
   }
 
   function renderCompReportMap() {
-    const container = document.getElementById('cr-map-container');
+    var container = document.getElementById('cr-map-container');
     if (!container) return;
-    // Ensure Leaflet is loaded
-    if (typeof L === 'undefined') {
-      const ov = getCrMapOverlay();
-      if (ov) { ov.textContent = 'Map requires Leaflet. Please reload the page.'; ov.style.display = 'flex'; }
+    // Ensure Google Maps is loaded
+    if (!window.google || !window.google.maps) {
+      var ov = getCrMapOverlay();
+      if (ov) { ov.textContent = 'Loading Google Maps...'; ov.style.display = 'flex'; }
       return;
     }
-    // If crMap was destroyed (e.g. by a previous innerHTML overwrite), reset it
-    if (crMap && !container.querySelector('.leaflet-container')) {
-      try { crMap.remove(); } catch(e) {}
-      crMap = null;
-    }
+    if (!crGeocoder) crGeocoder = new google.maps.Geocoder();
+
     // Init map if not already
     if (!crMap) {
-      crMap = L.map('cr-map-container').setView([33.7, -117.8], 10);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 19,
-      }).addTo(crMap);
+      container.style.position = 'relative';
+      // Create a sub-div for the map so the toolbar can overlay
+      var mapDiv = document.getElementById('cr-map-inner');
+      if (!mapDiv) {
+        mapDiv = document.createElement('div');
+        mapDiv.id = 'cr-map-inner';
+        mapDiv.style.cssText = 'width:100%;height:100%;position:absolute;inset:0;';
+        container.insertBefore(mapDiv, container.firstChild);
+      }
+      crMap = new google.maps.Map(mapDiv, {
+        center: { lat: 33.7, lng: -117.8 },
+        zoom: 10,
+        mapTypeControl: true,
+        streetViewControl: true,
+        fullscreenControl: true,
+        styles: [
+          { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+          { featureType: 'transit', stylers: [{ visibility: 'off' }] }
+        ]
+      });
     }
     // Clear existing markers
-    crMarkers.forEach(function(m) { m.remove(); });
+    crMarkers.forEach(function(m) { m.marker.setMap(null); if (m.infoWindow) m.infoWindow.close(); });
     crMarkers = [];
-    const results = window.compReportsResultsCache || [];
-    const overlay = getCrMapOverlay();
+    var results = window.compReportsResultsCache || [];
+    var overlay = getCrMapOverlay();
     if (!results.length) {
       if (overlay) { overlay.textContent = 'No results to map. Run a search first.'; overlay.style.display = 'flex'; }
-      setTimeout(function() { if (crMap) crMap.invalidateSize(); }, 150);
+      updateMapToolbar();
       return;
     }
     if (overlay) overlay.style.display = 'none';
+
     // Geocode addresses and add markers
-    const bounds = [];
-    let pending = 0;
-    results.forEach(function(result, idx) {
-      const addr = (result.reportCard && result.reportCard.addressLine) || result.address || '';
-      const city = (result.reportCard && result.reportCard.cityLine) || result.city || '';
-      if (!addr) return;
-      const fullAddr = encodeURIComponent(addr + (city ? ', ' + city : '') + ', CA');
-      pending++;
-      fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + fullAddr + '&limit=1', {
-        headers: { 'Accept-Language': 'en' }
-      })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data && data[0]) {
-          const lat = parseFloat(data[0].lat);
-          const lng = parseFloat(data[0].lon);
-          if (isFinite(lat) && isFinite(lng)) {
-            const heading = (result.reportCard && result.reportCard.heading) || result.title || addr;
-            const marker = L.marker([lat, lng]).addTo(crMap);
-            // Build rich popup with property image and address details
-            var popupHtml = '<div style="min-width:220px;max-width:280px;font-family:Inter,system-ui,sans-serif;">';
-            // Property image: use stored photo or Street View fallback
-            var photoRaw = result.photoUrl || (result.reportCard && result.reportCard.photoUrl) || result.photo || (result.reportCard && result.reportCard.photo) || '';
-            photoRaw = String(photoRaw).trim();
-            var photoSrc = /^(https?:\/\/|data:|\/)/i.test(photoRaw) ? photoRaw : '';
-            if (!photoSrc) {
-              var svLocation = [addr, city].filter(Boolean).join(', ').trim();
-              if (svLocation) photoSrc = '/api/maps/api/streetview?size=280x160&location=' + encodeURIComponent(svLocation) + '&fov=80&pitch=0';
-            }
-            if (photoSrc) {
-              popupHtml += '<img src="' + dxEscHtml(photoSrc) + '" style="width:100%;height:140px;object-fit:cover;border-radius:6px 6px 0 0;display:block;" onerror="this.style.display=\'none\'" alt="Property">';
-            }
-            popupHtml += '<div style="padding:10px;">';
-            popupHtml += '<div style="font-weight:600;font-size:13px;margin-bottom:4px;color:#1a1a2e;">' + dxEscHtml(heading) + '</div>';
-            if (addr && addr !== heading) popupHtml += '<div style="font-size:11.5px;color:#555;margin-bottom:2px;">' + dxEscHtml(addr) + '</div>';
-            if (city) popupHtml += '<div style="font-size:11.5px;color:#555;margin-bottom:6px;">' + dxEscHtml(city) + '</div>';
-            // Key metrics
-            var fields = (result.reportCard && result.reportCard.fields) || {};
-            var metrics = [];
-            if (fields['Space Leased']) metrics.push('<b>SF:</b> ' + dxEscHtml(fields['Space Leased']));
-            if (fields['Bldg. SqFt']) metrics.push('<b>Bldg:</b> ' + dxEscHtml(fields['Bldg. SqFt']));
-            if (fields['Rent/SqFt']) metrics.push('<b>Rent:</b> ' + dxEscHtml(fields['Rent/SqFt']));
-            if (fields['Sale Price']) metrics.push('<b>Price:</b> ' + dxEscHtml(fields['Sale Price']));
-            if (fields['Sale $/SF']) metrics.push('<b>$/SF:</b> ' + dxEscHtml(fields['Sale $/SF']));
-            if (fields['Trans. Date']) metrics.push('<b>Date:</b> ' + dxEscHtml(fields['Trans. Date']));
-            if (fields['Prop. Type']) metrics.push('<b>Type:</b> ' + dxEscHtml(fields['Prop. Type']));
-            if (metrics.length) {
-              popupHtml += '<div style="font-size:11px;color:#333;line-height:1.6;border-top:1px solid #eee;padding-top:6px;margin-top:4px;">' + metrics.join(' &nbsp;·&nbsp; ') + '</div>';
-            }
-            popupHtml += '</div></div>';
-            marker.bindPopup(popupHtml, { maxWidth: 300 });
-            crMarkers.push(marker);
-            bounds.push([lat, lng]);
-            if (bounds.length === 1) crMap.setView([lat, lng], 12);
-            else crMap.fitBounds(bounds, { padding: [30, 30] });
-          }
+    var bounds = new google.maps.LatLngBounds();
+    var geocoded = 0;
+
+    // Rate-limit geocoding to avoid OVER_QUERY_LIMIT
+    var geocodeQueue = [];
+    var geocodeActive = 0;
+    var MAX_CONCURRENT = 5;
+
+    function processGeoQueue() {
+      while (geocodeActive < MAX_CONCURRENT && geocodeQueue.length > 0) {
+        var job = geocodeQueue.shift();
+        geocodeActive++;
+        doGeocode(job.addr, job.idx, job.result, function() {
+          geocodeActive--;
+          processGeoQueue();
+        });
+      }
+    }
+
+    function doGeocode(fullAddr, idx, result, done) {
+      crGeocoder.geocode({ address: fullAddr }, function(geoResults, status) {
+        if (status === 'OK' && geoResults[0]) {
+          var loc = geoResults[0].geometry.location;
+          addMarkerForResult(loc.lat(), loc.lng(), idx, result);
+          bounds.extend(loc);
+          geocoded++;
+          if (geocoded === 1) crMap.setCenter(loc);
+          if (geocoded > 1) crMap.fitBounds(bounds, { padding: 40 });
+        } else if (status === 'OVER_QUERY_LIMIT') {
+          // Retry after delay
+          setTimeout(function() { doGeocode(fullAddr, idx, result, done); }, 1000);
+          return;
         }
-      })
-      .catch(function() {})
-      .finally(function() {
-        pending--;
+        done();
+      });
+    }
+
+    results.forEach(function(result, idx) {
+      var addr = (result.reportCard && result.reportCard.addressLine) || result.address || '';
+      var city = (result.reportCard && result.reportCard.cityLine) || result.city || '';
+      if (!addr) return;
+      var fullAddr = addr + (city ? ', ' + city : '') + ', CA';
+      geocodeQueue.push({ addr: fullAddr, idx: idx, result: result });
+    });
+
+    processGeoQueue();
+    updateMapToolbar();
+  }
+
+  function addMarkerForResult(lat, lng, idx, result) {
+    var isSelected = !window.compReportsDeselected || !window.compReportsDeselected.has(idx);
+    var marker = new google.maps.Marker({
+      position: { lat: lat, lng: lng },
+      map: crMap,
+      icon: makeMarkerIcon(isSelected),
+      zIndex: isSelected ? 100 : 1,
+      title: (result.reportCard && result.reportCard.heading) || result.address || ''
+    });
+
+    // Build info window content
+    var addr = (result.reportCard && result.reportCard.addressLine) || result.address || '';
+    var city = (result.reportCard && result.reportCard.cityLine) || result.city || '';
+    var heading = (result.reportCard && result.reportCard.heading) || result.title || addr;
+    var popupHtml = '<div style="min-width:220px;max-width:300px;font-family:Inter,system-ui,sans-serif;">';
+    // Property image
+    var photoRaw = result.photoUrl || (result.reportCard && result.reportCard.photoUrl) || result.photo || (result.reportCard && result.reportCard.photo) || '';
+    photoRaw = String(photoRaw).trim();
+    var photoSrc = /^(https?:\/\/|data:|\/)/i.test(photoRaw) ? photoRaw : '';
+    if (!photoSrc) {
+      var svLocation = [addr, city].filter(Boolean).join(', ').trim();
+      if (svLocation) photoSrc = '/api/maps/api/streetview?size=300x160&location=' + encodeURIComponent(svLocation) + '&fov=80&pitch=0';
+    }
+    if (photoSrc) {
+      popupHtml += '<img src="' + dxEscHtml(photoSrc) + '" style="width:100%;height:140px;object-fit:cover;border-radius:6px 6px 0 0;display:block;" onerror="this.style.display=\'none\'" alt="Property">';
+    }
+    popupHtml += '<div style="padding:10px;">';
+    // Selection checkbox
+    popupHtml += '<label style="display:flex;align-items:center;gap:6px;margin-bottom:6px;cursor:pointer;font-size:12px;color:#555;">' +
+      '<input type="checkbox" class="cr-map-pin-check" data-idx="' + idx + '" ' + (isSelected ? 'checked' : '') + ' style="width:16px;height:16px;accent-color:#98002E;cursor:pointer;">' +
+      '<span>' + (isSelected ? 'Selected for export' : 'Click to select') + '</span></label>';
+    popupHtml += '<div style="font-weight:600;font-size:13px;margin-bottom:4px;color:#1a1a2e;">' + dxEscHtml(heading) + '</div>';
+    if (addr && addr !== heading) popupHtml += '<div style="font-size:11.5px;color:#555;margin-bottom:2px;">' + dxEscHtml(addr) + '</div>';
+    if (city) popupHtml += '<div style="font-size:11.5px;color:#555;margin-bottom:6px;">' + dxEscHtml(city) + '</div>';
+    // Key metrics
+    var fields = (result.reportCard && result.reportCard.fields) || {};
+    var metrics = [];
+    if (fields['Space Leased']) metrics.push('<b>SF:</b> ' + dxEscHtml(fields['Space Leased']));
+    if (fields['Bldg. SqFt']) metrics.push('<b>Bldg:</b> ' + dxEscHtml(fields['Bldg. SqFt']));
+    if (fields['Rent/SqFt']) metrics.push('<b>Rent:</b> ' + dxEscHtml(fields['Rent/SqFt']));
+    if (fields['Sale Price']) metrics.push('<b>Price:</b> ' + dxEscHtml(fields['Sale Price']));
+    if (fields['Sale $/SF']) metrics.push('<b>$/SF:</b> ' + dxEscHtml(fields['Sale $/SF']));
+    if (fields['Trans. Date']) metrics.push('<b>Date:</b> ' + dxEscHtml(fields['Trans. Date']));
+    if (fields['Prop. Type']) metrics.push('<b>Type:</b> ' + dxEscHtml(fields['Prop. Type']));
+    if (metrics.length) {
+      popupHtml += '<div style="font-size:11px;color:#333;line-height:1.6;border-top:1px solid #eee;padding-top:6px;margin-top:4px;">' + metrics.join(' &middot; ') + '</div>';
+    }
+    popupHtml += '</div></div>';
+
+    var infoWindow = new google.maps.InfoWindow({ content: popupHtml, maxWidth: 320 });
+    var markerObj = { marker: marker, idx: idx, infoWindow: infoWindow };
+    crMarkers.push(markerObj);
+
+    // Click marker to toggle selection
+    marker.addListener('click', function() {
+      // Close all other info windows
+      crMarkers.forEach(function(m) { if (m !== markerObj) m.infoWindow.close(); });
+      infoWindow.open(crMap, marker);
+      // Wire up checkbox inside info window after it opens
+      google.maps.event.addListenerOnce(infoWindow, 'domready', function() {
+        var cb = document.querySelector('.cr-map-pin-check[data-idx="' + idx + '"]');
+        if (cb) {
+          cb.addEventListener('change', function() {
+            if (typeof compReportToggleRowSelection === 'function') {
+              compReportToggleRowSelection(idx, cb.checked);
+            }
+            updateMarkerAppearance(markerObj);
+            updateMapToolbar();
+          });
+        }
       });
     });
-    // Invalidate size after render — use a longer delay to ensure the container
-    // is fully visible and has its final dimensions before Leaflet measures it
-    setTimeout(function() { if (crMap) crMap.invalidateSize(); }, 300);
-    setTimeout(function() { if (crMap) crMap.invalidateSize(); }, 800);
+
+    // Right-click to quick-toggle without opening popup
+    marker.addListener('rightclick', function() {
+      var currentlySelected = !window.compReportsDeselected || !window.compReportsDeselected.has(idx);
+      if (typeof compReportToggleRowSelection === 'function') {
+        compReportToggleRowSelection(idx, !currentlySelected);
+      }
+      updateMarkerAppearance(markerObj);
+      updateMapToolbar();
+    });
   }
 
   // Patch compReportRenderResults to also refresh map if in map view
   onDomReady(function() {
-    const origRender = window.compReportRenderResults;
+    var origRender = window.compReportRenderResults;
     window.compReportRenderResults = function(results, pageInfo) {
       if (typeof origRender === 'function') origRender.apply(this, arguments);
       if (crCurrentView === 'map') {
-        setTimeout(renderCompReportMap, 200);
+        loadGoogleMapsApi(function() {
+          setTimeout(renderCompReportMap, 200);
+        });
       }
     };
     // Ensure initial state: table visible, map hidden
-    const mapContainer = document.getElementById('cr-map-container');
+    var mapContainer = document.getElementById('cr-map-container');
     if (mapContainer) mapContainer.classList.add('is-hidden');
   });
+
+  // Expose function to refresh marker appearances from outside (e.g. when table selection changes)
+  window.crMapRefreshSelections = function() {
+    if (crCurrentView === 'map') updateAllMarkerAppearances();
+  };
 })();
+
 
 // ── Feature 25: Global search bar ──
 (function initGlobalSearch() {
@@ -847,6 +1016,16 @@ window.aiParseFromPaste = async function() {
 .btn-copy-to-voucher { background: #1D4ED8; color: #fff; border: none; }
 .btn-copy-to-voucher:hover { background: #1E40AF; }
 .rent-row-comm-rate { font-size: 12px; }
+
+/* Map toolbar for selectable pins */
+.cr-map-toolbar { position: absolute; bottom: 16px; left: 16px; right: 16px; z-index: 600; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.96); backdrop-filter: blur(8px); border: 1px solid #E5E7EB; border-radius: 10px; padding: 10px 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.10); gap: 12px; }
+.cr-map-toolbar-left { display: flex; align-items: center; gap: 10px; }
+.cr-map-toolbar-right { display: flex; align-items: center; gap: 8px; }
+.cr-map-toolbar-count { font-size: 13px; font-weight: 600; color: #1a1a2e; white-space: nowrap; }
+.cr-map-toolbar-btn { padding: 5px 12px; font-size: 11px; font-weight: 600; border: 1px solid #D1D5DB; border-radius: 6px; background: #fff; cursor: pointer; color: #374151; transition: all 0.15s; }
+.cr-map-toolbar-btn:hover { background: #F3F4F6; border-color: #9CA3AF; }
+.cr-map-toolbar-export { padding: 6px 14px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; }
+.cr-map-toolbar-export:disabled { opacity: 0.4; cursor: not-allowed; }
   `;
   document.head.appendChild(style);
 })();
