@@ -121,8 +121,8 @@ function extractColorsFromMarkdown(content) {
       ) {
         colors.primary.name = normalizeTokenName(name);
       }
-      if (normalizedName.includes("dark")) colors.primary.dark = hex;
-      else if (normalizedName.includes("light")) colors.primary.light = hex;
+      if (/\bdark\b/i.test(normalizedName)) colors.primary.dark = hex;
+      else if (/\blight\b/i.test(normalizedName)) colors.primary.light = hex;
       else colors.primary.base = hex;
     });
   }
@@ -134,7 +134,7 @@ function extractColorsFromMarkdown(content) {
   if (secondarySection) {
     parseColorRows(secondarySection[0], (name, hex) => {
       const normalizedName = name.toLowerCase();
-      const target = normalizedName.includes("accent")
+      const target = /^accent\b/i.test(name)
         ? colors.accent
         : colors.secondary;
       if (
@@ -143,8 +143,8 @@ function extractColorsFromMarkdown(content) {
       ) {
         target.name = normalizeTokenName(name);
       }
-      if (normalizedName.includes("dark")) target.dark = hex;
-      else if (normalizedName.includes("light")) target.light = hex;
+      if (/\bdark\b/i.test(normalizedName)) target.dark = hex;
+      else if (/\blight\b/i.test(normalizedName)) target.light = hex;
       else target.base = hex;
     });
   }
@@ -162,8 +162,8 @@ function extractColorsFromMarkdown(content) {
       ) {
         colors.accent.name = normalizeTokenName(name);
       }
-      if (normalizedName.includes("dark")) colors.accent.dark = hex;
-      else if (normalizedName.includes("light")) colors.accent.light = hex;
+      if (/\bdark\b/i.test(normalizedName)) colors.accent.dark = hex;
+      else if (/\blight\b/i.test(normalizedName)) colors.accent.light = hex;
       else colors.accent.base = hex;
     });
   }
@@ -345,7 +345,7 @@ function updateDesignTokens(tokens, colors) {
     $type: "color",
   };
   sem["primary-dark"] = {
-    $value: `{primitive.color.${p}.600}`,
+    $value: `{primitive.color.${p}.700}`,
     $type: "color",
   };
 
@@ -360,7 +360,7 @@ function updateDesignTokens(tokens, colors) {
     $type: "color",
   };
   sem["secondary-dark"] = {
-    $value: `{primitive.color.${s}.600}`,
+    $value: `{primitive.color.${s}.700}`,
     $type: "color",
   };
 

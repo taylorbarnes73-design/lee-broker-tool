@@ -315,8 +315,8 @@ function validateDimensions(filepath, extension, assetType, category) {
   const dimensions = getImageDimensions(filepath, extension);
 
   if (!dimensions) {
-    warnings.push("Unable to read image dimensions");
-    return { valid: true, issues, warnings, dimensions: null, required };
+    warnings.push("Unable to read image dimensions — minimum size could not be verified");
+    return { valid: issues.length === 0, issues, warnings, dimensions: null, required };
   }
 
   if (
