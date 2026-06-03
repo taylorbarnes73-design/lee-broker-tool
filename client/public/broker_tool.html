@@ -288,7 +288,7 @@
 
       <div id="size-building" class="type-section visible">
         <div class="row c3">
-          <div class="field"><label id="lbl-sf" class="req">Building / GLA SF</label><input id="l-bldg-sf" oninput="calcSaleSF()"></div>
+          <div class="field"><label id="lbl-sf" class="req">Building / GLA SF</label><input id="l-bldg-sf" oninput="calcSaleSF(); calcLeaseMonthly()"></div>
           <div class="field"><label>Year Built</label><input id="l-year-built"></div>
           <div class="field"><label>Parking Ratio</label><input id="l-parking-ratio"></div>
         </div>
@@ -1055,8 +1055,8 @@
     <div id="v-req-lease">
       <h3>Key Lease Terms</h3>
       <div class="row c3">
-        <div class="field"><label class="req">Start Date</label><input id="v-l-start" type="date"></div>
-        <div class="field"><label class="req">End Date</label><input id="v-l-end" type="date"></div>
+        <div class="field"><label class="req">Start Date</label><input id="v-l-start" type="date" onchange="calcVoucherTermFromDates()"></div>
+        <div class="field"><label class="req">End Date</label><input id="v-l-end" type="date" onchange="calcVoucherTermFromDates()"></div>
         <div class="field"><label>Occupancy Date</label><input id="v-l-occ" type="date"></div>
       </div>
       <div class="row c4">
@@ -3869,8 +3869,13 @@ function _saveCurrentDraftCore(context) {
 function openReviewSnapshotWithSpinner(btn, context) {
   if (btn) { setBtnLoading(btn, true, 'Loading…'); btn.disabled = true; }
   setTimeout(() => {
-    openReviewSnapshot(context);
-    if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
+    try {
+      openReviewSnapshot(context);
+    } catch (err) {
+      console.error('Review snapshot error:', err);
+    } finally {
+      if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
+    }
   }, 80);
 }
 // ── Wrapper: showListingReview with loading spinner ──
@@ -4853,6 +4858,21 @@ function syncVoucherDealAliases() {
   const dealSfAlias = document.getElementById('v-deal-sf');
   if (dealSf && dealSfAlias) {
     dealSfAlias.value = dealSf.value || '';
+  }
+}
+
+function calcVoucherTermFromDates() {
+  const startEl = document.getElementById('v-l-start');
+  const endEl = document.getElementById('v-l-end');
+  const termEl = document.getElementById('v-l-term');
+  if (!startEl || !endEl || !termEl) return;
+  const start = startEl.value ? new Date(startEl.value) : null;
+  const end = endEl.value ? new Date(endEl.value) : null;
+  if (!start || !end || end <= start) return;
+  const months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+  if (months > 0) {
+    termEl.value = String(months);
+    calcVoucherLease();
   }
 }
 
@@ -14680,6 +14700,7 @@ function compReportRenderDatasetSummary() {
 
 function compReportRenderResults(results, pageInfo) {
   compReportsResultsCache = Array.isArray(results) ? results : [];
+  window.compReportsResultsCache = compReportsResultsCache;
   compReportsPageInfo = pageInfo || {
     total: compReportsResultsCache.length,
     offset: compReportsPageOffset,

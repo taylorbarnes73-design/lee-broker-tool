@@ -291,7 +291,7 @@ function Router() {
       </Route>
       <Route path="/portal/admin">
         <AdminPortalRoute>
-          <Redirect to="/portal/submissions" />
+          <Redirect to="/portal/admin/settings" />
         </AdminPortalRoute>
       </Route>
 

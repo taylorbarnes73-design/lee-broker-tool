@@ -2,6 +2,15 @@
 // FEATURES PATCH — implements features 1,3,4,5,6,7,8,9,10,11,12,13,14,16,17,18,25,27
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Helper: run callback immediately if DOM already loaded, otherwise wait
+function onDomReady(fn) {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fn);
+  } else {
+    fn();
+  }
+}
+
 // ── Feature 13: Listing expiration alert ──
 (function initExpiryAlert() {
   function checkListingExpiry() {
@@ -23,7 +32,7 @@
       alertEl.innerHTML = '';
     }
   }
-  document.addEventListener('DOMContentLoaded', function() {
+  onDomReady(function() {
     const el = document.getElementById('l-listing-expiration');
     if (el) {
       el.addEventListener('change', checkListingExpiry);
@@ -95,7 +104,7 @@ function _copyListingToVoucherCore() {
 
 // ── Feature 7: Same-agent auto-copy ALL fields ──
 (function patchSameAgentChange() {
-  document.addEventListener('DOMContentLoaded', function() {
+  onDomReady(function() {
     const sel = document.getElementById('v-same-agent');
     if (!sel) return;
     sel.addEventListener('change', function() {
@@ -140,7 +149,7 @@ window.duplicateRentRow = function(btn) {
 
 // ── Feature 9: Per-row commission rate in addRentRow ──
 (function patchAddRentRow() {
-  document.addEventListener('DOMContentLoaded', function() {
+  onDomReady(function() {
     // Patch addRentRow to include per-row comm rate and duplicate button
     const origAddRentRow = window.addRentRow;
     window.addRentRow = function() {
@@ -164,7 +173,7 @@ window.duplicateRentRow = function(btn) {
 
 // ── Feature 6: Live commission calculator ──
 (function wireCommissionLive() {
-  document.addEventListener('DOMContentLoaded', function() {
+  onDomReady(function() {
     // Wire v-l-comm-rate, v-s-price, v-s-comm-pct to live-update
     ['v-l-comm-rate','v-s-price','v-s-comm-pct','v-deal-sf','v-land-sf','v-l-dealsf'].forEach(function(id) {
       const el = document.getElementById(id);
@@ -180,7 +189,7 @@ window.duplicateRentRow = function(btn) {
 
 // ── Feature 8: Lease vs sale branch toggle ──
 (function patchVoucherBranchToggle() {
-  document.addEventListener('DOMContentLoaded', function() {
+  onDomReady(function() {
     const origOnVoucherTxnChange = window.onVoucherTxnChange;
     window.onVoucherTxnChange = function() {
       if (typeof origOnVoucherTxnChange === 'function') origOnVoucherTxnChange.apply(this, arguments);
@@ -204,7 +213,7 @@ window.duplicateRentRow = function(btn) {
 
 // ── Feature 11: Deal summary card in voucher review ──
 (function patchVoucherReview() {
-  document.addEventListener('DOMContentLoaded', function() {
+  onDomReady(function() {
     const origOpenReviewSnapshot = window.openReviewSnapshot;
     window.openReviewSnapshot = function(context) {
       if (typeof origOpenReviewSnapshot === 'function') origOpenReviewSnapshot.apply(this, arguments);
@@ -252,7 +261,7 @@ window.duplicateRentRow = function(btn) {
 
 // ── Feature 12: Auto-save on field blur ──
 (function wireAutoSaveOnBlur() {
-  document.addEventListener('DOMContentLoaded', function() {
+  onDomReady(function() {
     let blurTimer = null;
     function onBlurAutoSave(e) {
       const target = e.target;
@@ -411,7 +420,7 @@ window.onSignLocationPhotoChange = function(input) {
   }
 
   // Patch compReportRenderResults to also refresh map if in map view
-  document.addEventListener('DOMContentLoaded', function() {
+  onDomReady(function() {
     const origRender = window.compReportRenderResults;
     window.compReportRenderResults = function(results, pageInfo) {
       if (typeof origRender === 'function') origRender.apply(this, arguments);
@@ -551,7 +560,7 @@ window.onSignLocationPhotoChange = function(input) {
     }
   }
   // Mark required fields and wire blur validation
-  document.addEventListener('DOMContentLoaded', function() {
+  onDomReady(function() {
     // Find all required fields (those with .req label)
     document.querySelectorAll('.field').forEach(function(fieldDiv) {
       const label = fieldDiv.querySelector('label.req');
@@ -595,7 +604,7 @@ window.onSignLocationPhotoChange = function(input) {
 
 // ── Feature 1: AI confidence indicators ──
 (function patchApplyAiFieldsConfidence() {
-  document.addEventListener('DOMContentLoaded', function() {
+  onDomReady(function() {
     const origApplyAiFields = window.applyAiFields;
     window.applyAiFields = function(tab, fields, options) {
       // If options.showConfirmModal is set, show the confirmation modal first
@@ -742,7 +751,7 @@ window.aiParseFromPaste = async function() {
 // The server already uses the tab parameter. We enhance the client to pass
 // additional context about the current deal type when parsing.
 (function patchAiParseDescription() {
-  document.addEventListener('DOMContentLoaded', function() {
+  onDomReady(function() {
     const origAiParseDescription = window.aiParseDescription;
     window.aiParseDescription = async function() {
       // Enrich the description with deal type context if available
@@ -776,7 +785,7 @@ window.aiParseFromPaste = async function() {
 // The existing exportLeeCompReportPdf already produces a branded Lee & Associates PDF.
 // This patch ensures the footer text is correct and adds a cover page summary.
 (function patchCompReportPdf() {
-  document.addEventListener('DOMContentLoaded', function() {
+  onDomReady(function() {
     const origExport = window.exportLeeCompReportPdf;
     if (typeof origExport !== 'function') return;
     // The existing function already handles branding. No Metropolis text is present.
