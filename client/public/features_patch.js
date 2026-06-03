@@ -400,7 +400,38 @@ window.onSignLocationPhotoChange = function(input) {
           if (isFinite(lat) && isFinite(lng)) {
             const heading = (result.reportCard && result.reportCard.heading) || result.title || addr;
             const marker = L.marker([lat, lng]).addTo(crMap);
-            marker.bindPopup('<strong>' + dxEscHtml(heading) + '</strong><br>' + dxEscHtml(addr));
+            // Build rich popup with property image and address details
+            var popupHtml = '<div style="min-width:220px;max-width:280px;font-family:Inter,system-ui,sans-serif;">';
+            // Property image: use stored photo or Street View fallback
+            var photoRaw = result.photoUrl || (result.reportCard && result.reportCard.photoUrl) || result.photo || (result.reportCard && result.reportCard.photo) || '';
+            photoRaw = String(photoRaw).trim();
+            var photoSrc = /^(https?:\/\/|data:|\/)/i.test(photoRaw) ? photoRaw : '';
+            if (!photoSrc) {
+              var svLocation = [addr, city].filter(Boolean).join(', ').trim();
+              if (svLocation) photoSrc = '/api/maps/api/streetview?size=280x160&location=' + encodeURIComponent(svLocation) + '&fov=80&pitch=0';
+            }
+            if (photoSrc) {
+              popupHtml += '<img src="' + dxEscHtml(photoSrc) + '" style="width:100%;height:140px;object-fit:cover;border-radius:6px 6px 0 0;display:block;" onerror="this.style.display=\'none\'" alt="Property">';
+            }
+            popupHtml += '<div style="padding:10px;">';
+            popupHtml += '<div style="font-weight:600;font-size:13px;margin-bottom:4px;color:#1a1a2e;">' + dxEscHtml(heading) + '</div>';
+            if (addr && addr !== heading) popupHtml += '<div style="font-size:11.5px;color:#555;margin-bottom:2px;">' + dxEscHtml(addr) + '</div>';
+            if (city) popupHtml += '<div style="font-size:11.5px;color:#555;margin-bottom:6px;">' + dxEscHtml(city) + '</div>';
+            // Key metrics
+            var fields = (result.reportCard && result.reportCard.fields) || {};
+            var metrics = [];
+            if (fields['Space Leased']) metrics.push('<b>SF:</b> ' + dxEscHtml(fields['Space Leased']));
+            if (fields['Bldg. SqFt']) metrics.push('<b>Bldg:</b> ' + dxEscHtml(fields['Bldg. SqFt']));
+            if (fields['Rent/SqFt']) metrics.push('<b>Rent:</b> ' + dxEscHtml(fields['Rent/SqFt']));
+            if (fields['Sale Price']) metrics.push('<b>Price:</b> ' + dxEscHtml(fields['Sale Price']));
+            if (fields['Sale $/SF']) metrics.push('<b>$/SF:</b> ' + dxEscHtml(fields['Sale $/SF']));
+            if (fields['Trans. Date']) metrics.push('<b>Date:</b> ' + dxEscHtml(fields['Trans. Date']));
+            if (fields['Prop. Type']) metrics.push('<b>Type:</b> ' + dxEscHtml(fields['Prop. Type']));
+            if (metrics.length) {
+              popupHtml += '<div style="font-size:11px;color:#333;line-height:1.6;border-top:1px solid #eee;padding-top:6px;margin-top:4px;">' + metrics.join(' &nbsp;·&nbsp; ') + '</div>';
+            }
+            popupHtml += '</div></div>';
+            marker.bindPopup(popupHtml, { maxWidth: 300 });
             crMarkers.push(marker);
             bounds.push([lat, lng]);
             if (bounds.length === 1) crMap.setView([lat, lng], 12);

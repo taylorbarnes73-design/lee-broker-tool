@@ -108,6 +108,14 @@ Parameters:
   AwsS3Region:
     Type: String
     Default: ""
+  GoogleMapsApiKey:
+    Type: String
+    NoEcho: true
+    Default: ""
+  GeminiApiKey:
+    Type: String
+    NoEcho: true
+    Default: ""
 
 Conditions:
   HasCertificate: !Not [!Equals [!Ref CertificateArn, ""]]
@@ -342,6 +350,10 @@ Resources:
               Value: !Ref AwsS3Bucket
             - Name: AWS_S3_REGION
               Value: !Ref AwsS3Region
+            - Name: GOOGLE_MAPS_API_KEY
+              Value: !Ref GoogleMapsApiKey
+            - Name: GEMINI_API_KEY
+              Value: !Ref GeminiApiKey
           Secrets: !If
             - HasDatabaseUrlSecretArn
             - - Name: DATABASE_URL
