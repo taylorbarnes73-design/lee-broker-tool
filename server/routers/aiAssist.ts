@@ -217,7 +217,26 @@ function normalizeEnum(
 ): string | undefined {
   const value = normalizeWhitespace(cleanString(raw)).toLowerCase();
   if (!value) return undefined;
-  return allowedMap[value];
+
+  // Exact match first
+  if (allowedMap[value]) return allowedMap[value];
+
+  // Check if any key is contained within the value (e.g., "industrial/warehouse" contains "industrial")
+  for (const [key, mapped] of Object.entries(allowedMap)) {
+    if (value.includes(key)) return mapped;
+  }
+
+  // Check if the value starts with any key
+  for (const [key, mapped] of Object.entries(allowedMap)) {
+    if (value.startsWith(key)) return mapped;
+  }
+
+  // Check if any mapped value matches (case-insensitive)
+  for (const [, mapped] of Object.entries(allowedMap)) {
+    if (mapped.toLowerCase() === value) return mapped;
+  }
+
+  return undefined;
 }
 
 function parseScaledNumber(raw: unknown) {
@@ -1341,10 +1360,27 @@ async function extractDocumentFieldsAndDetection<TDetection>(params: {
 
 READ THE ENTIRE DOCUMENT CAREFULLY. Extract every field you can identify with confidence.
 
-Available fields to extract: ${fieldNames.join(", ")}
+You MUST use these EXACT JSON key names (camelCase) for the "fields" object:
+${fieldNames.map(f => `  - "${f}"`).join("\n")}
 
 For each field, extract the value EXACTLY as described in the system prompt's FIELD EXTRACTION GUIDE.
-Only include fields you can confidently identify. Omit any field you're unsure about.`;
+Only include fields you can confidently identify. Omit any field you're unsure about.
+
+Example output for a lease brochure:
+{
+  "fields": {
+    "address": "1234 Main St",
+    "city": "Costa Mesa",
+    "state": "CA",
+    "zip": "92626",
+    "propertyType": "Industrial",
+    "transactionType": "Lease",
+    "buildingSf": "15000",
+    "rateSfMo": "1.25",
+    "listingAgentName": "John Smith"
+  },
+  "documentDetection": { ... }
+}`;
 
   const promptText = `${fieldPrompt}
 
@@ -1454,10 +1490,17 @@ Return ONLY valid JSON. No markdown fences, no explanation.`;
   let fields = sanitizeAiFields(params.tab, fieldSource);
   console.error(`[aiAssist DEBUG] sanitized fields (${Object.keys(fields).length}): ${JSON.stringify(fields)}`);
 
-  // If primary extraction returned few fields, try Claude as a second opinion
-  if (Object.keys(fields).length < 3 && isClaudeFallbackAvailable() && raw) {
+  // Smart fallback: check for critical fields, not just count.
+  // A good extraction should have at least address OR city for any real estate document.
+  const hasCriticalFields = Boolean(
+    fields.address || fields.city || fields.propertyAddress
+  );
+  const fieldCount = Object.keys(fields).length;
+  const needsFallback = !hasCriticalFields || fieldCount < 3;
+
+  if (needsFallback && isClaudeFallbackAvailable()) {
     try {
-      console.info(`[aiAssist] Only ${Object.keys(fields).length} fields extracted, trying Claude for better results...`);
+      console.info(`[aiAssist] Extraction quality check failed (fields: ${fieldCount}, hasCritical: ${hasCriticalFields}). Trying Claude for better results...`);
       const claudeRaw = await invokeClaudeWithFile({
         fileBuffer: fetched.fileBuffer,
         mimeType: params.mimeType,
@@ -1470,12 +1513,19 @@ Return ONLY valid JSON. No markdown fences, no explanation.`;
           ? (claudeParsed.fields as Record<string, unknown>)
           : claudeParsed;
       const claudeFields = sanitizeAiFields(params.tab, claudeFieldSource);
-      if (Object.keys(claudeFields).length > Object.keys(fields).length) {
+      const claudeHasCritical = Boolean(
+        claudeFields.address || claudeFields.city || claudeFields.propertyAddress
+      );
+      // Use Claude's result if it has critical fields or more total fields
+      if (claudeHasCritical || Object.keys(claudeFields).length > fieldCount) {
+        console.info(`[aiAssist] Claude returned ${Object.keys(claudeFields).length} fields (hasCritical: ${claudeHasCritical}). Using Claude result.`);
         fields = claudeFields;
       }
     } catch (claudeErr: unknown) {
-      console.warn("[aiAssist] Claude second-opinion failed:", claudeErr instanceof Error ? claudeErr.message : String(claudeErr));
+      console.warn("[aiAssist] Claude fallback failed:", claudeErr instanceof Error ? claudeErr.message : String(claudeErr));
     }
+  } else if (fieldCount > 0) {
+    console.info(`[aiAssist] Primary extraction succeeded: ${fieldCount} fields, critical fields present.`);
   }
 
   const modelDetection = params.parseDetection(parsed.documentDetection);
