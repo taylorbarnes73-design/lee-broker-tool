@@ -33,6 +33,7 @@ function extractColorsFromTable(content) {
   const colors = {
     primary: [],
     secondary: [],
+    accent: [],
     neutral: [],
     semantic: [],
   };
@@ -44,6 +45,9 @@ function extractColorsFromTable(content) {
   const secondaryMatch = content.match(
     /### Secondary Colors[\s\S]*?\|[\s\S]*?(?=###|$)/i
   );
+  const accentMatch = content.match(
+    /### Accent Colors[\s\S]*?\|[\s\S]*?(?=###|$)/i
+  );
   const neutralMatch = content.match(/### Neutral[\s\S]*?\|[\s\S]*?(?=###|$)/i);
   const semanticMatch = content.match(
     /### Semantic[\s\S]*?\|[\s\S]*?(?=###|$)/i
@@ -51,6 +55,7 @@ function extractColorsFromTable(content) {
 
   if (primaryMatch) colors.primary = extractHexColors(primaryMatch[0]);
   if (secondaryMatch) colors.secondary = extractHexColors(secondaryMatch[0]);
+  if (accentMatch) colors.accent = extractHexColors(accentMatch[0]);
   if (neutralMatch) colors.neutral = extractHexColors(neutralMatch[0]);
   if (semanticMatch) colors.semantic = extractHexColors(semanticMatch[0]);
 
@@ -286,6 +291,7 @@ BRAND CONTEXT:
 VISUAL IDENTITY:
 - Primary Colors: ${colors.primary.join(", ") || "Not specified"}
 - Secondary Colors: ${colors.secondary.join(", ") || "Not specified"}
+- Accent Colors: ${colors.accent.join(", ") || "Not specified"}
 - Typography: ${typography.heading || typography.body || "System fonts"}
 
 BRAND VOICE:
