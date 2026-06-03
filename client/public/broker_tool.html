@@ -13825,11 +13825,14 @@ const AI_FIELD_MAP = {
     term: 'l-lease-term',
     leaseType: 'l-lease-type',
     buildingSf: 'l-bldg-sf',
+    suiteSf: 'l-bldg-sf',
     sizeSf: 'l-bldg-sf',
     yearBuilt: 'l-year-built',
     askingPrice: 'l-sale-price',
     crossStreets: 'l-cross',
     buildingType: 'l-ind-construction',
+    listingAgentName: '__listing_agent_name__',
+    listingAgentLicense: '__listing_agent_license__',
     comments: 'l-comments',
   },
   voucher: {
@@ -13952,9 +13955,25 @@ function applyAiFields(tab, fields, options = {}) {
   const sourceToken = options && typeof options.sourceToken === 'string' ? options.sourceToken : '';
   const sourceKey = typeof options.sourceKey === 'string' ? options.sourceKey : '';
   let applied = 0;
+
+  // Special handling for listing agent fields (dynamic rows)
+  if (tab === 'listing' && (fields.listingAgentName || fields.listingAgentLicense)) {
+    try {
+      // Ensure at least one agent row exists
+      if (listingAgentCount === 0) addListingAgent();
+      const nameEl = document.getElementById('la-name-1');
+      if (nameEl && fields.listingAgentName && !nameEl.value) {
+        nameEl.value = fields.listingAgentName;
+        nameEl.classList.add('ai-filled');
+        addAiBadge(nameEl);
+        applied++;
+      }
+    } catch(e) { console.warn('[applyAiFields] agent auto-fill error:', e); }
+  }
+
   Object.entries(fields).forEach(([key, value]) => {
     const elId = map[key];
-    if (!elId) return;
+    if (!elId || elId.startsWith('__')) return; // skip sentinel values
     const el = document.getElementById(elId);
     if (!el) return;
     const oldVal = el.value || '';

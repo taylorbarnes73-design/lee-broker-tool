@@ -196,7 +196,10 @@ const southernCaliforniaCities = new Set([
 ]);
 
 function cleanString(value: unknown) {
-  return typeof value === "string" ? value.trim() : "";
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number") return String(value);
+  if (Array.isArray(value)) return value.map(v => String(v ?? "")).join("\n");
+  return "";
 }
 
 function normalizeWhitespace(value: string) {
