@@ -9,6 +9,7 @@ import { getDb } from "../db";
 import { storageGetBytes, storagePut } from "../storage";
 import { eq } from "drizzle-orm";
 import { getSetting } from "../settings/getSetting";
+import { notifyAdminOfSubmission } from "../services/adminNotification";
 
 const fieldSchema = z.object({
   label: z.string(),
@@ -393,8 +394,19 @@ async function recordSubmissionRequest(params: {
     }),
   });
 
+  const submissionId = (result as { insertId?: number }).insertId ?? null;
+
+  // Fire-and-forget notification to admin
+  notifyAdminOfSubmission({
+    formType: params.formType,
+    brokerName: params.brokerName,
+    propertyAddress: params.propertyAddress,
+    submittedByEmail: params.senderEmail,
+    submissionId,
+  });
+
   return {
-    id: (result as { insertId?: number }).insertId ?? null,
+    id: submissionId,
     status,
   };
 }

@@ -5,6 +5,7 @@ import { execSync } from "child_process";
 import { ENV } from "../_core/env";
 import { getSetting } from "../settings/getSetting";
 import { isStoredFileReference, storageGetBytes } from "../storage";
+import { notifyAdminOfSubmission } from "../services/adminNotification";
 
 // ── Types ──
 
@@ -389,6 +390,16 @@ Return JSON with these fields (omit any that are blank):
           `mcp-cli tool call outlook_send_messages --server outlook-mail --input '${mcpInput.replace(/'/g, "'\\''")}'`,
           { timeout: 30000 }
         );
+
+        // Notify admin of new contract submission
+        notifyAdminOfSubmission({
+          formType: "contract",
+          brokerName: brokerName || null,
+          propertyAddress: addressPart || null,
+          submittedByEmail: senderEmail || null,
+          notes: notes || null,
+        });
+
         return { success: true, error: null };
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);

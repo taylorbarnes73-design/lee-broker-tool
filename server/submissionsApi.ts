@@ -12,6 +12,7 @@ import { listingFormPatchFromParsed, parseListingFormPdfBuffer } from "./service
 import { DealiusClient } from "./services/dealiusClient";
 import { authenticateConfiguredDealius } from "./services/dealiusAuth";
 import { storageGetBytes, storagePut } from "./storage";
+import { notifyAdminOfSubmission } from "./services/adminNotification";
 
 const ACTIVE_QUEUE_STATUSES = ["pending", "in_review"] as const;
 type ActiveQueueStatus = (typeof ACTIVE_QUEUE_STATUSES)[number];
@@ -416,9 +417,20 @@ submissionsApiRouter.post("/", async (req, res) => {
     submittedByEmail: user.email ?? null,
   });
 
+  const submissionId = (result as any).insertId ?? null;
+
+  // Fire-and-forget notification to admin
+  notifyAdminOfSubmission({
+    formType: (parsed.data as any).formType,
+    brokerName: user.name ?? null,
+    propertyAddress: (parsed.data as any).reference ?? null,
+    submittedByEmail: user.email ?? null,
+    submissionId,
+  });
+
   res.status(201).json({
     success: true,
-    data: { id: (result as any).insertId ?? null },
+    data: { id: submissionId },
   });
 });
 
