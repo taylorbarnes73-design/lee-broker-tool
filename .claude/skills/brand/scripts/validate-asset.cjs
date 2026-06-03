@@ -19,7 +19,7 @@ const path = require("path");
 // Validation rules
 const RULES = {
   naming: {
-    pattern: /^[a-z]+_[a-z0-9-]+_[a-z0-9-]+_\d{8}(_[a-z0-9-]+)?\.[a-z]+$/,
+    pattern: /^[a-z]+_[a-z0-9-]+_[a-z0-9-]+_\d{8}(_[a-z0-9-]+)?\.[a-zA-Z]+$/,
     description: "{type}_{campaign}_{description}_{timestamp}_{variant}.{ext}",
     examples: [
       "banner_claude-launch_hero-image_20251209.png",
@@ -374,9 +374,10 @@ function suggestFilename(original, parsed) {
   const type = parsed.type || "asset";
   const campaign = parsed.campaign || "general";
   const description = parsed.description || "untitled";
-  const ext = parsed.extension || "png";
+  const ext = (parsed.extension || "png").toLowerCase();
+  const variantSuffix = parsed.variant ? `_${parsed.variant}` : "";
 
-  return `${type}_${campaign}_${description}_${today}.${ext}`;
+  return `${type}_${campaign}_${description}_${today}${variantSuffix}.${ext}`;
 }
 
 function updateManifestPath(oldPath, newPath) {

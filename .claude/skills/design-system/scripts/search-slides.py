@@ -14,6 +14,7 @@ DOMAIN_FILES = {
     "strategies": "slide-strategies.csv",
     "layout": "slide-layouts.csv",
     "layouts": "slide-layouts.csv",
+    "logic": "slide-layout-logic.csv",
     "typography": "slide-typography.csv",
     "color": "slide-color-logic.csv",
     "background": "slide-backgrounds.csv",
