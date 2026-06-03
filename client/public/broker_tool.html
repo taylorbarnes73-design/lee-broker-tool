@@ -1669,57 +1669,71 @@
         </div>
       </div>
       <form id="cr-search-form" onsubmit="event.preventDefault(); compReportRunSearch();">
-        <div class="cr-filters-grid">
-          <div class="field">
-            <label>Transaction</label>
-            <select id="cr-comp-type">
-              <option value="lease">Lease</option>
-              <option value="sale">Sale</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Search</label>
-            <input id="cr-query" placeholder="Address, project, tenant…">
-          </div>
-          <div class="field">
-            <label>City</label>
-            <div id="cr-city" class="cr-dd"></div>
-          </div>
-          <div class="field">
-            <label>Market</label>
-            <div id="cr-market" class="cr-dd"></div>
-          </div>
-          <div class="field">
-            <label>Submarket</label>
-            <div id="cr-submarket" class="cr-dd"></div>
-          </div>
-          <div class="field">
-            <label>Property Type</label>
-            <div id="cr-property-type" class="cr-dd"></div>
-          </div>
-          <div class="field cr-span-2">
-            <label>SF Range</label>
-            <div class="cr-range-row">
-              <input id="cr-sf-min" type="text" inputmode="numeric" placeholder="Min SF">
-              <span class="cr-range-sep">–</span>
-              <input id="cr-sf-max" type="text" inputmode="numeric" placeholder="Max SF">
+        <!-- CoStar-style filter bar -->
+        <div class="cr-filter-bar">
+          <!-- Row 1: Transaction toggle + Location search + Property Type -->
+          <div class="cr-filter-row-primary">
+            <div class="cr-filter-group cr-filter-txn">
+              <div class="cr-toggle-group" id="cr-comp-type-toggle">
+                <button type="button" class="cr-toggle-btn active" data-value="lease">Lease</button>
+                <button type="button" class="cr-toggle-btn" data-value="sale">Sale</button>
+              </div>
+              <!-- Hidden select for backward compat -->
+              <select id="cr-comp-type" style="display:none">
+                <option value="lease">Lease</option>
+                <option value="sale">Sale</option>
+              </select>
+            </div>
+
+            <div class="cr-filter-group cr-filter-location">
+              <div class="cr-chip-input" id="cr-location-chip-input">
+                <div class="cr-chips-wrap" id="cr-location-chips"></div>
+                <input type="text" class="cr-chip-search" id="cr-location-search" placeholder="Search markets, cities, submarkets…" autocomplete="off">
+                <div class="cr-chip-dropdown" id="cr-location-dropdown"></div>
+              </div>
+            </div>
+
+            <div class="cr-filter-group cr-filter-proptype">
+              <div class="cr-chip-input cr-chip-input-sm" id="cr-proptype-chip-input">
+                <div class="cr-chips-wrap" id="cr-proptype-chips"></div>
+                <input type="text" class="cr-chip-search" id="cr-proptype-search" placeholder="Property type…" autocomplete="off">
+                <div class="cr-chip-dropdown" id="cr-proptype-dropdown"></div>
+              </div>
+            </div>
+
+            <div class="cr-filter-group cr-filter-search">
+              <input id="cr-query" class="cr-query-input" placeholder="Address, project, tenant…">
             </div>
           </div>
-          <div class="field cr-span-2 cr-date-range-field">
-            <label>Date Range</label>
-            <div class="cr-range-row cr-date-range-row">
-              <input id="cr-date-from" type="text" inputmode="numeric" placeholder="From MM/DD/YYYY">
+
+          <!-- Row 2: More filters (SF, Date) + Actions -->
+          <div class="cr-filter-row-secondary">
+            <div class="cr-filter-group cr-filter-sf">
+              <label class="cr-filter-label">SF</label>
+              <input id="cr-sf-min" type="text" inputmode="numeric" placeholder="Min" class="cr-range-input">
               <span class="cr-range-sep">–</span>
-              <input id="cr-date-to" type="text" inputmode="numeric" placeholder="To MM/DD/YYYY">
+              <input id="cr-sf-max" type="text" inputmode="numeric" placeholder="Max" class="cr-range-input">
+            </div>
+            <div class="cr-filter-group cr-filter-date">
+              <label class="cr-filter-label">Date</label>
+              <input id="cr-date-from" type="text" inputmode="numeric" placeholder="From MM/DD/YYYY" class="cr-range-input cr-date-input">
+              <span class="cr-range-sep">–</span>
+              <input id="cr-date-to" type="text" inputmode="numeric" placeholder="To MM/DD/YYYY" class="cr-range-input cr-date-input">
+            </div>
+            <div class="cr-filter-actions">
+              <div class="cr-filters-note" id="cr-search-note"></div>
+              <button class="btn btn-gray btn-sm" type="button" onclick="compReportResetFilters()">Clear</button>
+              <button class="btn btn-red btn-sm" type="submit" id="cr-search-btn"><span class="btn-spinner"></span><span class="btn-label">Search</span></button>
             </div>
           </div>
         </div>
-        <div class="cr-filters-actions">
-          <div class="cr-filters-note" id="cr-search-note"></div>
-          <div class="cr-filters-actions-right">
-            <button class="btn btn-gray" type="button" onclick="compReportResetFilters()">Clear</button>
-            <button class="btn btn-red" type="submit" id="cr-search-btn"><span class="btn-spinner"></span><span class="btn-label">Search</span></button>
-          </div>
+
+        <!-- Hidden legacy dropdowns for backward compat with crVals() -->
+        <div style="display:none">
+          <div id="cr-city" class="cr-dd"></div>
+          <div id="cr-market" class="cr-dd"></div>
+          <div id="cr-submarket" class="cr-dd"></div>
+          <div id="cr-property-type" class="cr-dd"></div>
         </div>
       </form>
     </div>
@@ -17011,5 +17025,6 @@ function deleteDraft(key) {
 })();
 </script>
 <script src="/features_patch.js"></script>
+<script src="/cr-filter-chips.js"></script>
 </body>
 </html>
