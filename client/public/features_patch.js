@@ -222,7 +222,7 @@ window.duplicateRentRow = function(btn) {
       setTimeout(function() {
         const modal = document.getElementById('review-snapshot-modal');
         if (!modal) return;
-        const body = modal.querySelector('.review-snapshot-body');
+        const body = modal.querySelector('.review-content') || modal.querySelector('#review-snapshot-content');
         if (!body) return;
         if (body.querySelector('.voucher-summary-card')) return; // already added
         const gv = function(id) { return (document.getElementById(id) || {}).value || '—'; };
