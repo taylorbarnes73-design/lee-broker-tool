@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,600;0,6..12,700;0,6..12,800&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -44,8 +43,8 @@
 }
 
 :root {
-  --font-sans: "Nunito Sans", "Avenir Next", Inter, "Segoe UI", system-ui, sans-serif;
-  --font-serif: "Source Serif 4", "Minion Pro", Georgia, serif;
+  --font-sans: "Manrope", "Avenir Next", Inter, "Segoe UI", system-ui, sans-serif;
+  --font-serif: "Cormorant Garamond", "Minion Pro", Georgia, serif;
   --lee-charcoal: #303C42;
   --lee-charcoal-deep: #1F262B;
   --lee-charcoal-soft: #4A5A63;
@@ -263,7 +262,7 @@
 @import './design/tokens.css';
 
 .admin-portal {
-  --admin-accent: var(--lee-crimson, #01696f);
+  --admin-accent: var(--lee-crimson, #98002E);
   display: grid;
   grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
   grid-template-rows: 1fr; /* single row that fills full height */
@@ -361,7 +360,7 @@
     padding: 18px 18px;
   }
   .admin-portal-hero h1 {
-    font-size: clamp(22px, 6vw, 28px);
+    font-size: clamp(24px, 6vw, 34px);
   }
 }
 
@@ -660,9 +659,11 @@
 
 .admin-portal-hero h1 {
   margin: 10px 0 0;
-  font-size: clamp(26px, 3vw, 36px);
-  line-height: 1.1;
-  letter-spacing: -0.045em;
+  font-family: var(--font-serif);
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
 }
 
 .admin-portal-hero p {
@@ -1588,7 +1589,7 @@
 .help-panel-title {
   flex: 1;
   margin: 0;
-  font-family: 'Nunito Sans', 'Avenir Next', Inter, sans-serif;
+  font-family: var(--font-sans);
   font-size: 18px;
   font-weight: 700;
   color: #303C42;
@@ -1618,7 +1619,7 @@
   flex: 1;
   overflow-y: auto;
   padding: 18px 20px 28px;
-  font-family: 'Nunito Sans', 'Avenir Next', Inter, sans-serif;
+  font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.55;
   color: #303C42;
