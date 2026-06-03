@@ -22,6 +22,7 @@ const GENERATE_TOKENS_SCRIPT =
 const HEX_COLOR_PATTERN = /^#[A-Fa-f0-9]{6}$/;
 const DEFAULT_SEMANTIC_COLORS = {
   success: "#22C55E",
+  warning: "#F59E0B",
   error: "#EF4444",
   info: "#3B82F6",
 };
@@ -175,6 +176,8 @@ function extractColorsFromMarkdown(content) {
     parseColorRows(semanticSection[0], (name, hex) => {
       const normalizedName = name.toLowerCase();
       if (normalizedName.includes("success")) colors.semantic.success = hex;
+      else if (normalizedName.includes("warning"))
+        colors.semantic.warning = hex;
       else if (normalizedName.includes("error")) colors.semantic.error = hex;
       else if (normalizedName.includes("info")) colors.semantic.info = hex;
     });
@@ -262,7 +265,7 @@ function getSyncedPrimitiveColorNames(tokens) {
     "accent-hover",
     "accent-light",
   ];
-  const names = new Set(["coral", "purple", "mint"]);
+  const names = new Set();
 
   for (const key of syncedSemanticKeys) {
     const name = getPrimitiveColorNameFromReference(
@@ -373,6 +376,11 @@ function updateDesignTokens(tokens, colors) {
     sem.success = { $value: statusColors.success, $type: "color" };
     sem["success-light"] = {
       $value: adjustBrightness(statusColors.success, 0.35),
+      $type: "color",
+    };
+    sem.warning = { $value: statusColors.warning, $type: "color" };
+    sem["warning-light"] = {
+      $value: adjustBrightness(statusColors.warning, 0.35),
       $type: "color",
     };
     sem.error = { $value: statusColors.error, $type: "color" };
