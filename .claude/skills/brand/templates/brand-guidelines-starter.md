@@ -9,7 +9,6 @@
 |---------|-------|
 | Primary Color | #2563EB |
 | Secondary Color | #8B5CF6 |
-| Accent Color | #10B981 |
 | Primary Font | Inter |
 | Voice | Professional, Helpful, Clear |
 
@@ -29,11 +28,6 @@
 | Name | Hex | RGB | Usage |
 |------|-----|-----|-------|
 | Secondary Purple | #8B5CF6 | rgb(139,92,246) | Accents, highlights |
-
-### Accent Colors
-
-| Name | Hex | RGB | Usage |
-|------|-----|-----|-------|
 | Accent Green | #10B981 | rgb(16,185,129) | Success, positive states |
 
 ### Neutral Palette

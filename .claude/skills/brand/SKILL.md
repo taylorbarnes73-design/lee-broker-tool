@@ -59,8 +59,6 @@ node scripts/inject-brand-context.cjs --json | head -20
 | Subcommand | Description | Reference |
 |------------|-------------|-----------|
 | `update` | Update brand identity and sync to all design systems | `references/update.md` |
-| `review` | Audit brand consistency across copy, visuals, and assets | `references/review.md` |
-| `create` | Create a new brand guidelines file from the starter template | `references/create.md` |
 
 ## References
 
