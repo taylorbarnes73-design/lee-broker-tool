@@ -808,17 +808,13 @@
   </div>
   <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete all sections for fastest processing.</div>
 
-  <div class="voucher-progress is-hidden" id="progress-bar-wrap">
-    <div class="voucher-progress-bar"><div class="voucher-progress-fill" id="progress-bar-fill" style="width:0%"></div></div>
-    <div class="voucher-progress-label" id="progress-label">Step 1 of 7</div>
-    <div class="voucher-progress-pct" id="progress-pct">0%</div>
-  </div>
+
 
   <div class="deal-shell" id="v-deal-shell">
   <div class="deal-main" id="voucher-main">
 
   <!-- Upload Deal Documents -->
-  <div class="card ai-shortcut-card" id="vstep-upload" data-vstep="0" data-step-label="Upload Deal Documents">
+  <div class="card ai-shortcut-card" id="vstep-upload" >
     <h2>Upload Deal Documents <span class="inline-badge">AI Auto-Fill</span></h2>
     <div class="brochure-zone" id="v-brochure-zone" tabindex="0" role="button" aria-label="Upload deal documents" onclick="document.getElementById('v-brochure-file').click()" onkeydown="onVoucherDocZoneKeydown(event)">
       <input type="file" id="v-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" multiple aria-label="Upload deal documents" onchange="onVoucherDealDocumentsSelected(this)">
@@ -830,23 +826,14 @@
       </div>
       <div class="brochure-status" id="v-brochure-status" onclick="event.stopPropagation()"></div>
     </div>
-    <div class="voucher-doc-status-list top-gap-md" style="margin-top:8px;">
-      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;margin-bottom:4px;">
-        <input type="checkbox" id="v-doc-check-disclosure" onchange="onVoucherDocCheckChange()">
-        Agency Disclosure included
-      </label>
-      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
-        <input type="checkbox" id="v-doc-check-agreement" onchange="onVoucherDocCheckChange()">
-        Listing Agreement included
-      </label>
-    </div>
+
     <div id="v-doc-analysis-live" class="assistive-live" aria-live="polite"></div>
   </div>
 
-  <div class="stepper" data-stepper-for="voucher-main"></div>
+
 
   <!-- ═══ SECTION 1: DEAL BASICS (matches Excel rows 1-9) ═══ -->
-  <div class="card required-section voucher-section" id="vstep-1" data-vstep="1" data-step-label="Deal Basics" data-card-eyebrow="Deal Basics">
+  <div class="card required-section voucher-section" id="vstep-1" >
     <div class="voucher-section-header">Deal Basics</div>
     <div class="tip is-hidden top-gap-sm" id="voucher-confidential-warning"></div>
     <div class="row c4">
@@ -903,7 +890,7 @@
   </div>
 
   <!-- ═══ SECTION 2: LESSOR/SELLER & LESSEE/BUYER (matches Excel rows 11-18) ═══ -->
-  <div class="card voucher-section" id="vstep-3" data-vstep="3" data-step-label="Client & Property Info" data-card-eyebrow="Parties">
+  <div class="card voucher-section" id="vstep-3" >
     <div class="voucher-section-header">Lessor/Seller &amp; Lessee/Buyer</div>
     <div class="row c2 voucher-party-grid">
       <div>
@@ -972,7 +959,7 @@
   </div>
 
   <!-- ═══ SECTION 4: LEASE TRANSACTION DETAILS (matches Excel rows 34-48) ═══ -->
-  <div class="card voucher-section" id="vstep-4" data-vstep="4" data-step-label="Financial Details" data-card-eyebrow="Financials" data-card-control=".branch-toggle-wrap">
+  <div class="card voucher-section" id="vstep-4" >
     <div class="voucher-section-header">Transaction Details &amp; Commission</div>
     <div class="branch-toggle-wrap">
       <label class="branch-toggle-label">Deal Branch</label>
@@ -1123,7 +1110,7 @@
   </div>
 
   <!-- ═══ SECTION 5: BROKER REPRESENTATION (matches Excel rows 78-92) ═══ -->
-  <div class="card voucher-section" id="vstep-2" data-vstep="2" data-step-label="Broker Information" data-card-eyebrow="Brokers">
+  <div class="card voucher-section" id="vstep-2" >
     <div class="voucher-section-header">Broker Representation</div>
     <div class="row c2 micro-copy-bottom-sm">
       <div class="field"><label>Same Listing &amp; Procuring Agent?</label>
@@ -1212,7 +1199,7 @@
   </div>
 
   <!-- ═══ SECTION 7: COMMISSION DISTRIBUTION (matches Excel rows 116-131) ═══ -->
-  <div class="card voucher-section" id="vstep-8" data-vstep="8" data-step-label="Review" data-card-eyebrow="Distribution">
+  <div class="card voucher-section" id="vstep-8" >
     <div class="voucher-section-header">Commission Distribution</div>
     <div id="voucher-attachment-required-msg" class="tip text-error is-hidden" role="alert"></div>
     <div class="row c3 field-stack-gap-sm voucher-summary-row">
@@ -3094,17 +3081,8 @@ window.addEventListener('hashchange', function () {
 // Ensure step flows are initialized after the first view of each tab
 function bootstrapStepFlowFor(name) {
   if (name === 'voucher') {
-    if (!window.__stepFlows['voucher-main']) {
-      initStepFlow({
-        mainId: 'voucher-main',
-        stepAttr: 'data-vstep',
-        previewFor: voucherStepPreview,
-        canProceed: canProceedVoucherStep,
-        blockingMessage: getVoucherStepBlockingMessage,
-        onStep: () => { try { syncDealGlance(); } catch(e) {} }
-      });
-    }
-    return window.__stepFlows['voucher-main'] || null;
+    // Voucher uses continuous layout (no stepper wizard)
+    return null;
   }
   if (name === 'listing') {
     if (!window.__stepFlows['listing-main']) {
