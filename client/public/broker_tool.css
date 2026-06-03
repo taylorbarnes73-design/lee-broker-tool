@@ -6495,7 +6495,6 @@ a:hover {
 .deal-main {
   min-width: 0;
   padding-right: 0;
-  overflow: hidden;
 }
 
 .stepper {
@@ -7499,10 +7498,10 @@ body.broker-active .sub-tab-bar {
 #tab-voucher .voucher-party-grid .row.c3 {
   grid-template-columns: 1fr 1fr 1fr;
 }
-@media (max-width: 1200px) {
-  #tab-voucher .voucher-party-grid {
-    grid-template-columns: 1fr;
-  }
+/* Stack party/agent boxes when sidebar is present (deal-shell layout) */
+.deal-shell .voucher-party-grid,
+.deal-shell .voucher-agent-grid {
+  grid-template-columns: 1fr !important;
 }
 
 #tab-voucher .voucher-agent-grid > div,

@@ -3851,8 +3851,6 @@ function reviewSnapshotRowsFor(context) {
           ? docFiles.map(file => file.filename || 'Document').join(', ')
           : `${(docFiles[0]?.filename || 'Document')}, ${(docFiles[1]?.filename || 'Document')}, ${(docFiles[2]?.filename || 'Document')}, and ${docFiles.length - 3} more`)
       : '—';
-    const disclosureStatus = getVoucherDocDisplayState('agencyDisclosure').label;
-    const listingStatus = getVoucherDocDisplayState('listingAgreement').label;
     return [
       ['Representation Type', document.getElementById('v-rep-type')?.value || '—'],
       ['Transaction Type', document.getElementById('v-txn-type')?.value || '—'],
@@ -3860,8 +3858,6 @@ function reviewSnapshotRowsFor(context) {
       ['City', document.getElementById('v-city')?.value || '—'],
       ['Deal SF', document.getElementById('v-l-dealsf')?.value || '—'],
       ['Uploaded Deal Documents', docNames],
-      ['Agency Disclosure', disclosureStatus],
-      ['Listing Agreement', listingStatus],
     ];
   }
   return [
@@ -12295,12 +12291,7 @@ function renderVoucherDealDocumentsStatusMessage(messageHtml) {
     if (voucherPendingRemovalIndex === index) {
       html += `<div class="voucher-remove-confirm">Remove ${escHtml(file.filename || 'document')}? Autofilled values stay in place, but their AI markers will be removed. <button type="button" class="voucher-remove-confirm-btn" onclick="confirmVoucherDealDocumentRemoval(${index})">Remove</button> <button type="button" class="voucher-remove-confirm-btn" onclick="cancelVoucherDealDocumentRemoval()">Cancel</button></div>`;
     }
-    if (disclosureSource) {
-      html += `<div class="voucher-file-doc-status">• Agency Disclosure <span class="${getVoucherDocDisplayState('agencyDisclosure').colorClass}">${escHtml(getVoucherDocDisplayState('agencyDisclosure').label)}</span></div>`;
-    }
-    if (listingSource) {
-      html += `<div class="voucher-file-doc-status">• Listing Agreement <span class="${getVoucherDocDisplayState('listingAgreement').colorClass}">${escHtml(getVoucherDocDisplayState('listingAgreement').label)}</span></div>`;
-    }
+    // Agency Disclosure and Listing Agreement status removed per request
   });
   html += '</div>';
   status.innerHTML = html;
