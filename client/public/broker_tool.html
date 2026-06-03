@@ -167,21 +167,15 @@
           </div>
           <div class="brochure-status" id="l-deal-docs-status" onclick="event.stopPropagation()"></div>
         </div>
-        <div class="required-doc-status-list" id="l-required-doc-status-list">
-          <div class="required-doc-status-row">
-            <span>Agency Disclosure</span>
-            <span class="required-doc-status-row-actions">
-              <button type="button" class="voucher-doc-status-btn" id="l-doc-status-disclosure" onclick="onListingRequiredStatusClick('agencyDisclosure')">Missing — Upload</button>
-              <button type="button" class="doc-manual-link is-hidden" id="l-doc-manual-disclosure" onclick="markListingDocumentManual('agencyDisclosure')">Mark as included</button>
-            </span>
-          </div>
-          <div class="required-doc-status-row">
-            <span>Listing Agreement</span>
-            <span class="required-doc-status-row-actions">
-              <button type="button" class="voucher-doc-status-btn" id="l-doc-status-agreement" onclick="onListingRequiredStatusClick('listingAgreement')">Missing — Upload</button>
-              <button type="button" class="doc-manual-link is-hidden" id="l-doc-manual-agreement" onclick="markListingDocumentManual('listingAgreement')">Mark as included</button>
-            </span>
-          </div>
+        <div class="required-doc-status-list" id="l-required-doc-status-list" style="margin-top:8px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;margin-bottom:4px;">
+            <input type="checkbox" id="l-doc-check-disclosure" onchange="onListingDocCheckChange()">
+            Agency Disclosure included
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="l-doc-check-agreement" onchange="onListingDocCheckChange()">
+            Listing Agreement included
+          </label>
         </div>
         <div class="sr-only" id="l-doc-analysis-live" aria-live="polite"></div>
       </div>
@@ -844,21 +838,15 @@
       </div>
       <div class="brochure-status" id="v-brochure-status" onclick="event.stopPropagation()"></div>
     </div>
-    <div class="voucher-doc-status-list top-gap-md">
-      <div class="voucher-doc-status-row">
-        <span>Agency Disclosure</span>
-        <div class="voucher-doc-status-actions">
-          <button type="button" class="voucher-doc-status-btn" id="v-doc-status-disclosure" onclick="onVoucherDocStatusPrimaryAction('agencyDisclosure')">Not required</button>
-          <button type="button" class="voucher-doc-status-link is-hidden" id="v-doc-override-disclosure" onclick="onVoucherManualOverrideClick('agencyDisclosure')">Mark as executed</button>
-        </div>
-      </div>
-      <div class="voucher-doc-status-row">
-        <span>Listing Agreement</span>
-        <div class="voucher-doc-status-actions">
-          <button type="button" class="voucher-doc-status-btn" id="v-doc-status-agreement" onclick="onVoucherDocStatusPrimaryAction('listingAgreement')">Not required</button>
-          <button type="button" class="voucher-doc-status-link is-hidden" id="v-doc-override-agreement" onclick="onVoucherManualOverrideClick('listingAgreement')">Mark as executed</button>
-        </div>
-      </div>
+    <div class="voucher-doc-status-list top-gap-md" style="margin-top:8px;">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;margin-bottom:4px;">
+        <input type="checkbox" id="v-doc-check-disclosure" onchange="onVoucherDocCheckChange()">
+        Agency Disclosure included
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" id="v-doc-check-agreement" onchange="onVoucherDocCheckChange()">
+        Listing Agreement included
+      </label>
     </div>
     <div id="v-doc-analysis-live" class="assistive-live" aria-live="polite"></div>
   </div>
@@ -3302,9 +3290,7 @@ function canProceedVoucherStep(index, card) {
   const n = String(card.getAttribute('data-vstep') || '');
   if (n !== '0') return true;
   if (voucherAnalysisStatus.state === 'analyzing') return false;
-  if (voucherAnalysisStatus.state === 'manual') return true;
-  if (!voucherTransactionRequiresComplianceDocs()) return true;
-  return voucherDocExecuted('agencyDisclosure') && voucherDocExecuted('listingAgreement');
+  return true; // checkboxes are informational, don't block
 }
 
 function getVoucherStepBlockingMessage(index, card) {
@@ -3312,8 +3298,7 @@ function getVoucherStepBlockingMessage(index, card) {
   const n = String(card.getAttribute('data-vstep') || '');
   if (n !== '0') return 'Complete required items before continuing.';
   if (voucherAnalysisStatus.state === 'analyzing') return 'Wait for document analysis to finish before continuing.';
-  if (!voucherTransactionRequiresComplianceDocs()) return '';
-  return 'Both Agency Disclosure and Listing Agreement must be executed before continuing.';
+  return '';
 }
 
 function isFieldControlMissing(control) {
@@ -3360,7 +3345,7 @@ function canProceedListingStep(index, card) {
   const n = String(card.getAttribute('data-lstep') || '');
   if (n === '0') {
     if (listingAnalysisStatus.state === 'analyzing') return false;
-    return listingDocumentIsExecuted('agencyDisclosure') && listingDocumentIsExecuted('listingAgreement');
+    return true; // checkboxes are informational, don't block
   }
   if (n === '1') return getMissingRequiredFieldLabels(card).length === 0;
   return true;
@@ -3371,7 +3356,7 @@ function getListingStepBlockingMessage(index, card) {
   const n = String(card.getAttribute('data-lstep') || '');
   if (n === '0') {
     if (listingAnalysisStatus.state === 'analyzing') return 'Wait for document analysis to finish before continuing.';
-    return 'Agency Disclosure and Listing Agreement must be executed before continuing.';
+    return '';
   }
   if (n === '1') {
     const missing = getMissingRequiredFieldLabels(card);
@@ -11898,45 +11883,25 @@ function renderListingDealDocumentsStatusMessage() {
 }
 
 function updateListingRequiredDocStatus() {
-  const disclosureBtn = document.getElementById('l-doc-status-disclosure');
-  const agreementBtn = document.getElementById('l-doc-status-agreement');
-  const disclosureManual = document.getElementById('l-doc-manual-disclosure');
-  const agreementManual = document.getElementById('l-doc-manual-agreement');
-  const applyState = (btn, manualLink, kind) => {
-    if (!btn) return;
-    const state = listingDocumentStatus(kind);
-    btn.classList.remove('status-found', 'status-missing', 'status-not-required', 'status-pending', 'status-manual');
-    btn.textContent = getListingDocumentStatusLabel(kind);
-    btn.disabled = false;
-    btn.dataset.kind = kind;
-    btn.dataset.missingSignatures = state.missingSignatures.join(', ');
-    if (!state.found) {
-      btn.classList.add('status-missing');
-      if (manualLink) {
-        manualLink.textContent = 'Mark as included';
-        manualLink.classList.remove('is-hidden');
-      }
-      return;
-    }
-    if (state.executed && state.manualOverride) {
-      btn.classList.add('status-manual');
-      if (manualLink) manualLink.classList.add('is-hidden');
-      return;
-    }
-    if (state.executed) {
-      btn.classList.add('status-found');
-      btn.disabled = true;
-      if (manualLink) manualLink.classList.add('is-hidden');
-      return;
-    }
-    btn.classList.add('status-pending');
-    if (manualLink) {
-      manualLink.textContent = 'Mark as executed';
-      manualLink.classList.remove('is-hidden');
-    }
-  };
-  applyState(disclosureBtn, disclosureManual, 'agencyDisclosure');
-  applyState(agreementBtn, agreementManual, 'listingAgreement');
+  // Auto-check boxes if AI detected the documents as executed
+  const disclosureCheck = document.getElementById('l-doc-check-disclosure');
+  const agreementCheck = document.getElementById('l-doc-check-agreement');
+  if (disclosureCheck && listingDocumentIsExecuted('agencyDisclosure')) disclosureCheck.checked = true;
+  if (agreementCheck && listingDocumentIsExecuted('listingAgreement')) agreementCheck.checked = true;
+  const flow = window.__stepFlows && window.__stepFlows['listing-main'];
+  if (flow && typeof flow.renderNav === 'function') flow.renderNav();
+}
+
+function onListingDocCheckChange() {
+  // Update internal state when user manually checks/unchecks
+  const disclosureCheck = document.getElementById('l-doc-check-disclosure');
+  const agreementCheck = document.getElementById('l-doc-check-agreement');
+  if (disclosureCheck && disclosureCheck.checked) {
+    setListingDocumentState('agencyDisclosure', { found: true, executed: true, missingSignatures: [], manualOverride: true, manualOverrideAt: new Date().toISOString(), manualOverrideBy: getSignedInBrokerIdentity()?.name || '', manualOverrideByEmail: getSignedInBrokerIdentity()?.email || '' });
+  }
+  if (agreementCheck && agreementCheck.checked) {
+    setListingDocumentState('listingAgreement', { found: true, executed: true, missingSignatures: [], manualOverride: true, manualOverrideAt: new Date().toISOString(), manualOverrideBy: getSignedInBrokerIdentity()?.name || '', manualOverrideByEmail: getSignedInBrokerIdentity()?.email || '' });
+  }
   const flow = window.__stepFlows && window.__stepFlows['listing-main'];
   if (flow && typeof flow.renderNav === 'function') flow.renderNav();
 }
@@ -12340,26 +12305,25 @@ function renderVoucherDealDocumentsStatusMessage(messageHtml) {
 }
 
 function updateVoucherRequiredDocStatus() {
-  const disclosureBtn = document.getElementById('v-doc-status-disclosure');
-  const agreementBtn = document.getElementById('v-doc-status-agreement');
-  const disclosureOverride = document.getElementById('v-doc-override-disclosure');
-  const agreementOverride = document.getElementById('v-doc-override-agreement');
-  if (!disclosureBtn || !agreementBtn) return;
+  // Auto-check boxes if AI detected the documents as executed
+  const disclosureCheck = document.getElementById('v-doc-check-disclosure');
+  const agreementCheck = document.getElementById('v-doc-check-agreement');
+  if (disclosureCheck && voucherDocExecuted('agencyDisclosure')) disclosureCheck.checked = true;
+  if (agreementCheck && voucherDocExecuted('listingAgreement')) agreementCheck.checked = true;
+  const flow = window.__stepFlows && window.__stepFlows['voucher-main'];
+  if (flow && typeof flow.renderNav === 'function') flow.renderNav();
+}
 
-  const applyState = (btn, overrideBtn, kind) => {
-    const state = getVoucherDocDisplayState(kind);
-    btn.classList.remove('status-executed', 'status-not-executed', 'status-missing', 'status-not-required', 'status-manual');
-    btn.classList.add(state.colorClass);
-    btn.textContent = state.label;
-    btn.disabled = !state.clickable;
-    if (overrideBtn) {
-      overrideBtn.classList.toggle('is-hidden', !state.showOverride);
-      overrideBtn.textContent = state.key === 'missing' ? 'Mark as included' : 'Mark as executed';
-    }
-  };
-
-  applyState(disclosureBtn, disclosureOverride, 'agencyDisclosure');
-  applyState(agreementBtn, agreementOverride, 'listingAgreement');
+function onVoucherDocCheckChange() {
+  // Update internal state when user manually checks/unchecks
+  const disclosureCheck = document.getElementById('v-doc-check-disclosure');
+  const agreementCheck = document.getElementById('v-doc-check-agreement');
+  if (disclosureCheck && disclosureCheck.checked) {
+    voucherDocumentManualOverride['agencyDisclosure'] = true;
+  }
+  if (agreementCheck && agreementCheck.checked) {
+    voucherDocumentManualOverride['listingAgreement'] = true;
+  }
   const flow = window.__stepFlows && window.__stepFlows['voucher-main'];
   if (flow && typeof flow.renderNav === 'function') flow.renderNav();
 }
@@ -15334,10 +15298,7 @@ function validateListingDocumentRequirements(showFeedback = false) {
     if (showFeedback) showToast('Upload at least one deal document before review.', 'error');
     return { ok: false, message: 'Upload at least one deal document before review.' };
   }
-  if (!hasListingComplianceAttachments()) {
-    if (showFeedback) showToast('Agency Disclosure and Listing Agreement must be executed before review.', 'error');
-    return { ok: false, message: 'Agency Disclosure and Listing Agreement must be executed before review.' };
-  }
+  // Compliance doc checkboxes are informational — don't block submission
   if (!hasListingCoreRequiredFields()) {
     if (showFeedback) showToast('Complete Property Type, Address, Date Entered, Transaction Type, and Listing Expiration.', 'error');
     return { ok: false, message: 'Complete required listing fields before review.' };
@@ -15360,10 +15321,7 @@ function validateVoucherDocumentRequirements(showFeedback = false) {
     if (showFeedback) showToast('Upload at least one deal document before review.', 'error');
     return { ok: false, message: 'Upload at least one deal document before review.' };
   }
-  if (voucherTransactionRequiresComplianceDocs() && !hasVoucherComplianceAttachments()) {
-    if (showFeedback) showToast('Both Agency Disclosure and Listing Agreement must be executed before review.', 'error');
-    return { ok: false, message: 'Both Agency Disclosure and Listing Agreement must be executed before review.' };
-  }
+  // Compliance doc checkboxes are informational — don't block submission
   return { ok: true, message: '' };
 }
 
