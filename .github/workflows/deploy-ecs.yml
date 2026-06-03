@@ -56,6 +56,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           set -euo pipefail
 
@@ -68,7 +69,7 @@ jobs:
           aws ecs describe-task-definition --task-definition "${TD_ARN}" --query 'taskDefinition' > td.json
 
           # Remove fields that can't be passed to register-task-definition
-          # Update image and inject Google Maps + Gemini API keys
+          # Update image and inject Google Maps, Gemini, and Anthropic API keys
           jq 'del(
               .taskDefinitionArn,
               .revision,
@@ -80,9 +81,10 @@ jobs:
             )
             | (.containerDefinitions[] | select(.name=="'"${CONTAINER_NAME}"'") | .image) = "'"${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"'"
             | (.containerDefinitions[] | select(.name=="'"${CONTAINER_NAME}"'") | .environment) |= (
-                map(select(.name != "GOOGLE_MAPS_API_KEY" and .name != "GEMINI_API_KEY"))
+                map(select(.name != "GOOGLE_MAPS_API_KEY" and .name != "GEMINI_API_KEY" and .name != "ANTHROPIC_API_KEY"))
                 + [{"name": "GOOGLE_MAPS_API_KEY", "value": "'"${GOOGLE_MAPS_API_KEY}"'"}]
                 + [{"name": "GEMINI_API_KEY", "value": "'"${GEMINI_API_KEY}"'"}]
+                + [{"name": "ANTHROPIC_API_KEY", "value": "'"${ANTHROPIC_API_KEY}"'"}]
               )
           ' td.json > td-clean.json
 
