@@ -38,6 +38,25 @@ function isValidHexColor(value) {
   return typeof value === "string" && HEX_COLOR_PATTERN.test(value);
 }
 
+function extractBrandNameFromMarkdown(content) {
+  const brandLineMatch = content.match(
+    /(?:^|\n)\s*(?:[-*]\s*)?(?:\*\*)?Brand(?:\s+Name)?(?:\*\*)?\s*[:|]\s*([^|\n]+)/i
+  );
+  if (brandLineMatch) {
+    return brandLineMatch[1].trim().replace(/\*\*/g, "");
+  }
+
+  const headingMatch = content.match(/^#\s+(.+)$/m);
+  if (!headingMatch) return null;
+
+  const headingBrand = headingMatch[1]
+    .replace(/\bBrand Guidelines\b/i, "")
+    .replace(/\s+\(?v?\d+(?:\.\d+)*\)?\s*$/i, "")
+    .trim();
+
+  return headingBrand || null;
+}
+
 function parseColorRows(section, onColor) {
   const rows = section.matchAll(
     /\|\s*(?:\*\*)?([^|*]+?)(?:\*\*)?\s*\|\s*(#[A-Fa-f0-9]{6})\b/g
@@ -54,6 +73,7 @@ function parseColorRows(section, onColor) {
  */
 function extractColorsFromMarkdown(content) {
   const colors = {
+    brandName: extractBrandNameFromMarkdown(content),
     primary: { name: "primary", shades: {} },
     secondary: { name: "secondary", shades: {} },
     accent: { name: "accent", shades: {} },
@@ -219,24 +239,56 @@ function adjustBrightness(hex, percent) {
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0").toUpperCase()}`;
 }
 
+function getPrimitiveColorNameFromReference(value) {
+  if (typeof value !== "string") return null;
+  const match = value.match(/^\{primitive\.color\.([a-z0-9-]+)\.\d+\}$/i);
+  return match ? match[1] : null;
+}
+
+function getSyncedPrimitiveColorNames(tokens) {
+  const semanticColors = tokens.semantic?.color || {};
+  const syncedSemanticKeys = [
+    "primary",
+    "primary-hover",
+    "primary-active",
+    "primary-light",
+    "primary-lighter",
+    "primary-dark",
+    "secondary",
+    "secondary-hover",
+    "secondary-light",
+    "secondary-dark",
+    "accent",
+    "accent-hover",
+    "accent-light",
+  ];
+  const names = new Set(["coral", "purple", "mint"]);
+
+  for (const key of syncedSemanticKeys) {
+    const name = getPrimitiveColorNameFromReference(
+      semanticColors[key]?.$value
+    );
+    if (name) names.add(name);
+  }
+
+  return names;
+}
+
 /**
  * Update design tokens JSON
  */
 function updateDesignTokens(tokens, colors) {
-  // Update brand name
-  const brandName = `ClaudeKit Marketing - ${colors.primary.name
-    .split("-")
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ")}`;
-  tokens.brand = brandName;
+  if (colors.brandName) {
+    tokens.brand = colors.brandName;
+  }
 
   // Update primitive colors with new names
   const primitiveColors = tokens.primitive?.color || {};
 
-  // Remove old color keys, add new ones
-  delete primitiveColors.coral;
-  delete primitiveColors.purple;
-  delete primitiveColors.mint;
+  // Remove previously synced brand palette keys, then add the current palette.
+  for (const name of getSyncedPrimitiveColorNames(tokens)) {
+    delete primitiveColors[name];
+  }
 
   // Add new named colors
   primitiveColors[colors.primary.name] = generateColorScale(
