@@ -3568,7 +3568,7 @@ function switchListingMode(mode) {
 
 // ── Lease Monthly Auto-calc ──
 function calcLeaseMonthly() {
-  const sf = parseFloat((document.getElementById('l-lease-sf') || {}).value) || 0;
+  const sf = parseFloat((document.getElementById('l-lease-sf') || {}).value.replace(/[$,]/g,'')) || 0;
   const bldgSF = parseFloat((document.getElementById('l-bldg-sf') || {}).value.replace(/,/g,'')) || 0;
   if (sf && bldgSF) {
     const mo = (sf * bldgSF).toFixed(2);
@@ -8960,7 +8960,13 @@ function setBtnLoading(btn, loading, loadingLabel) {
   if (!btn) return;
   btn.classList.toggle('loading', Boolean(loading));
   const label = btn.querySelector('.btn-label');
-  if (label && loadingLabel) label.textContent = loading ? loadingLabel : label.dataset.idle || label.textContent;
+  if (!label) return;
+  if (loading && loadingLabel) {
+    if (!label.dataset.idle) label.dataset.idle = label.textContent;
+    label.textContent = loadingLabel;
+  } else if (!loading) {
+    if (label.dataset.idle) { label.textContent = label.dataset.idle; delete label.dataset.idle; }
+  }
 }
 
 function adminQuickAction(tab) {
@@ -11118,10 +11124,10 @@ document.addEventListener('input', (e) => {
   };
   const formatMoney = (num) => '$' + num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-  // Lease $/SF (Listing Entry)
+  // Lease $/SF (Listing Entry) — only reverse-calculate rate when user edits Monthly Rent directly
   const lLeaseMo = cleanNum(document.getElementById('l-lease-mo')?.value);
   const lBldgSf = cleanNum(document.getElementById('l-bldg-sf')?.value);
-  if (!isNaN(lLeaseMo) && !isNaN(lBldgSf) && lBldgSf > 0) {
+  if (!isNaN(lLeaseMo) && !isNaN(lBldgSf) && lBldgSf > 0 && e.target && e.target.id === 'l-lease-mo') {
     const el = document.getElementById('l-lease-sf');
     if (el && document.activeElement !== el && document.activeElement.id !== 'l-lease-sf') {
       el.value = formatMoney(lLeaseMo / lBldgSf);
