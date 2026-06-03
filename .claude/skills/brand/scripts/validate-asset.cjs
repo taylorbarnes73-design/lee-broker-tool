@@ -20,8 +20,7 @@ const path = require("path");
 const RULES = {
   naming: {
     pattern: /^[a-z]+_[a-z0-9-]+_[a-z0-9-]+_\d{8}(_[a-z0-9-]+)?\.[a-z]+$/,
-    description:
-      "{type}_{campaign}_{description}_{timestamp}_{variant}.{ext}",
+    description: "{type}_{campaign}_{description}_{timestamp}_{variant}.{ext}",
     examples: [
       "banner_claude-launch_hero-image_20251209.png",
       "logo_brand-refresh_horizontal_20251209_dark.svg",
@@ -195,7 +194,7 @@ function checkManifest(filepath) {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
     const relativePath = path.relative(process.cwd(), filepath);
     const found = manifest.assets?.find(
-      (a) => a.path === relativePath || a.path === filepath
+      a => a.path === relativePath || a.path === filepath
     );
 
     return {
@@ -221,6 +220,67 @@ function suggestFilename(original, parsed) {
   const ext = parsed.extension || "png";
 
   return `${type}_${campaign}_${description}_${today}.${ext}`;
+}
+
+function updateManifestPath(oldPath, newPath) {
+  const manifestPath = path.join(process.cwd(), ".assets", "manifest.json");
+
+  if (!fs.existsSync(manifestPath)) {
+    return false;
+  }
+
+  try {
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+    const oldRelativePath = path.relative(process.cwd(), oldPath);
+    const newRelativePath = path.relative(process.cwd(), newPath);
+    let updated = false;
+
+    for (const asset of manifest.assets || []) {
+      if (asset.path === oldRelativePath || asset.path === oldPath) {
+        asset.path = newRelativePath;
+        updated = true;
+      }
+    }
+
+    if (updated) {
+      fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+    }
+
+    return updated;
+  } catch {
+    return false;
+  }
+}
+
+function applyFixes(results) {
+  const fixes = [];
+  const filenameResult = results.checks.filename;
+  const suggested = suggestFilename(results.filename, filenameResult?.parsed);
+
+  if (
+    !results.valid &&
+    filenameResult &&
+    !filenameResult.valid &&
+    suggested &&
+    suggested !== results.filename
+  ) {
+    const targetPath = path.join(path.dirname(results.path), suggested);
+    if (fs.existsSync(targetPath)) {
+      results.warnings.push(
+        `Could not rename asset; target exists: ${targetPath}`
+      );
+    } else {
+      fs.renameSync(results.path, targetPath);
+      fixes.push(`Renamed asset to ${suggested}`);
+      if (updateManifestPath(results.path, targetPath)) {
+        fixes.push("Updated manifest path");
+      }
+      results = validateAsset(targetPath);
+    }
+  }
+
+  results.fixes = fixes;
+  return results;
 }
 
 /**
@@ -320,19 +380,22 @@ function formatOutput(results) {
 
   if (results.issues.length > 0) {
     lines.push("\nISSUES:");
-    results.issues.forEach((issue) => lines.push(`  - ${issue}`));
+    results.issues.forEach(issue => lines.push(`  - ${issue}`));
   }
 
   if (results.warnings.length > 0) {
     lines.push("\nWARNINGS:");
-    results.warnings.forEach((warning) => lines.push(`  - ${warning}`));
+    results.warnings.forEach(warning => lines.push(`  - ${warning}`));
   }
 
   if (results.suggestions.length > 0) {
     lines.push("\nSUGGESTIONS:");
-    results.suggestions.forEach((suggestion) =>
-      lines.push(`  - ${suggestion}`)
-    );
+    results.suggestions.forEach(suggestion => lines.push(`  - ${suggestion}`));
+  }
+
+  if (results.fixes?.length > 0) {
+    lines.push("\nFIXES:");
+    results.fixes.forEach(fix => lines.push(`  - ${fix}`));
   }
 
   // File size info
@@ -351,16 +414,22 @@ function formatOutput(results) {
 function main() {
   const args = process.argv.slice(2);
   const jsonOutput = args.includes("--json");
-  const assetPath = args.find((a) => !a.startsWith("--"));
+  const fix = args.includes("--fix");
+  const assetPath = args.find(a => !a.startsWith("--"));
 
   if (!assetPath) {
-    console.error("Usage: node validate-asset.cjs <asset-path> [--json]");
+    console.error(
+      "Usage: node validate-asset.cjs <asset-path> [--json] [--fix]"
+    );
     console.error("\nExamples:");
     console.error(
       "  node validate-asset.cjs assets/banners/social-media/banner_launch_hero_20251209.png"
     );
     console.error(
       "  node validate-asset.cjs assets/logos/icon-only/logo-icon.svg --json"
+    );
+    console.error(
+      "  node validate-asset.cjs assets/logos/icon-only/logo-icon.svg --fix"
     );
     process.exit(1);
   }
@@ -371,7 +440,10 @@ function main() {
     : path.join(process.cwd(), assetPath);
 
   // Validate
-  const results = validateAsset(resolvedPath);
+  let results = validateAsset(resolvedPath);
+  if (fix) {
+    results = applyFixes(results);
+  }
 
   // Output
   if (jsonOutput) {
