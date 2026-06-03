@@ -94,6 +94,9 @@ function extractColorsFromMarkdown(content) {
  * Generate color scale from base color (simple approach)
  */
 function generateColorScale(baseHex, darkHex, lightHex) {
+  if (!baseHex || !/^#[0-9A-Fa-f]{6}$/.test(baseHex)) {
+    throw new Error(`Invalid base color: ${JSON.stringify(baseHex)}. Ensure Quick Reference table uses format: | Primary Color | #RRGGBB (Name) |`);
+  }
   // Use provided shades or generate approximations
   return {
     "50": { "$value": lightHex || adjustBrightness(baseHex, 0.9), "$type": "color" },
@@ -113,6 +116,7 @@ function generateColorScale(baseHex, darkHex, lightHex) {
  * Adjust hex color brightness
  */
 function adjustBrightness(hex, percent) {
+  if (!hex || !/^#[0-9A-Fa-f]{6}$/.test(hex)) return '#000000';
   const num = parseInt(hex.replace('#', ''), 16);
   const r = Math.min(255, Math.max(0, (num >> 16) + Math.round(255 * percent)));
   const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + Math.round(255 * percent)));
@@ -181,20 +185,16 @@ function updateDesignTokens(tokens, colors) {
     sem['accent-hover'] = { "$value": `{primitive.color.${a}.600}`, "$type": "color" };
     sem['accent-light'] = { "$value": `{primitive.color.${a}.300}`, "$type": "color" };
 
-    // Status colors (use accent for success, primary for error/info)
-    sem.success = { "$value": `{primitive.color.${a}.500}`, "$type": "color" };
-    sem['success-light'] = { "$value": `{primitive.color.${a}.300}`, "$type": "color" };
-    sem.error = { "$value": `{primitive.color.${p}.500}`, "$type": "color" };
-    sem['error-light'] = { "$value": `{primitive.color.${p}.300}`, "$type": "color" };
+    // Status colors (error/success/warning keep conventional red/green semantics;
+    // only info is tied to the secondary brand palette)
     sem.info = { "$value": `{primitive.color.${s}.500}`, "$type": "color" };
     sem['info-light'] = { "$value": `{primitive.color.${s}.300}`, "$type": "color" };
   }
 
   // Update component references (button uses primary color with opacity)
-  if (tokens.component?.button?.secondary) {
-    const primaryBase = colors.primary.base;
+  if (tokens.component?.button?.secondary && colors.primary.base) {
     tokens.component.button.secondary['bg-hover'] = {
-      "$value": `${primaryBase}1A`,
+      "$value": `${colors.primary.base}1A`,
       "$type": "color"
     };
   }
@@ -220,6 +220,14 @@ function main() {
 
   // Extract colors
   const colors = extractColorsFromMarkdown(guidelinesContent);
+
+  const missing = ['primary', 'secondary', 'accent'].filter(k => !colors[k].base);
+  if (missing.length > 0) {
+    console.error(`❌ Could not extract base hex for: ${missing.join(', ')}`);
+    console.error('   Ensure Quick Reference table uses format: | Primary Color | #RRGGBB (Color Name) |');
+    process.exit(1);
+  }
+
   console.log('📊 Extracted colors:');
   console.log(`   Primary: ${colors.primary.name} (${colors.primary.base})`);
   console.log(`   Secondary: ${colors.secondary.name} (${colors.secondary.base})`);
@@ -258,6 +266,9 @@ function main() {
     } catch (e) {
       console.error('⚠️  Failed to regenerate CSS:', e.message);
     }
+  } else {
+    console.warn(`⚠️  CSS generator not found: ${GENERATE_TOKENS_SCRIPT}`);
+    console.warn(`   ${DESIGN_TOKENS_CSS} was NOT regenerated — run the design-system generate script manually.`);
   }
 
   console.log('\n✨ Brand sync complete!');
