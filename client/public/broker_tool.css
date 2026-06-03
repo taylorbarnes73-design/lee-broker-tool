@@ -9908,3 +9908,106 @@ input[type="date"],
     grid-column: 1 / -1;
   }
 }
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   PATCH 4 — Collapsible sidebar with hamburger toggle (desktop)
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── A. Always show the hamburger toggle on desktop ───────────────────── */
+body.broker-active .broker-hamburger {
+  display: inline-flex !important;
+}
+
+/* ── B. Sidebar collapse toggle button inside sidebar ─────────────────── */
+.sidebar-collapse-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  background: #FFFFFF;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  position: absolute;
+  top: 14px;
+  right: 10px;
+  z-index: 5;
+}
+.sidebar-collapse-btn:hover {
+  background: #F3F4F6;
+  color: #1F2937;
+  border-color: #D1D5DB;
+}
+
+@media (min-width: 881px) {
+  .sidebar-collapse-btn {
+    display: inline-flex;
+  }
+}
+
+/* ── C. Desktop collapsed state ───────────────────────────────────────── */
+@media (min-width: 881px) {
+  /* Smooth transition for sidebar width */
+  .broker-sidebar {
+    transition: width 0.25s ease, min-width 0.25s ease, padding 0.25s ease, transform 0.25s ease;
+  }
+
+  /* When sidebar is collapsed on desktop */
+  body.sidebar-collapsed .broker-sidebar {
+    width: 0px;
+    min-width: 0px;
+    padding: 0;
+    overflow: hidden;
+    border-right: none;
+    visibility: hidden;
+  }
+
+  /* Content area expands when sidebar is collapsed */
+  body.sidebar-collapsed #broker-view > .panel.active {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Remove the margin-left that was set for the sidebar */
+  body.sidebar-collapsed .broker-main,
+  body.sidebar-collapsed .main-content {
+    margin-left: 0;
+  }
+
+  /* Animate the content area transition */
+  #broker-view > .panel.active {
+    transition: margin-left 0.25s ease;
+  }
+}
+
+/* ── D. Hamburger button styling refinement ───────────────────────────── */
+.broker-hamburger {
+  position: relative;
+  z-index: 25;
+}
+
+/* When sidebar is open on desktop, change hamburger to X or indicate close */
+@media (min-width: 881px) {
+  body.broker-active:not(.sidebar-collapsed) .broker-hamburger {
+    background: rgba(152, 0, 46, 0.04);
+    border-color: rgba(152, 0, 46, 0.15);
+    color: #98002E;
+  }
+}
+
+/* ── E. Mobile behavior unchanged — keep existing slide-in behavior ───── */
+@media (max-width: 880px) {
+  body.sidebar-collapsed .broker-sidebar {
+    width: min(86vw, 280px);
+    min-width: unset;
+    padding: 18px 14px 20px;
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
+    visibility: visible;
+  }
+}

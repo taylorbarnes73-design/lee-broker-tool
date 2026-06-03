@@ -51,7 +51,7 @@
     <button type="button" class="iconbtn header-help-btn" id="help-btn" aria-label="Help for this page" title="Help">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.5V14"></path><circle cx="12" cy="17" r="0.9" fill="currentColor" stroke="none"></circle></svg>
     </button>
-    <button type="button" class="broker-hamburger" id="broker-hamburger" aria-label="Open navigation menu" onclick="toggleBrokerSidebar(true)">
+    <button type="button" class="broker-hamburger" id="broker-hamburger" aria-label="Open navigation menu" onclick="toggleBrokerSidebar()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <a class="admin-toggle is-hidden" id="header-admin-settings-link" href="/portal/admin" aria-label="Open admin portal">
@@ -8013,11 +8013,39 @@ function showBrokerTool(user) {
 function toggleBrokerSidebar(open) {
   const sidebar = document.getElementById('broker-sidebar');
   const overlay = document.getElementById('broker-sidebar-overlay');
-  const isOpen = open !== undefined ? open : !sidebar.classList.contains('open');
-  if (sidebar) sidebar.classList.toggle('open', isOpen);
-  if (overlay) overlay.classList.toggle('active', isOpen);
-  document.body.style.overflow = isOpen ? 'hidden' : '';
+  const isDesktop = window.innerWidth > 880;
+
+  if (isDesktop) {
+    // Desktop: toggle collapsed state (no overlay, no body scroll lock)
+    const isCollapsed = document.body.classList.contains('sidebar-collapsed');
+    if (open === true) {
+      // Expand sidebar
+      document.body.classList.remove('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', 'false');
+    } else if (open === false) {
+      // Collapse sidebar
+      document.body.classList.add('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', 'true');
+    } else {
+      // Toggle
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed') ? 'true' : 'false');
+    }
+  } else {
+    // Mobile: existing slide-in overlay behavior
+    const isOpen = open !== undefined ? open : !sidebar.classList.contains('open');
+    if (sidebar) sidebar.classList.toggle('open', isOpen);
+    if (overlay) overlay.classList.toggle('active', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  }
 }
+
+// Restore sidebar collapsed state from localStorage on page load
+(function restoreSidebarState() {
+  if (localStorage.getItem('sidebarCollapsed') === 'true' && window.innerWidth > 880) {
+    document.body.classList.add('sidebar-collapsed');
+  }
+})();
 
 // Sign-in functions removed, handled by React login.
 
