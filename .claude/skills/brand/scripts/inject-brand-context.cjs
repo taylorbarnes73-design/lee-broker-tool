@@ -118,17 +118,17 @@ function extractVoice(content) {
     }
   }
 
-  // Extract prohibited terms
+  // Extract prohibited terms — parse as rows, skip header row (index 0) and
+  // separator row (index 1) to avoid including column headers in the output.
   const prohibitedMatch = content.match(
     /### Prohibited[\s\S]*?(?=###|##|$)/i
   );
   if (prohibitedMatch) {
-    const terms = prohibitedMatch[0].match(/\|\s*([^|]+)\s*\|/g);
-    if (terms) {
-      voice.prohibited = terms
-        .map((t) => t.replace(/\|/g, "").trim())
-        .filter((t) => t && !t.includes("Avoid") && !t.includes("---"));
-    }
+    const rows = prohibitedMatch[0].split('\n').filter(line => /^\|/.test(line));
+    voice.prohibited = rows
+      .slice(2)
+      .map(row => row.split('|').map(c => c.trim()).filter(Boolean)[0] || '')
+      .filter(Boolean);
   }
 
   // Fallback: look for Forbidden Phrases
