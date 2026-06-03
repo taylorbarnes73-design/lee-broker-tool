@@ -8162,3 +8162,930 @@ body.broker-active .sub-tab-bar {
 }
 .voucher-progress-label { font-size: 12px; color: var(--text2); white-space: nowrap; }
 .voucher-progress-pct { font-size: 12px; font-weight: 700; color: var(--lee-crimson, var(--red)); white-space: nowrap; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AESTHETIC POLISH PASS — Cross-browser consistency & visual refinement
+   ═══════════════════════════════════════════════════════════════════════════
+   Goals:
+   1. Normalize rendering across Chrome, Firefox, Safari, Edge
+   2. Consolidate typography to a clean 4-step scale
+   3. Standardize spacing, radius, and shadow tokens
+   4. Polish cards, sidebar, forms, buttons, and tables
+   5. Improve transitions, focus states, and hover feedback
+   6. Tighten responsive breakpoints for tablet/mobile
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Cross-browser normalization ───────────────────────────────────── */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  overflow-x: hidden;
+}
+
+/* Prevent layout shift from scrollbar appearance */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Normalize input appearance across browsers */
+input, select, textarea, button {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7178' d='M2.5 4.5L6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  padding-right: 32px !important;
+  cursor: pointer;
+}
+
+/* Fix Firefox inner focus ring */
+::-moz-focus-inner {
+  border: 0;
+  padding: 0;
+}
+
+/* Consistent placeholder styling */
+::placeholder {
+  color: #9CA3AF;
+  opacity: 1;
+  font-weight: 400;
+}
+
+/* ── 2. Refined typography scale ──────────────────────────────────────── */
+/* Consolidate to: 11px (micro), 12px (small/labels), 13px (body-sm), 14px (body) */
+
+body.broker-active {
+  font-size: 14px;
+  line-height: 1.55;
+  letter-spacing: -0.006em;
+}
+
+/* Sidebar nav — standardize to 12px */
+.broker-sidebar .tab {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.3;
+}
+
+/* Card headings — clean hierarchy */
+.card-head h2,
+.card-head-left > h2 {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.card-eyebrow,
+.deal-eyebrow,
+.page-eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6B7178;
+}
+
+/* Form labels — unified */
+.field label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #4A5568;
+  margin-bottom: 5px;
+  display: block;
+}
+
+/* Form inputs — unified */
+.field input,
+.field select,
+.field textarea {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #1A202C;
+}
+
+/* Section headings inside cards */
+.card h3.section-heading-top,
+.card h3.section-heading-top-lg,
+.card h3.section-heading-tight {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.10em;
+  color: #6B7178;
+}
+
+/* ── 3. Standardized spacing & radius ─────────────────────────────────── */
+
+/* Cards — consistent 24px padding, 12px radius */
+.card {
+  padding: 24px !important;
+  border-radius: 12px !important;
+  border: 1px solid #E2E8F0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  border-color: #CBD5E0 !important;
+}
+
+.card.card-active,
+.step-flow .card[data-step].step--current {
+  border-color: #98002E !important;
+  border-left-width: 3px !important;
+  box-shadow: 0 4px 16px rgba(152, 0, 46, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Inputs — consistent height and radius */
+.field input,
+.field select,
+.field textarea,
+.suite-table input,
+.rent-table input,
+.broker-table input,
+.broker-table select {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  background: #FFFFFF;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field input:hover,
+.field select:hover,
+.field textarea:hover {
+  border-color: #9CA3AF;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: #98002E;
+  box-shadow: 0 0 0 3px rgba(152, 0, 46, 0.10);
+  outline: none;
+}
+
+/* Buttons — consistent radius and sizing */
+.btn {
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.btn-red,
+.btn-blue-red {
+  background: #98002E;
+  border: 1px solid #98002E;
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(152, 0, 46, 0.15);
+}
+
+.btn-red:hover,
+.btn-blue-red:hover {
+  background: #7A0024;
+  border-color: #7A0024;
+  box-shadow: 0 2px 6px rgba(152, 0, 46, 0.25);
+  transform: translateY(-0.5px);
+}
+
+.btn-red:active,
+.btn-blue-red:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(152, 0, 46, 0.15);
+}
+
+.btn-gray,
+.btn-outline {
+  background: #FFFFFF;
+  border: 1px solid #D1D5DB;
+  color: #374151;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.btn-gray:hover,
+.btn-outline:hover {
+  background: #F9FAFB;
+  border-color: #9CA3AF;
+  color: #1F2937;
+}
+
+/* ── 4. Sidebar polish ────────────────────────────────────────────────── */
+.broker-sidebar {
+  width: 240px;
+  background: #FFFFFF;
+  border-right: 1px solid #E5E7EB;
+  padding: 20px 14px;
+  gap: 2px;
+}
+
+.broker-sidebar-brand {
+  padding: 6px 8px 16px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.broker-sidebar .tab {
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #4B5563;
+  margin-bottom: 1px;
+}
+
+.broker-sidebar .tab:hover {
+  background: #F9FAFB;
+  color: #1F2937;
+}
+
+.broker-sidebar .tab.active {
+  background: rgba(152, 0, 46, 0.06);
+  color: #98002E;
+  font-weight: 800;
+  box-shadow: inset 3px 0 0 #98002E;
+}
+
+.broker-sidebar .tab svg {
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
+}
+
+.broker-sidebar .tab.active svg {
+  opacity: 1;
+}
+
+/* Sidebar user section */
+.broker-sidebar-user {
+  border-top: 1px solid #F3F4F6;
+  padding-top: 16px;
+  margin-top: auto;
+}
+
+.broker-sidebar-user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1F2937;
+}
+
+.broker-sidebar-user-email {
+  font-size: 11px;
+  color: #6B7280;
+  margin-top: 1px;
+}
+
+.broker-sidebar-action {
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6B7280;
+  letter-spacing: 0.04em;
+}
+
+.broker-sidebar-action:hover {
+  background: #F3F4F6;
+  color: #374151;
+}
+
+/* ── 5. Stepper polish ────────────────────────────────────────────────── */
+.stepper {
+  padding: 12px 16px;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  margin-bottom: 20px;
+}
+
+.stepper-num {
+  width: 26px;
+  height: 26px;
+  font-size: 11px;
+  font-weight: 800;
+  border: 2px solid #D1D5DB;
+  background: #FFFFFF;
+  color: #6B7280;
+}
+
+.stepper-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #6B7280;
+}
+
+.stepper-item.done .stepper-num,
+.stepper-item.current .stepper-num {
+  background: #98002E;
+  border-color: #98002E;
+  color: #FFFFFF;
+}
+
+.stepper-item.current .stepper-num {
+  box-shadow: 0 0 0 4px rgba(152, 0, 46, 0.10);
+}
+
+.stepper-item.done .stepper-label,
+.stepper-item.current .stepper-label {
+  color: #1F2937;
+  font-weight: 800;
+}
+
+.stepper-bar {
+  height: 2px;
+  background: #E5E7EB;
+  border-radius: 1px;
+}
+
+.stepper-bar.done {
+  background: rgba(152, 0, 46, 0.4);
+}
+
+/* ── 6. Deal sidebar (right panel) ────────────────────────────────────── */
+.deal-aside {
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  background: #FFFFFF;
+}
+
+.deal-card {
+  padding: 16px 18px;
+}
+
+.deal-card + .deal-card {
+  border-top: 1px solid #F3F4F6;
+}
+
+.deal-card-primary {
+  background: #F9FAFB;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.deal-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #1F2937;
+  letter-spacing: -0.01em;
+}
+
+.deal-subtitle {
+  font-size: 12px;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+/* Deal steps list */
+.deal-steps li {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B7280;
+  padding: 7px 0;
+}
+
+.deal-steps li.is-done,
+.deal-steps li.done,
+.deal-steps li.is-active,
+.deal-steps li.current {
+  color: #1F2937;
+}
+
+.deal-step-dot {
+  width: 8px;
+  height: 8px;
+  border: 2px solid #D1D5DB;
+  background: #FFFFFF;
+}
+
+.deal-steps li.is-done .deal-step-dot,
+.deal-steps li.done .deal-step-dot,
+.deal-steps li.is-active .deal-step-dot,
+.deal-steps li.current .deal-step-dot {
+  background: #98002E;
+  border-color: #98002E;
+}
+
+.deal-steps li.is-active .deal-step-dot,
+.deal-steps li.current .deal-step-dot {
+  box-shadow: 0 0 0 3px rgba(152, 0, 46, 0.10);
+}
+
+/* ── 7. Tables — cleaner, more readable ───────────────────────────────── */
+.suite-table,
+.rent-table,
+.broker-table,
+.cr-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.suite-table th,
+.rent-table th,
+.broker-table th,
+.cr-table th {
+  background: #F9FAFB;
+  color: #4B5563;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 10px 12px;
+  border-bottom: 1px solid #E5E7EB;
+  text-align: left;
+}
+
+.suite-table td,
+.rent-table td,
+.broker-table td,
+.cr-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #F3F4F6;
+  font-size: 13px;
+  color: #374151;
+}
+
+.suite-table tbody tr:last-child td,
+.rent-table tbody tr:last-child td,
+.broker-table tbody tr:last-child td,
+.cr-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.suite-table tbody tr:hover td,
+.rent-table tbody tr:hover td,
+.broker-table tbody tr:hover td,
+.cr-table tbody tr:hover td {
+  background: #F9FAFB;
+}
+
+/* Table inputs — tighter */
+.suite-table input,
+.rent-table input,
+.broker-table input,
+.broker-table select {
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 6px;
+}
+
+/* ── 8. Step navigation bar ───────────────────────────────────────────── */
+.step-nav {
+  margin: 24px -24px -24px;
+  padding: 16px 24px;
+  background: #F9FAFB;
+  border-top: 1px solid #E5E7EB;
+  border-radius: 0 0 12px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.step-nav .step-count,
+.step-meta {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6B7280;
+}
+
+/* ── 9. Upload zones ──────────────────────────────────────────────────── */
+.upload-zone,
+.brochure-zone {
+  border: 2px dashed #D1D5DB;
+  border-radius: 10px;
+  background: #FAFBFC;
+  padding: 24px;
+  text-align: center;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.upload-zone:hover,
+.brochure-zone:hover {
+  border-color: #98002E;
+  background: rgba(152, 0, 46, 0.02);
+}
+
+/* ── 10. Modal polish ─────────────────────────────────────────────────── */
+.modal-overlay.open {
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.modal {
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(0, 0, 0, 0.08);
+  border: 1px solid #E5E7EB;
+}
+
+/* ── 11. Queue items ──────────────────────────────────────────────────── */
+.queue-item {
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  padding: 16px 20px;
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.15s ease;
+}
+
+.queue-item:hover {
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+}
+
+/* ── 12. Comp reports filters ─────────────────────────────────────────── */
+.cr-filters {
+  padding: 18px 20px;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.filter-bar input,
+.filter-bar select {
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #FFFFFF;
+}
+
+.filter-bar input:focus,
+.filter-bar select:focus {
+  border-color: #98002E;
+  box-shadow: 0 0 0 3px rgba(152, 0, 46, 0.10);
+  outline: none;
+}
+
+/* ── 13. Listing type options — cleaner grid ──────────────────────────── */
+.listing-type-opt {
+  padding: 16px;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  background: #FFFFFF;
+  transition: all 0.15s ease;
+}
+
+.listing-type-opt:hover {
+  border-color: #CBD5E0;
+  background: #F9FAFB;
+  transform: none;
+}
+
+.listing-type-opt.selected {
+  border-color: #98002E;
+  background: rgba(152, 0, 46, 0.03);
+  box-shadow: inset 0 0 0 1px #98002E;
+}
+
+/* ── 14. Branch toggle — cleaner pill buttons ─────────────────────────── */
+.branch-toggle {
+  padding: 3px;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  background: #F9FAFB;
+}
+
+.branch-toggle button {
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6B7280;
+  background: transparent;
+  transition: all 0.15s ease;
+}
+
+.branch-toggle button:hover:not(.active) {
+  background: #FFFFFF;
+  color: #374151;
+}
+
+.branch-toggle button.active {
+  background: #1F2937;
+  color: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* ── 15. Global search — refined ──────────────────────────────────────── */
+.global-search-input {
+  width: 200px;
+  padding: 7px 12px 7px 34px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  background: #F9FAFB;
+  transition: all 0.2s ease;
+}
+
+.global-search-input:focus {
+  width: 260px;
+  border-color: #98002E;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(152, 0, 46, 0.08);
+}
+
+/* ── 16. Tip/alert boxes ──────────────────────────────────────────────── */
+.tip {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-left: 3px solid #98002E;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #4B5563;
+}
+
+/* ── 17. Header polish ────────────────────────────────────────────────── */
+body.broker-active .header {
+  padding: 10px 18px;
+  min-height: 52px;
+  border-bottom: 1px solid #E5E7EB;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  background: #FFFFFF;
+}
+
+/* ── 18. Scrollbar styling (Webkit + Firefox) ─────────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+  background-clip: content-box;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #D1D5DB transparent;
+}
+
+/* ── 19. Focus-visible ring (keyboard accessibility) ──────────────────── */
+:focus-visible {
+  outline: 2px solid #98002E;
+  outline-offset: 2px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none; /* handled by box-shadow above */
+}
+
+/* ── 20. Responsive refinements ───────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .deal-shell {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .deal-aside {
+    position: static;
+    max-height: none;
+  }
+}
+
+@media (max-width: 880px) {
+  .broker-sidebar {
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
+  }
+
+  .broker-sidebar.open {
+    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.15);
+  }
+}
+
+@media (max-width: 720px) {
+  .card {
+    padding: 18px 16px !important;
+    border-radius: 10px !important;
+  }
+
+  .step-nav {
+    margin: 20px -16px -18px;
+    padding: 14px 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    border-radius: 0 0 10px 10px;
+  }
+
+  .step-nav-right {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .step-nav-right .btn {
+    flex: 1 1 140px;
+    justify-content: center;
+  }
+
+  .stepper {
+    padding: 10px 12px;
+    border-radius: 10px;
+    overflow-x: auto;
+  }
+
+  .listing-type-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .field label {
+    font-size: 10px;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    font-size: 14px; /* prevent iOS zoom */
+    min-height: 44px; /* touch target */
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 14px 12px !important;
+    border-radius: 8px !important;
+  }
+
+  .card-head h2,
+  .card-head-left > h2 {
+    font-size: 16px;
+  }
+
+  .page-h1 {
+    font-size: 22px;
+  }
+
+  .broker-sidebar {
+    width: min(85vw, 260px);
+  }
+}
+
+/* ── 21. Print styles ─────────────────────────────────────────────────── */
+@media print {
+  .broker-sidebar,
+  .header,
+  .tab-bar,
+  .step-nav,
+  .btn-bar {
+    display: none !important;
+  }
+
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    break-inside: avoid;
+  }
+
+  body {
+    background: #fff;
+  }
+}
+
+/* ── 22. Subtle animation refinements ─────────────────────────────────── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.panel.active {
+  animation: fadeInUp 0.2s ease-out;
+}
+
+/* Smooth card entrance when switching steps */
+.card.card-active {
+  animation: fadeInUp 0.25s ease-out;
+}
+
+/* ── 23. Auto-calc field styling ──────────────────────────────────────── */
+.field input.auto-calc,
+.field input[readonly],
+.readonly-fill {
+  background: #F3F4F6;
+  border-color: #E5E7EB;
+  color: #4B5563;
+  cursor: default;
+  font-weight: 600;
+}
+
+/* ── 24. Required badge refinement ────────────────────────────────────── */
+.required-badge {
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #FEF2F2;
+  color: #98002E;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
+/* ── 25. Draft cards — cleaner grid ───────────────────────────────────── */
+.drafts-grid {
+  gap: 14px;
+}
+
+.draft-card {
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  padding: 16px 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s ease;
+}
+
+.draft-card:hover {
+  border-color: #CBD5E0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.draft-card-address {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1F2937;
+  line-height: 1.35;
+}
+
+/* ── 26. Address autocomplete — refined ───────────────────────────────── */
+.addr-ac-dropdown {
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+  margin-top: 4px;
+}
+
+.addr-ac-item {
+  padding: 10px 14px;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.addr-ac-item:hover,
+.addr-ac-item.addr-ac-active {
+  background: #FEF2F2;
+}
+
+.addr-ac-line1 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.addr-ac-line2 {
+  font-size: 11px;
+  color: #6B7280;
+}
