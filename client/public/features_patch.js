@@ -371,7 +371,8 @@ window.onSignLocationPhotoChange = function(input) {
       toolbar.className = 'cr-map-toolbar';
       container.appendChild(toolbar);
     }
-    var total = (window.compReportsResultsCache || []).length;
+    var results = crMapAllResults || window.compReportsResultsCache || [];
+    var total = results.length;
     var deselected = window.compReportsDeselected ? window.compReportsDeselected.size : 0;
     var selected = total - deselected;
     toolbar.innerHTML = '<div class="cr-map-toolbar-left">' +
@@ -380,20 +381,54 @@ window.onSignLocationPhotoChange = function(input) {
       '<button class="cr-map-toolbar-btn" onclick="crMapDeselectAll()" title="Deselect All">Deselect All</button>' +
       '</div>' +
       '<div class="cr-map-toolbar-right">' +
-      '<button class="btn btn-gray cr-map-toolbar-export" onclick="compReportExportCsvWithSpinner(this)"' + (selected ? '' : ' disabled') + '>Excel</button>' +
-      '<button class="btn btn-outline cr-map-toolbar-export" onclick="compReportExportPdfWithSpinner(this)"' + (selected ? '' : ' disabled') + '>PDF Report</button>' +
+      '<button class="btn btn-gray cr-map-toolbar-export" onclick="crMapExportCsv(this)"' + (selected ? '' : ' disabled') + '>Excel</button>' +
+      '<button class="btn btn-outline cr-map-toolbar-export" onclick="crMapExportPdf(this)"' + (selected ? '' : ' disabled') + '>PDF Report</button>' +
       '</div>';
   }
 
   // Select/deselect all from map toolbar
   window.crMapSelectAll = function() {
-    if (typeof compReportToggleSelectAll === 'function') compReportToggleSelectAll(true);
+    var results = crMapAllResults || window.compReportsResultsCache || [];
+    window.compReportsDeselected = new Set();
+    // Update table checkboxes too
+    document.querySelectorAll('#cr-tbody .cr-row-check').forEach(function(cb) { cb.checked = true; });
+    var master = document.getElementById('cr-select-all');
+    if (master) { master.checked = true; master.indeterminate = false; }
     updateAllMarkerAppearances();
   };
   window.crMapDeselectAll = function() {
-    if (typeof compReportToggleSelectAll === 'function') compReportToggleSelectAll(false);
+    var results = crMapAllResults || window.compReportsResultsCache || [];
+    window.compReportsDeselected = new Set();
+    for (var i = 0; i < results.length; i++) window.compReportsDeselected.add(i);
+    document.querySelectorAll('#cr-tbody .cr-row-check').forEach(function(cb) { cb.checked = false; });
+    var master = document.getElementById('cr-select-all');
+    if (master) { master.checked = false; master.indeterminate = false; }
     updateAllMarkerAppearances();
   };
+
+  // Map-specific export that uses the full results set
+  window.crMapExportCsv = function(btn) {
+    // Temporarily swap compReportsResultsCache with all map results for export
+    var origCache = window.compReportsResultsCache;
+    if (crMapAllResults) window.compReportsResultsCache = crMapAllResults;
+    try {
+      compReportExportCsvWithSpinner(btn);
+    } finally {
+      // Restore after a tick (export is sync for CSV)
+      setTimeout(function() { window.compReportsResultsCache = origCache; }, 100);
+    }
+  };
+  window.crMapExportPdf = function(btn) {
+    var origCache = window.compReportsResultsCache;
+    if (crMapAllResults) window.compReportsResultsCache = crMapAllResults;
+    // PDF export is async, restore after it completes
+    compReportExportPdfWithSpinner(btn);
+    // Restore after a generous delay (PDF generation can take seconds)
+    setTimeout(function() { window.compReportsResultsCache = origCache; }, 30000);
+  };
+
+  // Store all map results separately (not limited by page size)
+  var crMapAllResults = null;
 
   window.crSetView = function(view) {
     crCurrentView = view;
@@ -410,11 +445,50 @@ window.onSignLocationPhotoChange = function(input) {
       setHiddenState(mapContainer, view !== 'map');
       if (view === 'map') {
         loadGoogleMapsApi(function() {
-          setTimeout(function() { renderCompReportMap(); }, 100);
+          setTimeout(function() { fetchAllAndRenderMap(); }, 100);
         });
       }
     }
   };
+
+  // Fetch ALL results for the current filters (no page limit) and render on map
+  function fetchAllAndRenderMap() {
+    var overlay = getCrMapOverlay();
+    if (overlay) { overlay.textContent = 'Loading all results for map...'; overlay.style.display = 'flex'; }
+
+    // Fetch all pages using the same API the export uses
+    var base = typeof compReportGetFilters === 'function' ? compReportGetFilters() : {};
+    var limit = 100;
+    var all = [];
+    var offset = 0;
+
+    function fetchPage() {
+      var params = Object.assign({}, base, { limit: limit, offset: offset });
+      callTrpc('compData.search', params).then(function(data) {
+        var batch = Array.isArray(data && data.results) ? data.results : [];
+        var info = data && data.pageInfo;
+        all = all.concat(batch);
+        var total = (info && typeof info.total === 'number') ? info.total : Infinity;
+        offset += limit;
+        // Update loading message
+        if (overlay) overlay.textContent = 'Loading comps for map... ' + all.length + (Number.isFinite(total) ? ' of ' + total : '');
+        // Continue fetching if more pages exist
+        if (batch.length && all.length < total && all.length < 5000 && !(info && info.hasNext === false)) {
+          fetchPage();
+        } else {
+          // Done fetching — store and render
+          crMapAllResults = all;
+          renderCompReportMap();
+        }
+      }).catch(function() {
+        // Fall back to current page results
+        crMapAllResults = null;
+        renderCompReportMap();
+      });
+    }
+
+    fetchPage();
+  }
 
   function getCrMapOverlay() {
     var overlay = document.getElementById('cr-map-overlay-msg');
@@ -468,7 +542,8 @@ window.onSignLocationPhotoChange = function(input) {
     // Clear existing markers
     crMarkers.forEach(function(m) { m.marker.setMap(null); if (m.infoWindow) m.infoWindow.close(); });
     crMarkers = [];
-    var results = window.compReportsResultsCache || [];
+    // Use all fetched results (not page-limited) if available
+    var results = crMapAllResults || window.compReportsResultsCache || [];
     var overlay = getCrMapOverlay();
     if (!results.length) {
       if (overlay) { overlay.textContent = 'No results to map. Run a search first.'; overlay.style.display = 'flex'; }

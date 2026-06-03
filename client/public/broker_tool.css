@@ -9996,6 +9996,8 @@ body.broker-active .broker-hamburger {
 .broker-hamburger {
   position: relative;
   z-index: 25;
+  margin-right: 12px;
+  order: -1;
 }
 
 /* When sidebar is open on desktop, change hamburger to X or indicate close */
