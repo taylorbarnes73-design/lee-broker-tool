@@ -14,6 +14,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <link rel="stylesheet" href="broker_tool.css">
 </head>
@@ -6330,19 +6331,18 @@ function voucherWorkbookDownloadBlob(blob, filename) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+// ── JSZip-based cell operations (preserves all formatting) ──────────────────
+// Instead of mutating a SheetJS worksheet, we collect cell operations into a map
+// and apply them directly to the template's sheet XML.
+let _voucherCellOps = {};
+
 function voucherWorkbookCell(ws, addr) {
-  if (!ws[addr]) ws[addr] = { t: 'z' };
-  return ws[addr];
+  // Legacy compat: returns a dummy object (unused in JSZip path)
+  return {};
 }
 
 function voucherWorkbookClearCell(ws, addr) {
-  const cell = voucherWorkbookCell(ws, addr);
-  delete cell.v;
-  delete cell.w;
-  delete cell.r;
-  delete cell.h;
-  delete cell.f;
-  cell.t = 'z';
+  _voucherCellOps[addr] = { type: 'clear' };
 }
 
 function voucherWorkbookSetText(ws, addr, value) {
@@ -6351,13 +6351,7 @@ function voucherWorkbookSetText(ws, addr, value) {
     voucherWorkbookClearCell(ws, addr);
     return;
   }
-  const cell = voucherWorkbookCell(ws, addr);
-  delete cell.f;
-  delete cell.w;
-  delete cell.r;
-  delete cell.h;
-  cell.t = 's';
-  cell.v = text;
+  _voucherCellOps[addr] = { type: 'text', value: text };
 }
 
 function voucherWorkbookSetNumber(ws, addr, value) {
@@ -6365,13 +6359,7 @@ function voucherWorkbookSetNumber(ws, addr, value) {
     voucherWorkbookClearCell(ws, addr);
     return;
   }
-  const cell = voucherWorkbookCell(ws, addr);
-  delete cell.f;
-  delete cell.w;
-  delete cell.r;
-  delete cell.h;
-  cell.t = 'n';
-  cell.v = Number(value);
+  _voucherCellOps[addr] = { type: 'number', value: Number(value) };
 }
 
 function voucherWorkbookSetDate(ws, addr, value) {
@@ -6380,13 +6368,10 @@ function voucherWorkbookSetDate(ws, addr, value) {
     voucherWorkbookClearCell(ws, addr);
     return;
   }
-  const cell = voucherWorkbookCell(ws, addr);
-  delete cell.f;
-  delete cell.w;
-  delete cell.r;
-  delete cell.h;
-  cell.t = 'd';
-  cell.v = date;
+  // Excel serial date: days since 1900-01-01 (with the 1900 leap year bug)
+  const epoch = new Date(1899, 11, 30); // Dec 30, 1899
+  const serial = (date.getTime() - epoch.getTime()) / (24 * 60 * 60 * 1000);
+  _voucherCellOps[addr] = { type: 'number', value: serial };
 }
 
 function voucherWorkbookPartyAddress(prefix) {
@@ -6710,37 +6695,141 @@ function voucherWorkbookApplyForm(ws) {
   );
 }
 
+// ── XML escaping for cell values ──────────────────────────────────────────────
+function _xlEscape(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+// ── Apply cell operations to sheet XML ────────────────────────────────────────
+function _applyOpsToSheetXml(sheetXml, ops) {
+  // Parse the XML into a DOM for reliable manipulation
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(sheetXml, 'application/xml');
+  const ns = doc.documentElement.namespaceURI;
+
+  // Build a map of row number -> row element for fast lookup
+  const sheetData = doc.getElementsByTagNameNS(ns, 'sheetData')[0];
+  if (!sheetData) return sheetXml;
+
+  const rowElements = {};
+  for (const rowEl of sheetData.getElementsByTagNameNS(ns, 'row')) {
+    const r = rowEl.getAttribute('r');
+    if (r) rowElements[r] = rowEl;
+  }
+
+  // Helper: parse cell address into {col, row}
+  function parseAddr(addr) {
+    const m = addr.match(/^([A-Z]+)(\d+)$/);
+    return m ? { col: m[1], row: m[2] } : null;
+  }
+
+  for (const [addr, op] of Object.entries(ops)) {
+    const parsed = parseAddr(addr);
+    if (!parsed) continue;
+
+    // Find or create the row element
+    let rowEl = rowElements[parsed.row];
+    if (!rowEl) {
+      rowEl = doc.createElementNS(ns, 'row');
+      rowEl.setAttribute('r', parsed.row);
+      sheetData.appendChild(rowEl);
+      rowElements[parsed.row] = rowEl;
+    }
+
+    // Find the cell element within the row
+    let cellEl = null;
+    for (const c of rowEl.getElementsByTagNameNS(ns, 'c')) {
+      if (c.getAttribute('r') === addr) {
+        cellEl = c;
+        break;
+      }
+    }
+
+    if (!cellEl) {
+      cellEl = doc.createElementNS(ns, 'c');
+      cellEl.setAttribute('r', addr);
+      rowEl.appendChild(cellEl);
+    }
+
+    // Remove existing value and formula elements but KEEP style (s) attribute
+    const existingV = cellEl.getElementsByTagNameNS(ns, 'v')[0];
+    const existingF = cellEl.getElementsByTagNameNS(ns, 'f')[0];
+    const existingIs = cellEl.getElementsByTagNameNS(ns, 'is')[0];
+    if (existingV) cellEl.removeChild(existingV);
+    if (existingF) cellEl.removeChild(existingF);
+    if (existingIs) cellEl.removeChild(existingIs);
+
+    if (op.type === 'clear') {
+      // Remove type attribute, leave cell empty but styled
+      cellEl.removeAttribute('t');
+    } else if (op.type === 'text') {
+      // Use inline string (t="inlineStr") to avoid modifying sharedStrings.xml
+      cellEl.setAttribute('t', 'inlineStr');
+      const isEl = doc.createElementNS(ns, 'is');
+      const tEl = doc.createElementNS(ns, 't');
+      tEl.textContent = op.value;
+      isEl.appendChild(tEl);
+      cellEl.appendChild(isEl);
+    } else if (op.type === 'number') {
+      cellEl.removeAttribute('t'); // numbers have no t attribute
+      const vEl = doc.createElementNS(ns, 'v');
+      vEl.textContent = String(op.value);
+      cellEl.appendChild(vEl);
+    }
+  }
+
+  // Serialize back to string
+  const serializer = new XMLSerializer();
+  return serializer.serializeToString(doc);
+}
+
 async function buildVoucherExcelBlob() {
-  if (!window.XLSX) throw new Error('Excel export is unavailable in this browser session.');
+  if (!window.JSZip) throw new Error('Excel export is unavailable in this browser session.');
   if (typeof onSameAgentChange === 'function' && voucherWorkbookSelectValue('v-same-agent') === 'yes') onSameAgentChange();
   if (typeof syncVoucherDealAliases === 'function') syncVoucherDealAliases();
   if (typeof calcOutsideTotals === 'function') calcOutsideTotals();
   if (typeof calcCommSummary === 'function') calcCommSummary();
 
+  // Reset cell operations map
+  _voucherCellOps = {};
+
+  // Collect all cell operations (voucherWorkbookApplyForm populates _voucherCellOps)
+  voucherWorkbookApplyForm(null);
+
+  // Load the template as a ZIP
   const response = await fetch(VOUCHER_EXCEL_TEMPLATE_URL, { credentials: 'same-origin' });
   if (!response.ok) throw new Error('Unable to load the voucher template.');
   const templateBuffer = await response.arrayBuffer();
-  const workbook = XLSX.read(templateBuffer, {
-    type: 'array',
-    bookVBA: true,
-    cellDates: true,
-    cellStyles: true,
-    sheetStubs: true,
-  });
-  const firstSheetName = workbook.SheetNames[0];
-  if (!firstSheetName || !workbook.Sheets[firstSheetName]) throw new Error('Voucher template is missing its worksheet.');
+  const zip = await JSZip.loadAsync(templateBuffer);
 
-  voucherWorkbookApplyForm(workbook.Sheets[firstSheetName]);
-  const output = XLSX.write(workbook, {
-    type: 'array',
-    bookType: 'xlsm',
-    bookVBA: true,
-    cellDates: true,
-    cellStyles: true,
+  // Find the main worksheet (usually xl/worksheets/sheet1.xml)
+  const sheetPath = 'xl/worksheets/sheet1.xml';
+  const sheetFile = zip.file(sheetPath);
+  if (!sheetFile) throw new Error('Voucher template is missing its worksheet.');
+
+  // Read and modify the sheet XML
+  const sheetXml = await sheetFile.async('string');
+  const modifiedXml = _applyOpsToSheetXml(sheetXml, _voucherCellOps);
+
+  // Write the modified XML back into the ZIP
+  zip.file(sheetPath, modifiedXml);
+
+  // Generate the output blob
+  const output = await zip.generateAsync({
+    type: 'blob',
+    mimeType: VOUCHER_EXCEL_MIME,
+    compression: 'DEFLATE',
+    compressionOptions: { level: 6 },
   });
+
   return {
     filename: voucherWorkbookDownloadName(),
-    blob: new Blob([output], { type: VOUCHER_EXCEL_MIME }),
+    blob: output,
   };
 }
 
@@ -8278,25 +8367,8 @@ function initCompReportRangeInputs() {
     return `${m[2]}/${m[3]}/${m[1]}`;
   }
 
-  ['cr-date-from', 'cr-date-to'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('blur', () => {
-      const v = String(el.value || '').trim();
-      if (!v) return;
-      if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
-        const out = fmtIsoToMdy(v);
-        if (out) el.value = out;
-        return;
-      }
-      const m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-      if (!m) return;
-      const mm = String(Number(m[1])).padStart(2, '0');
-      const dd = String(Number(m[2])).padStart(2, '0');
-      const yyyy = m[3];
-      el.value = `${mm}/${dd}/${yyyy}`;
-    });
-  });
+  // Date inputs use type="date" which handles formatting natively.
+  // No blur reformatting needed (it would clear the value on type="date" inputs).
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
