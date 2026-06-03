@@ -376,36 +376,67 @@ export async function invokeLLMWithFile(params: {
     ],
   };
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${ENV.geminiApiKey}`,
-    },
-    body: JSON.stringify(payload),
-  });
+  const bodyStr = JSON.stringify(payload);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Gemini OpenAI-compat file API failed: ${response.status} ${response.statusText} – ${errorText.slice(0, 800)}`
-    );
+  // Retry logic for transient errors (503 overload, 429 rate limit, 500 server error)
+  const MAX_RETRIES = 3;
+  const RETRYABLE_STATUS_CODES = new Set([429, 500, 503]);
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${ENV.geminiApiKey}`,
+      },
+      body: bodyStr,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      // Retry on transient errors
+      if (RETRYABLE_STATUS_CODES.has(response.status) && attempt < MAX_RETRIES) {
+        const backoffMs = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 500, 16000);
+        console.warn(
+          `[invokeLLMWithFile] Gemini returned ${response.status}, retrying in ${Math.round(backoffMs)}ms (attempt ${attempt + 1}/${MAX_RETRIES})...`
+        );
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        continue;
+      }
+
+      throw new Error(
+        `Gemini OpenAI-compat file API failed: ${response.status} ${response.statusText} – ${errorText.slice(0, 800)}`
+      );
+    }
+
+    const data = (await response.json()) as {
+      choices?: Array<{
+        message?: { content?: string };
+        finish_reason?: string;
+      }>;
+      error?: { message?: string };
+    };
+
+    if (data.error?.message) {
+      // Some errors come back as 200 with an error body — retry those too
+      if (attempt < MAX_RETRIES && /overloaded|capacity|unavailable/i.test(data.error.message)) {
+        const backoffMs = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 500, 16000);
+        console.warn(
+          `[invokeLLMWithFile] Gemini returned error in body: "${data.error.message}", retrying in ${Math.round(backoffMs)}ms...`
+        );
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        continue;
+      }
+      throw new Error(`Gemini API error: ${data.error.message}`);
+    }
+
+    const text = data.choices?.[0]?.message?.content ?? "";
+    return text;
   }
 
-  const data = (await response.json()) as {
-    choices?: Array<{
-      message?: { content?: string };
-      finish_reason?: string;
-    }>;
-    error?: { message?: string };
-  };
-
-  if (data.error?.message) {
-    throw new Error(`Gemini API error: ${data.error.message}`);
-  }
-
-  const text = data.choices?.[0]?.message?.content ?? "";
-  return text;
+  // Should not reach here, but just in case
+  throw new Error("invokeLLMWithFile: exhausted all retries without a response");
 }
 
 /**
@@ -486,34 +517,64 @@ export async function invokeClaudeWithFile(params: {
     ],
   };
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": ENV.anthropicApiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify(body),
-  });
+  const bodyStr = JSON.stringify(body);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Claude API failed: ${response.status} ${response.statusText} – ${errorText.slice(0, 800)}`
-    );
+  // Retry logic for transient errors (529 overloaded, 429 rate limit, 500 server error)
+  const MAX_RETRIES = 3;
+  const RETRYABLE_STATUS_CODES = new Set([429, 500, 529]);
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": ENV.anthropicApiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: bodyStr,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      // Retry on transient errors
+      if (RETRYABLE_STATUS_CODES.has(response.status) && attempt < MAX_RETRIES) {
+        const backoffMs = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 500, 16000);
+        console.warn(
+          `[invokeClaudeWithFile] Claude returned ${response.status}, retrying in ${Math.round(backoffMs)}ms (attempt ${attempt + 1}/${MAX_RETRIES})...`
+        );
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        continue;
+      }
+
+      throw new Error(
+        `Claude API failed: ${response.status} ${response.statusText} – ${errorText.slice(0, 800)}`
+      );
+    }
+
+    const data = (await response.json()) as {
+      content?: Array<{ type: string; text?: string }>;
+      error?: { message?: string };
+    };
+
+    if (data.error?.message) {
+      if (attempt < MAX_RETRIES && /overloaded|capacity/i.test(data.error.message)) {
+        const backoffMs = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 500, 16000);
+        console.warn(
+          `[invokeClaudeWithFile] Claude returned error in body: "${data.error.message}", retrying in ${Math.round(backoffMs)}ms...`
+        );
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        continue;
+      }
+      throw new Error(`Claude API error: ${data.error.message}`);
+    }
+
+    const text = data.content?.find(b => b.type === "text")?.text ?? "";
+    return text;
   }
 
-  const data = (await response.json()) as {
-    content?: Array<{ type: string; text?: string }>;
-    error?: { message?: string };
-  };
-
-  if (data.error?.message) {
-    throw new Error(`Claude API error: ${data.error.message}`);
-  }
-
-  const text = data.content?.find(b => b.type === "text")?.text ?? "";
-  return text;
+  // Should not reach here, but just in case
+  throw new Error("invokeClaudeWithFile: exhausted all retries without a response");
 }
 
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
