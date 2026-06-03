@@ -1437,8 +1437,28 @@ Return ONLY valid JSON. No markdown fences, no explanation.`;
     return extractedPdfText;
   };
 
-  if (isGeminiDirectAvailable()) {
+  // ── Primary: Claude (most accurate for document extraction) ──
+  if (isClaudeFallbackAvailable()) {
     try {
+      console.info("[aiAssist] Using Claude as primary extractor for combined extraction...");
+      raw = await invokeClaudeWithFile({
+        fileBuffer: fetched.fileBuffer,
+        mimeType: params.mimeType,
+        systemPrompt: params.systemPrompt,
+        userPrompt: promptText,
+      });
+    } catch (claudeErr: unknown) {
+      console.error(
+        "[aiAssist] Claude primary extraction failed:",
+        claudeErr instanceof Error ? claudeErr.message : String(claudeErr)
+      );
+    }
+  }
+
+  // ── Fallback 1: Gemini with native PDF support ──
+  if (!raw && isGeminiDirectAvailable()) {
+    try {
+      console.info("[aiAssist] Claude unavailable/failed, trying Gemini for combined extraction...");
       raw = await invokeLLMWithFile({
         fileBuffer: fetched.fileBuffer,
         mimeType: params.mimeType,
@@ -1448,54 +1468,34 @@ Return ONLY valid JSON. No markdown fences, no explanation.`;
       });
     } catch (aiErr: unknown) {
       console.error(
-        "[aiAssist] AI combined document invocation failed, falling back to text extraction:",
+        "[aiAssist] Gemini fallback also failed:",
         aiErr instanceof Error ? aiErr.message : String(aiErr),
         aiErr instanceof Error ? aiErr.stack : ""
       );
     }
   }
 
+  // ── Fallback 2: text extraction + OpenAI-compatible endpoint ──
   if (!raw) {
-    // Try Claude fallback first if available (better at reading image-heavy PDFs)
-    if (isClaudeFallbackAvailable()) {
-      try {
-        console.info("[aiAssist] Gemini failed, trying Claude fallback for combined extraction...");
-        raw = await invokeClaudeWithFile({
-          fileBuffer: fetched.fileBuffer,
-          mimeType: params.mimeType,
-          systemPrompt: params.systemPrompt,
-          userPrompt: promptText,
-        });
-      } catch (claudeErr: unknown) {
-        console.warn(
-          "[aiAssist] Claude fallback also failed:",
-          claudeErr instanceof Error ? claudeErr.message : String(claudeErr)
-        );
-      }
-    }
-
-    // Final fallback: text extraction + OpenAI-compatible endpoint
-    if (!raw) {
-      await ensureExtractedPdfText();
-      const userContent = await buildDocumentUserContent(
-        fetched.fileBuffer,
-        params.mimeType,
-        promptText,
-        extractedPdfText
-      );
-      const response = await invokeLLM({
-        messages: [
-          { role: "system", content: params.systemPrompt },
-          { role: "user", content: userContent as any[] },
-        ],
-        response_format: {
-          type: "json_schema",
-          json_schema: outputSchema,
-        },
-      });
-      const content = response.choices?.[0]?.message?.content;
-      raw = typeof content === "string" ? content : "";
-    }
+    await ensureExtractedPdfText();
+    const userContent = await buildDocumentUserContent(
+      fetched.fileBuffer,
+      params.mimeType,
+      promptText,
+      extractedPdfText
+    );
+    const response = await invokeLLM({
+      messages: [
+        { role: "system", content: params.systemPrompt },
+        { role: "user", content: userContent as any[] },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: outputSchema,
+      },
+    });
+    const content = response.choices?.[0]?.message?.content;
+    raw = typeof content === "string" ? content : "";
   }
 
   const parsed = parseJsonObject(raw) as Record<string, unknown>;
@@ -1517,31 +1517,32 @@ Return ONLY valid JSON. No markdown fences, no explanation.`;
   const fieldCount = Object.keys(fields).length;
   const needsFallback = !hasCriticalFields || fieldCount < 3;
 
-  if (needsFallback && isClaudeFallbackAvailable()) {
+  if (needsFallback && isGeminiDirectAvailable()) {
     try {
-      console.info(`[aiAssist] Extraction quality check failed (fields: ${fieldCount}, hasCritical: ${hasCriticalFields}). Trying Claude for better results...`);
-      const claudeRaw = await invokeClaudeWithFile({
+      console.info(`[aiAssist] Extraction quality check failed (fields: ${fieldCount}, hasCritical: ${hasCriticalFields}). Trying Gemini as secondary...`);
+      const geminiRaw = await invokeLLMWithFile({
         fileBuffer: fetched.fileBuffer,
         mimeType: params.mimeType,
         systemPrompt: params.systemPrompt,
         userPrompt: promptText,
+        outputSchema,
       });
-      const claudeParsed = parseJsonObject(claudeRaw) as Record<string, unknown>;
-      const claudeFieldSource =
-        claudeParsed.fields && typeof claudeParsed.fields === "object" && !Array.isArray(claudeParsed.fields)
-          ? (claudeParsed.fields as Record<string, unknown>)
-          : claudeParsed;
-      const claudeFields = sanitizeAiFields(params.tab, claudeFieldSource);
-      const claudeHasCritical = Boolean(
-        claudeFields.address || claudeFields.city || claudeFields.propertyAddress
+      const geminiParsed = parseJsonObject(geminiRaw) as Record<string, unknown>;
+      const geminiFieldSource =
+        geminiParsed.fields && typeof geminiParsed.fields === "object" && !Array.isArray(geminiParsed.fields)
+          ? (geminiParsed.fields as Record<string, unknown>)
+          : geminiParsed;
+      const geminiFields = sanitizeAiFields(params.tab, geminiFieldSource);
+      const geminiHasCritical = Boolean(
+        geminiFields.address || geminiFields.city || geminiFields.propertyAddress
       );
-      // Use Claude's result if it has critical fields or more total fields
-      if (claudeHasCritical || Object.keys(claudeFields).length > fieldCount) {
-        console.info(`[aiAssist] Claude returned ${Object.keys(claudeFields).length} fields (hasCritical: ${claudeHasCritical}). Using Claude result.`);
-        fields = claudeFields;
+      // Use Gemini's result if it has critical fields or more total fields
+      if (geminiHasCritical || Object.keys(geminiFields).length > fieldCount) {
+        console.info(`[aiAssist] Gemini returned ${Object.keys(geminiFields).length} fields (hasCritical: ${geminiHasCritical}). Using Gemini result.`);
+        fields = geminiFields;
       }
-    } catch (claudeErr: unknown) {
-      console.warn("[aiAssist] Claude fallback failed:", claudeErr instanceof Error ? claudeErr.message : String(claudeErr));
+    } catch (geminiErr: unknown) {
+      console.warn("[aiAssist] Gemini quality fallback failed:", geminiErr instanceof Error ? geminiErr.message : String(geminiErr));
     }
   } else if (fieldCount > 0) {
     console.info(`[aiAssist] Primary extraction succeeded: ${fieldCount} fields, critical fields present.`);

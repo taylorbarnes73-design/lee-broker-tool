@@ -1,6 +1,6 @@
 import { z } from "zod/v4";
 import { publicProcedure, router } from "../_core/trpc";
-import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable, type Message } from "../_core/llm";
+import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable, isClaudeFallbackAvailable, invokeClaudeWithFile, type Message } from "../_core/llm";
 import { execSync } from "child_process";
 import { ENV } from "../_core/env";
 import { getSetting } from "../settings/getSetting";
@@ -257,8 +257,28 @@ Return JSON with these fields (omit any that are blank):
 
         let rawJson: string;
 
-        // ── Preferred path: native AI inline PDF (no text extraction) ──
-        if (isGeminiDirectAvailable()) {
+        // ── Primary: Claude (most accurate for document extraction) ──
+        if (isClaudeFallbackAvailable()) {
+          try {
+            rawJson = await invokeClaudeWithFile({
+              fileBuffer: pdfBuffer,
+              mimeType: "application/pdf",
+              systemPrompt: systemPrompt,
+              userPrompt: userPrompt,
+            });
+          } catch (claudeErr: unknown) {
+            console.warn(
+              "[contracts] Claude primary extraction failed, trying Gemini:",
+              claudeErr instanceof Error ? claudeErr.message : String(claudeErr)
+            );
+            rawJson = "";
+          }
+        } else {
+          rawJson = "";
+        }
+
+        // ── Fallback 1: Gemini with native PDF support ──
+        if (!rawJson && isGeminiDirectAvailable()) {
           try {
             rawJson = await invokeLLMWithFile({
               fileBuffer: pdfBuffer,
@@ -268,13 +288,11 @@ Return JSON with these fields (omit any that are blank):
             });
           } catch (aiErr: unknown) {
             console.warn(
-              "[contracts] AI native PDF invocation failed, falling back to text extraction:",
+              "[contracts] Gemini fallback also failed, falling back to text extraction:",
               aiErr instanceof Error ? aiErr.message : String(aiErr)
             );
             rawJson = "";
           }
-        } else {
-          rawJson = "";
         }
 
         // ── Fallback path: extract text then call via the regular LLM ──
