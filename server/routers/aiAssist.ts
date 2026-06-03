@@ -1392,9 +1392,10 @@ Return ONLY valid JSON. No markdown fences, no explanation.`;
         outputSchema,
       });
     } catch (aiErr: unknown) {
-      console.warn(
+      console.error(
         "[aiAssist] AI combined document invocation failed, falling back to text extraction:",
-        aiErr instanceof Error ? aiErr.message : String(aiErr)
+        aiErr instanceof Error ? aiErr.message : String(aiErr),
+        aiErr instanceof Error ? aiErr.stack : ""
       );
     }
   }
@@ -1443,11 +1444,15 @@ Return ONLY valid JSON. No markdown fences, no explanation.`;
   }
 
   const parsed = parseJsonObject(raw) as Record<string, unknown>;
+  console.error(`[aiAssist DEBUG] raw response length: ${raw.length}, parsed keys: ${Object.keys(parsed).join(", ")}`);
+  if (parsed.fields) console.error(`[aiAssist DEBUG] parsed.fields keys: ${Object.keys(parsed.fields as object).join(", ")}`);
   const fieldSource =
     parsed.fields && typeof parsed.fields === "object" && !Array.isArray(parsed.fields)
       ? (parsed.fields as Record<string, unknown>)
       : parsed;
+  console.error(`[aiAssist DEBUG] fieldSource keys: ${Object.keys(fieldSource).join(", ")}`);
   let fields = sanitizeAiFields(params.tab, fieldSource);
+  console.error(`[aiAssist DEBUG] sanitized fields (${Object.keys(fields).length}): ${JSON.stringify(fields)}`);
 
   // If primary extraction returned few fields, try Claude as a second opinion
   if (Object.keys(fields).length < 3 && isClaudeFallbackAvailable() && raw) {
