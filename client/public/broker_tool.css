@@ -3417,7 +3417,6 @@ body.admin-mode #admin-view {
 
   /* Type */
   --font-sans: 'Manrope', 'Avenir Next', Arial, Tahoma, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-serif: 'Cormorant Garamond', Georgia, serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
 
   /* Radii + shadows + motion */
@@ -3920,9 +3919,9 @@ body {
   margin-bottom: 20px;
 }
 .tool-sign-in-title {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 28px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
   margin-bottom: 6px;
 }
@@ -5572,7 +5571,6 @@ a:hover { text-decoration: none; }
   --ink-0: #FFFFFF;
 
   --font-sans: 'Manrope', 'Avenir Next', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-serif: 'Cormorant Garamond', Georgia, serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
 
   --r-4: 4px;
