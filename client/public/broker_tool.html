@@ -571,7 +571,7 @@
       <h1 class="page-h1">Sign Request</h1>
     </div>
     <div class="page-head-right">
-      <div class="page-meta-chip"><span class="dot"></span>Step-by-step workflow</div>
+      <div class="page-meta-chip"><span class="dot"></span>All sections on one page</div>
     </div>
   </div>
   <div class="tip pane-intro-tip">Complete each step. Fields marked <span class="required-mark">*</span> are required.</div>
@@ -3065,14 +3065,12 @@ function switchTab(name) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   window.scrollTo(0, 0);
-  // Close mobile sidebar on nav
+  // Close mobile sidebar + dimming overlay on nav (avoid overlay trapping clicks)
   const sidebar = document.getElementById('broker-sidebar');
   const overlay = document.getElementById('broker-sidebar-overlay');
-  if (sidebar && sidebar.classList.contains('open')) {
-    sidebar.classList.remove('open');
-    if (overlay) overlay.classList.remove('active');
-    document.body.style.overflow = '';
-  }
+  if (sidebar) sidebar.classList.remove('open');
+  if (overlay) overlay.classList.remove('active');
+  document.body.style.overflow = '';
   if (name === 'queue') {
     void refreshBrokerQueue();
   }
@@ -3082,8 +3080,7 @@ function switchTab(name) {
   if (name === 'drafts') {
     renderDraftsPanel();
   }
-  const flow = bootstrapStepFlowFor(name);
-  if (flow && typeof flow.go === 'function') flow.go(0);
+  bootstrapStepFlowFor(name);
   syncBrokerToolUrlTab(name);
   if (typeof renderHelpPanel === 'function') renderHelpPanel();
 }
@@ -3098,36 +3095,33 @@ window.addEventListener('hashchange', function () {
   if (curKey !== next) switchTab(next);
 });
 
-// Ensure step flows are initialized after the first view of each tab
+/** Show every section on listing/sign (same continuous scroll as voucher). */
+function enableContinuousBrokerLayout(mainId) {
+  const main = document.getElementById(mainId);
+  if (!main) return;
+  main.classList.remove('step-flow');
+  main.classList.add('broker-continuous-layout');
+  main.querySelectorAll('.step-summary').forEach(el => el.remove());
+  main.querySelectorAll('.step-nav').forEach(el => el.remove());
+  main.querySelectorAll('.card').forEach(card => {
+    card.classList.remove('step--current', 'step--done');
+    card.style.display = '';
+  });
+  const stepper = main.querySelector('.stepper[data-stepper-for]');
+  if (stepper) stepper.classList.add('is-hidden');
+}
+
+// Ensure each tab uses the intended layout when first opened
 function bootstrapStepFlowFor(name) {
-  if (name === 'voucher') {
-    // Voucher uses continuous layout (no stepper wizard)
+  if (name === 'listing') {
+    enableContinuousBrokerLayout('listing-main');
     return null;
   }
-  if (name === 'listing') {
-    if (!window.__stepFlows['listing-main']) {
-      initStepFlow({
-        mainId: 'listing-main',
-        stepAttr: 'data-lstep',
-        previewFor: listingStepPreview,
-        canProceed: canProceedListingStep,
-        blockingMessage: getListingStepBlockingMessage,
-        onStep: () => { try { syncListingGlance(); } catch(e) {} }
-      });
-    }
-    return window.__stepFlows['listing-main'] || null;
-  }
   if (name === 'sign') {
-    if (!window.__stepFlows['sign-main']) {
-      initStepFlow({
-        mainId: 'sign-main',
-        stepAttr: 'data-sstep',
-        previewFor: signStepPreview,
-        onStep: () => { try { syncSignGlance(); } catch(e) {} }
-      });
-    }
-    return window.__stepFlows['sign-main'] || null;
+    enableContinuousBrokerLayout('sign-main');
+    return null;
   }
+  // voucher, comp, comp-reports, queue, drafts: no step-flow controller
   return null;
 }
 

@@ -7295,6 +7295,23 @@ body.broker-active .sub-tab-bar {
   display: block;
 }
 
+/* Desktop: nav overlay is mobile-only — never dim the workspace */
+@media (min-width: 881px) {
+  .broker-sidebar-overlay,
+  .broker-sidebar-overlay.active {
+    display: none !important;
+  }
+}
+
+/* Listing/sign: continuous scroll (matches voucher — no one-step wizard) */
+.deal-main.broker-continuous-layout .stepper {
+  display: none !important;
+}
+.deal-main.broker-continuous-layout .card[data-lstep],
+.deal-main.broker-continuous-layout .card[data-sstep] {
+  display: block !important;
+}
+
 .broker-sidebar-close {
   display: none;
   position: absolute;
