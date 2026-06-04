@@ -98,6 +98,7 @@ const selectBar: CSSProperties = {
   background: "white",
   fontSize: 13,
   minWidth: 160,
+  maxWidth: "100%",
 };
 
 async function adminFetch<T>(

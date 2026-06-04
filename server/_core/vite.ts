@@ -96,10 +96,13 @@ export function serveStatic(app: Express) {
   );
 
   // React portal routes fall through to the SPA shell.
-  app.get(["/", "/portal", "/portal/*", "/login", "/404"], (_req, res) => {
-    res.setHeader("Cache-Control", "no-store");
-    res.sendFile("index.html", { root: distPath });
-  });
+  app.get(
+    ["/", "/portal", "/portal/*", "/dashboard", "/admin", "/admin/*", "/login", "/404"],
+    (_req, res) => {
+      res.setHeader("Cache-Control", "no-store");
+      res.sendFile("index.html", { root: distPath });
+    }
+  );
 
   // Legacy broker workflows still fall through to broker_tool.html.
   app.use("*", (_req, res) => {

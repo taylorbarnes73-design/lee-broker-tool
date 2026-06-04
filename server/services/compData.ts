@@ -588,8 +588,8 @@ export async function searchCompRows(params: {
     if (propertyTypeFilter) conditions.push(propertyTypeFilter);
     if (sfMin !== undefined) conditions.push(sql`CAST(JSON_UNQUOTE(JSON_EXTRACT(${leaseComps.rawPayload}, '$.leasedSqFt')) AS SIGNED) >= ${sfMin}`);
     if (sfMax !== undefined) conditions.push(sql`CAST(JSON_UNQUOTE(JSON_EXTRACT(${leaseComps.rawPayload}, '$.leasedSqFt')) AS SIGNED) <= ${sfMax}`);
-    if (dateFrom) conditions.push(gte(leaseComps.transactionDate, dateFrom));
-    if (dateTo) conditions.push(lte(leaseComps.transactionDate, dateTo));
+    if (dateFrom) conditions.push(sql`STR_TO_DATE(${leaseComps.transactionDate}, '%m/%d/%Y') >= STR_TO_DATE(${dateFrom}, '%Y-%m-%d')`);
+    if (dateTo) conditions.push(sql`STR_TO_DATE(${leaseComps.transactionDate}, '%m/%d/%Y') <= STR_TO_DATE(${dateTo}, '%Y-%m-%d')`);
 
     const whereClause = and(...conditions);
     const countRows = await db
@@ -640,8 +640,8 @@ export async function searchCompRows(params: {
   if (propertyTypeFilter) conditions.push(propertyTypeFilter);
   if (sfMin !== undefined) conditions.push(sql`CAST(JSON_UNQUOTE(JSON_EXTRACT(${saleComps.rawPayload}, '$.buildingSqFt')) AS SIGNED) >= ${sfMin}`);
   if (sfMax !== undefined) conditions.push(sql`CAST(JSON_UNQUOTE(JSON_EXTRACT(${saleComps.rawPayload}, '$.buildingSqFt')) AS SIGNED) <= ${sfMax}`);
-  if (dateFrom) conditions.push(gte(saleComps.transactionDate, dateFrom));
-  if (dateTo) conditions.push(lte(saleComps.transactionDate, dateTo));
+  if (dateFrom) conditions.push(sql`STR_TO_DATE(${saleComps.transactionDate}, '%m/%d/%Y') >= STR_TO_DATE(${dateFrom}, '%Y-%m-%d')`);
+  if (dateTo) conditions.push(sql`STR_TO_DATE(${saleComps.transactionDate}, '%m/%d/%Y') <= STR_TO_DATE(${dateTo}, '%Y-%m-%d')`);
 
   const whereClause = and(...conditions);
   const countRows = await db

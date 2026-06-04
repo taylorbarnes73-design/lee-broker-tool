@@ -82,7 +82,16 @@ export { Icon };
 /* Lee Broker Tool — Primitives: Button, Input, Select, Badge, Card, Chip */
 
 // ── Button ──
-function Button({ variant = 'primary', size = 'md', icon, iconRight, children, style, disabled, ...rest }) {
+function Button({ variant = 'primary', size = 'md', icon, iconRight, children, style, disabled, loading, ...rest }) {
+  const isDisabled = disabled || loading;
+  const spinnerEl = loading ? (
+    <span style={{
+      display: 'inline-block', width: 13, height: 13,
+      border: '2px solid currentColor', borderTopColor: 'transparent',
+      borderRadius: '50%', animation: 'btn-spin 0.65s linear infinite',
+      flexShrink: 0,
+    }} aria-hidden="true" />
+  ) : null;
   const sizes = {
     sm: { h: 32, px: 12, fs: 13, gap: 6 },
     md: { h: 38, px: 14, fs: 14, gap: 8 },
@@ -101,25 +110,25 @@ function Button({ variant = 'primary', size = 'md', icon, iconRight, children, s
   const [hover, setHover] = React.useState(false);
   return (
     <button
-      disabled={disabled}
+      disabled={isDisabled}
       onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
       style={{
         display: 'inline-flex', alignItems: 'center', gap: s.gap,
         height: s.h, padding: `0 ${s.px}px`,
         fontSize: s.fs, fontWeight: 600, letterSpacing: '-0.005em',
-        background: v.gradient && !disabled ? 'var(--ai-gradient)' : (hover && !disabled ? v.hover : v.bg),
+        background: v.gradient && !isDisabled ? 'var(--ai-gradient)' : (hover && !isDisabled ? v.hover : v.bg),
         color: v.color,
         border: `1px solid ${v.border}`,
         borderRadius: 'var(--r-6)',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.5 : 1,
+        cursor: isDisabled ? 'not-allowed' : 'pointer',
+        opacity: isDisabled ? 0.5 : 1,
         transition: 'background .12s var(--ease-out), box-shadow .12s, transform .06s',
-        boxShadow: variant === 'primary' && !disabled ? '0 1px 0 rgba(0,0,0,.04), inset 0 1px 0 rgba(255,255,255,.08)' : 'none',
+        boxShadow: variant === 'primary' && !isDisabled ? '0 1px 0 rgba(0,0,0,.04), inset 0 1px 0 rgba(255,255,255,.08)' : 'none',
         ...style,
       }}
       {...rest}
     >
-      {icon}
+      {loading ? spinnerEl : icon}
       {children}
       {iconRight}
     </button>

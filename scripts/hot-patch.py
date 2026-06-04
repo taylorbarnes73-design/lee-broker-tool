@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage broker_tool.html/css to S3 and pull onto the prod EC2 instance via SSM."""
+"""Stage broker_tool.html/css/features_patch.js to S3 and pull onto the prod EC2 instance via SSM."""
 import json, pathlib, shlex, subprocess, sys, time
 
 REGION = "us-east-2"
@@ -19,21 +19,24 @@ def presign(key: str) -> str:
 
 def main():
     # Always refresh S3 objects with the latest local content
-    run(["aws", "s3", "cp", "client/public/broker_tool.html", f"s3://{BUCKET}/{KEY_PREFIX}/broker_tool.html", "--region", REGION])
-    run(["aws", "s3", "cp", "client/public/broker_tool.css",  f"s3://{BUCKET}/{KEY_PREFIX}/broker_tool.css",  "--region", REGION])
-    html_url = presign(f"{KEY_PREFIX}/broker_tool.html")
-    css_url = presign(f"{KEY_PREFIX}/broker_tool.css")
+    run(["aws", "s3", "cp", "client/public/broker_tool.html",    f"s3://{BUCKET}/{KEY_PREFIX}/broker_tool.html",    "--region", REGION])
+    run(["aws", "s3", "cp", "client/public/broker_tool.css",     f"s3://{BUCKET}/{KEY_PREFIX}/broker_tool.css",     "--region", REGION])
+    run(["aws", "s3", "cp", "client/public/features_patch.js",   f"s3://{BUCKET}/{KEY_PREFIX}/features_patch.js",   "--region", REGION])
+    html_url  = presign(f"{KEY_PREFIX}/broker_tool.html")
+    css_url   = presign(f"{KEY_PREFIX}/broker_tool.css")
+    patch_url = presign(f"{KEY_PREFIX}/features_patch.js")
     cmds = [
         "set -e",
         f"curl -fsSL -o /opt/lee-broker-tool/dist/public/broker_tool.html {shlex.quote(html_url)}",
         f"curl -fsSL -o /opt/lee-broker-tool/dist/public/broker_tool.css {shlex.quote(css_url)}",
-        "chown root:root /opt/lee-broker-tool/dist/public/broker_tool.html /opt/lee-broker-tool/dist/public/broker_tool.css",
-        "chmod 644 /opt/lee-broker-tool/dist/public/broker_tool.html /opt/lee-broker-tool/dist/public/broker_tool.css",
+        f"curl -fsSL -o /opt/lee-broker-tool/dist/public/features_patch.js {shlex.quote(patch_url)}",
+        "chown root:root /opt/lee-broker-tool/dist/public/broker_tool.html /opt/lee-broker-tool/dist/public/broker_tool.css /opt/lee-broker-tool/dist/public/features_patch.js",
+        "chmod 644 /opt/lee-broker-tool/dist/public/broker_tool.html /opt/lee-broker-tool/dist/public/broker_tool.css /opt/lee-broker-tool/dist/public/features_patch.js",
         "systemctl restart lee-broker-tool",
         "sleep 2",
         "systemctl is-active lee-broker-tool",
-        "md5sum /opt/lee-broker-tool/dist/public/broker_tool.html /opt/lee-broker-tool/dist/public/broker_tool.css",
-        "wc -c /opt/lee-broker-tool/dist/public/broker_tool.html /opt/lee-broker-tool/dist/public/broker_tool.css",
+        "md5sum /opt/lee-broker-tool/dist/public/broker_tool.html /opt/lee-broker-tool/dist/public/broker_tool.css /opt/lee-broker-tool/dist/public/features_patch.js",
+        "wc -c /opt/lee-broker-tool/dist/public/broker_tool.html /opt/lee-broker-tool/dist/public/broker_tool.css /opt/lee-broker-tool/dist/public/features_patch.js",
         "echo __DONE__",
     ]
     params = {"commands": cmds}

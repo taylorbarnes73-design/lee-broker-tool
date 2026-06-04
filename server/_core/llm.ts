@@ -210,6 +210,17 @@ const normalizeToolChoice = (
 };
 
 /**
+ * Returns true when the model name indicates an OpenAI o-series reasoning model
+ * (o1, o3, o4-mini, etc.). These models:
+ *   - Use `max_completion_tokens` instead of `max_tokens`
+ *   - Do not support `response_format: json_schema` (use json_object or prompt-based JSON)
+ *   - Do not support `system` role messages (use `developer` role instead)
+ */
+function isOSeriesModel(model: string): boolean {
+  return /^o\d/i.test(model.trim());
+}
+
+/**
  * Choose an OpenAI-compatible LLM backend.
  *   1. If both BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY are set,
  *      use the Forge proxy.
@@ -305,11 +316,12 @@ export function isGeminiDirectAvailable(): boolean {
 }
 
 /**
- * Invoke the native AI generateContent API with an inline file (PDF or image).
+ * Invoke Gemini via the OpenAI-compatible endpoint with an inline file (PDF or image).
  *
- * Unlike the OpenAI-compatible endpoint, the native API accepts PDFs as inline base64
- * data — meaning the AI reads the document directly rather than relying on pre-extracted
- * text. This produces significantly better results for scanned or form-heavy PDFs.
+ * Sends the file as a base64 data URL in an image_url content part, which the
+ * Gemini OpenAI-compatible endpoint handles for PDFs and images alike.
+ * This approach is more reliable than the native generateContent API for
+ * structured JSON extraction.
  *
  * Falls back to the regular `invokeLLM` path when GEMINI_API_KEY is not set.
  */
@@ -321,7 +333,7 @@ export async function invokeLLMWithFile(params: {
   /** Optional JSON Schema — when provided the AI will return structured JSON. */
   outputSchema?: OutputSchema;
 }): Promise<string> {
-  const { fileBuffer, mimeType, systemPrompt, userPrompt, outputSchema } = params;
+  const { fileBuffer, mimeType, systemPrompt, userPrompt } = params;
 
   if (!ENV.geminiApiKey?.trim()) {
     throw new Error(
@@ -330,64 +342,244 @@ export async function invokeLLMWithFile(params: {
   }
 
   const model = (ENV.geminiModel || "gemini-2.5-flash").trim();
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${ENV.geminiApiKey}`;
+  const base64Data = fileBuffer.toString("base64");
+  const dataUrl = `data:${mimeType};base64,${base64Data}`;
 
-  const generationConfig: Record<string, unknown> = {
-    maxOutputTokens: 4096,
-  };
+  // Use the OpenAI-compatible Gemini endpoint
+  const url = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 
-  if (outputSchema) {
-    generationConfig.responseMimeType = "application/json";
-    // responseSchema follows a subset of JSON Schema; supply the inner schema object
-    generationConfig.responseSchema = outputSchema.schema;
-  }
-
-  const body = {
-    contents: [
+  const payload = {
+    model,
+    max_tokens: 8192,
+    temperature: 0,
+    response_format: { type: "json_object" as const },
+    messages: [
+      {
+        role: "system",
+        content: systemPrompt,
+      },
       {
         role: "user",
-        parts: [
+        content: [
           {
-            inlineData: {
-              mimeType,
-              data: fileBuffer.toString("base64"),
+            type: "image_url",
+            image_url: {
+              url: dataUrl,
             },
           },
-          { text: userPrompt },
+          {
+            type: "text",
+            text: userPrompt,
+          },
         ],
       },
     ],
-    systemInstruction: {
-      parts: [{ text: systemPrompt }],
-    },
-    generationConfig,
   };
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  const bodyStr = JSON.stringify(payload);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `AI native file API failed: ${response.status} ${response.statusText} – ${errorText.slice(0, 500)}`
-    );
+  // Retry logic for transient errors (503 overload, 429 rate limit, 500 server error)
+  const MAX_RETRIES = 3;
+  const RETRYABLE_STATUS_CODES = new Set([429, 500, 503]);
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${ENV.geminiApiKey}`,
+      },
+      body: bodyStr,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      // Retry on transient errors
+      if (RETRYABLE_STATUS_CODES.has(response.status) && attempt < MAX_RETRIES) {
+        const backoffMs = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 500, 16000);
+        console.warn(
+          `[invokeLLMWithFile] Gemini returned ${response.status}, retrying in ${Math.round(backoffMs)}ms (attempt ${attempt + 1}/${MAX_RETRIES})...`
+        );
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        continue;
+      }
+
+      throw new Error(
+        `Gemini OpenAI-compat file API failed: ${response.status} ${response.statusText} – ${errorText.slice(0, 800)}`
+      );
+    }
+
+    const data = (await response.json()) as {
+      choices?: Array<{
+        message?: { content?: string };
+        finish_reason?: string;
+      }>;
+      error?: { message?: string };
+    };
+
+    if (data.error?.message) {
+      // Some errors come back as 200 with an error body — retry those too
+      if (attempt < MAX_RETRIES && /overloaded|capacity|unavailable/i.test(data.error.message)) {
+        const backoffMs = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 500, 16000);
+        console.warn(
+          `[invokeLLMWithFile] Gemini returned error in body: "${data.error.message}", retrying in ${Math.round(backoffMs)}ms...`
+        );
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        continue;
+      }
+      throw new Error(`Gemini API error: ${data.error.message}`);
+    }
+
+    const text = data.choices?.[0]?.message?.content ?? "";
+    return text;
   }
 
-  const data = (await response.json()) as {
-    candidates?: Array<{
-      content?: { parts?: Array<{ text?: string }> };
-      finishReason?: string;
-    }>;
+  // Should not reach here, but just in case
+  throw new Error("invokeLLMWithFile: exhausted all retries without a response");
+}
+
+/**
+ * Recursively remove `additionalProperties` keys from a JSON Schema object.
+ * Gemini's responseSchema does not support this keyword and will return a 400 error.
+ */
+function stripAdditionalProperties(schema: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(schema)) {
+    if (key === "additionalProperties") continue;
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      result[key] = stripAdditionalProperties(value as Record<string, unknown>);
+    } else if (Array.isArray(value)) {
+      result[key] = value.map(item =>
+        item && typeof item === "object" && !Array.isArray(item)
+          ? stripAdditionalProperties(item as Record<string, unknown>)
+          : item
+      );
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
+/**
+ * Returns true when an Anthropic API key is configured for Claude fallback.
+ */
+export function isClaudeFallbackAvailable(): boolean {
+  return Boolean(ENV.anthropicApiKey?.trim());
+}
+
+/**
+ * Invoke Claude as a fallback for document extraction when Gemini returns poor results.
+ * Uses the Anthropic Messages API with base64 document content.
+ */
+export async function invokeClaudeWithFile(params: {
+  fileBuffer: Buffer;
+  mimeType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp";
+  systemPrompt: string;
+  userPrompt: string;
+}): Promise<string> {
+  const { fileBuffer, mimeType, systemPrompt, userPrompt } = params;
+
+  if (!ENV.anthropicApiKey?.trim()) {
+    throw new Error("invokeClaudeWithFile requires ANTHROPIC_API_KEY.");
+  }
+
+  const model = ENV.anthropicModel || "claude-sonnet-4-20250514";
+  const url = "https://api.anthropic.com/v1/messages";
+
+  // Claude uses a different content format for documents/images
+  const mediaType = mimeType === "application/pdf" ? "document" : "image";
+  const sourceType = "base64";
+
+  const body = {
+    model,
+    max_tokens: 8192,
+    system: systemPrompt,
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: mediaType,
+            source: {
+              type: sourceType,
+              media_type: mimeType,
+              data: fileBuffer.toString("base64"),
+            },
+          },
+          {
+            type: "text",
+            text: userPrompt,
+          },
+        ],
+      },
+    ],
   };
 
-  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+  const bodyStr = JSON.stringify(body);
+
+  // Retry logic for transient errors (529 overloaded, 429 rate limit, 500 server error)
+  const MAX_RETRIES = 3;
+  const RETRYABLE_STATUS_CODES = new Set([429, 500, 529]);
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": ENV.anthropicApiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: bodyStr,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      // Retry on transient errors
+      if (RETRYABLE_STATUS_CODES.has(response.status) && attempt < MAX_RETRIES) {
+        const backoffMs = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 500, 16000);
+        console.warn(
+          `[invokeClaudeWithFile] Claude returned ${response.status}, retrying in ${Math.round(backoffMs)}ms (attempt ${attempt + 1}/${MAX_RETRIES})...`
+        );
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        continue;
+      }
+
+      throw new Error(
+        `Claude API failed: ${response.status} ${response.statusText} – ${errorText.slice(0, 800)}`
+      );
+    }
+
+    const data = (await response.json()) as {
+      content?: Array<{ type: string; text?: string }>;
+      error?: { message?: string };
+    };
+
+    if (data.error?.message) {
+      if (attempt < MAX_RETRIES && /overloaded|capacity/i.test(data.error.message)) {
+        const backoffMs = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 500, 16000);
+        console.warn(
+          `[invokeClaudeWithFile] Claude returned error in body: "${data.error.message}", retrying in ${Math.round(backoffMs)}ms...`
+        );
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        continue;
+      }
+      throw new Error(`Claude API error: ${data.error.message}`);
+    }
+
+    const text = data.content?.find(b => b.type === "text")?.text ?? "";
+    return text;
+  }
+
+  // Should not reach here, but just in case
+  throw new Error("invokeClaudeWithFile: exhausted all retries without a response");
 }
 
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   const backend = resolveBackend();
+  const oSeries = isOSeriesModel(backend.model);
 
   const {
     messages,
@@ -400,9 +592,17 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     response_format,
   } = params;
 
+  // o-series models do not support the `system` role — convert to `developer`
+  const normalizedMessages = messages.map(normalizeMessage).map(msg => {
+    if (oSeries && msg.role === "system") {
+      return { ...msg, role: "developer" as const };
+    }
+    return msg;
+  });
+
   const payload: Record<string, unknown> = {
     model: backend.model,
-    messages: messages.map(normalizeMessage),
+    messages: normalizedMessages,
   };
 
   if (tools && tools.length > 0) {
@@ -417,14 +617,26 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.tool_choice = normalizedToolChoice;
   }
 
-  payload.max_tokens = params.maxTokens ?? params.max_tokens ?? 4096;
+  const tokenLimit = params.maxTokens ?? params.max_tokens ?? 4096;
+  if (oSeries) {
+    // o-series models use max_completion_tokens, not max_tokens
+    payload.max_completion_tokens = tokenLimit;
+  } else {
+    payload.max_tokens = tokenLimit;
+  }
 
-  const normalizedResponseFormat = normalizeResponseFormat({
+  let normalizedResponseFormat = normalizeResponseFormat({
     responseFormat,
     response_format,
     outputSchema,
     output_schema,
   });
+
+  // o-series models do not support json_schema response format — downgrade to json_object
+  // and rely on the system/developer prompt to enforce JSON structure
+  if (oSeries && normalizedResponseFormat?.type === "json_schema") {
+    normalizedResponseFormat = { type: "json_object" };
+  }
 
   if (normalizedResponseFormat) {
     payload.response_format = normalizedResponseFormat;
