@@ -455,8 +455,6 @@ submissionsApiRouter.post("/", async (req, res) => {
     req,
   });
 
-  const submissionId = (result as any).insertId ?? null;
-
   // Fire-and-forget notification to admin
   notifyAdminOfSubmission({
     formType: (parsed.data as any).formType,

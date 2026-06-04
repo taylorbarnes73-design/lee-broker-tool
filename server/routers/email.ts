@@ -414,8 +414,6 @@ async function recordSubmissionRequest(params: {
     req: params.req,
   });
 
-  const submissionId = (result as { insertId?: number }).insertId ?? null;
-
   // Fire-and-forget notification to admin
   notifyAdminOfSubmission({
     formType: params.formType,
