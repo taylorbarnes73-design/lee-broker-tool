@@ -682,7 +682,7 @@
 
 .admin-detail-tabs {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   gap: 8px;
   margin: 18px 0 14px;
   padding: 6px;
@@ -731,7 +731,7 @@
 
 .admin-detail-summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 10px;
 }
 
@@ -784,7 +784,7 @@
 
 .dealius-flow-panel {
   display: grid;
-  grid-template-columns: minmax(220px, 0.9fr) minmax(300px, 1.4fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
   align-items: center;
   padding: 16px;
@@ -811,7 +811,7 @@
 
 .dealius-flow-steps {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 8px;
 }
 
@@ -931,7 +931,7 @@
 
 .dealius-rule-stack {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 8px;
 }
 
@@ -973,7 +973,7 @@
 
 .dealius-form-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
 }
 
@@ -1164,7 +1164,7 @@
 
 .buildout-workflow {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 10px;
 }
 
@@ -1225,9 +1225,14 @@
 
 .buildout-main-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) clamp(240px, 28%, 320px);
   gap: 16px;
   align-items: start;
+}
+@media (max-width: 700px) {
+  .buildout-main-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .buildout-content-stack,
@@ -1358,7 +1363,7 @@
 
 .buildout-field-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
 }
 

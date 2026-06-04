@@ -437,9 +437,9 @@ export default function PortalSubmissionDetail() {
                       marginBottom: 14,
                       padding: 14,
                       borderRadius: 10,
-                      border: "1px solid #BCD6EF",
-                      background: "#E6F0FA",
-                      color: "#1F4F8B",
+                      border: "1px solid var(--ink-300)",
+                      background: "var(--ink-100)",
+                      color: "var(--ink-700)",
                     }}
                   >
                     <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>
@@ -451,7 +451,7 @@ export default function PortalSubmissionDetail() {
                       {item.sourceEmailWebLink && (
                         <>
                           {" · "}
-                          <a href={item.sourceEmailWebLink} target="_blank" rel="noreferrer" style={{ color: "#1F4F8B", fontWeight: 700 }}>
+                          <a href={item.sourceEmailWebLink} target="_blank" rel="noreferrer" style={{ color: "var(--ink-700)", fontWeight: 700 }}>
                             Open in Outlook ↗
                           </a>
                         </>

@@ -143,7 +143,7 @@ function ProgressPipeline({ status, queuePosition }: { status: string; queuePosi
           );
         })}
         {isRejected && (
-          <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 700, color: "#A1102F", marginBottom: 12 }}>Not accepted</span>
+          <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 700, color: "var(--err-700)", marginBottom: 12 }}>Not accepted</span>
         )}
       </div>
       <div style={{ fontSize: 12, color: "var(--ink-500)" }}>
