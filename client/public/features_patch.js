@@ -1106,6 +1106,287 @@ window.aiParseFromPaste = async function() {
   document.head.appendChild(style);
 })();
 
+// ── Feature: Upload Analyze Panel + Pre-Submit Preflight Check ──
+// Designed for accessibility: large text, plain language, explicit confirmation step.
+(function initUploadSafeguards() {
+  'use strict';
+
+  var _preflightCallback = null;
+  var _preflightFormType = null;
+
+  function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // ── File warning: detect suspiciously small or obviously wrong files ──
+  var SMALL_FILE_BYTES = 8 * 1024;
+  var SUSPICIOUS_PATTERNS = [/photo/i, /picture/i, /selfie/i, /screenshot/i, /\.heic$/i, /^img_\d+/i, /^dsc\d+/i, /^pic\d+/i];
+
+  function getSuspicionWarning(file) {
+    if (!file) return null;
+    if (file.size > 0 && file.size < SMALL_FILE_BYTES) {
+      return 'One of your files is very small (' + Math.round(file.size / 1024) + ' KB). Double-check it\'s the correct document.';
+    }
+    var name = String(file.name || '').toLowerCase();
+    if (SUSPICIOUS_PATTERNS.some(function(p) { return p.test(name); })) {
+      return '"' + file.name + '" looks like a photo. Make sure you\'re uploading deal documents, not personal photos.';
+    }
+    return null;
+  }
+
+  function patchFileHandler(handlerName) {
+    var orig = window[handlerName];
+    if (typeof orig !== 'function') return;
+    window[handlerName] = function(input) {
+      var files = Array.from(input && input.files ? input.files : []);
+      var warnings = files.map(getSuspicionWarning).filter(Boolean);
+      if (warnings.length) {
+        // Show after a short delay so staged list renders first
+        setTimeout(function() { injectFileWarnings(warnings); }, 150);
+      }
+      return orig.call(this, input);
+    };
+  }
+
+  function injectFileWarnings(warnings) {
+    document.querySelectorAll('.upload-staged-list').forEach(function(list) {
+      list.querySelectorAll('.upload-file-warning-banner').forEach(function(el) { el.remove(); });
+      var banner = document.createElement('div');
+      banner.className = 'upload-file-warning-banner';
+      banner.innerHTML =
+        '<span class="upload-warn-icon">⚠️</span>' +
+        '<div class="upload-warn-text"><strong>Check your files:</strong> ' +
+        warnings.map(esc).join(' ') + '</div>';
+      list.insertBefore(banner, list.firstChild);
+    });
+  }
+
+  // ── Analyze panel: show after upload completes ──
+  function showAnalyzePanel(tab) {
+    var panelId = tab === 'listing' ? 'l-analyze-panel' : 'v-analyze-panel';
+    var panel = document.getElementById(panelId);
+    if (!panel) return;
+    var fieldKey = tab === 'listing' ? 'l-deal-documents' : 'v-deal-documents';
+    var files = (window.uploadedFiles && Array.isArray(window.uploadedFiles[fieldKey])) ? window.uploadedFiles[fieldKey] : [];
+    if (!files.length) {
+      panel.classList.add('is-hidden');
+      panel.innerHTML = '';
+      return;
+    }
+    panel.classList.remove('is-hidden');
+    var btnId = tab + '-analyze-btn';
+    var resultId = tab + '-analyze-result';
+    panel.innerHTML =
+      '<div class="upload-analyze-inner">' +
+        '<div class="upload-analyze-info">' +
+          '<div class="upload-analyze-file-count">' +
+            '<span class="upload-analyze-icon">📄</span>' +
+            '<strong>' + files.length + ' file' + (files.length !== 1 ? 's' : '') + ' ready</strong>' +
+          '</div>' +
+          '<div id="' + resultId + '" class="upload-analyze-result"></div>' +
+        '</div>' +
+        '<button type="button" class="upload-analyze-btn" id="' + btnId + '" onclick="window.__doAnalyzeFiles(\'' + tab + '\', this)">' +
+          '<span class="btn-spinner"></span>' +
+          '<span class="upload-analyze-btn-inner">' +
+            '<span class="upload-analyze-btn-title">🔍 Re-Analyze Files</span>' +
+            '<span class="upload-analyze-btn-sub">Re-read documents &amp; refresh auto-filled fields</span>' +
+          '</span>' +
+        '</button>' +
+      '</div>';
+  }
+
+  window.__doAnalyzeFiles = async function(tab, btn) {
+    if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+    var resultEl = document.getElementById(tab + '-analyze-result');
+    if (resultEl) resultEl.innerHTML = '<span class="upload-analyzing-text">Analyzing your documents…</span>';
+    try {
+      if (tab === 'listing' && typeof window.reanalyzeListingDealDocuments === 'function') {
+        await window.reanalyzeListingDealDocuments();
+      } else if (tab === 'voucher') {
+        await reanalyzeVoucherFiles();
+      }
+      if (resultEl) resultEl.innerHTML = '<span class="upload-analyze-ok">✅ Done — form fields updated from your documents</span>';
+    } catch (err) {
+      if (resultEl) resultEl.innerHTML = '<span class="upload-analyze-error">Could not analyze. Try removing and re-uploading the file.</span>';
+    } finally {
+      if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+    }
+  };
+
+  async function reanalyzeVoucherFiles() {
+    var files = (window.uploadedFiles && Array.isArray(window.uploadedFiles['v-deal-documents'])) ? window.uploadedFiles['v-deal-documents'] : [];
+    if (!files.length || typeof window.callTrpc !== 'function') return;
+    await Promise.all(files.map(async function(file) {
+      try {
+        var mime = file.mimeType ||
+          (String(file.filename || '').endsWith('.png') ? 'image/png' :
+           String(file.filename || '').match(/\.(jpg|jpeg)$/i) ? 'image/jpeg' : 'application/pdf');
+        var parsed = await window.callTrpc('aiAssist.extractVoucherDocument', { fileUrl: file.url, mimeType: mime });
+        if (!parsed || !parsed.success) return;
+        if (typeof window.applyAiFields === 'function') {
+          window.applyAiFields('voucher', parsed.fields || {}, { sourceKey: file.fileKey || '' });
+        }
+      } catch(e) { console.warn('Voucher re-analysis error:', e); }
+    }));
+  }
+
+  // ── Patch render functions to keep analyze panel in sync ──
+  function patchRenderFunctions() {
+    var origListing = window.renderListingDealDocumentsStatusMessage;
+    if (typeof origListing === 'function') {
+      window.renderListingDealDocumentsStatusMessage = function() {
+        origListing.apply(this, arguments);
+        showAnalyzePanel('listing');
+      };
+    }
+    var origVoucher = window.renderVoucherDealDocumentsStatusMessage;
+    if (typeof origVoucher === 'function') {
+      window.renderVoucherDealDocumentsStatusMessage = function() {
+        origVoucher.apply(this, arguments);
+        showAnalyzePanel('voucher');
+      };
+    }
+  }
+
+  // ── Preflight checklist ──
+  function gv(id) { var el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; }
+  function gs(id) { var el = document.getElementById(id); return el && el.options && el.selectedIndex >= 0 ? String(el.options[el.selectedIndex].text || '').trim() : gv(id); }
+
+  function buildItems(formType) {
+    var lDocs = (window.uploadedFiles && Array.isArray(window.uploadedFiles['l-deal-documents'])) ? window.uploadedFiles['l-deal-documents'] : [];
+    var vDocs = (window.uploadedFiles && Array.isArray(window.uploadedFiles['v-deal-documents'])) ? window.uploadedFiles['v-deal-documents'] : [];
+    var items = [];
+    if (formType === 'listing') {
+      items.push({ label: 'Deal documents', value: lDocs.length ? lDocs.length + ' file' + (lDocs.length > 1 ? 's' : '') + ' attached' : '', ok: lDocs.length > 0, req: true });
+      items.push({ label: 'Property type', value: gs('l-prop-type'), ok: Boolean(gv('l-prop-type')), req: true });
+      items.push({ label: 'Property address', value: gv('l-address'), ok: Boolean(gv('l-address')), req: true });
+      items.push({ label: 'Transaction type', value: gs('l-txn-type'), ok: Boolean(gv('l-txn-type')), req: true });
+      items.push({ label: 'Date entered', value: gv('l-date-entered'), ok: Boolean(gv('l-date-entered')), req: true });
+      items.push({ label: 'Listing expiration', value: gv('l-listing-expiration'), ok: Boolean(gv('l-listing-expiration')), req: true });
+    } else if (formType === 'voucher') {
+      var needsDocs = typeof window.voucherTransactionRequiresComplianceDocs === 'function' && window.voucherTransactionRequiresComplianceDocs();
+      items.push({ label: 'Deal documents', value: vDocs.length ? vDocs.length + ' file' + (vDocs.length > 1 ? 's' : '') + ' attached' : '', ok: vDocs.length > 0, req: needsDocs });
+      items.push({ label: 'Transaction type', value: gs('v-txn-type'), ok: Boolean(gv('v-txn-type')), req: true });
+      items.push({ label: 'Property type', value: gs('v-prop-type'), ok: Boolean(gv('v-prop-type')), req: true });
+      items.push({ label: 'Property address', value: gv('v-address'), ok: Boolean(gv('v-address')), req: true });
+      items.push({ label: 'Date filled', value: gv('v-date-filled'), ok: Boolean(gv('v-date-filled')), req: true });
+      items.push({ label: 'Landlord / Seller', value: gv('v-lessor'), ok: Boolean(gv('v-lessor')), req: false });
+      items.push({ label: 'Tenant / Buyer', value: gv('v-lessee'), ok: Boolean(gv('v-lessee')), req: false });
+      items.push({ label: 'Listing agent', value: gv('v-listing-agent'), ok: Boolean(gv('v-listing-agent')), req: false });
+      var commAmt = gv('v-total-commission-amt') || gv('v-total-commission-pct');
+      items.push({ label: 'Commission', value: commAmt, ok: Boolean(commAmt), req: false });
+      items.push({ label: 'Total invoice', value: gv('v-total-invoice'), ok: Boolean(gv('v-total-invoice')), req: false });
+    } else if (formType === 'sign') {
+      items.push({ label: 'Property address', value: gv('s-address'), ok: Boolean(gv('s-address')), req: true });
+      items.push({ label: 'Order type', value: gs('s-order-type'), ok: Boolean(gv('s-order-type')), req: true });
+      items.push({ label: 'Date', value: gv('s-date'), ok: Boolean(gv('s-date')), req: true });
+    }
+    return items;
+  }
+
+  function buildChecklistHTML(formType) {
+    var items = buildItems(formType);
+    var blockers = items.filter(function(i) { return i.req && !i.ok; });
+    var formLabel = formType === 'listing' ? 'Listing Entry' : formType === 'voucher' ? 'Commission Voucher' : 'Sign Request';
+    var html = '<div class="preflight-form-label">Submitting: <strong>' + esc(formLabel) + '</strong></div>';
+    if (blockers.length) {
+      html += '<div class="preflight-warning-banner">' +
+        '<span class="preflight-warn-icon">⚠️</span>' +
+        '<div><strong>Missing required fields:</strong><br>' +
+        blockers.map(function(i) { return '&bull; ' + esc(i.label); }).join('<br>') +
+        '<br><small style="opacity:.8">You can still send, but admin may ask you to re-submit.</small>' +
+        '</div></div>';
+    }
+    html += '<div class="preflight-items">';
+    items.forEach(function(item) {
+      var cls = item.ok ? 'preflight-item-ok' : (item.req ? 'preflight-item-error' : 'preflight-item-warn');
+      var icon = item.ok ? '✅' : (item.req ? '❌' : '⚠️');
+      var val = item.ok ? esc(item.value) : (item.req ? '<em>Missing — required</em>' : '<em>Not filled in</em>');
+      html += '<div class="preflight-item ' + cls + '">' +
+        '<span class="preflight-item-icon">' + icon + '</span>' +
+        '<span class="preflight-item-label">' + esc(item.label) + '</span>' +
+        '<span class="preflight-item-value">' + val + '</span>' +
+      '</div>';
+    });
+    html += '</div>';
+    return { html: html, hasBlockers: blockers.length > 0 };
+  }
+
+  window.openPreflightModal = function(formType, callback) {
+    _preflightFormType = formType;
+    _preflightCallback = callback || null;
+    var modal = document.getElementById('preflight-modal');
+    var checklist = document.getElementById('preflight-checklist');
+    var confirmBtn = document.getElementById('preflight-confirm-btn');
+    if (!modal || !checklist) { if (callback) callback(); return; }
+    var result = buildChecklistHTML(formType);
+    checklist.innerHTML = result.html;
+    if (confirmBtn) {
+      var label = confirmBtn.querySelector('.btn-label');
+      if (label) label.textContent = result.hasBlockers ? 'Send Anyway →' : 'Looks Good — Send to Admin →';
+      confirmBtn.disabled = false;
+    }
+    modal.classList.add('open');
+  };
+
+  window.closePreflightModal = function() {
+    var modal = document.getElementById('preflight-modal');
+    if (modal) modal.classList.remove('open');
+    _preflightCallback = null;
+    _preflightFormType = null;
+  };
+
+  window.confirmPreflightSubmit = function() {
+    var cb = _preflightCallback;
+    window.closePreflightModal();
+    if (typeof cb === 'function') cb();
+  };
+
+  // ── Intercept openSendToAdminModal to wrap with preflight ──
+  function patchSendToAdminModal() {
+    var orig = window.openSendToAdminModal;
+    if (typeof orig !== 'function') return;
+    window.__origOpenSendToAdminModal = orig;
+    window.openSendToAdminModal = function(formType) {
+      window.openPreflightModal(formType, function() {
+        orig.call(window, formType);
+        setTimeout(function() { updateStaSummary(formType); }, 60);
+      });
+    };
+  }
+
+  function updateStaSummary(formType) {
+    var el = document.getElementById('sta-submission-summary');
+    if (!el) return;
+    var addr = formType === 'listing' ? gv('l-address') : formType === 'voucher' ? gv('v-address') : gv('s-address');
+    var label = formType === 'listing' ? 'Listing Entry' : formType === 'voucher' ? 'Commission Voucher' : 'Sign Request';
+    var docCount = formType === 'listing'
+      ? ((window.uploadedFiles && Array.isArray(window.uploadedFiles['l-deal-documents'])) ? window.uploadedFiles['l-deal-documents'].length : 0)
+      : formType === 'voucher'
+        ? ((window.uploadedFiles && Array.isArray(window.uploadedFiles['v-deal-documents'])) ? window.uploadedFiles['v-deal-documents'].length : 0)
+        : 0;
+    el.innerHTML =
+      '<div class="sta-summary-form">' + esc(label) + '</div>' +
+      (addr ? '<div class="sta-summary-addr">📍 ' + esc(addr) + '</div>' : '') +
+      (docCount > 0 ? '<div class="sta-summary-docs">📎 ' + docCount + ' file' + (docCount !== 1 ? 's' : '') + ' attached</div>' : '');
+    el.classList.remove('is-hidden');
+  }
+
+  // ── Bootstrap ──
+  onDomReady(function() {
+    patchFileHandler('onListingDealDocumentsSelected');
+    patchFileHandler('onVoucherDealDocumentsSelected');
+    patchRenderFunctions();
+    patchSendToAdminModal();
+
+    var preflightModal = document.getElementById('preflight-modal');
+    if (preflightModal) {
+      preflightModal.addEventListener('click', function(e) {
+        if (e.target === preflightModal) window.closePreflightModal();
+      });
+    }
+  });
+
+})();
+
 // ── Keyboard shortcut: Ctrl+S to save draft ──
 document.addEventListener('keydown', function(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 's') {

@@ -170,6 +170,7 @@
         </div>
         <p style="margin-top:8px;font-size:13px;color:#555;font-style:italic;">*Please provide all executed deal documents (Agency Disclosure, Listing Agreement, etc.)</p>
         <div class="sr-only" id="l-doc-analysis-live" aria-live="polite"></div>
+        <div id="l-analyze-panel" class="upload-analyze-panel is-hidden" aria-live="polite"></div>
       </div>
     </div>
     <div class="stepper" data-stepper-for="listing-main"></div>
@@ -828,6 +829,7 @@
     </div>
 
     <div id="v-doc-analysis-live" class="assistive-live" aria-live="polite"></div>
+    <div id="v-analyze-panel" class="upload-analyze-panel is-hidden" aria-live="polite"></div>
   </div>
 
 
@@ -2733,10 +2735,28 @@
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="preflight-modal">
+  <div class="modal modal-preflight">
+    <div class="preflight-header">
+      <h2 class="preflight-title">Check Before You Send</h2>
+      <p class="preflight-subtitle">Take a moment to review your submission — you can go back and fix anything.</p>
+    </div>
+    <div id="preflight-checklist" class="preflight-checklist"></div>
+    <div class="btn-bar preflight-btn-bar">
+      <button class="btn btn-gray preflight-back-btn" onclick="window.closePreflightModal()">&#8592; Go Back and Fix</button>
+      <button class="btn btn-red" id="preflight-confirm-btn" onclick="window.confirmPreflightSubmit()">
+        <span class="btn-spinner"></span>
+        <span class="btn-label">Looks Good &mdash; Send to Admin &rarr;</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="send-admin-modal">
   <div class="modal modal-sm">
     <h2 id="send-admin-modal-title" class="modal-heading-row">Send to Admin</h2>
     <p class="modal-copy" id="send-admin-modal-desc">This will email all filled form fields to the office admin. Taylor will be CC&rsquo;d automatically.</p>
+    <div id="sta-submission-summary" class="sta-submission-summary is-hidden"></div>
     <div class="field">
       <label>Your Name (Broker)</label>
       <input id="sta-broker-name" value="Taylor Barnes">
