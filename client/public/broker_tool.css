@@ -22,7 +22,7 @@
   --shadow-sm: 0 1px 2px rgba(48, 60, 66, .04);
   --shadow-card: 0 1px 2px rgba(48, 60, 66, .05);
   --shadow-focus: 0 0 0 3px rgba(152, 0, 46, .18);
-  --font-sans: "Nunito Sans", "Avenir Next", Inter, "Segoe UI", system-ui, sans-serif;
+  --font-sans: "Manrope", "Avenir Next", Inter, "Segoe UI", system-ui, sans-serif;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -3416,8 +3416,8 @@ body.admin-mode #admin-view {
   --ink-0:   #FFFFFF;
 
   /* Type */
-  --font-sans: 'Avenir Next', 'Nunito Sans', Arial, Tahoma, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-serif: 'Minion Pro', Georgia, serif;
+  --font-sans: 'Manrope', 'Avenir Next', Arial, Tahoma, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-serif: 'Manrope', Georgia, serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
 
   /* Radii + shadows + motion */
@@ -5571,8 +5571,8 @@ a:hover { text-decoration: none; }
   --ink-50: #F8F7F4;
   --ink-0: #FFFFFF;
 
-  --font-sans: 'Nunito Sans', 'Avenir Next', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-serif: 'Source Serif 4', 'Minion Pro', Georgia, serif;
+  --font-sans: 'Manrope', 'Avenir Next', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-serif: 'Manrope', Georgia, serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
 
   --r-4: 4px;
