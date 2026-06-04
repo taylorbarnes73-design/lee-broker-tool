@@ -750,6 +750,7 @@ export default function PortalSubmissionDetail() {
                     border: "1px solid var(--ink-200)",
                     background: "white",
                     overflow: "auto",
+                    maxHeight: 400,
                     fontSize: 13,
                     color: "var(--ink-900)",
                     whiteSpace: "pre-wrap",

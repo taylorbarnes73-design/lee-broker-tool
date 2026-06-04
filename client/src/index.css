@@ -767,6 +767,15 @@
   border-top: 1px solid var(--ink-150);
 }
 
+/* Clickable list rows in submission queues and inbox */
+.portal-list-item {
+  transition: box-shadow 0.14s ease, border-color 0.14s ease;
+}
+.portal-list-item:hover {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+  border-color: var(--ink-300) !important;
+}
+
 .dealius-workspace {
   display: flex;
   flex-direction: column;
