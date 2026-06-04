@@ -1423,11 +1423,14 @@ window.aiParseFromPaste = async function() {
     el.classList.remove('is-hidden');
   }
 
-  function wrapWideTables() {
-    document.querySelectorAll('#broker-view table.rent-table, #broker-view table.broker-table, #broker-view table.suite-table').forEach(function(table) {
+  function wrapWideTables(root) {
+    var scope = root && root.querySelectorAll ? root : document;
+    scope.querySelectorAll('#broker-view table.rent-table, #broker-view table.broker-table, #broker-view table.suite-table').forEach(function(table) {
       if (table.closest('.broker-table-scroll')) return;
       var wrap = document.createElement('div');
       wrap.className = 'broker-table-scroll';
+      wrap.setAttribute('tabindex', '0');
+      wrap.setAttribute('aria-label', 'Scrollable table');
       table.parentNode.insertBefore(wrap, table);
       wrap.appendChild(table);
     });
@@ -1471,6 +1474,9 @@ window.aiParseFromPaste = async function() {
     window.switchTab = function(name) {
       orig.apply(this, arguments);
       updateBrokerReviewBar(name);
+      if (name === 'voucher') {
+        setTimeout(function() { wrapWideTables(document.getElementById('tab-voucher')); }, 0);
+      }
     };
   }
 

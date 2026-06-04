@@ -7505,13 +7505,13 @@ body.broker-active .sub-tab-bar {
   gap: 18px;
 }
 #tab-voucher .voucher-party-grid {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
 }
-#tab-voucher .voucher-party-grid .row.c2 {
-  grid-template-columns: 1fr 1fr;
-}
-#tab-voucher .voucher-party-grid .row.c3 {
-  grid-template-columns: 1fr 1fr 1fr;
+#tab-voucher .voucher-party-grid .row.c2,
+#tab-voucher .voucher-party-grid .row.c3,
+#tab-voucher .voucher-agent-grid .row.c2,
+#tab-voucher .voucher-agent-grid .row.c3 {
+  grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr));
 }
 /* Stack party/agent boxes when sidebar is present (deal-shell layout) */
 .deal-shell .voucher-party-grid,
