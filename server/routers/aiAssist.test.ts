@@ -68,6 +68,14 @@ vi.mock("../db", () => ({
   }),
 }));
 
+vi.mock("../settings/getSetting", () => ({
+  getSetting: vi.fn().mockImplementation(async (key: string) => {
+    if (key === "branding.company_name") return "Test Brokerage";
+    if (key === "branding.support_email") return "support@example.com";
+    return "";
+  }),
+}));
+
 // Mock PDF parsing so brochure tests don't need real PDFs.
 // The production code uses the default export as a callable: (mod.default ?? mod)(buffer)
 const mockPdfParse = vi.fn().mockResolvedValue({

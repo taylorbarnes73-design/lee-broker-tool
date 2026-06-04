@@ -80,6 +80,14 @@ vi.mock("../db", () => ({
   }),
 }));
 
+vi.mock("../settings/getSetting", () => ({
+  getSetting: vi.fn().mockImplementation(async (key: string) => {
+    if (key === "branding.company_name") return "Test Brokerage";
+    if (key === "branding.support_email") return "support@example.com";
+    return "";
+  }),
+}));
+
 import { invokeLLM } from "../_core/llm";
 import { execSync } from "child_process";
 import { contractsRouter } from "./contracts";
