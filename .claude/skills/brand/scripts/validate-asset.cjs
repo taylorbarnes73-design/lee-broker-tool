@@ -19,8 +19,9 @@ const path = require("path");
 // Validation rules
 const RULES = {
   naming: {
-    pattern: /^[a-z]+_[a-z0-9-]+_[a-z0-9-]+_\d{8}(_[a-z0-9-]+)?\.[a-zA-Z]+$/,
-    description: "{type}_{campaign}_{description}_{timestamp}_{variant}.{ext}",
+    pattern: /^[a-z]+_[a-z0-9-]+_[a-z0-9-]+_\d{8}(_[a-z0-9-]+)?\.[a-z]+$/,
+    description:
+      "{type}_{campaign}_{description}_{timestamp}_{variant}.{ext}",
     examples: [
       "banner_claude-launch_hero-image_20251209.png",
       "logo_brand-refresh_horizontal_20251209_dark.svg",
@@ -181,163 +182,6 @@ function validateFormat(extension) {
 }
 
 /**
- * Read dimensions for common image formats without external dependencies.
- */
-function getImageDimensions(filepath, extension) {
-  const buffer = fs.readFileSync(filepath);
-
-  if (extension === "png" && buffer.toString("ascii", 1, 4) === "PNG") {
-    return {
-      width: buffer.readUInt32BE(16),
-      height: buffer.readUInt32BE(20),
-    };
-  }
-
-  if (extension === "gif" && buffer.toString("ascii", 0, 3) === "GIF") {
-    return {
-      width: buffer.readUInt16LE(6),
-      height: buffer.readUInt16LE(8),
-    };
-  }
-
-  if (["jpg", "jpeg"].includes(extension)) {
-    return getJpegDimensions(buffer);
-  }
-
-  if (extension === "webp") {
-    return getWebpDimensions(buffer);
-  }
-
-  if (extension === "svg") {
-    return getSvgDimensions(buffer.toString("utf-8"));
-  }
-
-  return null;
-}
-
-function getJpegDimensions(buffer) {
-  if (buffer.length < 4 || buffer.readUInt16BE(0) !== 0xffd8) return null;
-
-  let offset = 2;
-  while (offset < buffer.length) {
-    if (buffer[offset] !== 0xff) return null;
-
-    const marker = buffer[offset + 1];
-    const length = buffer.readUInt16BE(offset + 2);
-    const isStartOfFrame =
-      (marker >= 0xc0 && marker <= 0xc3) ||
-      (marker >= 0xc5 && marker <= 0xc7) ||
-      (marker >= 0xc9 && marker <= 0xcb) ||
-      (marker >= 0xcd && marker <= 0xcf);
-
-    if (isStartOfFrame) {
-      return {
-        height: buffer.readUInt16BE(offset + 5),
-        width: buffer.readUInt16BE(offset + 7),
-      };
-    }
-
-    offset += 2 + length;
-  }
-
-  return null;
-}
-
-function getWebpDimensions(buffer) {
-  if (
-    buffer.toString("ascii", 0, 4) !== "RIFF" ||
-    buffer.toString("ascii", 8, 12) !== "WEBP"
-  ) {
-    return null;
-  }
-
-  const chunkType = buffer.toString("ascii", 12, 16);
-  if (chunkType === "VP8X") {
-    return {
-      width: 1 + buffer.readUIntLE(24, 3),
-      height: 1 + buffer.readUIntLE(27, 3),
-    };
-  }
-
-  if (chunkType === "VP8L") {
-    const bits = buffer.readUInt32LE(21);
-    return {
-      width: (bits & 0x3fff) + 1,
-      height: ((bits >> 14) & 0x3fff) + 1,
-    };
-  }
-
-  if (chunkType === "VP8 ") {
-    return {
-      width: buffer.readUInt16LE(26) & 0x3fff,
-      height: buffer.readUInt16LE(28) & 0x3fff,
-    };
-  }
-
-  return null;
-}
-
-function getSvgDimensions(svg) {
-  const widthMatch = svg.match(/\bwidth=["']?([0-9.]+)/i);
-  const heightMatch = svg.match(/\bheight=["']?([0-9.]+)/i);
-  if (widthMatch && heightMatch) {
-    return {
-      width: Number(widthMatch[1]),
-      height: Number(heightMatch[1]),
-    };
-  }
-
-  const viewBoxMatch = svg.match(
-    /\bviewBox=["'][^"']*\s([0-9.]+)\s([0-9.]+)["']/i
-  );
-  if (viewBoxMatch) {
-    return {
-      width: Number(viewBoxMatch[1]),
-      height: Number(viewBoxMatch[2]),
-    };
-  }
-
-  return null;
-}
-
-/**
- * Validate image dimensions against asset type minimums.
- */
-function validateDimensions(filepath, extension, assetType, category) {
-  const issues = [];
-  const warnings = [];
-
-  if (!["image", "vector"].includes(category)) {
-    return { valid: true, issues, warnings, dimensions: null, required: null };
-  }
-
-  const required = RULES.dimensions[assetType] || RULES.dimensions.default;
-  const dimensions = getImageDimensions(filepath, extension);
-
-  if (!dimensions) {
-    warnings.push("Unable to read image dimensions — minimum size could not be verified");
-    return { valid: issues.length === 0, issues, warnings, dimensions: null, required };
-  }
-
-  if (
-    dimensions.width < required.minWidth ||
-    dimensions.height < required.minHeight
-  ) {
-    issues.push(
-      `Dimensions (${dimensions.width}x${dimensions.height}) are below minimum (${required.minWidth}x${required.minHeight})`
-    );
-  }
-
-  return {
-    valid: issues.length === 0,
-    issues,
-    warnings,
-    dimensions,
-    required,
-  };
-}
-
-/**
  * Check if asset exists in manifest
  */
 function checkManifest(filepath) {
@@ -351,7 +195,7 @@ function checkManifest(filepath) {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
     const relativePath = path.relative(process.cwd(), filepath);
     const found = manifest.assets?.find(
-      a => a.path === relativePath || a.path === filepath
+      (a) => a.path === relativePath || a.path === filepath
     );
 
     return {
@@ -374,71 +218,9 @@ function suggestFilename(original, parsed) {
   const type = parsed.type || "asset";
   const campaign = parsed.campaign || "general";
   const description = parsed.description || "untitled";
-  const ext = (parsed.extension || "png").toLowerCase();
-  const variantSuffix = parsed.variant ? `_${parsed.variant}` : "";
+  const ext = parsed.extension || "png";
 
-  return `${type}_${campaign}_${description}_${today}${variantSuffix}.${ext}`;
-}
-
-function updateManifestPath(oldPath, newPath) {
-  const manifestPath = path.join(process.cwd(), ".assets", "manifest.json");
-
-  if (!fs.existsSync(manifestPath)) {
-    return false;
-  }
-
-  try {
-    const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
-    const oldRelativePath = path.relative(process.cwd(), oldPath);
-    const newRelativePath = path.relative(process.cwd(), newPath);
-    let updated = false;
-
-    for (const asset of manifest.assets || []) {
-      if (asset.path === oldRelativePath || asset.path === oldPath) {
-        asset.path = newRelativePath;
-        updated = true;
-      }
-    }
-
-    if (updated) {
-      fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
-    }
-
-    return updated;
-  } catch {
-    return false;
-  }
-}
-
-function applyFixes(results) {
-  const fixes = [];
-  const filenameResult = results.checks.filename;
-  const suggested = suggestFilename(results.filename, filenameResult?.parsed);
-
-  if (
-    !results.valid &&
-    filenameResult &&
-    !filenameResult.valid &&
-    suggested &&
-    suggested !== results.filename
-  ) {
-    const targetPath = path.join(path.dirname(results.path), suggested);
-    if (fs.existsSync(targetPath)) {
-      results.warnings.push(
-        `Could not rename asset; target exists: ${targetPath}`
-      );
-    } else {
-      fs.renameSync(results.path, targetPath);
-      fixes.push(`Renamed asset to ${suggested}`);
-      if (updateManifestPath(results.path, targetPath)) {
-        fixes.push("Updated manifest path");
-      }
-      results = validateAsset(targetPath);
-    }
-  }
-
-  results.fixes = fixes;
-  return results;
+  return `${type}_${campaign}_${description}_${today}.${ext}`;
 }
 
 /**
@@ -491,21 +273,7 @@ function validateAsset(assetPath) {
     results.issues.push(...formatResult.issues);
   }
 
-  // 3. Validate dimensions
-  const assetType = filenameResult.parsed?.type || "default";
-  const dimensionsResult = validateDimensions(
-    assetPath,
-    extension,
-    assetType,
-    formatResult.info.category
-  );
-  results.checks.dimensions = dimensionsResult;
-  if (!dimensionsResult.valid) {
-    results.issues.push(...dimensionsResult.issues);
-  }
-  results.warnings.push(...dimensionsResult.warnings);
-
-  // 4. Validate file size
+  // 3. Validate file size
   const sizeResult = validateFileSize(assetPath, extension);
   results.checks.fileSize = sizeResult;
   if (!sizeResult.valid) {
@@ -513,7 +281,7 @@ function validateAsset(assetPath) {
   }
   results.warnings.push(...sizeResult.warnings);
 
-  // 5. Check manifest registration
+  // 4. Check manifest registration
   const manifestResult = checkManifest(assetPath);
   results.checks.manifest = manifestResult;
   if (!manifestResult.registered) {
@@ -523,7 +291,7 @@ function validateAsset(assetPath) {
     );
   }
 
-  // 6. Suggest corrected filename if needed
+  // 5. Suggest corrected filename if needed
   if (!filenameResult.valid && filenameResult.parsed) {
     const suggested = suggestFilename(filename, filenameResult.parsed);
     if (suggested) {
@@ -552,32 +320,24 @@ function formatOutput(results) {
 
   if (results.issues.length > 0) {
     lines.push("\nISSUES:");
-    results.issues.forEach(issue => lines.push(`  - ${issue}`));
+    results.issues.forEach((issue) => lines.push(`  - ${issue}`));
   }
 
   if (results.warnings.length > 0) {
     lines.push("\nWARNINGS:");
-    results.warnings.forEach(warning => lines.push(`  - ${warning}`));
+    results.warnings.forEach((warning) => lines.push(`  - ${warning}`));
   }
 
   if (results.suggestions.length > 0) {
     lines.push("\nSUGGESTIONS:");
-    results.suggestions.forEach(suggestion => lines.push(`  - ${suggestion}`));
-  }
-
-  if (results.fixes?.length > 0) {
-    lines.push("\nFIXES:");
-    results.fixes.forEach(fix => lines.push(`  - ${fix}`));
+    results.suggestions.forEach((suggestion) =>
+      lines.push(`  - ${suggestion}`)
+    );
   }
 
   // File size info
   if (results.checks.fileSize?.size) {
     lines.push(`\nFile Size: ${formatBytes(results.checks.fileSize.size)}`);
-  }
-
-  if (results.checks.dimensions?.dimensions) {
-    const { width, height } = results.checks.dimensions.dimensions;
-    lines.push(`Dimensions: ${width}x${height}`);
   }
 
   lines.push("\n" + "=".repeat(60));
@@ -591,22 +351,16 @@ function formatOutput(results) {
 function main() {
   const args = process.argv.slice(2);
   const jsonOutput = args.includes("--json");
-  const fix = args.includes("--fix");
-  const assetPath = args.find(a => !a.startsWith("--"));
+  const assetPath = args.find((a) => !a.startsWith("--"));
 
   if (!assetPath) {
-    console.error(
-      "Usage: node validate-asset.cjs <asset-path> [--json] [--fix]"
-    );
+    console.error("Usage: node validate-asset.cjs <asset-path> [--json]");
     console.error("\nExamples:");
     console.error(
       "  node validate-asset.cjs assets/banners/social-media/banner_launch_hero_20251209.png"
     );
     console.error(
       "  node validate-asset.cjs assets/logos/icon-only/logo-icon.svg --json"
-    );
-    console.error(
-      "  node validate-asset.cjs assets/logos/icon-only/logo-icon.svg --fix"
     );
     process.exit(1);
   }
@@ -617,10 +371,7 @@ function main() {
     : path.join(process.cwd(), assetPath);
 
   // Validate
-  let results = validateAsset(resolvedPath);
-  if (fix) {
-    results = applyFixes(results);
-  }
+  const results = validateAsset(resolvedPath);
 
   // Output
   if (jsonOutput) {
