@@ -121,9 +121,9 @@ function extractColorsFromMarkdown(content) {
       ) {
         colors.primary.name = normalizeTokenName(name);
       }
-      if (normalizedName.includes("dark")) colors.primary.dark = hex;
-      else if (normalizedName.includes("light")) colors.primary.light = hex;
-      else colors.primary.base = hex;
+      if (/\bdark\b/i.test(normalizedName)) colors.primary.dark = hex;
+      else if (/\blight\b/i.test(normalizedName)) colors.primary.light = hex;
+      else if (!colors.primary.base) colors.primary.base = hex;
     });
   }
 
@@ -134,7 +134,7 @@ function extractColorsFromMarkdown(content) {
   if (secondarySection) {
     parseColorRows(secondarySection[0], (name, hex) => {
       const normalizedName = name.toLowerCase();
-      const target = normalizedName.includes("accent")
+      const target = /^accent\b/i.test(normalizedName)
         ? colors.accent
         : colors.secondary;
       if (
@@ -143,9 +143,9 @@ function extractColorsFromMarkdown(content) {
       ) {
         target.name = normalizeTokenName(name);
       }
-      if (normalizedName.includes("dark")) target.dark = hex;
-      else if (normalizedName.includes("light")) target.light = hex;
-      else target.base = hex;
+      if (/\bdark\b/i.test(normalizedName)) target.dark = hex;
+      else if (/\blight\b/i.test(normalizedName)) target.light = hex;
+      else if (!target.base) target.base = hex;
     });
   }
 
@@ -162,9 +162,9 @@ function extractColorsFromMarkdown(content) {
       ) {
         colors.accent.name = normalizeTokenName(name);
       }
-      if (normalizedName.includes("dark")) colors.accent.dark = hex;
-      else if (normalizedName.includes("light")) colors.accent.light = hex;
-      else colors.accent.base = hex;
+      if (/\bdark\b/i.test(normalizedName)) colors.accent.dark = hex;
+      else if (/\blight\b/i.test(normalizedName)) colors.accent.light = hex;
+      else if (!colors.accent.base) colors.accent.base = hex;
     });
   }
 

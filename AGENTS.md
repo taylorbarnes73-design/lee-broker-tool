@@ -72,6 +72,26 @@ With `LOCAL_AUTH_ENABLED=true`, the login page at `/portal` accepts usernames (e
 
 The `.npmrc` in the repo must contain `onlyBuiltDependencies=@tailwindcss/oxide,esbuild` to allow native addon builds. The update script handles this.
 
+### UI/UX Pro Max skills (`.claude/skills/`)
+
+Three Claude Code skills ship with this repo:
+
+| Skill | Path | Use for |
+|-------|------|---------|
+| `ckm:brand` | `.claude/skills/brand/` | Brand voice, guidelines, token sync from `docs/brand-guidelines.md` |
+| `ckm:design-system` | `.claude/skills/design-system/` | Design tokens, slide generation, token validation |
+| `ckm:banner-design` | `.claude/skills/banner-design/` | Social/ad/web/print banners |
+
+**Brand sync workflow** (run from repo root):
+
+```bash
+node .claude/skills/brand/scripts/sync-brand-to-tokens.cjs --dry-run
+node .claude/skills/brand/scripts/sync-brand-to-tokens.cjs
+node .claude/skills/brand/scripts/inject-brand-context.cjs --json | head -30
+```
+
+Source of truth for Lee branding: `docs/brand-guidelines.md`. Portal CSS tokens live in `client/src/design/tokens.css` (separate from optional `assets/design-tokens.json` used by the skills pipeline).
+
 ### Gotchas
 
 - The app gracefully handles missing `DATABASE_URL` (returns null from `getDb()`), so it starts without a DB but most features won't work.
