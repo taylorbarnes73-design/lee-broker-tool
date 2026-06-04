@@ -1,8 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ── Mock dependencies ──
-const { storageGetBytesMock } = vi.hoisted(() => ({
+const { storageGetBytesMock, storedUploadRow } = vi.hoisted(() => ({
   storageGetBytesMock: vi.fn(),
+  storedUploadRow: {
+    fileKey: "broker-docs/submissions/contracts/test.pdf",
+    filename: "test.pdf",
+    mimeType: "application/pdf",
+    uploaderOpenId: "local:contracts@example.com",
+    reference: null,
+  },
 }));
 
 vi.mock("../_core/llm", () => ({
@@ -28,6 +35,28 @@ vi.mock("../_core/env", () => ({
 }));
 
 vi.mock("../storage", () => ({
+  sanitizeStorageKey: vi.fn((rawKey: string) =>
+    String(rawKey).trim().replace(/\\/g, "/").replace(/^\/+/, "")
+  ),
+  storedFileKeyFromReference: vi.fn((input: string | null | undefined) => {
+    const raw = String(input ?? "").trim();
+    if (!raw) return null;
+    if (raw.startsWith("/api/files/content")) {
+      const [, query = ""] = raw.split("?", 2);
+      return new URLSearchParams(query).get("key");
+    }
+    if (raw.startsWith("/local-uploads/")) {
+      return raw.slice("/local-uploads/".length);
+    }
+    if (raw.includes("/api/files/content?key=")) {
+      const parsed = new URL(raw);
+      return parsed.searchParams.get("key");
+    }
+    if (/^(broker-docs|broker-admin|broker-docusign)\//.test(raw)) {
+      return raw;
+    }
+    return null;
+  }),
   storageGetBytes: storageGetBytesMock,
   isStoredFileReference: vi.fn((value: string) =>
     Boolean(
@@ -39,13 +68,58 @@ vi.mock("../storage", () => ({
   ),
 }));
 
+vi.mock("../db", () => ({
+  getDb: vi.fn().mockResolvedValue({
+    select: vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([storedUploadRow]),
+        }),
+      }),
+    }),
+  }),
+}));
+
 import { invokeLLM } from "../_core/llm";
 import { execSync } from "child_process";
 import { contractsRouter } from "./contracts";
+import { getDb } from "../db";
 
 // ── Helpers ──
 
 const mockPdfBuffer = Buffer.from("%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF");
+
+const testUser = {
+  id: 1,
+  openId: "local:contracts@example.com",
+  name: "Contract Broker",
+  email: "contracts@example.com",
+  loginMethod: "local",
+  role: "user",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  lastSignedIn: new Date(),
+} as const;
+
+function createCtx(user = testUser as any) {
+  return {
+    user,
+    req: { protocol: "https", headers: {} },
+    res: {},
+  };
+}
+
+function makeAccessDb(row = storedUploadRow) {
+  return {
+    select: vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue(row ? [row] : []),
+        }),
+      }),
+    }),
+  };
+}
 
 global.fetch = vi.fn().mockImplementation(async (url: string) => {
   if (url === "https://example.com/test.pdf") {
@@ -80,6 +154,7 @@ async function callMutation(procedure: string, input: unknown) {
 describe("contracts.extractContract", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getDb).mockResolvedValue(makeAccessDb() as any);
     storageGetBytesMock.mockResolvedValue({
       key: "broker-docs/submissions/contracts/test.pdf",
       bytes: mockPdfBuffer,
@@ -106,7 +181,7 @@ describe("contracts.extractContract", () => {
       choices: [{ message: { content: JSON.stringify(mockData) } }],
     });
 
-    const result = await callMutation("extractContract", {
+    const result = await contractsRouter.createCaller(createCtx()).extractContract({
       pdfUrl: "https://example.com/test.pdf",
       contractType: "excl-sublease",
     }) as { success: boolean; data: typeof mockData; error: null };
@@ -128,7 +203,7 @@ describe("contracts.extractContract", () => {
       choices: [{ message: { content: JSON.stringify(mockData) } }],
     });
 
-    const result = await callMutation("extractContract", {
+    const result = await contractsRouter.createCaller(createCtx()).extractContract({
       pdfUrl: "https://example.com/test.pdf",
       contractType: "excl-sublease",
     }) as { success: boolean; data: { agreementDate: string; termStart: string }; error: null };
@@ -144,7 +219,7 @@ describe("contracts.extractContract", () => {
       choices: [{ message: { content: "not valid json {{{" } }],
     });
 
-    const result = await callMutation("extractContract", {
+    const result = await contractsRouter.createCaller(createCtx()).extractContract({
       pdfUrl: "https://example.com/test.pdf",
       contractType: "excl-sublease",
     }) as { success: boolean; data: null; error: string };
@@ -156,7 +231,7 @@ describe("contracts.extractContract", () => {
   it("returns error when invokeLLM throws", async () => {
     (invokeLLM as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("LLM timeout"));
 
-    const result = await callMutation("extractContract", {
+    const result = await contractsRouter.createCaller(createCtx()).extractContract({
       pdfUrl: "https://example.com/test.pdf",
       contractType: "excl-sublease",
     }) as { success: boolean; data: null; error: string };
@@ -180,17 +255,34 @@ describe("contracts.extractContract", () => {
     });
 
     const fetchMock = vi.mocked(global.fetch);
-    const result = await callMutation("extractContract", {
+    const result = await contractsRouter.createCaller(createCtx()).extractContract({
       pdfUrl: "/api/files/content?key=broker-docs%2Fsubmissions%2Fcontracts%2Ftest.pdf",
       contractType: "excl-sublease",
     }) as { success: boolean; data: { party1Name?: string } | null; error: string | null };
 
     expect(result.success).toBe(true);
     expect(result.data?.party1Name).toBe("Proxy Source");
-    expect(storageGetBytesMock).toHaveBeenCalledWith(
-      "/api/files/content?key=broker-docs%2Fsubmissions%2Fcontracts%2Ftest.pdf"
-    );
+    expect(storageGetBytesMock).toHaveBeenCalledWith("broker-docs/submissions/contracts/test.pdf");
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects uploaded file proxy URLs owned by another user", async () => {
+    vi.mocked(getDb).mockResolvedValueOnce(
+      makeAccessDb({
+        ...storedUploadRow,
+        uploaderOpenId: "local:someone-else@example.com",
+      }) as any
+    );
+
+    const result = await contractsRouter.createCaller(createCtx()).extractContract({
+      pdfUrl: "/api/files/content?key=broker-docs%2Fsubmissions%2Fcontracts%2Ftest.pdf",
+      contractType: "excl-sublease",
+    }) as { success: boolean; data: null; error: string };
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/forbidden/i);
+    expect(storageGetBytesMock).not.toHaveBeenCalled();
+    expect(invokeLLM).not.toHaveBeenCalled();
   });
 });
 

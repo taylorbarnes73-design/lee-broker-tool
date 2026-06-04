@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { ENV } from "./_core/env";
-import { isStoredFileReference, normalizeStoredFileUrl, sanitizeStorageKey, storagePublicUrl } from "./storage";
+import {
+  isStoredFileReference,
+  normalizeStoredFileUrl,
+  sanitizeStorageKey,
+  storagePublicUrl,
+  storedFileKeyFromReference,
+} from "./storage";
 
 const originalBucket = ENV.awsS3Bucket;
 const originalRegion = ENV.awsS3Region;
@@ -13,10 +19,10 @@ afterEach(() => {
 });
 
 describe("storagePublicUrl", () => {
-  it("returns a local uploads path when S3 is not configured", () => {
+  it("always returns the authenticated file proxy path, even when S3 is not configured", () => {
     ENV.awsS3Bucket = "";
     expect(storagePublicUrl("broker-docs/contracts/test file.pdf")).toBe(
-      "/local-uploads/broker-docs/contracts/test file.pdf"
+      "/api/files/content?key=broker-docs%2Fcontracts%2Ftest%20file.pdf"
     );
   });
 
@@ -56,16 +62,27 @@ describe("normalizeStoredFileUrl", () => {
     ).toBe("/api/files/content?key=broker-docs%2Fcontracts%2Flease.pdf");
   });
 
-  it("leaves local and already-normalized URLs unchanged", () => {
+  it("normalizes local and already-normalized URLs to the authenticated proxy", () => {
     ENV.awsS3Bucket = "";
     expect(normalizeStoredFileUrl("/local-uploads/broker-docs/contracts/lease.pdf")).toBe(
-      "/local-uploads/broker-docs/contracts/lease.pdf"
+      "/api/files/content?key=broker-docs%2Fcontracts%2Flease.pdf"
     );
 
     ENV.awsS3Bucket = "test-bucket";
     expect(
       normalizeStoredFileUrl("/api/files/content?key=broker-docs%2Fcontracts%2Flease.pdf")
     ).toBe("/api/files/content?key=broker-docs%2Fcontracts%2Flease.pdf");
+  });
+});
+
+describe("storedFileKeyFromReference", () => {
+  it("extracts sanitized keys from legacy local paths and proxy URLs", () => {
+    expect(storedFileKeyFromReference("/local-uploads/broker-docs/contracts/lease.pdf")).toBe(
+      "broker-docs/contracts/lease.pdf"
+    );
+    expect(storedFileKeyFromReference("/api/files/content?key=broker-docs%2Fcontracts%2Flease.pdf")).toBe(
+      "broker-docs/contracts/lease.pdf"
+    );
   });
 });
 

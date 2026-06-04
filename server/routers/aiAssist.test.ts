@@ -2,8 +2,15 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { aiAssistRouter } from "./aiAssist";
 import type { TrpcContext } from "../_core/context";
 
-const { storageGetBytesMock } = vi.hoisted(() => ({
+const { storageGetBytesMock, storedUploadRow } = vi.hoisted(() => ({
   storageGetBytesMock: vi.fn(),
+  storedUploadRow: {
+    fileKey: "broker-docs/listing_brochure/sample.pdf",
+    filename: "sample.pdf",
+    mimeType: "application/pdf",
+    uploaderOpenId: "local:ai@example.com",
+    reference: null,
+  },
 }));
 
 // Mock the LLM to avoid real API calls in tests
@@ -16,6 +23,28 @@ vi.mock("../_core/llm", () => ({
 }));
 
 vi.mock("../storage", () => ({
+  sanitizeStorageKey: vi.fn((rawKey: string) =>
+    String(rawKey).trim().replace(/\\/g, "/").replace(/^\/+/, "")
+  ),
+  storedFileKeyFromReference: vi.fn((input: string | null | undefined) => {
+    const raw = String(input ?? "").trim();
+    if (!raw) return null;
+    if (raw.startsWith("/api/files/content")) {
+      const [, query = ""] = raw.split("?", 2);
+      return new URLSearchParams(query).get("key");
+    }
+    if (raw.startsWith("/local-uploads/")) {
+      return raw.slice("/local-uploads/".length);
+    }
+    if (raw.includes("/api/files/content?key=")) {
+      const parsed = new URL(raw);
+      return parsed.searchParams.get("key");
+    }
+    if (/^(broker-docs|broker-admin|broker-docusign)\//.test(raw)) {
+      return raw;
+    }
+    return null;
+  }),
   storageGetBytes: storageGetBytesMock,
   isStoredFileReference: vi.fn((value: string) =>
     Boolean(
@@ -25,6 +54,18 @@ vi.mock("../storage", () => ({
       /^(broker-docs|broker-admin|broker-docusign)\//.test(value ?? "")
     )
   ),
+}));
+
+vi.mock("../db", () => ({
+  getDb: vi.fn().mockResolvedValue({
+    select: vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([storedUploadRow]),
+        }),
+      }),
+    }),
+  }),
 }));
 
 // Mock PDF parsing so brochure tests don't need real PDFs.
@@ -37,14 +78,43 @@ vi.mock("pdf-parse", () => ({
 }));
 
 import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable } from "../_core/llm";
+import { getDb } from "../db";
 
-function createCtx(): TrpcContext {
+const testUser = {
+  id: 1,
+  openId: "local:ai@example.com",
+  name: "AI Broker",
+  email: "ai@example.com",
+  loginMethod: "local",
+  role: "user",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  lastSignedIn: new Date(),
+} as const;
+
+function makeAccessDb(row = storedUploadRow) {
   return {
-    user: null,
+    select: vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue(row ? [row] : []),
+        }),
+      }),
+    }),
+  };
+}
+
+function createCtx(user: TrpcContext["user"] = testUser as any): TrpcContext {
+  return {
+    user,
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: {} as TrpcContext["res"],
   };
 }
+
+beforeEach(() => {
+  vi.mocked(getDb).mockResolvedValue(makeAccessDb() as any);
+});
 
 describe("aiAssist.parse", () => {
   beforeEach(() => {
@@ -485,9 +555,7 @@ describe("aiAssist.extractDocument", () => {
 
     expect(result.success).toBe(true);
     expect(result.fields.clientName).toBe("Proxy URL Client");
-    expect(storageGetBytesMock).toHaveBeenCalledWith(
-      "/api/files/content?key=broker-docs%2Flisting_brochure%2Fsample.pdf"
-    );
+    expect(storageGetBytesMock).toHaveBeenCalledWith("broker-docs/listing_brochure/sample.pdf");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -515,10 +583,29 @@ describe("aiAssist.extractDocument", () => {
 
     expect(result.success).toBe(true);
     expect(result.fields.clientName).toBe("Absolute Proxy URL Client");
-    expect(storageGetBytesMock).toHaveBeenCalledWith(
-      "https://broker.example.com/api/files/content?key=broker-docs%2Flisting_brochure%2Fsample.pdf"
-    );
+    expect(storageGetBytesMock).toHaveBeenCalledWith("broker-docs/listing_brochure/sample.pdf");
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects stored file references owned by another user", async () => {
+    vi.mocked(getDb).mockResolvedValueOnce(
+      makeAccessDb({
+        ...storedUploadRow,
+        uploaderOpenId: "local:someone-else@example.com",
+      }) as any
+    );
+
+    const caller = aiAssistRouter.createCaller(createCtx());
+    const result = await caller.extractDocument({
+      fileUrl: "/api/files/content?key=broker-docs%2Flisting_brochure%2Fsample.pdf",
+      mimeType: "application/pdf",
+      tab: "voucher",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/forbidden/i);
+    expect(storageGetBytesMock).not.toHaveBeenCalled();
+    expect(invokeLLM).not.toHaveBeenCalled();
   });
 
   it("returns voucher document detection alongside extracted fields", async () => {

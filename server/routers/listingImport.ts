@@ -12,7 +12,9 @@ import {
   buildoutResultErrorMessage,
 } from "../services/buildoutClient";
 import { mapListingFieldsToBuildoutProperty } from "../services/listingToBuildoutMap";
-import { storageGetBytes } from "../storage";
+import { isStoredFileReference, storageGetBytes } from "../storage";
+import { getDb } from "../db";
+import { requireStoredFileAccess, type StoredFileAccessUser } from "../fileAccess";
 
 /** Server-side brochure / flyer size cap (after fetch or decode). */
 export const BROCHURE_MAX_BYTES = 18 * 1024 * 1024;
@@ -41,16 +43,21 @@ function normalizeWhitespace(value: string) {
   return value.replace(/\s+/g, " ").trim();
 }
 
-async function fetchDocumentBuffer(fileUrl: string): Promise<{ fileBuffer: Buffer | null; error: string | null }> {
+async function fetchDocumentBuffer(
+  fileUrl: string,
+  user: StoredFileAccessUser
+): Promise<{ fileBuffer: Buffer | null; error: string | null }> {
   const target = fileUrl.trim();
   const isHttp = /^https?:\/\//i.test(target);
   const isDataUrl = /^data:[^;]+;base64,/i.test(target);
-  const isStoredPath = target.startsWith("/local-uploads/") || target.startsWith("/api/files/content");
-  const isStoredKey = /^(broker-docs|broker-admin|broker-docusign)\//.test(target);
+  const isStoredPath = isStoredFileReference(target);
 
   try {
-    if (isStoredPath || isStoredKey) {
-      const { bytes } = await storageGetBytes(target);
+    if (isStoredPath) {
+      const db = await getDb();
+      if (!db) return { fileBuffer: null, error: "Database unavailable" };
+      const { key } = await requireStoredFileAccess(db, user, target);
+      const { bytes } = await storageGetBytes(key);
       if (bytes.length > BROCHURE_MAX_BYTES) {
         return {
           fileBuffer: null,
@@ -240,8 +247,8 @@ export const listingImportRouter = router({
         mimeType: mimeSchema.default("application/pdf"),
       })
     )
-    .mutation(async ({ input }) => {
-      const fetched = await fetchDocumentBuffer(input.fileUrl);
+    .mutation(async ({ ctx, input }) => {
+      const fetched = await fetchDocumentBuffer(input.fileUrl, ctx.user);
       if (!fetched.fileBuffer) {
         return {
           success: false as const,

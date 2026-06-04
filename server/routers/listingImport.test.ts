@@ -3,8 +3,15 @@ import { listingImportRouter } from "./listingImport";
 import type { TrpcContext } from "../_core/context";
 import type { User } from "../../drizzle/schema";
 
-const { storageGetBytesMock } = vi.hoisted(() => ({
+const { storageGetBytesMock, storedUploadRow } = vi.hoisted(() => ({
   storageGetBytesMock: vi.fn(),
+  storedUploadRow: {
+    fileKey: "broker-docs/listing_brochure/proxy.pdf",
+    filename: "proxy.pdf",
+    mimeType: "application/pdf",
+    uploaderOpenId: "local:broker@example.com",
+    reference: null,
+  },
 }));
 
 vi.mock("../_core/llm", () => ({
@@ -27,13 +34,50 @@ vi.mock("../settings/settingsStore", () => ({
 }));
 
 vi.mock("../storage", () => ({
+  sanitizeStorageKey: vi.fn((rawKey: string) =>
+    String(rawKey).trim().replace(/\\/g, "/").replace(/^\/+/, "")
+  ),
+  storedFileKeyFromReference: vi.fn((input: string | null | undefined) => {
+    const raw = String(input ?? "").trim();
+    if (!raw) return null;
+    if (raw.startsWith("/api/files/content")) {
+      const [, query = ""] = raw.split("?", 2);
+      return new URLSearchParams(query).get("key");
+    }
+    if (raw.startsWith("/local-uploads/")) {
+      return raw.slice("/local-uploads/".length);
+    }
+    if (/^(broker-docs|broker-admin|broker-docusign)\//.test(raw)) {
+      return raw;
+    }
+    return null;
+  }),
   storageGetBytes: storageGetBytesMock,
+  isStoredFileReference: vi.fn((value: string) =>
+    Boolean(
+      value?.startsWith("/api/files/content") ||
+      value?.startsWith("/local-uploads/") ||
+      /^(broker-docs|broker-admin|broker-docusign)\//.test(value ?? "")
+    )
+  ),
+}));
+
+vi.mock("../db", () => ({
+  getDb: vi.fn().mockResolvedValue({
+    select: vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([storedUploadRow]),
+        }),
+      }),
+    }),
+  }),
 }));
 
 import { invokeLLM } from "../_core/llm";
 import { ensureSettingsCache } from "../settings/settingsStore";
 
-const adminUser = { role: "admin" } as User;
+const adminUser = { openId: "local:admin@example.com", role: "admin" } as User;
 
 function adminCtx(): TrpcContext {
   return {
@@ -119,9 +163,7 @@ describe("listingImport.extractFromBrochure", () => {
 
     expect(r.success).toBe(true);
     expect(r.property.address).toBe("42 Proxy Ave");
-    expect(storageGetBytesMock).toHaveBeenCalledWith(
-      "/api/files/content?key=broker-docs%2Flisting_brochure%2Fproxy.pdf"
-    );
+    expect(storageGetBytesMock).toHaveBeenCalledWith("broker-docs/listing_brochure/proxy.pdf");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

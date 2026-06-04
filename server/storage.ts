@@ -49,19 +49,17 @@ async function localPut(
   const filePath = path.join(LOCAL_UPLOADS_DIR, ...safeKey.split("/"));
   await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
   await fs.promises.writeFile(filePath, data);
-  return { key: safeKey, url: LOCAL_URL_PREFIX + safeKey };
+  return { key: safeKey, url: storagePublicUrl(safeKey) };
 }
 
 function localGet(relKey: string): { key: string; url: string } {
   const safeKey = sanitizeStorageKey(relKey);
-  return { key: safeKey, url: LOCAL_URL_PREFIX + safeKey };
+  return { key: safeKey, url: storagePublicUrl(safeKey) };
 }
 
 export function storagePublicUrl(relKey: string): string {
   const safeKey = sanitizeStorageKey(relKey);
-  return isLocalStorage()
-    ? LOCAL_URL_PREFIX + safeKey
-    : `${PUBLIC_FILE_PROXY_PREFIX}${encodeURIComponent(safeKey)}`;
+  return `${PUBLIC_FILE_PROXY_PREFIX}${encodeURIComponent(safeKey)}`;
 }
 
 function tryParseStoredKey(input: string): string | null {
@@ -125,6 +123,11 @@ export function isStoredFileReference(input: string | null | undefined): boolean
   return Boolean(tryParseStoredKey(value));
 }
 
+export function storedFileKeyFromReference(input: string | null | undefined): string | null {
+  const key = tryParseStoredKey(String(input ?? ""));
+  return key ? sanitizeStorageKey(key) : null;
+}
+
 export function normalizeStoredFileUrl(urlOrKey: string | null | undefined, fileKey?: string | null): string | null {
   const explicitKey = String(fileKey ?? "").trim();
   if (explicitKey) return storagePublicUrl(explicitKey);
@@ -132,7 +135,7 @@ export function normalizeStoredFileUrl(urlOrKey: string | null | undefined, file
   const raw = String(urlOrKey ?? "").trim();
   if (!raw) return null;
 
-  const parsedKey = tryParseStoredKey(raw);
+  const parsedKey = storedFileKeyFromReference(raw);
   return parsedKey ? storagePublicUrl(parsedKey) : raw;
 }
 
