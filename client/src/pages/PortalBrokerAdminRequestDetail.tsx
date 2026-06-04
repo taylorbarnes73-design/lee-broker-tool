@@ -70,8 +70,8 @@ export default function PortalBrokerAdminRequestDetail() {
         title="Broker Admin"
         description="Admin access is required."
         actions={
-          <LinkButton href="/portal" variant="secondary">
-            Back to dashboard
+          <LinkButton href="/portal/submissions" variant="secondary">
+            Back to submissions
           </LinkButton>
         }
       >
@@ -89,8 +89,8 @@ export default function PortalBrokerAdminRequestDetail() {
       description="View the stored email metadata and attachments captured from the shared mailbox."
       actions={
         <div style={{ display: "flex", gap: 10 }}>
-          <LinkButton href="/portal/admin/broker-admin" variant="secondary">
-            Back
+          <LinkButton href="/portal/submissions" variant="secondary">
+            Back to submissions
           </LinkButton>
         </div>
       }

@@ -57,7 +57,7 @@ const COMING_SOON: ReadonlyArray<{ name: string }> = [
 
 const rowGrid: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(200px, 1fr) minmax(220px, 1fr)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
   gap: "var(--s-4)",
   alignItems: "start",
   padding: "var(--s-4) 0",

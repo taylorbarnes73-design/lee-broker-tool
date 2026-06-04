@@ -120,7 +120,7 @@ function stepIndexForStatus(status: string): number {
 function ProgressPipeline({ status, queuePosition }: { status: string; queuePosition: number | null }) {
   const isRejected = status === "rejected" || status === "cancelled";
   const activeStep = stepIndexForStatus(status);
-  const accent = "#98002E";
+  const accent = "#98002E"; // keep literal — used in template literals for box-shadow alpha
   const dotGreen = "rgba(138, 148, 30, 0.9)";
   return (
     <div>
@@ -143,7 +143,7 @@ function ProgressPipeline({ status, queuePosition }: { status: string; queuePosi
           );
         })}
         {isRejected && (
-          <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 700, color: "#A1102F", marginBottom: 12 }}>Not accepted</span>
+          <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 700, color: "var(--err-700)", marginBottom: 12 }}>Not accepted</span>
         )}
       </div>
       <div style={{ fontSize: 12, color: "var(--ink-500)" }}>
@@ -191,7 +191,7 @@ function BrokerSubmissions() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {items.map(s => (
-        <Link key={s.id} href={`/portal/submissions/${s.id}`} style={{ textDecoration: "none", display: "flex", flexDirection: "column", gap: 4, padding: "12px 14px", borderRadius: 10, border: "1px solid var(--ink-200)", background: "white", color: "inherit" }}>
+        <Link key={s.id} href={`/portal/submissions/${s.id}`} className="portal-list-item" style={{ textDecoration: "none", display: "flex", flexDirection: "column", gap: 4, padding: "12px 14px", borderRadius: 10, border: "1px solid var(--ink-200)", background: "white", color: "inherit" }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
             <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>#{s.id} · {s.reference || "(untitled)"}</div>
             <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>{formatDateTime(s.createdAt)}</div>
@@ -245,14 +245,14 @@ function AdminSubmissions() {
     <>
       <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
         <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Filter by name, email, or reference…" style={{ ...INPUT_STYLE, width: 320, maxWidth: "100%" }} />
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={INPUT_STYLE}>
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ ...INPUT_STYLE, maxWidth: "100%" }}>
           <option value="">All statuses</option>
           <option value="pending">Pending</option>
           <option value="in_review">In review</option>
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
         </select>
-        <select value={formTypeFilter} onChange={e => setFormTypeFilter(e.target.value)} style={INPUT_STYLE}>
+        <select value={formTypeFilter} onChange={e => setFormTypeFilter(e.target.value)} style={{ ...INPUT_STYLE, maxWidth: "100%" }}>
           <option value="">All types</option>
           <option value="voucher">Commission voucher</option>
           <option value="listing">Listing</option>
@@ -271,7 +271,7 @@ function AdminSubmissions() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {visible.map(s => (
-            <Link key={s.id} href={`/portal/submissions/${s.id}`} style={{ textDecoration: "none", display: "flex", justifyContent: "space-between", gap: 12, padding: 12, borderRadius: 10, border: "1px solid var(--ink-200)", background: "white", color: "inherit" }}>
+            <Link key={s.id} href={`/portal/submissions/${s.id}`} className="portal-list-item" style={{ textDecoration: "none", display: "flex", justifyContent: "space-between", gap: 12, padding: 12, borderRadius: 10, border: "1px solid var(--ink-200)", background: "white", color: "inherit" }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>#{s.id} · {s.reference || "(untitled)"}</div>
                 <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6, flexWrap: "wrap" }}>
@@ -280,7 +280,7 @@ function AdminSubmissions() {
                   {(s.source === "email_ingest" || s.source === "email_ingest_backfill") && (
                     <span
                       title={s.source === "email_ingest_backfill" ? "Imported from backfill" : "Imported from BrokerAdmin email"}
-                      style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 999, border: "1px solid #BCD6EF", background: "#E6F0FA", color: "#1F4F8B", fontSize: 11, fontWeight: 600, cursor: s.sourceEmailWebLink ? "pointer" : "default" }}
+                      style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 999, border: "1px solid var(--ink-300)", background: "var(--ink-100)", color: "var(--ink-700)", fontSize: 11, fontWeight: 600, cursor: s.sourceEmailWebLink ? "pointer" : "default" }}
                       onClick={e => { if (s.sourceEmailWebLink) { e.preventDefault(); window.open(s.sourceEmailWebLink, "_blank", "noopener"); } }}
                     >
                       ✉ Email
@@ -359,7 +359,7 @@ function AdminInbox() {
       )}
       <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
         <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search title, from, reference…" style={{ ...INPUT_STYLE, width: 320, maxWidth: "100%" }} />
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={INPUT_STYLE}>
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ ...INPUT_STYLE, maxWidth: "100%" }}>
           <option value="">All statuses</option>
           <option value="new">New</option>
           <option value="triaged">Triaged</option>
@@ -369,7 +369,7 @@ function AdminInbox() {
           <option value="done">Done</option>
           <option value="cancelled">Cancelled</option>
         </select>
-        <select value={ownerFilter} onChange={e => setOwnerFilter(e.target.value)} style={INPUT_STYLE}>
+        <select value={ownerFilter} onChange={e => setOwnerFilter(e.target.value)} style={{ ...INPUT_STYLE, maxWidth: "100%" }}>
           <option value="">All owners</option>
           {ownerOptions.map(o => <option key={o} value={o}>{o}</option>)}
           <option value="Unassigned">Unassigned</option>
@@ -383,7 +383,7 @@ function AdminInbox() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {visible.map(r => (
-            <Link key={r.id} href={`/portal/admin/broker-admin/${r.id}`} style={{ textDecoration: "none", display: "flex", justifyContent: "space-between", gap: 12, padding: 12, borderRadius: 10, border: "1px solid var(--ink-200)", background: "white", color: "inherit" }}>
+            <Link key={r.id} href={`/portal/admin/broker-admin/${r.id}`} className="portal-list-item" style={{ textDecoration: "none", display: "flex", justifyContent: "space-between", gap: 12, padding: 12, borderRadius: 10, border: "1px solid var(--ink-200)", background: "white", color: "inherit" }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 4, flexWrap: "wrap" }}>
                   <span style={{ fontWeight: 700, color: "var(--ink-900)" }}>#{r.id} · {r.title || "(untitled)"}</span>
@@ -413,7 +413,7 @@ function TabBar({ active, onSelect }: { active: TabId; onSelect: (t: TabId) => v
     { id: "submissions", label: "Submissions" },
     { id: "inbox", label: "Broker Admin Inbox" },
   ];
-  const accent = "#98002E";
+  const accent = "var(--admin-accent, #98002E)";
   return (
     <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: "1px solid var(--ink-200)", paddingBottom: 0 }}>
       {tabs.map(t => (
@@ -486,7 +486,7 @@ export default function PortalSubmissions() {
     >
       {/* Stats row */}
       <div className="admin-portal-card">
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16 }}>
           <StatCard label="Pending" value={stats?.pending ?? 0} loading={statsLoading} hint="Awaiting first review." />
           <StatCard label="In progress" value={stats?.inReview ?? 0} loading={statsLoading} hint="Claimed and being processed." />
           <StatCard label="Active in queue" value={stats?.active ?? 0} loading={statsLoading} hint="Pending + in progress combined." />

@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#A9223B">
+<meta name="theme-color" content="#98002E">
 <title>Broker Tool</title>
 <link rel="icon" type="image/png" href="lee-newport-beach-fullcolor.png">
 <link rel="apple-touch-icon" href="lee-newport-beach-fullcolor.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,600;0,6..12,700;0,6..12,800&family=Source+Serif+4:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!-- Google Maps JS API loaded dynamically by features_patch.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -170,6 +170,7 @@
         </div>
         <p style="margin-top:8px;font-size:13px;color:#555;font-style:italic;">*Please provide all executed deal documents (Agency Disclosure, Listing Agreement, etc.)</p>
         <div class="sr-only" id="l-doc-analysis-live" aria-live="polite"></div>
+        <div id="l-analyze-panel" class="upload-analyze-panel is-hidden" aria-live="polite"></div>
       </div>
     </div>
     <div class="stepper" data-stepper-for="listing-main"></div>
@@ -828,6 +829,7 @@
     </div>
 
     <div id="v-doc-analysis-live" class="assistive-live" aria-live="polite"></div>
+    <div id="v-analyze-panel" class="upload-analyze-panel is-hidden" aria-live="polite"></div>
   </div>
 
 
@@ -2733,10 +2735,28 @@
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="preflight-modal">
+  <div class="modal modal-preflight">
+    <div class="preflight-header">
+      <h2 class="preflight-title">Check Before You Send</h2>
+      <p class="preflight-subtitle">Take a moment to review your submission — you can go back and fix anything.</p>
+    </div>
+    <div id="preflight-checklist" class="preflight-checklist"></div>
+    <div class="btn-bar preflight-btn-bar">
+      <button class="btn btn-gray preflight-back-btn" onclick="window.closePreflightModal()">&#8592; Go Back and Fix</button>
+      <button class="btn btn-red" id="preflight-confirm-btn" onclick="window.confirmPreflightSubmit()">
+        <span class="btn-spinner"></span>
+        <span class="btn-label">Looks Good &mdash; Send to Admin &rarr;</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="send-admin-modal">
   <div class="modal modal-sm">
     <h2 id="send-admin-modal-title" class="modal-heading-row">Send to Admin</h2>
     <p class="modal-copy" id="send-admin-modal-desc">This will email all filled form fields to the office admin. Taylor will be CC&rsquo;d automatically.</p>
+    <div id="sta-submission-summary" class="sta-submission-summary is-hidden"></div>
     <div class="field">
       <label>Your Name (Broker)</label>
       <input id="sta-broker-name" value="Taylor Barnes">
@@ -13519,7 +13539,7 @@ function scrapeCompBrochure() {
   font-weight: 800;
   letter-spacing: .12em;
   text-transform: uppercase;
-  font-family: 'Nunito Sans', 'Avenir Next', sans-serif;
+  font-family: 'Manrope', 'Avenir Next', sans-serif;
   box-shadow: 0 12px 24px rgba(152, 0, 46, 0.18);
   z-index: 1100;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
