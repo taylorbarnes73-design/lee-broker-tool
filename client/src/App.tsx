@@ -3,6 +3,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Link, Route, Switch, useLocation } from "wouter";
 import { useEffect, type ReactNode } from "react";
+import { Lock } from "lucide-react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Login from "./pages/Login";
@@ -47,33 +48,44 @@ function PublicHome() {
         fontFamily: "var(--font-sans)",
       }}
     >
-      <div style={{ maxWidth: 440, textAlign: "center" }}>
+      <div style={{ maxWidth: 440, width: "100%", textAlign: "center" }}>
         <img
           src="/lee-newport-beach-fullcolor.png"
           alt="Lee & Associates Newport Beach"
-          style={{ height: 64, width: "auto", display: "inline-block" }}
+          style={{ height: 56, width: "auto", display: "inline-block" }}
         />
-        <h1 style={{ fontSize: 26, fontWeight: 700, color: "var(--ink-900)", marginTop: 24, marginBottom: 8, letterSpacing: "-0.01em" }}>
-          Broker Tool
+        <h1 style={{
+          fontFamily: "var(--font-serif)",
+          fontSize: 38,
+          fontWeight: 600,
+          color: "var(--ink-900)",
+          marginTop: 20,
+          marginBottom: 10,
+          letterSpacing: "-0.01em",
+          lineHeight: 1.1,
+        }}>
+          Broker Portal
         </h1>
-        <p style={{ fontSize: 15, color: "var(--ink-600)", lineHeight: 1.5, marginBottom: 28 }}>
-          Sign in for the broker portal and submission queue, or open the listing and forms workspace.
+        <p style={{ fontSize: 14, color: "var(--ink-500)", lineHeight: 1.6, marginBottom: 28 }}>
+          Sign in for the submission queue and broker portal, or open the listings and forms workspace.
         </p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <a
             href="/login?next=/portal/new"
             style={{
               display: "block",
-              padding: "14px 20px",
-              borderRadius: 10,
+              padding: "13px 20px",
+              borderRadius: 8,
               background: "var(--lee-red, #98002E)",
               color: "#fff",
-              fontWeight: 700,
+              fontWeight: 600,
+              fontSize: 14,
               textDecoration: "none",
-              letterSpacing: "0.02em",
+              letterSpacing: "0.01em",
+              boxShadow: "0 1px 2px rgba(152,0,46,.18)",
             }}
           >
-            Sign in
+            Sign in to portal
           </a>
           <a
             href="/login?next=%2Fportal%2Fnew"
@@ -94,20 +106,21 @@ function PublicHome() {
             href="/tool"
             style={{
               display: "block",
-              padding: "14px 20px",
-              borderRadius: 10,
+              padding: "13px 20px",
+              borderRadius: 8,
               border: "1px solid var(--ink-200)",
-              background: "#fff",
-              color: "var(--ink-800)",
+              background: "var(--ink-0)",
+              color: "var(--ink-700)",
               fontWeight: 600,
+              fontSize: 14,
               textDecoration: "none",
             }}
           >
             Open broker forms workspace
           </a>
         </div>
-        <p style={{ marginTop: 28, fontSize: 13, color: "var(--ink-500)" }}>
-          <Link href="/portal/admin/login" style={{ color: "var(--ink-700)", fontWeight: 600 }}>
+        <p style={{ marginTop: 24, fontSize: 12, color: "var(--ink-400)" }}>
+          <Link href="/portal/admin/login" style={{ color: "var(--ink-600)", fontWeight: 600 }}>
             Administrator sign-in
           </Link>
         </p>
@@ -127,8 +140,8 @@ function BrokerToolRedirect() {
     window.location.replace("/tool");
   }, []);
   return (
-    <div style={{ display: "flex", width: "100vw", height: "100vh", alignItems: "center", justifyContent: "center", color: "#6b7280", fontFamily: "Inter, system-ui, sans-serif" }}>
-      Opening Broker Tool...
+    <div style={{ display: "flex", width: "100vw", height: "100vh", alignItems: "center", justifyContent: "center", color: "var(--ink-400)", fontSize: 14 }}>
+      Opening Broker Tool…
     </div>
   );
 }
@@ -173,18 +186,17 @@ function AdminAccessRequired() {
         alignItems: "center",
         justifyContent: "center",
         padding: 24,
-        fontFamily: "Inter, system-ui, sans-serif",
       }}
     >
       <div
         style={{
-          maxWidth: 460,
+          maxWidth: 420,
           width: "100%",
-          background: "white",
-          borderRadius: 16,
+          background: "var(--ink-0)",
+          borderRadius: 12,
           border: "1px solid var(--ink-200)",
-          padding: 28,
-          boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+          padding: "28px 28px 24px",
+          boxShadow: "var(--shadow-md)",
           textAlign: "center",
         }}
       >
@@ -193,21 +205,20 @@ function AdminAccessRequired() {
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
-            width: 48,
-            height: 48,
+            width: 44,
+            height: 44,
             borderRadius: 999,
-            background: "var(--ink-100)",
-            color: "var(--ink-700)",
-            marginBottom: 14,
-            fontSize: 22,
-            fontWeight: 700,
+            background: "var(--lee-red-wash, #F4E3E8)",
+            color: "var(--lee-red, #98002E)",
+            marginBottom: 16,
           }}
         >
-          ·
+          <Lock size={20} aria-hidden />
         </div>
-        <h1 style={{ fontSize: 20, fontWeight: 700, color: "var(--ink-900)", margin: 0 }}>
+        <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 26, fontWeight: 600, color: "var(--ink-900)", margin: 0, letterSpacing: "-0.01em" }}>
           Administrator access required
         </h1>
+        <p style={{ fontSize: 14, color: "var(--ink-600)", lineHeight: 1.55, marginTop: 8, marginBottom: 22 }}>
         <p style={{ fontSize: 14, color: "var(--ink-600)", lineHeight: 1.55, marginTop: 8, marginBottom: 22 }}>
           This area is restricted to platform administrators. You can still use the broker portal home
           or open the broker tool to build a new submission.
@@ -218,8 +229,8 @@ function AdminAccessRequired() {
             style={{
               display: "block",
               padding: "12px 18px",
-              borderRadius: 10,
-              background: "var(--brand-600, #A9223B)",
+              borderRadius: 8,
+              background: "var(--lee-red, #98002E)",
               color: "#fff",
               fontWeight: 600,
               textDecoration: "none",
@@ -227,22 +238,23 @@ function AdminAccessRequired() {
             }}
           >
             Broker portal home
+            Broker portal home
           </Link>
           <a
             href="/tool"
             style={{
               display: "block",
               padding: "12px 18px",
-              borderRadius: 10,
+              borderRadius: 8,
               border: "1px solid var(--ink-200)",
-              background: "#fff",
-              color: "var(--ink-800)",
+              background: "var(--ink-0)",
+              color: "var(--ink-700)",
               fontWeight: 600,
               textDecoration: "none",
               fontSize: 14,
             }}
           >
-            Open broker tool
+            Open broker forms workspace
           </a>
         </div>
       </div>
@@ -323,7 +335,7 @@ function Router() {
       </Route>
       <Route path="/portal/admin">
         <AdminPortalRoute>
-          <Redirect to="/portal/submissions" />
+          <Redirect to="/portal/admin/settings" />
         </AdminPortalRoute>
       </Route>
 

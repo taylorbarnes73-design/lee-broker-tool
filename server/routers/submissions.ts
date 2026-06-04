@@ -446,9 +446,15 @@ export const submissionsRouter = router({
       const db = await getDb();
       if (!db) return [];
       const limit = input?.limit ?? 25;
+      const columns = await getSubmissionColumnSet(db);
+      const brokerCondition = columns.has("submittedByOpenId")
+        ? sql`s.\`submittedByOpenId\` = ${ctx.user.openId}`
+        : columns.has("submittedByEmail")
+          ? sql`s.\`submittedByEmail\` = ${ctx.user.email}`
+          : sql`s.\`submittedBy\` = ${ctx.user.name ?? ctx.user.email}`;
 
       const rows = await selectSubmissionRows(db, {
-        where: [sql`s.\`submittedByOpenId\` = ${ctx.user.openId}`],
+        where: [brokerCondition],
         orderBy: sql`order by s.\`createdAt\` desc`,
         limit,
       });
@@ -476,16 +482,21 @@ export const submissionsRouter = router({
         })
         .optional()
     )
-    .query(async ({ ctx, input }) => {
+        .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return { totalPending: 0, requests: [] as any[] };
-
       const limit = input?.limit ?? 50;
-
+      const columns = await getSubmissionColumnSet(db);
+      // Build broker-scoping condition: prefer submittedByOpenId, fall back to submittedByEmail
+      const brokerCondition = columns.has("submittedByOpenId")
+        ? sql`s.\`submittedByOpenId\` = ${ctx.user.openId}`
+        : columns.has("submittedByEmail")
+          ? sql`s.\`submittedByEmail\` = ${ctx.user.email}`
+          : sql`s.\`submittedBy\` = ${ctx.user.name ?? ctx.user.email}`;
       // 1) Get *my* active queue requests (the broker should only see their own).
       const myQueueRows = await selectSubmissionRows(db, {
         where: [
-          sql`s.\`submittedByOpenId\` = ${ctx.user.openId}`,
+          brokerCondition,
           sql`s.\`status\` in (${sql.join(ACTIVE_QUEUE_STATUSES.map(status => sql`${status}`), sql`, `)})`,
         ],
         orderBy: sql`order by s.\`createdAt\` asc, s.\`id\` asc`,
@@ -503,20 +514,23 @@ export const submissionsRouter = router({
       // Ordering rule: createdAt ASC, then id ASC for stable tie-break.
       const requests = await Promise.all(
         myQueueRows.map(async row => {
-          const aheadRows = await db
-            .select({ count: sql<number>`count(*)` })
-            .from(submissions)
-            .where(
-              and(
-                activeQueueStatusCondition(),
-                or(
-                  sql`${submissions.createdAt} < ${row.createdAt}`,
-                  and(sql`${submissions.createdAt} = ${row.createdAt}`, sql`${submissions.id} < ${row.id}`)
+          let aheadCount = 0;
+          // Only compute position if createdAt is available (column may not exist in older schemas)
+          if (row.createdAt != null && row.id != null) {
+            const aheadRows = await db
+              .select({ count: sql<number>`count(*)` })
+              .from(submissions)
+              .where(
+                and(
+                  activeQueueStatusCondition(),
+                  or(
+                    sql`${submissions.createdAt} < ${row.createdAt}`,
+                    and(sql`${submissions.createdAt} = ${row.createdAt}`, sql`${submissions.id} < ${row.id}`)
+                  )
                 )
-              )
-            );
-
-          const aheadCount = numberFromCount(aheadRows[0]?.count);
+              );
+            aheadCount = numberFromCount(aheadRows[0]?.count);
+          }
           return {
             id: row.id,
             formType: row.formType,

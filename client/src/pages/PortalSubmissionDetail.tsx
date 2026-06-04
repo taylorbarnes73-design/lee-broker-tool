@@ -208,6 +208,8 @@ export default function PortalSubmissionDetail() {
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
   const [activityLoading, setActivityLoading] = useState(false);
   const [activityError, setActivityError] = useState<string | null>(null);
+  const [stagedPdf, setStagedPdf] = useState<File | null>(null);
+  const [stagedExcel, setStagedExcel] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const excelFileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -505,7 +507,7 @@ export default function PortalSubmissionDetail() {
                       {item.sourceEmailWebLink && (
                         <>
                           {" · "}
-                          <a href={item.sourceEmailWebLink} target="_blank" rel="noreferrer" style={{ color: "#1F4F8B", fontWeight: 700 }}>
+                          <a href={item.sourceEmailWebLink} target="_blank" rel="noreferrer" style={{ color: "var(--ink-700)", fontWeight: 700 }}>
                             Open in Outlook ↗
                           </a>
                         </>
@@ -664,6 +666,7 @@ export default function PortalSubmissionDetail() {
                     <Button
                       variant={item.status === "pending" ? "primary" : "secondary"}
                       disabled={updatingStatus !== null || item.status === "pending"}
+                      loading={updatingStatus === "pending"}
                       onClick={() => updateStatus("pending")}
                     >
                       {updatingStatus === "pending" ? "Updating…" : "Requeue"}
@@ -671,6 +674,7 @@ export default function PortalSubmissionDetail() {
                     <Button
                       variant={item.status === "in_review" ? "primary" : "secondary"}
                       disabled={updatingStatus !== null || item.status === "in_review"}
+                      loading={updatingStatus === "in_review"}
                       onClick={() => updateStatus("in_review")}
                     >
                       {updatingStatus === "in_review" ? "Updating…" : item.assignedTo ? "Reassign to me" : "Claim & start"}
@@ -678,6 +682,7 @@ export default function PortalSubmissionDetail() {
                     <Button
                       variant={item.status === "approved" ? "primary" : "secondary"}
                       disabled={updatingStatus !== null || item.status === "approved"}
+                      loading={updatingStatus === "approved"}
                       onClick={() => updateStatus("approved")}
                     >
                       {updatingStatus === "approved" ? "Updating…" : "Mark complete"}
@@ -685,6 +690,7 @@ export default function PortalSubmissionDetail() {
                     <Button
                       variant={item.status === "rejected" ? "primary" : "secondary"}
                       disabled={updatingStatus !== null || item.status === "rejected"}
+                      loading={updatingStatus === "rejected"}
                       onClick={() => updateStatus("rejected")}
                     >
                       {updatingStatus === "rejected" ? "Updating…" : "Reject"}
@@ -814,7 +820,7 @@ export default function PortalSubmissionDetail() {
             {activeTab === "documents" && isAdmin && item.formType === "voucher" && (
               <section className="admin-detail-panel">
                 <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 6 }}>Import Lee voucher (Excel)</div>
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   <input
                     ref={excelFileInputRef}
                     type="file"
@@ -822,16 +828,29 @@ export default function PortalSubmissionDetail() {
                     style={{ display: "none" }}
                     onChange={e => {
                       const file = e.target.files?.[0];
-                      if (file) void handleImportVoucherExcel(file);
+                      if (file) { setStagedExcel(file); }
                       e.target.value = "";
                     }}
                   />
-                  <Button variant="secondary" disabled={!item || importingExcel} onClick={() => excelFileInputRef.current?.click()}>
-                    {importingExcel ? "Importing…" : "Upload .xlsx / .xlsm voucher"}
-                  </Button>
-                  <span style={{ fontSize: 12, color: "var(--ink-500)" }}>
-                    Uses the same cell layout as the legacy commission voucher workbook.
-                  </span>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                    <Button variant="secondary" disabled={!item || importingExcel} loading={importingExcel} onClick={() => excelFileInputRef.current?.click()}>
+                      {importingExcel ? "Importing…" : "Select .xlsx / .xlsm voucher"}
+                    </Button>
+                    <span style={{ fontSize: 12, color: "var(--ink-500)" }}>
+                      Uses the same cell layout as the legacy commission voucher workbook.
+                    </span>
+                  </div>
+                  {stagedExcel && !importingExcel && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "white", border: "1px solid var(--ink-200)", borderRadius: 8, fontSize: 13 }}>
+                      <span style={{ fontSize: 18 }}>📄</span>
+                      <span style={{ flex: 1, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{stagedExcel.name}</span>
+                      <span style={{ fontSize: 11, color: "var(--ink-400)", whiteSpace: "nowrap" }}>{(stagedExcel.size / 1024).toFixed(0)} KB</span>
+                      <button type="button" style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "var(--ink-400)", textDecoration: "underline" }} onClick={() => setStagedExcel(null)}>Remove</button>
+                      <Button variant="primary" disabled={importingExcel} loading={importingExcel} onClick={() => { void handleImportVoucherExcel(stagedExcel).then(() => setStagedExcel(null)); }}>
+                        Import File
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </section>
             )}
@@ -842,44 +861,58 @@ export default function PortalSubmissionDetail() {
                   AI extract (voucher, lease, or purchase agreement PDF)
                 </div>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-                  <label style={{ fontSize: 12, color: "var(--ink-600)" }}>
-                    Document type
-                    <select
-                      value={contractType}
-                      onChange={e => setContractType(e.target.value)}
-                      style={{
-                        marginLeft: 8,
-                        padding: "8px 10px",
-                        borderRadius: "var(--r-8)",
-                        border: "1px solid var(--ink-200)",
-                        fontSize: 13,
-                        background: "var(--ink-0)",
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                    <label style={{ fontSize: 12, color: "var(--ink-600)" }}>
+                      Document type
+                      <select
+                        value={contractType}
+                        onChange={e => setContractType(e.target.value)}
+                        style={{
+                          marginLeft: 8,
+                          padding: "8px 10px",
+                          borderRadius: "var(--r-8)",
+                          border: "1px solid var(--ink-200)",
+                          fontSize: 13,
+                          background: "var(--ink-0)",
+                        }}
+                      >
+                        <option>Lease Agreement</option>
+                        <option>Purchase &amp; Sale Agreement</option>
+                        <option>AIR CRE Contract</option>
+                        <option>Commission Agreement</option>
+                      </select>
+                    </label>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="application/pdf"
+                      style={{ display: "none" }}
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) { setStagedPdf(file); }
+                        e.target.value = "";
                       }}
-                    >
-                      <option>Lease Agreement</option>
-                      <option>Purchase &amp; Sale Agreement</option>
-                      <option>AIR CRE Contract</option>
-                      <option>Commission Agreement</option>
-                    </select>
-                  </label>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="application/pdf"
-                    style={{ display: "none" }}
-                    onChange={e => {
-                      const file = e.target.files?.[0];
-                      if (file) void handleExtractFile(file);
-                      e.target.value = "";
-                    }}
-                  />
-                  <Button variant="secondary" disabled={!item || extracting} onClick={() => fileInputRef.current?.click()}>
-                    {extracting ? "Extracting…" : "Upload PDF and extract"}
-                  </Button>
-                  <span style={{ fontSize: 12, color: "var(--ink-500)" }}>
-                    Fills address, parties, term dates, and fee percent when found.
-                    {derivedFee != null ? ` Current fee: ${derivedFee.toFixed(2)}%.` : ""}
-                  </span>
+                    />
+                    <Button variant="secondary" disabled={!item || extracting} loading={extracting} onClick={() => fileInputRef.current?.click()}>
+                      {extracting ? "Extracting…" : "Select PDF"}
+                    </Button>
+                    <span style={{ fontSize: 12, color: "var(--ink-500)" }}>
+                      Fills address, parties, term dates, and fee percent when found.
+                      {derivedFee != null ? ` Current fee: ${derivedFee.toFixed(2)}%.` : ""}
+                    </span>
+                  </div>
+                  {stagedPdf && !extracting && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "white", border: "1px solid var(--ink-200)", borderRadius: 8, fontSize: 13 }}>
+                      <span style={{ fontSize: 18 }}>📄</span>
+                      <span style={{ flex: 1, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{stagedPdf.name}</span>
+                      <span style={{ fontSize: 11, color: "var(--ink-400)", whiteSpace: "nowrap" }}>{(stagedPdf.size / 1024).toFixed(0)} KB</span>
+                      <button type="button" style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "var(--ink-400)", textDecoration: "underline" }} onClick={() => setStagedPdf(null)}>Remove</button>
+                      <Button variant="primary" disabled={extracting} loading={extracting} onClick={() => { void handleExtractFile(stagedPdf).then(() => setStagedPdf(null)); }}>
+                        Extract Fields
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </section>
             )}
@@ -895,6 +928,7 @@ export default function PortalSubmissionDetail() {
                     border: "1px solid var(--ink-200)",
                     background: "var(--ink-0)",
                     overflow: "auto",
+                    maxHeight: 400,
                     fontSize: 13,
                     color: "var(--ink-900)",
                     whiteSpace: "pre-wrap",

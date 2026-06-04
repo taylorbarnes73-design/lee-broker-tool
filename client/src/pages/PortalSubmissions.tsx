@@ -165,8 +165,7 @@ function ProgressPipeline({
         })}
         {isRejected && (
           <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 700, color: "var(--err-700)", marginBottom: 12 }}>
-            Not accepted
-          </span>
+          <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 700, color: "var(--err-700)", marginBottom: 12 }}>Not accepted</span>
         )}
       </div>
       <div style={{ fontSize: 12, color: "var(--ink-500)" }}>
@@ -452,7 +451,7 @@ function AdminSubmissions() {
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
         </select>
-        <select value={formTypeFilter} onChange={e => setFormTypeFilter(e.target.value)} style={INPUT_STYLE}>
+        <select value={formTypeFilter} onChange={e => setFormTypeFilter(e.target.value)} style={{ ...INPUT_STYLE, maxWidth: "100%" }}>
           <option value="">All types</option>
           <option value="voucher">Commission voucher</option>
           <option value="listing">Listing</option>
@@ -511,29 +510,29 @@ function AdminSubmissions() {
                   )}
                   <StatusBadge tone={{ bg: "var(--ink-100)", fg: "var(--ink-700)", border: "var(--ink-200)" }} size="sm">{formatFormType(s.formType)}</StatusBadge>
                     {(s.source === "email_ingest" || s.source === "email_ingest_backfill") && (
-                      <span
-                        title={s.source === "email_ingest_backfill" ? "Imported from backfill" : "Imported from BrokerAdmin email"}
-                        style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 999, border: "1px solid #BCD6EF", background: "#E6F0FA", color: "#1F4F8B", fontSize: 11, fontWeight: 600, cursor: s.sourceEmailWebLink ? "pointer" : "default" }}
-                        onClick={e => {
-                          if (s.sourceEmailWebLink) {
-                            e.preventDefault();
-                            window.open(s.sourceEmailWebLink, "_blank", "noopener");
-                          }
-                        }}
-                      >
-                        ✉ Email
-                      </span>
-                    )}
-                    {s.queuePosition !== null && <span style={{ fontSize: 12, color: "var(--ink-500)" }}>Queue #{s.queuePosition}</span>}
-                  </div>
-                  <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 5 }}>
-                    {s.submittedBy || "(unknown)"}{s.submittedByEmail ? ` · ${s.submittedByEmail}` : ""}
-                    {s.assignedTo && (
-                      <span style={ASSIGNEE_CHIP_STYLE}>
-                        → {s.assignedTo}
-                      </span>
-                    )}
-                  </div>
+                  {(s.source === "email_ingest" || s.source === "email_ingest_backfill") && (
+                    <span
+                      title={s.source === "email_ingest_backfill" ? "Imported from backfill" : "Imported from BrokerAdmin email"}
+                      style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 999, border: "1px solid #BCD6EF", background: "#E6F0FA", color: "#1F4F8B", fontSize: 11, fontWeight: 600, cursor: s.sourceEmailWebLink ? "pointer" : "default" }}
+                      onClick={e => {
+                        if (s.sourceEmailWebLink) {
+                          e.preventDefault();
+                          window.open(s.sourceEmailWebLink, "_blank", "noopener");
+                        }
+                      }}
+                    >
+                      ✉ Email
+                    </span>
+                  )}
+                  {s.queuePosition !== null && <span style={{ fontSize: 12, color: "var(--ink-500)" }}>Queue #{s.queuePosition}</span>}
+                </div>
+                <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 5 }}>
+                  {s.submittedBy || "(unknown)"}{s.submittedByEmail ? ` · ${s.submittedByEmail}` : ""}
+                  {s.assignedTo && (
+                    <span style={ASSIGNEE_CHIP_STYLE}>
+                      → {s.assignedTo}
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>{formatDateTime(s.createdAt)}</div>
               </Link>
@@ -801,7 +800,7 @@ function AdminInbox() {
           <option value="done">Done</option>
           <option value="cancelled">Cancelled</option>
         </select>
-        <select value={ownerFilter} onChange={e => setOwnerFilter(e.target.value)} style={INPUT_STYLE}>
+        <select value={ownerFilter} onChange={e => setOwnerFilter(e.target.value)} style={{ ...INPUT_STYLE, maxWidth: "100%" }}>
           <option value="">All owners</option>
           {ownerOptions.map(o => <option key={o} value={o}>{o}</option>)}
           <option value="Unassigned">Unassigned</option>

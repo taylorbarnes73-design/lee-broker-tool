@@ -9,10 +9,16 @@ vi.mock("../_core/llm", () => ({
   invokeLLM: vi.fn(),
   invokeLLMWithFile: vi.fn(),
   isGeminiDirectAvailable: vi.fn().mockReturnValue(false),
+  isClaudeFallbackAvailable: vi.fn().mockReturnValue(false),
+  invokeClaudeWithFile: vi.fn(),
 }));
 
 vi.mock("child_process", () => ({
   execSync: vi.fn(),
+}));
+
+vi.mock("../services/adminNotification", () => ({
+  notifyAdminOfSubmission: vi.fn(),
 }));
 
 vi.mock("../_core/env", () => ({

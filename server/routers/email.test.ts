@@ -19,6 +19,10 @@ vi.mock("child_process", () => ({
   execSync: execSyncMock,
 }));
 
+vi.mock("../services/adminNotification", () => ({
+  notifyAdminOfSubmission: vi.fn(),
+}));
+
 vi.mock("../storage", () => ({
   storagePut: storagePutMock,
 }));

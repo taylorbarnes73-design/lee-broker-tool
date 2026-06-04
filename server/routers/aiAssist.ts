@@ -1,5 +1,5 @@
 import { publicProcedure, router } from "../_core/trpc";
-import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable } from "../_core/llm";
+import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable, isClaudeFallbackAvailable, invokeClaudeWithFile } from "../_core/llm";
 import { z } from "zod/v4";
 import { getSetting } from "../settings/getSetting";
 import { isStoredFileReference, storageGetBytes } from "../storage";
@@ -196,7 +196,10 @@ const southernCaliforniaCities = new Set([
 ]);
 
 function cleanString(value: unknown) {
-  return typeof value === "string" ? value.trim() : "";
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number") return String(value);
+  if (Array.isArray(value)) return value.map(v => String(v ?? "")).join("\n");
+  return "";
 }
 
 function normalizeWhitespace(value: string) {
@@ -217,7 +220,26 @@ function normalizeEnum(
 ): string | undefined {
   const value = normalizeWhitespace(cleanString(raw)).toLowerCase();
   if (!value) return undefined;
-  return allowedMap[value];
+
+  // Exact match first
+  if (allowedMap[value]) return allowedMap[value];
+
+  // Check if any key is contained within the value (e.g., "industrial/warehouse" contains "industrial")
+  for (const [key, mapped] of Object.entries(allowedMap)) {
+    if (value.includes(key)) return mapped;
+  }
+
+  // Check if the value starts with any key
+  for (const [key, mapped] of Object.entries(allowedMap)) {
+    if (value.startsWith(key)) return mapped;
+  }
+
+  // Check if any mapped value matches (case-insensitive)
+  for (const [, mapped] of Object.entries(allowedMap)) {
+    if (mapped.toLowerCase() === value) return mapped;
+  }
+
+  return undefined;
 }
 
 function parseScaledNumber(raw: unknown) {
@@ -739,47 +761,84 @@ CRITICAL RULES — follow exactly:
 async function brochureSystemPrompt(): Promise<string> {
   const company = String(await getSetting("branding.company_name"));
   return `You are a commercial real estate data extraction specialist for ${company}.
-Extract structured listing data from a property marketing brochure or flyer.
+You extract structured listing data from property marketing brochures, flyers, and offering memoranda.
 
-CRITICAL RULES — follow exactly:
+Your task: Read the entire brochure carefully, identify every relevant data point, and return a JSON object with the extracted values.
+
+FIELD EXTRACTION GUIDE:
+- address: Street address ONLY (e.g. "1234 Main St" or "1234 Main St Ste 200"). Never include city, state, or zip.
+- city: City name only, title case (e.g. "Irvine").
+- state: Two-letter abbreviation (e.g. "CA").
+- zip: 5-digit zip code.
+- propertyType: Exactly one of: Industrial, Office, Retail, Medical, Land, Multi-Family, Other. Determine from building use, zoning, or description.
+- transactionType: "Lease" or "Sale" — if brochure shows rental rates, it's Lease. If it shows a sale price, it's Sale. If both, use the primary offering.
+- leaseType: "NNN" (triple net), "FSG" (full service gross), "MG" (modified gross), "Gross", or "Net". Look for these abbreviations near the rate.
+- buildingSf: Total building square footage as integer string. "12,500 SF" → "12500".
+- suiteSf: Available suite/space square footage as integer string.
+- rateSfMo: Monthly rate per SF as decimal string. "$1.25/SF/Mo" → "1.25". IMPORTANT: If the rate is ANNUAL (e.g. "$15.00/SF/Yr NNN"), divide by 12 and return the monthly figure ("1.25").
+- askingPrice: Sale price as integer string. "$2,500,000" → "2500000".
+- term: Lease term in MONTHS as integer string. "5 years" → "60".
+- listingExpiration: Listing expiration date in MM/DD/YYYY format.
+- dateEntered: Date listing was entered/created in MM/DD/YYYY format.
+- ownerName: Property owner's full name or entity name.
+- commissionRate: Commission percentage as decimal. "6%" → "6".
+- crossStreets: Nearby cross streets or intersection.
+- yearBuilt: Year the building was constructed as string (e.g. "1985").
+- listingAgentName: Full name of the listing agent/broker. No phone or email.
+- listingAgentLicense: DRE license number.
+- comments: Key property highlights, features, and amenities as a concise bullet list.
+
+CRITICAL RULES:
 - Return ONLY a valid JSON object. No markdown fences, no explanation.
-- Extract ONLY fields you can identify with high confidence. Omit everything else.
-- Monetary values: numeric strings without $ or commas. "$1.25/SF/Mo" → "1.25".
-- Building/suite SF: numeric string without commas. "12,500 SF" → "12500".
-- Asking price for sales: numeric string. "$2,500,000" → "2500000".
-- Dates: MM/DD/YYYY format.
-- Property type: exactly one of Industrial, Office, Retail, Medical, Land, Multi-Family, Other.
-- Transaction type: Lease or Sale.
-- Lease type: NNN, FSG, MG, Gross, or Net.
-- Term: integer months as string if stated. "5 years" → "60".
-- Address: street only (no city/state). Put city and state in separate fields.
-- State: two-letter abbreviation.
-- Extract agent/broker full name if visible.
-- Extract all highlights/features into comments as a concise bullet list.
-- If the brochure is ambiguous or promotional without a precise field value, omit that field.`;
+- Extract ONLY values you can identify with HIGH CONFIDENCE from the document.
+- Read ALL pages — brochures often have key data on back pages, in fine print, or in contact sections.
+- Look carefully at headers, footers, and sidebar panels for rates, SF, and property details.
+- If a rate is shown as annual (per year), convert to monthly by dividing by 12.
+- If the brochure is promotional without precise values, OMIT those fields.
+- Never guess or infer values not explicitly stated.`;
 }
 
 async function documentSystemPrompt(): Promise<string> {
   const company = String(await getSetting("branding.company_name"));
   return `You are a commercial real estate data extraction specialist for ${company}.
-Extract structured form data from broker-provided documents such as brochures, offering memoranda, commission agreements, sign requests, and comp sheets.
+You extract structured form data from broker-provided documents such as brochures, offering memoranda, commission agreements, sign requests, lease abstracts, and comp sheets.
 
-CRITICAL RULES — follow exactly:
-- Return ONLY a valid JSON object. No markdown fences, no explanation.
-- Include ONLY fields listed in the user's available fields list.
-- Extract ONLY values you can identify with high confidence. Omit uncertain fields entirely.
-- Monetary values: numeric strings without $ or commas. "$1.25/SF/Mo" -> "1.25".
-- Building/suite/deal SF: numeric string without commas. "12,500 SF" -> "12500".
-- Dates: MM/DD/YYYY format.
-- Property type: exactly one of Industrial, Office, Retail, Medical, Land, Multi-Family, Other.
-- Transaction type: Lease or Sale.
-- Representation type: Tenant Rep, Landlord Rep, Buyer Rep, Seller Rep, or Dual.
-- Lease type: NNN, FSG, MG, Gross, or Net.
-- Term: integer months as string if stated. "5 years" -> "60".
-- Address: street only (no city/state). Put city and state in separate fields.
-- State: two-letter abbreviation.
-- Broker/agent names: full name only, no phone or email.
-- If the document is ambiguous or promotional without a precise field value, omit that field.`;
+Your task: Read the entire document carefully, identify every relevant data point, and return a JSON object with the extracted values.
+
+FIELD EXTRACTION GUIDE:
+- address: Street address ONLY (e.g. "1234 Main St" or "1234 Main St Ste 200"). Never include city, state, or zip in this field.
+- city: City name only (e.g. "Irvine" or "Costa Mesa"). Title case.
+- state: Two-letter state abbreviation (e.g. "CA").
+- zip: 5-digit zip code (e.g. "92618").
+- propertyType: Classify as exactly one of: Industrial, Office, Retail, Medical, Land, Multi-Family, Other.
+- transactionType: "Lease" or "Sale" — determine from context (rental terms = Lease, purchase price = Sale).
+- representationType: "Tenant Rep", "Landlord Rep", "Buyer Rep", "Seller Rep", or "Dual".
+- leaseType: "NNN" (triple net), "FSG" (full service gross), "MG" (modified gross), "Gross", or "Net".
+- buildingSf / suiteSf / dealSf: Total square footage as integer string without commas. "12,500 SF" → "12500".
+- rateSfMo / leaseRate / baseRent: Monthly rate PER SQUARE FOOT as decimal string (NOT the total monthly rent). "$1.25/SF/Mo" → "1.25". If annual, divide by 12. If rate says "$15.00 NNN" (annual), return "1.25". IMPORTANT: If the document states a total monthly rent (e.g. "$15,000/month"), you MUST divide by the square footage to get the per-SF rate. For example, $15,000/month on 10,000 SF = "1.50".
+- term: Lease duration in MONTHS as integer string. "5 years" → "60". "36 months" → "36".
+- commencementDate / expirationDate / listingExpiration / dateEntered: Dates in MM/DD/YYYY format.
+- askingPrice / salePrice / totalConsideration: Dollar amount as integer string without $ or commas. "$2,500,000" → "2500000".
+- pricePerSf: Price per square foot as decimal string. "$250.00/SF" → "250.00".
+- commissionRate: Commission percentage as decimal string. "6%" → "6". "3.5%" → "3.5".
+- ownerName / clientName / lessorName / lesseeName / tenantName / landlordName: Full name of the person or entity.
+- listingAgentName / procuringAgentName / brokerName: Full name only, no phone/email/license.
+- listingAgentLicense: DRE license number if visible.
+- comments / notes: Brief summary of key deal terms, highlights, or special conditions.
+- signType: Type of sign (e.g. "For Lease", "For Sale", "Sold").
+- signSize: Dimensions (e.g. "4x8").
+- nameRider: Name rider text.
+- specialInstructions / accessInstructions: Verbatim instructions from the document.
+
+CRITICAL RULES:
+- Return ONLY a valid JSON object. No markdown fences, no explanation, no extra text.
+- Include ONLY fields from the user's available fields list.
+- Extract ONLY values you can identify with HIGH CONFIDENCE. Omit uncertain fields entirely.
+- Read the ENTIRE document — important data may be on any page, in headers, footers, signature blocks, or fine print.
+- For multi-page documents, cross-reference data across pages to ensure accuracy.
+- If a value appears in multiple places, prefer the most specific/detailed version.
+- If the document is ambiguous or promotional without a precise field value, OMIT that field.
+- Never guess or infer values that are not explicitly stated in the document.`;
 }
 
 // ── Shared JSON schema builder ──
@@ -903,19 +962,93 @@ async function extractDocumentFields(
     };
   }
 
+  const docDesc = mimeType === "application/pdf" ? "PDF document" : "document image";
   const promptText = options.listingBrochurePrompt
-    ? `Extract all listing fields you can identify from this ${mimeType === "application/pdf" ? "PDF brochure" : "brochure image"}.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nReturn JSON with only fields you can confidently extract:`
-    : `Extract all fields you can identify for the "${tab}" form from this ${mimeType === "application/pdf" ? "PDF document" : "document image"}.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nReturn JSON with only fields you can confidently extract:`;
+    ? `Carefully read this entire ${docDesc} (all pages) and extract listing data into the fields below.
+
+Fields to extract: ${fieldNames.join(", ")}
+
+Instructions:
+- Read every page, header, footer, sidebar, and fine print.
+- For rates: if shown as annual ($/SF/Yr), divide by 12 to get monthly.
+- For SF: remove commas, return as integer string.
+- For dates: return as MM/DD/YYYY.
+- For addresses: street only, put city/state/zip in their own fields.
+- Only include fields you find explicitly stated. Omit anything uncertain.
+
+Return the JSON object now:`
+    : `Carefully read this entire ${docDesc} (all pages) and extract data for the "${tab}" form into the fields below.
+
+Fields to extract: ${fieldNames.join(", ")}
+
+Instructions:
+- Read every page, header, footer, sidebar, signature block, and fine print.
+- For rates: if shown as annual ($/SF/Yr), divide by 12 to get monthly.
+- For SF: remove commas, return as integer string.
+- For monetary amounts: remove $ and commas, return as integer string.
+- For dates: return as MM/DD/YYYY.
+- For term: convert to months ("5 years" = "60").
+- For addresses: street only, put city/state/zip in their own fields.
+- Only include fields you find explicitly stated. Omit anything uncertain.
+
+Return the JSON object now:`;
 
   const systemContent = options.listingBrochurePrompt
     ? await brochureSystemPrompt()
     : await documentSystemPrompt();
 
-  // ── Preferred path: native AI inline file (no text extraction) ──
-  // The AI reads the document directly, giving much better results on scanned PDFs
-  // and image-heavy brochures. Only available when GEMINI_API_KEY is configured.
+  // ── Preferred path: Claude (Anthropic) as primary extractor ──
+  // Claude provides superior accuracy for document field extraction, especially
+  // for pricing, SF, and agent details. Gemini serves as fallback.
+  let primaryFields: Record<string, string> = {};
+  let primarySucceeded = false;
+  let primaryProvider = "";
+
+  if (isClaudeFallbackAvailable()) {
+    try {
+      console.info(`[aiAssist] Trying Claude as primary extractor...`);
+      const claudeRaw = await invokeClaudeWithFile({
+        fileBuffer: fetched.fileBuffer,
+        mimeType,
+        systemPrompt: systemContent,
+        userPrompt: promptText,
+      });
+      console.info(`[aiAssist] Claude raw response length: ${typeof claudeRaw === 'string' ? claudeRaw.length : 0}`);
+      console.info(`[aiAssist] Claude raw response (first 2000 chars): ${typeof claudeRaw === 'string' ? claudeRaw.slice(0, 2000) : JSON.stringify(claudeRaw)}`);
+      const claudeParsed = parseJsonObject(claudeRaw);
+      console.info(`[aiAssist] Claude parsed keys: ${Object.keys(claudeParsed).join(', ')}`);
+      primaryFields = sanitizeAiFields(tab, claudeParsed);
+      console.info(`[aiAssist] Claude sanitized fields (${Object.keys(primaryFields).length}): ${JSON.stringify(primaryFields).slice(0, 2000)}`);
+      primarySucceeded = true;
+      primaryProvider = "Claude";
+    } catch (claudeErr: unknown) {
+      console.warn(
+        "[aiAssist] Claude primary extraction failed:",
+        claudeErr instanceof Error ? claudeErr.message : String(claudeErr)
+      );
+    }
+  }
+
+  // If Claude returned a good result (3+ fields), use it
+  if (primarySucceeded && Object.keys(primaryFields).length >= 3) {
+    console.info(`[aiAssist] ${primaryProvider} returned ${Object.keys(primaryFields).length} fields — using as final result.`);
+    return {
+      success: true as const,
+      fields: primaryFields,
+      tab,
+      fieldCount: Object.keys(primaryFields).length,
+    };
+  }
+
+  // ── Gemini fallback: try Gemini when Claude returned few/no fields ──
+  let geminiFields: Record<string, string> = {};
+  let geminiSucceeded = false;
+
   if (isGeminiDirectAvailable()) {
     try {
+      console.info(
+        `[aiAssist] Claude returned ${Object.keys(primaryFields).length} fields, trying Gemini fallback...`
+      );
       const raw = await invokeLLMWithFile({
         fileBuffer: fetched.fileBuffer,
         mimeType,
@@ -924,24 +1057,39 @@ async function extractDocumentFields(
         outputSchema: buildJsonSchema(`${tab}_document_fields`, fieldNames),
       });
       const parsed = parseJsonObject(raw);
-      const fields = sanitizeAiFields(tab, parsed);
-      return {
-        success: true as const,
-        fields,
-        tab,
-        fieldCount: Object.keys(fields).length,
-      };
+      geminiFields = sanitizeAiFields(tab, parsed);
+      geminiSucceeded = true;
+      console.info(`[aiAssist] Gemini fallback returned ${Object.keys(geminiFields).length} fields.`);
+      if (Object.keys(geminiFields).length > Object.keys(primaryFields).length) {
+        return {
+          success: true as const,
+          fields: geminiFields,
+          tab,
+          fieldCount: Object.keys(geminiFields).length,
+        };
+      }
     } catch (aiErr: unknown) {
-      // Log and fall through to the text-extraction fallback so the user always
-      // gets a result even if the native AI call unexpectedly fails.
       console.warn(
-        "[aiAssist] AI native file invocation failed, falling back to text extraction:",
+        "[aiAssist] Gemini fallback also failed:",
         aiErr instanceof Error ? aiErr.message : String(aiErr)
       );
     }
   }
 
-  // ── Fallback path: extract text from PDF, then call via the regular LLM ──
+  // Return whichever provider got more fields
+  const bestFields = Object.keys(primaryFields).length >= Object.keys(geminiFields).length
+    ? primaryFields
+    : geminiFields;
+  if (Object.keys(bestFields).length > 0) {
+    return {
+      success: true as const,
+      fields: bestFields,
+      tab,
+      fieldCount: Object.keys(bestFields).length,
+    };
+  }
+
+  // ── Last resort: extract text from PDF, then call via the regular LLM ──
   const userContent = await buildDocumentUserContent(
     fetched.fileBuffer,
     mimeType,
@@ -1227,11 +1375,31 @@ async function extractDocumentFieldsAndDetection<TDetection>(params: {
     };
   }
 
-  const fieldPrompt = `Extract all fields you can identify for the "${params.tab}" form from this ${params.mimeType === "application/pdf" ? "PDF document" : "document image"}.
+  const fieldPrompt = `You are analyzing a ${params.mimeType === "application/pdf" ? "PDF document" : "document image"} for a commercial real estate ${params.tab} form.
 
-Available fields: ${fieldNames.join(", ")}
+READ THE ENTIRE DOCUMENT CAREFULLY. Extract every field you can identify with confidence.
 
-Return fields only when you can confidently extract them.`;
+You MUST use these EXACT JSON key names (camelCase) for the "fields" object:
+${fieldNames.map(f => `  - "${f}"`).join("\n")}
+
+For each field, extract the value EXACTLY as described in the system prompt's FIELD EXTRACTION GUIDE.
+Only include fields you can confidently identify. Omit any field you're unsure about.
+
+Example output for a lease brochure:
+{
+  "fields": {
+    "address": "1234 Main St",
+    "city": "Costa Mesa",
+    "state": "CA",
+    "zip": "92626",
+    "propertyType": "Industrial",
+    "transactionType": "Lease",
+    "buildingSf": "15000",
+    "rateSfMo": "1.25",
+    "listingAgentName": "John Smith"
+  },
+  "documentDetection": { ... }
+}`;
 
   const promptText = `${fieldPrompt}
 
@@ -1239,9 +1407,14 @@ Also check required compliance document status:
 
 ${params.detectionPrompt}
 
-Return one JSON object with:
-- fields: object of extracted form fields
-- documentDetection: required document status`;
+Return ONE JSON object with exactly this structure:
+{
+  "fields": { ...extracted form field values... },
+  "documentDetection": { ...compliance document status... }
+}
+
+The "fields" object should contain the extracted values. The "documentDetection" object should follow the compliance rules above.
+Return ONLY valid JSON. No markdown fences, no explanation.`;
 
   const outputSchema = buildFieldsWithDetectionSchema(
     params.schemaName,
@@ -1264,8 +1437,28 @@ Return one JSON object with:
     return extractedPdfText;
   };
 
-  if (isGeminiDirectAvailable()) {
+  // ── Primary: Claude (most accurate for document extraction) ──
+  if (isClaudeFallbackAvailable()) {
     try {
+      console.info("[aiAssist] Using Claude as primary extractor for combined extraction...");
+      raw = await invokeClaudeWithFile({
+        fileBuffer: fetched.fileBuffer,
+        mimeType: params.mimeType,
+        systemPrompt: params.systemPrompt,
+        userPrompt: promptText,
+      });
+    } catch (claudeErr: unknown) {
+      console.error(
+        "[aiAssist] Claude primary extraction failed:",
+        claudeErr instanceof Error ? claudeErr.message : String(claudeErr)
+      );
+    }
+  }
+
+  // ── Fallback 1: Gemini with native PDF support ──
+  if (!raw && isGeminiDirectAvailable()) {
+    try {
+      console.info("[aiAssist] Claude unavailable/failed, trying Gemini for combined extraction...");
       raw = await invokeLLMWithFile({
         fileBuffer: fetched.fileBuffer,
         mimeType: params.mimeType,
@@ -1274,13 +1467,15 @@ Return one JSON object with:
         outputSchema,
       });
     } catch (aiErr: unknown) {
-      console.warn(
-        "[aiAssist] AI combined document invocation failed, falling back to text extraction:",
-        aiErr instanceof Error ? aiErr.message : String(aiErr)
+      console.error(
+        "[aiAssist] Gemini fallback also failed:",
+        aiErr instanceof Error ? aiErr.message : String(aiErr),
+        aiErr instanceof Error ? aiErr.stack : ""
       );
     }
   }
 
+  // ── Fallback 2: text extraction + OpenAI-compatible endpoint ──
   if (!raw) {
     await ensureExtractedPdfText();
     const userContent = await buildDocumentUserContent(
@@ -1304,11 +1499,55 @@ Return one JSON object with:
   }
 
   const parsed = parseJsonObject(raw) as Record<string, unknown>;
+  console.error(`[aiAssist DEBUG] raw response length: ${raw.length}, parsed keys: ${Object.keys(parsed).join(", ")}`);
+  if (parsed.fields) console.error(`[aiAssist DEBUG] parsed.fields keys: ${Object.keys(parsed.fields as object).join(", ")}`);
   const fieldSource =
     parsed.fields && typeof parsed.fields === "object" && !Array.isArray(parsed.fields)
       ? (parsed.fields as Record<string, unknown>)
       : parsed;
-  const fields = sanitizeAiFields(params.tab, fieldSource);
+  console.error(`[aiAssist DEBUG] fieldSource keys: ${Object.keys(fieldSource).join(", ")}`);
+  let fields = sanitizeAiFields(params.tab, fieldSource);
+  console.error(`[aiAssist DEBUG] sanitized fields (${Object.keys(fields).length}): ${JSON.stringify(fields)}`);
+
+  // Smart fallback: check for critical fields, not just count.
+  // A good extraction should have at least address OR city for any real estate document.
+  const hasCriticalFields = Boolean(
+    fields.address || fields.city || fields.propertyAddress
+  );
+  const fieldCount = Object.keys(fields).length;
+  const needsFallback = !hasCriticalFields || fieldCount < 3;
+
+  if (needsFallback && isGeminiDirectAvailable()) {
+    try {
+      console.info(`[aiAssist] Extraction quality check failed (fields: ${fieldCount}, hasCritical: ${hasCriticalFields}). Trying Gemini as secondary...`);
+      const geminiRaw = await invokeLLMWithFile({
+        fileBuffer: fetched.fileBuffer,
+        mimeType: params.mimeType,
+        systemPrompt: params.systemPrompt,
+        userPrompt: promptText,
+        outputSchema,
+      });
+      const geminiParsed = parseJsonObject(geminiRaw) as Record<string, unknown>;
+      const geminiFieldSource =
+        geminiParsed.fields && typeof geminiParsed.fields === "object" && !Array.isArray(geminiParsed.fields)
+          ? (geminiParsed.fields as Record<string, unknown>)
+          : geminiParsed;
+      const geminiFields = sanitizeAiFields(params.tab, geminiFieldSource);
+      const geminiHasCritical = Boolean(
+        geminiFields.address || geminiFields.city || geminiFields.propertyAddress
+      );
+      // Use Gemini's result if it has critical fields or more total fields
+      if (geminiHasCritical || Object.keys(geminiFields).length > fieldCount) {
+        console.info(`[aiAssist] Gemini returned ${Object.keys(geminiFields).length} fields (hasCritical: ${geminiHasCritical}). Using Gemini result.`);
+        fields = geminiFields;
+      }
+    } catch (geminiErr: unknown) {
+      console.warn("[aiAssist] Gemini quality fallback failed:", geminiErr instanceof Error ? geminiErr.message : String(geminiErr));
+    }
+  } else if (fieldCount > 0) {
+    console.info(`[aiAssist] Primary extraction succeeded: ${fieldCount} fields, critical fields present.`);
+  }
+
   const modelDetection = params.parseDetection(parsed.documentDetection);
   if (params.tab === "listing") await ensureExtractedPdfText();
   const documentDetection =
@@ -1332,6 +1571,7 @@ async function extractVoucherDocumentWithDetection(
   fileUrl: string,
   mimeType: AiDocumentMime
 ) {
+  const sysPrompt = await documentSystemPrompt();
   return extractDocumentFieldsAndDetection({
     tab: "voucher",
     fileUrl,
@@ -1340,8 +1580,7 @@ async function extractVoucherDocumentWithDetection(
     detectionSchema: voucherDocumentDetectionSchema,
     parseDetection: parseVoucherDocumentDetection,
     emptyDetection: emptyVoucherDocumentDetection,
-    systemPrompt:
-      "You extract real estate form fields and classify compliance document execution status. Return only the requested JSON result.",
+    systemPrompt: sysPrompt + "\n\nIn addition to extracting fields, you must also classify compliance document status as described in the user prompt.",
     detectionPrompt: `Determine whether this file includes either of these documents and whether each one appears fully executed:
 - Agency Disclosure
 - Listing Agreement
@@ -1358,6 +1597,7 @@ async function extractListingDocumentWithDetection(
   fileUrl: string,
   mimeType: AiDocumentMime
 ) {
+  const sysPrompt = await brochureSystemPrompt();
   return extractDocumentFieldsAndDetection({
     tab: "listing",
     fileUrl,
@@ -1366,8 +1606,7 @@ async function extractListingDocumentWithDetection(
     detectionSchema: listingDocumentDetectionSchema,
     parseDetection: parseListingDocumentDetection,
     emptyDetection: emptyListingDocumentDetection,
-    systemPrompt:
-      "You are an expert at reading California real estate listing documents. Extract all form fields and classify required compliance document execution status. Return only the requested JSON.",
+    systemPrompt: sysPrompt + "\n\nIn addition to extracting fields, you must also classify compliance document status as described in the user prompt.",
     detectionPrompt: `Identify whether this file contains the following documents and whether each is fully executed:
 
 AGENCY DISCLOSURE
@@ -1402,19 +1641,31 @@ export const aiAssistRouter = router({
       z.object({
         description: z.string().min(5).max(3000),
         tab: z.enum(["listing", "voucher", "sign", "comp"]),
+        // Optional deal-type context hint from the client (e.g. "lease", "sale")
+        dealTypeHint: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
-      const { description, tab } = input;
+      const { description, tab, dealTypeHint } = input;
       const schema = tabFieldSchemas[tab];
       const fieldNames = Object.keys(schema.shape);
+
+      // Build a tab-specific context prefix for the user message
+      const tabContextMap: Record<string, string> = {
+        listing: "You are extracting data for a commercial real estate LISTING form. Focus on property address, type, lease rate, term, building SF, suite SF, expiration date, and listing agent details.",
+        voucher: "You are extracting data for a commercial real estate COMMISSION VOUCHER. Focus on parties (lessor/lessee or buyer/seller), deal SF, commencement/expiration dates, rent schedule, commission rate, and agent names.",
+        sign: "You are extracting data for a SIGN REQUEST form. Focus on property address, sign type, size, quantity, name rider, and any special placement instructions.",
+        comp: "You are extracting data for a COMPARABLE TRANSACTION (comp) entry. Focus on address, deal SF, lease rate or sale price, term, tenant/landlord names, and transaction date.",
+      };
+      const tabContext = tabContextMap[tab] ?? "";
+      const dealHintLine = dealTypeHint ? `\nDeal type context: ${dealTypeHint}` : "";
 
       const response = await invokeLLM({
         messages: [
           { role: "system", content: await parseSystemPrompt() },
           {
             role: "user",
-            content: `Extract fields for the "${tab}" form tab.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nDeal description:\n"${description}"\n\nReturn JSON:`,
+            content: `${tabContext}${dealHintLine}\n\nExtract fields for the "${tab}" form tab.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nDeal description:\n"${description}"\n\nReturn JSON:`,
           },
         ],
         response_format: {

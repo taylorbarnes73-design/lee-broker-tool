@@ -11,6 +11,7 @@ import { getIngestStatus, runIngestOnce } from "./jobs/ingestBrokerAdminEmails";
 import { testGraphConnection } from "./lib/msGraph";
 import { parseEmailSubmission, type FormType } from "./lib/parseEmailSubmission";
 import { SETTINGS_BY_KEY } from "./settings/settingsSchema";
+import { notifyAdminOfSubmission } from "./services/adminNotification";
 
 export const brokerAdminIngestRouter = Router();
 brokerAdminIngestRouter.use(requirePlatformAdmin);
@@ -258,6 +259,15 @@ brokerAdminIngestRouter.post(
           submissionId,
           ingestStatus: "imported",
           errorMessage: null,
+        });
+
+        // Notify admin of new ingested submission
+        notifyAdminOfSubmission({
+          formType,
+          brokerName: fromEmail || null,
+          propertyAddress: reference || null,
+          submittedByEmail: fromEmail || null,
+          submissionId,
         });
 
         imported += 1;

@@ -23,6 +23,7 @@ import {
   applySubmissionStatusChange,
   type SubmissionStatusActor,
 } from "./services/submissionStatusUpdate";
+import { notifyAdminOfSubmission } from "./services/adminNotification";
 
 type ActiveQueueStatus = (typeof ACTIVE_QUEUE_STATUSES)[number];
 
@@ -452,6 +453,17 @@ submissionsApiRouter.post("/", async (req, res) => {
       platformUserId: portalUser.platformUserId ?? null,
     },
     req,
+  });
+
+  const submissionId = (result as any).insertId ?? null;
+
+  // Fire-and-forget notification to admin
+  notifyAdminOfSubmission({
+    formType: (parsed.data as any).formType,
+    brokerName: user.name ?? null,
+    propertyAddress: (parsed.data as any).reference ?? null,
+    submittedByEmail: user.email ?? null,
+    submissionId,
   });
 
   res.status(201).json({

@@ -57,7 +57,7 @@ const COMING_SOON: ReadonlyArray<{ name: string }> = [
 
 const rowGrid: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(200px, 1fr) minmax(220px, 1fr)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
   gap: "var(--s-4)",
   alignItems: "start",
   padding: "var(--s-4) 0",
@@ -633,6 +633,7 @@ export default function PortalAdminSettings() {
                             size="sm"
                             icon={<Icons.Upload size={14} />}
                             disabled={uploadMutation.isPending}
+                            loading={uploadMutation.isPending && uploadKey === "branding.logo_url"}
                             onClick={() => {
                               const inp = document.createElement("input");
                               inp.type = "file";
@@ -644,7 +645,7 @@ export default function PortalAdminSettings() {
                               inp.click();
                             }}
                           >
-                            Upload logo
+                            {uploadMutation.isPending && uploadKey === "branding.logo_url" ? "Uploading…" : "Upload logo"}
                           </Button>
                           <SaveHint k="branding.logo_url" />
                         </div>
@@ -712,6 +713,7 @@ export default function PortalAdminSettings() {
                             size="sm"
                             icon={<Icons.Upload size={14} />}
                             disabled={uploadMutation.isPending}
+                            loading={uploadMutation.isPending && uploadKey === "branding.letterhead_template_url"}
                             onClick={() => {
                               const inp = document.createElement("input");
                               inp.type = "file";
@@ -723,7 +725,7 @@ export default function PortalAdminSettings() {
                               inp.click();
                             }}
                           >
-                            Upload template
+                            {uploadMutation.isPending && uploadKey === "branding.letterhead_template_url" ? "Uploading…" : "Upload template"}
                           </Button>
                           <SaveHint k="branding.letterhead_template_url" />
                         </div>
