@@ -12,7 +12,6 @@ import { getSetting } from "../settings/getSetting";
 import { createSubmissionRecord } from "../services/submissionCreate";
 import { findAppUserByUsernameOrEmail } from "../auth/platformSession";
 import type { Request } from "express";
-import { notifyAdminOfSubmission } from "../services/adminNotification";
 
 const fieldSchema = z.object({
   label: z.string(),
@@ -412,17 +411,6 @@ async function recordSubmissionRequest(params: {
       platformUserId: params.platformUserId ?? null,
     },
     req: params.req,
-  });
-
-  const submissionId = (result as { insertId?: number }).insertId ?? null;
-
-  // Fire-and-forget notification to admin
-  notifyAdminOfSubmission({
-    formType: params.formType,
-    brokerName: params.brokerName,
-    propertyAddress: params.propertyAddress,
-    submittedByEmail: params.senderEmail,
-    submissionId,
   });
 
   return {
