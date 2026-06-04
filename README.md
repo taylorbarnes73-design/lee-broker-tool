@@ -77,6 +77,21 @@ After **Submit to Queue** in `/tool`, brokers get a **Track in portal** link and
 
 `aiAssist` uses an OpenAI-compatible backend (Forge proxy preferred, or `OPENAI_API_KEY`). PDF brochure scrape extracts text server-side before calling the model.
 
+### Quick convert (portal)
+
+Brokers: **`/portal/convert`** (also linked from broker home).
+
+| Action | Behavior |
+|--------|----------|
+| Lease/agreement → voucher | PDF → `contracts.extractContract` → broker tool voucher tab with AI highlights |
+| Exclusive → sign | PDF → `aiAssist.extractDocument` (sign) → broker tool sign tab |
+| Convert to PDF | Word/PDF → PDF download (LibreOffice `soffice` for `.doc`/`.docx`) |
+| LANB letterhead | Prepends letterhead cover page to your PDF (see `server/assets/templates/README.md`) |
+
+Letterhead template path: `server/assets/templates/lanb-letterhead-copy.doc` (copy from OneDrive Blank Forms if missing).
+
+Optional env: `QUICK_CONVERT_SOFFICE_PATH` — full path to `soffice` when not on PATH.
+
 ### Tests
 
 ```bash

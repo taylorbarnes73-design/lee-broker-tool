@@ -178,6 +178,39 @@ export default function PortalNewSubmission() {
       )}
       <div className="admin-portal-card">
         <Card padding="lg">
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 12,
+              flexWrap: "wrap",
+              marginBottom: 16,
+              padding: "12px 14px",
+              borderRadius: 10,
+              border: `1px solid ${accent}33`,
+              background: `${accent}08`,
+            }}
+          >
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink-900)" }}>Quick convert</div>
+              <div style={{ fontSize: 13, color: "var(--ink-600)", marginTop: 4, lineHeight: 1.45 }}>
+                Lease → voucher, exclusive → sign, Word → PDF, or LANB letterhead — upload once and go.
+              </div>
+            </div>
+            <Link
+              href="/portal/convert"
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: accent,
+                textDecoration: "none",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Open quick convert →
+            </Link>
+          </div>
           <div style={{ fontSize: 13, color: "var(--ink-600)", marginBottom: 16, lineHeight: 1.5 }}>
             Forms still live in the broker tool workspace while we migrate them into the portal. Each card opens the
             right tab with your signed-in session.

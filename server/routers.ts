@@ -17,6 +17,7 @@ import { emailRouter } from "./routers/email";
 import { contractsRouter } from "./routers/contracts";
 import { submissionsRouter } from "./routers/submissions";
 import { brokersRouter } from "./routers/brokers";
+import { quickConvertRouter } from "./routers/quickConvert";
 import { localAuth, sdk } from "./_core/sdk";
 import { ENV } from "./_core/env";
 import { handlePlatformLogout } from "./auth/passwordPlatformAuth";
@@ -97,6 +98,7 @@ export const appRouter = router({
   contracts: contractsRouter,
   submissions: submissionsRouter,
   brokers: brokersRouter,
+  quickConvert: quickConvertRouter,
   auth: router({
     me: publicProcedure.query(opts => {
       const user = opts.ctx.user;

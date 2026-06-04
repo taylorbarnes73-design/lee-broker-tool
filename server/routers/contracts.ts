@@ -5,6 +5,7 @@ import { execSync } from "child_process";
 import { ENV } from "../_core/env";
 import { getSetting } from "../settings/getSetting";
 import { isStoredFileReference, storageGetBytes } from "../storage";
+import { extractPdfPlainText } from "../services/pdfTextScrape";
 
 // ── Types ──
 
@@ -28,6 +29,10 @@ const contractDataSchema = z.object({
   agentFax: z.string().optional(),
   brokerDre: z.string().optional(),
   agentIndividual: z.string().optional(),
+  /** AIR CRE §1.10 — Lessor's Agent (salesperson), when filled */
+  lessorAgentIndividual: z.string().optional(),
+  /** AIR CRE §1.10 — Lessee's Agent (salesperson), when filled */
+  lesseeAgentIndividual: z.string().optional(),
   agentTitle: z.string().optional(),
   agentDre: z.string().optional(),
   agentEmail: z.string().optional(),
@@ -188,6 +193,8 @@ export const contractsRouter = router({
 For dates, return them in YYYY-MM-DD format if possible, otherwise return the raw text.
 For commission, note whether it is a percentage, flat fee, or per schedule.
 For arbitration, return "AAA", "JAMS", or "none".
+For AIR CRE §1.10 brokerage: put the Lessor's Agent salesperson in lessorAgentIndividual and the Lessee's Agent salesperson in lesseeAgentIndividual. Do not copy the Lessor's Agent into lesseeAgentIndividual when the Lessee's Agent line is blank.
+Split property location into propAddress (street + suite only), propCity, propState, and propZip when shown in the Premises line.
 If a field is blank or not applicable, omit it from the response.
 
 Return ONLY valid JSON, no markdown, no explanation.`;
@@ -209,6 +216,8 @@ Return JSON with these fields (omit any that are blank):
   "agentFax": "",
   "brokerDre": "",
   "agentIndividual": "",
+  "lessorAgentIndividual": "",
+  "lesseeAgentIndividual": "",
   "agentTitle": "",
   "agentDre": "",
   "agentEmail": "",
@@ -280,10 +289,7 @@ Return JSON with these fields (omit any that are blank):
         if (!rawJson) {
           let pdfText = "";
           try {
-            const mod = await import("pdf-parse");
-            const parse = (mod as any).default ?? (mod as any);
-            const pdfParsed = await parse(pdfBuffer);
-            pdfText = (pdfParsed.text || "").replace(/\s+/g, " ").trim().slice(0, 40_000);
+            pdfText = await extractPdfPlainText(pdfBuffer, 40_000);
           } catch (parseErr: unknown) {
             const msg = parseErr instanceof Error ? parseErr.message : String(parseErr);
             pdfText = `[PDF text extraction failed: ${msg}. Return empty JSON if no data is available.]`;

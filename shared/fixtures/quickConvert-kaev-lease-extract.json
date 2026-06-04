@@ -1,0 +1,13 @@
+{
+  "contractType": "Lease Agreement",
+  "propAddress": "2961 W. MacArthur Blvd, Suite 212",
+  "propCity": "Santa Ana",
+  "propState": "CA",
+  "propZip": "92704",
+  "mlLessor": "MacArthur Fairview Park, LLC",
+  "mlLessee": "KAEV Corporation, A California Corporation",
+  "termStart": "2026-05-01",
+  "termEnd": "2029-04-30",
+  "commAmount": "sum of $1,000.00 or % of the total Base Rent",
+  "lessorAgentIndividual": "Carter Harrington"
+}

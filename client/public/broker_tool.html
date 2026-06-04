@@ -92,6 +92,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
       <span>Comp Reports</span>
     </div>
+    <div class="tab broker-nav-item" data-tab="quick-convert" data-tab-trigger="quick-convert" onclick="switchTab('quick-convert')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="M9 15h6"/></svg>
+      <span>Quick Convert</span>
+    </div>
     <div class="tab broker-nav-item" data-tab="queue" onclick="switchTab('queue')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
       <span>My Queue</span>
@@ -123,6 +127,7 @@
   <div class="tab" data-tab="voucher" data-tab-trigger="voucher" onclick="switchTab('voucher')">Commission Voucher</div>
   <div class="tab" data-tab="comp" data-tab-trigger="comp-input" onclick="switchTab('comp')">Comp Input</div>
   <div class="tab" data-tab="comp-reports" data-tab-trigger="comp-reports" onclick="switchTab('comp-reports')">Comp Reports</div>
+  <div class="tab" data-tab="quick-convert" data-tab-trigger="quick-convert" onclick="switchTab('quick-convert')">Quick Convert</div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
@@ -2269,6 +2274,65 @@
   </div>
 </div><!-- /tab-contracts -->
 
+<div id="tab-quick-convert" class="panel" data-pane="quick-convert">
+  <div class="page-head broker-page-head">
+    <div class="page-head-left">
+      <div class="page-eyebrow">Broker Workspace</div>
+      <h1 class="page-h1">Quick Convert</h1>
+    </div>
+    <div class="page-head-right">
+      <a class="btn btn-gray btn-sm" href="/portal/convert">Portal version</a>
+    </div>
+  </div>
+
+  <p class="tip pane-intro-tip">
+    Upload a lease, listing agreement, or Word document — convert to PDF, apply LANB letterhead, or prefill the voucher and sign tabs.
+    Same backend as <a href="/portal/convert">portal Quick convert</a>. Accepted: PDF and Word (.doc, .docx), up to 25&nbsp;MB.
+  </p>
+
+  <div id="qc-converter-note" class="qc-note is-hidden" role="status"></div>
+
+  <div class="qc-grid">
+    <div class="card qc-card" data-qc-kind="lease_to_voucher">
+      <div class="qc-card-head">
+        <h2 class="qc-card-title">Lease / agreement &rarr; voucher</h2>
+        <span class="inline-badge">AI prefill</span>
+      </div>
+      <p class="micro-copy">Upload a lease or commission agreement PDF. AI extracts deal fields and opens the Commission Voucher tab with highlights.</p>
+      <button type="button" class="btn btn-outline btn-sm" onclick="openQuickConvertFilePicker('lease_to_voucher')">Choose file&hellip;</button>
+      <div class="qc-status" id="qc-status-lease_to_voucher" aria-live="polite"></div>
+    </div>
+
+    <div class="card qc-card" data-qc-kind="exclusive_to_sign">
+      <div class="qc-card-head">
+        <h2 class="qc-card-title">Exclusive right &rarr; sign request</h2>
+        <span class="inline-badge">AI prefill</span>
+      </div>
+      <p class="micro-copy">Upload an exclusive right or listing agreement PDF. AI fills the Sign Request form from the document.</p>
+      <button type="button" class="btn btn-outline btn-sm" onclick="openQuickConvertFilePicker('exclusive_to_sign')">Choose file&hellip;</button>
+      <div class="qc-status" id="qc-status-exclusive_to_sign" aria-live="polite"></div>
+    </div>
+
+    <div class="card qc-card" data-qc-kind="to_pdf">
+      <h2 class="qc-card-title">Convert to PDF</h2>
+      <p class="micro-copy">Turn a Word document (.doc / .docx) into a PDF for email or submission attachments.</p>
+      <button type="button" class="btn btn-outline btn-sm" onclick="openQuickConvertFilePicker('to_pdf')">Choose file&hellip;</button>
+      <div class="qc-status" id="qc-status-to_pdf" aria-live="polite"></div>
+      <div class="qc-download is-hidden" id="qc-download-to_pdf"></div>
+    </div>
+
+    <div class="card qc-card" data-qc-kind="letterhead">
+      <h2 class="qc-card-title">Apply LANB letterhead</h2>
+      <p class="micro-copy">Build a PDF with the Newport Beach letterhead cover page followed by your document pages.</p>
+      <button type="button" class="btn btn-outline btn-sm" onclick="openQuickConvertFilePicker('letterhead')">Choose file&hellip;</button>
+      <div class="qc-status" id="qc-status-letterhead" aria-live="polite"></div>
+      <div class="qc-download is-hidden" id="qc-download-letterhead"></div>
+    </div>
+  </div>
+
+  <input type="file" id="qc-file-input" class="hidden-file-input" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onchange="onQuickConvertFileSelected(this)">
+</div><!-- /tab-quick-convert -->
+
 <div id="tab-queue" class="panel">
   <div class="queue-shell">
     <div class="queue-header">
@@ -3014,7 +3078,7 @@ function toggleOptional(toggleEl) {
   }
 }
 
-const BROKER_TOOL_TAB_IDS = new Set(['listing', 'sign', 'voucher', 'comp', 'comp-reports', 'queue']);
+const BROKER_TOOL_TAB_IDS = new Set(['listing', 'sign', 'voucher', 'comp', 'comp-reports', 'quick-convert', 'queue']);
 
 function parseBrokerToolTabFromLocation() {
   try {
@@ -3051,6 +3115,462 @@ function applyBrokerToolInitialTabFromUrl() {
   }
 }
 
+function applyQuickConvertPrefillFromPortal() {
+  try {
+    const raw = sessionStorage.getItem('leeBrokerTool:quickConvertPrefill');
+    if (!raw) return;
+    sessionStorage.removeItem('leeBrokerTool:quickConvertPrefill');
+    const data = JSON.parse(raw);
+    if (!data || (data.tab !== 'voucher' && data.tab !== 'sign') || !data.fields) return;
+    const assessment = assessQuickConvertPrefill(data.tab, data.fields);
+    if (typeof switchTab === 'function') switchTab(data.tab);
+    const count = applyAiFields(data.tab, data.fields, {
+      sourceToken: data.sourceFileUrl || 'quick-convert',
+    });
+    if (assessment.lowConfidence && typeof showToast === 'function') {
+      showToast(formatQuickConvertPrefillWarnings(assessment), 'error');
+    } else if (count > 0 && typeof showToast === 'function') {
+      showToast('\u2713 Quick convert filled ' + count + ' field' + (count === 1 ? '' : 's') + ' — review before submitting.');
+    }
+  } catch (e) {
+    console.warn('Quick convert prefill:', e && e.message ? e.message : e);
+  }
+}
+
+let quickConvertSelectedKind = null;
+let quickConvertBusy = false;
+
+function mimeTypeFromQuickConvertFilename(filename) {
+  const lower = String(filename || '').trim().toLowerCase();
+  if (lower.endsWith('.pdf')) return 'application/pdf';
+  if (lower.endsWith('.docx')) return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  if (lower.endsWith('.doc')) return 'application/msword';
+  return 'application/octet-stream';
+}
+
+function validateQuickConvertUpload(params) {
+  const filename = String(params.filename || '').trim();
+  const ext = filename.toLowerCase();
+  if (!ext.endsWith('.pdf') && !ext.endsWith('.doc') && !ext.endsWith('.docx')) {
+    return { ok: false, error: 'Upload a .pdf, .doc, or .docx file.' };
+  }
+  const mime = String(params.mimeType || '').trim() || mimeTypeFromQuickConvertFilename(filename);
+  const allowed = new Set([
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ]);
+  if (!allowed.has(mime)) {
+    return { ok: false, error: 'Unsupported file type. Use PDF or Word (.doc / .docx).' };
+  }
+  if (params.byteLength <= 0) return { ok: false, error: 'File is empty.' };
+  if (params.byteLength > 25 * 1024 * 1024) {
+    return { ok: false, error: 'File exceeds 25 MB limit.' };
+  }
+  return { ok: true };
+}
+
+function normalizeIsoDateQuickConvert(raw) {
+  const text = String(raw ?? '').trim();
+  if (!text) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+  const mmddyyyy = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (mmddyyyy) {
+    const mm = mmddyyyy[1].padStart(2, '0');
+    const dd = mmddyyyy[2].padStart(2, '0');
+    return mmddyyyy[3] + '-' + mm + '-' + dd;
+  }
+  return '';
+}
+
+function parseStreetAddressPartsQuickConvert(raw) {
+  const text = String(raw ?? '').trim();
+  if (!text) return {};
+  const suiteMatch = text.match(/\b(?:suite|ste\.?|unit|#)\s*([#.\w-]+)\b/i);
+  let suite = '';
+  let street = text;
+  if (suiteMatch) {
+    suite = suiteMatch[1].replace(/^#/, '');
+    street = text.replace(suiteMatch[0], '').replace(/\s*,\s*,/g, ',').replace(/\s*,\s*$/, '').trim();
+  }
+  const commaMatch = street.match(/^(.+?),\s*([A-Za-z][A-Za-z.\- ]+?),\s*([A-Za-z]{2}|California)(?:\s+(\d{5}(?:-\d{4})?))?\s*$/);
+  if (commaMatch) {
+    return {
+      address: commaMatch[1].trim(),
+      suite: suite || undefined,
+      city: commaMatch[2].trim(),
+      state: commaMatch[3] === 'California' ? 'CA' : commaMatch[3].toUpperCase(),
+      zip: commaMatch[4] || undefined,
+    };
+  }
+  return suite ? { address: street, suite: suite } : { address: street };
+}
+
+function termMonthsFromIsoDatesQuickConvert(startRaw, endRaw) {
+  const start = normalizeIsoDateQuickConvert(startRaw);
+  const end = normalizeIsoDateQuickConvert(endRaw);
+  if (!start || !end) return '';
+  const s = new Date(start + 'T00:00:00Z');
+  const e = new Date(end + 'T00:00:00Z');
+  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime()) || e <= s) return '';
+  let months = (e.getUTCFullYear() - s.getUTCFullYear()) * 12 + (e.getUTCMonth() - s.getUTCMonth());
+  if (e.getUTCDate() < s.getUTCDate()) months -= 1;
+  return months > 0 ? String(months) : '';
+}
+
+function mapContractExtractionToVoucherFields(contract) {
+  const str = v => String(v ?? '').trim();
+  const out = {};
+  let address = str(contract.propAddress);
+  let city = str(contract.propCity);
+  let state = str(contract.propState);
+  let zip = str(contract.propZip);
+  if (address && (!city || !state || !zip)) {
+    const parsed = parseStreetAddressPartsQuickConvert(address);
+    if (parsed.address) address = parsed.address;
+    if (parsed.suite) out.suite = parsed.suite;
+    if (!city && parsed.city) city = parsed.city;
+    if (!state && parsed.state) state = parsed.state;
+    if (!zip && parsed.zip) zip = parsed.zip;
+  }
+  if (address) out.address = address;
+  if (city) out.city = city;
+  if (state) out.state = state;
+  if (zip) out.zip = zip;
+  const lessor = str(contract.mlLessor) || str(contract.party1Name);
+  const lessee = str(contract.mlLessee);
+  if (lessor) out.lessorName = lessor;
+  if (lessee) {
+    out.lesseeName = lessee;
+    out.clientName = lessee;
+  }
+  const commencementDate = normalizeIsoDateQuickConvert(contract.termStart);
+  const expirationDate = normalizeIsoDateQuickConvert(contract.termEnd);
+  if (commencementDate) out.commencementDate = commencementDate;
+  if (expirationDate) out.expirationDate = expirationDate;
+  const term = termMonthsFromIsoDatesQuickConvert(
+    commencementDate || str(contract.termStart),
+    expirationDate || str(contract.termEnd)
+  );
+  if (term) out.term = term;
+  const commMatch = str(contract.commAmount).match(/(\d+(?:\.\d+)?)\s*%/);
+  if (commMatch) {
+    const parsed = Number(commMatch[1]);
+    if (Number.isFinite(parsed) && parsed > 0) out.commissionRate = String(parsed);
+  }
+  const contractType = str(contract.contractType).toLowerCase();
+  let tenantRepLease = false;
+  if (contractType.includes('lease')) {
+    out.transactionType = 'lease';
+    out.representationType = 'tenant_rep';
+    tenantRepLease = true;
+  } else if (contractType.includes('purchase') || contractType.includes('sale')) {
+    out.transactionType = 'sale';
+  }
+  const agent = str(contract.agentIndividual) || str(contract.agentName);
+  if (agent) {
+    if (tenantRepLease) out.procuringAgentName = agent;
+    else out.listingAgentName = agent;
+  }
+  const notes = [str(contract.additionalProvisions), str(contract.propDesc)].filter(Boolean).join('\n');
+  if (notes) out.notes = notes;
+  return out;
+}
+
+function normalizeSignExtractFields(fields) {
+  const allowed = new Set([
+    'propertyAddress', 'city', 'state', 'zip', 'nameRider', 'requestedBy',
+    'specialInstructions', 'accessInstructions', 'signType', 'signSize', 'quantity',
+  ]);
+  const out = {};
+  Object.entries(fields || {}).forEach(([key, value]) => {
+    if (!allowed.has(key)) return;
+    const cleaned = String(value ?? '').trim();
+    if (cleaned) out[key] = cleaned;
+  });
+  if (out.propertyAddress && !out.city && out.propertyAddress.indexOf(',') >= 0) {
+    const parsed = parseStreetAddressPartsQuickConvert(out.propertyAddress);
+    if (parsed.address) out.propertyAddress = parsed.address;
+    if (parsed.city) out.city = parsed.city;
+  }
+  delete out.state;
+  delete out.zip;
+  delete out.signType;
+  delete out.signSize;
+  delete out.quantity;
+  return out;
+}
+
+function assessQuickConvertPrefill(tab, fields) {
+  const fieldCount = Object.keys(fields || {}).length;
+  const missingRequired = [];
+  const warnings = [];
+  if (tab === 'voucher') {
+    if (!String(fields.address || '').trim()) missingRequired.push('address');
+    if (!String(fields.city || '').trim()) missingRequired.push('city');
+    if (!String(fields.lesseeName || '').trim() && !String(fields.clientName || '').trim()) {
+      missingRequired.push('lesseeName');
+    }
+    if (!String(fields.commencementDate || '').trim()) {
+      warnings.push('Commencement date not found in document.');
+    }
+    if (!String(fields.commissionRate || '').trim()) {
+      warnings.push('Commission rate not found (only explicit % values are mapped).');
+    }
+  } else {
+    if (!String(fields.propertyAddress || '').trim()) missingRequired.push('propertyAddress');
+    if (!String(fields.city || '').trim()) missingRequired.push('city');
+    if (!String(fields.requestedBy || '').trim()) {
+      warnings.push('Requested By agent name not found in document.');
+    }
+  }
+  if (fieldCount < 3) {
+    warnings.push('Very few fields extracted — review the entire form carefully.');
+  }
+  return {
+    tab: tab,
+    fieldCount: fieldCount,
+    missingRequired: missingRequired,
+    warnings: warnings,
+    lowConfidence: missingRequired.length > 0 || fieldCount < 3,
+  };
+}
+
+function formatQuickConvertPrefillWarnings(assessment) {
+  const parts = [];
+  if (assessment.missingRequired && assessment.missingRequired.length) {
+    parts.push('Missing required: ' + assessment.missingRequired.join(', '));
+  }
+  if (assessment.warnings && assessment.warnings.length) {
+    parts.push.apply(parts, assessment.warnings);
+  }
+  return parts.filter(Boolean).join(' ');
+}
+
+function fileToBase64QuickConvert(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const raw = String(reader.result || '');
+      const comma = raw.indexOf(',');
+      resolve(comma >= 0 ? raw.slice(comma + 1) : raw);
+    };
+    reader.onerror = () => reject(reader.error || new Error('Could not read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function downloadBase64PdfQuickConvert(filename, dataBase64) {
+  const bytes = Uint8Array.from(atob(dataBase64), c => c.charCodeAt(0));
+  const blob = new Blob([bytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function setQuickConvertStatus(kind, message, isError) {
+  const el = document.getElementById('qc-status-' + kind);
+  if (!el) return;
+  el.textContent = message || '';
+  el.classList.toggle('text-error', !!isError);
+  el.classList.toggle('status-success', !!message && !isError);
+}
+
+function setQuickConvertCardBusy(kind, busy) {
+  const card = document.querySelector('.qc-card[data-qc-kind="' + kind + '"]');
+  if (!card) return;
+  card.classList.toggle('qc-card-busy', !!busy);
+  const btn = card.querySelector('button');
+  if (btn) {
+    btn.disabled = !!busy;
+    if (busy) btn.textContent = 'Working\u2026';
+    else btn.textContent = 'Choose file\u2026';
+  }
+}
+
+function openQuickConvertFilePicker(kind) {
+  if (quickConvertBusy) return;
+  quickConvertSelectedKind = kind;
+  const input = document.getElementById('qc-file-input');
+  if (input) {
+    input.value = '';
+    input.click();
+  }
+}
+
+function redownloadQuickConvertPdf(kind) {
+  const item = window.__qcLastPdf && window.__qcLastPdf[kind];
+  if (item) downloadBase64PdfQuickConvert(item.filename, item.dataBase64);
+}
+
+async function refreshQuickConvertStatus() {
+  const note = document.getElementById('qc-converter-note');
+  if (!note) return;
+  try {
+    const s = await callTrpc('quickConvert.status', null);
+    if (!s) {
+      note.classList.add('is-hidden');
+      return;
+    }
+    const parts = [];
+    if (!s.sofficePath) {
+      parts.push('Word\u2192PDF uses LibreOffice (soffice) when installed on the server.');
+    } else {
+      parts.push('Office converter: ' + s.sofficePath);
+    }
+    if (s.letterheadTemplate === 'missing') {
+      parts.push('Letterhead template not found \u2014 add server/assets/templates/lanb-letterhead-copy.doc.');
+    }
+    note.textContent = parts.join(' ');
+    note.classList.toggle('is-hidden', parts.length === 0);
+  } catch (e) {
+    note.classList.add('is-hidden');
+  }
+}
+
+async function runQuickConvertPrefill(kind, file, fileUrl) {
+  if (kind === 'lease_to_voucher') {
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      throw new Error('Lease \u2192 voucher needs a PDF in v1. Use Convert to PDF first, then retry.');
+    }
+    const extracted = await callTrpc('contracts.extractContract', {
+      pdfUrl: fileUrl,
+      contractType: 'Lease Agreement',
+    });
+    if (!extracted?.success || !extracted.data) {
+      throw new Error(extracted?.error || 'Contract extraction failed');
+    }
+    const fields = mapContractExtractionToVoucherFields(extracted.data);
+    const assessment = assessQuickConvertPrefill('voucher', fields);
+    switchTab('voucher');
+    const count = applyAiFields('voucher', fields, { sourceToken: fileUrl || 'quick-convert' });
+    if (assessment.lowConfidence && typeof showToast === 'function') {
+      showToast(formatQuickConvertPrefillWarnings(assessment), 'error');
+    } else if (count > 0 && typeof showToast === 'function') {
+      showToast('\u2713 Quick convert filled ' + count + ' voucher field' + (count === 1 ? '' : 's') + ' \u2014 review before submitting.');
+    }
+    return { tab: 'voucher', count, assessment };
+  }
+
+  if (kind === 'exclusive_to_sign') {
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      throw new Error('Exclusive \u2192 sign needs a PDF in v1. Use Convert to PDF first, then retry.');
+    }
+    const mimeType = mimeTypeFromQuickConvertFilename(file.name);
+    const result = await callTrpc('aiAssist.extractDocument', {
+      fileUrl,
+      mimeType: mimeType === 'application/pdf' ? mimeType : 'application/pdf',
+      tab: 'sign',
+    });
+    if (!result?.success) {
+      throw new Error(result?.error || 'Could not extract sign request fields from this document.');
+    }
+    const fields = normalizeSignExtractFields(result.fields || {});
+    const assessment = assessQuickConvertPrefill('sign', fields);
+    switchTab('sign');
+    const count = applyAiFields('sign', fields, { sourceToken: fileUrl || 'quick-convert' });
+    if (assessment.lowConfidence && typeof showToast === 'function') {
+      showToast(formatQuickConvertPrefillWarnings(assessment), 'error');
+    } else if (count > 0 && typeof showToast === 'function') {
+      showToast('\u2713 Quick convert filled ' + count + ' sign field' + (count === 1 ? '' : 's') + ' \u2014 review before submitting.');
+    }
+    return { tab: 'sign', count, assessment };
+  }
+
+  return null;
+}
+
+async function onQuickConvertFileSelected(input) {
+  const file = input?.files?.[0];
+  const kind = quickConvertSelectedKind;
+  quickConvertSelectedKind = null;
+  if (input) input.value = '';
+  if (!file || !kind) return;
+
+  const validation = validateQuickConvertUpload({
+    filename: file.name,
+    mimeType: file.type || mimeTypeFromQuickConvertFilename(file.name),
+    byteLength: file.size,
+  });
+  if (!validation.ok) {
+    setQuickConvertStatus(kind, validation.error, true);
+    return;
+  }
+
+  quickConvertBusy = true;
+  setQuickConvertCardBusy(kind, true);
+  setQuickConvertStatus(kind, 'Uploading\u2026', false);
+  const downloadEl = document.getElementById('qc-download-' + kind);
+  if (downloadEl) {
+    downloadEl.innerHTML = '';
+    downloadEl.classList.add('is-hidden');
+  }
+
+  try {
+    const dataBase64 = await fileToBase64QuickConvert(file);
+    const uploaded = await callTrpc('files.upload', {
+      filename: file.name,
+      mimeType: file.type || mimeTypeFromQuickConvertFilename(file.name),
+      base64Data: dataBase64,
+      category: 'quick_convert',
+      reference: kind,
+    });
+    if (!uploaded?.success || !uploaded.url) {
+      throw new Error('Upload failed');
+    }
+    const fileUrl = uploaded.url;
+
+    if (kind === 'lease_to_voucher' || kind === 'exclusive_to_sign') {
+      setQuickConvertStatus(kind, 'Extracting fields with AI\u2026', false);
+      const prefill = await runQuickConvertPrefill(kind, file, fileUrl);
+      const count = prefill?.count ?? 0;
+      const assessment = prefill?.assessment;
+      let statusMsg = count > 0
+        ? 'Opened ' + (prefill.tab === 'voucher' ? 'Commission Voucher' : 'Sign Request') + ' with ' + count + ' field' + (count === 1 ? '' : 's') + '.'
+        : 'Extraction finished — review the form for missing fields.';
+      if (assessment && assessment.lowConfidence) {
+        statusMsg = formatQuickConvertPrefillWarnings(assessment);
+      }
+      setQuickConvertStatus(kind, statusMsg, !!(assessment && assessment.lowConfidence));
+      return;
+    }
+
+    setQuickConvertStatus(kind, 'Converting\u2026', false);
+    const result = await callTrpc('quickConvert.processUploaded', {
+      kind,
+      filename: file.name,
+      mimeType: file.type || mimeTypeFromQuickConvertFilename(file.name),
+      dataBase64,
+    });
+    if (!result?.success) {
+      throw new Error(result?.error || 'Conversion failed');
+    }
+    downloadBase64PdfQuickConvert(result.filename, result.dataBase64);
+    window.__qcLastPdf = window.__qcLastPdf || {};
+    window.__qcLastPdf[kind] = { filename: result.filename, dataBase64: result.dataBase64 };
+    const msg = result.note
+      ? 'Downloaded ' + result.filename + '. ' + result.note
+      : 'Downloaded ' + result.filename + '.';
+    setQuickConvertStatus(kind, msg, false);
+    if (downloadEl) {
+      downloadEl.classList.remove('is-hidden');
+      downloadEl.innerHTML =
+        '<button type="button" class="btn btn-outline btn-sm" onclick="redownloadQuickConvertPdf(\'' + kind + '\')">Download again</button>';
+    }
+    if (typeof showToast === 'function') showToast('\u2713 ' + result.filename);
+  } catch (e) {
+    const msg = e && e.message ? e.message : String(e);
+    setQuickConvertStatus(kind, msg || 'Conversion failed', true);
+    if (typeof showToast === 'function') showToast(msg, 'error');
+  } finally {
+    quickConvertBusy = false;
+    setQuickConvertCardBusy(kind, false);
+  }
+}
+
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => {
     t.classList.toggle('active', t.dataset.tab === name);
@@ -3074,6 +3594,9 @@ function switchTab(name) {
   }
   if (name === 'drafts') {
     renderDraftsPanel();
+  }
+  if (name === 'quick-convert') {
+    void refreshQuickConvertStatus();
   }
   const flow = bootstrapStepFlowFor(name);
   if (flow && typeof flow.go === 'function') flow.go(0);
@@ -7834,7 +8357,10 @@ function showBrokerTool(user) {
     updateHeaderUserDisplay(user);
   }
   void refreshBrokerQueue();
-  window.queueMicrotask(applyBrokerToolInitialTabFromUrl);
+  window.queueMicrotask(() => {
+    applyBrokerToolInitialTabFromUrl();
+    applyQuickConvertPrefillFromPortal();
+  });
 }
 
 function toggleBrokerSidebar(open) {
@@ -13646,11 +14172,9 @@ const AI_FIELD_MAP = {
   sign: {
     propertyAddress: 's-address',
     city: 's-city',
-    state: 's-state',
-    zip: 's-zip',
-    nameRider: 's-rider-text',
-    requestedBy: 's-req-name',
-    specialInstructions: 's-special',
+    nameRider: 's-rider',
+    requestedBy: 's-requested-by',
+    specialInstructions: 's-comments',
     accessInstructions: 's-access',
   },
   comp: {
@@ -13780,6 +14304,16 @@ function applyAiFields(tab, fields, options = {}) {
     applied++;
   });
 
+  if (tab === 'sign' && fields.nameRider && String(fields.nameRider).trim()) {
+    try {
+      const riderToggle = document.getElementById('s-rider-toggle');
+      if (riderToggle && !riderToggle.checked) {
+        riderToggle.checked = true;
+        toggleNameRider(true);
+      }
+    } catch (e) { /* no-op */ }
+  }
+
   // After applying listing fields, re-run type-dependent UI cascades
   if (tab === 'listing' && applied > 0) {
     try { onTxnTypeChange(); } catch(e) {}
@@ -13883,6 +14417,7 @@ const TRPC_QUERY_PROCEDURES = new Set([
   'submissions.queueMine',
   'compData.latest',
   'compData.search',
+  'quickConvert.status',
 ]);
 
 async function callTrpc(procedure, input) {
@@ -16249,6 +16784,17 @@ const HELP_PANEL_CONTENT = {
       <p>Filter by transaction type, city, market, submarket, property type, SF range, or date range, then run the search to update the report-ready grid.</p>
       <h4>Exports</h4>
       <p>Use the export buttons above the table to download the current result set after you’ve narrowed it to the comps you want.</p>
+    `,
+  },
+  'quick-convert': {
+    title: 'Quick Convert — how this panel works',
+    body: `
+      <p>Upload a document once, then pick a workflow: lease/agreement &rarr; commission voucher (AI prefill), exclusive right &rarr; sign request (AI prefill), Word &rarr; PDF, or LANB letterhead PDF.</p>
+      <h4>AI prefill</h4>
+      <p>Lease and exclusive flows require PDF in v1. Extracted fields open the voucher or sign tab with AI highlights &mdash; review everything before submitting to the office queue.</p>
+      <h4>PDF &amp; letterhead</h4>
+      <p>Word &rarr; PDF needs LibreOffice (<code>soffice</code>) on the server when the file is not already PDF. Letterhead prepends the bundled LANB template cover page.</p>
+      <p>The same workflows are available on <a href="/portal/convert">portal Quick convert</a>.</p>
     `,
   },
   'queue': {

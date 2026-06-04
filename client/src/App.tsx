@@ -15,6 +15,7 @@ import PortalAccount from "./pages/PortalAccount";
 import PortalSubmissionDetail from "./pages/PortalSubmissionDetail";
 import PortalSubmissions from "./pages/PortalSubmissions";
 import PortalNewSubmission from "./pages/PortalNewSubmission";
+import PortalQuickConvert from "./pages/PortalQuickConvert";
 
 /** Redirect component for renamed/merged routes */
 function Redirect({ to }: { to: string }) {
@@ -281,6 +282,11 @@ function Router() {
       <Route path="/portal/new">
         <PortalRoute>
           <PortalNewSubmission />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/convert">
+        <PortalRoute>
+          <PortalQuickConvert />
         </PortalRoute>
       </Route>
       <Route path="/portal/home">

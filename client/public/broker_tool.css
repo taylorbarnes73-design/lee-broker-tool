@@ -7805,3 +7805,57 @@ body.broker-active .sub-tab-bar {
   gap: 8px;
   margin-top: 2px;
 }
+
+/* Quick Convert panel */
+.qc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.qc-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.qc-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.qc-card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.qc-card-busy {
+  opacity: 0.85;
+  pointer-events: none;
+}
+.qc-status {
+  min-height: 1.25em;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-600, #4b5563);
+}
+.qc-status.status-success {
+  color: var(--success, #166534);
+}
+.qc-status.text-error {
+  color: var(--lee-red, #98002e);
+}
+.qc-note {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-600, #4b5563);
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--ink-50, #f9fafb);
+  border: 1px solid var(--ink-200, #e5e7eb);
+  margin-top: 8px;
+}
+.qc-download {
+  margin-top: 4px;
+}
