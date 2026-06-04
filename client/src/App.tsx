@@ -14,6 +14,7 @@ import PortalAdminListingImport from "./pages/PortalAdminListingImport";
 import PortalAccount from "./pages/PortalAccount";
 import PortalSubmissionDetail from "./pages/PortalSubmissionDetail";
 import PortalSubmissions from "./pages/PortalSubmissions";
+import PortalNewSubmission from "./pages/PortalNewSubmission";
 
 /** Redirect component for renamed/merged routes */
 function Redirect({ to }: { to: string }) {
@@ -42,7 +43,7 @@ function PublicHome() {
         alignItems: "center",
         justifyContent: "center",
         padding: 24,
-        fontFamily: "'Nunito Sans', 'Avenir Next', Inter, system-ui, sans-serif",
+        fontFamily: "var(--font-sans)",
       }}
     >
       <div style={{ maxWidth: 440, textAlign: "center" }}>
@@ -59,7 +60,7 @@ function PublicHome() {
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <a
-            href="/login?next=/tool"
+            href="/login?next=/portal/new"
             style={{
               display: "block",
               padding: "14px 20px",
@@ -72,6 +73,21 @@ function PublicHome() {
             }}
           >
             Sign in
+          </a>
+          <a
+            href="/login?next=%2Fportal%2Fnew"
+            style={{
+              display: "block",
+              padding: "14px 20px",
+              borderRadius: 10,
+              border: "1px solid var(--ink-200)",
+              background: "#fff",
+              color: "var(--ink-800)",
+              fontWeight: 600,
+              textDecoration: "none",
+            }}
+          >
+            Start a submission (sign in)
           </a>
           <a
             href="/tool"
@@ -192,12 +208,12 @@ function AdminAccessRequired() {
           Administrator access required
         </h1>
         <p style={{ fontSize: 14, color: "var(--ink-600)", lineHeight: 1.55, marginTop: 8, marginBottom: 22 }}>
-          This area is restricted to platform administrators. You can still continue with the broker dashboard
+          This area is restricted to platform administrators. You can still use the broker portal home
           or open the broker tool to build a new submission.
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <Link
-            href="/portal/submissions"
+            href="/portal/new"
             style={{
               display: "block",
               padding: "12px 18px",
@@ -209,7 +225,7 @@ function AdminAccessRequired() {
               fontSize: 14,
             }}
           >
-            Broker dashboard
+            Broker portal home
           </Link>
           <a
             href="/tool"
@@ -262,6 +278,16 @@ function Router() {
       <Route path="/portal/admin/login" component={AdminLoginEntry} />
 
       {/* Primary submissions view (all users, replaces dashboard + separate queues) */}
+      <Route path="/portal/new">
+        <PortalRoute>
+          <PortalNewSubmission />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/home">
+        <PortalRoute>
+          <Redirect to="/portal/new" />
+        </PortalRoute>
+      </Route>
       <Route path="/portal/submissions">
         <PortalRoute>
           <PortalSubmissions />
@@ -276,17 +302,17 @@ function Router() {
       {/* Legacy / alias routes → redirect to unified submissions */}
       <Route path="/portal">
         <PortalRoute>
-          <Redirect to="/portal/submissions" />
+          <Redirect to="/portal/new" />
         </PortalRoute>
       </Route>
       <Route path="/portal/dashboard">
         <PortalRoute>
-          <Redirect to="/portal/submissions" />
+          <Redirect to="/portal/new" />
         </PortalRoute>
       </Route>
       <Route path="/dashboard">
         <PortalRoute>
-          <Redirect to="/portal/submissions" />
+          <Redirect to="/portal/new" />
         </PortalRoute>
       </Route>
       <Route path="/portal/admin">

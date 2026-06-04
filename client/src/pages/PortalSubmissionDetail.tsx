@@ -5,10 +5,14 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import AdminPortalShell from "@/components/AdminPortalShell";
+import SubmissionFieldSummary from "@/components/SubmissionFieldSummary";
 import DealiusSubmissionWorkspace from "@/components/DealiusSubmissionWorkspace";
 import LinkButton from "@/components/ui/LinkButton";
 import StatusBadge from "@/components/ui/StatusBadge";
 import {
+  brokerQueueStatusText,
+  brokerSubmissionNextSteps,
+  brokerToolTabUrl,
   formatFormType,
   formatSubmissionStatus,
   submissionStatusTone,
@@ -49,6 +53,14 @@ type QueueMeta = {
   position: number | null;
   totalActive: number;
   aheadOfYou: number | null;
+};
+
+type ActivityEntry = {
+  id: string;
+  action: string;
+  summary: string;
+  actorLabel: string;
+  createdAt: string;
 };
 
 type SubmissionDocument = {
@@ -178,11 +190,14 @@ function fileAsBase64(file: File): Promise<string> {
   });
 }
 
+type DetailTab = "summary" | "activity" | "deal" | "documents" | "payload";
+
 export default function PortalSubmissionDetail() {
   const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [, params] = useRoute("/portal/submissions/:id");
   const id = Number(params?.id);
-  const [activeTab, setActiveTab] = useState<"summary" | "deal" | "documents" | "payload">("summary");
+  const [activeTab, setActiveTab] = useState<DetailTab>("summary");
   const [item, setItem] = useState<SubmissionDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [queueMeta, setQueueMeta] = useState<QueueMeta | null>(null);
@@ -190,12 +205,38 @@ export default function PortalSubmissionDetail() {
   const [contractType, setContractType] = useState("Lease Agreement");
   const [extracting, setExtracting] = useState(false);
   const [importingExcel, setImportingExcel] = useState(false);
+  const [activity, setActivity] = useState<ActivityEntry[]>([]);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityError, setActivityError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const excelFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const uploadFile = trpc.files.upload.useMutation();
   const extractContract = trpc.contracts.extractContract.useMutation();
   const derivedFee = deriveFeePercent(item?.payload);
+
+  useEffect(() => {
+    if (!isAdmin && (activeTab === "deal" || activeTab === "payload")) {
+      setActiveTab("summary");
+    }
+  }, [isAdmin, activeTab]);
+
+  async function reloadActivity() {
+    if (!Number.isFinite(id)) return;
+    setActivityLoading(true);
+    setActivityError(null);
+    try {
+      const response = await fetch(`/api/submissions/${id}/activity`, { credentials: "include" });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body?.error ?? "Failed to load activity");
+      setActivity(body?.data ?? []);
+    } catch (e: unknown) {
+      setActivity([]);
+      setActivityError(e instanceof Error ? e.message : "Failed to load activity");
+    } finally {
+      setActivityLoading(false);
+    }
+  }
   const submissionDocuments =
     item?.attachments && item.attachments.length > 0 ? item.attachments : submissionDocumentsFromPayload(item?.payload);
 
@@ -256,6 +297,11 @@ export default function PortalSubmissionDetail() {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (activeTab !== "activity" || !Number.isFinite(id)) return;
+    void reloadActivity();
+  }, [activeTab, id]);
+
   async function updateStatus(status: string) {
     if (!item || user?.role !== "admin") return;
     setUpdatingStatus(status);
@@ -270,6 +316,9 @@ export default function PortalSubmissionDetail() {
       if (!response.ok) throw new Error(body?.error ?? "Status update failed");
       setItem({ ...item, status, updatedAt: new Date().toISOString() });
       toast.success(`Submission marked ${formatSubmissionStatus(status).toLowerCase()}.`);
+      if (activeTab === "activity") {
+        void reloadActivity();
+      }
     } catch (e: any) {
       toast.error(e?.message ?? "Status update failed");
     } finally {
@@ -348,12 +397,19 @@ export default function PortalSubmissionDetail() {
     }
   }
 
-  const tabs: Array<[typeof activeTab, string, string]> = [
-    ["summary", "Summary", "Status and queue"],
-    ["deal", "Dealius", "Create deal or listing"],
-    ["documents", "Documents", "Imports and extraction"],
-    ["payload", "Payload", "Raw data"],
-  ];
+  const tabs: Array<[DetailTab, string, string]> = isAdmin
+    ? [
+        ["summary", "Summary", "Status and queue"],
+        ["activity", "Activity", "Status & actions"],
+        ["deal", "Dealius", "Create deal or listing"],
+        ["documents", "Documents", "Imports and extraction"],
+        ["payload", "Payload", "Raw data"],
+      ]
+    : [
+        ["summary", "Summary", "Status and queue"],
+        ["activity", "Activity", "Status updates"],
+        ["documents", "Files", "Uploaded documents"],
+      ];
 
   return (
     <AdminPortalShell
@@ -366,7 +422,7 @@ export default function PortalSubmissionDetail() {
       }
       actions={
         <LinkButton href="/portal/submissions" variant="secondary">
-          Back to queue
+          {isAdmin ? "Back to queue" : "Back to my submissions"}
         </LinkButton>
       }
     >
@@ -378,7 +434,7 @@ export default function PortalSubmissionDetail() {
             aria-hidden
             style={{
               height: 120,
-              borderRadius: 10,
+              borderRadius: "var(--r-8)",
               background: "var(--ink-100)",
               border: "1px solid var(--ink-200)",
             }}
@@ -434,7 +490,7 @@ export default function PortalSubmissionDetail() {
                     style={{
                       marginBottom: 14,
                       padding: 14,
-                      borderRadius: 10,
+                      borderRadius: "var(--r-8)",
                       border: "1px solid #BCD6EF",
                       background: "#E6F0FA",
                       color: "#1F4F8B",
@@ -473,6 +529,51 @@ export default function PortalSubmissionDetail() {
                     )}
                   </div>
                 )}
+                {!isAdmin && item && (
+                  <>
+                    <div
+                      style={{
+                        marginBottom: 18,
+                        padding: 14,
+                        borderRadius: "var(--r-8)",
+                        border: `1px solid ${item.status === "in_review" ? "rgba(0, 49, 70, 0.22)" : "var(--ink-200)"}`,
+                        background: item.status === "in_review" ? "rgba(0, 49, 70, 0.06)" : "var(--ink-50)",
+                        fontSize: 13,
+                        color: "var(--ink-700)",
+                        lineHeight: 1.55,
+                      }}
+                    >
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-800)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                        What happens next
+                      </div>
+                      <p style={{ margin: 0 }}>{brokerSubmissionNextSteps(item.status, item.formType)}</p>
+                      <p style={{ margin: "10px 0 0", fontSize: 12, color: "var(--ink-500)" }}>
+                        {brokerQueueStatusText(item.status, queueMeta?.position ?? item.queuePosition ?? null)}
+                      </p>
+                      {queueMeta?.position !== null && queueMeta?.position !== undefined && item.status === "pending" && (
+                        <p style={{ margin: "10px 0 0", fontSize: 12, color: "var(--ink-600)" }}>
+                          Queue position #{queueMeta.position} of {queueMeta.totalActive}
+                          {typeof queueMeta.aheadOfYou === "number" && queueMeta.aheadOfYou > 0
+                            ? ` — ${queueMeta.aheadOfYou} ahead of you`
+                            : queueMeta.position === 1
+                              ? " — you're next"
+                              : ""}
+                          .
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
+                <div style={{ marginBottom: 18 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-700)", marginBottom: 8 }}>
+                    Submitted details
+                  </div>
+                  <SubmissionFieldSummary
+                    formType={item.formType}
+                    payload={item.payload}
+                    reference={item.reference}
+                  />
+                </div>
                 <div className="admin-detail-summary-grid">
                   <div>
                     <span>Reference</span>
@@ -507,6 +608,12 @@ export default function PortalSubmissionDetail() {
                       </strong>
                     </div>
                   )}
+                  {!isAdmin && item && (
+                    <div style={{ gridColumn: "1 / -1" }}>
+                      <span>Your status</span>
+                      <strong>{brokerQueueStatusText(item.status, queueMeta?.position ?? null)}</strong>
+                    </div>
+                  )}
                   {/* Assignment / completion info — only admins see who is working on what */}
                   {user?.role === "admin" && item.assignedTo && (
                     <div>
@@ -527,7 +634,32 @@ export default function PortalSubmissionDetail() {
                     </div>
                   )}
                 </div>
-                {user?.role === "admin" && (
+                {!isAdmin && (
+                  <div
+                    style={{
+                      marginTop: 16,
+                      padding: 14,
+                      borderRadius: "var(--r-8)",
+                      border: "1px solid var(--ink-200)",
+                      background: "var(--ink-50)",
+                      fontSize: 13,
+                      color: "var(--ink-700)",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    You will receive an email when the office updates this submission (if notifications are enabled).
+                    Need to change something? Submit an updated request from the broker tool, or contact the admin team.
+                    <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                      <LinkButton href={brokerToolTabUrl("voucher")} variant="secondary">
+                        Open broker tool
+                      </LinkButton>
+                      <LinkButton href="/portal/submissions" variant="secondary">
+                        All my submissions
+                      </LinkButton>
+                    </div>
+                  </div>
+                )}
+                {isAdmin && (
                   <div className="admin-status-actions">
                     <Button
                       variant={item.status === "pending" ? "primary" : "secondary"}
@@ -562,13 +694,64 @@ export default function PortalSubmissionDetail() {
               </section>
             )}
 
-            {activeTab === "deal" && (
+            {activeTab === "activity" && (
               <section className="admin-detail-panel">
-                {user?.role === "admin" ? (
-                  <DealiusSubmissionWorkspace submission={item as any} onRefresh={reloadSubmission} />
-                ) : (
-                  <div style={{ color: "var(--ink-500)", fontSize: 13 }}>Admin access is required for Dealius controls.</div>
+                {!isAdmin && item && (
+                  <div style={{ fontSize: 13, color: "var(--ink-600)", lineHeight: 1.5, marginBottom: 14 }}>
+                    Timeline of status changes for this request.{" "}
+                    <strong>Pending</strong> means waiting in the office queue;{" "}
+                    <strong>In progress</strong> means an admin claimed it and is working on it (not that you need to act).
+                  </div>
                 )}
+                {activityLoading ? (
+                  <div style={{ fontSize: 13, color: "var(--ink-500)" }}>Loading activity…</div>
+                ) : activityError ? (
+                  <div style={{ color: "var(--err-700)", fontSize: 13 }}>{activityError}</div>
+                ) : activity.length === 0 ? (
+                  <div style={{ fontSize: 13, color: "var(--ink-500)", lineHeight: 1.5 }}>
+                    No activity recorded yet. Status changes and new submissions will appear here.
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                    {activity.map((entry, index) => (
+                      <div
+                        key={entry.id}
+                        style={{
+                          display: "flex",
+                          gap: 12,
+                          padding: "12px 0",
+                          borderBottom:
+                            index < activity.length - 1 ? "1px solid var(--ink-150)" : "none",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: "50%",
+                            background: "var(--lee-red, #98002E)",
+                            marginTop: 6,
+                            flexShrink: 0,
+                          }}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-900)" }}>
+                            {entry.summary}
+                          </div>
+                          <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 4 }}>
+                            {entry.actorLabel} · {new Date(entry.createdAt).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {activeTab === "deal" && isAdmin && (
+              <section className="admin-detail-panel">
+                <DealiusSubmissionWorkspace submission={item as any} onRefresh={reloadSubmission} />
               </section>
             )}
 
@@ -589,9 +772,9 @@ export default function PortalSubmissionDetail() {
                           gap: 12,
                           flexWrap: "wrap",
                           padding: 12,
-                          borderRadius: 10,
+                          borderRadius: "var(--r-8)",
                           border: "1px solid var(--ink-200)",
-                          background: "white",
+                          background: "var(--ink-0)",
                         }}
                       >
                         <div style={{ minWidth: 0 }}>
@@ -628,13 +811,7 @@ export default function PortalSubmissionDetail() {
               </section>
             )}
 
-            {activeTab === "documents" && user?.role !== "admin" && (
-              <section className="admin-detail-panel">
-                <div style={{ color: "var(--ink-500)", fontSize: 13 }}>Admin access is required for document import and extraction tools.</div>
-              </section>
-            )}
-
-            {activeTab === "documents" && user?.role === "admin" && item.formType === "voucher" && (
+            {activeTab === "documents" && isAdmin && item.formType === "voucher" && (
               <section className="admin-detail-panel">
                 <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 6 }}>Import Lee voucher (Excel)</div>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
@@ -659,7 +836,7 @@ export default function PortalSubmissionDetail() {
               </section>
             )}
 
-            {activeTab === "documents" && user?.role === "admin" && (
+            {activeTab === "documents" && isAdmin && (
               <section className="admin-detail-panel">
                 <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 6 }}>
                   AI extract (voucher, lease, or purchase agreement PDF)
@@ -673,10 +850,10 @@ export default function PortalSubmissionDetail() {
                       style={{
                         marginLeft: 8,
                         padding: "8px 10px",
-                        borderRadius: 10,
+                        borderRadius: "var(--r-8)",
                         border: "1px solid var(--ink-200)",
                         fontSize: 13,
-                        background: "white",
+                        background: "var(--ink-0)",
                       }}
                     >
                       <option>Lease Agreement</option>
@@ -707,16 +884,16 @@ export default function PortalSubmissionDetail() {
               </section>
             )}
 
-            {activeTab === "payload" && (
+            {activeTab === "payload" && isAdmin && (
               <section className="admin-detail-panel">
                 <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 6 }}>Body</div>
                 <div
                   style={{
                     margin: 0,
                     padding: 12,
-                    borderRadius: 10,
+                    borderRadius: "var(--r-8)",
                     border: "1px solid var(--ink-200)",
-                    background: "white",
+                    background: "var(--ink-0)",
                     overflow: "auto",
                     fontSize: 13,
                     color: "var(--ink-900)",

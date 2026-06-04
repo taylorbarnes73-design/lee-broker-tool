@@ -263,12 +263,23 @@
 @import './design/tokens.css';
 
 .admin-portal {
-  --admin-accent: var(--lee-crimson, #01696f);
+  --admin-accent: var(--lee-red, #98002E);
   display: grid;
   grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
   min-height: 100vh;
   background: var(--ink-50);
   color: var(--ink-900);
+  font-family: var(--font-sans);
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.admin-portal button,
+.admin-portal input,
+.admin-portal select,
+.admin-portal textarea {
+  font-family: inherit;
 }
 
 /* Mobile overlay + slide-in drawer for the sidebar. */
@@ -639,6 +650,16 @@
   margin-top: 20px;
 }
 
+.admin-portal-card {
+  padding: 24px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-12);
+  background: var(--ink-0);
+  box-shadow: var(--shadow-sm);
+  font-size: var(--fs-14, 14px);
+  line-height: 1.5;
+}
+
 .admin-portal-hero {
   display: flex;
   justify-content: space-between;
@@ -659,8 +680,10 @@
 .admin-portal-hero h1 {
   margin: 10px 0 0;
   font-size: clamp(26px, 3vw, 36px);
+  font-weight: 700;
   line-height: 1.1;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.02em;
+  color: var(--ink-900);
 }
 
 .admin-portal-hero p {

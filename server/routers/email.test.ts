@@ -23,12 +23,21 @@ vi.mock("../storage", () => ({
   storagePut: storagePutMock,
 }));
 
-vi.mock("../db", () => ({
-  getDb: vi.fn().mockResolvedValue({
+function makeDbMock() {
+  const limit = vi.fn().mockResolvedValue([]);
+  const where = vi.fn().mockReturnValue({ limit });
+  const from = vi.fn().mockReturnValue({ where });
+  const select = vi.fn().mockReturnValue({ from });
+  return {
     insert: vi.fn().mockReturnValue({
       values: dbInsertValuesMock,
     }),
-  }),
+    select,
+  };
+}
+
+vi.mock("../db", () => ({
+  getDb: vi.fn().mockResolvedValue(makeDbMock()),
 }));
 
 vi.mock("../settings/getSetting", () => ({
@@ -70,9 +79,17 @@ vi.mock("../_core/env", () => ({
 import { execSync } from "child_process";
 import { emailRouter } from "./email";
 
+function getSubmissionInsertArg(): Record<string, unknown> {
+  const insertArg = dbInsertValuesMock.mock.calls.find(
+    call => call[0] && "payload" in (call[0] as Record<string, unknown>)
+  )?.[0] as Record<string, unknown> | undefined;
+  if (!insertArg) throw new Error("Expected submission payload insert call");
+  return insertArg;
+}
+
 function makeCaller() {
   return emailRouter.createCaller({
-    req: {} as any,
+    req: { headers: {} } as any,
     res: {} as any,
     user: {
       openId: "local-test-user",
@@ -124,7 +141,7 @@ describe("email.sendToAdmin", () => {
 
     expect(result.success).toBe(true);
     expect(execSync).toHaveBeenCalledOnce();
-    expect(dbInsertValuesMock).toHaveBeenCalledOnce();
+    expect(getSubmissionInsertArg().formType).toBe("listing");
 
     const callArg = execSyncMock.mock.calls[0][0] as string;
     expect(callArg).toContain("outlook_send_messages");
@@ -182,8 +199,7 @@ describe("email.sendToAdmin", () => {
     expect(callArg).toContain("Agency Disclosure");
     expect(callArg).toContain("agreement.pdf");
 
-    expect(dbInsertValuesMock).toHaveBeenCalledOnce();
-    const insertArg = dbInsertValuesMock.mock.calls[0][0] as Record<string, unknown>;
+    const insertArg = getSubmissionInsertArg();
     const payload = JSON.parse(String(insertArg.payload));
     expect(payload.supportingFiles).toEqual(supportingFiles);
   });
@@ -229,11 +245,7 @@ describe("email.sendToAdmin", () => {
     expect(callArg).toContain("Generated Excel Voucher");
     expect(callArg).toContain("contentBytes");
 
-    const insertArg = dbInsertValuesMock.mock.calls.find(call => call[0] && "payload" in (call[0] as Record<string, unknown>))?.[0] as
-      | Record<string, unknown>
-      | undefined;
-    expect(insertArg).toBeTruthy();
-    if (!insertArg) throw new Error("Expected submission payload insert call");
+    const insertArg = getSubmissionInsertArg();
     const payload = JSON.parse(String(insertArg.payload));
     expect(payload.archivedFile?.filename).toBe("Voucher_Draft.pdf");
     expect(payload.excelFile?.filename).toBe("Filled_Voucher.xlsm");

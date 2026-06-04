@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#A9223B">
+<meta name="theme-color" content="#98002E">
 <title>Broker Tool</title>
 <link rel="icon" type="image/png" href="lee-newport-beach-fullcolor.png">
 <link rel="apple-touch-icon" href="lee-newport-beach-fullcolor.png">
@@ -110,7 +110,7 @@
       <div class="broker-sidebar-user-email" id="sidebar-user-email"></div>
     </div>
     <div class="broker-sidebar-user-actions">
-      <a class="broker-sidebar-action" href="/portal">Portal</a>
+      <a class="broker-sidebar-action" href="/portal/new">Portal</a>
       <a class="broker-sidebar-action admin-toggle is-hidden" id="sidebar-admin-link" href="/portal/admin">Admin</a>
       <button type="button" class="broker-sidebar-action" onclick="signOut()">Sign Out</button>
     </div>
@@ -140,7 +140,7 @@
       <h1 class="page-h1">Listing Entry</h1>
     </div>
     <div class="page-head-right">
-      <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('listing')">Save Draft</button>
+      <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('listing', this)">Save Draft</button>
     </div>
   </div>
 
@@ -489,7 +489,7 @@
       <div class="deal-actions">
         <button class="btn btn-gray" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
         <button class="btn btn-red" onclick="showListingReview()">Review</button>
-        <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing')">Save Draft</button>
+        <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing', this)">Save Draft</button>
       </div>
     </aside>
     </div><!-- /deal-shell -->
@@ -497,7 +497,7 @@
     <div class="btn-bar is-hidden" id="listing-form-actions">
       <button class="btn btn-red" onclick="showListingReview()"><span class="btn-label">Review</span></button>
       <button class="btn btn-gray" id="btn-listing-pdf" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
-    <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing')"><span class="btn-label">Save Draft</span></button>
+    <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing', this)"><span class="btn-label">Save Draft</span></button>
       <button class="btn btn-gray" onclick="clearListing()"><span class="btn-label">Clear Form</span></button>
     </div>
 
@@ -564,7 +564,7 @@
     </div>
     <div class="btn-bar" id="listing-mod-form-actions">
       <button class="btn btn-red" onclick="openReviewSnapshot('listing-mod')">Review</button>
-      <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing-mod')">Save Draft</button>
+      <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing-mod', this)">Save Draft</button>
       <button class="btn btn-gray" onclick="document.getElementById('lm-notes').value='';document.getElementById('lm-address').value='';">Clear</button>
     </div>
   </div><!-- end listing-mod-mode -->
@@ -784,7 +784,7 @@
   </aside>
   </div><!-- /deal-shell -->
   <div class="btn-bar btn-bar-top-md">
-    <button class="btn btn-gray" onclick="exportSignPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
+    <button class="btn btn-gray" onclick="exportSignPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
     <button class="btn btn-red" onclick="openReviewSnapshot('sign')">Review</button>
     <button class="btn btn-gray" onclick="clearSign()">Clear Form</button>
   </div>
@@ -798,7 +798,7 @@
       <h1 class="page-h1">Commission Voucher</h1>
     </div>
     <div class="page-head-right">
-      <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('voucher')">Save Draft</button>
+      <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('voucher', this)">Save Draft</button>
     </div>
   </div>
   <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete all steps in order for fastest processing.</div>
@@ -1232,7 +1232,7 @@
   <div class="btn-bar">
     <button class="btn btn-gray" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Excel Voucher</span></button>
     <button class="btn btn-red" onclick="openReviewSnapshot('voucher')">Review</button>
-    <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('voucher')">Save Draft</button>
+    <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('voucher', this)">Save Draft</button>
     <button class="btn btn-outline" onclick="switchTab('sign')">Remove Signs &rarr;</button>
     <button class="btn btn-gray" onclick="clearVoucher()">Clear Form</button>
   </div>
@@ -1304,7 +1304,7 @@
       <h1 class="page-h1">Comp Input</h1>
     </div>
     <div class="page-head-right">
-      <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('comp')">Save Draft</button>
+      <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('comp', this)">Save Draft</button>
     </div>
   </div>
   <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections for additional detail.</div>
@@ -1587,9 +1587,9 @@
   </div><!-- end optional-wrapper -->
 
   <div class="btn-bar btn-bar-top-md">
-    <button class="btn btn-gray" onclick="exportCompPdf(); this.classList.add('loading'); setTimeout(()=>this.classList.remove('loading'),1200);"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
+    <button class="btn btn-gray" onclick="exportCompPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
     <button class="btn btn-red" onclick="openReviewSnapshot('comp')">Review</button>
-    <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('comp')">Save Draft</button>
+    <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('comp', this)">Save Draft</button>
     <button class="btn btn-gray" onclick="clearComp()">Clear Form</button>
   </div>
   <div id="comp-submit-badge" class="comp-submit-badge"></div>
@@ -1699,8 +1699,8 @@
     <div class="cr-results-meta">
       <div id="cr-results-count">No results loaded.</div>
       <div class="cr-filters-actions-right">
-        <button class="btn btn-gray" type="button" onclick="compReportExportCsv()">Excel file</button>
-        <button class="btn btn-outline" type="button" onclick="compReportExportPdf()">Download Comp Report</button>
+        <button class="btn btn-gray" type="button" onclick="compReportExportCsv(this)">Excel file</button>
+        <button class="btn btn-outline" type="button" onclick="compReportExportPdf(this)">Download Comp Report</button>
       </div>
     </div>
 
@@ -2664,7 +2664,7 @@
 
             <div class="dx-slabel">Brokers (from voucher — reference only)</div>
             <div id="dxBd"></div>
-            <div class="dx-outside-warn" id="dxOw">&x26A0; Outside broker(s) must be added manually in Dealius.</div>
+            <div class="dx-outside-warn" id="dxOw">Warning: Outside broker(s) must be added manually in Dealius.</div>
             <p class="dx-hint">Broker commission assignments are not submitted via API — add them in Dealius after the deal is created.</p>
 
             <div id="dxAiPanel" class="is-hidden section-heading-top"></div>
@@ -3727,7 +3727,12 @@ function restoreListingUploadDraftState(state) {
   safeUpdateListingRequiredDocStatus();
 }
 
-function saveCurrentDraft(context) {
+async function saveCurrentDraft(context, btn) {
+  btn = btn || getActionButtonFromEvent();
+  setBtnLoading(btn, true, 'Saving...');
+  if (typeof showFormOverlay === 'function') {
+    showFormOverlay('Saving draft...', { subMsg: 'Securing your current entries.' });
+  }
   try {
     if (context === 'listing') {
       localStorage.setItem(LBT_AUTOSAVE_KEYS.listing, JSON.stringify({
@@ -3748,9 +3753,13 @@ function saveCurrentDraft(context) {
         voucherUploads: collectVoucherUploadDraftState(),
       }));
     }
+    await processingDelay(850);
     showToast('Draft saved');
   } catch (e) {
     showToast('Draft could not be saved', 'error');
+  } finally {
+    setBtnLoading(btn, false);
+    if (typeof hideFormOverlay === 'function') hideFormOverlay();
   }
 }
 
@@ -3856,12 +3865,17 @@ function submitReviewSnapshot() {
   submitCompDirect();
 }
 
-function exportListingPdfWithSpinner(btn) {
-  if (btn) { btn.classList.add('loading'); btn.disabled = true; }
-  setTimeout(() => {
+async function exportListingPdfWithSpinner(btn) {
+  await runWithProcessingFeedback({
+    button: btn,
+    message: 'Generating listing PDF...',
+    buttonLabel: 'Generating...',
+    detail: 'Building the document preview.',
+    minDuration: 600,
+  }, async () => {
+    await processingDelay(100);
     exportListingPdf();
-    if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
-  }, 300);
+  });
 }
 
 // ── Listing Summary (legacy — kept for PDF export) ──
@@ -5749,6 +5763,19 @@ function exportSignPdf() {
   doc.save('Sign_Request_' + addr.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30) + '.pdf');
 }
 
+async function exportSignPdfWithSpinner(btn) {
+  await runWithProcessingFeedback({
+    button: btn,
+    message: 'Generating sign request PDF...',
+    buttonLabel: 'Generating...',
+    detail: 'Preparing the sign order document.',
+    minDuration: 600,
+  }, async () => {
+    await processingDelay(100);
+    exportSignPdf();
+  });
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // PDF EXPORT: COMMISSION VOUCHER — matches Excel voucher layout
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -6569,25 +6596,19 @@ async function exportVoucherExcel() {
 }
 
 async function exportVoucherExcelWithSpinner(btn) {
-  const label = btn?.querySelector('.btn-label');
-  const originalText = label ? label.textContent : btn?.textContent || '';
-  if (btn) btn.disabled = true;
-  if (btn?.classList) btn.classList.add('loading');
-  if (label) label.textContent = 'Preparing Excel...';
-  else if (btn) btn.textContent = 'Preparing Excel...';
-
   try {
-    await exportVoucherExcel();
+    await runWithProcessingFeedback({
+      button: btn,
+      message: 'Generating Excel voucher...',
+      buttonLabel: 'Preparing Excel...',
+      detail: 'Loading the voucher template and filling workbook fields.',
+      minDuration: 600,
+    }, exportVoucherExcel);
     if (typeof showToast === 'function') showToast('Excel voucher downloaded');
   } catch (error) {
     const message = error && error.message ? error.message : 'The Excel voucher could not be created.';
     if (typeof showToast === 'function') showToast(message, 'error');
     else alert(message);
-  } finally {
-    if (btn) btn.disabled = false;
-    if (btn?.classList) btn.classList.remove('loading');
-    if (label) label.textContent = originalText;
-    else if (btn) btn.textContent = originalText;
   }
 }
 
@@ -6634,6 +6655,19 @@ function exportCompPdf() {
   const compType = document.getElementById('c-comp-type').value;
   if (compType === 'sale') { exportSaleCompPdf(); }
   else { exportLeaseCompPdf(); }
+}
+
+async function exportCompPdfWithSpinner(btn) {
+  await runWithProcessingFeedback({
+    button: btn,
+    message: 'Generating comp PDF...',
+    buttonLabel: 'Generating...',
+    detail: 'Formatting the comp input document.',
+    minDuration: 600,
+  }, async () => {
+    await processingDelay(100);
+    exportCompPdf();
+  });
 }
 
 /* ── Helper: get value from input/select ── */
@@ -8538,6 +8572,37 @@ async function refreshAdminSubmissions() {
   }
 }
 
+async function fetchSubmissionQueueHint(submissionId) {
+  if (!submissionId) return '';
+  try {
+    const res = await fetch('/api/submissions/' + submissionId + '/queue', { credentials: 'include' });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok || !body?.data) return '';
+    const pos = body.data.position;
+    const ahead = body.data.aheadOfYou;
+    if (pos == null) return '';
+    if (typeof ahead === 'number' && ahead > 0) {
+      return ' Queue position #' + pos + ' (' + ahead + ' ahead of you).';
+    }
+    return pos === 1 ? " You're next in the queue." : ' Queue position #' + pos + '.';
+  } catch (_) {
+    return '';
+  }
+}
+
+function appendPortalTrackLink(statusEl, submissionId, queueHint) {
+  if (!statusEl || !submissionId) return;
+  const portalUrl = '/portal/submissions/' + submissionId;
+  const hint = queueHint || '';
+  const linkHtml = ' <a href="' + portalUrl + '" class="status-success" style="font-weight:700;margin-left:6px">Track in portal \u2192</a>';
+  if (statusEl.innerHTML && statusEl.innerHTML.indexOf('Track in portal') === -1) {
+    statusEl.innerHTML += linkHtml;
+  } else if (!statusEl.innerHTML) {
+    statusEl.innerHTML = '<span class="status-success status-strong">Submitted.' + escHtml(hint.trim()) + '</span>' + linkHtml;
+  }
+  showToast('Submitted.' + hint + ' Open the portal to follow status.');
+}
+
 async function syncSubmissionToServer(submission) {
   let authenticated = false;
   try {
@@ -8552,13 +8617,14 @@ async function syncSubmissionToServer(submission) {
     console.warn('Submission sync skipped:', error && error.message ? error.message : error);
   }
 
-  if (!authenticated) return;
+  if (!authenticated) return null;
 
   try {
     const result = await callTrpc('submissions.create', submission);
     if (result && result.success && result.submissionId) {
       submission.serverSubmissionId = result.submissionId;
       persistSubmissions();
+      return result.submissionId;
     }
   } catch (error) {
     console.warn('Submission sync skipped:', error && error.message ? error.message : error);
@@ -8571,6 +8637,8 @@ async function syncSubmissionToServer(submission) {
       console.warn('Comp report sync skipped:', error && error.message ? error.message : error);
     }
   }
+
+  return null;
 }
 
 // Generate next submission ID
@@ -8753,9 +8821,61 @@ function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
 
 function setBtnLoading(btn, loading, loadingLabel) {
   if (!btn) return;
+  prepareLoadingButton(btn);
+  if (!btn.dataset.idleDisabled) btn.dataset.idleDisabled = btn.disabled ? '1' : '0';
   btn.classList.toggle('loading', Boolean(loading));
+  btn.disabled = Boolean(loading) || btn.dataset.idleDisabled === '1';
   const label = btn.querySelector('.btn-label');
-  if (label && loadingLabel) label.textContent = loading ? loadingLabel : label.dataset.idle || label.textContent;
+  if (label && !label.dataset.idle) label.dataset.idle = label.textContent;
+  if (label) label.textContent = loading ? (loadingLabel || label.dataset.idle || label.textContent) : (label.dataset.idle || label.textContent);
+  if (!loading) delete btn.dataset.idleDisabled;
+}
+
+function prepareLoadingButton(btn) {
+  if (!btn || btn.querySelector('.btn-label')) return;
+  const labelText = (btn.textContent || '').trim();
+  btn.textContent = '';
+  const spinner = document.createElement('span');
+  spinner.className = 'btn-spinner';
+  const label = document.createElement('span');
+  label.className = 'btn-label';
+  label.textContent = labelText || 'Working';
+  btn.appendChild(spinner);
+  btn.appendChild(label);
+}
+
+function getActionButtonFromEvent() {
+  const target = window.event && window.event.currentTarget;
+  return target && target.tagName === 'BUTTON' ? target : null;
+}
+
+function processingDelay(ms) {
+  return new Promise(resolve => setTimeout(resolve, Math.max(0, Number(ms) || 0)));
+}
+
+async function runWithProcessingFeedback(config, task) {
+  const started = Date.now();
+  const opts = config || {};
+  const btn = opts.button || getActionButtonFromEvent();
+  setBtnLoading(btn, true, opts.buttonLabel || 'Working...');
+  if (typeof showFormOverlay === 'function') {
+    showFormOverlay(opts.message || 'Processing request...', {
+      subMsg: opts.subMsg || 'Please keep this window open.',
+      detail: opts.detail || '',
+      step: opts.step,
+      totalSteps: opts.totalSteps,
+      stepLabel: opts.stepLabel,
+    });
+  }
+  try {
+    return await task();
+  } finally {
+    const minDuration = Number(opts.minDuration || 0);
+    const elapsed = Date.now() - started;
+    if (minDuration > elapsed) await processingDelay(minDuration - elapsed);
+    setBtnLoading(btn, false);
+    if (typeof hideFormOverlay === 'function') hideFormOverlay();
+  }
 }
 
 function adminQuickAction(tab) {
@@ -8797,17 +8917,20 @@ function switchAdminPage(page) {
 
 async function refreshAdminWorkspace() {
   const btn = document.getElementById('btn-admin-refresh');
+  const showOverlay = btn && document.activeElement === btn;
   if (btn) {
     const label = btn.querySelector('.btn-label');
     if (label && !label.dataset.idle) label.dataset.idle = label.textContent;
     setBtnLoading(btn, true, 'Refreshing…');
   }
+  if (showOverlay) showFormOverlay('Refreshing admin queue...', { subMsg: 'Loading the latest submissions.' });
   try {
     await refreshAdminSubmissions();
     renderDashboard();
     renderSubmissions();
   } finally {
     setBtnLoading(btn, false);
+    if (showOverlay) hideFormOverlay();
   }
 }
 
@@ -9000,6 +9123,12 @@ async function adminSendSignToCimarron(id) {
   _applySignFormDataToDom(payload.formData || null);
   const poEl = document.getElementById('s-po');
   if (poEl) poEl.value = String(po).trim();
+  showFormOverlay('Sending sign order...', {
+    step: 1,
+    totalSteps: 2,
+    stepLabel: 'Generating PDF...',
+    subMsg: 'Preparing the Cimarron notification.',
+  });
 
   try {
     const pdfAttachment = await (async () => {
@@ -9010,6 +9139,7 @@ async function adminSendSignToCimarron(id) {
       return result;
     })();
 
+    updateFormOverlay('Sending sign order...', 2, 2, 'Sending notification...');
     const resp = await fetch('/api/trpc/email.sendApprovedSignToCimarron', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -9029,6 +9159,8 @@ async function adminSendSignToCimarron(id) {
   } catch (e) {
     console.warn('Send to Cimarron failed:', e && e.message ? e.message : e);
     alert('❌ Send failed: ' + (e && e.message ? e.message : 'Unknown error'));
+  } finally {
+    hideFormOverlay();
   }
 }
 
@@ -9084,6 +9216,12 @@ async function adminPushSubmissionToDealius(id) {
 
   try {
     setBtnLabel('Pushing…');
+    showFormOverlay('Pushing to Dealius...', {
+      step: 1,
+      totalSteps: 2,
+      stepLabel: 'Creating Dealius record...',
+      subMsg: 'Please keep this window open.',
+    });
     const res = await fetch('/api/submissions/' + sub.serverSubmissionId + '/push-dealius', {
       method: 'POST',
       credentials: 'include',
@@ -9093,6 +9231,7 @@ async function adminPushSubmissionToDealius(id) {
     const body = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(body && body.error ? body.error : ('HTTP ' + res.status));
 
+    updateFormOverlay('Pushing to Dealius...', 2, 2, 'Refreshing admin queue...');
     await refreshAdminSubmissions();
     renderDashboard();
     renderSubmissions();
@@ -9109,6 +9248,7 @@ async function adminPushSubmissionToDealius(id) {
     alert('❌ Dealius push failed: ' + (e && e.message ? e.message : 'Unknown error'));
   } finally {
     setBtnLabel('Review & push to Dealius');
+    hideFormOverlay();
   }
 }
 
@@ -10131,6 +10271,12 @@ async function dxSubmitDeal() {
   if (btnLabel) btnLabel.textContent = 'Authenticating…';
   setHiddenState(document.getElementById('dxStepBar'), false);
   document.getElementById('dxLg').classList.add('on');
+  showFormOverlay('Submitting to Dealius...', {
+    step: 1,
+    totalSteps: 8,
+    stepLabel: 'Authenticating...',
+    subMsg: 'Please keep this window open while Dealius records are created.',
+  });
 
   let authToken;
   try {
@@ -10154,6 +10300,7 @@ async function dxSubmitDeal() {
     btn.disabled = false;
     btn.classList.remove('loading');
     if (btnLabel) btnLabel.textContent = 'Retry';
+    hideFormOverlay();
     return;
   }
 
@@ -10170,6 +10317,7 @@ async function dxSubmitDeal() {
     // Step 1: Create Property
     dxStepMark(1, 'active');
     dxStat('load', 'Step 1/7 — Creating property record…');
+    updateFormOverlay('Submitting to Dealius...', 2, 8, 'Creating property record...');
     let submarketID = null, officeID = null;
     try {
       const offices = await dxCallAPI('GET', '/lookup/offices', H);
@@ -10217,6 +10365,7 @@ async function dxSubmitDeal() {
     // Step 2: Create Space
     dxStepMark(2, 'active');
     dxStat('load', 'Step 2/7 — Creating property space…');
+    updateFormOverlay('Submitting to Dealius...', 3, 8, 'Creating property space...');
     let propertySpaceID = null;
     if (propertyID) {
       const spaceDetails = dxOmitNulls({
@@ -10252,6 +10401,7 @@ async function dxSubmitDeal() {
     // Step 3: Resolve companies
     dxStepMark(3, 'active');
     dxStat('load', 'Step 3/7 — Resolving companies…');
+    updateFormOverlay('Submitting to Dealius...', 4, 8, 'Resolving companies...');
     const clientID   = d.clientCo   ? await dxResolveCompany(d.clientCo,   H) : null;
     const oppositeID = d.oppositeCo ? await dxResolveCompany(d.oppositeCo, H) : null;
     dxStepMark(3, (clientID || oppositeID) ? 'done' : 'warn');
@@ -10259,6 +10409,7 @@ async function dxSubmitDeal() {
     // Step 4: Create contacts
     dxStepMark(4, 'active');
     dxStat('load', 'Step 4/7 — Creating contacts…');
+    updateFormOverlay('Submitting to Dealius...', 5, 8, 'Creating contacts...');
     let clientContactID = null, oppositeContactID = null;
     if (clientID && d.clientContactName) clientContactID = await dxResolveContact(d.clientContactName, d.clientContactEmail, d.clientContactPhone, clientID, H);
     if (oppositeID && d.oppositeContactName) oppositeContactID = await dxResolveContact(d.oppositeContactName, d.oppositeContactEmail, d.oppositeContactPhone, oppositeID, H);
@@ -10267,6 +10418,7 @@ async function dxSubmitDeal() {
     // Step 5: Create deal
     dxStepMark(5, 'active');
     dxStat('load', 'Step 5/7 — Creating deal…');
+    updateFormOverlay('Submitting to Dealius...', 6, 8, 'Creating deal...');
     // Dealius validates rent schedules against deal fee %s.
     // Keep "fee percent" as a percent value (e.g. 3 = 3%), not a fraction (0.03).
     const rawCommInput = d.saleCommPct != null ? d.saleCommPct : null;
@@ -10312,6 +10464,7 @@ async function dxSubmitDeal() {
     if (d.isLease) {
       dxStepMark(6, 'active');
       dxStat('load', 'Step 6/7 — Updating financial details…');
+      updateFormOverlay('Submitting to Dealius...', 7, 8, 'Updating financial details...');
       const rentMonthTotal = d.rentRows && d.rentRows.length > 0 ? d.rentRows.reduce((s, r) => s + (r.months || 0), 0) : null;
       const effectiveTerm = rentMonthTotal || d.term || null;
       // Dealius expects "fee percent" as a percent value (e.g. 3 = 3%).
@@ -10352,6 +10505,7 @@ async function dxSubmitDeal() {
     // Step 7: Rent schedule & brokers
     dxStepMark(7, 'active');
     dxStat('load', 'Step 7/7 — Rent schedule & brokers…');
+    updateFormOverlay('Submitting to Dealius...', 8, 8, 'Assigning rent schedule and brokers...');
     let step7ok = true;
     if (d.isLease && d.rentRows && d.rentRows.length > 0) {
       const sqft = d.sqft || 1;
@@ -10405,6 +10559,7 @@ async function dxSubmitDeal() {
     btn.classList.remove('loading');
     if (btnLabel) btnLabel.textContent = 'Done';
     btn.classList.add('dx-btn-success');
+    setTimeout(hideFormOverlay, 700);
   } catch (err) {
     const msg = err.message || '';
     dxAddLog('err', 'Error: ' + msg);
@@ -10413,6 +10568,7 @@ async function dxSubmitDeal() {
     btn.disabled = false;
     btn.classList.remove('loading');
     if (btnLabel) btnLabel.textContent = 'Retry';
+    hideFormOverlay();
   }
 }
 
@@ -11253,6 +11409,12 @@ async function uploadFileToBrokerStorage(file, category, fieldId, statusId, uplo
     return;
   }
 
+  showFormOverlay(`Uploading ${file.name || 'file'}...`, {
+    step: 1,
+    totalSteps: 2,
+    stepLabel: 'Reading file...',
+    subMsg: 'Please keep this window open until the upload finishes.',
+  });
   try {
     const base64Data = await new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -11270,6 +11432,7 @@ async function uploadFileToBrokerStorage(file, category, fieldId, statusId, uplo
       reference: document.getElementById('v-address')?.value || document.getElementById('l-address')?.value || ''
     };
 
+    updateFormOverlay(`Uploading ${file.name || 'file'}...`, 2, 2, 'Saving to secure storage...');
     const result = await callTrpc('files.upload', payload);
 
     if (result?.success) {
@@ -11293,6 +11456,8 @@ async function uploadFileToBrokerStorage(file, category, fieldId, statusId, uplo
     console.error('Upload error:', err);
     if (fieldId === 'c-property-photo') { compPropertyPhotoStorageUrl = ''; renderCompPhotoPreview(); }
     if (statusEl) statusEl.innerHTML = '<span class="text-error">Upload failed. Try again.</span>';
+  } finally {
+    hideFormOverlay();
   }
 }
 
@@ -11320,6 +11485,12 @@ async function uploadFilesBatch(files, category, fieldId, statusId, uploaderName
     statusEl.innerHTML = `<span class="text-muted-sm">Uploading ${validList.length} file${validList.length > 1 ? 's' : ''}…</span>`;
   }
 
+  showFormOverlay(`Uploading ${validList.length} file${validList.length > 1 ? 's' : ''}...`, {
+    step: 1,
+    totalSteps: 2,
+    stepLabel: 'Reading files...',
+    subMsg: 'Please keep this window open until the upload finishes.',
+  });
   try {
     // Read all valid files as base64 in parallel
     const filePayloads = await Promise.all(
@@ -11339,6 +11510,7 @@ async function uploadFilesBatch(files, category, fieldId, statusId, uploaderName
       )
     );
 
+    updateFormOverlay(`Uploading ${validList.length} file${validList.length > 1 ? 's' : ''}...`, 2, 2, 'Saving to secure storage...');
     const batchResult = await callTrpc('files.uploadBatch', {
       files: filePayloads,
       uploaderName: uploaderName || '',
@@ -11373,6 +11545,8 @@ async function uploadFilesBatch(files, category, fieldId, statusId, uploaderName
   } catch (err) {
     console.error('Batch upload error:', err);
     if (statusEl) statusEl.innerHTML = '<span class="text-error">Upload failed. Try again.</span>';
+  } finally {
+    hideFormOverlay();
   }
 }
 
@@ -13169,7 +13343,7 @@ function scrapeCompBrochure() {
   font-weight: 800;
   letter-spacing: .12em;
   text-transform: uppercase;
-  font-family: 'Nunito Sans', 'Avenir Next', sans-serif;
+  font-family: var(--font-sans);
   box-shadow: 0 12px 24px rgba(152, 0, 46, 0.18);
   z-index: 1100;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -13184,9 +13358,9 @@ function scrapeCompBrochure() {
   right: 28px;
   width: 380px;
   max-width: calc(100vw - 32px);
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+  background: var(--ink-0);
+  border-radius: var(--r-12);
+  box-shadow: var(--shadow-lg);
   z-index: 1099;
   overflow: hidden;
   transform: translateY(20px) scale(0.97);
@@ -13200,7 +13374,7 @@ function scrapeCompBrochure() {
   pointer-events: all;
 }
 .ai-panel-header {
-  background: #2b2e33;
+  background: var(--ink-900);
   color: #fff;
   padding: 14px 18px;
   display: flex;
@@ -13224,8 +13398,8 @@ function scrapeCompBrochure() {
 .ai-panel-body { padding: 18px; }
 .ai-tab-badge {
   display: inline-block;
-  background: #F3F4F6;
-  color: #6B7280;
+  background: var(--ink-100);
+  color: var(--ink-500);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -13237,7 +13411,7 @@ function scrapeCompBrochure() {
 .ai-section-title {
   font-size: 12px;
   font-weight: 700;
-  color: #1A1A1A;
+  color: var(--ink-900);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin: 0 0 8px;
@@ -13245,8 +13419,8 @@ function scrapeCompBrochure() {
 .ai-textarea {
   width: 100%;
   min-height: 90px;
-  border: 1.5px solid #E5E7EB;
-  border-radius: 8px;
+  border: 1.5px solid var(--ink-200);
+  border-radius: var(--r-8);
   padding: 10px 12px;
   font-size: 14px;
   font-family: inherit;
@@ -13255,8 +13429,8 @@ function scrapeCompBrochure() {
   transition: border-color 0.15s;
   box-sizing: border-box;
 }
-.ai-textarea:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(193,15,77,0.1); }
-.ai-textarea::placeholder { color: #9CA3AF; }
+.ai-textarea:focus { border-color: var(--red); box-shadow: var(--ring-crimson); }
+.ai-textarea::placeholder { color: var(--ink-400); }
 .ai-btn-row {
   display: flex;
   gap: 8px;
@@ -13279,13 +13453,13 @@ function scrapeCompBrochure() {
 .ai-btn:active { transform: scale(0.97); }
 .ai-btn-primary { background: var(--red); color: #fff; }
 .ai-btn-primary:hover { background: var(--red-dark); }
-.ai-btn-secondary { background: #F3F4F6; color: #374151; border: 1.5px solid #E5E7EB; }
-.ai-btn-secondary:hover { background: #E5E7EB; }
+.ai-btn-secondary { background: var(--ink-100); color: var(--ink-700); border: 1.5px solid var(--ink-200); }
+.ai-btn-secondary:hover { background: var(--ink-150); }
 .ai-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.ai-divider { border: none; border-top: 1px solid #F3F4F6; margin: 14px 0; }
+.ai-divider { border: none; border-top: 1px solid var(--ink-150); margin: 14px 0; }
 .ai-status {
   font-size: 12px;
-  color: #6B7280;
+  color: var(--ink-500);
   min-height: 18px;
   margin-top: 6px;
   display: flex;
@@ -13926,11 +14100,13 @@ function renderBrokerQueue(data) {
 
 async function refreshBrokerQueue() {
   const btn = document.getElementById('btn-broker-queue-refresh');
+  const showOverlay = btn && document.activeElement === btn;
   if (btn) {
     const label = btn.querySelector('.btn-label');
     if (label && !label.dataset.idle) label.dataset.idle = label.textContent;
     setBtnLoading(btn, true, 'Refreshing…');
   }
+  if (showOverlay) showFormOverlay('Refreshing your queue...', { subMsg: 'Checking the latest submission status.' });
   setQueueStatus('Loading queue...');
   try {
     await ensureSharedBrokerSession();
@@ -13941,6 +14117,7 @@ async function refreshBrokerQueue() {
     renderBrokerQueueError();
   } finally {
     setBtnLoading(btn, false);
+    if (showOverlay) hideFormOverlay();
   }
 }
 
@@ -14421,46 +14598,54 @@ function compReportToggleSelectAll(isChecked) {
   compReportUpdateSelectAllState();
 }
 
-function compReportExportCsv() {
+async function compReportExportCsv(btn) {
   const rows = compReportSelectedRows();
   if (!rows.length) {
     alert((compReportsResultsCache || []).length ? 'Select at least one comp to export.' : 'Run a search first so there is something to export.');
     return;
   }
-  const compType = compReportsTypeCache || 'lease';
-  const labels = COMP_REPORT_DRAWER_FIELDS[compType] || COMP_REPORT_DRAWER_FIELDS.lease;
-  const headers = ['#','Heading','Address','City','State','Zip','Market','Submarket','Source'].concat(labels).concat(['Procuring Broker','Listing Broker','Comments','Updated']);
-  const esc = (v) => {
-    const s = String(v == null ? '' : v);
-    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
-  };
-  const lines = [headers.map(esc).join(',')];
-  rows.forEach((r, i) => {
-    const fields = r?.reportCard?.fields || {};
-    const out = [
-      i + 1,
-      r?.reportCard?.heading || r?.title || '',
-      r?.reportCard?.addressLine || r?.address || '',
-      r?.city || '', r?.state || '', r?.zipCode || '',
-      r?.market || '', r?.subMarket || '',
-      r?.source || '',
-    ];
-    for (const label of labels) out.push(fields[label] || '');
-    out.push(r?.reportCard?.procuringBrokerLine || '');
-    out.push(r?.reportCard?.listingBrokerLine || '');
-    out.push(r?.reportCard?.comments || '');
-    out.push(r?.reportCard?.updatedLine || '');
-    lines.push(out.map(esc).join(','));
+  await runWithProcessingFeedback({
+    button: btn,
+    message: 'Preparing Excel export...',
+    buttonLabel: 'Exporting...',
+    detail: 'Formatting selected comp rows.',
+    minDuration: 500,
+  }, async () => {
+    const compType = compReportsTypeCache || 'lease';
+    const labels = COMP_REPORT_DRAWER_FIELDS[compType] || COMP_REPORT_DRAWER_FIELDS.lease;
+    const headers = ['#','Heading','Address','City','State','Zip','Market','Submarket','Source'].concat(labels).concat(['Procuring Broker','Listing Broker','Comments','Updated']);
+    const esc = (v) => {
+      const s = String(v == null ? '' : v);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    const lines = [headers.map(esc).join(',')];
+    rows.forEach((r, i) => {
+      const fields = r?.reportCard?.fields || {};
+      const out = [
+        i + 1,
+        r?.reportCard?.heading || r?.title || '',
+        r?.reportCard?.addressLine || r?.address || '',
+        r?.city || '', r?.state || '', r?.zipCode || '',
+        r?.market || '', r?.subMarket || '',
+        r?.source || '',
+      ];
+      for (const label of labels) out.push(fields[label] || '');
+      out.push(r?.reportCard?.procuringBrokerLine || '');
+      out.push(r?.reportCard?.listingBrokerLine || '');
+      out.push(r?.reportCard?.comments || '');
+      out.push(r?.reportCard?.updatedLine || '');
+      lines.push(out.map(esc).join(','));
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Lee-' + (compType === 'sale' ? 'Sale' : 'Lease') + '-CompReport-' + new Date().toISOString().slice(0,10) + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   });
-  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'Lee-' + (compType === 'sale' ? 'Sale' : 'Lease') + '-CompReport-' + new Date().toISOString().slice(0,10) + '.csv';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
 
 async function compReportFetchAllRowsForCurrentFilters() {
@@ -14488,7 +14673,7 @@ async function compReportFetchAllRowsForCurrentFilters() {
   return all;
 }
 
-function compReportExportPdf() {
+function compReportExportPdf(btn) {
   void (async () => {
     const rows = compReportSelectedRows();
     if (!rows.length) {
@@ -14501,23 +14686,33 @@ function compReportExportPdf() {
       return;
     }
 
-    // If the user has effectively selected "all rows" on the current page and
-    // there are more results than are currently loaded, export the full result set.
-    const selectedAllOnPage = compReportsResultsCache?.length && compReportsDeselected?.size === 0;
-    const total = Number(compReportsPageInfo?.total ?? compReportsResultsCache?.length ?? 0);
-    const moreThanLoaded = Number.isFinite(total) && total > (compReportsResultsCache?.length || 0);
+    await runWithProcessingFeedback({
+      button: btn,
+      message: 'Generating comp report...',
+      buttonLabel: 'Generating...',
+      detail: 'Collecting selected comps.',
+      minDuration: 700,
+    }, async () => {
+      // If the user has effectively selected "all rows" on the current page and
+      // there are more results than are currently loaded, export the full result set.
+      const selectedAllOnPage = compReportsResultsCache?.length && compReportsDeselected?.size === 0;
+      const total = Number(compReportsPageInfo?.total ?? compReportsResultsCache?.length ?? 0);
+      const moreThanLoaded = Number.isFinite(total) && total > (compReportsResultsCache?.length || 0);
 
-    let exportRows = rows;
-    if (selectedAllOnPage && moreThanLoaded) {
-      try {
-        exportRows = await compReportFetchAllRowsForCurrentFilters();
-      } catch (e) {
-        console.warn('Comp report export: unable to fetch full result set:', e?.message || e);
-        exportRows = rows; // fall back to current page selection
+      let exportRows = rows;
+      if (selectedAllOnPage && moreThanLoaded) {
+        try {
+          updateFormOverlay('Generating comp report...', 1, 2, 'Loading full result set...');
+          exportRows = await compReportFetchAllRowsForCurrentFilters();
+        } catch (e) {
+          console.warn('Comp report export: unable to fetch full result set:', e?.message || e);
+          exportRows = rows; // fall back to current page selection
+        }
       }
-    }
 
-    exportLeeCompReportPdf(compType, exportRows);
+      updateFormOverlay('Generating comp report...', 2, 2, 'Building PDF...');
+      exportLeeCompReportPdf(compType, exportRows);
+    });
   })();
 }
 
@@ -14568,19 +14763,19 @@ function compReportGetFilters() {
 
 function compReportRunSearch() {
   compReportsPageOffset = 0;
-  void compReportSearch();
+  void compReportSearch(true, true);
 }
 
 function compReportNextPage() {
   if (!compReportsPageInfo?.hasNext) return;
   compReportsPageOffset = Number(compReportsPageInfo.nextOffset ?? (compReportsPageInfo.offset + compReportsPageInfo.limit));
-  void compReportSearch();
+  void compReportSearch(true, true);
 }
 
 function compReportPreviousPage() {
   if (!compReportsPageInfo?.hasPrevious) return;
   compReportsPageOffset = Number(compReportsPageInfo.previousOffset ?? Math.max(0, compReportsPageInfo.offset - compReportsPageInfo.limit));
-  void compReportSearch();
+  void compReportSearch(true, true);
 }
 
 function compReportResetFilters() {
@@ -14642,7 +14837,7 @@ async function initCompReports(forceRefresh) {
   compReportsInitialized = true;
 }
 
-async function compReportSearch(allowRetry = true) {
+async function compReportSearch(allowRetry = true, showOverlay = false) {
   if (!compReportsUser) {
     await initCompReports(true);
     return;
@@ -14659,9 +14854,18 @@ async function compReportSearch(allowRetry = true) {
   compReportSetResultsCount('Loading results...');
   compReportSetResultsHtml('Searching the active comp dataset for matching comparables.', 'comp-report-empty');
   compReportSetTableMessage('Searching the active comp dataset for matching comparables.');
+  if (showOverlay) {
+    showFormOverlay('Searching comp database...', {
+      step: 1,
+      totalSteps: 2,
+      stepLabel: 'Running filters...',
+      subMsg: 'This can take a few seconds for larger datasets.',
+    });
+  }
 
   try {
     const data = await callTrpc('compData.search', compReportGetFilters());
+    if (showOverlay) updateFormOverlay('Preparing comp results...', 2, 2, 'Rendering table...');
     if (data?.latestImport) {
       compReportsLatest = data.latestImport;
       compReportRenderDatasetSummary();
@@ -14678,6 +14882,8 @@ async function compReportSearch(allowRetry = true) {
     compReportSetResultsCount('Search unavailable.');
     compReportSetResultsHtml('Unable to load comp results right now. ' + dxEscHtml(error.message || 'Please try again.'), 'comp-report-message error');
     compReportSetTableMessage('Unable to load comp results right now. ' + (error.message || 'Please try again.'));
+  } finally {
+    if (showOverlay) hideFormOverlay();
   }
 }
 
@@ -14728,13 +14934,21 @@ async function compReportHandleWorkbookSelection(input) {
     emptyStatus.className = status.className;
     emptyStatus.textContent = status.textContent;
   }
+  showFormOverlay('Importing comp workbook...', {
+    step: 1,
+    totalSteps: 3,
+    stepLabel: 'Uploading workbook...',
+    subMsg: 'This can take up to a minute for large workbooks.',
+  });
 
   try {
     const uploaded = await compReportUploadWorkbook(file);
+    updateFormOverlay('Importing comp workbook...', 2, 3, 'Processing dataset...');
     await callTrpc('compData.importWorkbook', {
       fileKey: uploaded.fileKey,
       filename: file.name
     });
+    updateFormOverlay('Workbook imported', 3, 3, 'Refreshing comp reports...');
     status.className = 'comp-report-message';
     status.textContent = 'Workbook imported successfully. Refreshing the active dataset.';
     if (emptyStatus) {
@@ -14753,6 +14967,7 @@ async function compReportHandleWorkbookSelection(input) {
       emptyStatus.textContent = status.textContent;
     }
   } finally {
+    hideFormOverlay();
     input.value = '';
   }
 }
@@ -15271,6 +15486,12 @@ async function submitSendToAdmin() {
   btn.querySelector('.btn-label').textContent = _staFormType === 'voucher' ? 'Preparing files...' : 'Preparing PDF...';
   status.textContent = '';
   status.classList.remove('text-success', 'text-error', 'status-strong');
+  showFormOverlay('Preparing submission...', {
+    step: 1,
+    totalSteps: _staFormType === 'voucher' ? 4 : 3,
+    stepLabel: 'Generating PDF...',
+    subMsg: 'Please keep this window open while we package the request.',
+  });
 
   const sections = _staFormType === 'listing'
     ? collectListingSections(notes)
@@ -15286,7 +15507,11 @@ async function submitSendToAdmin() {
 
   try {
     const pdfAttachment = await buildSendToAdminPdfAttachment();
+    if (_staFormType === 'voucher') {
+      updateFormOverlay('Preparing submission...', 2, 4, 'Generating Excel voucher...');
+    }
     const excelAttachment = _staFormType === 'voucher' ? await buildVoucherExcelAttachment() : undefined;
+    updateFormOverlay('Submitting to admin queue...', _staFormType === 'voucher' ? 3 : 2, _staFormType === 'voucher' ? 4 : 3, 'Uploading files...');
     btn.querySelector('.btn-label').textContent = 'Submitting…';
 
     const resp = await fetch('/api/trpc/email.sendToAdmin', {
@@ -15311,6 +15536,7 @@ async function submitSendToAdmin() {
     const data = await resp.json();
     const result = data?.result?.data?.json;
     if (result?.success) {
+      updateFormOverlay('Submission complete', _staFormType === 'voucher' ? 4 : 3, _staFormType === 'voucher' ? 4 : 3, 'Notifying admin...');
       // Submission was added to the admin queue regardless of email delivery status.
       const archivedLink = result?.archivedFile?.url;
       const emailOk = result?.emailDelivered !== false; // true for sign (queue-only), true when email sent
@@ -15328,8 +15554,17 @@ async function submitSendToAdmin() {
       }
       status.classList.add('text-success', 'status-strong');
       btn.querySelector('.btn-label').textContent = 'Submitted';
-      showToast('Submission added to admin queue.');
-      setTimeout(closeSendToAdminModal, 2200);
+      const submissionId = result?.submissionId;
+      if (submissionId) {
+        const queueHint = await fetchSubmissionQueueHint(submissionId);
+        appendPortalTrackLink(status, submissionId, queueHint);
+      } else {
+        showToast('Submission added to admin queue.');
+      }
+      setTimeout(() => {
+        hideFormOverlay();
+        closeSendToAdminModal();
+      }, submissionId ? 2200 : 900);
     } else {
       const errMsg = result?.error || 'Unknown error';
       status.textContent = 'Failed to submit: ' + errMsg;
@@ -15337,6 +15572,7 @@ async function submitSendToAdmin() {
       btn.classList.remove('loading');
       btn.disabled = false;
       btn.querySelector('.btn-label').textContent = 'Submit to Queue';
+      hideFormOverlay();
     }
   } catch(err) {
     status.textContent = 'Error: ' + err.message;
@@ -15344,6 +15580,7 @@ async function submitSendToAdmin() {
     btn.classList.remove('loading');
     btn.disabled = false;
     btn.querySelector('.btn-label').textContent = 'Submit to Queue';
+    hideFormOverlay();
   }
 }
 
@@ -15789,6 +16026,12 @@ async function ciSubmitToAdmin() {
   btn.classList.add('loading');
   btn.querySelector('.btn-label').textContent = 'Sending\u2026';
   statusEl.textContent = '';
+  showFormOverlay('Submitting contract to admin...', {
+    step: 1,
+    totalSteps: 2,
+    stepLabel: 'Sending contract details...',
+    subMsg: 'Please keep this window open while we create the admin queue item.',
+  });
 
   try {
     const submitResp = await fetch('/api/trpc/contracts.submitContractToAdmin', {
@@ -15808,6 +16051,7 @@ async function ciSubmitToAdmin() {
     const res = submitJson?.result?.data?.json;
 
     if (res && res.success) {
+      updateFormOverlay('Contract submitted', 2, 2, 'Admin queue updated.');
       statusEl.innerHTML = '<span class="status-success status-strong">\u2713 Contract submitted to admin successfully!</span>';
       btn.querySelector('.btn-label').textContent = '\u2713 Submitted!';
       const contractType = document.getElementById('ci-contract-type')?.value;
@@ -15815,6 +16059,7 @@ async function ciSubmitToAdmin() {
       setTimeout(() => {
         btn.classList.remove('loading');
         btn.querySelector('.btn-label').textContent = '\u2709 Submit to Admin';
+        hideFormOverlay();
       }, 3000);
     } else {
       throw new Error(res.error || 'Submission failed');
@@ -15823,6 +16068,7 @@ async function ciSubmitToAdmin() {
     statusEl.innerHTML = '<span class="text-error status-strong">\u2717 ' + err.message + '</span>';
     btn.classList.remove('loading');
     btn.querySelector('.btn-label').textContent = '\u2709 Submit to Admin';
+    hideFormOverlay();
   }
 }
 
@@ -16089,10 +16335,8 @@ document.addEventListener('DOMContentLoaded', () => {
   void initBrokerToolAuth();
 });
 </script>
-<script src="/broker_profiles.js"></script>
-
 <!-- Form-level loading overlay -->
-<div id="form-overlay" class="form-overlay is-hidden" role="dialog" aria-label="Processing documents" aria-hidden="true" aria-modal="true">
+<div id="form-overlay" class="form-overlay is-hidden" role="dialog" aria-label="Processing request" aria-hidden="true" aria-modal="true">
   <div class="form-overlay-inner">
     <div class="form-overlay-spinner" id="form-overlay-spinner"></div>
     <div class="form-overlay-error-icon is-hidden" id="form-overlay-error-icon">✕</div>
@@ -16519,5 +16763,6 @@ function deleteDraft(key) {
   });
 })();
 </script>
+<script src="/broker_profiles.js"></script>
 </body>
 </html>

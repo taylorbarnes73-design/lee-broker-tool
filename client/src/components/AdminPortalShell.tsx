@@ -7,6 +7,7 @@ import HelpPanel from "@/components/HelpPanel";
 import { getHelpForRoute } from "@/lib/helpContent";
 
 type AdminPortalSection =
+  | "new-submission"
   | "submissions"
   | "settings"
   | "users"
@@ -142,6 +143,18 @@ export default function AdminPortalShell({
 
       <nav className="admin-portal-sidebar-nav" aria-label="Primary">
         <Link
+          href="/portal/new"
+          className={`admin-portal-nav-item ${section === "new-submission" ? "active" : ""}`}
+          style={
+            section === "new-submission"
+              ? ({ borderColor: `${accent}33`, color: accent } as CSSProperties)
+              : undefined
+          }
+        >
+          <span>{isAdmin ? "New submission" : "Home"}</span>
+          <small>{isAdmin ? "Listing, sign, voucher" : "Start a request"}</small>
+        </Link>
+        <Link
           href="/portal/submissions"
           className={`admin-portal-nav-item ${section === "submissions" ? "active" : ""}`}
           style={
@@ -151,7 +164,7 @@ export default function AdminPortalShell({
           }
         >
           <span>Submissions</span>
-          <small>Queue & inbox</small>
+          <small>{isAdmin ? "Queue & inbox" : "Track status"}</small>
         </Link>
         <a href="/tool" className="admin-portal-nav-item">
           <span>Broker tool</span>
