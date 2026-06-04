@@ -280,7 +280,7 @@ function AdminSubmissions() {
                   {(s.source === "email_ingest" || s.source === "email_ingest_backfill") && (
                     <span
                       title={s.source === "email_ingest_backfill" ? "Imported from backfill" : "Imported from BrokerAdmin email"}
-                      style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 999, border: "1px solid #BCD6EF", background: "#E6F0FA", color: "#1F4F8B", fontSize: 11, fontWeight: 600, cursor: s.sourceEmailWebLink ? "pointer" : "default" }}
+                      style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 999, border: "1px solid var(--ink-300)", background: "var(--ink-100)", color: "var(--ink-700)", fontSize: 11, fontWeight: 600, cursor: s.sourceEmailWebLink ? "pointer" : "default" }}
                       onClick={e => { if (s.sourceEmailWebLink) { e.preventDefault(); window.open(s.sourceEmailWebLink, "_blank", "noopener"); } }}
                     >
                       ✉ Email

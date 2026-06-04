@@ -1086,7 +1086,7 @@ window.aiParseFromPaste = async function() {
 .gs-highlight { background: #FEF3C7 !important; transition: background 0.3s; }
 .cr-view-toggle { display: flex; gap: 4px; }
 .cr-view-btn { padding: 5px 14px; font-size: 12px; font-weight: 600; border: 1px solid #D7DBE1; border-radius: 6px; background: #fff; cursor: pointer; color: #6B7178; transition: all 0.15s; }
-.cr-view-btn.active { background: #A9223B; color: #fff; border-color: #A9223B; }
+.cr-view-btn.active { background: #98002E; color: #fff; border-color: #98002E; }
 .cr-view-btn:hover:not(.active) { background: #F3F4F6; }
 
 .btn-copy-to-voucher { background: #1D4ED8; color: #fff; border: none; }
