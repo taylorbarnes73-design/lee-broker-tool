@@ -6,23 +6,18 @@ export type HelpEntry = {
 };
 
 const dashboard: HelpEntry = {
-  title: "Dashboard — how this page works",
+  title: "Broker home — how this page works",
   body: (
     <>
       <p>
-        The dashboard is your entry point into the Lee Broker Tool. It shows the work that's currently in
-        flight — your submissions, queue counts, and quick links to the forms you use most.
+        Landing page after sign-in. Action cards open the broker tool on the right tab (
+        <code>?tab=voucher</code>, <code>listing</code>, or <code>sign</code>). More workflows (comps, drafts) are
+        linked below the primary cards.
       </p>
-      <h3>What to look for</h3>
-      <ul>
-        <li><strong>My submissions</strong> — your in-flight Listings, Sign Requests, and Commission Vouchers.</li>
-        <li><strong>Admin queue</strong> — items awaiting admin review (admin only).</li>
-        <li><strong>Broker Admin</strong> — requests that came in through the shared inbox (admin only).</li>
-      </ul>
-      <h3>Tips</h3>
+      <h3>In progress summary</h3>
       <p>
-        Click any card to drill into the detail page. Use the help button on any page for a per-page
-        explainer like this one.
+        The banner shows how many of your submissions are still pending or being processed. Open{" "}
+        <strong>My submissions</strong> for the full list, queue position, and detail pages.
       </p>
     </>
   ),
@@ -33,18 +28,20 @@ const mySubmissions: HelpEntry = {
   body: (
     <>
       <p>
-        Everything you've submitted to the office, with the latest status. Filter by status to narrow the
-        list, or click a row to see the full record, files, and admin notes.
+        Everything you've submitted to the office, with the latest status. By default you see <strong>in progress</strong> work
+        only (pending or being processed). Use <strong>View all submissions</strong> for your full history.
       </p>
       <h3>Statuses</h3>
       <ul>
-        <li><strong>Pending</strong> — submitted, waiting for admin to pick up.</li>
-        <li><strong>In review</strong> — an admin is working on it.</li>
-        <li><strong>Approved</strong> — admin has approved; downstream tasks are running.</li>
-        <li><strong>Closed</strong> — fully processed (Dealius pushed, voucher signed, etc.).</li>
-        <li><strong>Waiting on broker</strong> — admin needs something from you to proceed.</li>
-        <li><strong>Rejected</strong> — admin marked it as rejected. Open the detail to see why.</li>
+        <li><strong>Pending</strong> — submitted and waiting in the office queue.</li>
+        <li><strong>In progress</strong> — an admin claimed it and is actively working on it (Dealius, vendors, validation).</li>
+        <li><strong>Complete</strong> — approved and processed.</li>
+        <li><strong>Rejected</strong> — not accepted; check the detail page or contact admin.</li>
       </ul>
+      <h3>Queue messaging</h3>
+      <p>
+        Pending items show your place in line when the office publishes queue order. In-progress items no longer count against queue position.
+      </p>
     </>
   ),
 };
@@ -54,20 +51,23 @@ const submissionDetail: HelpEntry = {
   body: (
     <>
       <p>
-        The full record for a single submission. You can read what was submitted, see attached files, follow
-        the timeline, and (admins) take action.
+        The full record for a single submission. Read what was submitted, see attached files, and follow the timeline.
       </p>
       <h3>Tabs</h3>
       <ul>
-        <li><strong>Summary</strong> — the structured data captured by the form.</li>
+        <li><strong>Summary</strong> — key fields, queue status, and <em>What happens next</em> guidance.</li>
+        <li><strong>Activity</strong> — status changes and when the request entered the queue.</li>
         <li><strong>Files</strong> — uploads (signed forms, broker docs, photos).</li>
-        <li><strong>Activity</strong> — status changes, comments, and admin actions.</li>
       </ul>
+      <h3>In progress vs pending</h3>
+      <p>
+        <strong>Pending</strong> means your request is still in the shared queue. <strong>In progress</strong> means an admin picked it up — you typically do not need to take action unless the office contacts you.
+      </p>
       <h3>Admin actions</h3>
       <p>
-        Admins can move the status between in_review, approved, rejected, waiting_on_broker, and closed.
-        Each change is logged on the activity tab and can trigger a downstream task (Dealius push,
-        voucher sign, etc.).
+        Admins can move status between pending, in progress, complete, and rejected from the detail page or
+        use <strong>Claim</strong> on the queue list. Each change is recorded on the Activity tab and can email
+        the broker when notifications are enabled.
       </p>
     </>
   ),
@@ -79,19 +79,23 @@ const adminSubmissions: HelpEntry = {
     <>
       <p>
         The review queue for the Newport Beach office. New broker submissions land here, classified by
-        form type (Listing, Sign Request, Commission Voucher, etc.).
+        form type (Listing, Sign Request, Commission Voucher, etc.). The default <strong>Needs action</strong> tab
+        combines the submission queue with Broker Admin inbox email requests in one list.
       </p>
       <h3>Working the queue</h3>
       <ul>
-        <li>Filter by status to focus on what needs you (pending or waiting_on_admin).</li>
-        <li>Open a row to review the data, files, and any parser warnings.</li>
-        <li>Move status to in_review when you pick it up, then approved or rejected when done.</li>
+        <li><strong>Needs action</strong> (default) — combined feed from the submission queue and shared inbox.</li>
+        <li><strong>Submission queue</strong> — portal and broker-tool submissions (pending / in review).</li>
+        <li><strong>Broker Admin Inbox</strong> — email requests; default filter shows items still needing triage.</li>
+        <li>Use <strong>Claim</strong> on a queue row to assign it to yourself without opening the detail page.</li>
+        <li>Pending items older than 48 hours show a <strong>Stale</strong> badge.</li>
+        <li>Open a row for field summary, files, Dealius tools, and the activity timeline.</li>
       </ul>
       <h3>Source labels</h3>
       <p>
-        <code>source="portal"</code> means the broker submitted through the React tool.
-        <code> source="email_ingest"</code> means it came from the BrokerAdmin shared inbox poll.
-        <code> source="email_ingest_backfill"</code> means it was imported from the backfill endpoint.
+        <code>tool</code> (default) means the broker submitted from the HTML workspace or portal.
+        <code>email_ingest</code> means it came from the Broker Admin shared inbox.
+        <code>email_ingest_backfill</code> means it was imported from a backfill job.
       </p>
     </>
   ),
@@ -336,6 +340,8 @@ const ROUTE_MAP: ReadonlyArray<{ match: RegExp; entry: HelpEntry }> = [
   { match: /^\/portal\/account/, entry: account },
   { match: /^\/portal\/submissions\/[^/]+/, entry: submissionDetail },
   { match: /^\/portal\/submissions/, entry: mySubmissions },
+  { match: /^\/portal\/new/, entry: dashboard },
+  { match: /^\/portal\/home/, entry: dashboard },
   { match: /^\/portal\/?$/, entry: dashboard },
   { match: /^\/tool\/sign-request/i, entry: signRequest },
   { match: /^\/tool\/commission-voucher/i, entry: commissionVoucher },

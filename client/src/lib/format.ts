@@ -31,6 +31,11 @@ export function formatSubmissionStatus(status: string | null | undefined): strin
   return SUBMISSION_STATUS_LABELS[status] ?? titleize(status);
 }
 
+/** Plain-language explanation of what "in progress" (in_review) means for brokers. */
+export function brokerInReviewExplainer(): string {
+  return "A member of the admin team has claimed your submission and is working on it—reviewing details, preparing documents, or coordinating vendors. You usually do not need to do anything unless they reach out.";
+}
+
 /**
  * Returns a short broker-facing status phrase.
  * queuePosition is 1-based (1 = next in line, so 0 submissions are ahead).
@@ -45,19 +50,53 @@ export function brokerQueueStatusText(
     case "pending":
       if (queuePosition !== null && queuePosition > 1) {
         const ahead = queuePosition - 1;
-        return `${ahead} submission${ahead === 1 ? "" : "s"} ahead of yours`;
+        return `${ahead} submission${ahead === 1 ? "" : "s"} ahead of yours in the office queue`;
       }
-      return "You're next in queue";
+      if (queuePosition === 1) {
+        return "You're next — the office will pick this up soon";
+      }
+      return "Waiting for the office to start review";
     case "in_review":
-      return "Your submission is being processed";
+      return "An admin is actively working on this request";
     case "approved":
     case "closed":
-      return "Completed ✓";
+      return "Completed — no further action needed";
     case "rejected":
     case "cancelled":
-      return "Not accepted";
+      return "Not accepted — contact the admin team if you have questions";
     default:
       return formatSubmissionStatus(status);
+  }
+}
+
+/** Deep link into the legacy HTML broker tool (`?tab=` or hash). */
+export function brokerToolTabUrl(tab: "voucher" | "listing" | "sign" | "comp"): string {
+  return `/tool?tab=${tab}`;
+}
+
+/**
+ * Short broker-facing guidance for what happens next on a submission.
+ */
+export function brokerSubmissionNextSteps(
+  status: string | null | undefined,
+  formType?: string | null
+): string {
+  const kind = formatFormType(formType).toLowerCase();
+  switch (status) {
+    case "pending":
+      return `Your ${kind} is in the office queue. You'll get an email when an admin starts working on it (if notifications are on).`;
+    case "in_review":
+      return `In progress means an admin claimed your ${kind} and is processing it. ${brokerInReviewExplainer()}`;
+    case "approved":
+    case "closed":
+      return `This ${kind} is complete. If you need a correction, submit an updated request from the broker tool or email the admin team.`;
+    case "rejected":
+    case "cancelled":
+      return `This ${kind} was not accepted. Check Activity below for context, or contact the admin team to resubmit.`;
+    case "waiting_on_broker":
+      return `The office needs something from you before they can finish this ${kind}. Reply to their email or submit an update from the broker tool.`;
+    default:
+      return "Track status here and open the broker tool if you need to submit a new or updated request.";
   }
 }
 

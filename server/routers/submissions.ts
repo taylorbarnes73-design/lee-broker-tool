@@ -9,6 +9,10 @@ import { z } from "zod/v4";
 import { addSingleComp } from "../services/compData";
 import type { LeaseCompRecord, SaleCompRecord } from "../../shared/comp-data";
 import { normalizeStoredFileUrl } from "../storage";
+import { maybeNotifySubmissionStatusChange } from "../services/submissionNotifications";
+import { findAppUserByUsernameOrEmail } from "../auth/platformSession";
+import { createSubmissionRecord } from "../services/submissionCreate";
+import { applySubmissionStatusChange } from "../services/submissionStatusUpdate";
 
 const submissionSummarySchema = z
   .object({
@@ -387,14 +391,27 @@ export const submissionsRouter = router({
       }
 
       const reference = [input.address, input.city].filter(Boolean).join(", ") || null;
-      const [result] = await db.insert(submissions).values({
-        formType: input.type,
-        status: input.status?.trim() || "pending",
-        payload: JSON.stringify(input),
-        reference,
-        submittedBy: input.brokerName || ctx.user.name || ctx.user.email || ctx.user.openId,
-        submittedByOpenId: ctx.user.openId,
-        submittedByEmail: ctx.user.email ?? (input.brokerEmail || null),
+      const brokerName = input.brokerName || ctx.user.name || ctx.user.email || ctx.user.openId;
+      const appUser =
+        ctx.user.email && db ? await findAppUserByUsernameOrEmail(db, ctx.user.email) : null;
+      const { submissionId } = await createSubmissionRecord({
+        db,
+        input: {
+          formType: input.type,
+          status: input.status?.trim() || "pending",
+          payload: input,
+          reference,
+          submittedBy: brokerName,
+          submittedByOpenId: ctx.user.openId,
+          submittedByEmail: ctx.user.email ?? (input.brokerEmail || null),
+        },
+        actor: {
+          openId: ctx.user.openId,
+          name: brokerName,
+          email: ctx.user.email ?? null,
+          platformUserId: appUser?.id ?? null,
+        },
+        req: ctx.req,
       });
 
       // Best-effort: push voucher deals into comps dataset when NOT confidential.
@@ -419,7 +436,7 @@ export const submissionsRouter = router({
       return {
         success: true as const,
         stored: true as const,
-        submissionId: (result as { insertId?: number }).insertId ?? null,
+        submissionId,
       };
     }),
 
@@ -625,26 +642,22 @@ export const submissionsRouter = router({
       }
       const currentStatus = existingRow.status ?? "";
       const availableColumns = await getSubmissionColumnSet(db);
-
-      const now = new Date();
       const adminName = ctx.user.name || ctx.user.email || ctx.user.openId;
-      const patch: Record<string, unknown> = { status: input.status, updatedAt: now };
 
-      if (input.status !== currentStatus) {
-        if (input.status === "in_review") {
-          if (availableColumns.has("assignedTo")) patch.assignedTo = adminName;
-          if (availableColumns.has("assignedToOpenId")) patch.assignedToOpenId = ctx.user.openId;
-          if (availableColumns.has("assignedAt")) patch.assignedAt = now;
-        } else if (input.status === "approved") {
-          if (availableColumns.has("completedBy")) patch.completedBy = adminName;
-          if (availableColumns.has("completedAt")) patch.completedAt = now;
-        }
-      }
-
-      await db
-        .update(submissions)
-        .set(patch as any)
-        .where(eq(submissions.id, input.id));
+      await applySubmissionStatusChange({
+        db,
+        submissionId: input.id,
+        previousStatus: currentStatus,
+        nextStatus: input.status,
+        actor: {
+          openId: ctx.user.openId,
+          name: adminName,
+          email: ctx.user.email ?? null,
+          platformUserId: null,
+        },
+        req: ctx.req,
+        availableColumns,
+      });
 
       return { success: true as const };
     }),

@@ -1,95 +1,84 @@
 ## Lee Broker Tool (local dev)
 
-This repo is a **TypeScript Node/Express** server that serves a **Vite + React** frontend. It uses **Drizzle ORM + MySQL** for persistence.
+TypeScript **Node/Express** API with a **Vite + React** portal and the legacy **`/tool`** HTML workspace for broker forms. Persistence uses **Drizzle ORM + MySQL**.
 
-### What was added (auth + RBAC + submissions portal)
+### Main URLs
 
-- **Password-based local auth** (bcrypt hashing) layered onto the existing signed-cookie session system.
-- **Role-based access control**:
-  - **Admins**: only users whose **display name** is exactly **"Errissa Kat"** or **"Taylor Barnes"** (case-insensitive match)
-  - **Agents**: everyone else (non-admin)
-- **Submissions API** with authorization rules:
-  - Agents can only see/manage their own submissions
-  - Admins can see/manage all submissions
-- A simple UI at `/portal` for:
-  - Login
-  - Dashboard
-  - My submissions list + detail
-  - Admin: all submissions
+| URL | Purpose |
+|-----|---------|
+| `/` | Public landing (sign in or open tool) |
+| `/tool` | Broker forms workspace (listing, voucher, sign, comp, contracts) |
+| `/login` | Portal / platform sign-in |
+| `/portal/submissions` | Submission queue (brokers see their own; admins see all) |
 
 ### Setup
 
-1) Install deps
+1. Install dependencies:
 
 ```bash
 pnpm install
 ```
 
-On Windows without `pnpm` on PATH, you can run it via `corepack`:
+On Windows without `pnpm` on PATH:
 
 ```bash
 corepack prepare pnpm@10.4.1 --activate
 corepack pnpm install
 ```
 
-2) Configure env
+2. Copy `.env.example` → `.env` and set at minimum:
 
-- Copy `.env.example` → `.env`
-- Set at minimum:
-  - `DATABASE_URL` (MySQL connection string)
-  - `JWT_SECRET`
-  - `LOCAL_AUTH_ENABLED=true`
-  - (No admin allowlist env vars; admin names are fixed in code)
+- `DATABASE_URL` — MySQL connection string
+- `JWT_SECRET` — session signing
+- `LOCAL_AUTH_ENABLED=true` — password login for brokers/admins
+- `ADMIN_EMAIL` — office inbox for send-to-admin emails
+- `SMTP_HOST`, `SMTP_FROM` (and credentials if required) — broker notification emails
 
-#### AI / “Deal Assist” setup
+Optional:
 
-The `aiAssist` endpoints (parse, brochure scrape, smart complete, voucher review) use an **OpenAI-compatible** backend.
+- `LOCAL_ADMIN_EMAILS` — comma-separated emails treated as admin
+- `LOCAL_ADMIN_NAMES` — comma-separated display names treated as admin
+- `PUBLIC_APP_URL` — absolute links in broker notification emails (e.g. `http://localhost:3000`)
+- `BUILT_IN_FORGE_API_URL` + `BUILT_IN_FORGE_API_KEY` — AI assist and maps proxy
 
-- Preferred (managed proxy): set `BUILT_IN_FORGE_API_URL` + `BUILT_IN_FORGE_API_KEY`
-- Fallback (direct OpenAI): set `OPENAI_API_KEY` (optional: `OPENAI_MODEL`, `OPENAI_API_URL`)
-
-Notes:
-- `aiAssist.parse` uses text-only prompts.
-- `aiAssist.scrapeBrochure` supports both images and PDFs. **PDFs are parsed to text server-side** before being sent to the model for extraction.
-- `aiAssist.smartComplete` and `aiAssist.reviewVoucher` are deterministic and do not call the LLM.
-
-#### Google Maps photos (Comp Reports)
-
-Comp report previews can automatically populate a property photo (Street View) when a comp record has no stored `photo`.
-
-- This uses the same Forge proxy credentials as the AI features:
-  - `BUILT_IN_FORGE_API_URL`
-  - `BUILT_IN_FORGE_API_KEY`
-- If those are not set, the app will simply omit photos (no errors).
-
-3) Run migrations (Drizzle)
+3. Apply schema:
 
 ```bash
 pnpm db:push
 ```
 
-4) Start dev server (API + Vite)
+4. Start dev:
 
 ```bash
 pnpm dev
 ```
 
-Then open:
+### Admin access
 
-- `http://localhost:3000/portal` (submissions portal)
-- `http://localhost:3000/beta` (existing “beta” UI)
-- `http://localhost:3000/` (redirects to `/tool` when authenticated)
+Admins are resolved by `isAdminByPolicy` in `server/auth/isAdminByPolicy.ts`:
 
-### Auth behavior (local)
+1. `LOCAL_ADMIN_EMAILS` (email or Lee username)
+2. `LOCAL_ADMIN_NAMES` (display name, case-insensitive)
+3. Broker directory entries with **Office Admin** role
 
-- Login uses **email + password**.
-- If the user doesn’t exist yet (or has no stored password), the first successful login **creates** (or sets) the password hash.
-- **Admin role** is assigned only when the normalized display name equals **"errissa kat"** or **"taylor barnes"**.
+Legacy cookie sessions also honor the `admin` role on the `users` table when set.
 
-### Admin identification
+### Portal features (submissions)
 
-Admins are **hardcoded** to exactly:
+- **Queue** with filters, sort-by-queue, **Claim** from the list, and stale badges for pending items older than 48 hours
+- **Detail** tabs: Summary (human-readable fields), Activity (audit timeline), Files, and admin-only Dealius / Payload
+- **Email notifications** when `notifications.email_on_submission` and `notifications.email_on_status_change` are enabled in Settings (requires SMTP)
 
-- `Errissa Kat`
-- `Taylor Barnes`
+### Broker tool → portal flow
 
+After **Submit to Queue** in `/tool`, brokers get a **Track in portal** link and optional queue position. Receipt and status emails go to `submittedByEmail` when SMTP is configured.
+
+### AI / Deal Assist
+
+`aiAssist` uses an OpenAI-compatible backend (Forge proxy preferred, or `OPENAI_API_KEY`). PDF brochure scrape extracts text server-side before calling the model.
+
+### Tests
+
+```bash
+pnpm test
+```

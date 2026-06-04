@@ -1,10 +1,15 @@
 import { Router } from "express";
 import { z } from "zod/v4";
 import { normalizeStoredFileUrl } from "./storage";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "./db";
 import { brokerAdminRequests, uploads } from "../drizzle/schema";
 import { requireAuth, requireRole } from "./middleware/requireAuth";
+import {
+  BROKER_ADMIN_NEEDS_ACTION_STATUSES,
+  isBrokerAdminNeedsActionStatus,
+  parseNeedsActionQuery,
+} from "../shared/needsAction";
 
 export const brokerAdminApiRouter = Router();
 
@@ -18,6 +23,14 @@ brokerAdminApiRouter.get("/requests", async (req, res) => {
   const status = String(req.query.status ?? "").trim();
   const owner = String(req.query.owner ?? "").trim();
   const q = String(req.query.q ?? "").trim().toLowerCase();
+  const needsAction = parseNeedsActionQuery(req.query.needsAction);
+
+  const whereClauses = [];
+  if (status) {
+    whereClauses.push(eq(brokerAdminRequests.status, status));
+  } else if (needsAction) {
+    whereClauses.push(inArray(brokerAdminRequests.status, [...BROKER_ADMIN_NEEDS_ACTION_STATUSES]));
+  }
 
   let rows = await db
     .select({
@@ -35,10 +48,10 @@ brokerAdminApiRouter.get("/requests", async (req, res) => {
       attachmentsSummary: brokerAdminRequests.attachmentsSummary,
     })
     .from(brokerAdminRequests)
+    .where(whereClauses.length ? and(...whereClauses) : undefined)
     .orderBy(desc(brokerAdminRequests.id))
     .limit(limit);
 
-  if (status) rows = rows.filter(r => r.status === status);
   if (owner) rows = rows.filter(r => (r.owner ?? "") === owner);
   if (q) {
     rows = rows.filter(r => {
@@ -79,6 +92,7 @@ brokerAdminApiRouter.get("/stats", async (req, res) => {
     countsByStatus.set(row.status, (countsByStatus.get(row.status) ?? 0) + 1);
   }
   const counts = [...countsByStatus.entries()].map(([status, count]) => ({ status, count }));
+  const needsActionCount = recent.filter(r => isBrokerAdminNeedsActionStatus(r.status)).length;
   const stale = recent
     .filter(row => row.updatedAt && new Date(row.updatedAt).getTime() < staleBefore.getTime())
     .slice(0, 50);
@@ -87,6 +101,7 @@ brokerAdminApiRouter.get("/stats", async (req, res) => {
     success: true,
     data: {
       counts,
+      needsActionCount,
       staleDays,
       staleCount: stale.length,
       stale,

@@ -1,26 +1,40 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type MouseEvent } from "react";
 import { Link } from "wouter";
+import { toast } from "sonner";
 import AdminPortalShell from "@/components/AdminPortalShell";
 import LinkButton from "@/components/ui/LinkButton";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { Button, Card } from "../design/index.jsx";
+import { usePublicBranding } from "@/hooks/usePublicBranding";
 import {
   brokerAdminStatusTone,
   brokerQueueStatusText,
+  brokerSubmissionNextSteps,
+  brokerToolTabUrl,
   formatBrokerAdminStatus,
   formatFormType,
   formatSubmissionStatus,
   submissionStatusTone,
 } from "@/lib/format";
+import { isSubmissionNeedsActionStatus } from "@shared/needsAction";
+
+const STALE_PENDING_MS = 48 * 60 * 60 * 1000;
+
+function isStalePendingSubmission(row: SubmissionRow): boolean {
+  if (row.status !== "pending") return false;
+  const created = new Date(row.createdAt).getTime();
+  return Number.isFinite(created) && Date.now() - created > STALE_PENDING_MS;
+}
 
 /* ── shared input style ───────────────────────────────────────────── */
 const INPUT_STYLE = {
   padding: "10px 12px",
-  borderRadius: 10,
+  borderRadius: "var(--r-8)",
   border: "1px solid var(--ink-200)",
-  background: "white",
-  fontSize: 13,
+  background: "var(--ink-0)",
+  fontSize: "var(--fs-13, 13px)",
+  fontFamily: "inherit",
   color: "var(--ink-900)",
 } as const;
 
@@ -28,7 +42,7 @@ const ASSIGNEE_CHIP_STYLE = {
   marginLeft: 8,
   padding: "1px 7px",
   borderRadius: 999,
-  background: "rgba(0,49,70,0.08)",
+  background: "var(--lee-red-wash, #F4E3E8)",
   color: "var(--ink-700)",
   fontSize: 11,
   fontWeight: 600,
@@ -72,7 +86,7 @@ function Skeleton() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {[0, 1, 2, 3].map(i => (
-        <div key={i} aria-hidden style={{ height: 72, borderRadius: 10, background: "var(--ink-100)", border: "1px solid var(--ink-200)" }} />
+        <div key={i} aria-hidden style={{ height: 72, borderRadius: "var(--r-8)", background: "var(--ink-100)", border: "1px solid var(--ink-200)" }} />
       ))}
     </div>
   );
@@ -117,11 +131,18 @@ function stepIndexForStatus(status: string): number {
   }
 }
 
-function ProgressPipeline({ status, queuePosition }: { status: string; queuePosition: number | null }) {
+function ProgressPipeline({
+  status,
+  queuePosition,
+  accent = "var(--lee-red, #98002E)",
+}: {
+  status: string;
+  queuePosition: number | null;
+  accent?: string;
+}) {
   const isRejected = status === "rejected" || status === "cancelled";
   const activeStep = stepIndexForStatus(status);
-  const accent = "#98002E"; // keep literal — used in template literals for box-shadow alpha
-  const dotGreen = "rgba(138, 148, 30, 0.9)";
+  const dotGreen = "var(--lee-green, #8A941E)";
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 0, marginTop: 8, marginBottom: 6 }}>
@@ -143,7 +164,9 @@ function ProgressPipeline({ status, queuePosition }: { status: string; queuePosi
           );
         })}
         {isRejected && (
-          <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 700, color: "var(--err-700)", marginBottom: 12 }}>Not accepted</span>
+          <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 700, color: "var(--err-700)", marginBottom: 12 }}>
+            Not accepted
+          </span>
         )}
       </div>
       <div style={{ fontSize: 12, color: "var(--ink-500)" }}>
@@ -153,16 +176,72 @@ function ProgressPipeline({ status, queuePosition }: { status: string; queuePosi
   );
 }
 
+/* ── broker quick actions ─────────────────────────────────────────── */
+const BROKER_ACTIONS = [
+  {
+    tab: "voucher" as const,
+    title: "Commission voucher",
+    description: "Submit a closed deal for commission processing.",
+  },
+  {
+    tab: "listing" as const,
+    title: "Listing",
+    description: "New listing or modification request.",
+  },
+  {
+    tab: "sign" as const,
+    title: "Sign request",
+    description: "Order or update a property sign.",
+  },
+];
+
+function BrokerActionCards({ accent }: { accent: string }) {
+  return (
+    <div style={{ marginBottom: 4 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+      {BROKER_ACTIONS.map(action => (
+        <a
+          key={action.tab}
+          href={brokerToolTabUrl(action.tab)}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+            padding: "16px 18px",
+            borderRadius: 12,
+            border: "1px solid var(--ink-200)",
+            background: "var(--ink-0)",
+            textDecoration: "none",
+            color: "inherit",
+            transition: "border-color 0.15s, box-shadow 0.15s",
+          }}
+        >
+          <span style={{ fontSize: 14, fontWeight: 700, color: accent }}>{action.title}</span>
+          <span style={{ fontSize: 12, color: "var(--ink-600)", lineHeight: 1.45 }}>{action.description}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-800)", marginTop: 4 }}>Open in broker tool →</span>
+        </a>
+      ))}
+    </div>
+    <div style={{ marginTop: 10 }}>
+      <LinkButton href="/portal/new" variant="secondary">All workflows (comps, drafts, reports)</LinkButton>
+    </div>
+    </div>
+  );
+}
+
 /* ── broker view: own submissions ─────────────────────────────────── */
-function BrokerSubmissions() {
+function BrokerSubmissions({ accent }: { accent: string }) {
   const [items, setItems] = useState<SubmissionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    fetch("/api/submissions?limit=100&includeQueue=1", { credentials: "include" })
+    const params = new URLSearchParams({ limit: "100", includeQueue: "1" });
+    if (!showAll) params.set("needsAction", "1");
+    fetch(`/api/submissions?${params}`, { credentials: "include" })
       .then(r => r.json().then(b => ({ ok: r.ok, b })))
       .then(({ ok, b }) => {
         if (!alive) return;
@@ -173,33 +252,72 @@ function BrokerSubmissions() {
       .catch(e => { if (!alive) return; setError(e?.message ?? "Failed to load"); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
-  }, []);
+  }, [showAll]);
 
   if (loading) return <Skeleton />;
   if (error) return <div style={{ color: "var(--err-700)", fontSize: 13 }}>{error}</div>;
   if (items.length === 0) {
     return (
-      <Empty>
-        <div style={{ fontWeight: 700, color: "var(--ink-900)", marginBottom: 6 }}>No submissions yet</div>
-        Build a voucher, listing, or sign request in the broker tool, then send it to admin.
-        <div style={{ marginTop: 14 }}>
-          <LinkButton href="/tool" variant="primary">Open broker tool</LinkButton>
-        </div>
-      </Empty>
+      <>
+        <BrokerActionCards accent={accent} />
+        <Empty>
+          <div style={{ fontWeight: 700, color: "var(--ink-900)", marginBottom: 6 }}>
+            {showAll ? "No submissions yet" : "Nothing in progress"}
+          </div>
+          {showAll ? (
+            <>
+              Start a voucher, listing, or sign request in the broker tool. After you submit, it appears here with queue status.
+              <div style={{ marginTop: 14 }}>
+                <LinkButton href={brokerToolTabUrl("voucher")} variant="primary">Open broker tool</LinkButton>
+              </div>
+            </>
+          ) : (
+            <>
+              You have no pending or in-progress requests. Completed items are in your full history.
+              <div style={{ marginTop: 14, display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+                <Button type="button" variant="secondary" onClick={() => setShowAll(true)}>
+                  View all submissions
+                </Button>
+                <LinkButton href={brokerToolTabUrl("listing")} variant="primary">Start a new request</LinkButton>
+              </div>
+            </>
+          )}
+        </Empty>
+      </>
     );
   }
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <BrokerActionCards accent={accent} />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <div style={{ fontSize: 13, color: "var(--ink-600)" }}>
+          {showAll
+            ? "All submissions you've sent to the office"
+            : "In progress — pending review or actively being processed"}
+        </div>
+        <Button
+          type="button"
+          variant={showAll ? "primary" : "secondary"}
+          onClick={() => setShowAll(v => !v)}
+        >
+          {showAll ? "Show in progress only" : "View all submissions"}
+        </Button>
+      </div>
       {items.map(s => (
-        <Link key={s.id} href={`/portal/submissions/${s.id}`} className="portal-list-item" style={{ textDecoration: "none", display: "flex", flexDirection: "column", gap: 4, padding: "12px 14px", borderRadius: 10, border: "1px solid var(--ink-200)", background: "white", color: "inherit" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-            <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>#{s.id} · {s.reference || "(untitled)"}</div>
-            <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>{formatDateTime(s.createdAt)}</div>
+        <Link key={s.id} href={`/portal/submissions/${s.id}`} style={{ textDecoration: "none", display: "flex", flexDirection: "column", gap: 6, padding: "14px 16px", borderRadius: "var(--r-8)", border: "1px solid var(--ink-200)", background: "var(--ink-0)", color: "inherit" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>#{s.id} · {s.reference || "(untitled)"}</div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6, flexWrap: "wrap" }}>
+                <StatusBadge tone={submissionStatusTone(s.status)} size="sm">{formatSubmissionStatus(s.status)}</StatusBadge>
+                <span style={{ fontSize: 12, color: "var(--ink-500)" }}>{formatFormType(s.formType)}</span>
+              </div>
+            </div>
+            <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0, textAlign: "right" }}>
+              {formatDateTime(s.createdAt)}
+            </div>
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <span style={{ fontSize: 12, color: "var(--ink-500)" }}>{formatFormType(s.formType)}</span>
-          </div>
-          <ProgressPipeline status={s.status} queuePosition={s.queuePosition} />
+          <ProgressPipeline status={s.status} queuePosition={s.queuePosition} accent={accent} />
         </Link>
       ))}
     </div>
@@ -208,31 +326,93 @@ function BrokerSubmissions() {
 
 /* ── admin view: all broker submissions ───────────────────────────── */
 function AdminSubmissions() {
+  const { user } = useAuth();
   const [items, setItems] = useState<SubmissionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [formTypeFilter, setFormTypeFilter] = useState("");
-  const [sortByQueue, setSortByQueue] = useState(false);
+  const [sortByQueue, setSortByQueue] = useState(true);
+  const [needsActionOnly, setNeedsActionOnly] = useState(true);
+  const [claimingId, setClaimingId] = useState<number | null>(null);
 
-  useEffect(() => {
-    let alive = true;
+  const loadItems = useCallback(async () => {
     setLoading(true);
     const p = new URLSearchParams({ limit: "200", includeQueue: "1" });
-    if (statusFilter) p.set("status", statusFilter);
+    if (needsActionOnly && !statusFilter) {
+      p.set("needsAction", "1");
+    } else if (statusFilter) {
+      p.set("status", statusFilter);
+    }
     if (formTypeFilter) p.set("formType", formTypeFilter);
-    fetch(`/api/submissions?${p}`, { credentials: "include" })
-      .then(r => r.json().then(b => ({ ok: r.ok, b })))
-      .then(({ ok, b }) => {
-        if (!alive) return;
-        if (!ok) throw new Error(b?.error ?? "Failed to load");
-        setItems(b?.data ?? []); setError(null);
-      })
-      .catch(e => { if (!alive) return; setError(e?.message ?? "Failed to load"); })
-      .finally(() => { if (alive) setLoading(false); });
-    return () => { alive = false; };
-  }, [statusFilter, formTypeFilter]);
+    try {
+      const r = await fetch(`/api/submissions?${p}`, { credentials: "include" });
+      const b = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(b?.error ?? "Failed to load");
+      setItems(b?.data ?? []);
+      setError(null);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to load");
+    } finally {
+      setLoading(false);
+    }
+  }, [statusFilter, formTypeFilter, needsActionOnly]);
+
+  useEffect(() => {
+    void loadItems();
+  }, [loadItems]);
+
+  async function claimSubmission(submission: SubmissionRow, event: MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (claimingId !== null) return;
+
+    setClaimingId(submission.id);
+    try {
+      const response = await fetch(`/api/submissions/${submission.id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "in_review" }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body?.error ?? "Could not claim submission");
+
+      const adminName = user?.name || user?.email || "You";
+      setItems(prev =>
+        prev.map(row =>
+          row.id === submission.id
+            ? { ...row, status: "in_review", assignedTo: adminName }
+            : row
+        )
+      );
+      toast.success(
+        submission.status === "pending"
+          ? `Claimed #${submission.id} — now in progress.`
+          : `Assigned #${submission.id} to you.`
+      );
+      void loadItems();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Could not claim submission");
+    } finally {
+      setClaimingId(null);
+    }
+  }
+
+  function canClaimFromList(status: string): boolean {
+    return status === "pending" || status === "in_review";
+  }
+
+  const staleCount = useMemo(
+    () => items.filter(isStalePendingSubmission).length,
+    [items]
+  );
+
+  const needsActionCount = useMemo(
+    () => items.filter(s => isSubmissionNeedsActionStatus(s.status)).length,
+    [items]
+  );
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -245,14 +425,34 @@ function AdminSubmissions() {
     <>
       <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
         <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Filter by name, email, or reference…" style={{ ...INPUT_STYLE, width: 320, maxWidth: "100%" }} />
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ ...INPUT_STYLE, maxWidth: "100%" }}>
+        <Button
+          variant={needsActionOnly ? "primary" : "secondary"}
+          onClick={() => {
+            setNeedsActionOnly(v => {
+              const next = !v;
+              if (next) setStatusFilter("");
+              return next;
+            });
+          }}
+        >
+          Needs action ({needsActionCount})
+        </Button>
+        <select
+          value={statusFilter}
+          onChange={e => {
+            setStatusFilter(e.target.value);
+            if (e.target.value) setNeedsActionOnly(false);
+          }}
+          disabled={needsActionOnly}
+          style={{ ...INPUT_STYLE, opacity: needsActionOnly ? 0.6 : 1 }}
+        >
           <option value="">All statuses</option>
           <option value="pending">Pending</option>
           <option value="in_review">In review</option>
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
         </select>
-        <select value={formTypeFilter} onChange={e => setFormTypeFilter(e.target.value)} style={{ ...INPUT_STYLE, maxWidth: "100%" }}>
+        <select value={formTypeFilter} onChange={e => setFormTypeFilter(e.target.value)} style={INPUT_STYLE}>
           <option value="">All types</option>
           <option value="voucher">Commission voucher</option>
           <option value="listing">Listing</option>
@@ -262,6 +462,11 @@ function AdminSubmissions() {
           <option value="sale">Sale</option>
         </select>
         <Button variant={sortByQueue ? "primary" : "secondary"} onClick={() => setSortByQueue(v => !v)}>Sort by queue</Button>
+        {staleCount > 0 && (
+          <StatusBadge tone={{ bg: "var(--warn-100)", fg: "var(--warn-700)", border: "var(--warn-500)" }} size="sm">
+            Stale pending (48h+): {staleCount}
+          </StatusBadge>
+        )}
         <div style={{ fontSize: 12, color: "var(--ink-500)", marginLeft: "auto" }}>Showing {visible.length} of {items.length}</div>
       </div>
       {loading ? <Skeleton /> : error ? (
@@ -271,38 +476,238 @@ function AdminSubmissions() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {visible.map(s => (
-            <Link key={s.id} href={`/portal/submissions/${s.id}`} className="portal-list-item" style={{ textDecoration: "none", display: "flex", justifyContent: "space-between", gap: 12, padding: 12, borderRadius: 10, border: "1px solid var(--ink-200)", background: "white", color: "inherit" }}>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>#{s.id} · {s.reference || "(untitled)"}</div>
-                <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6, flexWrap: "wrap" }}>
+            <div
+              key={s.id}
+              style={{
+                display: "flex",
+                alignItems: "stretch",
+                gap: 10,
+                padding: 12,
+                borderRadius: "var(--r-8)",
+                border: "1px solid var(--ink-200)",
+                background: "var(--ink-0)",
+              }}
+            >
+              <Link
+                href={`/portal/submissions/${s.id}`}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  textDecoration: "none",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  color: "inherit",
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>#{s.id} · {s.reference || "(untitled)"}</div>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6, flexWrap: "wrap" }}>
                   <StatusBadge tone={submissionStatusTone(s.status)} size="sm">{formatSubmissionStatus(s.status)}</StatusBadge>
+                  {isStalePendingSubmission(s) && (
+                    <StatusBadge tone={{ bg: "var(--warn-100)", fg: "var(--warn-700)", border: "var(--warn-500)" }} size="sm">
+                      Stale
+                    </StatusBadge>
+                  )}
                   <StatusBadge tone={{ bg: "var(--ink-100)", fg: "var(--ink-700)", border: "var(--ink-200)" }} size="sm">{formatFormType(s.formType)}</StatusBadge>
-                  {(s.source === "email_ingest" || s.source === "email_ingest_backfill") && (
-                    <span
-                      title={s.source === "email_ingest_backfill" ? "Imported from backfill" : "Imported from BrokerAdmin email"}
-                      style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 999, border: "1px solid var(--ink-300)", background: "var(--ink-100)", color: "var(--ink-700)", fontSize: 11, fontWeight: 600, cursor: s.sourceEmailWebLink ? "pointer" : "default" }}
-                      onClick={e => { if (s.sourceEmailWebLink) { e.preventDefault(); window.open(s.sourceEmailWebLink, "_blank", "noopener"); } }}
-                    >
-                      ✉ Email
-                    </span>
-                  )}
-                  {s.queuePosition !== null && <span style={{ fontSize: 12, color: "var(--ink-500)" }}>Queue #{s.queuePosition}</span>}
+                    {(s.source === "email_ingest" || s.source === "email_ingest_backfill") && (
+                      <span
+                        title={s.source === "email_ingest_backfill" ? "Imported from backfill" : "Imported from BrokerAdmin email"}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 999, border: "1px solid #BCD6EF", background: "#E6F0FA", color: "#1F4F8B", fontSize: 11, fontWeight: 600, cursor: s.sourceEmailWebLink ? "pointer" : "default" }}
+                        onClick={e => {
+                          if (s.sourceEmailWebLink) {
+                            e.preventDefault();
+                            window.open(s.sourceEmailWebLink, "_blank", "noopener");
+                          }
+                        }}
+                      >
+                        ✉ Email
+                      </span>
+                    )}
+                    {s.queuePosition !== null && <span style={{ fontSize: 12, color: "var(--ink-500)" }}>Queue #{s.queuePosition}</span>}
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 5 }}>
+                    {s.submittedBy || "(unknown)"}{s.submittedByEmail ? ` · ${s.submittedByEmail}` : ""}
+                    {s.assignedTo && (
+                      <span style={ASSIGNEE_CHIP_STYLE}>
+                        → {s.assignedTo}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 5 }}>
-                  {s.submittedBy || "(unknown)"}{s.submittedByEmail ? ` · ${s.submittedByEmail}` : ""}
-                  {s.assignedTo && (
-                    <span style={ASSIGNEE_CHIP_STYLE}>
-                      → {s.assignedTo}
-                    </span>
-                  )}
+                <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>{formatDateTime(s.createdAt)}</div>
+              </Link>
+              {canClaimFromList(s.status) && (
+                <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", flexShrink: 0 }}>
+                  <Button
+                    variant={s.status === "pending" ? "primary" : "secondary"}
+                    disabled={claimingId === s.id}
+                    onClick={e => void claimSubmission(s, e)}
+                  >
+                    {claimingId === s.id
+                      ? "Claiming…"
+                      : s.status === "pending"
+                        ? "Claim"
+                        : "Assign to me"}
+                  </Button>
                 </div>
-              </div>
-              <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>{formatDateTime(s.createdAt)}</div>
-            </Link>
+              )}
+            </div>
           ))}
         </div>
       )}
     </>
+  );
+}
+
+type UnifiedNeedsActionItem =
+  | { kind: "queue"; sortAt: number; row: SubmissionRow }
+  | { kind: "inbox"; sortAt: number; row: BrokerAdminRow };
+
+/* ── admin: combined needs-action feed ────────────────────────────── */
+function AdminUnifiedNeedsAction({ accent }: { accent: string }) {
+  const [items, setItems] = useState<UnifiedNeedsActionItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    Promise.all([
+      fetch("/api/submissions?needsAction=1&limit=200&includeQueue=1", { credentials: "include" }).then(r =>
+        r.json().then(b => ({ ok: r.ok, b }))
+      ),
+      fetch("/api/broker-admin/requests?needsAction=1&limit=200", { credentials: "include" }).then(r =>
+        r.json().then(b => ({ ok: r.ok, b }))
+      ),
+    ])
+      .then(([subRes, inboxRes]) => {
+        if (!alive) return;
+        if (!subRes.ok) throw new Error(subRes.b?.error ?? "Failed to load submission queue");
+        if (!inboxRes.ok) throw new Error(inboxRes.b?.error ?? "Failed to load broker admin inbox");
+        const merged: UnifiedNeedsActionItem[] = [];
+        for (const row of (subRes.b?.data ?? []) as SubmissionRow[]) {
+          merged.push({
+            kind: "queue",
+            sortAt: new Date(row.createdAt).getTime() || 0,
+            row,
+          });
+        }
+        for (const row of (inboxRes.b?.data ?? []) as BrokerAdminRow[]) {
+          merged.push({
+            kind: "inbox",
+            sortAt: new Date(row.createdAt).getTime() || 0,
+            row,
+          });
+        }
+        merged.sort((a, b) => b.sortAt - a.sortAt);
+        setItems(merged);
+        setError(null);
+      })
+      .catch(e => {
+        if (!alive) return;
+        setError(e instanceof Error ? e.message : "Failed to load");
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  if (loading) return <Skeleton />;
+  if (error) return <div style={{ color: "var(--err-700)", fontSize: 13 }}>{error}</div>;
+  if (items.length === 0) {
+    return (
+      <Empty>
+        <div style={{ fontWeight: 700, color: "var(--ink-900)", marginBottom: 6 }}>Nothing needs action</div>
+        The submission queue and Broker Admin inbox are clear. Use the other tabs to browse history or change filters.
+      </Empty>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ fontSize: 13, color: "var(--ink-600)", marginBottom: 4 }}>
+        Combined view: portal/tool submissions plus shared-inbox email requests, newest first.
+      </div>
+      {items.map(item => {
+        if (item.kind === "queue") {
+          const s = item.row;
+          return (
+            <Link
+              key={`q-${s.id}`}
+              href={`/portal/submissions/${s.id}`}
+              style={{
+                textDecoration: "none",
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 12,
+                padding: 12,
+                borderRadius: "var(--r-8)",
+                border: "1px solid var(--ink-200)",
+                background: "var(--ink-0)",
+                color: "inherit",
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 4 }}>
+                  <StatusBadge tone={{ bg: `${accent}18`, fg: accent, border: `${accent}44` }} size="sm">
+                    Submission queue
+                  </StatusBadge>
+                  <span style={{ fontWeight: 700, color: "var(--ink-900)" }}>
+                    #{s.id} · {s.reference || "(untitled)"}
+                  </span>
+                </div>
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <StatusBadge tone={submissionStatusTone(s.status)} size="sm">
+                    {formatSubmissionStatus(s.status)}
+                  </StatusBadge>
+                  <span style={{ fontSize: 12, color: "var(--ink-500)" }}>{formatFormType(s.formType)}</span>
+                  {s.submittedBy && <span style={{ fontSize: 12, color: "var(--ink-500)" }}>{s.submittedBy}</span>}
+                </div>
+              </div>
+              <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>{formatDateTime(s.createdAt)}</div>
+            </Link>
+          );
+        }
+        const r = item.row;
+        return (
+          <Link
+            key={`i-${r.id}`}
+            href={`/portal/admin/broker-admin/${r.id}`}
+            style={{
+              textDecoration: "none",
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 12,
+              padding: 12,
+              borderRadius: "var(--r-8)",
+              border: "1px solid var(--ink-200)",
+              background: "var(--ink-0)",
+              color: "inherit",
+            }}
+          >
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 4 }}>
+                <StatusBadge tone={{ bg: "var(--ink-100)", fg: "var(--ink-700)", border: "var(--ink-200)" }} size="sm">
+                  Broker Admin inbox
+                </StatusBadge>
+                <span style={{ fontWeight: 700, color: "var(--ink-900)" }}>#{r.id} · {r.title || "(untitled)"}</span>
+              </div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <StatusBadge tone={brokerAdminStatusTone(r.status)} size="sm">
+                  {formatBrokerAdminStatus(r.status)}
+                </StatusBadge>
+                {r.fromEmail && <span style={{ fontSize: 12, color: "var(--ink-500)" }}>From: {r.fromEmail}</span>}
+              </div>
+            </div>
+            <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>{formatDateTime(r.createdAt)}</div>
+          </Link>
+        );
+      })}
+    </div>
   );
 }
 
@@ -314,13 +719,15 @@ function AdminInbox() {
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [ownerFilter, setOwnerFilter] = useState("");
-  const [stats, setStats] = useState<{ counts: { status: string; count: number }[]; staleCount: number; staleDays: number } | null>(null);
+  const [needsActionOnly, setNeedsActionOnly] = useState(true);
+  const [stats, setStats] = useState<{ counts: { status: string; count: number }[]; staleCount: number; staleDays: number; needsActionCount?: number } | null>(null);
 
   useEffect(() => {
     let alive = true;
     setLoading(true);
     const p = new URLSearchParams({ limit: "200" });
-    if (statusFilter) p.set("status", statusFilter);
+    if (needsActionOnly && !statusFilter) p.set("needsAction", "1");
+    else if (statusFilter) p.set("status", statusFilter);
     if (ownerFilter) p.set("owner", ownerFilter);
     if (q.trim()) p.set("q", q.trim());
     fetch(`/api/broker-admin/requests?${p}`, { credentials: "include" })
@@ -333,7 +740,12 @@ function AdminInbox() {
       .then(({ ok, b }) => { if (!alive || !ok) return; setStats({ counts: b?.data?.counts ?? [], staleCount: Number(b?.data?.staleCount ?? 0), staleDays: Number(b?.data?.staleDays ?? 3) }); })
       .catch(() => {});
     return () => { alive = false; };
-  }, [statusFilter, ownerFilter, q]);
+  }, [statusFilter, ownerFilter, q, needsActionOnly]);
+
+  const inboxNeedsActionCount = useMemo(
+    () => items.filter(r => r.status !== "done" && r.status !== "cancelled").length,
+    [items]
+  );
 
   const visible = useMemo(() => {
     const n = q.trim().toLowerCase();
@@ -359,7 +771,27 @@ function AdminInbox() {
       )}
       <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
         <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search title, from, reference…" style={{ ...INPUT_STYLE, width: 320, maxWidth: "100%" }} />
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ ...INPUT_STYLE, maxWidth: "100%" }}>
+        <Button
+          variant={needsActionOnly ? "primary" : "secondary"}
+          onClick={() => {
+            setNeedsActionOnly(v => {
+              const next = !v;
+              if (next) setStatusFilter("");
+              return next;
+            });
+          }}
+        >
+          Needs action ({inboxNeedsActionCount})
+        </Button>
+        <select
+          value={statusFilter}
+          onChange={e => {
+            setStatusFilter(e.target.value);
+            if (e.target.value) setNeedsActionOnly(false);
+          }}
+          disabled={needsActionOnly}
+          style={{ ...INPUT_STYLE, opacity: needsActionOnly ? 0.6 : 1 }}
+        >
           <option value="">All statuses</option>
           <option value="new">New</option>
           <option value="triaged">Triaged</option>
@@ -369,7 +801,7 @@ function AdminInbox() {
           <option value="done">Done</option>
           <option value="cancelled">Cancelled</option>
         </select>
-        <select value={ownerFilter} onChange={e => setOwnerFilter(e.target.value)} style={{ ...INPUT_STYLE, maxWidth: "100%" }}>
+        <select value={ownerFilter} onChange={e => setOwnerFilter(e.target.value)} style={INPUT_STYLE}>
           <option value="">All owners</option>
           {ownerOptions.map(o => <option key={o} value={o}>{o}</option>)}
           <option value="Unassigned">Unassigned</option>
@@ -383,7 +815,7 @@ function AdminInbox() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {visible.map(r => (
-            <Link key={r.id} href={`/portal/admin/broker-admin/${r.id}`} className="portal-list-item" style={{ textDecoration: "none", display: "flex", justifyContent: "space-between", gap: 12, padding: 12, borderRadius: 10, border: "1px solid var(--ink-200)", background: "white", color: "inherit" }}>
+            <Link key={r.id} href={`/portal/admin/broker-admin/${r.id}`} style={{ textDecoration: "none", display: "flex", justifyContent: "space-between", gap: 12, padding: 12, borderRadius: "var(--r-8)", border: "1px solid var(--ink-200)", background: "var(--ink-0)", color: "inherit" }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 4, flexWrap: "wrap" }}>
                   <span style={{ fontWeight: 700, color: "var(--ink-900)" }}>#{r.id} · {r.title || "(untitled)"}</span>
@@ -406,14 +838,24 @@ function AdminInbox() {
 }
 
 /* ── tab button style ─────────────────────────────────────────────── */
-type TabId = "submissions" | "inbox";
+type TabId = "needs_action" | "submissions" | "inbox";
 
-function TabBar({ active, onSelect }: { active: TabId; onSelect: (t: TabId) => void }) {
+function TabBar({
+  active,
+  onSelect,
+  accent,
+  counts,
+}: {
+  active: TabId;
+  onSelect: (t: TabId) => void;
+  accent: string;
+  counts: { combined: number; queue: number; inbox: number };
+}) {
   const tabs: { id: TabId; label: string }[] = [
-    { id: "submissions", label: "Submissions" },
-    { id: "inbox", label: "Broker Admin Inbox" },
+    { id: "needs_action", label: `Needs action (${counts.combined})` },
+    { id: "submissions", label: `Submission queue (${counts.queue})` },
+    { id: "inbox", label: `Broker Admin Inbox (${counts.inbox})` },
   ];
-  const accent = "var(--admin-accent, #98002E)";
   return (
     <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: "1px solid var(--ink-200)", paddingBottom: 0 }}>
       {tabs.map(t => (
@@ -444,38 +886,95 @@ function TabBar({ active, onSelect }: { active: TabId; onSelect: (t: TabId) => v
 /* ── main export ──────────────────────────────────────────────────── */
 export default function PortalSubmissions() {
   const { user } = useAuth();
+  const branding = usePublicBranding();
+  const accent = branding.primary_color || "var(--lee-red, #98002E)";
   const isAdmin = user?.role === "admin";
-  const [tab, setTab] = useState<TabId>("submissions");
+  const [tab, setTab] = useState<TabId>("needs_action");
 
-  // Stats data (loaded by the active list component above, so keep it simple here)
-  const [stats, setStats] = useState<{ pending: number; inReview: number; active: number } | null>(null);
+  const [adminStats, setAdminStats] = useState<{ queue: number; inbox: number; combined: number } | null>(null);
+  const [brokerStats, setBrokerStats] = useState<{ pending: number; inReview: number; active: number } | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
     setStatsLoading(true);
-    const endpoint = "/api/submissions?limit=200&includeQueue=1";
-    fetch(endpoint, { credentials: "include" })
-      .then(r => r.json().then(b => ({ ok: r.ok, b })))
-      .then(({ ok, b }) => {
-        if (!alive) return;
-        if (!ok) { setStats({ pending: 0, inReview: 0, active: 0 }); return; }
-        const rows = (b?.data ?? []) as { status: string; queuePosition: number | null }[];
-        setStats({
-          pending: rows.filter(r => r.status === "pending").length,
-          inReview: rows.filter(r => r.status === "in_review").length,
-          active: rows.filter(r => r.queuePosition !== null).length,
+
+    if (!isAdmin) {
+      fetch("/api/submissions?limit=100&includeQueue=1", { credentials: "include" })
+        .then(r => r.json().then(b => ({ ok: r.ok, b })))
+        .then(({ ok, b }) => {
+          if (!alive) return;
+          if (!ok) {
+            setBrokerStats({ pending: 0, inReview: 0, active: 0 });
+            return;
+          }
+          const rows = (b?.data ?? []) as { status: string }[];
+          setBrokerStats({
+            pending: rows.filter(r => r.status === "pending").length,
+            inReview: rows.filter(r => r.status === "in_review").length,
+            active: rows.filter(r => isSubmissionNeedsActionStatus(r.status)).length,
+          });
+        })
+        .catch(() => {
+          if (!alive) return;
+          setBrokerStats({ pending: 0, inReview: 0, active: 0 });
+        })
+        .finally(() => {
+          if (alive) setStatsLoading(false);
         });
+      return () => {
+        alive = false;
+      };
+    }
+
+    Promise.all([
+      fetch("/api/submissions?needsAction=1&limit=200", { credentials: "include" }).then(r =>
+        r.json().then(b => ({ ok: r.ok, b }))
+      ),
+      fetch("/api/broker-admin/requests?needsAction=1&limit=200", { credentials: "include" }).then(r =>
+        r.json().then(b => ({ ok: r.ok, b }))
+      ),
+    ])
+      .then(([subRes, inboxRes]) => {
+        if (!alive) return;
+        const queue = subRes.ok ? ((subRes.b?.data ?? []) as unknown[]).length : 0;
+        const inbox = inboxRes.ok ? ((inboxRes.b?.data ?? []) as unknown[]).length : 0;
+        setAdminStats({ queue, inbox, combined: queue + inbox });
       })
-      .catch(() => { if (!alive) return; setStats({ pending: 0, inReview: 0, active: 0 }); })
-      .finally(() => { if (alive) setStatsLoading(false); });
-    return () => { alive = false; };
+      .catch(() => {
+        if (!alive) return;
+        setAdminStats({ queue: 0, inbox: 0, combined: 0 });
+      })
+      .finally(() => {
+        if (alive) setStatsLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
   }, [isAdmin]);
 
-  const title = "Submissions";
+  const tabCounts = {
+    combined: adminStats?.combined ?? 0,
+    queue: adminStats?.queue ?? 0,
+    inbox: adminStats?.inbox ?? 0,
+  };
+
+  const title = isAdmin ? "Submissions" : "Home";
   const description = isAdmin
     ? "Review broker work, triage inbox requests, and push approved deals to Dealius."
-    : "Track your submissions through the admin queue and check status at any time.";
+    : "Track your office requests, see queue status, and start new vouchers, listings, or sign orders.";
+
+  const brokerStatHints = {
+    pending: "Waiting for the office to pick up.",
+    inReview: "An admin is actively processing.",
+    active: "Pending + in progress combined.",
+  };
+  const adminStatHints = {
+    pending: "Awaiting first review.",
+    inReview: "Claimed and being processed.",
+    active: "Pending + in progress combined.",
+  };
+  const statHints = isAdmin ? adminStatHints : brokerStatHints;
 
   return (
     <AdminPortalShell
@@ -483,21 +982,74 @@ export default function PortalSubmissions() {
       eyebrow={isAdmin ? "Admin Portal" : "Broker Portal"}
       title={title}
       description={description}
+      actions={
+        !isAdmin ? (
+          <>
+            <LinkButton href="/portal/new" variant="secondary">
+              Broker home
+            </LinkButton>
+            <LinkButton href={brokerToolTabUrl("voucher")} variant="primary">
+              Open broker tool
+            </LinkButton>
+          </>
+        ) : undefined
+      }
     >
       {/* Stats row */}
       <div className="admin-portal-card">
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16 }}>
-          <StatCard label="Pending" value={stats?.pending ?? 0} loading={statsLoading} hint="Awaiting first review." />
-          <StatCard label="In progress" value={stats?.inReview ?? 0} loading={statsLoading} hint="Claimed and being processed." />
-          <StatCard label="Active in queue" value={stats?.active ?? 0} loading={statsLoading} hint="Pending + in progress combined." />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 16 }}>
+          {isAdmin ? (
+            <>
+              <StatCard
+                label="Needs action (all)"
+                value={adminStats?.combined ?? 0}
+                loading={statsLoading}
+                hint="Submission queue + Broker Admin inbox."
+              />
+              <StatCard
+                label="Submission queue"
+                value={adminStats?.queue ?? 0}
+                loading={statsLoading}
+                hint={statHints.pending}
+              />
+              <StatCard
+                label="Broker Admin inbox"
+                value={adminStats?.inbox ?? 0}
+                loading={statsLoading}
+                hint="Shared mailbox items needing triage."
+              />
+            </>
+          ) : (
+            <>
+              <StatCard
+                label="Awaiting office"
+                value={brokerStats?.pending ?? 0}
+                loading={statsLoading}
+                hint={statHints.pending}
+              />
+              <StatCard
+                label="Being processed"
+                value={brokerStats?.inReview ?? 0}
+                loading={statsLoading}
+                hint={statHints.inReview}
+              />
+              <StatCard
+                label="In progress total"
+                value={brokerStats?.active ?? 0}
+                loading={statsLoading}
+                hint={statHints.active}
+              />
+            </>
+          )}
         </div>
       </div>
 
       {/* List panel */}
       <div className="admin-portal-card">
         <Card padding="lg">
-          {isAdmin && <TabBar active={tab} onSelect={setTab} />}
-          {!isAdmin && <BrokerSubmissions />}
+          {isAdmin && <TabBar active={tab} onSelect={setTab} accent={accent} counts={tabCounts} />}
+          {!isAdmin && <BrokerSubmissions accent={accent} />}
+          {isAdmin && tab === "needs_action" && <AdminUnifiedNeedsAction accent={accent} />}
           {isAdmin && tab === "submissions" && <AdminSubmissions />}
           {isAdmin && tab === "inbox" && <AdminInbox />}
         </Card>
