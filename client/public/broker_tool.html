@@ -17,6 +17,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <link rel="stylesheet" href="broker_tool.css">
+<link rel="stylesheet" href="broker_ux.css">
 </head>
 <body>
 
@@ -151,6 +152,14 @@
 
   <div id="listing-add-mode">
     <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections as needed.</div>
+    <div class="broker-pane-guide" role="note">
+      <strong>How to use this form:</strong>
+      <ol>
+        <li>Upload your deal documents (PDF preferred).</li>
+        <li>Tap <strong>Analyze Documents</strong> below the upload box.</li>
+        <li>Review every field, then tap <strong>Review</strong> on the right before sending.</li>
+      </ol>
+    </div>
 
     <div class="deal-shell" id="l-deal-shell">
     <div class="deal-main" id="listing-main">
@@ -171,6 +180,16 @@
         <p style="margin-top:8px;font-size:13px;color:#555;font-style:italic;">*Please provide all executed deal documents (Agency Disclosure, Listing Agreement, etc.)</p>
         <div class="sr-only" id="l-doc-analysis-live" aria-live="polite"></div>
         <div id="l-analyze-panel" class="upload-analyze-panel is-hidden" aria-live="polite"></div>
+        <div class="upload-action-row">
+          <button type="button" class="upload-analyze-btn upload-analyze-btn-primary" id="l-analyze-primary-btn" disabled onclick="window.__doAnalyzeFiles && window.__doAnalyzeFiles('listing', this)">
+            <span class="btn-spinner"></span>
+            <span class="upload-analyze-btn-inner">
+              <span class="upload-analyze-btn-title">Analyze Documents &amp; Fill Form</span>
+              <span class="upload-analyze-btn-sub">Reads your PDFs and fills in the fields below</span>
+            </span>
+          </button>
+        </div>
+        <p class="upload-senior-hint">Upload your listing agreement and related PDFs first. If something looks wrong after Analyze, you can edit any field or upload again.</p>
       </div>
     </div>
     <div class="stepper" data-stepper-for="listing-main"></div>
@@ -466,7 +485,7 @@
         </dl>
       </div>
 
-      <div class="deal-card">
+      <div class="deal-card deal-card-progress">
         <div class="deal-eyebrow">Progress</div>
         <ol class="deal-steps" id="lg-steps">
           <li data-step="0"><span class="deal-step-dot"></span><span class="deal-step-label">Upload Docs</span></li>
@@ -479,7 +498,7 @@
 
       <div class="deal-actions">
         <button class="btn btn-gray" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
-        <button class="btn btn-red" onclick="showListingReviewWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
+        <button class="btn btn-red" onclick="showListingReviewWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Review Before Send</span></button>
         <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
         <button class="btn btn-copy-to-voucher" type="button" onclick="copyListingToVoucher(this)"><span class="btn-spinner"></span><span class="btn-label">Copy to Voucher</span></button>
       </div>
@@ -574,7 +593,10 @@
       <div class="page-meta-chip"><span class="dot"></span>All sections on one page</div>
     </div>
   </div>
-  <div class="tip pane-intro-tip">Complete each step. Fields marked <span class="required-mark">*</span> are required.</div>
+  <div class="tip pane-intro-tip">Fields marked <span class="required-mark">*</span> are required. Review everything before you send.</div>
+  <div class="broker-pane-guide" role="note">
+    <strong>Sign request tips:</strong> Upload documents, tap <strong>Analyze</strong>, check the address and quantities, then use <strong>Review Before Send</strong>.
+  </div>
   <div class="deal-shell" id="s-deal-shell">
   <div class="deal-main" id="sign-main">
   <div class="stepper" data-stepper-for="sign-main"></div>
@@ -595,7 +617,14 @@
         </div>
         <div class="brochure-status" id="s-brochure-status" onclick="event.stopPropagation()"></div>
       </div>
-      <button class="brochure-scrape-btn" id="s-brochure-scrape-btn" onclick="scrapeSignBrochure()">Analyze &amp; Fill Fields</button>
+      <button type="button" class="upload-analyze-btn upload-analyze-btn-primary" id="s-analyze-primary-btn" disabled onclick="window.__doAnalyzeSignFiles && window.__doAnalyzeSignFiles(this)">
+        <span class="btn-spinner"></span>
+        <span class="upload-analyze-btn-inner">
+          <span class="upload-analyze-btn-title">Analyze Documents &amp; Fill Form</span>
+          <span class="upload-analyze-btn-sub">Reads uploads and fills sign request fields</span>
+        </span>
+      </button>
+      <p class="upload-senior-hint">Wrong file? Remove it from the list above and upload the correct PDF before analyzing.</p>
     </div>
     <div class="row c2">
       <div class="field"><label>Date</label><input id="s-date" type="date"></div>
@@ -774,7 +803,7 @@
         <div class="deal-kv-strong"><dt>Total Signs</dt><dd id="sg-total" class="mono">0</dd></div>
       </dl>
     </div>
-    <div class="deal-card">
+    <div class="deal-card deal-card-progress">
       <div class="deal-eyebrow">Progress</div>
       <ol class="deal-steps" id="sg-steps">
         <li data-step="0"><span class="deal-step-dot"></span><span class="deal-step-label">Order Basics</span></li>
@@ -785,13 +814,13 @@
     </div>
     <div class="deal-actions">
       <button class="btn btn-gray" onclick="exportSignPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
-      <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'sign')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
+      <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'sign')"><span class="btn-spinner"></span><span class="btn-label">Review Before Send</span></button>
     </div>
   </aside>
   </div><!-- /deal-shell -->
   <div class="btn-bar btn-bar-top-md">
     <button class="btn btn-gray" onclick="exportSignPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
-    <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'sign')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
+    <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'sign')"><span class="btn-spinner"></span><span class="btn-label">Review Before Send</span></button>
     <button class="btn btn-gray" onclick="setBtnLoading(this,true,'Clearing…');setTimeout(()=>{clearSign();setBtnLoading(this,false);},80)"><span class="btn-spinner"></span><span class="btn-label">Clear Form</span></button>
   </div>
 </div>
@@ -808,8 +837,9 @@
     </div>
   </div>
   <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete all sections for fastest processing.</div>
-
-
+  <div class="broker-pane-guide" role="note">
+    <strong>Commission voucher tips:</strong> Upload deal documents, tap <strong>Analyze</strong>, verify parties and dollar amounts, then <strong>Review Before Send</strong>.
+  </div>
 
   <div class="deal-shell" id="v-deal-shell">
   <div class="deal-main" id="voucher-main">
@@ -830,6 +860,16 @@
 
     <div id="v-doc-analysis-live" class="assistive-live" aria-live="polite"></div>
     <div id="v-analyze-panel" class="upload-analyze-panel is-hidden" aria-live="polite"></div>
+    <div class="upload-action-row">
+      <button type="button" class="upload-analyze-btn upload-analyze-btn-primary" id="v-analyze-primary-btn" disabled onclick="window.__doAnalyzeFiles && window.__doAnalyzeFiles('voucher', this)">
+        <span class="btn-spinner"></span>
+        <span class="upload-analyze-btn-inner">
+          <span class="upload-analyze-btn-title">Analyze Documents &amp; Fill Form</span>
+          <span class="upload-analyze-btn-sub">Reads your PDFs and fills voucher fields</span>
+        </span>
+      </button>
+    </div>
+    <p class="upload-senior-hint">Double-check commission amounts and tenant/landlord names before sending — errors slow down admin processing.</p>
   </div>
 
 
@@ -1259,7 +1299,7 @@
       </dl>
     </div>
 
-    <div class="deal-card">
+    <div class="deal-card deal-card-progress">
       <div class="deal-eyebrow">Progress</div>
       <ol class="deal-steps" id="dg-steps">
         <li data-step="0"><span class="deal-step-dot"></span><span class="deal-step-label">Upload Docs</span></li>
@@ -1273,7 +1313,7 @@
 
     <div class="deal-actions">
       <button class="btn btn-gray" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Excel Voucher</span></button>
-      <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'voucher')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
+      <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'voucher')"><span class="btn-spinner"></span><span class="btn-label">Review Before Send</span></button>
     </div>
   </aside>
   </div><!-- /deal-shell -->
@@ -1306,7 +1346,14 @@
       </div>
       <div class="brochure-status" id="c-brochure-status" onclick="event.stopPropagation()"></div>
     </div>
-    <button class="brochure-scrape-btn" id="c-brochure-scrape-btn" onclick="scrapeCompBrochure()">Analyze &amp; Fill Fields</button>
+    <button type="button" class="upload-analyze-btn upload-analyze-btn-primary" id="c-analyze-primary-btn" disabled onclick="window.__doAnalyzeCompFiles && window.__doAnalyzeCompFiles(this)">
+      <span class="btn-spinner"></span>
+      <span class="upload-analyze-btn-inner">
+        <span class="upload-analyze-btn-title">Analyze Documents &amp; Fill Form</span>
+        <span class="upload-analyze-btn-sub">Reads uploads and fills comp fields</span>
+      </span>
+    </button>
+    <p class="upload-senior-hint">Use a clear PDF of the lease or sale document when possible.</p>
   </div>
 
   <!-- ═══ REQUIRED SECTION ═══ -->
@@ -3632,13 +3679,15 @@ function hideListingReview() {
 
 function submitListingToAdmin(btn) {
   if (btn) { btn.classList.add('loading'); btn.disabled = true; }
-  openSendToAdminModal('listing');
-  // After a short delay, reveal the post-submit actions and remove spinner
-  setTimeout(() => {
-    const postSubmit = document.getElementById('listing-post-submit');
-    setHiddenState(postSubmit, false);
+  const openModal = function() {
+    openSendToAdminModal('listing');
     if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
-  }, 800);
+  };
+  if (typeof window.openPreflightModal === 'function') {
+    window.openPreflightModal('listing', openModal);
+  } else {
+    openModal();
+  }
 }
 
 let reviewSnapshotContext = null;
@@ -15806,6 +15855,13 @@ async function submitSendToAdmin() {
       status.classList.add('text-success', 'status-strong');
       btn.querySelector('.btn-label').textContent = 'Submitted';
       showToast('Submission added to admin queue.');
+      if (_staFormType === 'listing') {
+        const reviewPage = document.getElementById('listing-review-page');
+        const postSubmit = document.getElementById('listing-post-submit');
+        if (reviewPage && postSubmit && !reviewPage.classList.contains('is-hidden')) {
+          setHiddenState(postSubmit, false);
+        }
+      }
       setTimeout(closeSendToAdminModal, 2200);
     } else {
       const errMsg = result?.error || 'Unknown error';

@@ -1159,13 +1159,39 @@ window.aiParseFromPaste = async function() {
     });
   }
 
+  function syncPrimaryAnalyzeButton(tab, fileCount) {
+    var prefix = tab === 'listing' ? 'l' : tab === 'voucher' ? 'v' : null;
+    if (!prefix) return;
+    var btn = document.getElementById(prefix + '-analyze-primary-btn');
+    if (!btn) return;
+    btn.disabled = !(fileCount > 0);
+    var title = btn.querySelector('.upload-analyze-btn-title');
+    if (title) {
+      title.textContent = fileCount > 0
+        ? 'Analyze Documents & Fill Form (' + fileCount + ' file' + (fileCount !== 1 ? 's' : '') + ')'
+        : 'Analyze Documents & Fill Form';
+    }
+  }
+
+  function syncSignAnalyzeButton() {
+    var btn = document.getElementById('s-analyze-primary-btn');
+    if (!btn) return;
+    var hasFile = Boolean(window.signBrochureFileUrl);
+    btn.disabled = !hasFile;
+    var title = btn.querySelector('.upload-analyze-btn-title');
+    if (title) {
+      title.textContent = hasFile ? 'Analyze Documents & Fill Form' : 'Analyze Documents & Fill Form (upload first)';
+    }
+  }
+
   // ── Analyze panel: show after upload completes ──
   function showAnalyzePanel(tab) {
     var panelId = tab === 'listing' ? 'l-analyze-panel' : 'v-analyze-panel';
     var panel = document.getElementById(panelId);
-    if (!panel) return;
     var fieldKey = tab === 'listing' ? 'l-deal-documents' : 'v-deal-documents';
     var files = (window.uploadedFiles && Array.isArray(window.uploadedFiles[fieldKey])) ? window.uploadedFiles[fieldKey] : [];
+    syncPrimaryAnalyzeButton(tab, files.length);
+    if (!panel) return;
     if (!files.length) {
       panel.classList.add('is-hidden');
       panel.innerHTML = '';
@@ -1186,12 +1212,39 @@ window.aiParseFromPaste = async function() {
         '<button type="button" class="upload-analyze-btn" id="' + btnId + '" onclick="window.__doAnalyzeFiles(\'' + tab + '\', this)">' +
           '<span class="btn-spinner"></span>' +
           '<span class="upload-analyze-btn-inner">' +
-            '<span class="upload-analyze-btn-title">🔍 Re-Analyze Files</span>' +
-            '<span class="upload-analyze-btn-sub">Re-read documents &amp; refresh auto-filled fields</span>' +
+            '<span class="upload-analyze-btn-title">Re-Analyze Files</span>' +
+            '<span class="upload-analyze-btn-sub">Run again if you added or replaced a document</span>' +
           '</span>' +
         '</button>' +
       '</div>';
   }
+
+  window.__doAnalyzeSignFiles = async function(btn) {
+    if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+    try {
+      if (typeof window.scrapeSignBrochure === 'function') {
+        await window.scrapeSignBrochure();
+      }
+    } finally {
+      syncSignAnalyzeButton();
+      if (btn) { btn.classList.remove('loading'); btn.disabled = !window.signBrochureFileUrl; }
+    }
+  };
+
+  window.__doAnalyzeCompFiles = async function(btn) {
+    if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+    try {
+      if (typeof window.scrapeCompBrochure === 'function') {
+        await window.scrapeCompBrochure();
+      }
+    } finally {
+      var compBtn = document.getElementById('c-analyze-primary-btn');
+      if (compBtn) {
+        compBtn.classList.remove('loading');
+        compBtn.disabled = !window.compBrochureFileUrl;
+      }
+    }
+  };
 
   window.__doAnalyzeFiles = async function(tab, btn) {
     if (btn) { btn.classList.add('loading'); btn.disabled = true; }
@@ -1370,12 +1423,97 @@ window.aiParseFromPaste = async function() {
     el.classList.remove('is-hidden');
   }
 
+  function wrapWideTables() {
+    document.querySelectorAll('#broker-view table.rent-table, #broker-view table.broker-table, #broker-view table.suite-table').forEach(function(table) {
+      if (table.closest('.broker-table-scroll')) return;
+      var wrap = document.createElement('div');
+      wrap.className = 'broker-table-scroll';
+      table.parentNode.insertBefore(wrap, table);
+      wrap.appendChild(table);
+    });
+  }
+
+  function ensureBrokerReviewBar() {
+    if (document.getElementById('broker-review-bar')) return;
+    var bar = document.createElement('div');
+    bar.id = 'broker-review-bar';
+    bar.className = 'broker-review-bar is-hidden';
+    bar.setAttribute('role', 'region');
+    bar.setAttribute('aria-label', 'Review before send');
+    bar.innerHTML =
+      '<span class="broker-review-bar-text">Take a moment to review your work before sending to admin.</span>' +
+      '<button type="button" class="btn btn-red" id="broker-review-bar-btn">Review Before Send</button>';
+    document.body.appendChild(bar);
+    bar.querySelector('#broker-review-bar-btn').addEventListener('click', function() {
+      var tab = bar.getAttribute('data-tab') || '';
+      if (tab === 'listing' && typeof window.showListingReviewWithSpinner === 'function') {
+        window.showListingReviewWithSpinner(this);
+      } else if (tab === 'voucher' && typeof window.openReviewSnapshotWithSpinner === 'function') {
+        window.openReviewSnapshotWithSpinner(this, 'voucher');
+      } else if (tab === 'sign' && typeof window.openReviewSnapshotWithSpinner === 'function') {
+        window.openReviewSnapshotWithSpinner(this, 'sign');
+      }
+    });
+  }
+
+  function updateBrokerReviewBar(tabName) {
+    ensureBrokerReviewBar();
+    var bar = document.getElementById('broker-review-bar');
+    if (!bar) return;
+    var show = tabName === 'listing' || tabName === 'voucher' || tabName === 'sign';
+    bar.classList.toggle('is-hidden', !show);
+    if (show) bar.setAttribute('data-tab', tabName);
+  }
+
+  function patchSwitchTabForReviewBar() {
+    var orig = window.switchTab;
+    if (typeof orig !== 'function') return;
+    window.switchTab = function(name) {
+      orig.apply(this, arguments);
+      updateBrokerReviewBar(name);
+    };
+  }
+
+  function patchSignBrochureHandler() {
+    var orig = window.onSignBrochureSelected;
+    if (typeof orig !== 'function') return;
+    window.onSignBrochureSelected = function(input) {
+      var result = orig.apply(this, arguments);
+      setTimeout(syncSignAnalyzeButton, 80);
+      return result;
+    };
+  }
+
+  function patchCompBrochureHandler() {
+    var orig = window.onCompBrochureSelected;
+    if (typeof orig !== 'function') return;
+    window.onCompBrochureSelected = function(input) {
+      var result = orig.apply(this, arguments);
+      setTimeout(function() {
+        var btn = document.getElementById('c-analyze-primary-btn');
+        if (btn) btn.disabled = !window.compBrochureFileUrl;
+      }, 80);
+      return result;
+    };
+  }
+
   // ── Bootstrap ──
   onDomReady(function() {
     patchFileHandler('onListingDealDocumentsSelected');
     patchFileHandler('onVoucherDealDocumentsSelected');
     patchRenderFunctions();
     patchSendToAdminModal();
+    patchSwitchTabForReviewBar();
+    patchSignBrochureHandler();
+    patchCompBrochureHandler();
+    wrapWideTables();
+    ensureBrokerReviewBar();
+    syncSignAnalyzeButton();
+
+    var active = document.querySelector('.panel.active');
+    if (active && active.id) {
+      updateBrokerReviewBar(active.id.replace(/^tab-/, ''));
+    }
 
     var preflightModal = document.getElementById('preflight-modal');
     if (preflightModal) {
