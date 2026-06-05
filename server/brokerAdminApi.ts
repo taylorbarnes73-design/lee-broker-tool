@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod/v4";
 import { normalizeStoredFileUrl } from "./storage";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, type SQL } from "drizzle-orm";
 import { getDb } from "./db";
 import { brokerAdminRequests, uploads } from "../drizzle/schema";
 import { requireAuth, requireRole } from "./middleware/requireAuth";
@@ -25,7 +25,7 @@ brokerAdminApiRouter.get("/requests", async (req, res) => {
   const q = String(req.query.q ?? "").trim().toLowerCase();
   const needsAction = parseNeedsActionQuery(req.query.needsAction);
 
-  const whereClauses = [];
+  const whereClauses: SQL[] = [];
   if (status) {
     whereClauses.push(eq(brokerAdminRequests.status, status));
   } else if (needsAction) {
