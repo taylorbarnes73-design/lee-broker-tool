@@ -5,10 +5,15 @@
  * whenever a new submission is recorded in the admin queue.
  */
 import { execSync } from "child_process";
+import nodemailer from "nodemailer";
 import { ENV } from "../_core/env";
 
 function getAdminNotifyEmail(): string {
   return ENV.adminEmail || "tbarnes@lee-associates.com";
+}
+
+function isSmtpConfigured(): boolean {
+  return Boolean(ENV.smtpHost && ENV.smtpFrom);
 }
 
 export interface SubmissionNotificationParams {
@@ -25,6 +30,10 @@ export interface SubmissionNotificationParams {
  * This is fire-and-forget — failures are logged but do not block the submission flow.
  */
 export function notifyAdminOfSubmission(params: SubmissionNotificationParams): void {
+  void sendAdminNotification(params);
+}
+
+async function sendAdminNotification(params: SubmissionNotificationParams): Promise<void> {
   try {
     const formLabel = formatFormType(params.formType);
     const timestamp = new Date().toLocaleString("en-US", {
@@ -49,6 +58,24 @@ export function notifyAdminOfSubmission(params: SubmissionNotificationParams): v
       "—",
       "View and manage this submission in the Admin Portal.",
     ].filter(Boolean).join("\n");
+
+    if (isSmtpConfigured()) {
+      const transporter = nodemailer.createTransport({
+        host: ENV.smtpHost,
+        port: ENV.smtpPort,
+        secure: ENV.smtpSecure,
+        requireTLS: !ENV.smtpSecure,
+        auth: ENV.smtpUser ? { user: ENV.smtpUser, pass: ENV.smtpPass } : undefined,
+      });
+
+      await transporter.sendMail({
+        from: ENV.smtpFrom,
+        to: getAdminNotifyEmail(),
+        subject,
+        text: bodyLines,
+      });
+      return;
+    }
 
     const message: Record<string, unknown> = {
       to: [getAdminNotifyEmail()],
