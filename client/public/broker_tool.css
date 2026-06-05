@@ -7241,39 +7241,15 @@ body.broker-active .sub-tab-bar {
   gap: 18px;
 }
 
-.admin-request-card {
+.admin-request-card,
+.marketing-request-card {
   max-width: 860px;
 }
 
-.admin-request-card textarea {
+.admin-request-card textarea,
+.marketing-request-card textarea {
   min-height: 150px;
   resize: vertical;
-}
-
-.marketing-request-placeholder {
-  max-width: 760px;
-}
-
-.marketing-request-placeholder p {
-  color: var(--text2);
-  line-height: 1.6;
-}
-
-.marketing-request-prep-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 18px;
-}
-
-.marketing-request-prep-grid h3 {
-  margin: 0 0 6px;
-}
-
-@media (max-width: 720px) {
-  .marketing-request-prep-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* ── User footer ────────────────────────────────────────────────────── */

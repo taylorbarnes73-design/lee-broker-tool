@@ -2394,19 +2394,50 @@
       </div>
     </div>
 
-    <div class="card marketing-request-placeholder">
-      <h2>Request Intake Coming Soon</h2>
-      <p>This page is ready for the future marketing request form. It will live under the Marketing folder in the broker sidebar.</p>
-      <div class="marketing-request-prep-grid">
-        <div>
-          <h3>Likely Fields</h3>
-          <p>Property, request type, deadline, broker contact, deliverables, notes, and attachments.</p>
+    <div class="card marketing-request-card">
+      <div class="form-section-title">Request Details</div>
+      <div class="row c2">
+        <div class="field">
+          <label for="mr-request-type">Request Type</label>
+          <select id="mr-request-type">
+            <option value="Other Marketing Request">Other Marketing Request</option>
+            <option value="Flyer / Brochure">Flyer / Brochure</option>
+            <option value="Email Campaign">Email Campaign</option>
+            <option value="Social Media">Social Media</option>
+            <option value="Offering Memorandum / Proposal">Offering Memorandum / Proposal</option>
+            <option value="Signage">Signage</option>
+            <option value="Website / Listing Update">Website / Listing Update</option>
+          </select>
         </div>
-        <div>
-          <h3>Next Wiring</h3>
-          <p>Submission payload, admin queue routing, file upload handling, and email notification copy.</p>
+        <div class="field">
+          <label for="mr-subject">Subject</label>
+          <input id="mr-subject" placeholder="Example: Need a flyer for new listing">
         </div>
       </div>
+      <div class="field">
+        <label for="mr-property">Related Property / Address <span class="muted-label">(Optional)</span></label>
+        <input id="mr-property" placeholder="Property, client, or address">
+      </div>
+      <div class="field">
+        <label for="mr-message">Message</label>
+        <textarea id="mr-message" rows="6" placeholder="Describe the marketing work you need and include any brand, audience, or content notes."></textarea>
+      </div>
+      <div class="field">
+        <label>Attachments <span class="muted-label">(Optional)</span></label>
+        <div class="upload-zone" id="uz-mr-attachments" data-category="marketing_request" data-field="mr-doc-attachments">
+          <input type="file" id="mr-doc-attachments" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png,.webp,.ai,.indd" class="hidden-file-input">
+          <div class="upload-zone-inner" onclick="document.getElementById('mr-doc-attachments').click()">
+            <span class="upload-icon" aria-hidden="true">+</span>
+            <span>Drop files here or browse</span>
+          </div>
+        </div>
+        <div class="upload-status" id="us-mr-attachments"></div>
+      </div>
+      <div class="btn-bar btn-bar-top-lg">
+        <button class="btn btn-green" id="btn-mr-submit" onclick="submitMarketingRequest(this)"><span class="btn-spinner"></span><span class="btn-label">Submit Request</span></button>
+        <button class="btn btn-gray" onclick="resetMarketingRequestForm()">Clear Form</button>
+      </div>
+      <div id="mr-status" class="status-copy"></div>
     </div>
   </div>
 </div><!-- /tab-marketing-request -->
@@ -9081,6 +9112,102 @@ function resetAdminRequestForm() {
   }
 }
 
+async function submitMarketingRequest(btn) {
+  const status = document.getElementById('mr-status');
+  const requestType = document.getElementById('mr-request-type')?.value || 'Other Marketing Request';
+  const subject = (document.getElementById('mr-subject')?.value || '').trim();
+  const propertyAddress = (document.getElementById('mr-property')?.value || '').trim();
+  const message = (document.getElementById('mr-message')?.value || '').trim();
+  const attachments = Array.isArray(uploadedFiles['mr-doc-attachments']) ? uploadedFiles['mr-doc-attachments'] : [];
+
+  if (status) {
+    status.classList.remove('text-error', 'status-success', 'status-strong');
+    status.textContent = '';
+  }
+
+  if (!subject || !message) {
+    if (status) {
+      status.innerHTML = '<span class="text-error status-strong">Subject and message are required.</span>';
+    }
+    return;
+  }
+
+  setBtnLoading(btn, true, 'Submitting...');
+  if (btn) btn.disabled = true;
+
+  try {
+    const now = new Date().toISOString();
+    const authUser = getSignedInBrokerIdentity();
+    const attachmentNames = attachments.map(file => file.filename || file.name || 'Attachment').filter(Boolean);
+    const submission = {
+      id: nextSubId(),
+      type: 'marketing-request',
+      formType: 'marketing-request',
+      status: 'pending',
+      submittedAt: now,
+      updatedAt: now,
+      office: authUser?.office || 'Newport Beach',
+      propertyType: 'marketing request',
+      transactionType: requestType,
+      address: propertyAddress,
+      city: '',
+      state: 'CA',
+      zip: '',
+      brokerName: authUser?.name || 'Unknown',
+      brokerEmail: authUser?.email || '',
+      requestType,
+      subject,
+      body: message,
+      notes: message,
+      propertyAddress,
+      attachments,
+      uploadedFiles: attachments,
+      sections: [{
+        title: 'Marketing Request',
+        fields: [
+          { label: 'Request Type', value: requestType },
+          { label: 'Subject', value: subject },
+          propertyAddress ? { label: 'Related Property / Address', value: propertyAddress } : null,
+          { label: 'Message', value: message },
+          attachmentNames.length ? { label: 'Attachments', value: attachmentNames.join(', ') } : null,
+        ].filter(Boolean),
+      }],
+    };
+
+    ADMIN_SUBMISSIONS.unshift(submission);
+    persistSubmissions();
+    await syncSubmissionToServer(submission);
+    showToast('Marketing request submitted.');
+    if (status) {
+      status.innerHTML = '<span class="status-success status-strong">Marketing request submitted successfully.</span>';
+    }
+    if (typeof refreshBrokerQueue === 'function') refreshBrokerQueue().catch(() => {});
+  } catch (error) {
+    console.error('Marketing request submit failed:', error);
+    if (status) {
+      status.innerHTML = '<span class="text-error status-strong">' + escHtml(error.message || 'Request failed. Please try again.') + '</span>';
+    }
+  } finally {
+    setBtnLoading(btn, false);
+    if (btn) btn.disabled = false;
+  }
+}
+
+function resetMarketingRequestForm() {
+  ['mr-subject', 'mr-property', 'mr-message'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const typeEl = document.getElementById('mr-request-type');
+  if (typeEl) typeEl.value = 'Other Marketing Request';
+  clearUpload('mr-doc-attachments', 'us-mr-attachments');
+  const status = document.getElementById('mr-status');
+  if (status) {
+    status.classList.remove('text-error', 'status-success', 'status-strong');
+    status.textContent = '';
+  }
+}
+
 // Generate next submission ID
 function nextSubId() {
   const nums = ADMIN_SUBMISSIONS.map(s => parseInt(s.id.replace('SUB-','')) || 0);
@@ -14514,7 +14641,7 @@ function escapeQueueHtml(value) {
 }
 
 function formatQueueFormType(type) {
-  const labels = { listing: 'Listing', voucher: 'Voucher', sign: 'Sign Request', 'sign-request': 'Sign Request', comp: 'Comp', 'admin-request': 'Admin Request' };
+  const labels = { listing: 'Listing', voucher: 'Voucher', sign: 'Sign Request', 'sign-request': 'Sign Request', comp: 'Comp', 'admin-request': 'Admin Request', 'marketing-request': 'Marketing Request' };
   return labels[type] || cap(String(type || 'Submission'));
 }
 
@@ -16781,11 +16908,11 @@ const HELP_PANEL_CONTENT = {
   'marketing-request': {
     title: 'Marketing Request — how this page works',
     body: `
-      <p>Marketing Request is the planned intake page for broker marketing work. The sidebar route and placeholder page are ready for the future form.</p>
-      <h4>Planned Intake</h4>
-      <p>The page can collect property details, requested deliverables, due date, broker contact, notes, and supporting attachments.</p>
-      <h4>Next Wiring</h4>
-      <p>The next implementation step is connecting the form to submissions, admin queue routing, upload storage, and notification emails.</p>
+      <p>Marketing Request is for broker marketing work such as flyers, email campaigns, social posts, signage, proposals, and listing updates.</p>
+      <h4>What to Include</h4>
+      <p>Pick the marketing request type, add a clear subject, and describe what needs to be created or updated. Add a property or address when the request is property-specific.</p>
+      <h4>Attachments</h4>
+      <p>Upload source files, photos, PDFs, copy, or examples before submitting so they travel with the request into the queue.</p>
     `,
   },
   'admin-request': {
