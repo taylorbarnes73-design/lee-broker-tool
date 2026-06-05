@@ -84,6 +84,10 @@
         <span>Admin</span>
       </div>
       <div class="broker-nav-folder-items">
+        <div class="tab broker-nav-item" data-tab="admin-request" data-tab-trigger="admin-request" onclick="switchTab('admin-request')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
+          <span>Admin Request</span>
+        </div>
         <div class="tab broker-nav-item active" data-tab="listing" data-tab-trigger="listings" onclick="switchTab('listing')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           <span>Listing Entry</span>
@@ -2325,6 +2329,62 @@
   </div>
 </div><!-- /tab-contracts -->
 
+<div id="tab-admin-request" class="panel" data-pane="admin-request">
+  <div class="admin-request-shell">
+    <div class="card-head">
+      <div class="card-head-left">
+        <div class="card-eyebrow">Admin</div>
+        <h2>Admin Request</h2>
+      </div>
+    </div>
+
+    <div class="card admin-request-card">
+      <div class="form-section-title">Request Details</div>
+      <div class="row c2">
+        <div class="field">
+          <label for="ar-request-type">Request Type</label>
+          <select id="ar-request-type">
+            <option value="Other Admin Request">Other Admin Request</option>
+            <option value="Listing Help">Listing Help</option>
+            <option value="Document Help">Document Help</option>
+            <option value="Research">Research</option>
+            <option value="Admin Handoff">Admin Handoff</option>
+            <option value="Question">Question</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="ar-subject">Subject</label>
+          <input id="ar-subject" placeholder="Example: Need help preparing package">
+        </div>
+      </div>
+      <div class="field">
+        <label for="ar-property">Related Property / Address <span class="muted-label">(Optional)</span></label>
+        <input id="ar-property" placeholder="Property, client, or address">
+      </div>
+      <div class="field">
+        <label for="ar-message">Message</label>
+        <textarea id="ar-message" rows="6" placeholder="Describe what you need done and include any context admin should know."></textarea>
+      </div>
+      <div class="field">
+        <label>Attachments <span class="muted-label">(Optional)</span></label>
+        <div class="upload-zone" id="uz-ar-attachments" data-category="admin_request" data-field="ar-doc-attachments">
+          <input type="file" id="ar-doc-attachments" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png,.webp" class="hidden-file-input">
+          <div class="upload-zone-inner" onclick="document.getElementById('ar-doc-attachments').click()">
+            <span class="upload-icon" aria-hidden="true">+</span>
+            <span>Drop files here or browse</span>
+          </div>
+        </div>
+        <div class="upload-status" id="us-ar-attachments"></div>
+      </div>
+      <div class="btn-bar btn-bar-top-lg">
+        <button class="btn btn-green" id="btn-ar-submit" onclick="submitAdminRequest(this)"><span class="btn-spinner"></span><span class="btn-label">Submit Request</span></button>
+        <button class="btn btn-gray" onclick="resetAdminRequestForm()">Clear Form</button>
+      </div>
+      <div id="ar-status" class="status-copy"></div>
+    </div>
+  </div>
+</div><!-- /tab-admin-request -->
+
 <div id="tab-marketing-request" class="panel" data-pane="marketing-request">
   <div class="marketing-request-shell">
     <div class="card-head">
@@ -3114,7 +3174,7 @@ function toggleOptional(toggleEl) {
   }
 }
 
-const BROKER_TOOL_TAB_IDS = new Set(['listing', 'sign', 'voucher', 'comp', 'comp-reports', 'marketing-request', 'queue']);
+const BROKER_TOOL_TAB_IDS = new Set(['listing', 'sign', 'voucher', 'comp', 'comp-reports', 'admin-request', 'marketing-request', 'queue', 'drafts']);
 
 function parseBrokerToolTabFromLocation() {
   try {
@@ -8925,6 +8985,102 @@ async function syncSubmissionToServer(submission) {
   }
 }
 
+async function submitAdminRequest(btn) {
+  const status = document.getElementById('ar-status');
+  const requestType = document.getElementById('ar-request-type')?.value || 'Other Admin Request';
+  const subject = (document.getElementById('ar-subject')?.value || '').trim();
+  const propertyAddress = (document.getElementById('ar-property')?.value || '').trim();
+  const message = (document.getElementById('ar-message')?.value || '').trim();
+  const attachments = Array.isArray(uploadedFiles['ar-doc-attachments']) ? uploadedFiles['ar-doc-attachments'] : [];
+
+  if (status) {
+    status.classList.remove('text-error', 'status-success', 'status-strong');
+    status.textContent = '';
+  }
+
+  if (!subject || !message) {
+    if (status) {
+      status.innerHTML = '<span class="text-error status-strong">Subject and message are required.</span>';
+    }
+    return;
+  }
+
+  setBtnLoading(btn, true, 'Submitting...');
+  if (btn) btn.disabled = true;
+
+  try {
+    const now = new Date().toISOString();
+    const authUser = getSignedInBrokerIdentity();
+    const attachmentNames = attachments.map(file => file.filename || file.name || 'Attachment').filter(Boolean);
+    const submission = {
+      id: nextSubId(),
+      type: 'admin-request',
+      formType: 'admin-request',
+      status: 'pending',
+      submittedAt: now,
+      updatedAt: now,
+      office: authUser?.office || 'Newport Beach',
+      propertyType: 'admin request',
+      transactionType: requestType,
+      address: propertyAddress,
+      city: '',
+      state: 'CA',
+      zip: '',
+      brokerName: authUser?.name || 'Unknown',
+      brokerEmail: authUser?.email || '',
+      requestType,
+      subject,
+      body: message,
+      notes: message,
+      propertyAddress,
+      attachments,
+      uploadedFiles: attachments,
+      sections: [{
+        title: 'Admin Request',
+        fields: [
+          { label: 'Request Type', value: requestType },
+          { label: 'Subject', value: subject },
+          propertyAddress ? { label: 'Related Property / Address', value: propertyAddress } : null,
+          { label: 'Message', value: message },
+          attachmentNames.length ? { label: 'Attachments', value: attachmentNames.join(', ') } : null,
+        ].filter(Boolean),
+      }],
+    };
+
+    ADMIN_SUBMISSIONS.unshift(submission);
+    persistSubmissions();
+    await syncSubmissionToServer(submission);
+    showToast('Admin request submitted.');
+    if (status) {
+      status.innerHTML = '<span class="status-success status-strong">Admin request submitted successfully.</span>';
+    }
+    if (typeof refreshBrokerQueue === 'function') refreshBrokerQueue().catch(() => {});
+  } catch (error) {
+    console.error('Admin request submit failed:', error);
+    if (status) {
+      status.innerHTML = '<span class="text-error status-strong">' + escHtml(error.message || 'Request failed. Please try again.') + '</span>';
+    }
+  } finally {
+    setBtnLoading(btn, false);
+    if (btn) btn.disabled = false;
+  }
+}
+
+function resetAdminRequestForm() {
+  ['ar-subject', 'ar-property', 'ar-message'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const typeEl = document.getElementById('ar-request-type');
+  if (typeEl) typeEl.value = 'Other Admin Request';
+  clearUpload('ar-doc-attachments', 'us-ar-attachments');
+  const status = document.getElementById('ar-status');
+  if (status) {
+    status.classList.remove('text-error', 'status-success', 'status-strong');
+    status.textContent = '';
+  }
+}
+
 // Generate next submission ID
 function nextSubId() {
   const nums = ADMIN_SUBMISSIONS.map(s => parseInt(s.id.replace('SUB-','')) || 0);
@@ -14358,7 +14514,7 @@ function escapeQueueHtml(value) {
 }
 
 function formatQueueFormType(type) {
-  const labels = { listing: 'Listing', voucher: 'Voucher', sign: 'Sign Request', 'sign-request': 'Sign Request', comp: 'Comp' };
+  const labels = { listing: 'Listing', voucher: 'Voucher', sign: 'Sign Request', 'sign-request': 'Sign Request', comp: 'Comp', 'admin-request': 'Admin Request' };
   return labels[type] || cap(String(type || 'Submission'));
 }
 
@@ -16630,6 +16786,16 @@ const HELP_PANEL_CONTENT = {
       <p>The page can collect property details, requested deliverables, due date, broker contact, notes, and supporting attachments.</p>
       <h4>Next Wiring</h4>
       <p>The next implementation step is connecting the form to submissions, admin queue routing, upload storage, and notification emails.</p>
+    `,
+  },
+  'admin-request': {
+    title: 'Admin Request — how this page works',
+    body: `
+      <p>Admin Request is for general broker requests that do not fit one of the dedicated forms.</p>
+      <h4>What to Include</h4>
+      <p>Pick the request type, add a clear subject, and describe what you need done. Add a related property or address when it helps admin route the work.</p>
+      <h4>Attachments</h4>
+      <p>Upload supporting files before submitting so they travel with the request into the queue.</p>
     `,
   },
   'queue': {

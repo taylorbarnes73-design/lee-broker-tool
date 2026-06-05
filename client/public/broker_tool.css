@@ -7235,9 +7235,19 @@ body.broker-active .sub-tab-bar {
   opacity: 1;
 }
 
+.admin-request-shell,
 .marketing-request-shell {
   display: grid;
   gap: 18px;
+}
+
+.admin-request-card {
+  max-width: 860px;
+}
+
+.admin-request-card textarea {
+  min-height: 150px;
+  resize: vertical;
 }
 
 .marketing-request-placeholder {
