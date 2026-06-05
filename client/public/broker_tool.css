@@ -3865,11 +3865,13 @@ textarea {
   padding: 4px 0;
 }
 .cr-dd-opt {
-  display: flex;
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
   font-size: 13px;
+  line-height: 1.35;
   cursor: pointer;
   color: var(--ink-700, #374151);
   user-select: none;
@@ -3880,10 +3882,16 @@ textarea {
 .cr-dd-opt input[type=checkbox] {
   width: 14px;
   height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+  padding: 0;
   accent-color: var(--lee-crimson, #98002E);
   cursor: pointer;
-  flex-shrink: 0;
   margin: 0;
+}
+.cr-dd-opt span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .cr-dd-footer {
   border-top: 1px solid var(--border, #e5e7eb);

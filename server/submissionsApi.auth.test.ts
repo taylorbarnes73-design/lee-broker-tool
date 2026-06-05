@@ -15,6 +15,7 @@ vi.mock("./_core/sdk", () => ({
   },
   sdk: {
     authenticateRequest: vi.fn(),
+    verifySession: vi.fn(),
   },
 }));
 
@@ -63,6 +64,23 @@ describe("submissions REST auth", () => {
     expect(res.status).toBe(503);
     expect(res.body).toMatchObject({ success: false, error: "Database unavailable" });
     expect(sdk.authenticateRequest).not.toHaveBeenCalled();
+  });
+
+  it("accepts legacy JWT when DB is down but session cookie is valid", async () => {
+    vi.mocked(sdk.verifySession).mockResolvedValue({
+      openId: "local:tbarnes@lee-associates.com",
+      appId: "lee-broker-tool",
+      name: "Taylor Barnes",
+      email: "tbarnes@lee-associates.com",
+    });
+
+    const res = await request(buildApp())
+      .get("/api/submissions")
+      .set("Cookie", "app_session_id=fake.jwt.token");
+
+    expect(res.status).toBe(503);
+    expect(res.body).toMatchObject({ success: false, error: "Database unavailable" });
+    expect(sdk.verifySession).toHaveBeenCalled();
   });
 
   it("keeps accepting legacy broker sessions", async () => {
