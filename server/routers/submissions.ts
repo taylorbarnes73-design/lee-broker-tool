@@ -13,6 +13,7 @@ import { maybeNotifySubmissionStatusChange } from "../services/submissionNotific
 import { findAppUserByUsernameOrEmail } from "../auth/platformSession";
 import { createSubmissionRecord } from "../services/submissionCreate";
 import { applySubmissionStatusChange } from "../services/submissionStatusUpdate";
+import { notifyAdminOfSubmission } from "../services/adminNotification";
 
 const submissionSummarySchema = z
   .object({
@@ -432,6 +433,15 @@ export const submissionsRouter = router({
       } catch {
         // Intentionally ignore comps write failures; the voucher submission is already stored.
       }
+
+      notifyAdminOfSubmission({
+        formType: input.type,
+        brokerName,
+        propertyAddress: reference,
+        submittedByEmail: ctx.user.email ?? (input.brokerEmail || null),
+        submissionId,
+        notes: typeof input.notes === "string" ? input.notes : null,
+      });
 
       return {
         success: true as const,

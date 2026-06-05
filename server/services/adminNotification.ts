@@ -5,8 +5,11 @@
  * whenever a new submission is recorded in the admin queue.
  */
 import { execSync } from "child_process";
+import { ENV } from "../_core/env";
 
-const ADMIN_NOTIFY_EMAIL = "tbarnes@lee-associates.com";
+function getAdminNotifyEmail(): string {
+  return ENV.adminEmail || "tbarnes@lee-associates.com";
+}
 
 export interface SubmissionNotificationParams {
   formType: string;
@@ -48,7 +51,7 @@ export function notifyAdminOfSubmission(params: SubmissionNotificationParams): v
     ].filter(Boolean).join("\n");
 
     const message: Record<string, unknown> = {
-      to: [ADMIN_NOTIFY_EMAIL],
+      to: [getAdminNotifyEmail()],
       cc: [],
       subject,
       content: bodyLines,
@@ -77,6 +80,8 @@ function formatFormType(formType: string): string {
     voucher: "Commission Voucher",
     contract: "Contract Data Sheet",
     comp: "Comp Submission",
+    "admin-request": "Admin Request",
+    "marketing-request": "Marketing Request",
   };
   return labels[formType] || formType.replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
