@@ -55,10 +55,19 @@ export const quickConvertRouter = router({
     }),
 
   processStoredFile: publicProcedure
-    .input(
       z.object({
         kind: kindSchema,
-        fileUrl: z.string().min(1),
+        fileUrl: z.string().min(1).refine(
+          v =>
+            /^https?:\/\//i.test(v) ||
+            v.startsWith("/local-uploads/") ||
+            v.startsWith("/api/files/content") ||
+            /^(broker-docs|broker-admin|broker-docusign)\//.test(v),
+          {
+            message:
+              "fileUrl must be an http(s) URL, local upload path, file proxy URL, or stored file key",
+          }
+        ),
         filename: z.string().optional(),
       })
     )
