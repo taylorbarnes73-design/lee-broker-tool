@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod/v4";
 import { nanoid } from "nanoid";
 import { getDb } from "./db";
-import { appUsers, auditLog, submissions, uploads } from "../drizzle/schema";
+import { submissions, uploads } from "../drizzle/schema";
 import { and, asc, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { resolvePortalRequestUser } from "./auth/resolvePortalRequestUser";
 import { pushVoucherSubmissionToDealius, validateVoucherPayloadForDealiusPush } from "./services/dealiusPush";
@@ -12,18 +12,9 @@ import { listingFormPatchFromParsed, parseListingFormPdfBuffer } from "./service
 import { DealiusClient } from "./services/dealiusClient";
 import { authenticateConfiguredDealius } from "./services/dealiusAuth";
 import { storageGetBytes, storagePut } from "./storage";
-import { createSubmissionRecord } from "./services/submissionCreate";
-import {
-  describeSubmissionActivity,
-  logSubmissionAudit,
-  SUBMISSION_AUDIT_TARGET,
-} from "./services/submissionAudit";
-import {
-  ACTIVE_QUEUE_STATUSES,
-  applySubmissionStatusChange,
-  type SubmissionStatusActor,
-} from "./services/submissionStatusUpdate";
+import { notifyAdminOfSubmission } from "./services/adminNotification";
 
+const ACTIVE_QUEUE_STATUSES = ["pending", "in_review"] as const;
 type ActiveQueueStatus = (typeof ACTIVE_QUEUE_STATUSES)[number];
 
 function isActiveQueueStatus(status: string): status is ActiveQueueStatus {
@@ -327,25 +318,14 @@ submissionsApiRouter.get("/", async (req, res) => {
   const formTypeFilter = String(req.query.formType ?? "").trim();
   const submittedByOpenIdFilter = String(req.query.submittedByOpenId ?? "").trim();
   const submittedByEmailFilter = String(req.query.submittedByEmail ?? "").trim();
-  const needsAction =
-    String(req.query.needsAction ?? "").trim().toLowerCase() === "1" ||
-    String(req.query.needsAction ?? "").trim().toLowerCase() === "true";
 
   const whereClauses: SQL[] = [];
   if (!isAdmin) {
     whereClauses.push(eq(submissions.submittedByOpenId, user.openId));
-    if (needsAction && !statusFilter) {
-      whereClauses.push(inArray(submissions.status, [...ACTIVE_QUEUE_STATUSES]));
-    } else if (statusFilter) {
-      whereClauses.push(eq(submissions.status, statusFilter));
-    }
+    if (statusFilter) whereClauses.push(eq(submissions.status, statusFilter));
     if (formTypeFilter) whereClauses.push(eq(submissions.formType, formTypeFilter));
   } else {
-    if (needsAction && !statusFilter) {
-      whereClauses.push(inArray(submissions.status, [...ACTIVE_QUEUE_STATUSES]));
-    } else if (statusFilter) {
-      whereClauses.push(eq(submissions.status, statusFilter));
-    }
+    if (statusFilter) whereClauses.push(eq(submissions.status, statusFilter));
     if (formTypeFilter) whereClauses.push(eq(submissions.formType, formTypeFilter));
     if (submittedByOpenIdFilter) whereClauses.push(eq(submissions.submittedByOpenId, submittedByOpenIdFilter));
     if (submittedByEmailFilter) whereClauses.push(eq(submissions.submittedByEmail, submittedByEmailFilter));
@@ -426,32 +406,26 @@ submissionsApiRouter.post("/", async (req, res) => {
     return;
   }
 
-  const portalUser = (req as any).user as {
-    platformUserId?: string;
-    name?: string | null;
-    email?: string | null;
-    openId: string;
-  };
-  const actorName = portalUser.name ?? portalUser.email ?? portalUser.openId;
+  const payload = (parsed.data as any).payload ?? {};
+  const [result] = await db.insert(submissions).values({
+    formType: (parsed.data as any).formType,
+    status: "pending",
+    payload: JSON.stringify(payload),
+    reference: (parsed.data as any).reference ?? null,
+    submittedBy: user.name ?? user.email ?? user.openId,
+    submittedByOpenId: user.openId,
+    submittedByEmail: user.email ?? null,
+  });
 
-  const { submissionId } = await createSubmissionRecord({
-    db,
-    input: {
-      formType: (parsed.data as any).formType,
-      status: "pending",
-      payload: (parsed.data as any).payload ?? {},
-      reference: (parsed.data as any).reference ?? null,
-      submittedBy: actorName,
-      submittedByOpenId: portalUser.openId,
-      submittedByEmail: portalUser.email ?? null,
-    },
-    actor: {
-      openId: portalUser.openId,
-      name: actorName,
-      email: portalUser.email ?? null,
-      platformUserId: portalUser.platformUserId ?? null,
-    },
-    req,
+  const submissionId = (result as any).insertId ?? null;
+
+  // Fire-and-forget notification to admin
+  notifyAdminOfSubmission({
+    formType: (parsed.data as any).formType,
+    brokerName: user.name ?? null,
+    propertyAddress: (parsed.data as any).reference ?? null,
+    submittedByEmail: user.email ?? null,
+    submissionId,
   });
 
   res.status(201).json({
@@ -590,76 +564,6 @@ submissionsApiRouter.get("/:id/attachments/:index/download", async (req, res) =>
     const message = err instanceof Error ? err.message : String(err);
     res.status(500).json({ success: false, error: message || "Failed to download attachment" });
   }
-});
-
-const BROKER_VISIBLE_AUDIT_ACTIONS = new Set(["submission.created", "submission.status_changed"]);
-
-submissionsApiRouter.get("/:id/activity", async (req, res) => {
-  const user = (req as any).user as {
-    openId: string;
-    role: string;
-    platformUserId?: string;
-  };
-  const id = Number(req.params.id);
-  if (!Number.isFinite(id) || id <= 0) {
-    res.status(400).json({ success: false, error: "Invalid id" });
-    return;
-  }
-
-  const db = await getDb();
-  if (!db) {
-    res.status(503).json({ success: false, error: "Database unavailable" });
-    return;
-  }
-
-  const rows = await db.select().from(submissions).where(eq(submissions.id, id)).limit(1);
-  const row = rows[0];
-  if (!row) {
-    res.status(404).json({ success: false, error: "Not found" });
-    return;
-  }
-
-  const isAdmin = user.role === "admin";
-  if (!isAdmin && row.submittedByOpenId !== user.openId) {
-    res.status(403).json({ success: false, error: "Forbidden" });
-    return;
-  }
-
-  const auditRows = await db
-    .select({
-      id: auditLog.id,
-      action: auditLog.action,
-      metadata: auditLog.metadata,
-      createdAt: auditLog.createdAt,
-      userFullName: appUsers.fullName,
-      userEmail: appUsers.email,
-    })
-    .from(auditLog)
-    .leftJoin(appUsers, eq(appUsers.id, auditLog.userId))
-    .where(and(eq(auditLog.targetType, SUBMISSION_AUDIT_TARGET), eq(auditLog.targetId, String(id))))
-    .orderBy(desc(auditLog.createdAt))
-    .limit(100);
-
-  const data = auditRows
-    .filter(entry => isAdmin || BROKER_VISIBLE_AUDIT_ACTIONS.has(entry.action))
-    .map(entry => {
-      const metadata = (entry.metadata ?? {}) as Record<string, unknown>;
-      const actorLabel =
-        entry.userFullName?.trim() ||
-        entry.userEmail?.trim() ||
-        (typeof metadata.actorName === "string" ? metadata.actorName : "") ||
-        "System";
-      return {
-        id: entry.id,
-        action: entry.action,
-        summary: describeSubmissionActivity(entry.action, metadata),
-        actorLabel,
-        createdAt: entry.createdAt,
-        metadata: isAdmin ? metadata : undefined,
-      };
-    });
-
-  res.json({ success: true, data });
 });
 
 submissionsApiRouter.get("/:id/queue", async (req, res) => {
@@ -1198,13 +1102,7 @@ submissionsApiRouter.post("/:id/import-listing-pdf", async (req, res) => {
 });
 
 submissionsApiRouter.put("/:id", async (req, res) => {
-  const user = (req as any).user as {
-    openId: string;
-    role: string;
-    name?: string | null;
-    email?: string | null;
-    platformUserId?: string;
-  };
+  const user = (req as any).user as { openId: string; role: string; name?: string | null; email?: string | null };
   const id = Number(req.params.id);
   if (!Number.isFinite(id) || id <= 0) {
     res.status(400).json({ success: false, error: "Invalid id" });
@@ -1241,53 +1139,35 @@ submissionsApiRouter.put("/:id", async (req, res) => {
     return;
   }
 
+  // Compute assignment side-effects for admin status transitions.
+  // "Claim" (→ in_review): record who picked it up and when.
+  // "Complete" (→ approved | closed): record who finished it and when.
   const now = new Date();
-  const actor: SubmissionStatusActor = {
-    openId: user.openId,
-    name: user.name || user.email || user.openId,
-    email: user.email ?? null,
-    platformUserId: user.platformUserId ?? null,
-  };
-
-  if (nextStatus !== undefined && nextStatus !== row.status) {
-    await applySubmissionStatusChange({
-      db,
-      submissionId: id,
-      previousStatus: row.status,
-      nextStatus,
-      actor,
-      req,
-    });
+  const adminName = user.name || user.openId;
+  const assignmentPatch: Record<string, unknown> = {};
+  if (isAdmin && nextStatus !== undefined && nextStatus !== row.status) {
+    if (nextStatus === "in_review") {
+      // Always update assignedTo so re-assignment works
+      assignmentPatch.assignedTo = adminName;
+      assignmentPatch.assignedToOpenId = user.openId;
+      assignmentPatch.assignedAt = now;
+    } else if (nextStatus === "approved" || nextStatus === "closed") {
+      assignmentPatch.completedBy = adminName;
+      assignmentPatch.completedAt = now;
+    }
   }
 
-  const resolvedStatus = nextStatus ?? row.status;
-  const payloadChanged = parsed.data.payload !== undefined;
-  const referenceChanged =
-    parsed.data.reference !== undefined && parsed.data.reference !== row.reference;
-
-  if (payloadChanged || referenceChanged) {
-    await db
-      .update(submissions)
-      .set({
-        status: resolvedStatus,
-        reference: parsed.data.reference ?? row.reference,
-        payload: payloadChanged ? JSON.stringify(parsed.data.payload) : row.payload,
-        updatedAt: now,
-      })
-      .where(eq(submissions.id, id));
-  }
-
-  const actorName = actor.name;
-
-  if (payloadChanged && isAdmin && (nextStatus === undefined || nextStatus === row.status)) {
-    void logSubmissionAudit(req, {
-      platformUserId: user.platformUserId ?? null,
-      actorName,
-      actorOpenId: user.openId,
-      submissionId: id,
-      action: "submission.payload_updated",
-    });
-  }
+  await db
+    .update(submissions)
+    .set({
+      status: nextStatus ?? row.status,
+      reference: parsed.data.reference ?? row.reference,
+      payload:
+        parsed.data.payload !== undefined ? JSON.stringify(parsed.data.payload) : row.payload,
+      updatedAt: now,
+      ...(assignmentPatch as any),
+    })
+    .where(eq(submissions.id, id));
 
   res.json({ success: true });
 });

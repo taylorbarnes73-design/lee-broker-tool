@@ -4,9 +4,9 @@
    * references in this file pick up the brand value. */
   --red: #98002E; --red-dark: #7A0024; --red-light: #F4E3E8;
   --navy: #303C42; --navy-deep: #1F262B; --navy-soft: #4A5A63;
-  --sand: #E2E1DD; --shell: #FFFFFF; --stone: #D1D5DB;
-  /* Backgrounds — aligned with portal ink scale (dense forms keep --radius: 10px) */
-  --bg: #F9FAFB; --card: #FFFFFF; --border: #D1D5DB;
+  --sand: #E2E1DD; --shell: #FFFFFF; --stone: #D4D1CA;
+  /* Backgrounds */
+  --bg: #F8F7F4; --card: #FFFFFF; --border: #D4D1CA;
   /* Text */
   --text: #303C42; --text2: #7E8083; --text3: #A8AAAD;
   /* Semantic — Lee green for success, navy for info, bright-red for error */
@@ -22,8 +22,7 @@
   --shadow-sm: 0 1px 2px rgba(48, 60, 66, .04);
   --shadow-card: 0 1px 2px rgba(48, 60, 66, .05);
   --shadow-focus: 0 0 0 3px rgba(152, 0, 46, .18);
-  --font-sans: "Nunito Sans", "Avenir Next", Inter, "Segoe UI", system-ui, sans-serif;
-  letter-spacing: -0.005em;
+  --font-sans: "Manrope", "Avenir Next", Inter, "Segoe UI", system-ui, sans-serif;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -3384,87 +3383,58 @@ body.admin-mode #admin-view {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Brand (design-system canonical values — matches client/src/design/tokens.css) */
-  --lee-red: #98002E;
-  --lee-red-hover: #7A0024;
-  --lee-red-wash: #F4E3E8;
-  --lee-crimson: var(--lee-red);
-  --lee-crimson-ink: var(--lee-red-hover);
-  --lee-crimson-wash: var(--lee-red-wash);
+  /* Brand (design-system canonical values) */
+  /* Official brand palette (Brand Standards — Updated Feb 2021) */
+  --lee-crimson: #98002E; /* PMS 202 */
+  --lee-crimson-ink: #4E131E; /* PMS 1817 (Merlot) */
+  --lee-crimson-wash: rgba(152, 0, 46, 0.08);
   --lee-crimson-glow: rgba(152, 0, 46, 0.14);
 
-  --lee-slate: #7E8083;
-  --lee-charcoal: #303C42;
-  --lee-navy: #003146;
-  --lee-sky: #009AD9;
-  --lee-frost: #A9C3CB;
-  --lee-bright-red: #CD1442;
-  --lee-green: #8A941E;
-  --lee-mint: #6FC9C4;
-  --lee-slate-wash: #F0F2F4;
+  --lee-slate: #7E8083; /* PMS 424 */
+  --lee-charcoal: #303C42; /* PMS 425 */
+  --lee-navy: #003146; /* PMS 3035 */
+  --lee-sky: #009AD9; /* PMS 2925 */
+  --lee-frost: #A9C3CB; /* PMS 7542 */
+  --lee-bright-red: #CD1442; /* PMS 200 */
+  --lee-green: #8A941E; /* PMS 384 */
+  --lee-mint: #6FC9C4; /* PMS 7472 */
 
-  /* Legacy aliases used across forms/JS */
-  --red: var(--lee-crimson);
-  --red-dark: var(--lee-crimson-ink);
-  --red-light: var(--lee-crimson-wash);
-  --admin-accent: var(--lee-crimson);
+  --lee-slate-wash: rgba(126, 128, 131, 0.12);
 
-  /* Ink scale (Lee charcoal / slate — same as React portal) */
-  --ink-900: #303C42;
-  --ink-800: #3A4A52;
-  --ink-700: #4A5A63;
-  --ink-600: #5E6A71;
-  --ink-500: #7E8083;
-  --ink-400: #9C9FA1;
-  --ink-300: #A8AAAD;
-  --ink-200: #D1D5DB;
-  --ink-150: #E2E5EA;
-  --ink-100: #F0F2F4;
-  --ink-50:  #F9FAFB;
+  /* Ink scale (neutrals) */
+  --ink-900: #0A0A0B;
+  --ink-800: #17181B;
+  --ink-700: #2A2B30;
+  --ink-600: #4A4C54;
+  --ink-500: #6B6D78;
+  --ink-400: #9A9CA5;
+  --ink-300: #C8CAD0;
+  --ink-200: #E4E5E9;
+  --ink-150: #EEEFF1;
+  --ink-100: #F5F5F7;
+  --ink-50:  #FAFAF7;
   --ink-0:   #FFFFFF;
 
-  --text: var(--ink-900);
-  --text2: var(--ink-500);
-  --text3: var(--ink-300);
-  --bg: var(--ink-50);
-  --card: var(--ink-0);
-  --border: var(--ink-200);
-
-  /* Type — Nunito Sans is the approved web stand-in for Avenir Next */
-  --font-sans: "Nunito Sans", "Avenir Next", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --font-serif: "Source Serif 4", "Minion Pro", Georgia, serif;
-  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, monospace;
+  /* Type */
+  --font-sans: 'Manrope', 'Avenir Next', Arial, Tahoma, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
 
   /* Radii + shadows + motion */
-  --r-4: 4px;
-  --r-6: 6px;
-  --r-8: 8px;
-  --r-12: 12px;
-  --shadow-sm: 0 1px 2px rgba(48, 60, 66, 0.04);
-  --shadow-md: 0 1px 2px rgba(48, 60, 66, 0.05);
-  --shadow-lg: 0 4px 12px rgba(48, 60, 66, 0.06), 0 1px 2px rgba(48, 60, 66, 0.04);
+  --r-4: 4px;  --r-6: 6px;  --r-8: 8px;  --r-12: 12px;
+  --shadow-sm: 0 1px 2px rgba(10,10,11,.05);
+  --shadow-md: 0 2px 8px rgba(10,10,11,.06), 0 1px 2px rgba(10,10,11,.04);
+  --shadow-lg: 0 12px 32px rgba(10,10,11,.08), 0 2px 6px rgba(10,10,11,.04);
   --ring-crimson: 0 0 0 3px var(--lee-crimson-glow);
-  --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --ease-out: cubic-bezier(.2, .7, .3, 1);
 }
 
 body {
   background: var(--ink-50);
   color: var(--ink-900);
   font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.5;
   font-feature-settings: "ss01", "cv11";
   letter-spacing: -0.005em;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-button,
-input,
-select,
-textarea {
-  font-family: inherit;
-  color: inherit;
 }
 
 /* ── HEADER: dark AppShell-style bar with white Lee logo ── */
@@ -3473,7 +3443,7 @@ textarea {
   color: #fff;
   border-bottom: 1px solid var(--ink-800);
   box-shadow: none;
-  padding: 14px 28px;
+  padding: 18px 32px;
   backdrop-filter: none;
 }
 .header-main { gap: 18px; }
@@ -3501,14 +3471,14 @@ textarea {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: .22em;
-  margin: 0;
+  margin: 0 0 3px;
 }
 .header h1 {
   color: #fff;
   font-size: 20px;
   font-weight: 700;
   letter-spacing: -.02em;
-  line-height: 1.1;
+  line-height: 1.18;
   margin: 0;
 }
 .header .sub {
@@ -3957,9 +3927,9 @@ textarea {
   margin-bottom: 20px;
 }
 .tool-sign-in-title {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 28px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
   margin-bottom: 6px;
 }
@@ -4518,10 +4488,32 @@ textarea {
   border-top: 1px solid var(--border, #E4E5E9);
 }
 .step-nav .step-nav-left { display: flex; gap: 8px; }
-.step-nav .step-nav-right { display: flex; gap: 8px; }
+.step-nav .step-nav-right {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  max-width: 420px;
+}
 .step-nav .step-count {
   font-size: 11px; font-weight: 700; color: #6b7178;
   letter-spacing: .06em; text-transform: uppercase;
+}
+.step-nav-blocker {
+  flex: 1 1 100%;
+  color: #6B7178;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: right;
+}
+
+.step-nav .btn:disabled {
+  background: #D7DBE1;
+  border-color: #D7DBE1;
+  color: #6B7178;
+  box-shadow: none;
+  opacity: 1;
+  transform: none;
 }
 
 
@@ -4536,6 +4528,18 @@ textarea {
 .step-flow .card[data-vstep].step--current > *,
 .step-flow .card[data-lstep].step--current > *,
 .step-flow .card[data-sstep].step--current > * { display: revert; }
+.step-flow .card[data-vstep].step--current > .row:not(.is-hidden),
+.step-flow .card[data-lstep].step--current > .row:not(.is-hidden),
+.step-flow .card[data-sstep].step--current > .row:not(.is-hidden) { display: grid; }
+.step-flow .card[data-vstep].step--current > .field:not(.is-hidden),
+.step-flow .card[data-lstep].step--current > .field:not(.is-hidden),
+.step-flow .card[data-sstep].step--current > .field:not(.is-hidden) { display: flex; }
+.step-flow .card[data-vstep].step--current > .type-section:not(.visible),
+.step-flow .card[data-lstep].step--current > .type-section:not(.visible),
+.step-flow .card[data-sstep].step--current > .type-section:not(.visible) { display: none; }
+.step-flow .card[data-vstep].step--current > .type-section.visible:not(.is-hidden),
+.step-flow .card[data-lstep].step--current > .type-section.visible:not(.is-hidden),
+.step-flow .card[data-sstep].step--current > .type-section.visible:not(.is-hidden) { display: block; }
 .step-flow .card[data-vstep].step--current > .is-hidden,
 .step-flow .card[data-lstep].step--current > .is-hidden,
 .step-flow .card[data-sstep].step--current > .is-hidden { display: none; }
@@ -5574,8 +5578,7 @@ a:hover { text-decoration: none; }
   --ink-50: #F8F7F4;
   --ink-0: #FFFFFF;
 
-  --font-sans: 'Nunito Sans', 'Avenir Next', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --font-serif: 'Source Serif 4', 'Minion Pro', Georgia, serif;
+  --font-sans: 'Manrope', 'Avenir Next', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
 
   --r-4: 4px;
@@ -6596,9 +6599,8 @@ a:hover {
 #tab-sign .stepper,
 #tab-voucher .stepper {
   justify-content: flex-start;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 4px;
+  overflow: visible;
+  padding-bottom: 0;
   scrollbar-width: none;
 }
 
@@ -6611,15 +6613,31 @@ a:hover {
 #tab-listing .stepper-item,
 #tab-sign .stepper-item,
 #tab-voucher .stepper-item {
-  flex: 0 0 auto;
+  display: none;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 6px 8px;
+}
+
+#tab-listing .stepper-item.is-window-visible,
+#tab-sign .stepper-item.is-window-visible,
+#tab-voucher .stepper-item.is-window-visible {
+  display: inline-flex;
 }
 
 #tab-listing .stepper-bar,
 #tab-sign .stepper-bar,
 #tab-voucher .stepper-bar {
-  flex: 0 0 28px;
-  min-width: 28px;
-  margin: 0 10px;
+  display: none;
+  flex: 0 0 48px;
+  min-width: 48px;
+  margin: 0 12px;
+}
+
+#tab-listing .stepper-bar.is-window-visible,
+#tab-sign .stepper-bar.is-window-visible,
+#tab-voucher .stepper-bar.is-window-visible {
+  display: block;
 }
 
 #tab-listing .stepper-label,
@@ -6627,8 +6645,12 @@ a:hover {
 #tab-voucher .stepper-label {
   font-size: 10.5px;
   letter-spacing: 0.06em;
-  max-width: 220px;
+  max-width: none;
   line-height: 1.25;
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+  overflow-wrap: break-word;
 }
 
 .card,
@@ -7099,7 +7121,8 @@ body.broker-active .sub-tab-bar {
   flex-shrink: 0;
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: 100dvh; /* dynamic viewport height — fits within window, no overflow */
+  max-height: 100vh; /* fallback for browsers without dvh support */
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -7116,21 +7139,9 @@ body.broker-active .sub-tab-bar {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
-  padding: 4px 6px 14px;
-  margin-bottom: 6px;
-}
-
-.broker-sidebar-logo {
-  height: 30px;
-  width: auto;
-}
-
-.broker-sidebar-rule {
-  width: 100%;
-  height: 1px;
-  background: var(--text2);
-  opacity: 0.3;
+  padding: 4px 6px 12px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
 }
 
 .broker-sidebar-subtitle {
@@ -7152,6 +7163,7 @@ body.broker-active .sub-tab-bar {
   display: flex;
   align-items: center;
   gap: 10px;
+  position: relative;
   padding: 9px 12px;
   border-radius: 8px;
   border-bottom: none !important;
@@ -7173,10 +7185,12 @@ body.broker-active .sub-tab-bar {
 }
 
 .broker-sidebar .tab.active {
-  background: rgba(152, 0, 46, 0.11);
-  color: var(--red);
+  background: rgba(152, 0, 46, 0.13);
+  color: var(--lee-crimson);
   border-bottom: none !important;
   border-radius: 8px;
+  box-shadow: inset 3px 0 0 var(--lee-crimson);
+  font-weight: 800;
 }
 
 .broker-sidebar .tab svg {
@@ -7289,6 +7303,23 @@ body.broker-active .sub-tab-bar {
   display: block;
 }
 
+/* Desktop: nav overlay is mobile-only — never dim the workspace */
+@media (min-width: 881px) {
+  .broker-sidebar-overlay,
+  .broker-sidebar-overlay.active {
+    display: none !important;
+  }
+}
+
+/* Listing/sign: continuous scroll (matches voucher — no one-step wizard) */
+.deal-main.broker-continuous-layout .stepper {
+  display: none !important;
+}
+.deal-main.broker-continuous-layout .card[data-lstep],
+.deal-main.broker-continuous-layout .card[data-sstep] {
+  display: block !important;
+}
+
 .broker-sidebar-close {
   display: none;
   position: absolute;
@@ -7347,7 +7378,30 @@ body.broker-active .sub-tab-bar {
 
 #tab-listing .sub-tab-bar {
   padding: 0 0 8px;
-  margin-bottom: 4px;
+  margin-bottom: 10px;
+}
+
+#tab-listing .sub-tab {
+  min-height: 40px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  border-color: #D9DDE3;
+  background: #fff;
+  color: #4E545B;
+  font-weight: 700;
+}
+
+#tab-listing .sub-tab:hover {
+  background: #F8F9FB;
+  border-color: #C8CDD3;
+  color: #0F1419;
+}
+
+#tab-listing .sub-tab.active {
+  background: var(--lee-crimson);
+  border-color: var(--lee-crimson);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(152, 0, 46,.16), 0 6px 14px rgba(152, 0, 46,.14);
 }
 
 #tab-listing .broker-page-head {
@@ -7370,19 +7424,30 @@ body.broker-active .sub-tab-bar {
   align-items: end;
 }
 
+#tab-listing .row.c-addr {
+  grid-template-columns: minmax(0, 5fr) minmax(96px, 2fr) minmax(120px, 3fr);
+}
+
 #tab-listing .listing-pricing-row {
   align-items: end;
 }
 
 #tab-listing .pricing-visibility-field {
-  padding: 12px;
-  border: 1px solid #F2C94C;
+  padding: 14px;
+  border: 1px solid #E7B93C;
   border-radius: 8px;
-  background: #FFF8E5;
+  background: #FFF7D8;
+  box-shadow: inset 3px 0 0 #D48806;
 }
 
 #tab-listing .pricing-visibility-field label {
+  color: #6A3F00;
+  font-weight: 800;
+}
+
+#tab-listing .pricing-visibility-field .field-hint {
   color: #7A4B00;
+  font-weight: 600;
 }
 
 #tab-listing .listing-type-grid {
@@ -7447,6 +7512,20 @@ body.broker-active .sub-tab-bar {
 #tab-voucher .voucher-party-grid {
   gap: 18px;
 }
+#tab-voucher .voucher-party-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+}
+#tab-voucher .voucher-party-grid .row.c2,
+#tab-voucher .voucher-party-grid .row.c3,
+#tab-voucher .voucher-agent-grid .row.c2,
+#tab-voucher .voucher-agent-grid .row.c3 {
+  grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr));
+}
+/* Stack party/agent boxes when sidebar is present (deal-shell layout) */
+.deal-shell .voucher-party-grid,
+.deal-shell .voucher-agent-grid {
+  grid-template-columns: 1fr !important;
+}
 
 #tab-voucher .voucher-agent-grid > div,
 #tab-voucher .voucher-party-grid > div {
@@ -7486,6 +7565,44 @@ body.broker-active .sub-tab-bar {
   border-color: #DDE2E8;
 }
 
+/* Voucher section headers - match Excel voucher section dividers */
+#tab-voucher .voucher-section {
+  border-left: 3px solid var(--lee-crimson, #98002E);
+}
+
+#tab-voucher .voucher-section-header {
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--lee-crimson, #98002E);
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E7EAEE;
+}
+
+#tab-voucher .voucher-sub-header {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text1, #1A1D21);
+  margin: 18px 0 10px 0;
+  padding-top: 12px;
+  border-top: 1px solid #F0F2F5;
+}
+
+#tab-voucher .voucher-sub-header:first-child,
+#tab-voucher .voucher-section-header + .voucher-sub-header {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+#tab-voucher .voucher-section .row.compact .field {
+  margin-bottom: 4px;
+}
+
 #tab-queue .queue-status.queue-error {
   margin-bottom: 16px;
   padding: 12px 14px;
@@ -7496,6 +7613,17 @@ body.broker-active .sub-tab-bar {
   line-height: 1.5;
 }
 
+#tab-queue #btn-broker-queue-refresh.queue-retry-ready {
+  border-color: rgba(152, 0, 46, 0.35);
+  background: #fff;
+  color: var(--lee-crimson);
+  box-shadow: 0 1px 2px rgba(152, 0, 46, 0.10);
+}
+
+#tab-queue .queue-empty .btn {
+  margin-top: 12px;
+}
+
 @media (max-width: 960px) {
   #tab-voucher .voucher-summary-row {
     grid-template-columns: 1fr;
@@ -7503,6 +7631,10 @@ body.broker-active .sub-tab-bar {
 }
 
 @media (max-width: 720px) {
+  #tab-listing .row.c-addr {
+    grid-template-columns: 1fr;
+  }
+
   #tab-listing .listing-type-opt {
     min-height: 0;
   }
@@ -7814,56 +7946,2820 @@ body.broker-active .sub-tab-bar {
   margin-top: 2px;
 }
 
-/* Quick Convert panel */
-.qc-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 12px;
-  margin-top: 12px;
+/* ── Two-step upload: staged file preview ── */
+.upload-staged-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--card, #fff);
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: 8px;
+  font-size: 13px;
 }
-.qc-card {
+.upload-staged-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  background: #fce8ed;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.upload-staged-icon svg { display: block; }
+.upload-staged-name {
+  flex: 1;
+  font-weight: 600;
+  color: var(--text, #1a1a1a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.upload-staged-size {
+  font-size: 11px;
+  color: var(--text3, #888);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.upload-staged-remove {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text3, #888);
+  font-size: 11px;
+  text-decoration: underline;
+  padding: 0;
+  line-height: 1;
+}
+.upload-staged-remove:hover { color: #b42318; }
+.upload-confirm-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 10px;
+  width: 100%;
+  padding: 11px 16px;
+  background: var(--red, #98002e);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 14px rgba(152,0,46,0.22);
+  letter-spacing: -0.01em;
+}
+.upload-confirm-btn:hover { opacity: 0.92; box-shadow: 0 6px 20px rgba(152,0,46,0.32); }
+.upload-confirm-btn:disabled { opacity: 0.55; pointer-events: none; }
+.upload-confirm-btn .btn-spinner {
+  display: none;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255,255,255,0.5);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btnSpin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+.upload-confirm-btn.loading .btn-spinner { display: inline-block; }
+.upload-confirm-btn.loading { opacity: 0.7; pointer-events: none; }
+.upload-staged-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
+  margin-top: 10px;
 }
-.qc-card-head {
+.upload-staged-list .upload-staged-bar { margin-top: 0; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FEATURE ADDITIONS — Features 1,3,4,5,6,7,8,9,10,11,12,13,14,16,17,18,25,27
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Feature 13: Listing expiration alert ── */
+.expiry-alert {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 8px;
+  line-height: 1.35;
 }
-.qc-card-title {
-  margin: 0;
-  font-size: 15px;
+.expiry-alert.expiry-expired { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+.expiry-alert.expiry-soon    { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+.expiry-alert.expiry-ok      { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
+
+/* ── Feature 14: Copy to Voucher button ── */
+.btn-copy-to-voucher { background: #003146; color: #fff; border: 1.5px solid #003146; }
+.btn-copy-to-voucher:hover { background: #004466; border-color: #004466; }
+
+/* ── Feature 10: Duplicate rent row button ── */
+.rent-dup-btn {
+  background: none; border: none; cursor: pointer; color: #6B7178;
+  padding: 0 4px; font-size: 13px; line-height: 1; transition: color 0.15s;
+}
+.rent-dup-btn:hover { color: var(--red, #98002E); }
+
+/* ── Feature 9: Per-row commission rate ── */
+.rent-comm-rate { width: 56px !important; text-align: center; }
+
+/* ── Feature 27: Inline validation tooltips ── */
+.field-has-error input,
+.field-has-error select,
+.field-has-error textarea { border-color: #DC2626 !important; background: #FFF5F5 !important; }
+.field-tooltip {
+  position: absolute; bottom: calc(100% + 5px); left: 0;
+  background: #1F2937; color: #fff; font-size: 11px; padding: 4px 8px;
+  border-radius: 5px; white-space: nowrap; pointer-events: none; z-index: 200;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18); line-height: 1.4;
+}
+.field-tooltip::after {
+  content: ''; position: absolute; top: 100%; left: 12px;
+  border: 5px solid transparent; border-top-color: #1F2937;
+}
+.field.field-has-error { position: relative; }
+
+/* ── Feature 17: Map view in comp report ── */
+.cr-view-toggle { display: flex; gap: 4px; align-items: center; }
+.cr-view-btn {
+  padding: 5px 12px; border: 1px solid #D7DBE1; background: #fff;
+  border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer;
+  color: #6B7178; transition: all 0.15s;
+}
+.cr-view-btn.active { background: var(--red, #98002E); border-color: var(--red, #98002E); color: #fff; }
+.cr-view-btn:hover:not(.active) { background: #F3F4F6; }
+#cr-map-container {
+  width: 100%; height: 480px; border-radius: 8px; border: 1px solid #E5E7EB;
+  margin-top: 12px; overflow: hidden;
+}
+.cr-map-popup { font-size: 12px; line-height: 1.5; min-width: 160px; }
+.cr-map-popup strong { font-size: 13px; display: block; margin-bottom: 2px; }
+
+/* ── Feature 25: Global search bar ── */
+.global-search-wrap { position: relative; display: flex; align-items: center; }
+.global-search-input {
+  width: 220px; padding: 6px 10px 6px 32px; border: 1px solid #D7DBE1;
+  border-radius: 20px; font-size: 13px; background: #F9FAFB;
+  transition: all 0.2s; outline: none; font-family: inherit;
+}
+.global-search-input:focus {
+  width: 280px; border-color: var(--red, #98002E); background: #fff;
+  box-shadow: 0 0 0 3px rgba(169,34,59,0.1);
+}
+.global-search-icon { position: absolute; left: 10px; color: #9CA3AF; pointer-events: none; }
+.global-search-results {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: #fff; border: 1px solid #E5E7EB; border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 500;
+  max-height: 360px; overflow-y: auto; display: none;
+}
+.global-search-results.is-open { display: block; }
+.gs-result-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 14px;
+  cursor: pointer; border-bottom: 1px solid #F3F4F6; transition: background 0.1s;
+}
+.gs-result-item:last-child { border-bottom: none; }
+.gs-result-item:hover { background: #F9FAFB; }
+.gs-result-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+  flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.gs-result-badge.listing { background: #DBEAFE; color: #1E40AF; }
+.gs-result-badge.voucher { background: #D1FAE5; color: #065F46; }
+.gs-result-badge.sign    { background: #FCE7F3; color: #9D174D; }
+.gs-result-badge.comp    { background: #FEF3C7; color: #92400E; }
+.gs-result-text { flex: 1; min-width: 0; }
+.gs-result-title { font-size: 13px; font-weight: 600; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gs-result-sub   { font-size: 11px; color: #6B7178; }
+.gs-no-results   { padding: 16px; text-align: center; color: #9CA3AF; font-size: 13px; }
+
+/* ── Feature 5: AI parsed fields confirmation modal ── */
+.ai-confirm-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.ai-confirm-modal {
+  background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+  width: 100%; max-width: 560px; max-height: 80vh;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.ai-confirm-modal-header {
+  padding: 18px 20px 14px; border-bottom: 1px solid #E5E7EB;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.ai-confirm-modal-title { font-size: 15px; font-weight: 700; color: #111827; }
+.ai-confirm-modal-close { background: none; border: none; cursor: pointer; color: #6B7178; font-size: 20px; line-height: 1; padding: 0; }
+.ai-confirm-modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+.ai-confirm-modal-hint { font-size: 12px; color: #6B7178; margin-bottom: 12px; }
+.ai-confirm-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ai-confirm-table th {
+  text-align: left; padding: 6px 10px; background: #F3F4F6; color: #374151;
+  font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.ai-confirm-table td { padding: 7px 10px; border-bottom: 1px solid #F3F4F6; vertical-align: middle; }
+.ai-confirm-table tr:last-child td { border-bottom: none; }
+.ai-confirm-table tr:hover td { background: #F9FAFB; }
+.ai-confirm-check { width: 16px; height: 16px; cursor: pointer; accent-color: var(--red, #98002E); }
+.ai-confirm-field-name  { font-weight: 600; color: #374151; }
+.ai-confirm-field-value { color: #111827; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+.ai-confirm-modal-footer { padding: 14px 20px; border-top: 1px solid #E5E7EB; display: flex; justify-content: flex-end; gap: 10px; }
+
+/* ── Feature 11: Deal summary card in voucher review ── */
+.voucher-summary-card {
+  background: #F8FAFC; border: 1px solid #E5E7EB; border-radius: 10px;
+  padding: 20px 24px; margin-bottom: 20px;
+}
+.voucher-summary-card-title {
+  font-size: 13px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: #6B7178; margin-bottom: 14px;
+}
+.voucher-summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; }
+.voucher-summary-item dt { font-size: 11px; color: #9CA3AF; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.voucher-summary-item dd { font-size: 14px; font-weight: 700; color: #111827; margin-top: 2px; }
+.voucher-summary-item dd.mono { font-family: 'JetBrains Mono', monospace; }
+.voucher-summary-item.full-width { grid-column: 1 / -1; }
+.voucher-summary-divider { grid-column: 1 / -1; border: none; border-top: 1px solid #E5E7EB; margin: 4px 0; }
+.voucher-summary-highlight dd { color: var(--red, #98002E); font-size: 16px; }
+
+/* ── Feature 16: Sign photo upload location pin ── */
+.sign-map-pin-field { margin-top: 12px; }
+.sign-photo-preview { max-width: 100%; max-height: 200px; border-radius: 6px; margin-top: 8px; border: 1px solid #E5E7EB; display: none; }
+.sign-photo-preview.has-image { display: block; }
+
+/* ── Feature 12: Auto-save indicator pulse ── */
+@keyframes autosavePulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.autosave-saving { animation: autosavePulse 1s ease-in-out 2; }
+
+/* ── Feature 4: Parse-from-text fallback ── */
+.ai-paste-fallback { margin-top: 10px; padding-top: 10px; border-top: 1px solid #E5E7EB; }
+.ai-paste-fallback-label { font-size: 11px; color: #6B7178; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.ai-paste-fallback-textarea {
+  width: 100%; min-height: 80px; font-size: 12px; border: 1px solid #D7DBE1;
+  border-radius: 6px; padding: 8px; resize: vertical; font-family: inherit;
+  color: #374151; background: #F9FAFB;
+}
+.ai-paste-fallback-textarea:focus { outline: none; border-color: var(--red, #98002E); background: #fff; }
+
+/* ── Feature 1: AI confidence indicators ── */
+.ai-confidence-high   { border-left: 3px solid #10B981 !important; }
+.ai-confidence-medium { border-left: 3px solid #F59E0B !important; }
+.ai-confidence-low    { border-left: 3px solid #EF4444 !important; }
+
+/* ── Responsive tweaks ── */
+@media (max-width: 640px) {
+  .global-search-input { width: 160px; }
+  .global-search-input:focus { width: 200px; }
+  .voucher-summary-grid { grid-template-columns: 1fr; }
+  #cr-map-container { height: 320px; }
+}
+/* ── Voucher progress bar ── */
+.voucher-progress {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 20px; background: var(--ink-0, #fff);
+  border-bottom: 1px solid var(--ink-200, var(--border));
+  margin-bottom: 4px;
+}
+.voucher-progress-bar {
+  flex: 1; height: 6px; background: var(--ink-200, #E5E7EB);
+  border-radius: 3px; overflow: hidden;
+}
+.voucher-progress-fill {
+  height: 100%; background: var(--lee-crimson, var(--red));
+  border-radius: 3px; transition: width 0.3s ease;
+}
+.voucher-progress-label { font-size: 12px; color: var(--text2); white-space: nowrap; }
+.voucher-progress-pct { font-size: 12px; font-weight: 700; color: var(--lee-crimson, var(--red)); white-space: nowrap; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AESTHETIC POLISH PASS — Cross-browser consistency & visual refinement
+   ═══════════════════════════════════════════════════════════════════════════
+   Goals:
+   1. Normalize rendering across Chrome, Firefox, Safari, Edge
+   2. Consolidate typography to a clean 4-step scale
+   3. Standardize spacing, radius, and shadow tokens
+   4. Polish cards, sidebar, forms, buttons, and tables
+   5. Improve transitions, focus states, and hover feedback
+   6. Tighten responsive breakpoints for tablet/mobile
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Cross-browser normalization ───────────────────────────────────── */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  overflow-x: hidden;
+}
+
+/* Prevent layout shift from scrollbar appearance */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Normalize input appearance across browsers */
+input, select, textarea, button {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7178' d='M2.5 4.5L6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  padding-right: 32px !important;
+  cursor: pointer;
+}
+
+/* Fix Firefox inner focus ring */
+::-moz-focus-inner {
+  border: 0;
+  padding: 0;
+}
+
+/* Consistent placeholder styling */
+::placeholder {
+  color: #9CA3AF;
+  opacity: 1;
+  font-weight: 400;
+}
+
+/* ── 2. Refined typography scale ──────────────────────────────────────── */
+/* Consolidate to: 11px (micro), 12px (small/labels), 13px (body-sm), 14px (body) */
+
+body.broker-active {
+  font-size: 14px;
+  line-height: 1.55;
+  letter-spacing: -0.006em;
+}
+
+/* Sidebar nav — standardize to 12px */
+.broker-sidebar .tab {
+  font-size: 12px;
   font-weight: 700;
+  letter-spacing: 0.03em;
   line-height: 1.3;
 }
-.qc-card-busy {
-  opacity: 0.85;
-  pointer-events: none;
+
+/* Card headings — clean hierarchy */
+.card-head h2,
+.card-head-left > h2 {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
 }
-.qc-status {
-  min-height: 1.25em;
+
+.card-eyebrow,
+.deal-eyebrow,
+.page-eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6B7178;
+}
+
+/* Form labels — unified */
+.field label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #4A5568;
+  margin-bottom: 5px;
+  display: block;
+}
+
+/* Form inputs — unified */
+.field input,
+.field select,
+.field textarea {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #1A202C;
+}
+
+/* Section headings inside cards */
+.card h3.section-heading-top,
+.card h3.section-heading-top-lg,
+.card h3.section-heading-tight {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.10em;
+  color: #6B7178;
+}
+
+/* ── 3. Standardized spacing & radius ─────────────────────────────────── */
+
+/* Cards — consistent 24px padding, 12px radius */
+.card {
+  padding: 24px !important;
+  border-radius: 12px !important;
+  border: 1px solid #E2E8F0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  border-color: #CBD5E0 !important;
+}
+
+.card.card-active,
+.step-flow .card[data-step].step--current {
+  border-color: #98002E !important;
+  border-left-width: 3px !important;
+  box-shadow: 0 4px 16px rgba(152, 0, 46, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Inputs — consistent height and radius */
+.field input,
+.field select,
+.field textarea,
+.suite-table input,
+.rent-table input,
+.broker-table input,
+.broker-table select {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  background: #FFFFFF;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field input:hover,
+.field select:hover,
+.field textarea:hover {
+  border-color: #9CA3AF;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: #98002E;
+  box-shadow: 0 0 0 3px rgba(152, 0, 46, 0.10);
+  outline: none;
+}
+
+/* Buttons — consistent radius and sizing */
+.btn {
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 8px;
   font-size: 13px;
-  line-height: 1.45;
-  color: var(--ink-600, #4b5563);
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  transition: all 0.15s ease;
+  cursor: pointer;
 }
-.qc-status.status-success {
-  color: var(--success, #166534);
+
+.btn-red,
+.btn-blue-red {
+  background: #98002E;
+  border: 1px solid #98002E;
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(152, 0, 46, 0.15);
 }
-.qc-status.text-error {
-  color: var(--lee-red, #98002e);
+
+.btn-red:hover,
+.btn-blue-red:hover {
+  background: #7A0024;
+  border-color: #7A0024;
+  box-shadow: 0 2px 6px rgba(152, 0, 46, 0.25);
+  transform: translateY(-0.5px);
 }
-.qc-note {
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--ink-600, #4b5563);
+
+.btn-red:active,
+.btn-blue-red:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(152, 0, 46, 0.15);
+}
+
+.btn-gray,
+.btn-outline {
+  background: #FFFFFF;
+  border: 1px solid #D1D5DB;
+  color: #374151;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.btn-gray:hover,
+.btn-outline:hover {
+  background: #F9FAFB;
+  border-color: #9CA3AF;
+  color: #1F2937;
+}
+
+/* ── 4. Sidebar polish ────────────────────────────────────────────────── */
+.broker-sidebar {
+  width: 240px;
+  background: #FFFFFF;
+  border-right: 1px solid #E5E7EB;
+  padding: 20px 14px;
+  gap: 2px;
+}
+
+.broker-sidebar-brand {
+  padding: 6px 8px 16px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.broker-sidebar .tab {
   padding: 10px 12px;
   border-radius: 8px;
-  background: var(--ink-50, #f9fafb);
-  border: 1px solid var(--ink-200, #e5e7eb);
-  margin-top: 8px;
+  color: #4B5563;
+  margin-bottom: 1px;
 }
-.qc-download {
+
+.broker-sidebar .tab:hover {
+  background: #F9FAFB;
+  color: #1F2937;
+}
+
+.broker-sidebar .tab.active {
+  background: rgba(152, 0, 46, 0.06);
+  color: #98002E;
+  font-weight: 800;
+  box-shadow: inset 3px 0 0 #98002E;
+}
+
+.broker-sidebar .tab svg {
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
+}
+
+.broker-sidebar .tab.active svg {
+  opacity: 1;
+}
+
+/* Sidebar user section */
+.broker-sidebar-user {
+  border-top: 1px solid #F3F4F6;
+  padding-top: 16px;
+  margin-top: auto;
+}
+
+.broker-sidebar-user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1F2937;
+}
+
+.broker-sidebar-user-email {
+  font-size: 11px;
+  color: #6B7280;
+  margin-top: 1px;
+}
+
+.broker-sidebar-action {
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6B7280;
+  letter-spacing: 0.04em;
+}
+
+.broker-sidebar-action:hover {
+  background: #F3F4F6;
+  color: #374151;
+}
+
+/* ── 5. Stepper polish ────────────────────────────────────────────────── */
+.stepper {
+  padding: 12px 16px;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  margin-bottom: 20px;
+}
+
+.stepper-num {
+  width: 26px;
+  height: 26px;
+  font-size: 11px;
+  font-weight: 800;
+  border: 2px solid #D1D5DB;
+  background: #FFFFFF;
+  color: #6B7280;
+}
+
+.stepper-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #6B7280;
+}
+
+.stepper-item.done .stepper-num,
+.stepper-item.current .stepper-num {
+  background: #98002E;
+  border-color: #98002E;
+  color: #FFFFFF;
+}
+
+.stepper-item.current .stepper-num {
+  box-shadow: 0 0 0 4px rgba(152, 0, 46, 0.10);
+}
+
+.stepper-item.done .stepper-label,
+.stepper-item.current .stepper-label {
+  color: #1F2937;
+  font-weight: 800;
+}
+
+.stepper-bar {
+  height: 2px;
+  background: #E5E7EB;
+  border-radius: 1px;
+}
+
+.stepper-bar.done {
+  background: rgba(152, 0, 46, 0.4);
+}
+
+/* ── 6. Deal sidebar (right panel) ────────────────────────────────────── */
+.deal-aside {
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  background: #FFFFFF;
+}
+
+.deal-card {
+  padding: 16px 18px;
+}
+
+.deal-card + .deal-card {
+  border-top: 1px solid #F3F4F6;
+}
+
+.deal-card-primary {
+  background: #F9FAFB;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.deal-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #1F2937;
+  letter-spacing: -0.01em;
+}
+
+.deal-subtitle {
+  font-size: 12px;
+  color: #6B7280;
+  font-weight: 500;
+}
+
+/* Deal steps list */
+.deal-steps li {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B7280;
+  padding: 7px 0;
+}
+
+.deal-steps li.is-done,
+.deal-steps li.done,
+.deal-steps li.is-active,
+.deal-steps li.current {
+  color: #1F2937;
+}
+
+.deal-step-dot {
+  width: 8px;
+  height: 8px;
+  border: 2px solid #D1D5DB;
+  background: #FFFFFF;
+}
+
+.deal-steps li.is-done .deal-step-dot,
+.deal-steps li.done .deal-step-dot,
+.deal-steps li.is-active .deal-step-dot,
+.deal-steps li.current .deal-step-dot {
+  background: #98002E;
+  border-color: #98002E;
+}
+
+.deal-steps li.is-active .deal-step-dot,
+.deal-steps li.current .deal-step-dot {
+  box-shadow: 0 0 0 3px rgba(152, 0, 46, 0.10);
+}
+
+/* ── 7. Tables — cleaner, more readable ───────────────────────────────── */
+.suite-table,
+.rent-table,
+.broker-table,
+.cr-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.suite-table th,
+.rent-table th,
+.broker-table th,
+.cr-table th {
+  background: #F9FAFB;
+  color: #4B5563;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 10px 12px;
+  border-bottom: 1px solid #E5E7EB;
+  text-align: left;
+}
+
+.suite-table td,
+.rent-table td,
+.broker-table td,
+.cr-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #F3F4F6;
+  font-size: 13px;
+  color: #374151;
+}
+
+.suite-table tbody tr:last-child td,
+.rent-table tbody tr:last-child td,
+.broker-table tbody tr:last-child td,
+.cr-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.suite-table tbody tr:hover td,
+.rent-table tbody tr:hover td,
+.broker-table tbody tr:hover td,
+.cr-table tbody tr:hover td {
+  background: #F9FAFB;
+}
+
+/* Table inputs — tighter */
+.suite-table input,
+.rent-table input,
+.broker-table input,
+.broker-table select {
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 6px;
+}
+
+/* ── 8. Step navigation bar ───────────────────────────────────────────── */
+.step-nav {
+  margin: 24px -24px -24px;
+  padding: 16px 24px;
+  background: #F9FAFB;
+  border-top: 1px solid #E5E7EB;
+  border-radius: 0 0 12px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.step-nav .step-count,
+.step-meta {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6B7280;
+}
+
+/* ── 9. Upload zones ──────────────────────────────────────────────────── */
+.upload-zone,
+.brochure-zone {
+  border: 2px dashed #D1D5DB;
+  border-radius: 10px;
+  background: #FAFBFC;
+  padding: 24px;
+  text-align: center;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.upload-zone:hover,
+.brochure-zone:hover {
+  border-color: #98002E;
+  background: rgba(152, 0, 46, 0.02);
+}
+
+/* ── 10. Modal polish ─────────────────────────────────────────────────── */
+.modal-overlay.open {
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.modal {
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(0, 0, 0, 0.08);
+  border: 1px solid #E5E7EB;
+}
+
+/* ── 11. Queue items ──────────────────────────────────────────────────── */
+.queue-item {
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  padding: 16px 20px;
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.15s ease;
+}
+
+.queue-item:hover {
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+}
+
+/* ── 12. Comp reports filters ─────────────────────────────────────────── */
+.cr-filters {
+  padding: 18px 20px;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.filter-bar input,
+.filter-bar select {
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #FFFFFF;
+}
+
+.filter-bar input:focus,
+.filter-bar select:focus {
+  border-color: #98002E;
+  box-shadow: 0 0 0 3px rgba(152, 0, 46, 0.10);
+  outline: none;
+}
+
+/* ── 13. Listing type options — cleaner grid ──────────────────────────── */
+.listing-type-opt {
+  padding: 16px;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  background: #FFFFFF;
+  transition: all 0.15s ease;
+}
+
+.listing-type-opt:hover {
+  border-color: #CBD5E0;
+  background: #F9FAFB;
+  transform: none;
+}
+
+.listing-type-opt.selected {
+  border-color: #98002E;
+  background: rgba(152, 0, 46, 0.03);
+  box-shadow: inset 0 0 0 1px #98002E;
+}
+
+/* ── 14. Branch toggle — cleaner pill buttons ─────────────────────────── */
+.branch-toggle {
+  padding: 3px;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  background: #F9FAFB;
+}
+
+.branch-toggle button {
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6B7280;
+  background: transparent;
+  transition: all 0.15s ease;
+}
+
+.branch-toggle button:hover:not(.active) {
+  background: #FFFFFF;
+  color: #374151;
+}
+
+.branch-toggle button.active {
+  background: #1F2937;
+  color: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* ── 15. Global search — refined ──────────────────────────────────────── */
+.global-search-input {
+  width: 200px;
+  padding: 7px 12px 7px 34px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  background: #F9FAFB;
+  transition: all 0.2s ease;
+}
+
+.global-search-input:focus {
+  width: 260px;
+  border-color: #98002E;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(152, 0, 46, 0.08);
+}
+
+/* ── 16. Tip/alert boxes ──────────────────────────────────────────────── */
+.tip {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-left: 3px solid #98002E;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #4B5563;
+}
+
+/* ── 17. Header polish ────────────────────────────────────────────────── */
+body.broker-active .header {
+  padding: 10px 18px;
+  min-height: 52px;
+  border-bottom: 1px solid #E5E7EB;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  background: #FFFFFF;
+}
+
+/* ── 18. Scrollbar styling (Webkit + Firefox) ─────────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+  background-clip: content-box;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #D1D5DB transparent;
+}
+
+/* ── 19. Focus-visible ring (keyboard accessibility) ──────────────────── */
+:focus-visible {
+  outline: 2px solid #98002E;
+  outline-offset: 2px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none; /* handled by box-shadow above */
+}
+
+/* ── 20. Responsive refinements ───────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .deal-shell {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .deal-aside {
+    position: static;
+    max-height: none;
+  }
+}
+
+@media (max-width: 880px) {
+  .broker-sidebar {
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
+  }
+
+  .broker-sidebar.open {
+    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.15);
+  }
+}
+
+@media (max-width: 720px) {
+  .card {
+    padding: 18px 16px !important;
+    border-radius: 10px !important;
+  }
+
+  .step-nav {
+    margin: 20px -16px -18px;
+    padding: 14px 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    border-radius: 0 0 10px 10px;
+  }
+
+  .step-nav-right {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .step-nav-right .btn {
+    flex: 1 1 140px;
+    justify-content: center;
+  }
+
+  .stepper {
+    padding: 10px 12px;
+    border-radius: 10px;
+    overflow-x: auto;
+  }
+
+  .listing-type-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .field label {
+    font-size: 10px;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    font-size: 14px; /* prevent iOS zoom */
+    min-height: 44px; /* touch target */
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 14px 12px !important;
+    border-radius: 8px !important;
+  }
+
+  .card-head h2,
+  .card-head-left > h2 {
+    font-size: 16px;
+  }
+
+  .page-h1 {
+    font-size: 22px;
+  }
+
+  .broker-sidebar {
+    width: min(85vw, 260px);
+  }
+}
+
+/* ── 21. Print styles ─────────────────────────────────────────────────── */
+@media print {
+  .broker-sidebar,
+  .header,
+  .tab-bar,
+  .step-nav,
+  .btn-bar {
+    display: none !important;
+  }
+
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    break-inside: avoid;
+  }
+
+  body {
+    background: #fff;
+  }
+}
+
+/* ── 22. Subtle animation refinements ─────────────────────────────────── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.panel.active {
+  animation: fadeInUp 0.2s ease-out;
+}
+
+/* Smooth card entrance when switching steps */
+.card.card-active {
+  animation: fadeInUp 0.25s ease-out;
+}
+
+/* ── 23. Auto-calc field styling ──────────────────────────────────────── */
+.field input.auto-calc,
+.field input[readonly],
+.readonly-fill {
+  background: #F3F4F6;
+  border-color: #E5E7EB;
+  color: #4B5563;
+  cursor: default;
+  font-weight: 600;
+}
+
+/* ── 24. Required badge refinement ────────────────────────────────────── */
+.required-badge {
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #FEF2F2;
+  color: #98002E;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
+/* ── 25. Draft cards — cleaner grid ───────────────────────────────────── */
+.drafts-grid {
+  gap: 14px;
+}
+
+.draft-card {
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  padding: 16px 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s ease;
+}
+
+.draft-card:hover {
+  border-color: #CBD5E0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.draft-card-address {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1F2937;
+  line-height: 1.35;
+}
+
+/* ── 26. Address autocomplete — refined ───────────────────────────────── */
+.addr-ac-dropdown {
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
   margin-top: 4px;
 }
+
+.addr-ac-item {
+  padding: 10px 14px;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.addr-ac-item:hover,
+.addr-ac-item.addr-ac-active {
+  background: #FEF2F2;
+}
+
+.addr-ac-line1 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.addr-ac-line2 {
+  font-size: 11px;
+  color: #6B7280;
+}
+
+/* ── 27. Sidebar label truncation fix ────────────────────────────────── */
+.broker-sidebar .nav-item,
+.broker-sidebar .tab-item,
+.broker-sidebar [data-tab] {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* Widen sidebar slightly so common labels don't clip */
+@media (min-width: 881px) {
+  .broker-sidebar {
+    width: 200px;
+    min-width: 200px;
+  }
+
+  .broker-main,
+  .main-content {
+    margin-left: 200px;
+  }
+}
+
+/* ── 28. Comp Reports filter row — responsive grid ───────────────────── */
+.filter-bar,
+.cr-filter-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px 12px;
+  align-items: end;
+}
+
+.filter-bar label,
+.cr-filter-row label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6B7280;
+  margin-bottom: 4px;
+  display: block;
+}
+
+/* Make the search field span 2 columns when space allows */
+@media (min-width: 1000px) {
+  .filter-bar .filter-search-col,
+  .cr-filter-row .filter-search-col {
+    grid-column: span 2;
+  }
+}
+
+/* ── 29. Filter pill buttons (City: All, Market: All, etc.) ──────────── */
+.filter-bar button,
+.cr-filter-row button {
+  min-height: 36px;
+  padding: 6px 14px;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  background: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.filter-bar button:hover,
+.cr-filter-row button:hover {
+  border-color: #9CA3AF;
+  background: #F9FAFB;
+}
+
+/* ── 30. Date inputs — better sizing ────────────────────────────────── */
+input[type="date"],
+.filter-bar input[type="text"][placeholder*="MM/DD"] {
+  min-width: 130px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 31. Document status row — better alignment ─────────────────────── */
+.doc-status-row,
+.doc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #F3F4F6;
+  gap: 12px;
+}
+
+.doc-status-row:last-child,
+.doc-row:last-child {
+  border-bottom: none;
+}
+
+.doc-status-row .doc-name,
+.doc-row .doc-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  flex: 1;
+  min-width: 0;
+}
+
+.doc-status-row .doc-actions,
+.doc-row .doc-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ── 32. Table/Map toggle — segmented control ────────────────────────── */
+.view-toggle,
+.cr-view-toggle {
+  display: inline-flex;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #F9FAFB;
+}
+
+.view-toggle button,
+.cr-view-toggle button {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B7280;
+  background: transparent;
+  border: none;
+  border-right: 1px solid #E5E7EB;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.view-toggle button:last-child,
+.cr-view-toggle button:last-child {
+  border-right: none;
+}
+
+.view-toggle button.active,
+.cr-view-toggle button.active,
+.view-toggle button[aria-pressed="true"],
+.cr-view-toggle button[aria-pressed="true"] {
+  background: #1F2937;
+  color: #FFFFFF;
+}
+
+.view-toggle button:hover:not(.active),
+.cr-view-toggle button:hover:not(.active) {
+  background: #FFFFFF;
+  color: #1F2937;
+}
+
+/* ── 33. Pagination — cleaner ────────────────────────────────────────── */
+.pagination,
+.cr-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 0;
+  margin-top: 12px;
+}
+
+.pagination button,
+.cr-pagination button {
+  padding: 8px 16px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  background: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pagination button:hover,
+.cr-pagination button:hover {
+  border-color: #9CA3AF;
+  background: #F9FAFB;
+}
+
+.pagination button:disabled,
+.cr-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination .page-info,
+.cr-pagination .page-info {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4B5563;
+}
+
+/* ── 34. Empty state / loading state ─────────────────────────────────── */
+.empty-state,
+.loading-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9CA3AF;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.empty-state::before {
+  content: "";
+  display: block;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 12px;
+  background: #F3F4F6;
+  border-radius: 50%;
+}
+
+/* ── 35. Upload drop zone — cleaner ─────────────────────────────────── */
+.drop-zone,
+[id$="-zone"] {
+  border: 2px dashed #D1D5DB;
+  border-radius: 12px;
+  padding: 28px 20px;
+  text-align: center;
+  background: #FAFBFC;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.drop-zone:hover,
+[id$="-zone"]:hover {
+  border-color: #98002E;
+  background: #FEF7F9;
+}
+
+.drop-zone.drag-over,
+[id$="-zone"].drag-over {
+  border-color: #98002E;
+  background: #FEF2F2;
+  box-shadow: inset 0 0 0 2px rgba(152, 0, 46, 0.08);
+}
+
+.drop-zone-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.drop-zone-hint {
+  font-size: 12px;
+  color: #9CA3AF;
+}
+
+/* ── 36. Sidebar user info — cleaner ────────────────────────────────── */
+.sidebar-user {
+  padding: 14px 16px;
+  border-top: 1px solid #E5E7EB;
+  margin-top: auto;
+}
+
+.sidebar-user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1F2937;
+  line-height: 1.3;
+}
+
+.sidebar-user-email {
+  font-size: 11px;
+  color: #6B7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── 37. Consistent spacing between form sections ────────────────────── */
+.field-group + .field-group,
+.form-section + .form-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #F3F4F6;
+}
+
+/* ── 38. Badge / tag consistency ─────────────────────────────────────── */
+.badge,
+.tag,
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+.badge-success {
+  background: #ECFDF5;
+  color: #065F46;
+}
+
+.badge-warning {
+  background: #FFFBEB;
+  color: #92400E;
+}
+
+.badge-error {
+  background: #FEF2F2;
+  color: #98002E;
+}
+
+.badge-info {
+  background: #EFF6FF;
+  color: #1E40AF;
+}
+
+.badge-neutral {
+  background: #F3F4F6;
+  color: #4B5563;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   PATCH 3 — Sidebar label truncation fix + Comp Reports dropdown polish
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── A. Sidebar tab label truncation fix ──────────────────────────────
+   Section 27 incorrectly set sidebar to 200px and added overflow:hidden
+   on [data-tab]. We undo that and ensure labels fit at 240px width.
+   ───────────────────────────────────────────────────────────────────── */
+
+/* Override section 27's broken width reduction */
+@media (min-width: 881px) {
+  .broker-sidebar {
+    width: 240px;
+    min-width: 240px;
+  }
+  .broker-main,
+  .main-content {
+    margin-left: 240px;
+  }
+}
+
+/* Remove overflow clipping from sidebar nav items */
+.broker-sidebar .nav-item,
+.broker-sidebar .tab-item,
+.broker-sidebar [data-tab],
+.broker-sidebar .tab {
+  overflow: visible;
+  text-overflow: unset;
+  letter-spacing: 0.02em;
+  font-size: 11.5px;
+}
+
+/* Ensure the tab text span doesn't get clipped */
+.broker-sidebar .tab span {
+  overflow: visible;
+  text-overflow: unset;
+  white-space: nowrap;
+}
+
+/* ── B. Comp Reports dropdown panel — cleaner, more polished ─────────── */
+
+/* Ensure the dropdown container doesn't clip the panel */
+.cr-dd {
+  position: relative;
+  overflow: visible;
+}
+
+/* Ensure the filter grid doesn't clip dropdown panels */
+.cr-filters-grid {
+  overflow: visible;
+}
+.cr-filters-grid .field {
+  overflow: visible;
+}
+.cr-filters {
+  overflow: visible;
+}
+
+/* Enhanced dropdown button */
+.cr-dd-btn {
+  min-height: 38px;
+  padding: 8px 12px;
+  background: #FFFFFF;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.cr-dd-btn:hover {
+  border-color: #9CA3AF;
+  background: #FAFAFA;
+}
+.cr-dd-btn.open {
+  border-color: #98002E;
+  box-shadow: 0 0 0 3px rgba(152, 0, 46, 0.08);
+  background: #FFFFFF;
+}
+
+/* Enhanced dropdown panel */
+.cr-dd-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 9999;
+  min-width: 220px;
+  max-width: 300px;
+  width: max-content;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  animation: crDdSlideIn 0.15s ease-out;
+}
+.cr-dd-panel.open {
+  display: block;
+}
+
+@keyframes crDdSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Search input inside dropdown */
+.cr-dd-search {
+  padding: 10px 12px;
+  border-bottom: 1px solid #F3F4F6;
+  background: #FAFAFA;
+}
+.cr-dd-search-input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  background: #FFFFFF;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.cr-dd-search-input:focus {
+  border-color: #98002E;
+  box-shadow: 0 0 0 3px rgba(152, 0, 46, 0.10);
+}
+.cr-dd-search-input::placeholder {
+  color: #9CA3AF;
+  font-weight: 400;
+}
+
+/* Options list */
+.cr-dd-opts {
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 6px 0;
+  scrollbar-width: thin;
+  scrollbar-color: #D1D5DB transparent;
+}
+.cr-dd-opts::-webkit-scrollbar {
+  width: 6px;
+}
+.cr-dd-opts::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 3px;
+}
+.cr-dd-opts::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Individual option row */
+.cr-dd-opt {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s ease;
+  border-radius: 0;
+}
+.cr-dd-opt:hover {
+  background: #F9FAFB;
+}
+.cr-dd-opt span {
+  font-size: 13px;
+  line-height: 1.3;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Checkbox styling */
+.cr-dd-opt input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  padding: 0;
+  accent-color: #98002E;
+  cursor: pointer;
+  margin: 0;
+  border-radius: 4px;
+}
+
+/* Footer with Clear button */
+.cr-dd-footer {
+  border-top: 1px solid #F3F4F6;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: flex-end;
+  background: #FAFAFA;
+}
+.cr-dd-footer button {
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #FFFFFF;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.cr-dd-footer button:hover {
+  background: #F3F4F6;
+  border-color: #9CA3AF;
+  color: #374151;
+}
+
+/* Arrow indicator */
+.cr-dd-arrow {
+  flex-shrink: 0;
+  color: #9CA3AF;
+  transition: transform 0.2s ease, color 0.15s ease;
+}
+.cr-dd-btn.open .cr-dd-arrow {
+  transform: rotate(180deg);
+  color: #98002E;
+}
+
+/* Label text in button */
+.cr-dd-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+/* ── C. Comp Reports table polish ─────────────────────────────────────── */
+
+/* Results count text */
+.cr-results-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 0;
+}
+#cr-results-count {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6B7280;
+}
+
+/* Table header row */
+.cr-table thead th,
+.cr-tbl thead th,
+#cr-table-head th {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6B7280;
+  padding: 10px 12px;
+  border-bottom: 2px solid #E5E7EB;
+  background: #F9FAFB;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* Table body rows */
+.cr-table tbody tr,
+.cr-tbl tbody tr,
+#cr-table-body tr {
+  border-bottom: 1px solid #F3F4F6;
+  transition: background 0.1s ease;
+}
+.cr-table tbody tr:hover,
+.cr-tbl tbody tr:hover,
+#cr-table-body tr:hover {
+  background: #FAFBFC;
+}
+
+/* Table cells */
+.cr-table td,
+.cr-tbl td,
+#cr-table-body td {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #374151;
+  vertical-align: middle;
+}
+
+/* NO PHOTO placeholder */
+.cr-photo-placeholder,
+.cr-no-photo {
+  width: 60px;
+  height: 44px;
+  border-radius: 6px;
+  background: #F3F4F6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #9CA3AF;
+  text-transform: uppercase;
+}
+
+/* Expand/collapse toggle button */
+.cr-row-toggle,
+.cr-expand-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #E5E7EB;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: #9CA3AF;
+}
+.cr-row-toggle:hover,
+.cr-expand-btn:hover {
+  background: #F3F4F6;
+  border-color: #D1D5DB;
+  color: #374151;
+}
+
+/* Pagination */
+.cr-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 0;
+  font-size: 13px;
+  color: #6B7280;
+}
+.cr-pagination button {
+  padding: 8px 16px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  background: #FFFFFF;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.cr-pagination button:hover:not(:disabled) {
+  background: #F9FAFB;
+  border-color: #D1D5DB;
+}
+.cr-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.cr-pagination .cr-page-info {
+  font-weight: 600;
+  color: #374151;
+}
+
+/* ── D. Comp Reports view toggle buttons (Table / Map) ────────────────── */
+.cr-view-toggle,
+.cr-results-meta .cr-filters-actions-right {
+  display: flex;
+  gap: 0;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.cr-view-toggle button,
+.cr-results-meta .cr-filters-actions-right button {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  background: #FFFFFF;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-right: 1px solid #E5E7EB;
+}
+.cr-view-toggle button:last-child,
+.cr-results-meta .cr-filters-actions-right button:last-child {
+  border-right: none;
+}
+.cr-view-toggle button.active,
+.cr-results-meta .cr-filters-actions-right button.active,
+#cr-view-table-btn.active,
+#cr-view-map-btn.active {
+  background: #1F2937;
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+/* ── E. Comp Reports filter grid — ensure proper spacing ──────────────── */
+.cr-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px 14px;
+  align-items: end;
+}
+.cr-filters-grid .field {
+  min-width: 0;
+}
+.cr-filters-grid .field label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6B7280;
+  margin-bottom: 5px;
+  display: block;
+  white-space: nowrap;
+}
+
+/* Date range field — sits inline spanning 2 columns like SF Range */
+.cr-filters-grid .cr-date-range-field {
+  grid-column: span 2;
+  min-width: 0;
+}
+
+/* SF Range field */
+.cr-filters-grid .cr-span-2 {
+  grid-column: span 2;
+}
+
+/* Range row inputs */
+.cr-range-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cr-range-row input {
+  flex: 1;
+  min-width: 0;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #FFFFFF;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.cr-range-row input:focus {
+  border-color: #98002E;
+  box-shadow: 0 0 0 3px rgba(152, 0, 46, 0.10);
+  outline: none;
+}
+.cr-range-row input::placeholder {
+  color: #9CA3AF;
+  font-size: 12px;
+}
+.cr-range-sep {
+  color: #9CA3AF;
+  font-size: 14px;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+/* Filter actions row */
+.cr-filters-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #F3F4F6;
+  gap: 12px;
+}
+.cr-filters-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Responsive: collapse grid on smaller screens */
+@media (max-width: 1100px) {
+  .cr-filters-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+  .cr-filters-grid .cr-date-range-field,
+  .cr-filters-grid .cr-span-2 {
+    grid-column: span 2;
+  }
+}
+@media (max-width: 640px) {
+  .cr-filters-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .cr-filters-grid .cr-date-range-field,
+  .cr-filters-grid .cr-span-2 {
+    grid-column: 1 / -1;
+  }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   PATCH 4 — Collapsible sidebar with hamburger toggle (desktop)
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── A. Always show the hamburger toggle on desktop ───────────────────── */
+body.broker-active .broker-hamburger {
+  display: inline-flex !important;
+}
+
+/* ── B. Sidebar collapse toggle button inside sidebar ─────────────────── */
+.sidebar-collapse-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  background: #FFFFFF;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  position: absolute;
+  top: 14px;
+  right: 10px;
+  z-index: 5;
+}
+.sidebar-collapse-btn:hover {
+  background: #F3F4F6;
+  color: #1F2937;
+  border-color: #D1D5DB;
+}
+
+@media (min-width: 881px) {
+  .sidebar-collapse-btn {
+    display: inline-flex;
+  }
+}
+
+/* ── C. Desktop collapsed state ───────────────────────────────────────── */
+@media (min-width: 881px) {
+  /* Smooth transition for sidebar width */
+  .broker-sidebar {
+    transition: width 0.25s ease, min-width 0.25s ease, padding 0.25s ease, transform 0.25s ease;
+  }
+
+  /* When sidebar is collapsed on desktop */
+  body.sidebar-collapsed .broker-sidebar {
+    width: 0px;
+    min-width: 0px;
+    padding: 0;
+    overflow: hidden;
+    border-right: none;
+    visibility: hidden;
+  }
+
+  /* Content area expands when sidebar is collapsed */
+  body.sidebar-collapsed #broker-view > .panel.active {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Remove the margin-left that was set for the sidebar */
+  body.sidebar-collapsed .broker-main,
+  body.sidebar-collapsed .main-content {
+    margin-left: 0;
+  }
+
+  /* Animate the content area transition */
+  #broker-view > .panel.active {
+    transition: margin-left 0.25s ease;
+  }
+}
+
+/* ── D. Hamburger button styling refinement ───────────────────────────── */
+.broker-hamburger {
+  position: relative;
+  z-index: 25;
+  margin-right: 12px;
+  order: -1;
+}
+
+/* When sidebar is open on desktop, change hamburger to X or indicate close */
+@media (min-width: 881px) {
+  body.broker-active:not(.sidebar-collapsed) .broker-hamburger {
+    background: rgba(152, 0, 46, 0.04);
+    border-color: rgba(152, 0, 46, 0.15);
+    color: #98002E;
+  }
+}
+
+/* ── E. Mobile behavior unchanged — keep existing slide-in behavior ───── */
+@media (max-width: 880px) {
+  body.sidebar-collapsed .broker-sidebar {
+    width: min(86vw, 280px);
+    min-width: unset;
+    padding: 18px 14px 20px;
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
+    visibility: visible;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   SECTION 32 — CoStar-style Filter Bar (Comp Reports)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── A. Filter Bar Layout ─────────────────────────────────────────────────── */
+.cr-filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.cr-filter-row-primary {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cr-filter-row-secondary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px solid #F3F4F6;
+}
+
+.cr-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cr-filter-txn {
+  flex-shrink: 0;
+}
+
+.cr-filter-location {
+  flex: 2;
+  min-width: 240px;
+}
+
+.cr-filter-proptype {
+  flex: 1;
+  min-width: 160px;
+}
+
+.cr-filter-search {
+  flex: 1;
+  min-width: 160px;
+}
+
+.cr-filter-sf,
+.cr-filter-date {
+  flex-shrink: 0;
+}
+
+.cr-filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.cr-filter-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* ── B. Transaction Toggle ────────────────────────────────────────────────── */
+.cr-toggle-group {
+  display: inline-flex;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #F9FAFB;
+}
+
+.cr-toggle-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.cr-toggle-btn:hover {
+  background: #F3F4F6;
+  color: #374151;
+}
+
+.cr-toggle-btn.active {
+  background: #98002E;
+  color: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(152, 0, 46, 0.2);
+}
+
+/* ── C. Chip Input Container ──────────────────────────────────────────────── */
+.cr-chip-input {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-height: 38px;
+  padding: 4px 8px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  background: #FFFFFF;
+  cursor: text;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  width: 100%;
+}
+
+.cr-chip-input:focus-within {
+  border-color: #98002E;
+  box-shadow: 0 0 0 3px rgba(152, 0, 46, 0.08);
+}
+
+.cr-chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.cr-chip-search {
+  flex: 1;
+  min-width: 80px;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  padding: 4px 2px;
+  background: transparent;
+  color: #1F2937;
+}
+
+.cr-chip-search::placeholder {
+  color: #9CA3AF;
+}
+
+/* ── D. Chips ─────────────────────────────────────────────────────────────── */
+.cr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 500;
+  background: color-mix(in srgb, var(--chip-color, #6B7280) 10%, transparent);
+  color: var(--chip-color, #6B7280);
+  border: 1px solid color-mix(in srgb, var(--chip-color, #6B7280) 25%, transparent);
+  white-space: nowrap;
+  animation: chipIn 0.15s ease;
+}
+
+@keyframes chipIn {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.cr-chip-icon {
+  font-size: 8px;
+  opacity: 0.7;
+}
+
+.cr-chip-label {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cr-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 50%;
+  opacity: 0.6;
+  transition: opacity 0.1s, background 0.1s;
+  padding: 0;
+  line-height: 1;
+}
+
+.cr-chip-remove:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--chip-color, #6B7280) 15%, transparent);
+}
+
+/* ── E. Chip Dropdown ─────────────────────────────────────────────────────── */
+.cr-chip-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  z-index: 600;
+  padding: 6px 0;
+}
+
+.cr-chip-dropdown.open {
+  display: block;
+}
+
+.cr-chip-dd-group {
+  padding: 4px 0;
+}
+
+.cr-chip-dd-group + .cr-chip-dd-group {
+  border-top: 1px solid #F3F4F6;
+}
+
+.cr-chip-dd-group-label {
+  padding: 6px 14px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9CA3AF;
+}
+
+.cr-chip-dd-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: #1F2937;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.cr-chip-dd-item:hover {
+  background: #F9FAFB;
+}
+
+.cr-chip-dd-item-label strong {
+  color: #98002E;
+  font-weight: 700;
+}
+
+.cr-chip-dd-hint {
+  font-size: 11px;
+  color: #9CA3AF;
+  font-style: italic;
+}
+
+.cr-chip-dd-more {
+  padding: 6px 14px;
+  font-size: 11px;
+  color: #9CA3AF;
+  font-style: italic;
+}
+
+.cr-chip-dd-empty {
+  padding: 16px 14px;
+  font-size: 13px;
+  color: #9CA3AF;
+  text-align: center;
+}
+
+/* ── F. Query Input ───────────────────────────────────────────────────────── */
+.cr-query-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1F2937;
+  background: #FFFFFF;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cr-query-input:focus {
+  outline: none;
+  border-color: #98002E;
+  box-shadow: 0 0 0 3px rgba(152, 0, 46, 0.08);
+}
+
+.cr-query-input::placeholder {
+  color: #9CA3AF;
+}
+
+/* ── G. Range Inputs (SF, Date) ───────────────────────────────────────────── */
+.cr-range-input {
+  width: 80px;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #1F2937;
+  background: #FFFFFF;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cr-range-input:focus {
+  outline: none;
+  border-color: #98002E;
+  box-shadow: 0 0 0 3px rgba(152, 0, 46, 0.08);
+}
+
+.cr-range-input::placeholder {
+  color: #9CA3AF;
+}
+
+.cr-date-input {
+  width: 120px;
+}
+
+.cr-filter-row-secondary .cr-range-sep {
+  color: #9CA3AF;
+  font-size: 13px;
+}
+
+/* ── H. Button sizing ─────────────────────────────────────────────────────── */
+.btn-sm {
+  padding: 7px 14px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+/* ── I. Responsive ────────────────────────────────────────────────────────── */
+@media (max-width: 880px) {
+  .cr-filter-row-primary {
+    flex-direction: column;
+  }
+  .cr-filter-location,
+  .cr-filter-proptype,
+  .cr-filter-search {
+    min-width: 100%;
+  }
+  .cr-filter-row-secondary {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cr-filter-actions {
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Section 33 — Export Progress Overlay
+   ═══════════════════════════════════════════════════════════════════════════ */
+#cr-export-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+#cr-export-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.cr-export-overlay-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px 48px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  min-width: 320px;
+}
+.cr-export-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #E5E7EB;
+  border-top-color: #98002E;
+  border-radius: 50%;
+  animation: btnSpin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+.cr-export-status {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1F2937;
+  margin-bottom: 12px;
+}
+#cr-export-progress {
+  height: 4px;
+  background: #98002E;
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Section 34 — Calendar Date Picker Enhancement
+   ═══════════════════════════════════════════════════════════════════════════ */
+.cr-date-input {
+  position: relative;
+}
+.cr-date-input::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'/%3E%3C/svg%3E");
+  background-size: contain;
+  pointer-events: none;
+  opacity: 0.6;
+}
+.cr-date-input:focus-within::after {
+  opacity: 1;
+}
+
+/* ─── Upload Analyze Panel ─────────────────────────────────────────────────── */
+.upload-analyze-panel {
+  margin-top: 12px;
+  border: 1.5px solid #e8d0d7;
+  border-radius: 10px;
+  background: #fdf5f7;
+  overflow: hidden;
+}
+.upload-analyze-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  flex-wrap: wrap;
+}
+.upload-analyze-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.upload-analyze-file-count {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #303c42;
+}
+.upload-analyze-icon { font-size: 16px; flex-shrink: 0; }
+.upload-analyze-result {
+  font-size: 13px;
+  min-height: 18px;
+}
+.upload-analyze-ok { color: #3a6b2a; font-weight: 600; }
+.upload-analyzing-text { color: #7e8083; font-style: italic; }
+.upload-analyze-warn { color: #86411c; font-weight: 600; }
+.upload-analyze-error { color: #a1102f; font-weight: 600; }
+.upload-analyze-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--red, #98002e);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background 0.15s, opacity 0.15s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.upload-analyze-btn:hover { background: #7a0024; }
+.upload-analyze-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.upload-analyze-btn .btn-spinner {
+  display: none;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btnSpin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+.upload-analyze-btn.loading .btn-spinner { display: block; }
+.upload-analyze-btn.loading .upload-analyze-btn-inner { opacity: 0.7; }
+.upload-analyze-btn-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  line-height: 1.2;
+}
+.upload-analyze-btn-title { font-size: 13px; font-weight: 700; }
+.upload-analyze-btn-sub { font-size: 11px; font-weight: 400; opacity: 0.85; }
+
+/* File warning banner in staged list */
+.upload-file-warning-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: #fff8ed;
+  border: 1px solid #f6d186;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #6f311a;
+  line-height: 1.4;
+}
+.upload-warn-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.upload-warn-text { flex: 1; }
+
+/* ─── Preflight Check Modal ─────────────────────────────────────────────────── */
+.modal-preflight {
+  max-width: 560px;
+  width: min(96vw, 560px);
+  padding: 28px 28px 24px;
+}
+.preflight-header { margin-bottom: 18px; }
+.preflight-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #303c42;
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+}
+.preflight-subtitle {
+  font-size: 14px;
+  color: #7e8083;
+  margin: 0;
+  line-height: 1.4;
+}
+.preflight-form-label {
+  font-size: 13px;
+  color: #7e8083;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e8eaed;
+}
+.preflight-form-label strong { color: #303c42; }
+.preflight-warning-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  background: #fef7ea;
+  border: 1.5px solid #f6a800;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #6f311a;
+  line-height: 1.5;
+}
+.preflight-warn-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.preflight-checklist {
+  max-height: 340px;
+  overflow-y: auto;
+  margin-bottom: 18px;
+  padding-right: 2px;
+}
+.preflight-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.preflight-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  border: 1px solid transparent;
+}
+.preflight-item-ok {
+  background: #f0f7ed;
+  border-color: #c5e0bb;
+}
+.preflight-item-warn {
+  background: #fdf5f7;
+  border-color: #e8d0d7;
+}
+.preflight-item-error {
+  background: #fef2f2;
+  border-color: #fcc;
+}
+.preflight-item-icon { font-size: 16px; flex-shrink: 0; }
+.preflight-item-label {
+  flex: 0 0 auto;
+  font-weight: 600;
+  color: #303c42;
+  min-width: 140px;
+  font-size: 14px;
+}
+.preflight-item-value {
+  flex: 1;
+  color: #4a5a63;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.preflight-item-value em {
+  font-style: normal;
+  color: #a1102f;
+  font-size: 13px;
+}
+.preflight-item-ok .preflight-item-value { color: #2a5520; }
+.preflight-btn-bar { gap: 10px; margin-top: 0; flex-wrap: wrap; }
+.preflight-back-btn { flex: 0 0 auto; }
+.preflight-btn-bar .btn-red { flex: 1; min-width: 200px; justify-content: center; font-size: 15px; padding: 13px 20px; }
+
+/* ─── Send-to-Admin modal submission summary ─────────────────────────────── */
+.sta-submission-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: #f4e3e8;
+  border: 1px solid #e8d0d7;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.sta-summary-form {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #98002e;
+}
+.sta-summary-addr {
+  font-weight: 600;
+  color: #303c42;
+  font-size: 14px;
+}
+.sta-summary-docs { color: #7e8083; font-size: 12px; }

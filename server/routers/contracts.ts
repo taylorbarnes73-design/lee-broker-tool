@@ -1,11 +1,11 @@
 import { z } from "zod/v4";
 import { publicProcedure, router } from "../_core/trpc";
-import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable, type Message } from "../_core/llm";
+import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable, isClaudeFallbackAvailable, invokeClaudeWithFile, type Message } from "../_core/llm";
 import { execSync } from "child_process";
 import { ENV } from "../_core/env";
 import { getSetting } from "../settings/getSetting";
 import { isStoredFileReference, storageGetBytes } from "../storage";
-import { extractPdfPlainText } from "../services/pdfTextScrape";
+import { notifyAdminOfSubmission } from "../services/adminNotification";
 
 // ── Types ──
 
@@ -29,10 +29,6 @@ const contractDataSchema = z.object({
   agentFax: z.string().optional(),
   brokerDre: z.string().optional(),
   agentIndividual: z.string().optional(),
-  /** AIR CRE §1.10 — Lessor's Agent (salesperson), when filled */
-  lessorAgentIndividual: z.string().optional(),
-  /** AIR CRE §1.10 — Lessee's Agent (salesperson), when filled */
-  lesseeAgentIndividual: z.string().optional(),
   agentTitle: z.string().optional(),
   agentDre: z.string().optional(),
   agentEmail: z.string().optional(),
@@ -193,8 +189,6 @@ export const contractsRouter = router({
 For dates, return them in YYYY-MM-DD format if possible, otherwise return the raw text.
 For commission, note whether it is a percentage, flat fee, or per schedule.
 For arbitration, return "AAA", "JAMS", or "none".
-For AIR CRE §1.10 brokerage: put the Lessor's Agent salesperson in lessorAgentIndividual and the Lessee's Agent salesperson in lesseeAgentIndividual. Do not copy the Lessor's Agent into lesseeAgentIndividual when the Lessee's Agent line is blank.
-Split property location into propAddress (street + suite only), propCity, propState, and propZip when shown in the Premises line.
 If a field is blank or not applicable, omit it from the response.
 
 Return ONLY valid JSON, no markdown, no explanation.`;
@@ -216,8 +210,6 @@ Return JSON with these fields (omit any that are blank):
   "agentFax": "",
   "brokerDre": "",
   "agentIndividual": "",
-  "lessorAgentIndividual": "",
-  "lesseeAgentIndividual": "",
   "agentTitle": "",
   "agentDre": "",
   "agentEmail": "",
@@ -265,8 +257,28 @@ Return JSON with these fields (omit any that are blank):
 
         let rawJson: string;
 
-        // ── Preferred path: native AI inline PDF (no text extraction) ──
-        if (isGeminiDirectAvailable()) {
+        // ── Primary: Claude (most accurate for document extraction) ──
+        if (isClaudeFallbackAvailable()) {
+          try {
+            rawJson = await invokeClaudeWithFile({
+              fileBuffer: pdfBuffer,
+              mimeType: "application/pdf",
+              systemPrompt: systemPrompt,
+              userPrompt: userPrompt,
+            });
+          } catch (claudeErr: unknown) {
+            console.warn(
+              "[contracts] Claude primary extraction failed, trying Gemini:",
+              claudeErr instanceof Error ? claudeErr.message : String(claudeErr)
+            );
+            rawJson = "";
+          }
+        } else {
+          rawJson = "";
+        }
+
+        // ── Fallback 1: Gemini with native PDF support ──
+        if (!rawJson && isGeminiDirectAvailable()) {
           try {
             rawJson = await invokeLLMWithFile({
               fileBuffer: pdfBuffer,
@@ -276,20 +288,21 @@ Return JSON with these fields (omit any that are blank):
             });
           } catch (aiErr: unknown) {
             console.warn(
-              "[contracts] AI native PDF invocation failed, falling back to text extraction:",
+              "[contracts] Gemini fallback also failed, falling back to text extraction:",
               aiErr instanceof Error ? aiErr.message : String(aiErr)
             );
             rawJson = "";
           }
-        } else {
-          rawJson = "";
         }
 
         // ── Fallback path: extract text then call via the regular LLM ──
         if (!rawJson) {
           let pdfText = "";
           try {
-            pdfText = await extractPdfPlainText(pdfBuffer, 40_000);
+            const mod = await import("pdf-parse");
+            const parse = (mod as any).default ?? (mod as any);
+            const pdfParsed = await parse(pdfBuffer);
+            pdfText = (pdfParsed.text || "").replace(/\s+/g, " ").trim().slice(0, 40_000);
           } catch (parseErr: unknown) {
             const msg = parseErr instanceof Error ? parseErr.message : String(parseErr);
             pdfText = `[PDF text extraction failed: ${msg}. Return empty JSON if no data is available.]`;
@@ -395,6 +408,16 @@ Return JSON with these fields (omit any that are blank):
           `mcp-cli tool call outlook_send_messages --server outlook-mail --input '${mcpInput.replace(/'/g, "'\\''")}'`,
           { timeout: 30000 }
         );
+
+        // Notify admin of new contract submission
+        notifyAdminOfSubmission({
+          formType: "contract",
+          brokerName: brokerName || null,
+          propertyAddress: addressPart || null,
+          submittedByEmail: senderEmail || null,
+          notes: notes || null,
+        });
+
         return { success: true, error: null };
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);

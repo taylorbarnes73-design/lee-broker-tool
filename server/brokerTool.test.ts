@@ -7,8 +7,31 @@ const brokerToolHtml = readFileSync(
   "utf8"
 );
 
+// features_patch.js contains additional function definitions (as window.X = function(...))
+// referenced by onclick handlers added in broker_tool.html.
+const featuresPatchJs = readFileSync(
+  resolve(process.cwd(), "client/public/features_patch.js"),
+  "utf8"
+);
+
 function collectMatches(pattern: RegExp) {
   return [...brokerToolHtml.matchAll(pattern)].map(match => match[1]);
+}
+
+function collectDefinedFunctions(): Set<string> {
+  const defined = new Set<string>();
+  // Named function declarations: function foo(
+  for (const m of brokerToolHtml.matchAll(/\bfunction\s+([A-Za-z0-9_]+)\s*\(/g)) {
+    defined.add(m[1]);
+  }
+  for (const m of featuresPatchJs.matchAll(/\bfunction\s+([A-Za-z0-9_]+)\s*\(/g)) {
+    defined.add(m[1]);
+  }
+  // window.foo = function( or window.foo = async function(
+  for (const m of featuresPatchJs.matchAll(/window\.([A-Za-z0-9_]+)\s*=\s*(?:async\s+)?function\s*\(/g)) {
+    defined.add(m[1]);
+  }
+  return defined;
 }
 
 function extractFunctionSource(name: string) {
@@ -55,9 +78,9 @@ function getAiApplyHelpers() {
 describe("broker_tool.html wiring", () => {
   it("keeps every inline onclick handler bound to a real function", () => {
     const handlers = collectMatches(/onclick="([A-Za-z0-9_]+)\(/g);
-    const definedFunctions = new Set(
-      collectMatches(/\bfunction\s+([A-Za-z0-9_]+)\s*\(/g)
-    );
+    // Collect from broker_tool.html inline scripts AND features_patch.js
+    // (both named function declarations and window.X = function(...) assignments)
+    const definedFunctions = collectDefinedFunctions();
 
     const missingHandlers = [...new Set(handlers)].filter(
       handler => !definedFunctions.has(handler)

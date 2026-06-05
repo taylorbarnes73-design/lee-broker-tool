@@ -1,0 +1,470 @@
+/**
+ * Broker tool UX pass — layout, readability, senior-friendly affordances.
+ * Frontend-only; does not change API contracts.
+ */
+
+:root {
+  --broker-header-h: 72px;
+  --broker-chrome-h: 72px;
+}
+
+/* ── App shell: main area scrolls; side rails fit the window ── */
+body.broker-active {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+body.broker-active .header {
+  flex-shrink: 0;
+}
+
+body.broker-active #broker-view {
+  flex: 1;
+  min-height: 0;
+  height: calc(100dvh - var(--broker-header-h));
+  max-height: calc(100dvh - var(--broker-header-h));
+  overflow: hidden;
+  align-items: stretch;
+}
+
+body.broker-active .broker-sidebar {
+  height: 100%;
+  max-height: 100%;
+  overflow: visible;
+  padding: 12px 10px 14px;
+}
+
+body.broker-active .broker-sidebar .tab {
+  padding: 8px 10px;
+  font-size: 11px;
+}
+
+body.broker-active .broker-sidebar-user {
+  padding-top: 10px;
+  margin-top: auto;
+}
+
+body.broker-active #broker-view > .panel.active {
+  height: 100%;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 20px 18px 100px;
+  box-sizing: border-box;
+}
+
+/* ── Deal shell: glance column fits viewport (no inner scroll) ── */
+body.broker-active .deal-shell {
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 300px);
+  gap: 18px;
+}
+
+body.broker-active .deal-aside {
+  position: sticky;
+  top: 8px;
+  align-self: start;
+  max-height: calc(100dvh - var(--broker-chrome-h) - 32px);
+  overflow: visible;
+  gap: 8px;
+}
+
+body.broker-active .deal-aside .deal-card {
+  padding: 12px 14px;
+  border-radius: 10px;
+}
+
+body.broker-active .deal-aside .deal-title {
+  font-size: 15px;
+}
+
+body.broker-active .deal-aside .deal-kv {
+  gap: 5px;
+}
+
+body.broker-active .deal-aside .deal-kv dt {
+  font-size: 10px;
+}
+
+body.broker-active .deal-aside .deal-kv dd {
+  font-size: 12px;
+  max-width: 140px;
+}
+
+body.broker-active .deal-aside .deal-card-progress {
+  display: none;
+}
+
+body.broker-active .deal-actions {
+  gap: 6px;
+}
+
+body.broker-active .deal-actions .btn {
+  min-height: 44px;
+  font-size: 13px;
+  padding: 10px 12px;
+}
+
+/* ── Prevent field overflow in main column ── */
+body.broker-active .deal-main,
+body.broker-active .panel {
+  min-width: 0;
+}
+
+body.broker-active .row {
+  gap: 12px;
+  min-width: 0;
+}
+
+body.broker-active .row > .field {
+  min-width: 0;
+}
+
+body.broker-active .field input,
+body.broker-active .field select,
+body.broker-active .field textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+body.broker-active .row.c2,
+body.broker-active .row.c3,
+body.broker-active .row.c4,
+body.broker-active .row.c5,
+body.broker-active .row.c-addr {
+  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+}
+
+body.broker-active .listing-type-grid {
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+}
+
+body.broker-active .card {
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+body.broker-active .page-head {
+  margin-bottom: 12px;
+}
+
+body.broker-active .pane-intro-tip,
+body.broker-active .broker-pane-guide {
+  font-size: 14px;
+  line-height: 1.55;
+  border-radius: 10px;
+}
+
+.broker-pane-guide {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 12px 14px;
+  margin: 0 0 14px;
+  color: #334155;
+}
+
+.broker-pane-guide strong {
+  color: #0f172a;
+}
+
+.broker-pane-guide ol {
+  margin: 8px 0 0 1.1rem;
+  padding: 0;
+}
+
+.broker-pane-guide li {
+  margin-bottom: 4px;
+}
+
+/* ── Upload + Analyze (large, obvious) ── */
+.upload-action-row {
+  margin-top: 12px;
+}
+
+.upload-analyze-btn-primary {
+  width: 100%;
+  min-height: 52px;
+  justify-content: center;
+  text-align: left;
+}
+
+.upload-analyze-btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.upload-senior-hint {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+.broker-table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 8px;
+}
+
+.broker-table-scroll table {
+  min-width: 520px;
+}
+
+/* ── Sticky review bar (senior-friendly) ── */
+.broker-review-bar {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 16px;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  max-width: min(640px, calc(100vw - 24px));
+  padding: 12px 16px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+}
+
+.broker-review-bar.is-hidden {
+  display: none !important;
+}
+
+.broker-review-bar-text {
+  flex: 1;
+  min-width: 180px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.4;
+}
+
+.broker-review-bar .btn {
+  min-height: 48px;
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  body.broker-active .deal-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.broker-active .deal-aside {
+    position: static;
+    max-height: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  body.broker-active .deal-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  body.broker-active .deal-actions .btn {
+    flex: 1 1 160px;
+    width: auto;
+  }
+}
+
+/* Larger, readable preflight modal for review step */
+.modal-preflight .preflight-title {
+  font-size: 22px;
+}
+.modal-preflight .preflight-subtitle {
+  font-size: 15px;
+  line-height: 1.5;
+}
+.preflight-item {
+  font-size: 14px;
+  padding: 10px 12px;
+}
+.preflight-back-btn,
+#preflight-confirm-btn {
+  min-height: 48px;
+  font-size: 15px;
+}
+
+@media (max-width: 880px) {
+  :root {
+    --broker-header-h: 60px;
+    --broker-chrome-h: 60px;
+  }
+
+  .broker-review-bar {
+    left: 12px;
+    right: 12px;
+    transform: none;
+    max-width: none;
+  }
+}
+
+@media (max-height: 720px) {
+  body.broker-active .broker-sidebar .tab {
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  body.broker-active .deal-aside .deal-card:not(.deal-card-primary) {
+    display: none;
+  }
+
+  body.broker-active .deal-aside .deal-actions .btn {
+    min-height: 40px;
+    font-size: 12px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Commission Voucher — overflow fixes (main column beside Deal at a Glance)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body.broker-active #tab-voucher.panel {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+body.broker-active #tab-voucher .deal-shell {
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 260px);
+  min-width: 0;
+}
+
+body.broker-active #tab-voucher .deal-main,
+body.broker-active #tab-voucher #voucher-main {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body.broker-active #tab-voucher .card {
+  overflow: visible;
+  max-width: 100%;
+}
+
+/* Override fixed multi-column rows (c2/c3/c4/c23) inside voucher */
+body.broker-active #tab-voucher .row,
+body.broker-active #tab-voucher .row.c2,
+body.broker-active #tab-voucher .row.c23,
+body.broker-active #tab-voucher .row.c3,
+body.broker-active #tab-voucher .row.c4,
+body.broker-active #tab-voucher .row.c5,
+body.broker-active #tab-voucher .voucher-party-grid,
+body.broker-active #tab-voucher .voucher-agent-grid,
+body.broker-active #tab-voucher .voucher-party-grid .row,
+body.broker-active #tab-voucher .voucher-party-grid .row.c2,
+body.broker-active #tab-voucher .voucher-party-grid .row.c3,
+body.broker-active #tab-voucher .voucher-agent-grid .row,
+body.broker-active #tab-voucher .voucher-agent-grid .row.c2,
+body.broker-active #tab-voucher .voucher-agent-grid .row.c3,
+body.broker-active #tab-voucher .voucher-summary-row {
+  grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), 1fr)) !important;
+  min-width: 0;
+}
+
+body.broker-active #tab-voucher .voucher-party-grid,
+body.broker-active #tab-voucher .voucher-agent-grid {
+  display: grid !important;
+  gap: 14px;
+}
+
+body.broker-active #tab-voucher .voucher-party-grid > div,
+body.broker-active #tab-voucher .voucher-agent-grid > div {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+body.broker-active #tab-voucher .field {
+  min-width: 0;
+  max-width: 100%;
+}
+
+body.broker-active #tab-voucher .field label {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.35;
+}
+
+body.broker-active #tab-voucher .field input,
+body.broker-active #tab-voucher .field select,
+body.broker-active #tab-voucher .field textarea {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+body.broker-active #tab-voucher .agent-picker {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+body.broker-active #tab-voucher .agent-picker input {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+body.broker-active #tab-voucher .branch-toggle-wrap,
+body.broker-active #tab-voucher .toggle-row {
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+/* Wide tables scroll inside the form column instead of stretching the page */
+body.broker-active #tab-voucher .broker-table-scroll {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 8px 0 12px;
+  border: 1px solid #e7eaee;
+  border-radius: 10px;
+  background: #fff;
+}
+
+body.broker-active #tab-voucher .broker-table-scroll table.rent-table,
+body.broker-active #tab-voucher .broker-table-scroll table.broker-table {
+  width: max-content;
+  min-width: 100%;
+  margin-top: 0;
+  border: none;
+  border-radius: 0;
+}
+
+body.broker-active #tab-voucher #v-dist-table {
+  min-width: 720px;
+}
+
+body.broker-active #tab-voucher #v-rent-table {
+  min-width: 640px;
+}
+
+body.broker-active #tab-voucher #v-payment-table {
+  min-width: 520px;
+}
+
+@media (max-width: 1280px) {
+  body.broker-active #tab-voucher .deal-shell {
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 240px);
+  }
+
+  body.broker-active #tab-voucher .row,
+  body.broker-active #tab-voucher .row.c4 {
+    grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr)) !important;
+  }
+}
+
+@media (max-width: 1100px) {
+  body.broker-active #tab-voucher .deal-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

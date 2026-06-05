@@ -99,7 +99,6 @@ async function runMigrations() {
 }
 
 async function startServer() {
-  await runMigrations();
   const app = express();
   const server = createServer(app);
   // Configure body parser with larger size limit for file uploads
@@ -112,6 +111,7 @@ async function startServer() {
   });
 
   // Health check endpoint for AWS Application Load Balancer
+  // Must be registered before migrations run so ECS health checks pass during startup
   app.get(["/health", "/api/health"], (_req, res) => {
     res.status(200).send("OK");
   });
@@ -149,30 +149,6 @@ async function startServer() {
     } catch (error) {
       console.error("[files.content] Could not serve uploaded file:", error);
       res.status(404).json({ success: false, error: "File not found" });
-    }
-  });
-
-  // TEMPORARY: Seed the database for AWS
-  app.get("/api/seed-prod", async (req, res) => {
-    try {
-      const db = (await import("../db")).getDb;
-      const connection = await db();
-      if (!connection) {
-        res.status(503).json({ error: "DB offline" });
-        return;
-      }
-      const { sql } = await import("drizzle-orm");
-      const sqlContent = fs.readFileSync(path.resolve(process.cwd(), "drizzle/seed_app_users_and_settings.sql"), "utf-8");
-      const statements = sqlContent.split(";").map((s: string) => s.trim()).filter((s: string) => s.length > 0);
-      for (const statement of statements) {
-        if (statement.toUpperCase().startsWith("SET ") || statement.toUpperCase().startsWith("INSERT ")) {
-          await connection.execute(sql.raw(statement));
-        }
-      }
-      res.json({ success: true, count: statements.length });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: String(err) });
     }
   });
 
@@ -241,9 +217,13 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  server.listen(port, () => {
+  await new Promise<void>(resolve => server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
-  });
+    resolve();
+  }));
+
+  // Run migrations after the server is already listening so ECS health checks pass during startup.
+  await runMigrations();
 
   // BrokerAdmin email ingest poller — only schedules if Graph credentials are configured.
   startBrokerAdminIngestScheduler().catch(err =>

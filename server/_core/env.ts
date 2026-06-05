@@ -40,6 +40,11 @@ export const ENV = {
     geminiApiKey: process.env.GEMINI_API_KEY ?? "",
     geminiModel: process.env.GEMINI_MODEL ?? "gemini-2.5-flash",
 
+    // Anthropic Claude — used as a fallback for document extraction when Gemini
+    // returns poor/empty results.
+    anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
+    anthropicModel: process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-20250514",
+
     // AWS storage placeholders for future direct-S3 integration
     awsS3Bucket: process.env.AWS_S3_BUCKET ?? "",
     awsS3Region: process.env.AWS_S3_REGION ?? process.env.AWS_REGION ?? "",

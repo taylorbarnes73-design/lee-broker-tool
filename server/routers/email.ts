@@ -9,9 +9,7 @@ import { getDb } from "../db";
 import { storageGetBytes, storagePut } from "../storage";
 import { eq } from "drizzle-orm";
 import { getSetting } from "../settings/getSetting";
-import { createSubmissionRecord } from "../services/submissionCreate";
-import { findAppUserByUsernameOrEmail } from "../auth/platformSession";
-import type { Request } from "express";
+import { notifyAdminOfSubmission } from "../services/adminNotification";
 
 const fieldSchema = z.object({
   label: z.string(),
@@ -348,69 +346,63 @@ async function recordSubmissionRequest(params: {
   deliveryMethod?: string;
   deliveryError?: string;
   formData?: Record<string, unknown>;
-  req?: Request;
-  platformUserId?: string | null;
 }): Promise<RecordedSubmission> {
   const db = await getDb();
   if (!db) {
     throw new Error("Database unavailable. The request could not be recorded for the admin portal.");
   }
 
-  if (!params.req) {
-    throw new Error("Request context is required to record a submission.");
-  }
+  const status = "pending";
+  const [result] = await db.insert(submissions).values({
+    formType: params.formType,
+    status,
+    reference: params.propertyAddress || null,
+    submittedBy: params.brokerName || params.senderEmail || null,
+    submittedByOpenId: params.uploaderOpenId ?? null,
+    submittedByEmail: params.senderEmail ?? null,
+    pdfFileKey: params.archivedPdf?.fileKey ?? null,
+    pdfUrl: params.archivedPdf?.url ?? null,
+    payload: JSON.stringify({
+      brokerName: params.brokerName,
+      senderEmail: params.senderEmail ?? "",
+      propertyAddress: params.propertyAddress,
+      sections: params.sections,
+      formData: params.formData ?? null,
+      archivedFile: params.archivedPdf
+        ? {
+            fileKey: params.archivedPdf.fileKey,
+            url: params.archivedPdf.url,
+            filename: params.archivedPdf.filename,
+            fileSize: params.archivedPdf.fileSize,
+            mimeType: params.archivedPdf.mimeType,
+            category: params.archivedPdf.category,
+          }
+        : null,
+      excelFile: params.excelFile
+        ? {
+            fileKey: params.excelFile.fileKey,
+            url: params.excelFile.url,
+            filename: params.excelFile.filename,
+            fileSize: params.excelFile.fileSize,
+            mimeType: params.excelFile.mimeType,
+            category: params.excelFile.category,
+          }
+        : null,
+      supportingFiles: params.supportingFiles ?? [],
+      deliveryMethod: params.deliveryMethod ?? "",
+      deliveryError: params.deliveryError ?? "",
+    }),
+  });
 
-  const brokerName = params.brokerName || params.senderEmail || "Broker";
-  const { submissionId, status } = await createSubmissionRecord({
-    db,
-    input: {
-      formType: params.formType,
-      status: "pending",
-      reference: params.propertyAddress || null,
-      submittedBy: brokerName,
-      submittedByOpenId: params.uploaderOpenId ?? null,
-      submittedByEmail: params.senderEmail ?? null,
-      pdfFileKey: params.archivedPdf?.fileKey ?? null,
-      pdfUrl: params.archivedPdf?.url ?? null,
-      source: "tool",
-      payload: {
-        brokerName: params.brokerName,
-        senderEmail: params.senderEmail ?? "",
-        propertyAddress: params.propertyAddress,
-        sections: params.sections,
-        formData: params.formData ?? null,
-        archivedFile: params.archivedPdf
-          ? {
-              fileKey: params.archivedPdf.fileKey,
-              url: params.archivedPdf.url,
-              filename: params.archivedPdf.filename,
-              fileSize: params.archivedPdf.fileSize,
-              mimeType: params.archivedPdf.mimeType,
-              category: params.archivedPdf.category,
-            }
-          : null,
-        excelFile: params.excelFile
-          ? {
-              fileKey: params.excelFile.fileKey,
-              url: params.excelFile.url,
-              filename: params.excelFile.filename,
-              fileSize: params.excelFile.fileSize,
-              mimeType: params.excelFile.mimeType,
-              category: params.excelFile.category,
-            }
-          : null,
-        supportingFiles: params.supportingFiles ?? [],
-        deliveryMethod: params.deliveryMethod ?? "",
-        deliveryError: params.deliveryError ?? "",
-      },
-    },
-    actor: {
-      openId: params.uploaderOpenId ?? "",
-      name: brokerName,
-      email: params.senderEmail ?? null,
-      platformUserId: params.platformUserId ?? null,
-    },
-    req: params.req,
+  const submissionId = (result as { insertId?: number }).insertId ?? null;
+
+  // Fire-and-forget notification to admin
+  notifyAdminOfSubmission({
+    formType: params.formType,
+    brokerName: params.brokerName,
+    propertyAddress: params.propertyAddress,
+    submittedByEmail: params.senderEmail,
+    submissionId,
   });
 
   return {
@@ -523,14 +515,6 @@ export const emailRouter = router({
 
       let recordedSubmission: RecordedSubmission | null = null;
       try {
-        let platformUserId: string | null = null;
-        const auditDb = await getDb();
-        const auditEmail = ctx.user?.email ?? senderEmail;
-        if (auditDb && auditEmail) {
-          const appUser = await findAppUserByUsernameOrEmail(auditDb, auditEmail);
-          platformUserId = appUser?.id ?? null;
-        }
-
         recordedSubmission = await recordSubmissionRequest({
           formType,
           brokerName,
@@ -544,8 +528,6 @@ export const emailRouter = router({
           deliveryMethod: delivery.deliveryMethod,
           deliveryError: delivery.error,
           formData,
-          req: ctx.req,
-          platformUserId,
         });
       } catch (error: unknown) {
         return {
