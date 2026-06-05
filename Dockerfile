@@ -7,6 +7,7 @@ RUN corepack enable
 FROM base AS deps
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
+COPY vendor ./vendor
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
