@@ -7159,6 +7159,39 @@ body.broker-active .sub-tab-bar {
   gap: 3px;
 }
 
+.broker-nav-folder {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 4px 0 8px;
+}
+
+.broker-nav-folder-label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+
+.broker-nav-folder-label svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.broker-nav-folder-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 10px;
+  border-left: 1px solid var(--border);
+  margin-left: 17px;
+}
+
 .broker-sidebar .tab {
   display: flex;
   align-items: center;
@@ -7200,6 +7233,37 @@ body.broker-active .sub-tab-bar {
 
 .broker-sidebar .tab.active svg {
   opacity: 1;
+}
+
+.marketing-request-shell {
+  display: grid;
+  gap: 18px;
+}
+
+.marketing-request-placeholder {
+  max-width: 760px;
+}
+
+.marketing-request-placeholder p {
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+.marketing-request-prep-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.marketing-request-prep-grid h3 {
+  margin: 0 0 6px;
+}
+
+@media (max-width: 720px) {
+  .marketing-request-prep-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── User footer ────────────────────────────────────────────────────── */
