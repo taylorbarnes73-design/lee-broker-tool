@@ -47,17 +47,18 @@ export async function createSubmissionRecord(params: {
   });
 
   const submissionId = (result as { insertId?: number }).insertId ?? null;
-  if (submissionId) {
-    void maybeNotifySubmissionReceived(submissionId);
-    void logSubmissionCreated(params.req, {
-      platformUserId: params.actor.platformUserId ?? null,
-      actorName: params.actor.name,
-      actorOpenId: params.actor.openId,
-      submissionId,
-      formType: params.input.formType,
-      status,
-    });
+  if (!submissionId) {
+    throw new Error("Failed to create submission record (missing insertId).");
   }
 
+  void maybeNotifySubmissionReceived(submissionId);
+  void logSubmissionCreated(params.req, {
+    platformUserId: params.actor.platformUserId ?? null,
+    actorName: params.actor.name,
+    actorOpenId: params.actor.openId,
+    submissionId,
+    formType: params.input.formType,
+    status,
+  });
+
   return { submissionId, status };
-}
