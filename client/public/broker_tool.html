@@ -2395,44 +2395,179 @@
     </div>
 
     <div class="card marketing-request-card">
-      <div class="form-section-title">Request Details</div>
+      <div class="form-section-title">Requestor Information</div>
       <div class="row c2">
         <div class="field">
-          <label for="mr-request-type">Request Type</label>
-          <select id="mr-request-type">
-            <option value="Other Marketing Request">Other Marketing Request</option>
-            <option value="Flyer / Brochure">Flyer / Brochure</option>
-            <option value="Email Campaign">Email Campaign</option>
-            <option value="Social Media">Social Media</option>
-            <option value="Offering Memorandum / Proposal">Offering Memorandum / Proposal</option>
-            <option value="Signage">Signage</option>
-            <option value="Website / Listing Update">Website / Listing Update</option>
-          </select>
+          <label for="mr-requester-name">Requester Name <span class="muted-label">(Required)</span></label>
+          <input id="mr-requester-name" placeholder="Broker or team lead">
         </div>
         <div class="field">
-          <label for="mr-subject">Subject</label>
-          <input id="mr-subject" placeholder="Example: Need a flyer for new listing">
+          <label for="mr-requester-email">Email <span class="muted-label">(Required)</span></label>
+          <input id="mr-requester-email" type="email" placeholder="name@lee-associates.com">
         </div>
       </div>
       <div class="field">
-        <label for="mr-property">Related Property / Address <span class="muted-label">(Optional)</span></label>
-        <input id="mr-property" placeholder="Property, client, or address">
+        <label for="mr-team">Broker / Team / Department</label>
+        <input id="mr-team" placeholder="Team, department, or point of contact">
       </div>
-      <div class="field">
-        <label for="mr-message">Message</label>
-        <textarea id="mr-message" rows="6" placeholder="Describe the marketing work you need and include any brand, audience, or content notes."></textarea>
-      </div>
-      <div class="field">
-        <label>Attachments <span class="muted-label">(Optional)</span></label>
-        <div class="upload-zone" id="uz-mr-attachments" data-category="marketing_request" data-field="mr-doc-attachments">
-          <input type="file" id="mr-doc-attachments" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png,.webp,.ai,.indd" class="hidden-file-input">
-          <div class="upload-zone-inner" onclick="document.getElementById('mr-doc-attachments').click()">
-            <span class="upload-icon" aria-hidden="true">+</span>
-            <span>Drop files here or browse</span>
+
+      <div class="marketing-request-section">
+        <div class="form-section-title">Project Overview</div>
+        <div class="field">
+          <label for="mr-project-title">Project Title <span class="muted-label">(Required)</span></label>
+          <input id="mr-project-title" placeholder="Example: 6255 W Sunset listing flyer">
+        </div>
+        <div class="row c2">
+          <div class="field">
+            <label for="mr-request-type">Project Type <span class="muted-label">(Required)</span></label>
+            <select id="mr-request-type">
+              <option value="">Select one</option>
+              <option value="Flyer / Brochure">Flyer / Brochure</option>
+              <option value="Email Campaign">Email Campaign</option>
+              <option value="Social Media">Social Media</option>
+              <option value="Offering Memorandum / Proposal">Offering Memorandum / Proposal</option>
+              <option value="Property Listing Update">Property Listing Update</option>
+              <option value="Presentation / Pitch Deck">Presentation / Pitch Deck</option>
+              <option value="Signage">Signage</option>
+              <option value="Advertisement">Advertisement</option>
+              <option value="Website Update">Website Update</option>
+              <option value="Research / Map / Aerial">Research / Map / Aerial</option>
+              <option value="Other Marketing Request">Other Marketing Request</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="mr-priority">Priority <span class="muted-label">(Required)</span></label>
+            <select id="mr-priority">
+              <option value="">Select one</option>
+              <option value="Standard">Standard</option>
+              <option value="High">High</option>
+              <option value="Urgent / Time Sensitive">Urgent / Time Sensitive</option>
+            </select>
           </div>
         </div>
-        <div class="upload-status" id="us-mr-attachments"></div>
+        <div class="field">
+          <label for="mr-property">Related Property / Address</label>
+          <input id="mr-property" placeholder="Property, client, or address">
+        </div>
+        <div class="field">
+          <label for="mr-objective">Project Description / Objective <span class="muted-label">(Required)</span></label>
+          <textarea id="mr-objective" rows="5" placeholder="What are you trying to accomplish? Include key details, audience, and desired outcome."></textarea>
+        </div>
       </div>
+
+      <div class="marketing-request-section">
+        <div class="form-section-title">Deliverables Needed</div>
+        <div class="check-group marketing-request-check-grid">
+          <label><input type="checkbox" name="mr-deliverables" value="Print Collateral"> Print collateral</label>
+          <label><input type="checkbox" name="mr-deliverables" value="Digital Graphic"> Digital graphic</label>
+          <label><input type="checkbox" name="mr-deliverables" value="Email / Constant Contact"> Email / Constant Contact</label>
+          <label><input type="checkbox" name="mr-deliverables" value="Social Media"> Social media</label>
+          <label><input type="checkbox" name="mr-deliverables" value="Presentation"> Presentation</label>
+          <label><input type="checkbox" name="mr-deliverables" value="Website / Listing"> Website / listing</label>
+          <label><input type="checkbox" name="mr-deliverables" value="Map / Aerial"> Map / aerial</label>
+          <label><input type="checkbox" name="mr-deliverables" value="Other"> Other</label>
+        </div>
+        <div class="field">
+          <label for="mr-final-specs">Final Size / Format / Specs</label>
+          <input id="mr-final-specs" placeholder="Example: 8.5x11 PDF, 1080x1080 JPG, PowerPoint, print-ready">
+        </div>
+      </div>
+
+      <div class="marketing-request-section">
+        <div class="form-section-title">Timeline</div>
+        <div class="row c3">
+          <div class="field">
+            <label for="mr-due-date">Requested Due Date <span class="muted-label">(Required)</span></label>
+            <input id="mr-due-date" type="date">
+          </div>
+          <div class="field">
+            <label for="mr-launch-date">Event / Launch Date</label>
+            <input id="mr-launch-date" type="date">
+          </div>
+          <div class="field">
+            <label for="mr-date-flexible">Is This Date Flexible?</label>
+            <select id="mr-date-flexible">
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+              <option value="Somewhat">Somewhat</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="mr-timeline-notes">Timeline Notes</label>
+          <textarea id="mr-timeline-notes" rows="3" placeholder="Include review deadlines, print dates, client meetings, or campaign send dates."></textarea>
+        </div>
+        <div class="field">
+          <label for="mr-briefing-time">Optional 10-Minute Briefing Window</label>
+          <select id="mr-briefing-time">
+            <option value="">No briefing requested</option>
+            <option value="2:00 PM">2:00 PM</option>
+            <option value="2:10 PM">2:10 PM</option>
+            <option value="2:20 PM">2:20 PM</option>
+            <option value="2:30 PM">2:30 PM</option>
+            <option value="2:40 PM">2:40 PM</option>
+            <option value="2:50 PM">2:50 PM</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="marketing-request-section">
+        <div class="form-section-title">Content &amp; Assets</div>
+        <div class="field">
+          <label for="mr-copy">Copy / Messaging</label>
+          <textarea id="mr-copy" rows="4" placeholder="Paste approved copy or describe what needs to be written."></textarea>
+        </div>
+        <div class="field">
+          <label for="mr-asset-links">Asset Links</label>
+          <input id="mr-asset-links" placeholder="Google Drive, SharePoint, Dropbox, listing page, property photos, logos, etc.">
+        </div>
+        <div class="row c2">
+          <div class="field">
+            <label for="mr-approver-name">Approver Name</label>
+            <input id="mr-approver-name">
+          </div>
+          <div class="field">
+            <label for="mr-approver-email">Approver Email</label>
+            <input id="mr-approver-email" type="email">
+          </div>
+        </div>
+      </div>
+
+      <div class="marketing-request-section">
+        <div class="form-section-title">Audience &amp; Distribution</div>
+        <div class="field">
+          <label for="mr-target-audience">Target Audience</label>
+          <input id="mr-target-audience" placeholder="Clients, prospects, brokers, investors, tenants...">
+        </div>
+        <div class="field">
+          <label for="mr-market">Geography / Market</label>
+          <input id="mr-market">
+        </div>
+        <div class="field">
+          <label for="mr-distribution">Distribution Details</label>
+          <textarea id="mr-distribution" rows="4" placeholder="Email list, social channels, print quantity, mailing needs, website location, etc."></textarea>
+        </div>
+      </div>
+
+      <div class="marketing-request-section">
+        <div class="form-section-title">Additional Notes &amp; Attachments</div>
+        <div class="field">
+          <label for="mr-notes">Additional Notes</label>
+          <textarea id="mr-notes" rows="4" placeholder="Anything else the marketing team should know?"></textarea>
+        </div>
+        <div class="field">
+          <label>Attachments <span class="muted-label">(Optional)</span></label>
+          <div class="upload-zone" id="uz-mr-attachments" data-category="marketing_request" data-field="mr-doc-attachments">
+            <input type="file" id="mr-doc-attachments" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png,.webp,.ai,.indd" class="hidden-file-input">
+            <div class="upload-zone-inner" onclick="document.getElementById('mr-doc-attachments').click()">
+              <span class="upload-icon" aria-hidden="true">+</span>
+              <span>Drop files here or browse</span>
+            </div>
+          </div>
+          <div class="upload-status" id="us-mr-attachments"></div>
+        </div>
+      </div>
+
       <div class="btn-bar btn-bar-top-lg">
         <button class="btn btn-green" id="btn-mr-submit" onclick="submitMarketingRequest(this)"><span class="btn-spinner"></span><span class="btn-label">Submit Request</span></button>
         <button class="btn btn-gray" onclick="resetMarketingRequestForm()">Clear Form</button>
@@ -9114,10 +9249,32 @@ function resetAdminRequestForm() {
 
 async function submitMarketingRequest(btn) {
   const status = document.getElementById('mr-status');
-  const requestType = document.getElementById('mr-request-type')?.value || 'Other Marketing Request';
-  const subject = (document.getElementById('mr-subject')?.value || '').trim();
+  const valueOf = id => (document.getElementById(id)?.value || '').trim();
+  const checkedValues = name => Array.from(document.querySelectorAll('input[name="' + name + '"]:checked')).map(el => el.value);
+  const authUser = getSignedInBrokerIdentity();
+  const requesterName = valueOf('mr-requester-name') || authUser?.name || '';
+  const requesterEmail = valueOf('mr-requester-email') || authUser?.email || '';
+  const team = valueOf('mr-team');
+  const projectTitle = valueOf('mr-project-title');
+  const requestType = valueOf('mr-request-type') || 'Other Marketing Request';
+  const priority = valueOf('mr-priority');
   const propertyAddress = (document.getElementById('mr-property')?.value || '').trim();
-  const message = (document.getElementById('mr-message')?.value || '').trim();
+  const objective = valueOf('mr-objective');
+  const deliverables = checkedValues('mr-deliverables');
+  const finalSpecs = valueOf('mr-final-specs');
+  const dueDate = valueOf('mr-due-date');
+  const launchDate = valueOf('mr-launch-date');
+  const dateFlexible = valueOf('mr-date-flexible');
+  const timelineNotes = valueOf('mr-timeline-notes');
+  const briefingTime = valueOf('mr-briefing-time');
+  const copyMessaging = valueOf('mr-copy');
+  const assetLinks = valueOf('mr-asset-links');
+  const approverName = valueOf('mr-approver-name');
+  const approverEmail = valueOf('mr-approver-email');
+  const targetAudience = valueOf('mr-target-audience');
+  const market = valueOf('mr-market');
+  const distribution = valueOf('mr-distribution');
+  const additionalNotes = valueOf('mr-notes');
   const attachments = Array.isArray(uploadedFiles['mr-doc-attachments']) ? uploadedFiles['mr-doc-attachments'] : [];
 
   if (status) {
@@ -9125,9 +9282,20 @@ async function submitMarketingRequest(btn) {
     status.textContent = '';
   }
 
-  if (!subject || !message) {
+  const missingFields = [];
+  if (!requesterName) missingFields.push('requester name');
+  if (!requesterEmail) missingFields.push('email');
+  if (!projectTitle) missingFields.push('project title');
+  if (!requestType || requestType === 'Other Marketing Request') {
+    if (!valueOf('mr-request-type')) missingFields.push('project type');
+  }
+  if (!priority) missingFields.push('priority');
+  if (!objective) missingFields.push('project description / objective');
+  if (!dueDate) missingFields.push('requested due date');
+
+  if (missingFields.length > 0) {
     if (status) {
-      status.innerHTML = '<span class="text-error status-strong">Subject and message are required.</span>';
+      status.innerHTML = '<span class="text-error status-strong">Missing required fields: ' + escHtml(missingFields.join(', ')) + '.</span>';
     }
     return;
   }
@@ -9137,8 +9305,14 @@ async function submitMarketingRequest(btn) {
 
   try {
     const now = new Date().toISOString();
-    const authUser = getSignedInBrokerIdentity();
     const attachmentNames = attachments.map(file => file.filename || file.name || 'Attachment').filter(Boolean);
+    const body = [
+      objective,
+      timelineNotes ? 'Timeline notes: ' + timelineNotes : '',
+      copyMessaging ? 'Copy / messaging: ' + copyMessaging : '',
+      distribution ? 'Distribution: ' + distribution : '',
+      additionalNotes ? 'Additional notes: ' + additionalNotes : '',
+    ].filter(Boolean).join('\n\n');
     const submission = {
       id: nextSubId(),
       type: 'marketing-request',
@@ -9153,25 +9327,80 @@ async function submitMarketingRequest(btn) {
       city: '',
       state: 'CA',
       zip: '',
-      brokerName: authUser?.name || 'Unknown',
-      brokerEmail: authUser?.email || '',
+      brokerName: requesterName || authUser?.name || 'Unknown',
+      brokerEmail: requesterEmail || authUser?.email || '',
       requestType,
-      subject,
-      body: message,
-      notes: message,
+      subject: projectTitle,
+      body,
+      notes: body,
+      priority,
+      dueDate,
+      launchDate,
+      deliverables,
       propertyAddress,
       attachments,
       uploadedFiles: attachments,
-      sections: [{
-        title: 'Marketing Request',
-        fields: [
-          { label: 'Request Type', value: requestType },
-          { label: 'Subject', value: subject },
-          propertyAddress ? { label: 'Related Property / Address', value: propertyAddress } : null,
-          { label: 'Message', value: message },
-          attachmentNames.length ? { label: 'Attachments', value: attachmentNames.join(', ') } : null,
-        ].filter(Boolean),
-      }],
+      sections: [
+        {
+          title: 'Requestor Information',
+          fields: [
+            { label: 'Requester Name', value: requesterName },
+            { label: 'Email', value: requesterEmail },
+            team ? { label: 'Broker / Team / Department', value: team } : null,
+          ].filter(Boolean),
+        },
+        {
+          title: 'Project Overview',
+          fields: [
+            { label: 'Project Title', value: projectTitle },
+            { label: 'Project Type', value: requestType },
+            { label: 'Priority', value: priority },
+            propertyAddress ? { label: 'Related Property / Address', value: propertyAddress } : null,
+            { label: 'Project Description / Objective', value: objective },
+          ].filter(Boolean),
+        },
+        {
+          title: 'Deliverables Needed',
+          fields: [
+            deliverables.length ? { label: 'Deliverables', value: deliverables.join(', ') } : null,
+            finalSpecs ? { label: 'Final Size / Format / Specs', value: finalSpecs } : null,
+          ].filter(Boolean),
+        },
+        {
+          title: 'Timeline',
+          fields: [
+            { label: 'Requested Due Date', value: dueDate },
+            launchDate ? { label: 'Event / Launch Date', value: launchDate } : null,
+            dateFlexible ? { label: 'Is This Date Flexible?', value: dateFlexible } : null,
+            timelineNotes ? { label: 'Timeline Notes', value: timelineNotes } : null,
+            briefingTime ? { label: 'Optional Briefing Window', value: briefingTime } : null,
+          ].filter(Boolean),
+        },
+        {
+          title: 'Content & Assets',
+          fields: [
+            copyMessaging ? { label: 'Copy / Messaging', value: copyMessaging } : null,
+            assetLinks ? { label: 'Asset Links', value: assetLinks } : null,
+            approverName ? { label: 'Approver Name', value: approverName } : null,
+            approverEmail ? { label: 'Approver Email', value: approverEmail } : null,
+          ].filter(Boolean),
+        },
+        {
+          title: 'Audience & Distribution',
+          fields: [
+            targetAudience ? { label: 'Target Audience', value: targetAudience } : null,
+            market ? { label: 'Geography / Market', value: market } : null,
+            distribution ? { label: 'Distribution Details', value: distribution } : null,
+          ].filter(Boolean),
+        },
+        {
+          title: 'Additional Notes & Attachments',
+          fields: [
+            additionalNotes ? { label: 'Additional Notes', value: additionalNotes } : null,
+            attachmentNames.length ? { label: 'Attachments', value: attachmentNames.join(', ') } : null,
+          ].filter(Boolean),
+        },
+      ],
     };
 
     ADMIN_SUBMISSIONS.unshift(submission);
@@ -9194,12 +9423,37 @@ async function submitMarketingRequest(btn) {
 }
 
 function resetMarketingRequestForm() {
-  ['mr-subject', 'mr-property', 'mr-message'].forEach(id => {
+  [
+    'mr-requester-name',
+    'mr-requester-email',
+    'mr-team',
+    'mr-project-title',
+    'mr-property',
+    'mr-objective',
+    'mr-final-specs',
+    'mr-due-date',
+    'mr-launch-date',
+    'mr-timeline-notes',
+    'mr-briefing-time',
+    'mr-copy',
+    'mr-asset-links',
+    'mr-approver-name',
+    'mr-approver-email',
+    'mr-target-audience',
+    'mr-market',
+    'mr-distribution',
+    'mr-notes',
+  ].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
   const typeEl = document.getElementById('mr-request-type');
-  if (typeEl) typeEl.value = 'Other Marketing Request';
+  if (typeEl) typeEl.value = '';
+  const priorityEl = document.getElementById('mr-priority');
+  if (priorityEl) priorityEl.value = '';
+  const flexibleEl = document.getElementById('mr-date-flexible');
+  if (flexibleEl) flexibleEl.value = 'Yes';
+  document.querySelectorAll('input[name="mr-deliverables"]').forEach(el => { el.checked = false; });
   clearUpload('mr-doc-attachments', 'us-mr-attachments');
   const status = document.getElementById('mr-status');
   if (status) {

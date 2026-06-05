@@ -7252,6 +7252,32 @@ body.broker-active .sub-tab-bar {
   resize: vertical;
 }
 
+.marketing-request-section {
+  border-top: 1px solid var(--border);
+  margin-top: 22px;
+  padding-top: 22px;
+}
+
+.marketing-request-check-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.marketing-request-check-grid label {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fff;
+}
+
+@media (max-width: 720px) {
+  .marketing-request-check-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ── User footer ────────────────────────────────────────────────────── */
 .broker-sidebar-spacer {
   flex: 1;
