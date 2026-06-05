@@ -54,7 +54,7 @@ body.broker-active #broker-view > .panel.active {
   box-sizing: border-box;
 }
 
-/* ── Deal shell: glance column fits viewport (no inner scroll) ── */
+/* ── Deal shell: glance column fits viewport ── */
 body.broker-active .deal-shell {
   align-items: start;
   grid-template-columns: minmax(0, 1fr) minmax(260px, 300px);
@@ -66,7 +66,8 @@ body.broker-active .deal-aside {
   top: 8px;
   align-self: start;
   max-height: calc(100dvh - var(--broker-chrome-h) - 32px);
-  overflow: visible;
+  overflow-y: auto;
+  scrollbar-width: thin;
   gap: 8px;
 }
 
