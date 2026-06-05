@@ -25,6 +25,7 @@
   --font-sans: "Manrope", "Avenir Next", Inter, "Segoe UI", system-ui, sans-serif;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { overflow-x: hidden; }
 body {
   font-family: var(--font-sans);
   background: var(--bg);
