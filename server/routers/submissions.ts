@@ -9,7 +9,6 @@ import { z } from "zod/v4";
 import { addSingleComp } from "../services/compData";
 import type { LeaseCompRecord, SaleCompRecord } from "../../shared/comp-data";
 import { normalizeStoredFileUrl } from "../storage";
-import { maybeNotifySubmissionStatusChange } from "../services/submissionNotifications";
 import { findAppUserByUsernameOrEmail } from "../auth/platformSession";
 import { createSubmissionRecord } from "../services/submissionCreate";
 import { applySubmissionStatusChange } from "../services/submissionStatusUpdate";
