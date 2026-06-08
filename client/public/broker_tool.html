@@ -3901,8 +3901,6 @@ function toggleLeaseTerm(val) {
 
 // ── Listing Review & Confirm Page ──
 function showListingReview() {
-  const listingValidation = validateListingDocumentRequirements(true);
-  if (!listingValidation.ok) return;
   const formShell = document.getElementById('l-deal-shell');
   const reviewPage = document.getElementById('listing-review-page');
   const postSubmit = document.getElementById('listing-post-submit');
@@ -4230,17 +4228,6 @@ function reviewSnapshotRowsFor(context) {
 }
 
 function openReviewSnapshot(context) {
-  if (context === 'voucher') {
-    const voucherValidation = validateVoucherDocumentRequirements(true);
-    if (!voucherValidation.ok) {
-      const attachErr = document.getElementById('voucher-attachment-required-msg');
-      if (attachErr) {
-        attachErr.textContent = voucherValidation.message;
-        attachErr.classList.remove('is-hidden');
-      }
-      return;
-    }
-  }
   reviewSnapshotContext = context;
   const modal = document.getElementById('review-snapshot-modal');
   const title = document.getElementById('review-snapshot-title');
