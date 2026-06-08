@@ -62,7 +62,7 @@ vi.mock("nodemailer", () => ({
 
 vi.mock("../_core/env", () => ({
   ENV: {
-    adminEmail: "admin@example.test",
+    adminEmail: "tbarnes@lee-associates.com",
     forgeApiUrl: "",
     forgeApiKey: "",
     ownerOpenId: "",
@@ -149,7 +149,7 @@ describe("email.sendToAdmin", () => {
 
     const callArg = execSyncMock.mock.calls[0][0] as string;
     expect(callArg).toContain("outlook_send_messages");
-    expect(callArg).toContain("admin@example.test");
+    expect(callArg).toContain("tbarnes@lee-associates.com");
     expect(result.submissionId).toBe(101);
     expect(result.status).toBe("pending");
   });
