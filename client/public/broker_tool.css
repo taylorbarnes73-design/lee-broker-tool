@@ -7636,6 +7636,51 @@ body.broker-active .sub-tab-bar {
   background: #fff;
 }
 
+#tab-voucher #v-dist-table {
+  table-layout: fixed;
+  width: 100%;
+  overflow: visible;
+}
+
+#tab-voucher #v-dist-table th:first-child,
+#tab-voucher #v-dist-table td:first-child {
+  width: 28%;
+}
+
+#tab-voucher #v-dist-table th:nth-child(2),
+#tab-voucher #v-dist-table td:nth-child(2) {
+  width: 112px;
+}
+
+#tab-voucher #v-dist-table th:nth-child(3),
+#tab-voucher #v-dist-table td:nth-child(3) {
+  width: 76px;
+}
+
+#tab-voucher #v-dist-table th:last-child,
+#tab-voucher #v-dist-table td:last-child {
+  width: 42px;
+}
+
+#tab-voucher #v-dist-table th,
+#tab-voucher #v-dist-table td {
+  padding-left: 6px;
+  padding-right: 6px;
+  overflow: visible;
+}
+
+#tab-voucher #v-dist-table input,
+#tab-voucher #v-dist-table select,
+#tab-voucher #v-dist-table .agent-picker {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+#tab-voucher #v-dist-table .agent-dd {
+  min-width: 300px;
+}
+
 #tab-voucher .reference-card {
   background: #FBFCFD;
   border-color: #DDE2E8;

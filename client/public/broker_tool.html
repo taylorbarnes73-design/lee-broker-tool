@@ -16,8 +16,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-<link rel="stylesheet" href="broker_tool.css">
-<link rel="stylesheet" href="broker_ux.css">
+<link rel="stylesheet" href="broker_tool.css?v=20260608.2">
+<link rel="stylesheet" href="broker_ux.css?v=20260608.2">
 </head>
 <body>
 
@@ -936,7 +936,7 @@
     <div class="voucher-sub-header">Deal Details</div>
     <div class="row c4">
       <div class="field"><label class="req">Representation Type</label>
-        <select id="v-rep-type">
+        <select id="v-rep-type" onchange="updateDistributionForRepresentation()">
           <option value="tenant_rep">Tenant Rep</option>
           <option value="landlord_rep">Landlord Rep</option>
           <option value="buyer_rep">Buyer Rep</option>
@@ -1274,7 +1274,7 @@
       <div class="field"><label>Gross $$ to Distribute</label><input id="v-gross-dist" class="invoice-highlight-input" placeholder="$0" readonly></div>
     </div>
     <table class="broker-table" id="v-dist-table">
-      <thead><tr><th>Agent Name</th><th class="table-col-100">Side</th><th class="table-col-65">Gross %</th><th>Listing Gross</th><th>Procuring Gross</th><th>Both Gross</th><th>Other Gross</th><th>Referring Gross</th><th>NET (ck amt)</th><th class="table-col-compact"></th></tr></thead>
+      <thead><tr><th>Agent Name</th><th class="table-col-100">Side</th><th class="table-col-65">Gross %</th><th data-dist-gross="listing">Listing Gross</th><th data-dist-gross="procuring">Procuring Gross</th><th data-dist-gross="both">Both Gross</th><th data-dist-gross="other">Other Gross</th><th data-dist-gross="referring">Referring Gross</th><th>NET (ck amt)</th><th class="table-col-compact"></th></tr></thead>
       <tbody id="v-dist-body"></tbody>
     </table>
     <button class="btn btn-gray top-gap-sm" onclick="addDistRow()">+ Add Agent</button>
@@ -3228,6 +3228,24 @@ const DX_BROKERS = DX_USERS.filter(u => u.role.includes('Broker'));
 const DX_ADMINS = DX_USERS.filter(u => !u.role.includes('Broker'));
 const DX_SORTED = [...DX_BROKERS, ...DX_ADMINS];
 
+// Matches the validation list in Updated Voucher (4.3.26).xlsm, cells A268:A306.
+const VOUCHER_DISTRIBUTION_AGENTS = [
+  'ADLER, FRANK', 'AHERN, SEAN', 'ARGUELLO, TIM', 'BARNETT, CHRIS', 'BARSON, BRIAN',
+  'BOLT, DAVID', 'CHRISTENSEN, MATT', 'DAVIDSON, ETHAN', 'DUMKE, NICK', 'DURKIN, MATT',
+  'GARBUTT, BRIAN', 'GESSFORD, JOHN', 'GESSFORD, LIBBY', 'GILLS, PITZER', 'GOULD, KEN',
+  'GRIFFIN, BOB', 'GRIJALVA, JOHN', 'HARRINGTON, CARTER', 'HIETBRINK, JUDD', 'HIRSCH, JEFF',
+  'HOGAN, JACK', 'KLUVER, DAVE', 'LAWER, MATT', 'LONG, MIKE', 'MADIGAN, STEVE',
+  'MCARDELL, GARY', 'MEJIA, JONATHAN', 'RAZAZ, NIMA', 'SCHNEIDER, BRAD',
+  'SHERRATT, ALEJANDRO', 'SMITH, BRENDAN', 'TOLAND, HAYDEN', 'TOLAND, MILES',
+  'TURNER, RICK', 'WALKER, TIM', 'WEST, THOMAS', 'WINN, CHARLIE', 'ZACHER, MADDIE',
+  'ZACHER, SHANNON'
+].map((name, index) => ({
+  id: 'voucher-' + (index + 1),
+  name,
+  role: 'Broker',
+  email: ''
+}));
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // AGENT PICKER (searchable dropdown)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -3238,13 +3256,17 @@ function initAgentPicker(inputId, opts = {}) {
 
   const onSelect = opts.onSelect || function() {};
   const showAll = opts.showAll !== false; // show all users or just brokers
-  const list = showAll ? DX_SORTED : DX_BROKERS;
+  const list = Array.isArray(opts.users) ? opts.users : (showAll ? DX_SORTED : DX_BROKERS);
   let highlighted = -1;
 
   function render(filter) {
     dd.innerHTML = '';
     const q = (filter || '').toLowerCase();
-    const matches = q ? list.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) : list;
+    const matches = q ? list.filter(u => {
+      const name = String(u.name || '').toLowerCase();
+      const email = String(u.email || '').toLowerCase();
+      return name.includes(q) || email.includes(q);
+    }) : list;
     if (matches.length === 0) {
       dd.innerHTML = '<div class="no-match">No matching agents</div>';
     } else {
@@ -3252,7 +3274,8 @@ function initAgentPicker(inputId, opts = {}) {
         const opt = document.createElement('div');
         opt.className = 'agent-opt';
         opt.dataset.idx = i;
-        opt.innerHTML = '<span><strong>' + u.name + '</strong></span><span><span class="agent-role">' + u.role + '</span><span class="agent-email">' + u.email + '</span></span>';
+        opt.innerHTML = '<span><strong>' + u.name + '</strong></span><span><span class="agent-role">' + (u.role || '') + '</span>' +
+          (u.email ? '<span class="agent-email">' + u.email + '</span>' : '') + '</span>';
         opt.addEventListener('mousedown', (e) => {
           e.preventDefault();
           selectUser(u);
@@ -5026,6 +5049,52 @@ function getSideChipClass(side) {
   return map[side] || 'other';
 }
 
+function distributionSideForRepresentation() {
+  const representation = document.getElementById('v-rep-type')?.value || '';
+  if (representation === 'landlord_rep' || representation === 'seller_rep') return 'Listing';
+  if (representation === 'tenant_rep' || representation === 'buyer_rep') return 'Procuring';
+  return 'Other';
+}
+
+function distributionGrossKey(side) {
+  return String(side || '').trim().toLowerCase();
+}
+
+function updateDistributionGrossColumns() {
+  const visibleCategories = new Set([distributionGrossKey(distributionSideForRepresentation())]);
+  document.querySelectorAll('#v-dist-body select.chip-select').forEach(select => {
+    if (select.value) visibleCategories.add(distributionGrossKey(select.value));
+  });
+  document.querySelectorAll('#v-dist-table [data-dist-gross]').forEach(cell => {
+    cell.classList.toggle('is-hidden', !visibleCategories.has(cell.dataset.distGross));
+  });
+}
+
+function handleDistSideChange(selectEl, userSelected = true) {
+  if (!selectEl) return;
+  if (userSelected) selectEl.dataset.autoSide = 'false';
+  const chip = selectEl.closest('td')?.querySelector('.side-chip');
+  if (chip) {
+    chip.className = 'side-chip ' + getSideChipClass(selectEl.value) + ' cursor-pointer';
+    chip.textContent = selectEl.value;
+  }
+  closeDistSideSelect(selectEl);
+  updateDistributionGrossColumns();
+  updateDistPctTotal();
+}
+
+function updateDistributionForRepresentation() {
+  const defaultSide = distributionSideForRepresentation();
+  document.querySelectorAll('#v-dist-body select.chip-select').forEach(select => {
+    if (select.dataset.autoSide !== 'false') {
+      select.value = defaultSide;
+      handleDistSideChange(select, false);
+    }
+  });
+  updateDistributionGrossColumns();
+  syncDealGlance();
+}
+
 function workflowCommissionSplitMustSum100() {
   const wf = LBT_PUBLIC_SETTINGS && LBT_PUBLIC_SETTINGS.workflow;
   if (!wf || typeof wf.commission_split_must_sum_100 === 'undefined') return true;
@@ -5040,13 +5109,9 @@ function workflowRequireVoucherAttachment() {
 
 function updateDistChips() {
   document.querySelectorAll('#v-dist-body tr').forEach(tr => {
-    const sel = tr.querySelector('select');
-    const chip = tr.querySelector('.side-chip');
-    if (sel && chip) {
-      chip.className = 'side-chip ' + getSideChipClass(sel.value);
-      chip.textContent = sel.value;
-    }
+    handleDistSideChange(tr.querySelector('select'), false);
   });
+  updateDistributionGrossColumns();
   updateDistPctTotal();
 }
 
@@ -5093,36 +5158,36 @@ function closeDistSideSelect(selectEl) {
   selectEl.classList.remove('is-open');
 }
 
+let distRowCount = 0;
 function addDistRow() {
   const body = document.getElementById('v-dist-body');
+  if (!body) return;
+  distRowCount += 1;
+  const nameId = 'v-dist-agent-' + distRowCount;
+  const defaultSide = distributionSideForRepresentation();
   const tr = document.createElement('tr');
-  tr.innerHTML = '<td><input class="min-w-120" placeholder="Agent name"></td>' +
+  tr.innerHTML = '<td><div class="agent-picker" id="picker-' + nameId + '">' +
+      '<input id="' + nameId + '" autocomplete="off" placeholder="Agent name">' +
+      '<div class="agent-dd" id="dd-' + nameId + '"></div></div></td>' +
     '<td><div class="inline-select-chip">' +
-      '<select class="chip-select" onchange="updateDistChips()" onblur="closeDistSideSelect(this)">' +
+      '<select class="chip-select" data-auto-side="true" onchange="handleDistSideChange(this)" onblur="closeDistSideSelect(this)">' +
         '<option>Listing</option><option>Procuring</option><option>Both</option><option>Other</option><option>Referring</option>' +
       '</select>' +
-      '<span class="side-chip listing cursor-pointer" onclick="openDistSideSelect(this.previousElementSibling)">Listing</span>' +
+      '<span class="side-chip cursor-pointer" onclick="openDistSideSelect(this.previousElementSibling)"></span>' +
     '</div></td>' +
     '<td><input class="w-55" placeholder="%" oninput="updateDistPctTotal()"></td>' +
-    '<td><input placeholder="$0"></td>' +
-    '<td><input placeholder="$0"></td>' +
-    '<td><input placeholder="$0"></td>' +
-    '<td><input placeholder="$0"></td>' +
-    '<td><input placeholder="$0"></td>' +
+    '<td data-dist-gross="listing"><input placeholder="$0"></td>' +
+    '<td data-dist-gross="procuring"><input placeholder="$0"></td>' +
+    '<td data-dist-gross="both"><input placeholder="$0"></td>' +
+    '<td data-dist-gross="other"><input placeholder="$0"></td>' +
+    '<td data-dist-gross="referring"><input placeholder="$0"></td>' +
     '<td><input class="text-strong" placeholder="$0"></td>' +
-    '<td><button class="remove-row" onclick="this.closest(\'tr\').remove();updateDistPctTotal();">&times;</button></td>';
+    '<td><button class="remove-row" onclick="this.closest(\'tr\').remove();updateDistributionGrossColumns();updateDistPctTotal();">&times;</button></td>';
   body.appendChild(tr);
-  // Wire the hidden select to update the chip
   const sel = tr.querySelector('select');
-  const chip = tr.querySelector('.side-chip');
-  sel.addEventListener('change', function() {
-    chip.className = 'side-chip ' + getSideChipClass(this.value);
-    chip.textContent = this.value;
-    closeDistSideSelect(sel);
-  });
-  chip.addEventListener('click', function() {
-    openDistSideSelect(sel);
-  });
+  sel.value = defaultSide;
+  handleDistSideChange(sel, false);
+  initAgentPicker(nameId, { users: VOUCHER_DISTRIBUTION_AGENTS });
 }
 
 function syncVoucherDealAliases() {
@@ -5558,6 +5623,8 @@ function clearVoucher() {
    'v-avg-rate-sf', 'v-avg-monthly', 'v-total-outside', 'v-dist-total-invoice', 'v-dist-total-outside', 'v-gross-dist'
   ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   rentRowCount = 0;
+  distRowCount = 0;
+  addDistRow();
   delete uploadedFiles['v-deal-documents'];
   voucherAutofillFieldSource = {};
   resetVoucherDetectionState();
