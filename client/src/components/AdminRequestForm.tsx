@@ -24,6 +24,8 @@ export function AdminRequestForm({ requestType, onBack }: AdminRequestFormProps)
     priority: "medium",
   });
 
+  const BROKER_ADMIN_EMAIL = '_NewportBeach-BrokerAdmin@lee-associates.com';
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -45,7 +47,42 @@ export function AdminRequestForm({ requestType, onBack }: AdminRequestFormProps)
       JSON.stringify([newRequest, ...existingRequests])
     );
 
-    toast.success("Request submitted successfully!");
+    // Build mailto URL to open email app
+    const emailSubject = `[Lee Newport Beach] ${requestType.title} — ${formData.subject}`;
+    const emailBody = [
+      'Hello Broker Admin,',
+      '',
+      `Please see the attached ${requestType.title.toLowerCase()} request.`,
+      '',
+      `Request Type: ${requestType.title}`,
+      `Subject: ${formData.subject}`,
+      `Priority: ${formData.priority}`,
+      '',
+      'Description:',
+      formData.description,
+      '',
+      'IMPORTANT: Please attach any relevant documents to this email before sending.',
+      '',
+      'Thank you',
+    ].join('\n');
+
+    const params = new URLSearchParams();
+    params.set('subject', emailSubject);
+    params.set('body', emailBody);
+    const mailtoUrl = `mailto:${BROKER_ADMIN_EMAIL}?${params.toString()}`;
+
+    // Show reminder alert before opening email
+    const proceed = window.confirm(
+      'Your email app will open with a draft to the Broker Admin.\n\n' +
+      '⚠️ REMINDER: Don\'t forget to attach any relevant documents to the email before sending!\n\n' +
+      'Click OK to open your email app.'
+    );
+
+    if (proceed) {
+      window.location.href = mailtoUrl;
+    }
+
+    toast.success("Request submitted! Check your email app — attach documents before sending.");
     setLocation("/portal/request-hub/my-requests");
   };
 

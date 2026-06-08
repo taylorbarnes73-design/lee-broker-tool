@@ -9509,9 +9509,38 @@ async function submitAdminRequest(btn) {
     ADMIN_SUBMISSIONS.unshift(submission);
     persistSubmissions();
     await syncSubmissionToServer(submission);
-    showToast('Admin request submitted.');
+
+    // Build mailto for admin request
+    const arBodyLines = [
+      'Hello Broker Admin,',
+      '',
+      'Please see the attached admin request.',
+      '',
+      'Request Type: ' + requestType,
+      'Subject: ' + subject,
+      propertyAddress ? 'Property / Address: ' + propertyAddress : '',
+      '',
+      'Message:',
+      message,
+      '',
+      'Thank you,',
+      (authUser?.name || 'Lee & Associates Broker'),
+    ].filter(line => line !== '');
+    const arSubjectLine = '[Lee Newport Beach] Admin Request — ' + subject;
+    const arMailto = buildMailtoUrl(BROKER_ADMIN_EMAIL, (authUser?.email || ''), arSubjectLine, arBodyLines.join('\n'));
+    const arAttachmentNames = attachments.map(file => file.filename || file.name || 'Attachment').filter(Boolean);
+
+    // Show attachment reminder and open email
+    if (arAttachmentNames.length > 0) {
+      showAttachmentReminder(arMailto, [], arAttachmentNames);
+    } else {
+      showAttachmentReminder(arMailto, [], ['Attach any relevant documents before sending']);
+    }
+    launchMailto(arMailto);
+
+    showToast('Admin request submitted. Email draft opened — don\'t forget to attach your documents!');
     if (status) {
-      status.innerHTML = '<span class="status-success status-strong">Admin request submitted successfully.</span>';
+      status.innerHTML = '<span class="status-success status-strong">Admin request submitted. Check your email app — attach documents before sending.</span>';
     }
     if (typeof refreshBrokerQueue === 'function') refreshBrokerQueue().catch(() => {});
   } catch (error) {
@@ -9699,9 +9728,40 @@ async function submitMarketingRequest(btn) {
     ADMIN_SUBMISSIONS.unshift(submission);
     persistSubmissions();
     await syncSubmissionToServer(submission);
-    showToast('Marketing request submitted.');
+
+    // Build mailto for marketing request
+    const mrBodyLines = [
+      'Hello Broker Admin,',
+      '',
+      'Please see the attached marketing request.',
+      '',
+      'Project Title: ' + projectTitle,
+      'Project Type: ' + requestType,
+      'Priority: ' + priority,
+      propertyAddress ? 'Property / Address: ' + propertyAddress : '',
+      'Requested Due Date: ' + dueDate,
+      '',
+      'Objective:',
+      objective,
+      '',
+      'Thank you,',
+      (requesterName || 'Lee & Associates Broker'),
+    ].filter(line => line !== '');
+    const mrSubjectLine = '[Lee Newport Beach] Marketing Request — ' + projectTitle;
+    const mrMailto = buildMailtoUrl(BROKER_ADMIN_EMAIL, (requesterEmail || ''), mrSubjectLine, mrBodyLines.join('\n'));
+    const mrAttachmentNames = attachments.map(file => file.filename || file.name || 'Attachment').filter(Boolean);
+
+    // Show attachment reminder and open email
+    if (mrAttachmentNames.length > 0) {
+      showAttachmentReminder(mrMailto, [], mrAttachmentNames);
+    } else {
+      showAttachmentReminder(mrMailto, [], ['Attach any relevant documents before sending']);
+    }
+    launchMailto(mrMailto);
+
+    showToast('Marketing request submitted. Email draft opened — don\'t forget to attach your documents!');
     if (status) {
-      status.innerHTML = '<span class="status-success status-strong">Marketing request submitted successfully.</span>';
+      status.innerHTML = '<span class="status-success status-strong">Marketing request submitted. Check your email app — attach documents before sending.</span>';
     }
     if (typeof refreshBrokerQueue === 'function') refreshBrokerQueue().catch(() => {});
   } catch (error) {
@@ -17365,10 +17425,31 @@ async function ciSubmitToAdmin() {
     const res = submitJson?.result?.data?.json;
 
     if (res && res.success) {
-      statusEl.innerHTML = '<span class="status-success status-strong">\u2713 Contract submitted to admin successfully!</span>';
+      statusEl.innerHTML = '<span class="status-success status-strong">\u2713 Contract submitted to admin. Check your email app \u2014 attach documents before sending.</span>';
       btn.querySelector('.btn-label').textContent = '\u2713 Submitted!';
       const contractType = document.getElementById('ci-contract-type')?.value;
       if (contractType) ciSaveDraft(contractType);
+
+      // Build mailto for contract intake
+      const ciAddr = (contractData.propAddress || '').trim();
+      const ciBodyLines = [
+        'Hello Broker Admin,',
+        '',
+        'Please see the attached contract intake submission.',
+        '',
+        'Contract Type: ' + (contractData.contractType || ''),
+        ciAddr ? 'Property: ' + ciAddr : '',
+        contractData.party1Name ? 'Party 1: ' + contractData.party1Name : '',
+        notes ? 'Notes: ' + notes : '',
+        '',
+        'Thank you,',
+        (authUser?.name || 'Lee & Associates Broker'),
+      ].filter(line => line !== '');
+      const ciSubjectLine = '[Lee Newport Beach] Contract Intake \u2014 ' + (contractData.contractType || 'AIR CRE') + (ciAddr ? ' \u2014 ' + ciAddr : '');
+      const ciMailto = buildMailtoUrl(BROKER_ADMIN_EMAIL, (authUser?.email || ''), ciSubjectLine, ciBodyLines.join('\n'));
+      showAttachmentReminder(ciMailto, [], ['Attach the contract document (PDF or signed copy) before sending']);
+      launchMailto(ciMailto);
+
       setTimeout(() => {
         btn.classList.remove('loading');
         btn.querySelector('.btn-label').textContent = '\u2709 Submit to Admin';
