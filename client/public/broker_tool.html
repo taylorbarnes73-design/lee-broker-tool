@@ -600,7 +600,7 @@
     <div class="btn-bar" id="listing-mod-form-actions">
       <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'listing-mod')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
       <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing-mod', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
-      <button class="btn btn-gray" onclick="if(!confirm('Clear all listing modification fields?')) return; setBtnLoading(this,true,'Clearing…');setTimeout(()=>{clearListingModification();setBtnLoading(this,false);},80)"><span class="btn-spinner"></span><span class="btn-label">Clear Form</span></button>
+      <button class="btn btn-gray" onclick="clearListingModificationWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Clear Form</span></button>
     </div>
   </div><!-- end listing-mod-mode -->
 
@@ -5615,6 +5615,15 @@ function clearListingModification() {
   const zone = document.getElementById('lm-brochure-zone');
   if (zone) zone.classList.remove('upload-zone-success', 'upload-zone-active');
   try { localStorage.removeItem('lbt_autosave_listing_mod_v1'); } catch (e) {}
+}
+
+function clearListingModificationWithSpinner(btn) {
+  if (!confirm('Clear all listing modification fields?')) return;
+  setBtnLoading(btn, true, 'Clearing…');
+  setTimeout(() => {
+    clearListingModification();
+    setBtnLoading(btn, false);
+  }, 80);
 }
 
 function clearSign() {
