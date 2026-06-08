@@ -52,7 +52,7 @@ export const ENV = {
     awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? "",
 
     // Admin
-    adminEmail: process.env.ADMIN_EMAIL?.trim() || "tbarnes@lee-associates.com",
+    adminEmail: process.env.ADMIN_EMAIL?.trim() || "_NewportBeach-BrokerAdmin@lee-associates.com",
     // Sign request vendor
     cimarronEmail: process.env.CIMARRON_EMAIL ?? "",
 
