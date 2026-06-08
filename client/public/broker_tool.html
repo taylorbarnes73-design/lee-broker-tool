@@ -600,7 +600,7 @@
     <div class="btn-bar" id="listing-mod-form-actions">
       <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'listing-mod')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
       <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing-mod', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
-      <button class="btn btn-gray" onclick="document.getElementById('lm-notes').value='';document.getElementById('lm-address').value='';">Clear</button>
+      <button class="btn btn-gray" onclick="clearListingModificationWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Clear Form</span></button>
     </div>
   </div><!-- end listing-mod-mode -->
 
@@ -5586,6 +5586,31 @@ function clearListing() {
   try { localStorage.removeItem(LBT_AUTOSAVE_KEYS.listing); } catch (e) {}
   const au = document.getElementById('lg-autosave');
   if (au) au.textContent = '';
+}
+
+function clearListingModification() {
+  document.querySelectorAll('#listing-mod-mode input, #listing-mod-mode textarea').forEach((el) => {
+    if (el.type !== 'checkbox' && el.type !== 'radio' && el.type !== 'file') el.value = '';
+  });
+  document.querySelectorAll('#listing-mod-mode input[type="checkbox"]').forEach((el) => { el.checked = false; });
+  document.querySelectorAll('#listing-mod-mode .upload-staged-bar, #listing-mod-mode .upload-confirm-btn').forEach((el) => el.remove());
+  document.querySelectorAll('#listing-mod-mode .ai-filled-badge').forEach((badge) => badge.remove());
+  document.querySelectorAll('#listing-mod-mode .ai-filled, #listing-mod-mode .ai-smart').forEach((el) => {
+    el.classList.remove('ai-filled', 'ai-smart');
+  });
+  clearDealDocSelection('lm-brochure-status', 'lm-brochure-scrape-btn', 'lm-brochure-file', 'listing-mod');
+  const zone = document.getElementById('lm-brochure-zone');
+  if (zone) zone.classList.remove('upload-zone-success', 'upload-zone-active');
+  try { localStorage.removeItem('lbt_autosave_listing_mod_v1'); } catch (e) {}
+}
+
+function clearListingModificationWithSpinner(btn) {
+  if (!confirm('Clear all listing modification fields?')) return;
+  setBtnLoading(btn, true, 'Clearing…');
+  setTimeout(() => {
+    clearListingModification();
+    setBtnLoading(btn, false);
+  }, 80);
 }
 
 function clearSign() {
