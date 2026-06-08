@@ -123,19 +123,34 @@ async function fetchAccessToken(cfg: GraphConfig): Promise<string> {
   return json.access_token;
 }
 
-async function graphGet(cfg: GraphConfig, url: string): Promise<any> {
+async function graphRequest(
+  cfg: GraphConfig,
+  url: string,
+  init?: { method?: string; body?: string }
+): Promise<Response> {
   const token = await fetchAccessToken(cfg);
   const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    method: init?.method ?? "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      ...(init?.body ? { "Content-Type": "application/json" } : {}),
+    },
+    body: init?.body,
   });
   if (res.status === 401 || res.status === 403) {
     clearGraphTokenCache();
     const text = await res.text().catch(() => "");
     throw new GraphAuthError(
-      `Graph ${res.status}: ${res.statusText}. Likely missing Mail.Read application permission or admin consent. ${text.slice(0, 400)}`,
+      `Graph ${res.status}: ${res.statusText}. Likely missing Graph application permission or admin consent. ${text.slice(0, 400)}`,
       res.status
     );
   }
+  return res;
+}
+
+async function graphGet(cfg: GraphConfig, url: string): Promise<any> {
+  const res = await graphRequest(cfg, url);
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new GraphRequestError(
@@ -145,6 +160,68 @@ async function graphGet(cfg: GraphConfig, url: string): Promise<any> {
     );
   }
   return res.json();
+}
+
+export type GraphMailAttachment = {
+  filename: string;
+  mimeType: string;
+  base64Data: string;
+};
+
+export type GraphSendMailParams = {
+  mailbox: string;
+  to: string[];
+  cc?: string[];
+  subject: string;
+  content: string;
+  attachments?: GraphMailAttachment[];
+};
+
+/**
+ * Send outbound mail via Microsoft Graph from a shared mailbox.
+ * Requires Mail.Send application permission on the Azure AD app.
+ */
+export async function sendGraphMail(
+  cfg: GraphConfig,
+  params: GraphSendMailParams
+): Promise<void> {
+  const toRecipients = params.to.map(address => ({
+    emailAddress: { address },
+  }));
+  const ccRecipients = (params.cc ?? []).map(address => ({
+    emailAddress: { address },
+  }));
+  const attachments = (params.attachments ?? []).map(file => ({
+    "@odata.type": "#microsoft.graph.fileAttachment",
+    name: file.filename,
+    contentType: file.mimeType,
+    contentBytes: file.base64Data,
+  }));
+
+  const body = JSON.stringify({
+    message: {
+      subject: params.subject,
+      body: {
+        contentType: "Text",
+        content: params.content,
+      },
+      toRecipients,
+      ...(ccRecipients.length ? { ccRecipients } : {}),
+      ...(attachments.length ? { attachments } : {}),
+    },
+    saveToSentItems: true,
+  });
+
+  const url = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(params.mailbox)}/sendMail`;
+  const res = await graphRequest(cfg, url, { method: "POST", body });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new GraphRequestError(
+      `Graph sendMail failed: ${res.status} ${res.statusText}`,
+      res.status,
+      text.slice(0, 1000)
+    );
+  }
 }
 
 const MESSAGE_SELECT =

@@ -10,6 +10,7 @@ import { storageGetBytes, storagePut } from "../storage";
 import { eq } from "drizzle-orm";
 import { getSetting } from "../settings/getSetting";
 import { notifyAdminOfSubmission } from "../services/adminNotification";
+import { loadGraphConfig, loadMailboxAddress, sendGraphMail } from "../lib/msGraph";
 
 const fieldSchema = z.object({
   label: z.string(),
@@ -68,7 +69,7 @@ type ArchivedSubmissionFile = {
 type DeliveryResult = {
   success: boolean;
   error?: string;
-  deliveryMethod?: "smtp" | "outlook-mcp" | "outlook-mcp-link";
+  deliveryMethod?: "smtp" | "graph" | "outlook-mcp" | "outlook-mcp-link";
   attachmentIncluded?: boolean;
 };
 
@@ -207,6 +208,46 @@ async function sendViaSmtp(params: {
   }
 }
 
+async function sendViaGraph(params: {
+  to: string[];
+  cc: string[];
+  subject: string;
+  content: string;
+  attachments?: ArchivedSubmissionFile[];
+}): Promise<DeliveryResult> {
+  try {
+    const cfg = await loadGraphConfig();
+    if (!cfg) {
+      return { success: false, error: "Microsoft Graph is not configured." };
+    }
+
+    const mailbox = await loadMailboxAddress();
+    await sendGraphMail(cfg, {
+      mailbox,
+      to: params.to,
+      cc: params.cc,
+      subject: params.subject,
+      content: params.content,
+      attachments: params.attachments?.map(file => ({
+        filename: file.filename,
+        mimeType: file.mimeType,
+        base64Data: file.base64Data,
+      })),
+    });
+
+    return {
+      success: true,
+      deliveryMethod: "graph",
+      attachmentIncluded: Boolean(params.attachments?.length),
+    };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 function sendViaOutlookMcp(params: {
   to: string[];
   cc: string[];
@@ -265,6 +306,11 @@ async function deliverSubmissionEmail(params: {
     if (smtpResult.success) {
       return smtpResult;
     }
+  }
+
+  const graphResult = await sendViaGraph(params);
+  if (graphResult.success) {
+    return graphResult;
   }
 
   const mcpWithAttachment = sendViaOutlookMcp({

@@ -5,6 +5,9 @@ const {
   storagePutMock,
   dbInsertValuesMock,
   sendMailMock,
+  sendGraphMailMock,
+  loadGraphConfigMock,
+  loadMailboxAddressMock,
 } = vi.hoisted(() => ({
   execSyncMock: vi.fn(),
   storagePutMock: vi.fn().mockResolvedValue({
@@ -13,6 +16,9 @@ const {
   }),
   dbInsertValuesMock: vi.fn().mockResolvedValue([{ insertId: 101 }]),
   sendMailMock: vi.fn().mockResolvedValue({ messageId: "smtp-1" }),
+  sendGraphMailMock: vi.fn().mockResolvedValue(undefined),
+  loadGraphConfigMock: vi.fn().mockResolvedValue(null),
+  loadMailboxAddressMock: vi.fn().mockResolvedValue("_NewportBeach-BrokerAdmin@lee-associates.com"),
 }));
 
 vi.mock("child_process", () => ({
@@ -42,6 +48,12 @@ function makeDbMock() {
 
 vi.mock("../db", () => ({
   getDb: vi.fn().mockResolvedValue(makeDbMock()),
+}));
+
+vi.mock("../lib/msGraph", () => ({
+  loadGraphConfig: loadGraphConfigMock,
+  loadMailboxAddress: loadMailboxAddressMock,
+  sendGraphMail: sendGraphMailMock,
 }));
 
 vi.mock("../settings/getSetting", () => ({
@@ -274,6 +286,32 @@ describe("email.sendToAdmin", () => {
     expect(result.attachmentIncluded).toBe(false);
     expect(result.deliveryMethod).toBe("queue-only");
     expect(execSyncMock).not.toHaveBeenCalled();
+  });
+
+  it("uses Microsoft Graph when configured and SMTP is not", async () => {
+    loadGraphConfigMock.mockResolvedValueOnce({
+      tenantId: "tenant",
+      clientId: "client",
+      clientSecret: "secret",
+    });
+
+    const caller = makeCaller();
+    const result = await caller.sendToAdmin({
+      formType: "listing",
+      brokerName: "Test Broker",
+      propertyAddress: "100 Test Center Dr",
+      sections: sampleSections,
+      senderEmail: "testuser@example.test",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.deliveryMethod).toBe("graph");
+    expect(sendGraphMailMock).toHaveBeenCalledOnce();
+    expect(execSyncMock).not.toHaveBeenCalled();
+
+    const graphCall = sendGraphMailMock.mock.calls[0][1];
+    expect(graphCall.to).toEqual(["tbarnes@lee-associates.com"]);
+    expect(graphCall.cc).toEqual(["testuser@example.test"]);
   });
 
   it("uses SMTP with a true attachment when configured", async () => {

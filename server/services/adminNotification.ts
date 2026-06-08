@@ -7,6 +7,7 @@
 import { execSync } from "child_process";
 import nodemailer from "nodemailer";
 import { ENV } from "../_core/env";
+import { loadGraphConfig, loadMailboxAddress, sendGraphMail } from "../lib/msGraph";
 
 function getAdminNotifyEmail(): string {
   return ENV.adminEmail || "tbarnes@lee-associates.com";
@@ -73,6 +74,18 @@ async function sendAdminNotification(params: SubmissionNotificationParams): Prom
         to: getAdminNotifyEmail(),
         subject,
         text: bodyLines,
+      });
+      return;
+    }
+
+    const graphCfg = await loadGraphConfig();
+    if (graphCfg) {
+      const mailbox = await loadMailboxAddress();
+      await sendGraphMail(graphCfg, {
+        mailbox,
+        to: [getAdminNotifyEmail()],
+        subject,
+        content: bodyLines,
       });
       return;
     }

@@ -213,7 +213,7 @@ function bpApplyProfile(idxStr) {
 
   // -- SEND TO ADMIN modal: broker name & email --
   set('sta-broker-name', p.name);
-  set('sta-broker-email', p.email);
+  set('sta-sender-email', p.email);
 
   // Visual feedback: brief green flash on the selector
   const sel = document.getElementById('bp-active-select');

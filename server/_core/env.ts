@@ -71,7 +71,10 @@ export const ENV = {
     smtpSecure: (process.env.SMTP_SECURE ?? "").toLowerCase() === "true",
     smtpUser: process.env.SMTP_USER ?? "",
     smtpPass: process.env.SMTP_PASS ?? "",
-    smtpFrom: process.env.SMTP_FROM ?? process.env.ADMIN_EMAIL ?? "",
+    smtpFrom:
+        process.env.SMTP_FROM?.trim() ||
+        process.env.ADMIN_EMAIL?.trim() ||
+        "tbarnes@lee-associates.com",
 
     // Local broker auth
     localAuthEnabled:

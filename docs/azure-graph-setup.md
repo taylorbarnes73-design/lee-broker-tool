@@ -28,16 +28,19 @@ Azure AD app registration that a tenant administrator has consented to.
 4. **Immediately** copy the **Value** column (not Secret ID) — it is shown
    only once.
 
-## 3. Grant Mail.Read application permission
+## 3. Grant Graph application permissions
 
 1. **API permissions** → **Add a permission** → **Microsoft Graph** →
    **Application permissions**.
-2. Search for **Mail.Read** → check it → **Add permissions**.
+2. Add both:
+   - **Mail.Read** — ingest incoming BrokerAdmin emails into the portal queue
+   - **Mail.Send** — send **Send to Admin** submission emails to `ADMIN_EMAIL`
+     (defaults to `tbarnes@lee-associates.com`) from the BrokerAdmin mailbox
 3. Click **Grant admin consent for [tenant]** (requires a tenant admin).
 
-> Note: `Mail.Read` (application) grants access to **every** mailbox in the
-> tenant unless you scope it with an application access policy (next step).
-> Always scope it.
+> Note: `Mail.Read` and `Mail.Send` (application) grant access to **every**
+> mailbox in the tenant unless you scope them with an application access policy
+> (next step). Always scope it.
 
 ## 4. (Strongly recommended) Restrict to the BrokerAdmin mailbox
 
