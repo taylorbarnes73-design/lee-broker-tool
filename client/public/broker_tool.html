@@ -9239,15 +9239,18 @@ async function syncSubmissionToServer(submission) {
 }
 
 function openSubmissionEmailDraft({ to, cc, subject, body }) {
-  const normalizedTo = String(to || '').trim();
+  const sanitizeEmailForMailto = (value) => {
+    const candidate = String(value || '').trim();
+    if (!candidate || /[\r\n]/.test(candidate)) return '';
+    return /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/.test(candidate) ? candidate : '';
+  };
+  const normalizedTo = sanitizeEmailForMailto(to);
   if (!normalizedTo) return;
-  const params = new URLSearchParams({
-    subject: String(subject || '').trim(),
-    body: String(body || '').trim(),
-  });
-  const normalizedCc = String(cc || '').trim();
-  if (normalizedCc) params.set('cc', normalizedCc);
-  const mailtoUrl = 'mailto:' + normalizedTo + '?' + params.toString();
+  const encodedSubject = encodeURIComponent(String(subject || '').trim());
+  const encodedBody = encodeURIComponent(String(body || '').trim());
+  const normalizedCc = sanitizeEmailForMailto(cc);
+  let mailtoUrl = 'mailto:' + normalizedTo + '?subject=' + encodedSubject + '&body=' + encodedBody;
+  if (normalizedCc) mailtoUrl += '&cc=' + encodeURIComponent(normalizedCc);
   window.location.href = mailtoUrl;
 }
 
