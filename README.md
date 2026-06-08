@@ -32,7 +32,9 @@ corepack pnpm install
 - `JWT_SECRET` — session signing
 - `LOCAL_AUTH_ENABLED=true` — password login for brokers/admins
 - `ADMIN_EMAIL` — office inbox for send-to-admin emails (defaults to `tbarnes@lee-associates.com`)
-- `SMTP_HOST`, `SMTP_FROM` (and credentials if required) — broker notification emails
+- `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — Microsoft 365 example:
+  `smtp.office365.com`, port `587`, `SMTP_SECURE=false`, user `tbarnes@lee-associates.com`
+  (use an [app password](https://account.microsoft.com/security) when MFA is enabled)
 
 Optional:
 

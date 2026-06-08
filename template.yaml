@@ -55,6 +55,25 @@ Parameters:
   AdminEmail:
     Type: String
     Default: ''
+  SmtpHost:
+    Type: String
+    Default: ''
+  SmtpPort:
+    Type: String
+    Default: '587'
+  SmtpSecure:
+    Type: String
+    Default: 'false'
+  SmtpUser:
+    Type: String
+    Default: ''
+  SmtpPass:
+    Type: String
+    NoEcho: true
+    Default: ''
+  SmtpFrom:
+    Type: String
+    Default: ''
   CimarronEmail:
     Type: String
     Default: ''
@@ -146,6 +165,18 @@ Resources:
                 Value: !Ref OwnerOpenId
               - Name: ADMIN_EMAIL
                 Value: !Ref AdminEmail
+              - Name: SMTP_HOST
+                Value: !Ref SmtpHost
+              - Name: SMTP_PORT
+                Value: !Ref SmtpPort
+              - Name: SMTP_SECURE
+                Value: !Ref SmtpSecure
+              - Name: SMTP_USER
+                Value: !Ref SmtpUser
+              - Name: SMTP_PASS
+                Value: !Ref SmtpPass
+              - Name: SMTP_FROM
+                Value: !Ref SmtpFrom
               - Name: CIMARRON_EMAIL
                 Value: !Ref CimarronEmail
               - Name: LOCAL_AUTH_ENABLED
