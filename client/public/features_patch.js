@@ -211,54 +211,6 @@ window.duplicateRentRow = function(btn) {
   });
 })();
 
-// ── Feature 11: Deal summary card in voucher review ──
-(function patchVoucherReview() {
-  onDomReady(function() {
-    const origOpenReviewSnapshot = window.openReviewSnapshot;
-    window.openReviewSnapshot = function(context) {
-      if (typeof origOpenReviewSnapshot === 'function') origOpenReviewSnapshot.apply(this, arguments);
-      if (context !== 'voucher') return;
-      // Inject summary card at the top of the review modal body
-      setTimeout(function() {
-        const modal = document.getElementById('review-snapshot-modal');
-        if (!modal) return;
-        const body = modal.querySelector('.review-content') || modal.querySelector('#review-snapshot-content');
-        if (!body) return;
-        if (body.querySelector('.voucher-summary-card')) return; // already added
-        const gv = function(id) { return (document.getElementById(id) || {}).value || '—'; };
-        const txn = (document.getElementById('v-txn-type') || {}).value || 'lease';
-        const isLease = txn === 'lease' || txn === 'sublease' || txn === 'renewal';
-        const addr = [gv('v-address'), gv('v-city'), gv('v-state')].filter(v => v && v !== '—').join(', ') || '—';
-        const consideration = isLease ? gv('v-l-consideration') : gv('v-s-price');
-        const commDue = isLease ? gv('v-l-comm-due') : gv('v-s-comm-due');
-        const laName = gv('v-la-name') || '—';
-        const paName = gv('v-pa-name') || '—';
-        const lessee = gv('v-lb-company') || '—';
-        const lessor = gv('v-ls-company') || '—';
-        const dealSf = gv('v-l-dealsf');
-        const card = document.createElement('div');
-        card.className = 'voucher-summary-card';
-        card.innerHTML = '<div class="voucher-summary-card-title">Deal Summary</div>' +
-          '<div class="voucher-summary-grid">' +
-            '<div class="voucher-summary-item full-width"><dt>Property</dt><dd>' + escHtml(addr) + '</dd></div>' +
-            '<hr class="voucher-summary-divider">' +
-            '<div class="voucher-summary-item"><dt>' + (isLease ? 'Lessee' : 'Buyer') + '</dt><dd>' + escHtml(lessee) + '</dd></div>' +
-            '<div class="voucher-summary-item"><dt>' + (isLease ? 'Lessor' : 'Seller') + '</dt><dd>' + escHtml(lessor) + '</dd></div>' +
-            '<div class="voucher-summary-item"><dt>Listing Agent</dt><dd>' + escHtml(laName) + '</dd></div>' +
-            '<div class="voucher-summary-item"><dt>Procuring Agent</dt><dd>' + escHtml(paName) + '</dd></div>' +
-            '<hr class="voucher-summary-divider">' +
-            '<div class="voucher-summary-item"><dt>Deal SF</dt><dd class="mono">' + escHtml(dealSf) + '</dd></div>' +
-            '<div class="voucher-summary-item"><dt>Transaction Type</dt><dd>' + escHtml(txn.charAt(0).toUpperCase() + txn.slice(1)) + '</dd></div>' +
-            '<div class="voucher-summary-item voucher-summary-highlight"><dt>Total Consideration</dt><dd class="mono">' + escHtml(consideration) + '</dd></div>' +
-            '<div class="voucher-summary-item voucher-summary-highlight"><dt>Total Commission Due</dt><dd class="mono">' + escHtml(commDue) + '</dd></div>' +
-          '</div>';
-        body.insertBefore(card, body.firstChild);
-      }, 80);
-    };
-  });
-  function escHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-})();
-
 // ── Feature 12: Auto-save on field blur ──
 (function wireAutoSaveOnBlur() {
   onDomReady(function() {

@@ -100,6 +100,19 @@ describe("broker_tool.html wiring", () => {
     expect(missingPanels).toEqual([]);
   });
 
+  it("routes form review actions to the dedicated summary panel", () => {
+    expect(brokerToolHtml).toContain('id="tab-review-summary"');
+    expect(brokerToolHtml).toContain('id="review-summary-content"');
+    expect(brokerToolHtml).not.toContain('id="review-snapshot-modal"');
+
+    const listingReviewSource = extractFunctionSource("showListingReview");
+    const sharedReviewSource = extractFunctionSource("openReviewSnapshot");
+
+    expect(listingReviewSource).toContain("openReviewSnapshot('listing')");
+    expect(sharedReviewSource).toContain("reviewPanel.classList.add('active')");
+    expect(sharedReviewSource).toContain("renderReviewSummary(rows, sections)");
+  });
+
   it("maps every admin nav action to a real admin page", () => {
     const adminPageKeys = collectMatches(
       /onclick="switchAdminPage\('([^']+)'\)/g

@@ -16,7 +16,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-<link rel="stylesheet" href="broker_tool.css?v=20260608.2">
+<link rel="stylesheet" href="broker_tool.css?v=20260608.3">
 <link rel="stylesheet" href="broker_ux.css?v=20260608.2">
 </head>
 <body>
@@ -2620,6 +2620,31 @@
   <div id="drafts-list"></div>
 </div><!-- /tab-drafts -->
 
+<div id="tab-review-summary" class="panel review-summary-panel" data-pane="review-summary">
+  <div class="review-summary-shell">
+    <div class="page-head broker-page-head">
+      <div class="page-head-left">
+        <div class="page-eyebrow">Final Check</div>
+        <h1 class="page-h1" id="review-summary-title">Review Submission</h1>
+        <p class="review-summary-intro" id="review-summary-copy">Confirm the information below before continuing.</p>
+      </div>
+      <div class="page-head-right">
+        <button type="button" class="btn btn-gray" onclick="closeReviewSnapshot()">&#8592; Back to Edit</button>
+      </div>
+    </div>
+
+    <div class="card review-card">
+      <div id="review-summary-content" class="review-content"></div>
+    </div>
+
+    <div class="btn-bar review-summary-actions">
+      <button type="button" class="btn btn-gray" onclick="closeReviewSnapshot()">&#8592; Back to Edit</button>
+      <button type="button" class="btn btn-outline is-hidden" id="review-open-comp-reports" onclick="closeReviewSnapshot(); switchTab('comp-reports')">Open Comp Reports</button>
+      <button type="button" class="btn btn-red btn-lg" id="review-submit-btn" onclick="submitReviewSnapshot()"><span class="btn-spinner"></span><span class="btn-label">Continue to Admin Email</span></button>
+    </div>
+  </div>
+</div><!-- /tab-review-summary -->
+
 </div><!-- /broker-view -->
 
 <div class="help-overlay" id="help-overlay"></div>
@@ -3074,8 +3099,10 @@
 <div class="modal-overlay" id="send-admin-modal">
   <div class="modal modal-sm">
     <h2 id="send-admin-modal-title" class="modal-heading-row">Send to Admin</h2>
-    <p class="modal-copy" id="send-admin-modal-desc">This will open your email app pre-addressed to the office admin. Your submission PDF will download automatically — attach it to the email and click Send.</p>
-    <div id="send-admin-modal-reminder" class="tip text-error">Reminder: attach the downloaded PDF before sending the email.</div>
+    <p class="modal-copy" id="send-admin-modal-desc">This will prepare an email to the Newport Beach Broker Admin team.</p>
+    <div class="admin-email-notice" role="note">
+      <strong>Before sending:</strong> Your generated files will download and your email app will open. Browsers cannot place files into an email draft, so you must attach the downloaded files before you click Send.
+    </div>
     <div id="sta-submission-summary" class="sta-submission-summary is-hidden"></div>
     <div class="field">
       <label>Your Name (Broker)</label>
@@ -3092,31 +3119,20 @@
     <div id="sta-status" class="status-copy micro-copy-bottom-sm"></div>
     <div class="btn-bar">
       <button class="btn btn-gray" onclick="closeSendToAdminModal()">Cancel</button>
-      <button class="btn btn-green" id="sta-send-btn" onclick="submitSendToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Open Email App</span></button>
+      <button class="btn btn-green" id="sta-send-btn" onclick="submitSendToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Prepare Email &amp; Files</span></button>
     </div>
   </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="review-snapshot-modal">
-  <div class="modal">
-    <h2 id="review-snapshot-title">Review Snapshot</h2>
-    <p class="modal-copy" id="review-snapshot-copy">Review this snapshot before sending to admin.</p>
-    <div id="review-snapshot-content" class="review-content"></div>
-    <div class="btn-bar">
-      <button class="btn btn-gray" onclick="closeReviewSnapshot()">Back</button>
-      <button class="btn btn-outline is-hidden" id="review-open-comp-reports" onclick="closeReviewSnapshot(); switchTab('comp-reports')">Open Comp Reports</button>
-      <button class="btn btn-red" id="review-submit-btn" onclick="submitReviewSnapshot()"><span class="btn-spinner"></span><span class="btn-label">Submit to Admin</span></button>
-    </div>
-  </div>
-</div>
-
 <!-- ═══════════════════════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="email-modal">
   <div class="modal">
     <h2 id="email-modal-title">Draft Email</h2>
-    <div id="email-modal-reminder" class="tip text-error">Reminder: attach the related document before sending the email.</div>
-    <div class="field"><label>To</label><input id="em-to" value="tbarnes@lee-associates.com"></div>
+    <div class="admin-email-notice" role="note">
+      <strong>Attachment reminder:</strong> Your mail app will not attach files automatically. Attach the exported submission documents before sending.
+    </div>
+    <div class="field"><label>To</label><input id="em-to" value="_NewportBeach-BrokerAdmin@lee-associates.com"></div>
     <div class="field"><label>CC</label><input id="em-cc" placeholder="Optional"></div>
     <div class="field"><label>Subject</label><input id="em-subject"></div>
     <div class="field"><label>Body</label><textarea id="em-body" rows="10"></textarea></div>
@@ -3128,8 +3144,36 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="attachment-reminder-modal" role="dialog" aria-modal="true" aria-labelledby="attachment-reminder-title">
+  <div class="modal modal-sm">
+    <h2 id="attachment-reminder-title">Attach Files Before Sending</h2>
+    <p class="modal-copy">Your email draft is addressed to <strong>_NewportBeach-BrokerAdmin@lee-associates.com</strong> and includes the submission details.</p>
+    <div class="attachment-reminder-alert">
+      <strong>Do not send the email yet.</strong>
+      Add every file listed below to the draft first. Email apps do not allow this website to attach files automatically.
+    </div>
+    <div id="attachment-reminder-generated" class="attachment-reminder-group"></div>
+    <div id="attachment-reminder-supporting" class="attachment-reminder-group"></div>
+    <div class="btn-bar">
+      <button class="btn btn-gray" onclick="closeAttachmentReminder()">Close</button>
+      <button class="btn btn-red" onclick="openPreparedAdminEmail()">Open Email Draft Again</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const LEE_API_BASE_STORAGE_KEY = 'lee_api_base_url';
+
+[
+  'bp-modal',
+  'preflight-modal',
+  'send-admin-modal',
+  'email-modal',
+  'attachment-reminder-modal',
+].forEach(id => {
+  const modal = document.getElementById(id);
+  if (modal && modal.parentElement !== document.body) document.body.appendChild(modal);
+});
 
 function leeNormalizeApiBase(raw) {
   if (!raw) return '';
@@ -3901,75 +3945,11 @@ function toggleLeaseTerm(val) {
 
 // ── Listing Review & Confirm Page ──
 function showListingReview() {
-  const formShell = document.getElementById('l-deal-shell');
-  const reviewPage = document.getElementById('listing-review-page');
-  const postSubmit = document.getElementById('listing-post-submit');
-  if (!reviewPage) return;
-
-  // Build summary content
-  const addr = (document.getElementById('l-address') || {}).value || '—';
-  const city = (document.getElementById('l-city') || {}).value || '';
-  const state = (document.getElementById('l-state') || {}).value || '';
-  const zip = (document.getElementById('l-zip') || {}).value || '';
-  const propType = (document.getElementById('l-prop-type') || {}).value || '';
-  const txnType = (document.getElementById('l-txn-type') || {}).value || '';
-  const leaseSF = (document.getElementById('l-lease-sf') || {}).value || '';
-  const leaseType = (document.getElementById('l-lease-type') || {}).value || '';
-  const salePrice = (document.getElementById('l-sale-price') || {}).value || '';
-  const bldgSF = (document.getElementById('l-bldg-sf') || {}).value || '';
-  const agents = getListingAgents();
-  const agentNames = agents.map(a => a.name + (a.shared ? ' (' + a.shared + '%)' : '')).join(', ') || '—';
-  const reveal = (document.getElementById('l-reveal-prices') || {}).checked;
-  const dateEntered = (document.getElementById('l-date-entered') || {}).value || '—';
-  const releaseVal = document.querySelector('input[name="l-release"]:checked');
-  const release = releaseVal ? releaseVal.value : '—';
-  const comments = (document.getElementById('l-comments') || {}).value || '';
-  const docFiles = Array.isArray(uploadedFiles['l-deal-documents']) ? uploadedFiles['l-deal-documents'] : [];
-  const docNames = docFiles.length
-    ? docFiles.map(file => file.filename || 'Document').join(', ')
-    : '—';
-
-  const rows = [
-    ['Date Entered', dateEntered],
-    ['Property Type', propType.charAt(0).toUpperCase() + propType.slice(1)],
-    ['Transaction', txnType.charAt(0).toUpperCase() + txnType.slice(1)],
-    ['Address', addr + (city ? ', ' + city : '') + (state ? ', ' + state : '') + (zip ? ' ' + zip : '')],
-    ['Building SF', bldgSF || '—'],
-    txnType === 'lease' ? ['Rate $/SF/Mo', leaseSF ? '$' + leaseSF + ' ' + leaseType : '—'] : ['Asking Price', salePrice ? '$' + salePrice : '—'],
-    ['MLS Pricing', reveal ? 'Visible on MLS' : 'Hidden from MLS'],
-    ['Listing Agents', agentNames],
-    ['Uploaded Deal Documents', docNames],
-    ['Agency Disclosure', getListingDocumentStatusLabel('agencyDisclosure')],
-    ['Listing Agreement', getListingDocumentStatusLabel('listingAgreement')],
-    ['MLS Release', release],
-    comments ? ['Comments', comments] : null,
-  ].filter(Boolean);
-
-  const content = document.getElementById('listing-review-content');
-  if (content) {
-    content.innerHTML = '<table class="review-table">' +
-      rows.map((r, i) =>
-        '<tr class="' + (i % 2 === 0 ? 'review-table-alt' : '') + '">' +
-        '<td class="review-key-cell">' + r[0] + '</td>' +
-        '<td class="review-value-cell">' + r[1] + '</td></tr>'
-      ).join('') + '</table>';
-  }
-
-  // Hide form, show review page
-  const formActions = document.getElementById('listing-form-actions');
-  setHiddenState(formShell, true);
-  setHiddenState(formActions, true);
-  setHiddenState(postSubmit, true);
-  setHiddenState(reviewPage, false);
+  openReviewSnapshot('listing');
 }
 
 function hideListingReview() {
-  const formShell = document.getElementById('l-deal-shell');
-  const reviewPage = document.getElementById('listing-review-page');
-  const formActions = document.getElementById('listing-form-actions');
-  setHiddenState(reviewPage, true);
-  setHiddenState(formShell, false);
-  setHiddenState(formActions, false);
+  closeReviewSnapshot();
 }
 
 function submitListingToAdmin(btn) {
@@ -4185,21 +4165,51 @@ function showListingReviewWithSpinner(btn) {
     if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
   }, 80);
 }
+
+let reviewReturnPanelId = '';
+let reviewReturnScrollTop = 0;
+
+function reviewDisplayValue(id, fallback = '—') {
+  const el = document.getElementById(id);
+  if (!el) return fallback;
+  if (el.tagName === 'SELECT') {
+    const text = el.options?.[el.selectedIndex]?.text || '';
+    return text && !text.startsWith('—') ? text.trim() : fallback;
+  }
+  if (el.type === 'checkbox') return el.checked ? 'Yes' : 'No';
+  const value = String(el.value || '').trim();
+  return value || fallback;
+}
+
 function reviewSnapshotRowsFor(context) {
+  if (context === 'listing') {
+    const agents = getListingAgents();
+    const files = Array.isArray(uploadedFiles['l-deal-documents']) ? uploadedFiles['l-deal-documents'] : [];
+    return [
+      ['Property', [reviewDisplayValue('l-address', ''), reviewDisplayValue('l-city', ''), reviewDisplayValue('l-state', ''), reviewDisplayValue('l-zip', '')].filter(Boolean).join(', ') || '—'],
+      ['Property Type', reviewDisplayValue('l-prop-type')],
+      ['Transaction Type', reviewDisplayValue('l-txn-type')],
+      ['Date Entered', reviewDisplayValue('l-date-entered')],
+      ['Listing Expiration', reviewDisplayValue('l-listing-expiration')],
+      ['Listing Agents', agents.map(agent => agent.name).filter(Boolean).join(', ') || '—'],
+      ['Deal Documents', files.length ? `${files.length} file${files.length === 1 ? '' : 's'} attached` : '—'],
+    ];
+  }
   if (context === 'listing-mod') {
     return [
-      ['Property Address', document.getElementById('lm-address')?.value || '—'],
-      ['Date of Modification', document.getElementById('lm-date')?.value || '—'],
-      ['Notes / Changes', document.getElementById('lm-notes')?.value || '—'],
+      ['Property Address', reviewDisplayValue('lm-address')],
+      ['Date of Modification', reviewDisplayValue('lm-date')],
+      ['Notes / Changes', reviewDisplayValue('lm-notes')],
     ];
   }
   if (context === 'sign') {
     return [
-      ['Date', document.getElementById('s-date')?.value || '—'],
-      ['Order Type', document.getElementById('s-order-type')?.value || '—'],
-      ['Property Address', document.getElementById('s-address')?.value || '—'],
-      ['City', document.getElementById('s-city')?.value || '—'],
-      ['Requested By', document.getElementById('s-requested-by')?.value || '—'],
+      ['Property', [reviewDisplayValue('s-address', ''), reviewDisplayValue('s-city', '')].filter(Boolean).join(', ') || '—'],
+      ['Order Type', reviewDisplayValue('s-order-type')],
+      ['Date', reviewDisplayValue('s-date')],
+      ['Requested By', reviewDisplayValue('s-requested-by')],
+      ['4 x 8 Signs', reviewDisplayValue('s-4x8-qty', '0')],
+      ['6 x 8 Signs', reviewDisplayValue('s-6x8-qty', '0')],
     ];
   }
   if (context === 'voucher') {
@@ -4210,59 +4220,184 @@ function reviewSnapshotRowsFor(context) {
           : `${(docFiles[0]?.filename || 'Document')}, ${(docFiles[1]?.filename || 'Document')}, ${(docFiles[2]?.filename || 'Document')}, and ${docFiles.length - 3} more`)
       : '—';
     return [
-      ['Representation Type', document.getElementById('v-rep-type')?.value || '—'],
-      ['Transaction Type', document.getElementById('v-txn-type')?.value || '—'],
-      ['Property Address', document.getElementById('v-address')?.value || '—'],
-      ['City', document.getElementById('v-city')?.value || '—'],
-      ['Deal SF', document.getElementById('v-l-dealsf')?.value || '—'],
+      ['Property', [reviewDisplayValue('v-address', ''), reviewDisplayValue('v-city', ''), reviewDisplayValue('v-state', '')].filter(Boolean).join(', ') || '—'],
+      ['Representation Type', reviewDisplayValue('v-rep-type')],
+      ['Transaction Type', reviewDisplayValue('v-txn-type')],
+      ['Property Type', reviewDisplayValue('v-prop-type')],
+      ['Deal SF', reviewDisplayValue('v-l-dealsf')],
+      ['Total Invoice', reviewDisplayValue('v-total-invoice')],
       ['Uploaded Deal Documents', docNames],
     ];
   }
   return [
-    ['Comp Type', document.getElementById('c-comp-type')?.value || '—'],
-    ['Broker Source', document.getElementById('c-source')?.value || '—'],
-    ['Address', document.getElementById('c-address')?.value || '—'],
-    ['City', document.getElementById('c-city')?.value || '—'],
-    ['Property Type', document.getElementById('c-prop-type')?.value || '—'],
+    ['Comp Type', reviewDisplayValue('c-comp-type')],
+    ['Broker Source', reviewDisplayValue('c-source')],
+    ['Property', [reviewDisplayValue('c-address', ''), reviewDisplayValue('c-city', '')].filter(Boolean).join(', ') || '—'],
+    ['Property Type', reviewDisplayValue('c-prop-type')],
   ];
 }
 
+function reviewContextConfig(context) {
+  if (context === 'listing') return { panelId: 'tab-listing', title: 'Review Listing Entry', submitLabel: 'Continue to Admin Email' };
+  if (context === 'listing-mod') return { panelId: 'tab-listing', title: 'Review Listing Modification', submitLabel: 'Open Email Draft' };
+  if (context === 'sign') return { panelId: 'tab-sign', title: 'Review Sign Request', submitLabel: 'Continue to Admin Email' };
+  if (context === 'voucher') return { panelId: 'tab-voucher', title: 'Review Commission Voucher', submitLabel: 'Continue to Admin Email' };
+  return { panelId: 'tab-comp', title: 'Review Comp Input', submitLabel: 'Submit Comp to Admin' };
+}
+
+function reviewControlValue(control) {
+  if (!control || control.type === 'hidden' || control.type === 'file') return '';
+  if (control.type === 'checkbox') return control.checked ? 'Yes' : 'No';
+  if (control.type === 'radio') return control.checked ? String(control.value || 'Selected') : '';
+  if (control.tagName === 'SELECT') {
+    const selected = control.options?.[control.selectedIndex]?.text || '';
+    return selected && !selected.startsWith('—') ? selected.trim() : '';
+  }
+  return String(control.value || '').trim();
+}
+
+function reviewSectionTitle(card, index) {
+  const heading = card.querySelector('.voucher-section-header, h2, h3, .card-title');
+  const title = String(heading?.textContent || '').replace(/\s+/g, ' ').trim();
+  return title || `Details ${index + 1}`;
+}
+
+function collectReviewSections(context) {
+  const selector = context === 'listing'
+    ? '#listing-add-mode'
+    : context === 'listing-mod'
+      ? '#listing-mod-mode'
+      : context === 'sign'
+        ? '#sign-main'
+        : context === 'voucher'
+          ? '#voucher-main'
+          : '#tab-comp';
+  const container = document.querySelector(selector);
+  if (!container) return [];
+
+  const cards = Array.from(container.querySelectorAll('.card')).filter(card => {
+    const parentCard = card.parentElement?.closest('.card');
+    return !parentCard || !container.contains(parentCard);
+  });
+
+  return cards.map((card, index) => {
+    const fields = [];
+    Array.from(card.querySelectorAll('.field')).forEach(field => {
+      if (field.closest('.card') !== card || field.closest('.is-hidden')) return;
+      const label = String(field.querySelector('label')?.textContent || '').replace(/\s+/g, ' ').replace(/\*/g, '').trim();
+      const controls = Array.from(field.querySelectorAll('input, select, textarea'));
+      const values = controls.map(reviewControlValue).filter(Boolean);
+      if (label && values.length) fields.push({ label, value: values.join(', ') });
+    });
+
+    Array.from(card.querySelectorAll('table')).forEach(table => {
+      if (table.closest('.card') !== card || table.closest('.is-hidden')) return;
+      const headers = Array.from(table.querySelectorAll('thead th'))
+        .map(th => String(th.textContent || '').replace(/\s+/g, ' ').trim())
+        .filter(Boolean);
+      Array.from(table.querySelectorAll('tbody tr')).slice(0, 12).forEach((row, rowIndex) => {
+        const values = Array.from(row.querySelectorAll('td')).map(cell => {
+          const control = cell.querySelector('input, select, textarea');
+          return control ? reviewControlValue(control) : String(cell.textContent || '').replace(/[×❏]/g, '').replace(/\s+/g, ' ').trim();
+        }).filter(Boolean);
+        if (!values.length) return;
+        const parts = values.map((value, valueIndex) => headers[valueIndex] ? `${headers[valueIndex]}: ${value}` : value);
+        fields.push({ label: `Row ${rowIndex + 1}`, value: parts.join(' | ') });
+      });
+    });
+
+    return {
+      title: reviewSectionTitle(card, index),
+      fields,
+    };
+  }).filter(section => section.fields.length);
+}
+
+function renderReviewSummary(rows, sections) {
+  const overview = '<div class="review-overview">' +
+    '<p class="review-overview-copy">Check the key details first, then scan each completed section below. Use Back to Edit if anything needs to change.</p>' +
+    '<div class="review-summary-grid">' +
+      rows.map((row, index) =>
+        '<div class="review-summary-card' + (index === 0 ? ' is-accent' : '') + '">' +
+          '<span class="review-summary-label">' + escHtml(row[0]) + '</span>' +
+          '<span class="review-summary-value">' + escHtml(row[1]) + '</span>' +
+        '</div>'
+      ).join('') +
+    '</div></div>';
+  const sectionHtml = sections.length
+    ? '<div class="review-sections">' + sections.map((section, index) =>
+        '<section class="review-section-card">' +
+          '<div class="review-section-head"><div>' +
+            '<div class="review-section-step">Section ' + (index + 1) + '</div>' +
+            '<h2 class="review-section-title">' + escHtml(section.title) + '</h2>' +
+          '</div></div>' +
+          '<div class="review-list">' +
+            section.fields.map(field =>
+              '<div class="review-summary-card">' +
+                '<span class="review-summary-label">' + escHtml(field.label) + '</span>' +
+                '<span class="review-summary-value">' + escHtml(field.value) + '</span>' +
+              '</div>'
+            ).join('') +
+          '</div>' +
+        '</section>'
+      ).join('') + '</div>'
+    : '';
+  return overview + sectionHtml;
+}
 function openReviewSnapshot(context) {
   reviewSnapshotContext = context;
-  const modal = document.getElementById('review-snapshot-modal');
-  const title = document.getElementById('review-snapshot-title');
-  const content = document.getElementById('review-snapshot-content');
+  const config = reviewContextConfig(context);
+  const reviewPanel = document.getElementById('tab-review-summary');
+  const title = document.getElementById('review-summary-title');
+  const copy = document.getElementById('review-summary-copy');
+  const content = document.getElementById('review-summary-content');
+  const submitLabel = document.querySelector('#review-submit-btn .btn-label');
   const openCompReportsBtn = document.getElementById('review-open-comp-reports');
-  if (!modal || !title || !content) return;
-  title.textContent = context === 'listing-mod'
-    ? 'Review Listing Modification'
-    : context === 'sign'
-      ? 'Review Sign Request'
-      : context === 'voucher'
-        ? 'Review Commission Voucher'
-        : 'Review Comp Input';
+  if (!reviewPanel || !title || !content) return;
+
+  const activePanel = document.querySelector('#broker-view > .panel.active');
+  reviewReturnPanelId = activePanel && activePanel.id !== 'tab-review-summary' ? activePanel.id : config.panelId;
+  reviewReturnScrollTop = activePanel?.scrollTop || 0;
+
   const rows = reviewSnapshotRowsFor(context);
-  content.innerHTML = '<table class="review-table">' +
-    rows.map((r, i) =>
-      '<tr class="' + (i % 2 === 0 ? 'review-table-alt' : '') + '">' +
-      '<td class="review-key-cell">' + escHtml(r[0]) + '</td>' +
-      '<td class="review-value-cell">' + escHtml(r[1]) + '</td></tr>'
-    ).join('') +
-    '</table>';
+  const sections = collectReviewSections(context);
+  title.textContent = config.title;
+  if (copy) copy.textContent = 'Confirm the submission summary below before continuing.';
+  content.innerHTML = renderReviewSummary(rows, sections);
+  if (submitLabel) submitLabel.textContent = config.submitLabel;
   if (openCompReportsBtn) setHiddenState(openCompReportsBtn, context !== 'comp');
-  modal.classList.add('open');
+
+  document.querySelectorAll('#broker-view > .panel').forEach(panel => panel.classList.remove('active'));
+  reviewPanel.classList.add('active');
+  reviewPanel.scrollTop = 0;
+  const reviewBar = document.getElementById('broker-review-bar');
+  if (reviewBar) reviewBar.classList.add('is-hidden');
+  closeHelpPanel();
 }
 
 function closeReviewSnapshot() {
-  const modal = document.getElementById('review-snapshot-modal');
-  if (modal) modal.classList.remove('open');
+  const context = reviewSnapshotContext;
+  const config = reviewContextConfig(context);
+  const reviewPanel = document.getElementById('tab-review-summary');
+  const returnPanel = document.getElementById(reviewReturnPanelId || config.panelId);
+  reviewPanel?.classList.remove('active');
+  returnPanel?.classList.add('active');
+  if (returnPanel) returnPanel.scrollTop = reviewReturnScrollTop;
+
+  const reviewBar = document.getElementById('broker-review-bar');
+  const returnTab = (reviewReturnPanelId || config.panelId).replace(/^tab-/, '');
+  if (reviewBar) {
+    const show = returnTab === 'listing' || returnTab === 'voucher' || returnTab === 'sign';
+    reviewBar.classList.toggle('is-hidden', !show);
+    if (show) reviewBar.setAttribute('data-tab', returnTab);
+  }
 }
 
 async function submitReviewSnapshot() {
   const context = reviewSnapshotContext;
   const btn = document.getElementById('review-submit-btn');
   closeReviewSnapshot();
-  if (context === 'sign' || context === 'voucher') {
+  if (context === 'listing' || context === 'sign' || context === 'voucher') {
     openSendToAdminModal(context);
     return;
   }
@@ -7197,6 +7332,7 @@ async function buildVoucherExcelAttachment() {
     filename: built.filename,
     mimeType: VOUCHER_EXCEL_MIME,
     base64Data: await blobToBase64(built.blob),
+    blob: built.blob,
   };
 }
 
@@ -8189,7 +8325,9 @@ async function exportLeeCompReportPdf(compType, rows) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // EMAIL MODAL
 // ═══════════════════════════════════════════════════════════════════════════════
+const BROKER_ADMIN_EMAIL = '_NewportBeach-BrokerAdmin@lee-associates.com';
 let emailContext = '';
+let preparedAdminMailto = '';
 
 function openEmailModal(context) {
   emailContext = context;
@@ -8202,7 +8340,7 @@ function openEmailModal(context) {
   const subject = document.getElementById('em-subject');
   const body = document.getElementById('em-body');
 
-  to.value = 'tbarnes@lee-associates.com';
+  to.value = BROKER_ADMIN_EMAIL;
   cc.value = '';
   if (reminder) {
     reminder.textContent = context === 'comp'
@@ -8217,18 +8355,25 @@ function openEmailModal(context) {
     const propType = document.getElementById('l-prop-type').selectedOptions[0].text;
     const txnType = document.getElementById('l-txn-type').selectedOptions[0].text;
     subject.value = 'New ' + propType + ' Listing Entry — ' + addr;
-    body.value = 'Hi Taylor,\n\nPlease see the attached ' + propType.toLowerCase() + ' listing entry form for ' + addr + '.\n\n' +
+    body.value = 'Hello Broker Admin,\n\nPlease see the attached ' + propType.toLowerCase() + ' listing entry form for ' + addr + '.\n\n' +
       'Property Type: ' + propType + '\n' +
       'Transaction: ' + txnType + '\n' +
       'Listing Agent(s): ' + agentNames + '\n\n' +
       'Please let me know if you need anything else.\n\n' +
       'Thank you,\n' + (agents[0]?.name || '[Agent]');
+  } else if (context === 'listing-mod') {
+    const addr = document.getElementById('lm-address')?.value || '[Address]';
+    const notes = document.getElementById('lm-notes')?.value || '[Describe requested changes]';
+    subject.value = 'Listing Modification Request — ' + addr;
+    body.value = 'Hello Broker Admin,\n\nPlease update the listing for ' + addr + '.\n\n' +
+      'Requested changes:\n' + notes + '\n\n' +
+      'Thank you,\n' + (getSignedInBrokerIdentity()?.name || '[Agent]');
   } else if (context === 'sign') {
     const addr = document.getElementById('s-address').value || '[Address]';
     const orderType = document.getElementById('s-order-type').selectedOptions[0].text;
     cc.value = '';
     subject.value = 'Sign ' + orderType + ' Request — ' + addr;
-    body.value = 'Hi Taylor,\n\nPlease see the attached sign request for ' + addr + '.\n\n' +
+    body.value = 'Hello Broker Admin,\n\nPlease see the attached sign request for ' + addr + '.\n\n' +
       'Order Type: ' + orderType + '\n' +
       'Address: ' + addr + ', ' + (document.getElementById('s-city').value || '') + '\n\n' +
       'Thank you,\n' + (document.getElementById('s-requested-by').value || '[Agent]');
@@ -8236,7 +8381,7 @@ function openEmailModal(context) {
     const addr = document.getElementById('v-address').value || '[Address]';
     const txnType = document.getElementById('v-txn-type').selectedOptions[0].text;
     subject.value = txnType + ' Commission Voucher — ' + addr;
-    body.value = 'Hi Taylor,\n\nPlease see the attached commission voucher for the ' + txnType.toLowerCase() + ' transaction at ' + addr + '.\n\n' +
+    body.value = 'Hello Broker Admin,\n\nPlease see the attached commission voucher for the ' + txnType.toLowerCase() + ' transaction at ' + addr + '.\n\n' +
       'Address: ' + addr + (document.getElementById('v-suite').value ? ', ' + document.getElementById('v-suite').value : '') + '\n' +
       'Transaction Type: ' + txnType + '\n\n' +
       'Please let me know if you need anything else.\n\n' +
@@ -8276,6 +8421,66 @@ function closeEmailModal() {
   document.getElementById('email-modal').classList.remove('open');
 }
 
+function buildMailtoUrl(to, cc, subject, body) {
+  const params = new URLSearchParams();
+  params.set('subject', subject || '');
+  params.set('body', body || '');
+  if (cc) params.set('cc', cc);
+  return 'mailto:' + to + '?' + params.toString();
+}
+
+function launchMailto(mailto) {
+  if (!mailto) return;
+  const link = document.createElement('a');
+  link.href = mailto;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function openPreparedAdminEmail() {
+  launchMailto(preparedAdminMailto);
+}
+
+function closeAttachmentReminder() {
+  document.getElementById('attachment-reminder-modal')?.classList.remove('open');
+}
+
+function renderAttachmentReminderGroup(elementId, title, names) {
+  const group = document.getElementById(elementId);
+  if (!group) return;
+  const cleanNames = (names || []).map(name => String(name || '').trim()).filter(Boolean);
+  group.replaceChildren();
+  group.classList.toggle('is-hidden', cleanNames.length === 0);
+  if (!cleanNames.length) return;
+
+  const heading = document.createElement('h3');
+  heading.textContent = title;
+  const list = document.createElement('ul');
+  cleanNames.forEach(name => {
+    const item = document.createElement('li');
+    item.textContent = name;
+    list.appendChild(item);
+  });
+  group.append(heading, list);
+}
+
+function showAttachmentReminder(mailto, downloadedNames, supportingNames) {
+  preparedAdminMailto = mailto;
+  renderAttachmentReminderGroup(
+    'attachment-reminder-generated',
+    'Downloaded files to attach',
+    downloadedNames
+  );
+  renderAttachmentReminderGroup(
+    'attachment-reminder-supporting',
+    'Original deal documents to attach',
+    supportingNames
+  );
+  document.getElementById('attachment-reminder-modal')?.classList.add('open');
+}
+
 function copyEmail() {
   const subject = document.getElementById('em-subject').value;
   const body = document.getElementById('em-body').value;
@@ -8295,17 +8500,18 @@ function openInMailClient() {
   const sub = saveSubmission(emailContext);
   const to = document.getElementById('em-to').value;
   const cc = document.getElementById('em-cc').value;
-  const subject = encodeURIComponent(document.getElementById('em-subject').value);
-  const body = encodeURIComponent(document.getElementById('em-body').value);
-  let mailto = 'mailto:' + to + '?subject=' + subject + '&body=' + body;
-  if (cc) mailto += '&cc=' + cc;
-  window.open(mailto, '_blank');
+  const subject = document.getElementById('em-subject').value;
+  const body = document.getElementById('em-body').value;
+  launchMailto(buildMailtoUrl(to, cc, subject, body));
   closeEmailModal();
 }
 
 // Close modal on overlay click
 document.getElementById('email-modal').addEventListener('click', function(e) {
   if (e.target === this) closeEmailModal();
+});
+document.getElementById('attachment-reminder-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeAttachmentReminder();
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -16145,7 +16351,6 @@ function openSendToAdminModal(formType) {
   const modal = document.getElementById('send-admin-modal');
   const title = document.getElementById('send-admin-modal-title');
   const desc = document.getElementById('send-admin-modal-desc');
-  const reminder = document.getElementById('send-admin-modal-reminder');
   const status = document.getElementById('sta-status');
   const btn = document.getElementById('sta-send-btn');
   if (!modal) return;
@@ -16154,24 +16359,12 @@ function openSendToAdminModal(formType) {
     formType === 'voucher' ? 'Commission Voucher' :
     'Sign Request';
   title.textContent = formType === 'sign' ? `Submit ${label}` : `Send ${label} to Admin`;
-  desc.textContent = formType === 'sign'
-    ? 'This will submit the sign request into the admin submission queue. The admin will approve it, assign a PO #, and send it to Cimarron.'
-    : `This will open your email app pre-addressed to the office admin. Your ${label} PDF will download automatically — attach it to the email and click Send.`;
-  if (reminder) {
-    if (formType === 'sign') {
-      reminder.classList.add('is-hidden');
-    } else {
-      reminder.classList.remove('is-hidden');
-      reminder.textContent = formType === 'voucher'
-        ? 'Reminder: attach both downloaded files before sending the email.'
-        : 'Reminder: attach the downloaded PDF before sending the email.';
-    }
-  }
+  desc.textContent = `This will save the ${label} to the admin queue, download the generated files, and open an email draft to ${BROKER_ADMIN_EMAIL}.`;
   status.textContent = '';
   status.classList.remove('text-success', 'text-error', 'status-strong');
   btn.classList.remove('loading');
   btn.disabled = false;
-  btn.querySelector('.btn-label').textContent = formType === 'sign' ? 'Submit to Queue' : 'Open Email App';
+  btn.querySelector('.btn-label').textContent = 'Prepare Email & Files';
   modal.classList.add('open');
 }
 
@@ -16184,8 +16377,6 @@ function closeSendToAdminModal() {
 document.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('send-admin-modal');
   if (modal) modal.addEventListener('click', e => { if (e.target === modal) closeSendToAdminModal(); });
-  const reviewModal = document.getElementById('review-snapshot-modal');
-  if (reviewModal) reviewModal.addEventListener('click', e => { if (e.target === reviewModal) closeReviewSnapshot(); });
 });
 
 /**
@@ -16406,6 +16597,82 @@ function collectSignSections(notes) {
   return sections;
 }
 
+function sendToAdminFormLabel(formType) {
+  if (formType === 'listing') return 'Listing Entry';
+  if (formType === 'sign') return 'Sign Request';
+  return 'Commission Voucher';
+}
+
+function generatedAttachmentPayload(file) {
+  if (!file) return undefined;
+  return {
+    filename: file.filename,
+    mimeType: file.mimeType,
+    base64Data: file.base64Data,
+  };
+}
+
+function downloadGeneratedAdminFile(file) {
+  if (!file?.blob || !file?.filename) return;
+  voucherWorkbookDownloadBlob(file.blob, file.filename);
+}
+
+function buildAdminEmailDraft({ formType, brokerName, senderEmail, address, sections, supportingFiles, submissionId, attachmentNames }) {
+  const label = sendToAdminFormLabel(formType);
+  const details = [];
+  (sections || []).forEach(section => {
+    const fields = (section.fields || []).filter(field => String(field.value || '').trim());
+    if (!fields.length) return;
+    details.push(section.title.toUpperCase());
+    fields.forEach(field => details.push(`${field.label}: ${field.value}`));
+    details.push('');
+  });
+
+  const supportingLinks = (supportingFiles || [])
+    .filter(file => file?.url)
+    .map(file => `- ${file.filename || 'Supporting document'}: ${file.url}`);
+  const files = (attachmentNames || []).map(name => `- ${name}`);
+  const subject = `[Lee Newport Beach] ${label}${address ? ` - ${address}` : ''}`;
+  const bodyLines = [
+    'IMPORTANT: ATTACH ALL FILES LISTED BELOW BEFORE SENDING.',
+    '',
+    'Hello Newport Beach Broker Admin,',
+    '',
+    `Please process this ${label.toLowerCase()} submission.`,
+    submissionId ? `Admin Queue Submission: #${submissionId}` : null,
+    brokerName ? `Submitted By: ${brokerName}` : null,
+    senderEmail ? `Broker Email: ${senderEmail}` : null,
+    address ? `Property: ${address}` : null,
+    '',
+    'FILES TO ATTACH',
+    ...(files.length ? files : ['- Attach the exported submission document']),
+    '',
+    'SUBMISSION DETAILS',
+    ...details,
+  ].filter(line => line !== null);
+
+  if (supportingLinks.length) {
+    bodyLines.push(
+      '',
+      'SUPPORTING DOCUMENT LINKS (BACKUP)',
+      ...supportingLinks
+    );
+  }
+
+  bodyLines.push('', 'Thank you,', brokerName || 'Lee & Associates Broker');
+  let body = bodyLines.join('\n');
+  if (body.length > 12000) {
+    body = body.slice(0, 11600) +
+      '\n\n[Additional details are available in the attached form and the Admin Queue.]';
+  }
+
+  return {
+    subject,
+    body,
+    mailto: buildMailtoUrl(BROKER_ADMIN_EMAIL, senderEmail, subject, body),
+  };
+}
+
 async function blobToBase64(blob) {
   return await new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -16448,10 +16715,12 @@ async function buildSendToAdminPdfAttachment() {
     throw new Error('The PDF could not be generated. Please review the form and try again.');
   }
 
+  const blob = captured.doc.output('blob');
   return {
     filename: captured.fileName,
     mimeType: 'application/pdf',
-    base64Data: await blobToBase64(captured.doc.output('blob')),
+    base64Data: await blobToBase64(blob),
+    blob,
   };
 }
 
@@ -16525,67 +16794,75 @@ async function submitSendToAdmin() {
   try {
     const pdfAttachment = await buildSendToAdminPdfAttachment();
     const excelAttachment = _staFormType === 'voucher' ? await buildVoucherExcelAttachment() : undefined;
+    btn.querySelector('.btn-label').textContent = 'Saving to queue...';
 
-    // Download the generated file(s) so the broker can attach them to the email
-    _staDownloadBlob(pdfAttachment.base64Data, pdfAttachment.mimeType, pdfAttachment.filename);
-    if (excelAttachment) {
-      _staDownloadBlob(excelAttachment.base64Data, excelAttachment.mimeType, excelAttachment.filename);
-    }
-
-    btn.querySelector('.btn-label').textContent = 'Opening email…';
-
-    // Build and open the mailto: link so the broker's own email client handles delivery
-    const formLabel = _staFormType === 'listing' ? 'Listing Entry' : _staFormType === 'voucher' ? 'Commission Voucher' : 'Sign Request';
-    const subject = formLabel + ' Submission' + (address ? ' - ' + address : '');
-    const bodyText = _staFormatEmailBody(sections, brokerName, address);
-    const mailtoParams = new URLSearchParams({ subject, body: bodyText });
-    if (senderEmail) mailtoParams.set('cc', senderEmail);
-    const mailtoUrl = 'mailto:' + encodeURIComponent(STA_ADMIN_EMAIL) + '?' + mailtoParams.toString();
-    window.location.href = mailtoUrl;
-
-    // Archive the submission server-side for the admin portal (no server-side email sent)
-    fetch('/api/trpc/email.sendToAdmin', {
+    const resp = await fetch('/api/trpc/email.sendToAdmin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({
         json: {
           formType: _staFormType,
+          deliveryMode: 'mail-client',
           brokerName,
           propertyAddress: address,
           sections,
           senderEmail,
-          pdfAttachment,
-          excelAttachment,
+          pdfAttachment: generatedAttachmentPayload(pdfAttachment),
+          excelAttachment: generatedAttachmentPayload(excelAttachment),
           supportingFiles,
-          mailtoDelivery: true,
           formData: _staFormType === 'sign' ? collectSignFormData() : undefined,
           listingDocumentDetection: _staFormType === 'listing' ? listingDocumentDetection : undefined,
         }
       })
-    }).catch(err => { console.error('[sendToAdmin] Failed to archive submission:', err); });
+    });
+    const data = await resp.json();
+    const result = data?.result?.data?.json;
+    if (result?.success) {
+      const generatedFiles = [pdfAttachment, excelAttachment].filter(Boolean);
+      const downloadedNames = generatedFiles.map(file => file.filename);
+      const supportingNames = supportingFiles.map(file => file.filename || 'Supporting document');
+      generatedFiles.forEach(downloadGeneratedAdminFile);
 
-    const fileNote = excelAttachment
-      ? 'PDF and Excel file downloaded — please attach both to the email and click Send.'
-      : 'PDF downloaded — please attach it to the email and click Send.';
-    status.textContent = 'Email app opened. ' + fileNote;
-    status.classList.add('text-success', 'status-strong');
-    btn.querySelector('.btn-label').textContent = 'Email App Opened';
-    showToast('Email app opened with submission details.');
-    if (_staFormType === 'listing') {
-      const reviewPage = document.getElementById('listing-review-page');
-      const postSubmit = document.getElementById('listing-post-submit');
-      if (reviewPage && postSubmit && !reviewPage.classList.contains('is-hidden')) {
-        setHiddenState(postSubmit, false);
+      const draft = buildAdminEmailDraft({
+        formType: _staFormType,
+        brokerName,
+        senderEmail,
+        address,
+        sections,
+        supportingFiles,
+        submissionId: result.submissionId,
+        attachmentNames: [...downloadedNames, ...supportingNames],
+      });
+
+      status.textContent = 'Saved to the admin queue. Opening your email draft...';
+      status.classList.add('text-success', 'status-strong');
+      btn.querySelector('.btn-label').textContent = 'Email Prepared';
+      showToast('Files downloaded. Attach them before sending the email.');
+      if (_staFormType === 'listing') {
+        const reviewPage = document.getElementById('listing-review-page');
+        const postSubmit = document.getElementById('listing-post-submit');
+        if (reviewPage && postSubmit && !reviewPage.classList.contains('is-hidden')) {
+          setHiddenState(postSubmit, false);
+        }
       }
+      closeSendToAdminModal();
+      showAttachmentReminder(draft.mailto, downloadedNames, supportingNames);
+      launchMailto(draft.mailto);
+    } else {
+      const errMsg = result?.error || 'Unknown error';
+      status.textContent = 'Failed to submit: ' + errMsg;
+      status.classList.add('text-error', 'status-strong');
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      btn.querySelector('.btn-label').textContent = 'Prepare Email & Files';
     }
-    setTimeout(closeSendToAdminModal, 3500);
   } catch(err) {
     status.textContent = 'Error: ' + err.message;
     status.classList.add('text-error', 'status-strong');
     btn.classList.remove('loading');
     btn.disabled = false;
-    btn.querySelector('.btn-label').textContent = 'Open Email App';
+    btn.querySelector('.btn-label').textContent = 'Prepare Email & Files';
   }
 }
 
@@ -17819,6 +18096,6 @@ function deleteDraft(key) {
   });
 })();
 </script>
-<script src="/features_patch.js"></script>
+<script src="/features_patch.js?v=20260608.3"></script>
 </body>
 </html>

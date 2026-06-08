@@ -43,6 +43,7 @@ const supportingFileSchema = z.object({
 
 const sendToAdminInput = z.object({
   formType: z.enum(["listing", "voucher", "sign"]),
+  deliveryMode: z.enum(["server", "mail-client"]).optional(),
   brokerName: z.string().optional(),
   propertyAddress: z.string().optional(),
   sections: z.array(sectionSchema),
@@ -51,8 +52,6 @@ const sendToAdminInput = z.object({
   excelAttachment: generatedFileSchema.optional(),
   supportingFiles: z.array(supportingFileSchema).optional(),
   formData: z.record(z.string(), z.unknown()).optional(),
-  /** When true the broker's own email client handles delivery; skip server-side SMTP/MCP send. */
-  mailtoDelivery: z.boolean().optional(),
 });
 
 type FormType = z.infer<typeof sendToAdminInput>["formType"];
@@ -70,7 +69,7 @@ type ArchivedSubmissionFile = {
 type DeliveryResult = {
   success: boolean;
   error?: string;
-  deliveryMethod?: "smtp" | "outlook-mcp" | "outlook-mcp-link";
+  deliveryMethod?: "smtp" | "outlook-mcp" | "outlook-mcp-link" | "mail-client";
   attachmentIncluded?: boolean;
 };
 
@@ -419,6 +418,7 @@ export const emailRouter = router({
     .mutation(async ({ input, ctx }) => {
       const {
         formType,
+        deliveryMode = "server",
         brokerName = "",
         propertyAddress = "",
         sections,
@@ -427,11 +427,10 @@ export const emailRouter = router({
         excelAttachment,
         supportingFiles = [],
         formData,
-        mailtoDelivery = false,
       } = input;
       const adminEmail = ENV.adminEmail;
 
-      if (!adminEmail) {
+      if (deliveryMode === "server" && !adminEmail) {
         return {
           success: false,
           error: "Admin email not configured. Please set ADMIN_EMAIL in environment variables.",
@@ -497,12 +496,19 @@ export const emailRouter = router({
 
       // For sign requests, we record/queue the submission for the admin portal.
       // The admin later sends to Cimarron after approval + PO assignment.
-      // When mailtoDelivery is true, the broker's email client handles delivery;
-      // skip server-side SMTP/MCP so the admin does not receive a duplicate email.
+      // When the broker's email client handles delivery, skip server-side SMTP/MCP
+      // so the admin does not receive a duplicate email.
       // For listing/voucher, we try email delivery but always queue the submission
       // regardless of whether email succeeds — the admin portal is the source of truth.
       const delivery =
-        formType === "sign" || mailtoDelivery
+        deliveryMode === "mail-client"
+          ? {
+              success: true,
+              deliveryMethod: "mail-client" as const,
+              attachmentIncluded: false,
+              error: undefined as string | undefined,
+            }
+          : formType === "sign"
           ? {
               success: true,
               deliveryMethod: "queue-only" as const,

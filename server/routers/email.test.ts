@@ -276,6 +276,31 @@ describe("email.sendToAdmin", () => {
     expect(execSyncMock).not.toHaveBeenCalled();
   });
 
+  it("archives and queues a mail-client submission without sending a duplicate email", async () => {
+    const caller = makeCaller();
+    const result = await caller.sendToAdmin({
+      formType: "listing",
+      deliveryMode: "mail-client",
+      brokerName: "Test Broker",
+      propertyAddress: "300 Newport Center Dr",
+      sections: sampleSections,
+      senderEmail: "testuser@example.test",
+      pdfAttachment: {
+        filename: "Listing Entry.pdf",
+        mimeType: "application/pdf",
+        base64Data: Buffer.from("pdf-data").toString("base64"),
+      },
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.deliveryMethod).toBe("mail-client");
+    expect(result.attachmentIncluded).toBe(false);
+    expect(result.submissionId).toBe(101);
+    expect(storagePutMock).toHaveBeenCalledOnce();
+    expect(execSyncMock).not.toHaveBeenCalled();
+    expect(sendMailMock).not.toHaveBeenCalled();
+  });
+
   it("uses SMTP with a true attachment when configured", async () => {
     const envMod = await import("../_core/env");
     const originalHost = (envMod.ENV as any).smtpHost;

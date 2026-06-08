@@ -2490,6 +2490,38 @@ body.admin-mode #admin-view {
   gap: 16px;
 }
 
+.review-summary-panel {
+  background: var(--bg, #f7f6f2);
+}
+
+.review-summary-shell {
+  width: min(100%, 1040px);
+  margin: 0 auto;
+}
+
+.review-summary-intro {
+  margin: 8px 0 0;
+  max-width: 68ch;
+  color: #5f6670;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.review-summary-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding: 14px 0 4px;
+  background: linear-gradient(180deg, rgba(247, 246, 242, 0), rgba(247, 246, 242, 0.96) 28%);
+}
+
+.review-summary-actions .btn-red {
+  min-width: 220px;
+  justify-content: center;
+}
+
 .review-overview {
   display: grid;
   gap: 14px;
@@ -2865,6 +2897,42 @@ body.admin-mode #admin-view {
   font-size: 13px;
   color: var(--text2);
   margin-bottom: 16px;
+}
+
+.admin-email-notice,
+.attachment-reminder-alert {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid #e7c46f;
+  border-radius: 8px;
+  background: #fff8e6;
+  color: #594510;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.attachment-reminder-alert strong {
+  display: block;
+  margin-bottom: 2px;
+  color: #98002e;
+}
+
+.attachment-reminder-group {
+  margin: 0 0 14px;
+}
+
+.attachment-reminder-group h3 {
+  margin: 0 0 6px;
+  color: #303c42;
+  font-size: 13px;
+}
+
+.attachment-reminder-group ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #4a5a63;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .profile-list {
