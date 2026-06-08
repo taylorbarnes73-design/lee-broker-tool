@@ -9247,7 +9247,7 @@ function openSubmissionEmailDraft({ to, cc, subject, body }) {
   });
   const normalizedCc = String(cc || '').trim();
   if (normalizedCc) params.set('cc', normalizedCc);
-  const mailtoUrl = 'mailto:' + encodeURIComponent(normalizedTo) + '?' + params.toString();
+  const mailtoUrl = 'mailto:' + normalizedTo + '?' + params.toString();
   window.location.href = mailtoUrl;
 }
 
