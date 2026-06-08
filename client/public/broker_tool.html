@@ -16436,7 +16436,8 @@ function _staDownloadBlob(base64Data, mimeType, filename) {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  // Revoke after a short delay to allow the browser to initiate the download
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 function _staFormatEmailBody(sections, brokerName, address) {
@@ -16506,15 +16507,13 @@ async function submitSendToAdmin() {
     const formLabel = _staFormType === 'listing' ? 'Listing Entry' : _staFormType === 'voucher' ? 'Commission Voucher' : 'Sign Request';
     const subject = formLabel + ' Submission' + (address ? ' - ' + address : '');
     const bodyText = _staFormatEmailBody(sections, brokerName, address);
-    const ccParam = senderEmail ? '&cc=' + encodeURIComponent(senderEmail) : '';
-    const mailtoUrl = 'mailto:' + encodeURIComponent(STA_ADMIN_EMAIL)
-      + '?subject=' + encodeURIComponent(subject)
-      + ccParam
-      + '&body=' + encodeURIComponent(bodyText);
+    const mailtoParams = new URLSearchParams({ subject, body: bodyText });
+    if (senderEmail) mailtoParams.set('cc', senderEmail);
+    const mailtoUrl = 'mailto:' + encodeURIComponent(STA_ADMIN_EMAIL) + '?' + mailtoParams.toString();
     window.location.href = mailtoUrl;
 
     // Archive the submission server-side for the admin portal (no server-side email sent)
-    void fetch('/api/trpc/email.sendToAdmin', {
+    fetch('/api/trpc/email.sendToAdmin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -16533,7 +16532,7 @@ async function submitSendToAdmin() {
           listingDocumentDetection: _staFormType === 'listing' ? listingDocumentDetection : undefined,
         }
       })
-    });
+    }).catch(err => { console.error('[sendToAdmin] Failed to archive submission:', err); });
 
     const fileNote = excelAttachment
       ? 'PDF and Excel file downloaded — please attach both to the email and click Send.'
