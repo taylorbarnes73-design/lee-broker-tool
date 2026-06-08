@@ -51,6 +51,8 @@ const sendToAdminInput = z.object({
   excelAttachment: generatedFileSchema.optional(),
   supportingFiles: z.array(supportingFileSchema).optional(),
   formData: z.record(z.string(), z.unknown()).optional(),
+  /** When true the broker's own email client handles delivery; skip server-side SMTP/MCP send. */
+  mailtoDelivery: z.boolean().optional(),
 });
 
 type FormType = z.infer<typeof sendToAdminInput>["formType"];
@@ -425,6 +427,7 @@ export const emailRouter = router({
         excelAttachment,
         supportingFiles = [],
         formData,
+        mailtoDelivery = false,
       } = input;
       const adminEmail = ENV.adminEmail;
 
@@ -494,10 +497,12 @@ export const emailRouter = router({
 
       // For sign requests, we record/queue the submission for the admin portal.
       // The admin later sends to Cimarron after approval + PO assignment.
+      // When mailtoDelivery is true, the broker's email client handles delivery;
+      // skip server-side SMTP/MCP so the admin does not receive a duplicate email.
       // For listing/voucher, we try email delivery but always queue the submission
       // regardless of whether email succeeds — the admin portal is the source of truth.
       const delivery =
-        formType === "sign"
+        formType === "sign" || mailtoDelivery
           ? {
               success: true,
               deliveryMethod: "queue-only" as const,

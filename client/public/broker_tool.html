@@ -3074,7 +3074,7 @@
 <div class="modal-overlay" id="send-admin-modal">
   <div class="modal modal-sm">
     <h2 id="send-admin-modal-title" class="modal-heading-row">Send to Admin</h2>
-    <p class="modal-copy" id="send-admin-modal-desc">This will email all filled form fields to the office admin. Taylor will be CC&rsquo;d automatically.</p>
+    <p class="modal-copy" id="send-admin-modal-desc">This will open your email app pre-addressed to the office admin. Your submission PDF will download automatically — attach it to the email and click Send.</p>
     <div id="sta-submission-summary" class="sta-submission-summary is-hidden"></div>
     <div class="field">
       <label>Your Name (Broker)</label>
@@ -3091,7 +3091,7 @@
     <div id="sta-status" class="status-copy micro-copy-bottom-sm"></div>
     <div class="btn-bar">
       <button class="btn btn-gray" onclick="closeSendToAdminModal()">Cancel</button>
-      <button class="btn btn-green" id="sta-send-btn" onclick="submitSendToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Submit to Queue</span></button>
+      <button class="btn btn-green" id="sta-send-btn" onclick="submitSendToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Open Email App</span></button>
     </div>
   </div>
 </div>
@@ -16135,12 +16135,12 @@ function openSendToAdminModal(formType) {
   title.textContent = formType === 'sign' ? `Submit ${label}` : `Send ${label} to Admin`;
   desc.textContent = formType === 'sign'
     ? 'This will submit the sign request into the admin submission queue. The admin will approve it, assign a PO #, and send it to Cimarron.'
-    : `This will submit the ${label} to the admin queue and send a copy to the office admin. You will be CC'd automatically.`;
+    : `This will open your email app pre-addressed to the office admin. Your ${label} PDF will download automatically — attach it to the email and click Send.`;
   status.textContent = '';
   status.classList.remove('text-success', 'text-error', 'status-strong');
   btn.classList.remove('loading');
   btn.disabled = false;
-  btn.querySelector('.btn-label').textContent = 'Submit to Queue';
+  btn.querySelector('.btn-label').textContent = formType === 'sign' ? 'Submit to Queue' : 'Open Email App';
   modal.classList.add('open');
 }
 
@@ -16424,6 +16424,36 @@ async function buildSendToAdminPdfAttachment() {
   };
 }
 
+const STA_ADMIN_EMAIL = '_NewportBeach-BrokerAdmin@lee-associates.com';
+
+function _staDownloadBlob(base64Data, mimeType, filename) {
+  const bytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+  const blob = new Blob([bytes], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+function _staFormatEmailBody(sections, brokerName, address) {
+  let body = '';
+  if (brokerName) body += 'Submitted by: ' + brokerName + '\n';
+  if (address) body += 'Property: ' + address + '\n';
+  body += '\n';
+  sections.forEach(function(section) {
+    const filled = section.fields.filter(function(f) { return f.value && f.value.trim(); });
+    if (!filled.length) return;
+    body += '=== ' + section.title + ' ===\n';
+    filled.forEach(function(f) { body += f.label + ': ' + f.value + '\n'; });
+    body += '\n';
+  });
+  return body.trim();
+}
+
 async function submitSendToAdmin() {
   const btn = document.getElementById('sta-send-btn');
   const status = document.getElementById('sta-status');
@@ -16463,9 +16493,28 @@ async function submitSendToAdmin() {
   try {
     const pdfAttachment = await buildSendToAdminPdfAttachment();
     const excelAttachment = _staFormType === 'voucher' ? await buildVoucherExcelAttachment() : undefined;
-    btn.querySelector('.btn-label').textContent = 'Submitting…';
 
-    const resp = await fetch('/api/trpc/email.sendToAdmin', {
+    // Download the generated file(s) so the broker can attach them to the email
+    _staDownloadBlob(pdfAttachment.base64Data, pdfAttachment.mimeType, pdfAttachment.filename);
+    if (excelAttachment) {
+      _staDownloadBlob(excelAttachment.base64Data, excelAttachment.mimeType, excelAttachment.filename);
+    }
+
+    btn.querySelector('.btn-label').textContent = 'Opening email…';
+
+    // Build and open the mailto: link so the broker's own email client handles delivery
+    const formLabel = _staFormType === 'listing' ? 'Listing Entry' : _staFormType === 'voucher' ? 'Commission Voucher' : 'Sign Request';
+    const subject = formLabel + ' Submission' + (address ? ' - ' + address : '');
+    const bodyText = _staFormatEmailBody(sections, brokerName, address);
+    const ccParam = senderEmail ? '&cc=' + encodeURIComponent(senderEmail) : '';
+    const mailtoUrl = 'mailto:' + encodeURIComponent(STA_ADMIN_EMAIL)
+      + '?subject=' + encodeURIComponent(subject)
+      + ccParam
+      + '&body=' + encodeURIComponent(bodyText);
+    window.location.href = mailtoUrl;
+
+    // Archive the submission server-side for the admin portal (no server-side email sent)
+    void fetch('/api/trpc/email.sendToAdmin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -16479,54 +16528,34 @@ async function submitSendToAdmin() {
           pdfAttachment,
           excelAttachment,
           supportingFiles,
+          mailtoDelivery: true,
           formData: _staFormType === 'sign' ? collectSignFormData() : undefined,
           listingDocumentDetection: _staFormType === 'listing' ? listingDocumentDetection : undefined,
         }
       })
     });
-    const data = await resp.json();
-    const result = data?.result?.data?.json;
-    if (result?.success) {
-      // Submission was added to the admin queue regardless of email delivery status.
-      const archivedLink = result?.archivedFile?.url;
-      const emailOk = result?.emailDelivered !== false; // true for sign (queue-only), true when email sent
-      if (emailOk && archivedLink) {
-        status.textContent = 'Submitted to admin queue. A copy was archived and emailed to the office.';
-      } else if (emailOk && result?.attachmentIncluded) {
-        status.textContent = 'Submitted to admin queue. Email sent with PDF attached.';
-      } else if (emailOk && _staFormType !== 'sign') {
-        status.textContent = 'Submitted to admin queue. Email sent to admin.';
-      } else {
-        status.textContent = 'Submitted to admin queue successfully.';
+
+    const fileNote = excelAttachment
+      ? 'PDF and Excel file downloaded — please attach both to the email and click Send.'
+      : 'PDF downloaded — please attach it to the email and click Send.';
+    status.textContent = 'Email app opened. ' + fileNote;
+    status.classList.add('text-success', 'status-strong');
+    btn.querySelector('.btn-label').textContent = 'Email App Opened';
+    showToast('Email app opened with submission details.');
+    if (_staFormType === 'listing') {
+      const reviewPage = document.getElementById('listing-review-page');
+      const postSubmit = document.getElementById('listing-post-submit');
+      if (reviewPage && postSubmit && !reviewPage.classList.contains('is-hidden')) {
+        setHiddenState(postSubmit, false);
       }
-      if (!emailOk && result?.emailError) {
-        status.textContent += ' (Note: email notification failed — admin will still see it in the portal.)';
-      }
-      status.classList.add('text-success', 'status-strong');
-      btn.querySelector('.btn-label').textContent = 'Submitted';
-      showToast('Submission added to admin queue.');
-      if (_staFormType === 'listing') {
-        const reviewPage = document.getElementById('listing-review-page');
-        const postSubmit = document.getElementById('listing-post-submit');
-        if (reviewPage && postSubmit && !reviewPage.classList.contains('is-hidden')) {
-          setHiddenState(postSubmit, false);
-        }
-      }
-      setTimeout(closeSendToAdminModal, 2200);
-    } else {
-      const errMsg = result?.error || 'Unknown error';
-      status.textContent = 'Failed to submit: ' + errMsg;
-      status.classList.add('text-error', 'status-strong');
-      btn.classList.remove('loading');
-      btn.disabled = false;
-      btn.querySelector('.btn-label').textContent = 'Submit to Queue';
     }
+    setTimeout(closeSendToAdminModal, 3500);
   } catch(err) {
     status.textContent = 'Error: ' + err.message;
     status.classList.add('text-error', 'status-strong');
     btn.classList.remove('loading');
     btn.disabled = false;
-    btn.querySelector('.btn-label').textContent = 'Submit to Queue';
+    btn.querySelector('.btn-label').textContent = 'Open Email App';
   }
 }
 
