@@ -9238,6 +9238,19 @@ async function syncSubmissionToServer(submission) {
   }
 }
 
+function openSubmissionEmailDraft({ to, cc, subject, body }) {
+  const normalizedTo = String(to || '').trim();
+  if (!normalizedTo) return;
+  const params = new URLSearchParams({
+    subject: String(subject || '').trim(),
+    body: String(body || '').trim(),
+  });
+  const normalizedCc = String(cc || '').trim();
+  if (normalizedCc) params.set('cc', normalizedCc);
+  const mailtoUrl = 'mailto:' + encodeURIComponent(normalizedTo) + '?' + params.toString();
+  window.location.href = mailtoUrl;
+}
+
 async function submitAdminRequest(btn) {
   const status = document.getElementById('ar-status');
   const requestType = document.getElementById('ar-request-type')?.value || 'Other Admin Request';
@@ -9303,9 +9316,27 @@ async function submitAdminRequest(btn) {
     ADMIN_SUBMISSIONS.unshift(submission);
     persistSubmissions();
     await syncSubmissionToServer(submission);
+    openSubmissionEmailDraft({
+      to: STA_ADMIN_EMAIL,
+      cc: submission.brokerEmail,
+      subject: '[Admin Request] ' + subject + (propertyAddress ? ' - ' + propertyAddress : ''),
+      body: [
+        'Hi Admin Team,',
+        '',
+        'Request Type: ' + requestType,
+        propertyAddress ? 'Related Property / Address: ' + propertyAddress : '',
+        '',
+        message,
+        '',
+        attachmentNames.length ? 'Attachments: ' + attachmentNames.join(', ') : '',
+        '',
+        'Thanks,',
+        submission.brokerName || 'Broker',
+      ].filter(Boolean).join('\n'),
+    });
     showToast('Admin request submitted.');
     if (status) {
-      status.innerHTML = '<span class="status-success status-strong">Admin request submitted successfully.</span>';
+      status.innerHTML = '<span class="status-success status-strong">Admin request submitted. Your email app should open with a draft.</span>';
     }
     if (typeof refreshBrokerQueue === 'function') refreshBrokerQueue().catch(() => {});
   } catch (error) {
@@ -9493,9 +9524,31 @@ async function submitMarketingRequest(btn) {
     ADMIN_SUBMISSIONS.unshift(submission);
     persistSubmissions();
     await syncSubmissionToServer(submission);
+    openSubmissionEmailDraft({
+      to: STA_ADMIN_EMAIL,
+      cc: submission.brokerEmail,
+      subject: '[Marketing Request] ' + projectTitle + (propertyAddress ? ' - ' + propertyAddress : ''),
+      body: [
+        'Hi Admin Team,',
+        '',
+        'Project Type: ' + requestType,
+        'Priority: ' + priority,
+        propertyAddress ? 'Related Property / Address: ' + propertyAddress : '',
+        '',
+        objective,
+        timelineNotes ? 'Timeline Notes: ' + timelineNotes : '',
+        copyMessaging ? 'Copy / Messaging: ' + copyMessaging : '',
+        distribution ? 'Distribution: ' + distribution : '',
+        additionalNotes ? 'Additional Notes: ' + additionalNotes : '',
+        attachmentNames.length ? 'Attachments: ' + attachmentNames.join(', ') : '',
+        '',
+        'Requested by:',
+        submission.brokerName || 'Broker',
+      ].filter(Boolean).join('\n'),
+    });
     showToast('Marketing request submitted.');
     if (status) {
-      status.innerHTML = '<span class="status-success status-strong">Marketing request submitted successfully.</span>';
+      status.innerHTML = '<span class="status-success status-strong">Marketing request submitted. Your email app should open with a draft.</span>';
     }
     if (typeof refreshBrokerQueue === 'function') refreshBrokerQueue().catch(() => {});
   } catch (error) {
