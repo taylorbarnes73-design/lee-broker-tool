@@ -34,6 +34,40 @@ export const EMPTY_VOUCHER_PILOT_FIELDS: VoucherPilotFields = {
   dealSf: "",
 };
 
+/** Portal labels → broker tool v-rep-type option values. */
+export function normalizeVoucherPilotRepType(label: string): string {
+  const key = label
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "");
+  const map: Record<string, string> = {
+    tenant_rep: "tenant_rep",
+    tenant: "tenant_rep",
+    landlord_rep: "landlord_rep",
+    landlord: "landlord_rep",
+    buyer_rep: "buyer_rep",
+    buyer: "buyer_rep",
+    seller_rep: "seller_rep",
+    seller: "seller_rep",
+    dual_agency: "other",
+    dual: "other",
+    co_op: "other",
+    coop: "other",
+  };
+  return map[key] ?? label.trim();
+}
+
+/** Target AI field for the represented client's company name. */
+export function voucherPilotClientPartyField(
+  representationType: string
+): "lesseeName" | "lessorName" | null {
+  const rep = normalizeVoucherPilotRepType(representationType);
+  if (rep === "tenant_rep" || rep === "buyer_rep") return "lesseeName";
+  if (rep === "landlord_rep" || rep === "seller_rep") return "lessorName";
+  return null;
+}
+
 export function voucherPilotFieldsToPrefill(
   fields: VoucherPilotFields
 ): QuickConvertPrefillPayload["fields"] {
@@ -43,8 +77,13 @@ export function voucherPilotFieldsToPrefill(
     if (trimmed) out[key] = trimmed;
   };
   assign("transactionType", fields.transactionType);
-  assign("representationType", fields.representationType);
-  assign("clientName", fields.clientName);
+  assign("representationType", normalizeVoucherPilotRepType(fields.representationType));
+  const clientName = fields.clientName.trim();
+  if (clientName) {
+    const partyField = voucherPilotClientPartyField(fields.representationType);
+    if (partyField) assign(partyField, clientName);
+    else assign("clientName", clientName);
+  }
   assign("address", fields.address);
   assign("suite", fields.suite);
   assign("city", fields.city);

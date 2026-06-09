@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   buildVoucherPilotPrefill,
+  normalizeVoucherPilotRepType,
   validateVoucherPilotFields,
+  voucherPilotClientPartyField,
   EMPTY_VOUCHER_PILOT_FIELDS,
 } from "./voucherFormPilot";
 
@@ -17,10 +19,33 @@ describe("voucherFormPilot", () => {
       dealSf: "12500",
     });
     expect(payload.tab).toBe("voucher");
-    expect(payload.fields.clientName).toBe("Acme Logistics");
+    expect(payload.fields.representationType).toBe("tenant_rep");
+    expect(payload.fields.lesseeName).toBe("Acme Logistics");
+    expect(payload.fields.clientName).toBeUndefined();
     expect(payload.fields.address).toBe("123 Main St");
     expect(payload.fields.suite).toBe("Suite 200");
     expect(payload.fields.dealSf).toBe("12500");
+  });
+
+  it("maps landlord rep client name to lessor company field", () => {
+    const payload = buildVoucherPilotPrefill({
+      ...EMPTY_VOUCHER_PILOT_FIELDS,
+      representationType: "Landlord Rep",
+      clientName: "Big Landlord LLC",
+      address: "456 Oak Ave",
+      city: "Newport Beach",
+    });
+    expect(payload.fields.representationType).toBe("landlord_rep");
+    expect(payload.fields.lessorName).toBe("Big Landlord LLC");
+    expect(payload.fields.lesseeName).toBeUndefined();
+    expect(payload.fields.clientName).toBeUndefined();
+  });
+
+  it("normalizes portal representation labels to broker values", () => {
+    expect(normalizeVoucherPilotRepType("Tenant Rep")).toBe("tenant_rep");
+    expect(normalizeVoucherPilotRepType("Landlord Rep")).toBe("landlord_rep");
+    expect(voucherPilotClientPartyField("Tenant Rep")).toBe("lesseeName");
+    expect(voucherPilotClientPartyField("Landlord Rep")).toBe("lessorName");
   });
 
   it("requires address, city, and client name", () => {

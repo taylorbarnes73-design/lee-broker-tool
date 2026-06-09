@@ -5849,6 +5849,51 @@ function syncVoucherRepresentedClientHidden() {
   el.value = voucherRepresentedClientName();
 }
 
+function normalizeVoucherRepTypeValue(value) {
+  const text = String(value || '').trim().toLowerCase();
+  const key = text.replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+  const map = {
+    tenant_rep: 'tenant_rep',
+    tenant: 'tenant_rep',
+    landlord_rep: 'landlord_rep',
+    landlord: 'landlord_rep',
+    buyer_rep: 'buyer_rep',
+    buyer: 'buyer_rep',
+    seller_rep: 'seller_rep',
+    seller: 'seller_rep',
+  };
+  if (map[key]) return map[key];
+  if (text.includes('tenant')) return 'tenant_rep';
+  if (text.includes('landlord')) return 'landlord_rep';
+  if (text.includes('buyer')) return 'buyer_rep';
+  if (text.includes('seller')) return 'seller_rep';
+  return key;
+}
+
+function voucherClientPartyFieldId(repType) {
+  const rep = normalizeVoucherRepTypeValue(repType);
+  if (rep === 'tenant_rep' || rep === 'buyer_rep') return 'v-lb-company';
+  if (rep === 'landlord_rep' || rep === 'seller_rep') return 'v-ls-company';
+  return null;
+}
+
+function applyVoucherClientNameToPartyCompany(fields) {
+  const clientName = String(fields.clientName || '').trim();
+  if (!clientName) return false;
+  const repEl = document.getElementById('v-rep-type');
+  const repType = (repEl && repEl.value) || fields.representationType || '';
+  const targetId = voucherClientPartyFieldId(repType);
+  if (!targetId) return false;
+  const el = document.getElementById(targetId);
+  if (!el || String(el.value || '').trim()) return false;
+  el.value = clientName;
+  el.classList.add('ai-filled');
+  addAiBadge(el);
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  return true;
+}
+
 function suggestVoucherInvoiceFromRep(force) {
   const rep = document.getElementById('v-rep-type')?.value || '';
   const invoiceTo = document.getElementById('v-invoice-to');
@@ -15975,6 +16020,10 @@ function applyAiFields(tab, fields, options = {}) {
   }
 
   if (tab === 'voucher' && applied > 0) {
+    try {
+      if (fields.clientName) applyVoucherClientNameToPartyCompany(fields);
+      syncVoucherRepresentedClientHidden();
+    } catch (e) {}
     try { onVoucherTxnChange(); } catch(e) {}
     try { calcVoucherSale(); } catch(e) {}
     try { reconcileVoucherFinancials({ fields, autoGenerateSchedule: true }); } catch(e) {}
@@ -16052,6 +16101,10 @@ function applyAiFieldsForce(tab, fields) {
     applied++;
   });
   if (tab === 'voucher' && applied > 0) {
+    try {
+      if (fields.clientName) applyVoucherClientNameToPartyCompany(fields);
+      syncVoucherRepresentedClientHidden();
+    } catch (e) {}
     try { onVoucherTxnChange(); } catch(e) {}
     try { calcVoucherSale(); } catch(e) {}
     try { reconcileVoucherFinancials({ fields, autoGenerateSchedule: true }); } catch(e) {}
