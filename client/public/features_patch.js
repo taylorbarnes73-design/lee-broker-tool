@@ -1444,6 +1444,76 @@ window.aiParseFromPaste = async function() {
 
 })();
 
+// ── Quick convert portal prefill (sessionStorage from /portal/convert) ──
+(function initQuickConvertPrefill() {
+  var STORAGE_KEY = 'leeBrokerTool:quickConvertPrefill';
+
+  function parsePrefill(raw) {
+    try {
+      var parsed = JSON.parse(raw);
+      if (!parsed || parsed.version !== 1) return null;
+      if (parsed.tab !== 'voucher' && parsed.tab !== 'sign' && parsed.tab !== 'listing') return null;
+      if (!parsed.fields || typeof parsed.fields !== 'object') return null;
+      return parsed;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function showQuickConvertBanner(tab, fieldCount, sourceFilename) {
+    var host = document.querySelector('.broker-tool-header') || document.querySelector('.topbar') || document.body;
+    if (!host || document.getElementById('qc-prefill-banner')) return;
+    var banner = document.createElement('div');
+    banner.id = 'qc-prefill-banner';
+    banner.className = 'qc-prefill-banner';
+    banner.setAttribute('role', 'status');
+    var label = tab === 'voucher' ? 'voucher' : tab === 'sign' ? 'sign request' : 'listing entry';
+    banner.innerHTML =
+      '<strong>Quick convert prefill</strong> — ' + fieldCount + ' ' + label + ' field(s) highlighted' +
+      (sourceFilename ? ' from <em>' + String(sourceFilename).replace(/</g, '') + '</em>' : '') +
+      '. Review every field before submitting.';
+    if (host === document.body) {
+      banner.style.cssText = 'margin:12px 16px;padding:10px 14px;border-radius:8px;background:#F4E3E8;border:1px solid #98002E33;font-size:13px;line-height:1.45;color:#1f2937;';
+      host.insertBefore(banner, host.firstChild);
+    } else {
+      host.appendChild(banner);
+    }
+  }
+
+  function applyQuickConvertPrefill() {
+    var raw;
+    try { raw = sessionStorage.getItem(STORAGE_KEY); } catch (e) { return; }
+    if (!raw) return;
+    var payload = parsePrefill(raw);
+    try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    if (!payload) return;
+
+    var tab = payload.tab;
+    var fields = payload.fields || {};
+    var fieldCount = Object.keys(fields).length;
+
+    function runApply() {
+      if (typeof window.switchTab === 'function') window.switchTab(tab);
+      var applied = 0;
+      if (typeof window.applyAiFields === 'function') {
+        applied = window.applyAiFields(tab, fields, { sourceKey: 'quick-convert' }) || 0;
+      }
+      showQuickConvertBanner(tab, applied || fieldCount, payload.sourceFilename);
+      if (typeof window.showToast === 'function') {
+        window.showToast('Quick convert: review highlighted ' + tab + ' fields before submitting.', 'info');
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() { setTimeout(runApply, 120); });
+    } else {
+      setTimeout(runApply, 120);
+    }
+  }
+
+  applyQuickConvertPrefill();
+})();
+
 // ── Keyboard shortcut: Ctrl+S to save draft ──
 document.addEventListener('keydown', function(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 's') {

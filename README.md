@@ -85,10 +85,11 @@ Brokers: **`/portal/convert`** (also linked from broker home).
 |--------|----------|
 | Lease/agreement → voucher | PDF → `contracts.extractContract` → broker tool voucher tab with AI highlights |
 | Exclusive → sign | PDF → `aiAssist.extractDocument` (sign) → broker tool sign tab |
+| Exclusive → listing entry | PDF → `aiAssist.extractListingDocument` → broker tool listing tab (industrial/office/retail/land) |
 | Convert to PDF | Word/PDF → PDF download (LibreOffice `soffice` for `.doc`/`.docx`) |
 | LANB letterhead | Prepends letterhead cover page to your PDF (see `server/assets/templates/README.md`) |
 
-Letterhead template path: `server/assets/templates/lanb-letterhead-copy.doc` (copy from OneDrive Blank Forms if missing).
+Letterhead template path: `server/assets/templates/lanb-letterhead.dotx` (copy from OneDrive Blank Forms if missing).
 
 Optional env: `QUICK_CONVERT_SOFFICE_PATH` — full path to `soffice` when not on PATH.
 

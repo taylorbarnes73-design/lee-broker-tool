@@ -11,23 +11,25 @@ const quickConvert: HelpEntry = {
     <>
       <p>
         Upload a document once, then pick a conversion: lease/agreement → commission voucher (AI prefill), exclusive
-        right → sign request (AI prefill), Word → PDF, or LANB letterhead PDF.
+        right → sign request or listing entry form (industrial, office, retail, land), Word → PDF, or LANB letterhead
+        PDF.
       </p>
-      <h3>Broker tool panel</h3>
+      <h3>After AI prefill</h3>
       <p>
-        The same four workflows live in the HTML broker tool on the <strong>Quick Convert</strong> tab (
-        <code>/tool?tab=quick-convert</code> or <code>#quick-convert</code>). AI prefill opens the voucher or sign tab in
-        place; PDF and letterhead download from the panel.
+        Extracted fields open the broker tool on the voucher, sign, or listing tab with AI highlights. Review
+        everything there, then download the official PDF or Excel voucher. Word → PDF and letterhead downloads complete
+        on this page.
       </p>
       <h3>AI prefill workflows</h3>
       <p>
-        Lease and exclusive flows require PDF in v1. Extracted fields open the broker tool on the correct tab with AI
-        highlights — review everything before submitting to the office queue.
+        Lease and exclusive flows require PDF in v1. Extracted fields open the broker tool on the voucher, sign, or
+        listing tab with AI highlights — review everything, then download the official PDF or Excel voucher before
+        submitting to the office queue.
       </p>
       <h3>PDF & letterhead</h3>
       <p>
         Word → PDF needs LibreOffice (<code>soffice</code>) on the server when the file is not already PDF. Letterhead
-        prepends the bundled LANB template cover page to your document pages.
+        prepends the bundled LANB <code>.dotx</code> template cover page to your document pages (Word or PDF upload).
       </p>
     </>
   ),
@@ -39,8 +41,9 @@ const dashboard: HelpEntry = {
     <>
       <p>
         Landing page after sign-in. Action cards open the broker tool on the right tab (
-        <code>?tab=voucher</code>, <code>listing</code>, or <code>sign</code>). Use <strong>Quick convert</strong> on the
-        portal or broker tool (<code>?tab=quick-convert</code>) for document uploads (lease → voucher, letterhead, PDF).
+        <code>?tab=voucher</code>, <code>listing</code>, or <code>sign</code>). Use <strong>Quick convert</strong> at{" "}
+        <code>/portal/convert</code> (brokers) or <code>/portal/admin/quick-convert</code> (admin tools) for document
+        uploads (lease → voucher, listing → sign or entry form, letterhead, PDF).
         More workflows (comps, drafts) are linked below the primary
         cards.
       </p>
@@ -363,6 +366,7 @@ const ROUTE_MAP: ReadonlyArray<{ match: RegExp; entry: HelpEntry }> = [
   { match: /^\/portal\/admin\/settings/, entry: settings },
   { match: /^\/portal\/admin\/dealius-tools/, entry: dealiusTools },
   { match: /^\/portal\/admin\/listing-import/, entry: listingImport },
+  { match: /^\/portal\/admin\/quick-convert/, entry: quickConvert },
   { match: /^\/portal\/account/, entry: account },
   { match: /^\/portal\/submissions\/[^/]+/, entry: submissionDetail },
   { match: /^\/portal\/submissions/, entry: mySubmissions },

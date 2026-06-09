@@ -12,6 +12,10 @@ import {
 } from "@shared/quickConvert";
 
 const SERVICE_DIR = path.dirname(fileURLToPath(import.meta.url));
+export const BUNDLED_LETTERHEAD_DOTX = path.join(
+  SERVICE_DIR,
+  "../assets/templates/lanb-letterhead.dotx"
+);
 export const BUNDLED_LETTERHEAD_DOC = path.join(
   SERVICE_DIR,
   "../assets/templates/lanb-letterhead-copy.doc"
@@ -22,7 +26,7 @@ export const BUNDLED_LETTERHEAD_DOCX = path.join(
 );
 export const BUNDLED_LETTERHEAD_PDF_CACHE = path.join(
   SERVICE_DIR,
-  "../assets/templates/lanb-letterhead-copy.pdf"
+  "../assets/templates/lanb-letterhead.pdf"
 );
 
 const SOFFICE_CANDIDATES = [
@@ -120,6 +124,9 @@ export async function resolveLetterheadTemplatePath(): Promise<{
     }
   }
 
+  if (await pathExists(BUNDLED_LETTERHEAD_DOTX)) {
+    return { source: "bundled", path: BUNDLED_LETTERHEAD_DOTX };
+  }
   if (await pathExists(BUNDLED_LETTERHEAD_DOC)) {
     return { source: "bundled", path: BUNDLED_LETTERHEAD_DOC };
   }
@@ -260,7 +267,7 @@ async function loadLetterheadCoverPdf(templatePath: string | null): Promise<Buff
   }
 
   throw new Error(
-    "Letterhead cover requires LibreOffice (soffice) to convert the LANB template on first use. Install LibreOffice or pre-generate server/assets/templates/lanb-letterhead-copy.pdf."
+    "Letterhead cover requires LibreOffice (soffice) to convert the LANB template on first use. Install LibreOffice or pre-generate server/assets/templates/lanb-letterhead.pdf."
   );
 }
 
@@ -301,7 +308,7 @@ export async function applyLetterheadToDocument(params: {
       success: false,
       code: "LETTERHEAD_TEMPLATE_MISSING",
       error:
-        "LANB letterhead template is not available. Copy LANB Letterhead copy.doc to server/assets/templates/ or set branding.letterhead_template_url in Settings.",
+        "LANB letterhead template is not available. Copy LANB Letterhead.dotx to server/assets/templates/lanb-letterhead.dotx or set branding.letterhead_template_url in Settings.",
     };
   }
 

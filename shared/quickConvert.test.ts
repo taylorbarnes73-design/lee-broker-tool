@@ -5,6 +5,8 @@ import {
   formatQuickConvertPrefillWarnings,
   isQuickConvertKind,
   mapContractExtractionToVoucherFields,
+  normalizeListingExtractFields,
+  normalizeListingPropertyType,
   normalizeSignExtractFields,
   parseQuickConvertPrefill,
   parseStreetAddressParts,
@@ -185,9 +187,48 @@ describe("quickConvert shared", () => {
     });
   });
 
+  it("normalizes listing extract fields for broker tool listing tab", () => {
+    const fields = normalizeListingExtractFields(
+      {
+        propertyType: "Office Building",
+        transactionType: "Exclusive Right to Lease",
+        address: "200 Spectrum Center Drive, Irvine, CA 92618",
+        listingAgentName: "Jane Broker",
+        rateSfMo: "2.85",
+        buildingSf: "12000",
+        listingExpiration: "2027-06-01",
+      },
+      { forcedVariant: "office" }
+    );
+    expect(fields.propertyType).toBe("office");
+    expect(fields.transactionType).toBe("lease");
+    expect(fields.address).toBe("200 Spectrum Center Drive");
+    expect(fields.city).toBe("Irvine");
+    expect(fields.state).toBe("CA");
+    expect(fields.zip).toBe("92618");
+    expect(fields.listingAgentName).toBe("Jane Broker");
+    expect(fields.dateEntered).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("infers listing property type labels", () => {
+    expect(normalizeListingPropertyType("Retail storefront")).toBe("retail");
+    expect(normalizeListingPropertyType("Vacant land parcel")).toBe("land");
+    expect(normalizeListingPropertyType("Warehouse / distribution")).toBe("industrial");
+  });
+
+  it("assesses listing prefill when expiration is missing", () => {
+    const assessment = assessQuickConvertPrefill("listing", {
+      address: "100 Main",
+      city: "Irvine",
+      propertyType: "industrial",
+    });
+    expect(assessment.warnings.some(w => w.includes("expiration"))).toBe(true);
+  });
+
   it("resolves workflow tabs and broker tool URLs", () => {
     expect(toolTabForQuickConvertKind("lease_to_voucher")).toBe("voucher");
     expect(toolTabForQuickConvertKind("exclusive_to_sign")).toBe("sign");
+    expect(toolTabForQuickConvertKind("exclusive_to_listing_land")).toBe("listing");
     expect(toolTabForQuickConvertKind("to_pdf")).toBeNull();
     expect(buildBrokerToolTabUrl("voucher")).toBe("/tool?tab=voucher");
     expect(isQuickConvertKind("letterhead")).toBe(true);

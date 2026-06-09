@@ -12,6 +12,8 @@ import PortalAdminUsers from "./pages/PortalAdminUsers";
 import PortalAdminSettings from "./pages/PortalAdminSettings";
 import PortalAdminDealiusTools from "./pages/PortalAdminDealiusTools";
 import PortalAdminListingImport from "./pages/PortalAdminListingImport";
+import PortalNewSubmission from "./pages/PortalNewSubmission";
+import PortalQuickConvert from "./pages/PortalQuickConvert";
 import PortalAccount from "./pages/PortalAccount";
 import PortalSubmissionDetail from "./pages/PortalSubmissionDetail";
 import PortalSubmissions from "./pages/PortalSubmissions";
@@ -307,6 +309,23 @@ function Router() {
       <Route path="/portal/admin/broker-admin/:id">
         <AdminPortalRoute>
           <PortalBrokerAdminRequestDetail />
+        </AdminPortalRoute>
+      </Route>
+
+      {/* Broker home & quick convert */}
+      <Route path="/portal/new">
+        <PortalRoute>
+          <PortalNewSubmission />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/convert">
+        <PortalRoute>
+          <PortalQuickConvert />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/admin/quick-convert">
+        <AdminPortalRoute>
+          <PortalQuickConvert />
         </AdminPortalRoute>
       </Route>
 

@@ -4,15 +4,15 @@ import {
   validateQuickConvertUpload,
 } from "@shared/quickConvert";
 import {
-  BUNDLED_LETTERHEAD_DOC,
+  BUNDLED_LETTERHEAD_DOTX,
   resolveSofficePath,
   validatePdfBytes,
 } from "./quickConvert";
 import fs from "node:fs/promises";
 
 describe("quickConvert service", () => {
-  it("exposes bundled letterhead template in repo", async () => {
-    await expect(fs.access(BUNDLED_LETTERHEAD_DOC)).resolves.toBeUndefined();
+  it("exposes bundled letterhead dotx template in repo", async () => {
+    await expect(fs.access(BUNDLED_LETTERHEAD_DOTX)).resolves.toBeUndefined();
   });
 
   it("reports soffice availability without throwing", () => {

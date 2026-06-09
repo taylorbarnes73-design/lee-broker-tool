@@ -9,6 +9,7 @@ import { getHelpForRoute } from "@/lib/helpContent";
 type AdminPortalSection =
   | "new-submission"
   | "submissions"
+  | "quick-convert"
   | "settings"
   | "users"
   | "dealius-tools"
@@ -39,6 +40,13 @@ const settingsNav: ReadonlyArray<NavItem> = [
 ];
 
 const toolsNav: ReadonlyArray<NavItem> = [
+  {
+    section: "quick-convert",
+    label: "Quick convert",
+    subhead: "Upload → form",
+    href: "/portal/admin/quick-convert",
+    adminOnly: true,
+  },
   { section: "dealius-tools", label: "Dealius", subhead: "Push & attachments", href: "/portal/admin/dealius-tools", adminOnly: true },
   {
     section: "listing-import",

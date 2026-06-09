@@ -2,9 +2,22 @@ export const QUICK_CONVERT_PREFILL_STORAGE_KEY = "leeBrokerTool:quickConvertPref
 
 export const QUICK_CONVERT_MAX_BYTES = 25 * 1024 * 1024;
 
+export const QUICK_CONVERT_LISTING_VARIANTS = [
+  "industrial",
+  "office",
+  "retail",
+  "land",
+] as const;
+
+export type QuickConvertListingVariant = (typeof QUICK_CONVERT_LISTING_VARIANTS)[number];
+
 export const QUICK_CONVERT_KINDS = [
   "lease_to_voucher",
   "exclusive_to_sign",
+  "exclusive_to_listing_industrial",
+  "exclusive_to_listing_office",
+  "exclusive_to_listing_retail",
+  "exclusive_to_listing_land",
   "to_pdf",
   "letterhead",
 ] as const;
@@ -13,7 +26,7 @@ export type QuickConvertKind = (typeof QUICK_CONVERT_KINDS)[number];
 
 export type QuickConvertPrefillPayload = {
   version: 1;
-  tab: "voucher" | "sign";
+  tab: "voucher" | "sign" | "listing";
   fields: Record<string, string>;
   sourceFileUrl?: string;
   sourceFilename?: string;
@@ -66,8 +79,36 @@ export const SIGN_AI_FIELD_KEYS = [
 export const VOUCHER_PREFILL_REQUIRED_FIELDS = ["address", "city"] as const;
 export const SIGN_PREFILL_REQUIRED_FIELDS = ["propertyAddress", "city"] as const;
 
+/** Listing AI keys accepted by broker_tool applyAiFields (listing tab). */
+export const LISTING_AI_FIELD_KEYS = [
+  "propertyType",
+  "transactionType",
+  "address",
+  "city",
+  "state",
+  "zip",
+  "dateEntered",
+  "listingExpiration",
+  "rateSfMo",
+  "term",
+  "leaseType",
+  "buildingSf",
+  "suiteSf",
+  "sizeSf",
+  "yearBuilt",
+  "askingPrice",
+  "crossStreets",
+  "listingAgentName",
+  "listingAgentLicense",
+  "comments",
+  "ownerName",
+  "commissionRate",
+] as const;
+
+export const LISTING_PREFILL_REQUIRED_FIELDS = ["address", "city"] as const;
+
 export type QuickConvertPrefillAssessment = {
-  tab: "voucher" | "sign";
+  tab: "voucher" | "sign" | "listing";
   fieldCount: number;
   missingRequired: string[];
   warnings: string[];
@@ -138,9 +179,26 @@ export function validateQuickConvertUpload(params: {
   return { ok: true };
 }
 
-export function toolTabForQuickConvertKind(kind: QuickConvertKind): "voucher" | "sign" | null {
+export function listingVariantForQuickConvertKind(
+  kind: QuickConvertKind
+): QuickConvertListingVariant | null {
+  if (kind === "exclusive_to_listing_industrial") return "industrial";
+  if (kind === "exclusive_to_listing_office") return "office";
+  if (kind === "exclusive_to_listing_retail") return "retail";
+  if (kind === "exclusive_to_listing_land") return "land";
+  return null;
+}
+
+export function isListingEntryQuickConvertKind(kind: QuickConvertKind): boolean {
+  return listingVariantForQuickConvertKind(kind) !== null;
+}
+
+export function toolTabForQuickConvertKind(
+  kind: QuickConvertKind
+): "voucher" | "sign" | "listing" | null {
   if (kind === "lease_to_voucher") return "voucher";
   if (kind === "exclusive_to_sign") return "sign";
+  if (isListingEntryQuickConvertKind(kind)) return "listing";
   return null;
 }
 
@@ -346,8 +404,78 @@ export function normalizeSignExtractFields(
   return out;
 }
 
+const LISTING_EXTRACT_FIELD_KEYS = new Set<string>([...LISTING_AI_FIELD_KEYS]);
+
+/** Map AI / brochure property labels to broker-tool l-prop-type option values. */
+export function normalizeListingPropertyType(
+  raw: unknown,
+  forcedVariant?: QuickConvertListingVariant | null
+): string {
+  if (forcedVariant) return forcedVariant;
+  const text = str(raw).toLowerCase();
+  if (!text) return "industrial";
+  if (text.includes("land") || text.includes("vacant lot")) return "land";
+  if (text.includes("retail") || text.includes("storefront") || text.includes("shopping")) return "retail";
+  if (text.includes("office") || text.includes("medical")) return text.includes("medical") ? "medical" : "office";
+  if (text.includes("multifamily") || text.includes("multi-family") || text.includes("apartment")) {
+    return "multifamily";
+  }
+  if (text.includes("industrial") || text.includes("warehouse") || text.includes("distribution")) {
+    return "industrial";
+  }
+  return "industrial";
+}
+
+function normalizeListingTransactionType(raw: unknown): string {
+  const text = str(raw).toLowerCase();
+  if (!text) return "";
+  if (text.includes("sale") && text.includes("lease")) return "lease";
+  if (text.includes("sale")) return "sale";
+  if (text.includes("lease") || text.includes("sublease")) return "lease";
+  return "";
+}
+
+/** Keep listing-tab AI keys and normalize property / transaction selects for broker tool. */
+export function normalizeListingExtractFields(
+  fields: Record<string, unknown>,
+  options?: { forcedVariant?: QuickConvertListingVariant | null }
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  Object.entries(fields).forEach(([key, value]) => {
+    if (!LISTING_EXTRACT_FIELD_KEYS.has(key)) return;
+    const cleaned = str(value);
+    if (cleaned) out[key] = cleaned;
+  });
+
+  const propertyType = normalizeListingPropertyType(
+    out.propertyType,
+    options?.forcedVariant ?? null
+  );
+  out.propertyType = propertyType;
+
+  const txn = normalizeListingTransactionType(out.transactionType);
+  if (txn) out.transactionType = txn;
+
+  if (out.address && !out.city && out.address.includes(",")) {
+    const parsed = parseStreetAddressParts(out.address);
+    if (parsed.address) out.address = parsed.address;
+    if (parsed.city) out.city = parsed.city;
+    if (parsed.state) out.state = parsed.state;
+    if (parsed.zip) out.zip = parsed.zip;
+  }
+
+  if (!out.state) out.state = "CA";
+
+  if (!out.dateEntered) {
+    const today = new Date();
+    out.dateEntered = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  }
+
+  return out;
+}
+
 export function assessQuickConvertPrefill(
-  tab: "voucher" | "sign",
+  tab: "voucher" | "sign" | "listing",
   fields: Record<string, string>
 ): QuickConvertPrefillAssessment {
   const fieldCount = Object.keys(fields).length;
@@ -367,12 +495,25 @@ export function assessQuickConvertPrefill(
     if (!str(fields.commissionRate)) {
       warnings.push("Commission rate not found (only explicit % values are mapped).");
     }
-  } else {
+  } else if (tab === "sign") {
     for (const key of SIGN_PREFILL_REQUIRED_FIELDS) {
       if (!str(fields[key])) missingRequired.push(key);
     }
     if (!str(fields.requestedBy)) {
       warnings.push("Requested By agent name not found in document.");
+    }
+  } else {
+    for (const key of LISTING_PREFILL_REQUIRED_FIELDS) {
+      if (!str(fields[key])) missingRequired.push(key);
+    }
+    if (!str(fields.listingExpiration)) {
+      warnings.push("Listing expiration date not found — set it before submitting.");
+    }
+    if (!str(fields.transactionType)) {
+      warnings.push("Transaction type (lease/sale) not detected — pick Lease or Sale.");
+    }
+    if (!str(fields.listingAgentName)) {
+      warnings.push("Listing agent name not found in document.");
     }
   }
 
@@ -402,7 +543,7 @@ export function parseQuickConvertPrefill(raw: string): QuickConvertPrefillPayloa
   try {
     const parsed = JSON.parse(raw) as QuickConvertPrefillPayload;
     if (parsed?.version !== 1) return null;
-    if (parsed.tab !== "voucher" && parsed.tab !== "sign") return null;
+    if (parsed.tab !== "voucher" && parsed.tab !== "sign" && parsed.tab !== "listing") return null;
     if (!parsed.fields || typeof parsed.fields !== "object") return null;
     return parsed;
   } catch {

@@ -1,6 +1,10 @@
 import { z } from "zod/v4";
 import { publicProcedure, router } from "../_core/trpc";
-import { QUICK_CONVERT_KINDS, validateQuickConvertUpload } from "@shared/quickConvert";
+import {
+  QUICK_CONVERT_KINDS,
+  toolTabForQuickConvertKind,
+  validateQuickConvertUpload,
+} from "@shared/quickConvert";
 import {
   getQuickConvertConverterStatus,
   loadQuickConvertSourceBytes,
@@ -39,10 +43,10 @@ export const quickConvertRouter = router({
         return { success: false as const, error: validation.error };
       }
 
-      if (input.kind === "lease_to_voucher" || input.kind === "exclusive_to_sign") {
+      if (toolTabForQuickConvertKind(input.kind)) {
         return {
           success: false as const,
-          error: "Upload the file in the portal, then run AI prefill (lease→voucher / exclusive→sign).",
+          error: "Upload the file in the portal, then run AI prefill for this workflow.",
           code: "USE_PORTAL_WORKFLOW",
         };
       }
@@ -63,10 +67,10 @@ export const quickConvertRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      if (input.kind === "lease_to_voucher" || input.kind === "exclusive_to_sign") {
+      if (toolTabForQuickConvertKind(input.kind)) {
         return {
           success: false as const,
-          error: "Use portal AI prefill for lease→voucher and exclusive→sign.",
+          error: "Use portal AI prefill for document extraction workflows.",
           code: "USE_PORTAL_WORKFLOW",
         };
       }

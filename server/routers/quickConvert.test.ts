@@ -14,5 +14,6 @@ describe("quickConvert router", () => {
     expect(isQuickConvertKind("to_pdf")).toBe(true);
     expect(isQuickConvertKind("letterhead")).toBe(true);
     expect(isQuickConvertKind("lease_to_voucher")).toBe(true);
+    expect(isQuickConvertKind("exclusive_to_listing_office")).toBe(true);
   });
 });

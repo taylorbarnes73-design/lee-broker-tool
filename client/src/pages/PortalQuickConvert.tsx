@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 import AdminPortalShell from "@/components/AdminPortalShell";
 import LinkButton from "@/components/ui/LinkButton";
@@ -11,10 +11,14 @@ import {
   assessQuickConvertPrefill,
   buildBrokerToolTabUrl,
   formatQuickConvertPrefillWarnings,
+  isListingEntryQuickConvertKind,
+  listingVariantForQuickConvertKind,
   mapContractExtractionToVoucherFields,
   mimeTypeFromQuickConvertFilename,
+  normalizeListingExtractFields,
   normalizeSignExtractFields,
   serializeQuickConvertPrefill,
+  toolTabForQuickConvertKind,
   type QuickConvertKind,
   validateQuickConvertUpload,
 } from "@shared/quickConvert";
@@ -26,7 +30,13 @@ type ConvertCard = {
   badge?: string;
 };
 
-const CONVERT_CARDS: ConvertCard[] = [
+type ConvertCardSection = {
+  heading: string;
+  hint: string;
+  cards: ConvertCard[];
+};
+
+const PREFILL_CARDS: ConvertCard[] = [
   {
     kind: "lease_to_voucher",
     title: "Lease / agreement → voucher",
@@ -40,14 +50,57 @@ const CONVERT_CARDS: ConvertCard[] = [
     badge: "AI prefill",
   },
   {
+    kind: "exclusive_to_listing_industrial",
+    title: "Listing agreement → industrial entry",
+    description: "Extract listing fields from an agreement PDF and open the industrial listing entry form for review.",
+    badge: "AI prefill",
+  },
+  {
+    kind: "exclusive_to_listing_office",
+    title: "Listing agreement → office entry",
+    description: "Extract listing fields and open the office listing entry form (matches LANB office template).",
+    badge: "AI prefill",
+  },
+  {
+    kind: "exclusive_to_listing_retail",
+    title: "Listing agreement → retail entry",
+    description: "Extract listing fields and open the retail listing entry form for review.",
+    badge: "AI prefill",
+  },
+  {
+    kind: "exclusive_to_listing_land",
+    title: "Listing agreement → land entry",
+    description: "Extract listing fields and open the land listing entry form for review.",
+    badge: "AI prefill",
+  },
+];
+
+const FILE_CONVERSION_CARDS: ConvertCard[] = [
+  {
     kind: "to_pdf",
     title: "Convert to PDF",
-    description: "Turn a Word document (.doc / .docx) into a PDF for email or submission attachments.",
+    description: "Upload a Word document (.doc / .docx). The server converts it to PDF for email or submission attachments.",
+    badge: "PDF download",
   },
   {
     kind: "letterhead",
     title: "Apply LANB letterhead",
-    description: "Build a PDF with the Newport Beach letterhead cover page followed by your document pages.",
+    description:
+      "Upload Word or PDF. The server prepends the LANB Newport Beach letterhead cover page, then your document pages.",
+    badge: "PDF download",
+  },
+];
+
+const CONVERT_SECTIONS: ConvertCardSection[] = [
+  {
+    heading: "AI prefill",
+    hint: "PDF only in v1 — use Convert to PDF first if you have a Word file.",
+    cards: PREFILL_CARDS,
+  },
+  {
+    heading: "File conversion",
+    hint: "Accepts Word (.doc, .docx) or PDF. Downloads a PDF when conversion finishes.",
+    cards: FILE_CONVERSION_CARDS,
   },
 ];
 
@@ -76,6 +129,8 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 export default function PortalQuickConvert() {
+  const [location] = useLocation();
+  const isAdminToolsRoute = location.startsWith("/portal/admin/quick-convert");
   const branding = usePublicBranding();
   const accent = branding.primary_color || "var(--lee-red, #98002E)";
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -87,6 +142,7 @@ export default function PortalQuickConvert() {
   const processUploaded = trpc.quickConvert.processUploaded.useMutation();
   const extractContract = trpc.contracts.extractContract.useMutation();
   const extractDocument = trpc.aiAssist.extractDocument.useMutation();
+  const extractListingDocument = trpc.aiAssist.extractListingDocument.useMutation();
 
   const converterNote = (() => {
     const s = statusQuery.data;
@@ -98,7 +154,7 @@ export default function PortalQuickConvert() {
       parts.push(`Office converter: ${s.sofficePath}`);
     }
     if (s.letterheadTemplate === "missing") {
-      parts.push("Letterhead template not found — add server/assets/templates/lanb-letterhead-copy.doc.");
+      parts.push("Letterhead template not found — add server/assets/templates/lanb-letterhead.dotx.");
     }
     return parts.join(" ");
   })();
@@ -177,6 +233,42 @@ export default function PortalQuickConvert() {
         `Extracted ${assessment.fieldCount} sign field(s). Review highlighted fields before submitting.`
       );
       window.location.href = buildBrokerToolTabUrl("sign");
+      return;
+    }
+
+    if (isListingEntryQuickConvertKind(kind)) {
+      if (!file.name.toLowerCase().endsWith(".pdf")) {
+        toast.error("Listing entry prefill needs a PDF in v1. Use Convert to PDF first, then retry.");
+        return;
+      }
+      const result = await extractListingDocument.mutateAsync({
+        fileUrl,
+        mimeType: "application/pdf",
+      });
+      if (!result?.success) {
+        throw new Error(result?.error || "Could not extract listing fields from this document.");
+      }
+      const forcedVariant = listingVariantForQuickConvertKind(kind);
+      const fields = normalizeListingExtractFields((result.fields || {}) as Record<string, unknown>, {
+        forcedVariant,
+      });
+      const assessment = assessQuickConvertPrefill("listing", fields);
+      if (assessment.lowConfidence) {
+        toast.warning(formatQuickConvertPrefillWarnings(assessment), { duration: 8000 });
+      }
+      const payload = {
+        version: 1 as const,
+        tab: "listing" as const,
+        fields,
+        sourceFileUrl: fileUrl,
+        sourceFilename: file.name,
+        savedAt: new Date().toISOString(),
+      };
+      sessionStorage.setItem(QUICK_CONVERT_PREFILL_STORAGE_KEY, serializeQuickConvertPrefill(payload));
+      toast.success(
+        `Extracted ${assessment.fieldCount} listing field(s). Review highlighted fields, then download the official PDF.`
+      );
+      window.location.href = buildBrokerToolTabUrl("listing");
     }
   }
 
@@ -210,7 +302,7 @@ export default function PortalQuickConvert() {
       }
       const fileUrl = uploaded.url;
 
-      if (kind === "lease_to_voucher" || kind === "exclusive_to_sign") {
+      if (toolTabForQuickConvertKind(kind)) {
         await runWorkflowPrefill(kind, file, fileUrl);
         return;
       }
@@ -244,10 +336,10 @@ export default function PortalQuickConvert() {
 
   return (
     <AdminPortalShell
-      section="new-submission"
-      eyebrow="Broker Portal"
+      section={isAdminToolsRoute ? "quick-convert" : "new-submission"}
+      eyebrow={isAdminToolsRoute ? "Admin Portal" : "Broker Portal"}
       title="Quick convert"
-      description="Upload a lease, listing agreement, or Word doc — convert to PDF, apply letterhead, or prefill voucher and sign workflows."
+      description="Upload a lease, listing agreement, or Word doc — prefill voucher, sign, or listing entry forms, convert to PDF, or apply letterhead."
       actions={
         <>
           <LinkButton href="/portal/new" variant="secondary">
@@ -289,66 +381,74 @@ export default function PortalQuickConvert() {
             </div>
           )}
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-              gap: 12,
-            }}
-          >
-            {CONVERT_CARDS.map(card => (
+          {CONVERT_SECTIONS.map(section => (
+            <div key={section.heading} style={{ marginBottom: 24 }}>
+              <div style={{ marginBottom: 10 }}>
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--ink-800)" }}>{section.heading}</h3>
+                <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--ink-500)", lineHeight: 1.45 }}>{section.hint}</p>
+              </div>
               <div
-                key={card.kind}
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                  padding: "16px 18px",
-                  borderRadius: 12,
-                  border: "1px solid var(--ink-200)",
-                  background: "var(--ink-0)",
-                  boxShadow: "var(--shadow-sm)",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+                  gap: 12,
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-                  <span style={{ fontWeight: 700, fontSize: 15, color: "var(--ink-900)" }}>{card.title}</span>
-                  {card.badge && (
-                    <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        letterSpacing: "0.06em",
-                        textTransform: "uppercase",
-                        padding: "2px 8px",
-                        borderRadius: 999,
-                        background: `${accent}14`,
-                        color: accent,
-                      }}
+                {section.cards.map(card => (
+                  <div
+                    key={card.kind}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 8,
+                      padding: "16px 18px",
+                      borderRadius: 12,
+                      border: "1px solid var(--ink-200)",
+                      background: "var(--ink-0)",
+                      boxShadow: "var(--shadow-sm)",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                      <span style={{ fontWeight: 700, fontSize: 15, color: "var(--ink-900)" }}>{card.title}</span>
+                      {card.badge && (
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            letterSpacing: "0.06em",
+                            textTransform: "uppercase",
+                            padding: "2px 8px",
+                            borderRadius: 999,
+                            background: `${accent}14`,
+                            color: accent,
+                          }}
+                        >
+                          {card.badge}
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ margin: 0, fontSize: 13, color: "var(--ink-600)", lineHeight: 1.45 }}>{card.description}</p>
+                    <Button
+                      variant="secondary"
+                      disabled={busy}
+                      onClick={() => openFilePicker(card.kind)}
+                      style={{ marginTop: 4, alignSelf: "flex-start" }}
                     >
-                      {card.badge}
-                    </span>
-                  )}
-                </div>
-                <p style={{ margin: 0, fontSize: 13, color: "var(--ink-600)", lineHeight: 1.45 }}>{card.description}</p>
-                <Button
-                  variant="secondary"
-                  disabled={busy}
-                  onClick={() => openFilePicker(card.kind)}
-                  style={{ marginTop: 4, alignSelf: "flex-start" }}
-                >
-                  {busy && selectedKind === card.kind ? "Working…" : "Choose file…"}
-                </Button>
+                      {busy && selectedKind === card.kind ? "Working…" : "Choose file…"}
+                    </Button>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
 
           <p style={{ margin: "20px 0 0", fontSize: 12, color: "var(--ink-500)", lineHeight: 1.5 }}>
-            Accepted: PDF, Word (.doc, .docx), up to 25 MB. AI prefill requires a configured Gemini or OpenAI key on the
-            server. After prefill, review every field in the{" "}
-            <Link href="/tool?tab=voucher" style={{ color: accent, fontWeight: 600 }}>
+            Accepted: PDF, Word (.doc, .docx), up to 25 MB. AI prefill requires a configured Gemini, Anthropic, or OpenAI
+            key on the server. After prefill, review every field in the{" "}
+            <Link href="/tool" style={{ color: accent, fontWeight: 600 }}>
               broker tool
             </Link>{" "}
-            before submitting.
+            and download the official PDF or Excel voucher before submitting.
           </p>
         </Card>
       </div>

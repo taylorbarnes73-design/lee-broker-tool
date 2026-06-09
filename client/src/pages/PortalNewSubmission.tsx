@@ -195,7 +195,7 @@ export default function PortalNewSubmission() {
             <div>
               <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink-900)" }}>Quick convert</div>
               <div style={{ fontSize: 13, color: "var(--ink-600)", marginTop: 4, lineHeight: 1.45 }}>
-                Lease → voucher, exclusive → sign, Word → PDF, or LANB letterhead — upload once and go.
+                Lease → voucher, exclusive → sign or listing entry, Word → PDF, or LANB letterhead — upload once and go.
               </div>
             </div>
             <Link
