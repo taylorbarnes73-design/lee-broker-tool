@@ -1,4 +1,4 @@
-import { publicProcedure, router } from "../_core/trpc";
+import { protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable, isClaudeFallbackAvailable, invokeClaudeWithFile } from "../_core/llm";
 import { z } from "zod/v4";
 import { getSetting } from "../settings/getSetting";
@@ -895,7 +895,6 @@ function buildJsonSchema(name: string, fieldNames: string[]) {
 
 async function fetchDocumentBuffer(fileUrl: string) {
   const target = fileUrl.trim();
-  const isHttp = /^https?:\/\//i.test(target);
   const isDataUrl = /^data:[^;]+;base64,/i.test(target);
   const isStoredPath = isStoredFileReference(target);
 
@@ -904,13 +903,11 @@ async function fetchDocumentBuffer(fileUrl: string) {
       const { bytes } = await storageGetBytes(target);
       return { fileBuffer: bytes, error: null };
     }
-    if (!isHttp && !isDataUrl) {
-      return { fileBuffer: null, error: "Unsupported file URL format" };
+    if (isDataUrl) {
+      const base64 = target.slice(target.indexOf(",") + 1);
+      return { fileBuffer: Buffer.from(base64, "base64"), error: null };
     }
-    const fileResp = await fetch(target, { signal: AbortSignal.timeout(30_000) });
-    if (!fileResp.ok) throw new Error(`File fetch failed: ${fileResp.status}`);
-    const buffer = await fileResp.arrayBuffer();
-    return { fileBuffer: Buffer.from(buffer), error: null };
+    return { fileBuffer: null, error: "Only stored file references and data URLs are supported." };
   } catch (e: any) {
     return { fileBuffer: null, error: `Could not fetch file: ${e.message}` };
   }
@@ -1670,7 +1667,7 @@ export const aiAssistRouter = router({
   /**
    * Parse a natural language deal description into structured form fields.
    */
-  parse: publicProcedure
+  parse: protectedProcedure
     .input(
       z.object({
         description: z.string().min(5).max(3000),
@@ -1718,7 +1715,7 @@ export const aiAssistRouter = router({
   /**
    * Smart complete: suggest values for empty fields based on what is already filled.
    */
-  smartComplete: publicProcedure
+  smartComplete: protectedProcedure
     .input(
       z.object({
         currentFields: z.record(z.string(), z.string()),
@@ -1764,7 +1761,7 @@ export const aiAssistRouter = router({
    * Scrape a property brochure (PDF or image) and extract listing fields.
    * Fetches the file server-side and sends the content as base64.
    */
-  scrapeBrochure: publicProcedure
+  scrapeBrochure: protectedProcedure
     .input(
       z.object({
         // Accept either a public http(s) URL (e.g. an S3 object) or a data:
@@ -1801,7 +1798,7 @@ export const aiAssistRouter = router({
    * Extract fields from a broker document for any supported tool tab.
    * This keeps client-side AI document workflows behind the broker tool API.
    */
-  extractDocument: publicProcedure
+  extractDocument: protectedProcedure
     .input(
       z.object({
         fileUrl: z
@@ -1828,7 +1825,7 @@ export const aiAssistRouter = router({
       extractDocumentFields(input.tab, input.fileUrl, input.mimeType)
     ),
 
-  extractVoucherDocument: publicProcedure
+  extractVoucherDocument: protectedProcedure
     .input(
       z.object({
         fileUrl: z
@@ -1852,7 +1849,7 @@ export const aiAssistRouter = router({
       extractVoucherDocumentWithDetection(input.fileUrl, input.mimeType)
     ),
 
-  extractListingDocument: publicProcedure
+  extractListingDocument: protectedProcedure
     .input(
       z.object({
         fileUrl: z
@@ -1880,7 +1877,7 @@ export const aiAssistRouter = router({
    * Review parsed voucher/deal data and return structured suggestions.
    * Used by the Dealius integration panel — no external API key required.
    */
-  reviewVoucher: publicProcedure
+  reviewVoucher: protectedProcedure
     .input(
       z.object({
         dealData: z.record(z.string(), z.unknown()),
@@ -1898,7 +1895,7 @@ export const aiAssistRouter = router({
    *
    * Useful for: commission verification, deal summaries, quick sanity checks.
    */
-  calculateDeal: publicProcedure
+  calculateDeal: protectedProcedure
     .input(
       z.object({
         /** Natural language description OR structured deal data (or both). */

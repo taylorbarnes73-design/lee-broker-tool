@@ -4,7 +4,7 @@ import { nanoid } from "nanoid";
 import { z } from "zod/v4";
 import { submissions, uploads } from "../../drizzle/schema";
 import { ENV } from "../_core/env";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { storageGetBytes, storagePut } from "../storage";
 import { eq } from "drizzle-orm";
@@ -413,7 +413,7 @@ async function recordSubmissionRequest(params: {
 }
 
 export const emailRouter = router({
-  sendToAdmin: publicProcedure
+  sendToAdmin: protectedProcedure
     .input(sendToAdminInput)
     .mutation(async ({ input, ctx }) => {
       const {

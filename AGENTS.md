@@ -66,7 +66,7 @@ Use `drizzle-kit push --force` (not `pnpm db:push`) for fresh local databases â€
 
 ### Authentication (local dev)
 
-With `LOCAL_AUTH_ENABLED=true`, the login page at `/portal` accepts usernames (e.g. `tbarnes`) from the built-in broker directory. First login auto-creates the user. Admin role is hardcoded to display names "Errissa Kat" and "Taylor Barnes".
+With `LOCAL_AUTH_ENABLED=true`, the login page at `/portal` accepts usernames (e.g. `tbarnes`) from the built-in broker directory. First login auto-creates the user. Admin role is granted via `LOCAL_ADMIN_EMAILS`, `LOCAL_ADMIN_NAMES`, broker directory "Office Admin" titles, or the legacy `users.role` column â€” see `server/auth/isAdminByPolicy.ts`.
 
 ### pnpm build scripts
 

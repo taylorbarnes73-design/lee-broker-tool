@@ -1,5 +1,5 @@
 import { z } from "zod/v4";
-import { publicProcedure, router } from "../_core/trpc";
+import { protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable, isClaudeFallbackAvailable, invokeClaudeWithFile, type Message } from "../_core/llm";
 import { execSync } from "child_process";
 import { ENV } from "../_core/env";
@@ -162,21 +162,13 @@ export const contractsRouter = router({
   /**
    * Extract contract fields and redlines from an uploaded PDF using AI vision.
    */
-  extractContract: publicProcedure
+  extractContract: protectedProcedure
     .input(
         z.object({
           /** URL of the uploaded PDF (S3 signed URL or /local-uploads/ path) */
-          pdfUrl: z.string().refine(
-            v =>
-              /^https?:\/\//i.test(v) ||
-              v.startsWith("/local-uploads/") ||
-              v.startsWith("/api/files/content") ||
-              /^(broker-docs|broker-admin|broker-docusign)\//.test(v),
-            {
-              message:
-                "pdfUrl must be an http(s) URL, local upload path, file proxy URL, or stored file key",
-            }
-          ),
+          pdfUrl: z.string().refine(v => isStoredFileReference(v), {
+            message: "pdfUrl must be a stored file key, local upload path, or file proxy URL",
+          }),
           contractType: z.string(),
         })
     )
@@ -244,15 +236,11 @@ Return JSON with these fields (omit any that are blank):
           const { bytes } = await storageGetBytes(input.pdfUrl);
           pdfBuffer = bytes;
         } else {
-          const pdfResp = await fetch(input.pdfUrl, { signal: AbortSignal.timeout(30_000) });
-          if (!pdfResp.ok) {
-            return {
-              success: false,
-              error: `Could not fetch PDF: ${pdfResp.status} ${pdfResp.statusText}`,
-              data: null,
-            };
-          }
-          pdfBuffer = Buffer.from(await pdfResp.arrayBuffer());
+          return {
+            success: false,
+            error: "pdfUrl must be a stored file reference (upload the PDF first).",
+            data: null,
+          };
         }
 
         let rawJson: string;
@@ -352,7 +340,7 @@ Return JSON with these fields (omit any that are blank):
   /**
    * Submit a completed contract data sheet to the admin via Outlook MCP.
    */
-  submitContractToAdmin: publicProcedure
+  submitContractToAdmin: protectedProcedure
     .input(
       z.object({
         contractData: contractDataSchema,

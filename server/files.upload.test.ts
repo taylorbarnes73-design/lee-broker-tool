@@ -47,15 +47,11 @@ vi.mock("./db", () => ({
 }));
 
 import { appRouter } from "./routers";
-import type { TrpcContext } from "./_core/context";
+import { testCtx } from "./testCtx";
 import { getDb } from "./db";
 
-function createCtx(): TrpcContext {
-  return {
-    user: null,
-    req: { protocol: "https", headers: {} } as TrpcContext["req"],
-    res: { clearCookie: vi.fn() } as unknown as TrpcContext["res"],
-  };
+function createCtx() {
+  return testCtx();
 }
 
 describe("files.upload", () => {

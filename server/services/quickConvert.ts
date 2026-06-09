@@ -386,25 +386,12 @@ export async function processQuickConvertBinary(params: {
 
 export async function loadQuickConvertSourceBytes(fileUrl: string): Promise<{ bytes: Buffer; filename: string }> {
   const trimmed = fileUrl.trim();
-  if (isStoredFileReference(trimmed)) {
-    const { bytes } = await storageGetBytes(trimmed);
-    const filename = trimmed.split("/").pop() || "document.pdf";
-    return { bytes, filename };
+  if (!isStoredFileReference(trimmed)) {
+    throw new Error("Only stored file references are supported.");
   }
-  if (trimmed.startsWith("/api/files/content") || trimmed.startsWith("/local-uploads/")) {
-    const { bytes } = await storageGetBytes(trimmed);
-    const keyMatch = trimmed.match(/[?&]key=([^&]+)/);
-    const decoded = keyMatch ? decodeURIComponent(keyMatch[1]) : trimmed;
-    const filename = decoded.split("/").pop() || "document.pdf";
-    return { bytes, filename };
-  }
-  const resp = await fetch(trimmed, { signal: AbortSignal.timeout(30_000) });
-  if (!resp.ok) {
-    throw new Error(`Could not fetch file (${resp.status}).`);
-  }
-  const bytes = Buffer.from(await resp.arrayBuffer());
-  const fromUrl = trimmed.split("/").pop()?.split("?")[0] || "document.pdf";
-  return { bytes, filename: fromUrl };
+  const { bytes } = await storageGetBytes(trimmed);
+  const filename = trimmed.split("/").pop()?.split("?")[0] || "document.pdf";
+  return { bytes, filename };
 }
 
 export function mimeTypeForQuickConvertOutput(filename: string): string {

@@ -31,7 +31,34 @@ jobs:
       run: pnpm install --frozen-lockfile
     - name: Typecheck
       run: pnpm check
+    - name: Lint
+      run: pnpm lint
     - name: Test
       run: pnpm test
     - name: Build
       run: pnpm build
+
+  smoke:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js 22
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+    - name: Enable Corepack (pnpm)
+      run: corepack enable
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+    - name: Install Playwright Chromium
+      run: pnpm exec playwright install --with-deps chromium
+    - name: Smoke tests
+      run: pnpm smoketest
+      env:
+        JWT_SECRET: smoke-test-jwt-secret
+        LOCAL_AUTH_ENABLED: "true"
+        LOCAL_AUTH_EMAIL_DOMAIN: lee-associates.com
+        VITE_ENABLE_AUTH_REDIRECT: "false"
+        OAUTH_SERVER_URL: https://oauth.test.local
+        DATABASE_URL: ""

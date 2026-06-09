@@ -28,8 +28,9 @@ const PRIMARY_FORMS: FormCard[] = [
   },
   {
     title: "Commission voucher",
-    description: "Deal basics, commission splits, and voucher workbook for admin processing.",
-    href: "/tool?tab=voucher",
+    description: "Deal basics in the portal, then commission splits and submit in the workspace.",
+    href: "/portal/forms/voucher",
+    badge: "Portal pilot",
   },
 ];
 

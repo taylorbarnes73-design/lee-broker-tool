@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildLoginRequestBody } from "./Login";
+import { parseLeeLoginIdentifier } from "@shared/leeLogin";
 
 describe("buildLoginRequestBody", () => {
   it("uses the password login payload when a password is provided", () => {
@@ -19,5 +20,10 @@ describe("buildLoginRequestBody", () => {
         email: "tbarnes",
       },
     });
+  });
+
+  it("rejects non-Lee email addresses before submit", () => {
+    const parsed = parseLeeLoginIdentifier("someone@gmail.com");
+    expect(parsed.ok).toBe(false);
   });
 });

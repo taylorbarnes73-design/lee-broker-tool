@@ -1,6 +1,13 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { aiAssistRouter } from "./aiAssist";
-import type { TrpcContext } from "../_core/context";
+import { testCtx } from "../testCtx";
+
+function createCtx() {
+  return testCtx();
+}
+
+const STORED_PDF = "broker-docs/listing_brochure/sample.pdf";
+const STORED_IMAGE = "broker-docs/listing_brochure/flyer.jpg";
 
 const { storageGetBytesMock } = vi.hoisted(() => ({
   storageGetBytesMock: vi.fn(),
@@ -37,14 +44,6 @@ vi.mock("pdf-parse", () => ({
 }));
 
 import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable } from "../_core/llm";
-
-function createCtx(): TrpcContext {
-  return {
-    user: null,
-    req: { protocol: "https", headers: {} } as TrpcContext["req"],
-    res: {} as TrpcContext["res"],
-  };
-}
 
 describe("aiAssist.parse", () => {
   beforeEach(() => {
@@ -187,13 +186,10 @@ describe("aiAssist.parse", () => {
 describe("aiAssist.scrapeBrochure", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8)),
-      })
-    );
+    storageGetBytesMock.mockResolvedValue({
+      key: STORED_PDF,
+      bytes: Buffer.from("%PDF-sample"),
+    });
   });
 
   it("returns extracted fields from a brochure PDF URL", async () => {
@@ -218,7 +214,7 @@ describe("aiAssist.scrapeBrochure", () => {
 
     const caller = aiAssistRouter.createCaller(createCtx());
     const result = await caller.scrapeBrochure({
-      fileUrl: "https://example.com/brochure.pdf",
+      fileUrl: STORED_PDF,
       mimeType: "application/pdf",
     });
 
@@ -248,7 +244,7 @@ describe("aiAssist.scrapeBrochure", () => {
 
     const caller = aiAssistRouter.createCaller(createCtx());
     const result = await caller.scrapeBrochure({
-      fileUrl: "https://example.com/flyer.jpg",
+      fileUrl: STORED_IMAGE,
       mimeType: "image/jpeg",
     });
 
@@ -276,7 +272,7 @@ describe("aiAssist.scrapeBrochure", () => {
 
     const caller = aiAssistRouter.createCaller(createCtx());
     const result = await caller.scrapeBrochure({
-      fileUrl: "https://example.com/retail.pdf",
+      fileUrl: STORED_PDF,
       mimeType: "application/pdf",
     });
 
@@ -293,7 +289,7 @@ describe("aiAssist.scrapeBrochure", () => {
 
     const caller = aiAssistRouter.createCaller(createCtx());
     const result = await caller.scrapeBrochure({
-      fileUrl: "https://example.com/bad.pdf",
+      fileUrl: STORED_PDF,
       mimeType: "application/pdf",
     });
 
@@ -307,16 +303,9 @@ describe("aiAssist.extractDocument", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     storageGetBytesMock.mockResolvedValue({
-      key: "broker-docs/listing_brochure/sample.pdf",
+      key: STORED_PDF,
       bytes: Buffer.from("%PDF-sample"),
     });
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8)),
-      })
-    );
   });
 
   it("extracts voucher-shaped fields from an uploaded document", async () => {
@@ -344,7 +333,7 @@ describe("aiAssist.extractDocument", () => {
 
     const caller = aiAssistRouter.createCaller(createCtx());
     const result = await caller.extractDocument({
-      fileUrl: "https://example.com/voucher.pdf",
+      fileUrl: STORED_PDF,
       mimeType: "application/pdf",
       tab: "voucher",
     });
@@ -386,7 +375,7 @@ describe("aiAssist.extractDocument", () => {
 
     const caller = aiAssistRouter.createCaller(createCtx());
     const result = await caller.extractDocument({
-      fileUrl: "https://example.com/sign-request.png",
+      fileUrl: STORED_IMAGE,
       mimeType: "image/png",
       tab: "sign",
     });
@@ -399,14 +388,6 @@ describe("aiAssist.extractDocument", () => {
   });
 
   it("returns a structured error when document fetch fails", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: false,
-        status: 404,
-      })
-    );
-
     const caller = aiAssistRouter.createCaller(createCtx());
     const result = await caller.extractDocument({
       fileUrl: "https://example.com/missing.pdf",
@@ -417,7 +398,7 @@ describe("aiAssist.extractDocument", () => {
     expect(result.success).toBe(false);
     expect(result.fields).toEqual({});
     expect(result.fieldCount).toBe(0);
-    expect(result.error).toContain("File fetch failed: 404");
+    expect(result.error).toContain("Only stored file references");
     expect(invokeLLM).not.toHaveBeenCalled();
   });
 
@@ -442,7 +423,7 @@ describe("aiAssist.extractDocument", () => {
 
     const caller = aiAssistRouter.createCaller(createCtx());
     const result = await caller.extractDocument({
-      fileUrl: "https://example.com/comp-sheet.png",
+      fileUrl: STORED_IMAGE,
       mimeType: "image/png",
       tab: "comp",
     });
@@ -475,7 +456,6 @@ describe("aiAssist.extractDocument", () => {
       ],
     } as any);
 
-    const fetchMock = vi.mocked(globalThis.fetch);
     const caller = aiAssistRouter.createCaller(createCtx());
     const result = await caller.extractDocument({
       fileUrl: "/api/files/content?key=broker-docs%2Flisting_brochure%2Fsample.pdf",
@@ -488,7 +468,6 @@ describe("aiAssist.extractDocument", () => {
     expect(storageGetBytesMock).toHaveBeenCalledWith(
       "/api/files/content?key=broker-docs%2Flisting_brochure%2Fsample.pdf"
     );
-    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("accepts absolute proxy URLs and reads bytes from storage", async () => {
@@ -505,7 +484,6 @@ describe("aiAssist.extractDocument", () => {
       ],
     } as any);
 
-    const fetchMock = vi.mocked(globalThis.fetch);
     const caller = aiAssistRouter.createCaller(createCtx());
     const result = await caller.extractDocument({
       fileUrl: "https://broker.example.com/api/files/content?key=broker-docs%2Flisting_brochure%2Fsample.pdf",
@@ -518,7 +496,6 @@ describe("aiAssist.extractDocument", () => {
     expect(storageGetBytesMock).toHaveBeenCalledWith(
       "https://broker.example.com/api/files/content?key=broker-docs%2Flisting_brochure%2Fsample.pdf"
     );
-    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("returns voucher document detection alongside extracted fields", async () => {
@@ -551,7 +528,7 @@ describe("aiAssist.extractDocument", () => {
 
     const caller = aiAssistRouter.createCaller(createCtx());
     const result = await caller.extractVoucherDocument({
-      fileUrl: "https://example.com/voucher-doc.pdf",
+      fileUrl: STORED_PDF,
       mimeType: "application/pdf",
     });
 
@@ -603,7 +580,7 @@ describe("aiAssist.extractDocument", () => {
 
     const caller = aiAssistRouter.createCaller(createCtx());
     const result = await caller.extractListingDocument({
-      fileUrl: "https://example.com/listing-doc.pdf",
+      fileUrl: STORED_PDF,
       mimeType: "application/pdf",
     });
 
@@ -642,7 +619,7 @@ describe("aiAssist.extractDocument", () => {
 
     const caller = aiAssistRouter.createCaller(createCtx());
     const result = await caller.extractListingDocument({
-      fileUrl: "https://example.com/executed-listing-agreement.pdf",
+      fileUrl: STORED_PDF,
       mimeType: "application/pdf",
     });
 
@@ -684,7 +661,7 @@ describe("aiAssist.extractDocument", () => {
 
     const caller = aiAssistRouter.createCaller(createCtx());
     const result = await caller.extractListingDocument({
-      fileUrl: "https://example.com/exclusive-right.pdf",
+      fileUrl: STORED_PDF,
       mimeType: "application/pdf",
     });
 
@@ -722,7 +699,7 @@ describe("aiAssist.extractDocument", () => {
 
     const caller = aiAssistRouter.createCaller(createCtx());
     const result = await caller.extractListingDocument({
-      fileUrl: "https://example.com/agency-disclosure.pdf",
+      fileUrl: STORED_PDF,
       mimeType: "application/pdf",
     });
 

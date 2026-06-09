@@ -1,4 +1,4 @@
-import { publicProcedure, router } from "../_core/trpc";
+import { protectedProcedure, router } from "../_core/trpc";
 import { brokerDirectory } from "@shared/brokerDirectory";
 
 /**
@@ -9,7 +9,7 @@ import { brokerDirectory } from "@shared/brokerDirectory";
  *   - broker_tool.html (via the REST shim in server/_core/index.ts)
  */
 export const brokersRouter = router({
-  list: publicProcedure.query(() => {
+  list: protectedProcedure.query(() => {
     // Brokers first, then admins; stable alphabetical within each group.
     const isBroker = (r: string) => /broker/i.test(r);
     const sorted = [...brokerDirectory].sort((a, b) => {

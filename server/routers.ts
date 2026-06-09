@@ -1,9 +1,10 @@
 import { TRPCError } from "@trpc/server";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { findBrokerDirectoryEntry } from "@shared/brokerDirectory";
+import { parseLeeLoginIdentifier } from "@shared/leeLogin";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { storagePut, storageGet, storagePublicUrl } from "./storage";
 import { getDb, getUserByOpenId, upsertUser } from "./db";
 import { uploads } from "../drizzle/schema";
@@ -23,6 +24,8 @@ import { ENV } from "./_core/env";
 import { handlePlatformLogout } from "./auth/passwordPlatformAuth";
 import { linkPlatformSessionAfterLegacyLogin } from "./auth/linkPlatformSessionAfterLegacyLogin";
 import { isAdminByPolicy } from "./auth/isAdminByPolicy";
+import { getRequestIp } from "./auth/requestIp";
+import { isLoginRateLimited, recordLoginFailure } from "./auth/loginRateLimiter";
 
 const MAX_UPLOAD_BYTES = 100 * 1024 * 1024; // 100 MB per file
 const MAX_BATCH_FILES = 20; // maximum files accepted in a single batch request
@@ -35,9 +38,8 @@ const LISTING_BROCHURE_MIMES = new Set(["application/pdf", "image/jpeg", "image/
 const CATEGORY_SEGMENT_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 
 function normalizeLeeLogin(raw: string) {
-  const value = raw.trim().toLowerCase();
-  if (!value || value.includes("@")) return localAuth.normalizeEmail(value);
-  return localAuth.normalizeEmail(`${value}@lee-associates.com`);
+  const parsed = parseLeeLoginIdentifier(raw, ENV.localAuthEmailDomain);
+  return parsed.ok ? parsed.value.email : null;
 }
 
 function sanitizeUploadCategory(raw: string): string {
@@ -125,7 +127,17 @@ export const appRouter = router({
           return { success: false as const, error: "Local auth is disabled." };
         }
 
-        const email = normalizeLeeLogin(input.email);
+        const ip = getRequestIp(ctx.req);
+        if (isLoginRateLimited(ip)) {
+          return { success: false as const, error: "Too many login attempts. Try again later." };
+        }
+
+        const loginId = parseLeeLoginIdentifier(input.email, ENV.localAuthEmailDomain);
+        if (!loginId.ok) {
+          return { success: false as const, error: loginId.error };
+        }
+
+        const email = loginId.value.email;
         if (!z.string().email().safeParse(email).success) {
           return {
             success: false as const,
@@ -133,16 +145,17 @@ export const appRouter = router({
           };
         }
         const enteredName = input.name?.trim() || "";
-        const allowedDomain = (process.env.LOCAL_AUTH_EMAIL_DOMAIN ?? "").trim().toLowerCase();
+        const allowedDomain = (ENV.localAuthEmailDomain ?? "").trim().toLowerCase();
         if (allowedDomain && !email.endsWith(`@${allowedDomain}`)) {
           return {
             success: false as const,
-            error: `Use your ${allowedDomain} email address.`,
+            error: `Use your @${allowedDomain} email or Lee username only.`,
           };
         }
 
         const brokerEntry = findBrokerDirectoryEntry(email);
         if (!brokerEntry) {
+          recordLoginFailure(ip);
           return {
             success: false as const,
             error: "Email not recognized. Use your @lee-associates.com email.",
@@ -243,7 +256,7 @@ export const appRouter = router({
      * Upload a file to S3 and record metadata in the database.
      * The client sends the file as a base64-encoded string.
      */
-    upload: publicProcedure
+    upload: protectedProcedure
       .input(
         z.object({
           filename: z.string(),
@@ -319,7 +332,7 @@ export const appRouter = router({
      * (capped at MAX_BATCH_CONCURRENCY to avoid overwhelming storage).
      * A per-file result is returned so the client can show partial success.
      */
-    uploadBatch: publicProcedure
+    uploadBatch: protectedProcedure
       .input(
         z.object({
           files: z
@@ -431,7 +444,7 @@ export const appRouter = router({
     /**
      * Get a fresh download URL for a file by its key.
      */
-    getUrl: publicProcedure
+    getUrl: protectedProcedure
       .input(z.object({ fileKey: z.string() }))
       .query(async ({ input }) => {
         const { url } = await storageGet(input.fileKey);
@@ -441,7 +454,7 @@ export const appRouter = router({
     /**
      * List recent uploads, optionally filtered by category or reference.
      */
-    list: publicProcedure
+    list: protectedProcedure
       .input(
         z.object({
           category: z.string().optional(),

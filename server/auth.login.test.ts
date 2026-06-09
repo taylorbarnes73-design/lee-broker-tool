@@ -68,4 +68,15 @@ describe("auth.login", () => {
     });
     expect(cookies).toHaveLength(0);
   });
+
+  it("rejects non-Lee email domains", async () => {
+    const { ctx, cookies } = createLoginContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.auth.login({ email: "tbarnes@gmail.com" });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("lee-associates.com");
+    expect(cookies).toHaveLength(0);
+  });
 });

@@ -41,11 +41,13 @@ Optional:
 - `PUBLIC_APP_URL` — absolute links in broker notification emails (e.g. `http://localhost:3000`)
 - `BUILT_IN_FORGE_API_URL` + `BUILT_IN_FORGE_API_KEY` — AI assist and maps proxy
 
-3. Apply schema:
+3. Apply schema (fresh local MySQL):
 
 ```bash
-pnpm db:push
+npx drizzle-kit push --force
 ```
+
+For environments that already have migration history applied, use `pnpm db:push` instead.
 
 4. Start dev:
 

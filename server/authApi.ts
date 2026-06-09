@@ -15,9 +15,13 @@ import {
   handlePlatformLogout,
   isPlatformPasswordLoginBody,
 } from "./auth/passwordPlatformAuth";
+import { handleChangePlatformPassword } from "./auth/changePlatformPassword";
 import { resolvePlatformUserFromRequest, findAppUserByUsernameOrEmail } from "./auth/platformSession";
+import { parseLeeLoginIdentifier } from "@shared/leeLogin";
 import { linkPlatformSessionAfterLegacyLogin } from "./auth/linkPlatformSessionAfterLegacyLogin";
 import { isAdminByPolicy } from "./auth/isAdminByPolicy";
+import { getRequestIp } from "./auth/requestIp";
+import { isLoginRateLimited, recordLoginFailure } from "./auth/loginRateLimiter";
 import { requireAuth } from "./middleware/requireAuth";
 import {
   clearUserDealiusCredentials,
@@ -31,9 +35,8 @@ const loginSchema = z.object({
 });
 
 function normalizeLeeLogin(raw: string) {
-  const value = raw.trim().toLowerCase();
-  if (!value || value.includes("@")) return localAuth.normalizeEmail(value);
-  return localAuth.normalizeEmail(`${value}@lee-associates.com`);
+  const parsed = parseLeeLoginIdentifier(raw, ENV.localAuthEmailDomain);
+  return parsed.ok ? parsed.value.email : null;
 }
 
 export const authApiRouter = Router();
@@ -41,6 +44,12 @@ export const authApiRouter = Router();
 authApiRouter.post("/login", async (req, res) => {
   if (isPlatformPasswordLoginBody(req.body)) {
     await handlePlatformPasswordLogin(req, res);
+    return;
+  }
+
+  const ip = getRequestIp(req);
+  if (isLoginRateLimited(ip)) {
+    res.status(429).json({ success: false, error: "Too many login attempts. Try again later." });
     return;
   }
 
@@ -56,14 +65,23 @@ authApiRouter.post("/login", async (req, res) => {
   }
 
   const email = normalizeLeeLogin(parsed.data.email);
+  if (!email) {
+    const loginId = parseLeeLoginIdentifier(parsed.data.email, ENV.localAuthEmailDomain);
+    res.status(400).json({
+      success: false,
+      error: loginId.ok ? "Enter your Lee username or email address." : loginId.error,
+    });
+    return;
+  }
+
   if (!z.string().email().safeParse(email).success) {
     res.status(400).json({ success: false, error: "Enter your Lee username or email address." });
     return;
   }
 
-  const allowedDomain = (process.env.LOCAL_AUTH_EMAIL_DOMAIN ?? "").trim().toLowerCase();
+  const allowedDomain = (ENV.localAuthEmailDomain ?? "").trim().toLowerCase();
   if (allowedDomain && !email.endsWith(`@${allowedDomain}`)) {
-    res.status(400).json({ success: false, error: `Use your ${allowedDomain} email address.` });
+    res.status(400).json({ success: false, error: `Use your @${allowedDomain} email or Lee username only.` });
     return;
   }
 
@@ -89,6 +107,7 @@ authApiRouter.post("/login", async (req, res) => {
   }
 
   if (!brokerEntry && !isFromDb) {
+    recordLoginFailure(ip);
     res.status(400).json({ success: false, error: "Email not recognized. Use your @lee-associates.com email." });
     return;
   }
@@ -210,6 +229,10 @@ authApiRouter.put("/me/dealius-credentials", requireAuth, async (req, res) => {
 authApiRouter.delete("/me/dealius-credentials", requireAuth, async (req, res) => {
   await clearUserDealiusCredentials(req.user!.id);
   res.json({ success: true });
+});
+
+authApiRouter.put("/me/password", requireAuth, async (req, res) => {
+  await handleChangePlatformPassword(req, res);
 });
 
 authApiRouter.get("/me", async (req, res) => {

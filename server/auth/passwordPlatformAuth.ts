@@ -6,6 +6,7 @@ import { appUsers } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { getSessionCookieOptions } from "../_core/cookies";
 import { LBT_SESSION_COOKIE, LBT_SESSION_MAX_AGE_MS } from "./constants";
+import { parseLeeLoginIdentifier } from "@shared/leeLogin";
 import { isLoginRateLimited, recordLoginFailure } from "./loginRateLimiter";
 import {
   createPlatformSession,
@@ -15,6 +16,7 @@ import {
 import { writeAuditLog } from "./writeAuditLog";
 import { getRequestIp } from "./requestIp";
 import { isAdminByPolicy } from "./isAdminByPolicy";
+import { ENV } from "../_core/env";
 
 const passwordLoginBody = z.object({
   username_or_email: z.string().trim().min(1).max(320),
@@ -50,12 +52,6 @@ async function handlePlatformPasswordLoginUnsafe(req: Request, res: Response): P
     return;
   }
 
-  const db = await getDb();
-  if (!db) {
-    res.status(503).json({ error: "Database unavailable." });
-    return;
-  }
-
   const parsed = passwordLoginBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Invalid input" });
@@ -63,7 +59,19 @@ async function handlePlatformPasswordLoginUnsafe(req: Request, res: Response): P
   }
 
   const { username_or_email, password } = parsed.data;
-  const user = await findAppUserByUsernameOrEmail(db, username_or_email);
+  const loginId = parseLeeLoginIdentifier(username_or_email, ENV.localAuthEmailDomain);
+  if (!loginId.ok) {
+    res.status(400).json({ error: loginId.error });
+    return;
+  }
+
+  const db = await getDb();
+  if (!db) {
+    res.status(503).json({ error: "Database unavailable." });
+    return;
+  }
+
+  const user = await findAppUserByUsernameOrEmail(db, loginId.value.lookupKey);
 
   if (!user || !user.passwordHash) {
     recordLoginFailure(ip);

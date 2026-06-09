@@ -42,25 +42,19 @@ vi.mock("../storage", () => ({
 import { invokeLLM } from "../_core/llm";
 import { execSync } from "child_process";
 import { contractsRouter } from "./contracts";
+import { testCtx } from "../testCtx";
+
+const STORED_PDF_URL = "broker-docs/submissions/contracts/test.pdf";
 
 // ── Helpers ──
 
 const mockPdfBuffer = Buffer.from("%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF");
 
-global.fetch = vi.fn().mockImplementation(async (url: string) => {
-  if (url === "https://example.com/test.pdf") {
-    return {
-      ok: true,
-      status: 200,
-      arrayBuffer: async () => mockPdfBuffer.buffer,
-    };
-  }
-  return {
-    ok: false,
-    status: 404,
-    statusText: "Not Found",
-  };
-});
+global.fetch = vi.fn().mockImplementation(async () => ({
+  ok: false,
+  status: 404,
+  statusText: "Not Found",
+}));
 
 /** Call a tRPC mutation directly (no HTTP) */
 async function callMutation(procedure: string, input: unknown) {
@@ -72,7 +66,7 @@ async function callMutation(procedure: string, input: unknown) {
       : node[part] as Record<string, unknown>;
   }
   const resolver = (node as { _def: { resolver: (opts: { input: unknown; ctx: unknown }) => unknown } })._def.resolver;
-  return resolver({ input, ctx: {} });
+  return resolver({ input, ctx: testCtx() });
 }
 
 // ── extractContract tests ──
@@ -107,7 +101,7 @@ describe("contracts.extractContract", () => {
     });
 
     const result = await callMutation("extractContract", {
-      pdfUrl: "https://example.com/test.pdf",
+      pdfUrl: STORED_PDF_URL,
       contractType: "excl-sublease",
     }) as { success: boolean; data: typeof mockData; error: null };
 
@@ -129,7 +123,7 @@ describe("contracts.extractContract", () => {
     });
 
     const result = await callMutation("extractContract", {
-      pdfUrl: "https://example.com/test.pdf",
+      pdfUrl: STORED_PDF_URL,
       contractType: "excl-sublease",
     }) as { success: boolean; data: { agreementDate: string; termStart: string }; error: null };
 
@@ -145,7 +139,7 @@ describe("contracts.extractContract", () => {
     });
 
     const result = await callMutation("extractContract", {
-      pdfUrl: "https://example.com/test.pdf",
+      pdfUrl: STORED_PDF_URL,
       contractType: "excl-sublease",
     }) as { success: boolean; data: null; error: string };
 
@@ -157,7 +151,7 @@ describe("contracts.extractContract", () => {
     (invokeLLM as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("LLM timeout"));
 
     const result = await callMutation("extractContract", {
-      pdfUrl: "https://example.com/test.pdf",
+      pdfUrl: STORED_PDF_URL,
       contractType: "excl-sublease",
     }) as { success: boolean; data: null; error: string };
 

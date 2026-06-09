@@ -328,10 +328,8 @@ const account: HelpEntry = {
   body: (
     <>
       <p>
-        Your own profile. Update your name, password, and notification preferences here.
-      </p>
-      <p>
-        Role and permissions are managed by an admin from the Users page.
+        Your signed-in profile. Platform users can change their password here. Role and permissions are managed by an
+        admin from the Users page.
       </p>
     </>
   ),

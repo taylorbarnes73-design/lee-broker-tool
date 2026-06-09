@@ -12,6 +12,7 @@ type AdminPortalSection =
   | "quick-convert"
   | "settings"
   | "users"
+  | "audit-log"
   | "dealius-tools"
   | "listing-import"
   | "account"
@@ -37,6 +38,7 @@ type NavItem = {
 const settingsNav: ReadonlyArray<NavItem> = [
   { section: "settings", label: "Settings", subhead: "Branding & workflow", href: "/portal/admin/settings", adminOnly: true },
   { section: "users", label: "Users", subhead: "Brokers & admins", href: "/portal/admin/users", adminOnly: true },
+  { section: "audit-log", label: "Audit log", subhead: "Sign-in & admin events", href: "/portal/admin/audit-log", adminOnly: true },
 ];
 
 const toolsNav: ReadonlyArray<NavItem> = [

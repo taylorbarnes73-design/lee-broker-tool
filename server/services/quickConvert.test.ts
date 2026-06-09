@@ -61,4 +61,11 @@ describe("quickConvert service", () => {
     const result = await validatePdfBytes(bytes);
     expect(result.ok).toBe(true);
   });
+
+  it("rejects external URLs when loading source bytes", async () => {
+    const { loadQuickConvertSourceBytes } = await import("./quickConvert");
+    await expect(loadQuickConvertSourceBytes("https://example.com/doc.pdf")).rejects.toThrow(
+      "Only stored file references"
+    );
+  });
 });

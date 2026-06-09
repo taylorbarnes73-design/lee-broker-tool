@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl, isAuthRedirectEnabled } from "@/const";
+import { parseLeeLoginIdentifier } from "@shared/leeLogin";
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useLocation } from "wouter";
 import { usePublicBranding } from "@/hooks/usePublicBranding";
@@ -68,6 +69,11 @@ export default function Login() {
     event.preventDefault();
     setError(null);
     const { normalizedIdentifier, requestBody } = buildLoginRequestBody(identifier, password);
+    const loginId = parseLeeLoginIdentifier(normalizedIdentifier);
+    if (!loginId.ok) {
+      setError(loginId.error);
+      return;
+    }
     if (normalizedIdentifier !== identifier) setIdentifier(normalizedIdentifier);
     setSubmitting(true);
     try {
@@ -165,8 +171,14 @@ export default function Login() {
 
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>Username or Email</label>
+              <label
+                htmlFor="login-identifier"
+                style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}
+              >
+                Lee username or email
+              </label>
               <Input
+                id="login-identifier"
                 type="text"
                 inputMode="email"
                 prefix={<Icons.User size={15} />}
@@ -175,7 +187,7 @@ export default function Login() {
                 onBlur={() => setIdentifier(normalizeLoginIdentifier(identifier))}
                 required
                 autoComplete="username"
-                placeholder="tbarnes"
+                placeholder="tbarnes or tbarnes@lee-associates.com"
               />
             </div>
 

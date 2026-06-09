@@ -1,5 +1,5 @@
 import { z } from "zod/v4";
-import { publicProcedure, router } from "../_core/trpc";
+import { protectedProcedure, router } from "../_core/trpc";
 import {
   QUICK_CONVERT_KINDS,
   toolTabForQuickConvertKind,
@@ -14,7 +14,7 @@ import {
 const kindSchema = z.enum(QUICK_CONVERT_KINDS);
 
 export const quickConvertRouter = router({
-  status: publicProcedure.query(async () => {
+  status: protectedProcedure.query(async () => {
     const status = await getQuickConvertConverterStatus();
     return {
       ...status,
@@ -23,7 +23,7 @@ export const quickConvertRouter = router({
     };
   }),
 
-  processUploaded: publicProcedure
+  processUploaded: protectedProcedure
     .input(
       z.object({
         kind: kindSchema,
@@ -58,7 +58,7 @@ export const quickConvertRouter = router({
       });
     }),
 
-  processStoredFile: publicProcedure
+  processStoredFile: protectedProcedure
     .input(
       z.object({
         kind: kindSchema,

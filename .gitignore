@@ -122,5 +122,10 @@ Lee\ Broker\ Tool*/
 # Test files (sample PDFs, vouchers, etc.)
 test-files/
 
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+
 # Local file storage fallback (used when AWS_S3_BUCKET is not set)
 local-uploads/

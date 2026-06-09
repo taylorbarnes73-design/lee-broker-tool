@@ -13,8 +13,10 @@ import PortalAdminSettings from "./pages/PortalAdminSettings";
 import PortalAdminDealiusTools from "./pages/PortalAdminDealiusTools";
 import PortalAdminListingImport from "./pages/PortalAdminListingImport";
 import PortalNewSubmission from "./pages/PortalNewSubmission";
+import PortalVoucherForm from "./pages/PortalVoucherForm";
 import PortalQuickConvert from "./pages/PortalQuickConvert";
 import PortalAccount from "./pages/PortalAccount";
+import PortalAdminAuditLog from "./pages/PortalAdminAuditLog";
 import PortalSubmissionDetail from "./pages/PortalSubmissionDetail";
 import PortalSubmissions from "./pages/PortalSubmissions";
 
@@ -318,6 +320,11 @@ function Router() {
           <PortalNewSubmission />
         </PortalRoute>
       </Route>
+      <Route path="/portal/forms/voucher">
+        <PortalRoute>
+          <PortalVoucherForm />
+        </PortalRoute>
+      </Route>
       <Route path="/portal/convert">
         <PortalRoute>
           <PortalQuickConvert />
@@ -359,12 +366,12 @@ function Router() {
       </Route>
       <Route path="/portal/admin/audit-log">
         <AdminPortalRoute>
-          <Redirect to="/portal/admin/users" />
+          <PortalAdminAuditLog />
         </AdminPortalRoute>
       </Route>
       <Route path="/admin/audit-log">
         <AdminPortalRoute>
-          <Redirect to="/portal/admin/users" />
+          <PortalAdminAuditLog />
         </AdminPortalRoute>
       </Route>
 
