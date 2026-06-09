@@ -264,7 +264,7 @@
 
       <h3 class="section-heading-top-lg">Property Address</h3>
       <div class="row c2">
-        <div class="field"><label id="lbl-name" class="req">Address</label><input id="l-address"></div>
+        <div class="field"><label id="lbl-name" class="req">Address</label><input id="l-address" placeholder="Start typing an address…" autocomplete="off"></div>
         <div class="field is-hidden" id="field-project-name"><label>Project / Property Name</label><input id="l-project-name" placeholder="Optional"></div>
       </div>
       <div class="row c-addr">
@@ -658,8 +658,13 @@
     </div>
     <div class="field is-hidden"><label>PO #</label><input id="s-po" class="readonly-fill-strong" readonly></div>
     <div class="row c2">
-      <div class="field"><label class="req">Property Address</label><input id="s-address"></div>
+      <div class="field"><label class="req">Property Address</label><input id="s-address" placeholder="Start typing an address…" autocomplete="off"></div>
       <div class="field"><label class="req">City</label><input id="s-city"></div>
+    </div>
+    <div class="row c3">
+      <div class="field"><label class="req">State</label><input id="s-state" value="CA"></div>
+      <div class="field"><label class="req">Zip</label><input id="s-zip" placeholder="92618"></div>
+      <div class="field"></div>
     </div>
     <div class="field"><label class="req">Cross Streets / Building Name</label><input id="s-cross"><div class="field-hint">Cross streets, building name, etc.</div></div>
   </div>
@@ -907,31 +912,29 @@
         <select id="v-prop-type"><option value="industrial">Industrial</option><option value="office">Office</option><option value="retail">Retail</option><option value="land">Land</option><option value="other">Other</option></select>
       </div>
       <div class="field"><label class="req">Representation Type</label>
-        <select id="v-rep-type" onchange="updateDistributionForRepresentation(); suggestVoucherClientFromRep()">
+        <select id="v-rep-type" onchange="onVoucherRepTypeChange()">
           <option value="tenant_rep">Tenant Rep</option>
           <option value="landlord_rep">Landlord Rep</option>
           <option value="buyer_rep">Buyer Rep</option>
           <option value="seller_rep">Seller Rep</option>
           <option value="other">Other</option>
         </select>
+        <div class="field-hint" id="v-rep-type-hint">Tenant rep — you represent the lessee/buyer in this deal.</div>
       </div>
-      <div class="field"><label class="req">Suite / Unit</label><input id="v-suite" placeholder="Ste 100"></div>
-    </div>
-    <div class="row c4">
       <div class="field"><label class="req">Deal subtype</label>
         <select id="v-deal-type-req">
           <option value="">—</option>
           <option>New</option><option>Renewal</option><option>Expansion</option><option>Relocation</option><option>Blend &amp; Extend</option>
         </select>
       </div>
-      <div class="field"><label class="req">Your client (who you represent)</label><input id="v-on-behalf"><div class="field-hint">The party you represented in this deal (tenant, landlord, buyer, or seller).</div></div>
       <div class="field is-hidden" id="v-other-type-field"><label>If Other, Explain</label><input id="v-other-type"></div>
-      <div class="field"></div>
     </div>
+    <input id="v-on-behalf" type="hidden" aria-hidden="true">
 
     <div class="voucher-sub-header">Property Address</div>
-    <div class="row c23">
-      <div class="field"><label class="req">Street Address</label><input id="v-address"></div>
+    <div class="row c2">
+      <div class="field"><label class="req">Street Address</label><input id="v-address" placeholder="Start typing an address…" autocomplete="off"></div>
+      <div class="field"><label class="req">Suite / Unit</label><input id="v-suite" placeholder="Ste 100"></div>
     </div>
     <div class="row c4">
       <div class="field"><label class="req">City</label><input id="v-city"></div>
@@ -978,7 +981,7 @@
           </div>
         </div>
         <div class="field"><label>House</label><input id="v-la-house"></div>
-        <div class="field"><label>Invoice Listing Agent?</label><select id="v-la-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div class="field is-hidden" aria-hidden="true"><label>Invoice Listing Agent?</label><select id="v-la-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
         <div class="field"><label>Address</label><input id="v-la-address"></div>
         <div class="row c3">
           <div class="field"><label>City</label><input id="v-la-city"></div>
@@ -999,7 +1002,7 @@
           </div>
         </div>
         <div class="field"><label>House</label><input id="v-pa-house"><div class="field-hint">Brokerage name</div></div>
-        <div class="field"><label>Invoice Procuring Agent?</label><select id="v-pa-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div class="field is-hidden" aria-hidden="true"><label>Invoice Procuring Agent?</label><select id="v-pa-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
         <div class="field"><label>Address</label><input id="v-pa-address"></div>
         <div class="row c3">
           <div class="field"><label>City</label><input id="v-pa-city"></div>
@@ -1184,6 +1187,18 @@
           <p class="v-rent-stale-hint is-hidden" id="v-rent-stale-hint">Variables changed — regenerate schedule to update the table.</p>
         </div>
 
+        <div class="v-rent-comm-bar row c2 top-gap-sm">
+          <div class="field">
+            <label class="req">Commission Rate %</label>
+            <input id="v-l-comm-rate" placeholder="e.g. 4" oninput="calcCommSummary(); updateVoucherCommRateWarn()">
+            <div class="field-hint field-hint-warn is-hidden" id="v-comm-rate-warn">Generate a rent schedule before setting commission rate.</div>
+          </div>
+          <div class="field">
+            <label>Lease Commission Due</label>
+            <input id="v-l-comm-due" class="readonly-fill-strong" placeholder="$0" readonly>
+          </div>
+        </div>
+
         <div class="v-rent-table-panel">
           <div class="v-rent-table-toolbar">
             <span>Rent schedule</span>
@@ -1196,8 +1211,9 @@
                   <th class="col-rn">#</th>
                   <th class="col-months">Months</th>
                   <th class="col-monthly">Monthly rent</th>
-                  <th class="col-free">Free</th>
-                  <th class="col-rpsf">$/SF mo</th>
+                  <th class="col-free">Free mo.</th>
+                  <th class="col-comm-pct">Comm %</th>
+                  <th class="col-comm-due">Comm due</th>
                   <th class="col-del"></th>
                 </tr>
               </thead>
@@ -1206,8 +1222,9 @@
                 <tr class="v-rent-totals-row">
                   <td class="text-strong">Σ</td>
                   <td id="v-rent-total-months">0 mo</td>
-                  <td colspan="2" class="text-right text-strong">Total consideration</td>
-                  <td id="v-rent-total-consideration" class="text-strong">$0</td>
+                  <td id="v-rent-total-consideration" class="text-strong" colspan="2">$0</td>
+                  <td class="text-right text-muted-sm">Total</td>
+                  <td id="v-rent-total-comm-due" class="text-strong">$0</td>
                   <td></td>
                 </tr>
               </tfoot>
@@ -1230,10 +1247,9 @@
     <!-- Commission Section -->
     <div class="voucher-section-header">Commission &amp; Invoice</div>
     <div id="v-req-comm-lease">
-      <div class="row c4 v-lease-comm-primary-row">
-        <div class="field"><label class="req">Commission Rate %</label><input id="v-l-comm-rate" oninput="calcCommSummary(); updateVoucherCommRateWarn()"><div class="field-hint field-hint-warn is-hidden" id="v-comm-rate-warn">Generate a rent schedule before setting commission rate.</div></div>
-        <div class="field"><label>Lease Commission Due</label><input id="v-l-comm-due" class="readonly-fill-strong" placeholder="$0" readonly></div>
+      <div class="row c3 v-lease-comm-primary-row">
         <div class="field"><label>Additional Bonus / (Adjustment)</label><input id="v-comm-bonus" placeholder="$0" oninput="calcCommSummary()"></div>
+        <div class="field"></div>
         <div class="field"><label class="invoice-highlight-label">TOTAL INVOICE</label><input id="v-total-invoice" class="invoice-highlight-input" placeholder="$0" readonly></div>
       </div>
       <div class="row c3">
@@ -1466,9 +1482,11 @@
     </div>
 
     <h3 class="section-heading-top">Location</h3>
-    <div class="row c2">
-      <div class="field"><label class="req">Address</label><input id="c-address" list="comp-address-options"></div>
+    <div class="row c4">
+      <div class="field"><label class="req">Address</label><input id="c-address" placeholder="Start typing an address…" autocomplete="off"></div>
       <div class="field"><label class="req">City</label><input id="c-city"></div>
+      <div class="field"><label>State</label><input id="c-state" value="CA"></div>
+      <div class="field"><label>Zip</label><input id="c-zip" placeholder="92618"></div>
     </div>
 
     <h3 class="section-heading-top">Property Photo</h3>
@@ -3702,7 +3720,7 @@ function voucherStepPreview(card, n) {
     return [rep?.options[rep.selectedIndex]?.text, txn?.options[txn.selectedIndex]?.text].filter(Boolean).join(' · ');
   }
   if (n === '2') return v('v-la-name') || v('v-pa-name') || 'Broker info';
-  if (n === '3') return [v('v-address'), v('v-suite')].filter(Boolean).join(', ') || v('v-on-behalf') || 'Client & property';
+  if (n === '3') return [v('v-address'), v('v-suite')].filter(Boolean).join(', ') || 'Client & property';
   if (n === '4') return (v('v-l-dealsf') || v('v-s-price')) ? 'Financials set' : 'Financial details';
   if (n === '5') return v('v-l-comm-rate') ? (v('v-l-comm-rate') + '% commission') : (v('v-s-comm-pct') ? (v('v-s-comm-pct') + '% commission') : 'Commission & invoice');
   if (n === '6') return v('v-l-consideration') || 'Rent schedule';
@@ -4065,6 +4083,14 @@ function submitListingToAdmin(btn) {
 
 let reviewSnapshotContext = null;
 const uploadedFiles = {};
+
+function hasVoucherDealDocumentUpload() {
+  return Array.isArray(uploadedFiles['v-deal-documents']) && uploadedFiles['v-deal-documents'].length > 0;
+}
+
+function hasListingDealDocumentUpload() {
+  return Array.isArray(uploadedFiles['l-deal-documents']) && uploadedFiles['l-deal-documents'].length > 0;
+}
 
 function createEmptyVoucherDocStatus() {
   return { found: false, executed: false, missingSignatures: [] };
@@ -5078,8 +5104,8 @@ function syncDealGlance() {
   const addr = _dgVal('v-address');
   const city = _dgVal('v-city');
   const suite = _dgVal('v-suite');
-  // Client = "on behalf of" (our client). If blank, fall back to the other party.
-  const client = _dgVal('v-on-behalf') || _dgVal('v-lb-company') || _dgVal('v-ls-company') || _dgVal('v-lb-contact') || _dgVal('v-ls-contact');
+  syncVoucherRepresentedClientHidden();
+  const client = voucherRepresentedClientName();
   const rep = document.getElementById('v-rep-type');
   const repTxt = rep && rep.options[rep.selectedIndex] ? rep.options[rep.selectedIndex].text : '';
 
@@ -5160,9 +5186,15 @@ document.addEventListener('DOMContentLoaded', function () {
   const panel = document.getElementById('tab-voucher');
   if (!panel) return;
   const handler = () => { try { syncDealGlance(); } catch(e) {} };
-  panel.addEventListener('input', handler, { passive: true });
+  const partyIds = new Set(['v-ls-contact', 'v-ls-company', 'v-lb-contact', 'v-lb-company', 'v-rep-type']);
+  panel.addEventListener('input', function(e) {
+    handler();
+    if (e.target && e.target.id && partyIds.has(e.target.id)) {
+      try { syncVoucherRepresentedClientHidden(); } catch (err) {}
+    }
+  }, { passive: true });
   panel.addEventListener('change', handler, { passive: true });
-  // Initial paint
+  try { onVoucherRepTypeChange(); } catch (e) {}
   handler();
 });
 
@@ -5255,17 +5287,37 @@ function vRentRowMonths(tr) {
   return parseInt(tr.querySelector('.rent-months')?.value, 10) || 0;
 }
 
+function vRentRowCommissionDue(tr) {
+  const monthly = vRentRowMonthly(tr);
+  const months = vRentRowMonths(tr);
+  const rate = parseFloat(document.getElementById('v-l-comm-rate')?.value) || 0;
+  return monthly * months * (rate / 100);
+}
+
+function updateRentRowCommissionCells(tr) {
+  if (!tr) return;
+  const rate = parseFloat(document.getElementById('v-l-comm-rate')?.value) || 0;
+  const pctCell = tr.querySelector('.rent-comm-pct');
+  const dueCell = tr.querySelector('.rent-comm-due');
+  const due = vRentRowCommissionDue(tr);
+  if (pctCell) pctCell.textContent = rate > 0 ? (rate + '%') : '—';
+  if (dueCell) {
+    dueCell.textContent = due > 0
+      ? '$' + due.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : (tr.querySelector('.rent-free')?.checked ? '$0' : '—');
+  }
+}
+
+function updateAllRentRowCommissionCells() {
+  document.querySelectorAll('#v-rent-body tr').forEach(updateRentRowCommissionCells);
+}
+
 function addRentRow(months, monthly, free) {
   const body = document.getElementById('v-rent-body');
   if (!body) return;
   const isFree = !!free;
   const monthsVal = months != null && months !== '' ? String(months) : '12';
   const monthlyVal = isFree ? '' : (monthly != null && monthly !== '' ? String(monthly) : '');
-  const dealSf = parseFloat(document.getElementById('v-l-dealsf')?.value?.replace(/[^0-9.]/g, '')) || 0;
-  const monthlyNum = parseFloat(monthlyVal) || 0;
-  const rpsfHtml = isFree
-    ? '<em class="text-muted-sm">Free</em>'
-    : (dealSf > 0 && monthlyNum > 0 ? '$' + (monthlyNum / dealSf).toFixed(4) : '—');
   const tr = document.createElement('tr');
   if (isFree) tr.classList.add('free-rent-row');
   tr.innerHTML =
@@ -5273,42 +5325,37 @@ function addRentRow(months, monthly, free) {
     '<td><input class="rent-months" type="number" min="1" placeholder="12" value="' + monthsVal + '" oninput="calcRentRow(this)"></td>' +
     '<td><input class="rent-monthly" type="number" step="0.01" min="0" placeholder="0" value="' + monthlyVal + '" oninput="calcRentRow(this)"' + (isFree ? ' disabled' : '') + '></td>' +
     '<td class="text-center"><input type="checkbox" class="rent-free"' + (isFree ? ' checked' : '') + ' onchange="vOnFreeRentChange(this)"></td>' +
-    '<td class="rent-rpsf">' + rpsfHtml + '</td>' +
+    '<td class="rent-comm-pct text-center text-muted-sm">—</td>' +
+    '<td class="rent-comm-due text-right text-strong">—</td>' +
     '<td><button type="button" class="del-row" onclick="this.closest(\'tr\').remove();vRenumberRentRows();calcCommSummary()" title="Remove row">&times;</button></td>';
   body.appendChild(tr);
   vRenumberRentRows();
   if (!isFree && monthlyVal) calcRentRow(tr.querySelector('.rent-monthly'));
-  else calcCommSummary();
+  else {
+    updateRentRowCommissionCells(tr);
+    calcCommSummary();
+  }
 }
 
 function vOnFreeRentChange(cb) {
   const tr = cb.closest('tr');
   const monthlyInput = tr.querySelector('.rent-monthly');
-  const psfCell = tr.querySelector('.rent-rpsf');
   tr.classList.toggle('free-rent-row', cb.checked);
   if (cb.checked) {
     monthlyInput.disabled = true;
     monthlyInput.value = '';
-    if (psfCell) psfCell.innerHTML = '<em class="text-muted-sm">Free</em>';
   } else {
     monthlyInput.disabled = false;
     calcRentRow(monthlyInput);
     return;
   }
+  updateRentRowCommissionCells(tr);
   calcCommSummary();
 }
 
 function calcRentRow(el) {
   const tr = el.closest('tr');
-  const isFree = tr.querySelector('.rent-free')?.checked;
-  const monthly = isFree ? 0 : (parseFloat(tr.querySelector('.rent-monthly')?.value?.replace(/[^0-9.\-]/g, '')) || 0);
-  const dealSf = parseFloat(document.getElementById('v-l-dealsf')?.value?.replace(/[^0-9.]/g, '')) || 0;
-  const psfCell = tr.querySelector('.rent-rpsf');
-  if (psfCell) {
-    psfCell.innerHTML = isFree
-      ? '<em class="text-muted-sm">Free</em>'
-      : (dealSf > 0 && monthly > 0 ? '$' + (monthly / dealSf).toFixed(4) : '—');
-  }
+  updateRentRowCommissionCells(tr);
   calcCommSummary();
 }
 
@@ -5358,13 +5405,19 @@ function generateVoucherRentSchedule() {
   calcCommSummary();
 }
 
-function updateVoucherRentTotals(totalMonths, totalConsideration) {
+function updateVoucherRentTotals(totalMonths, totalConsideration, totalCommDue) {
   const monthsEl = document.getElementById('v-rent-total-months');
   const consEl = document.getElementById('v-rent-total-consideration');
+  const commEl = document.getElementById('v-rent-total-comm-due');
   if (monthsEl) monthsEl.textContent = totalMonths > 0 ? totalMonths + ' mo' : '0 mo';
   if (consEl) {
     consEl.textContent = totalConsideration > 0
       ? '$' + totalConsideration.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : '$0';
+  }
+  if (commEl) {
+    commEl.textContent = totalCommDue > 0
+      ? '$' + totalCommDue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
       : '$0';
   }
 }
@@ -5774,27 +5827,66 @@ function voucherTxnIsLease() {
   return txn === 'lease';
 }
 
-function suggestVoucherClientFromRep() {
-  const clientEl = document.getElementById('v-on-behalf');
-  if (!clientEl || String(clientEl.value || '').trim()) return;
+const VOUCHER_REP_HINTS = {
+  tenant_rep: 'Tenant rep — you represent the lessee/buyer. Invoice the opposite party unless noted below.',
+  landlord_rep: 'Landlord rep — you represent the lessor/seller. Invoice the opposite party unless noted below.',
+  buyer_rep: 'Buyer rep — you represent the buyer. Invoice the opposite party unless noted below.',
+  seller_rep: 'Seller rep — you represent the seller. Invoice the opposite party unless noted below.',
+  other: 'Other representation — choose who to invoice in Commission & Invoice.',
+};
+
+function voucherRepresentedClientName() {
   const rep = document.getElementById('v-rep-type')?.value || '';
   const pick = (id) => String(document.getElementById(id)?.value || '').trim();
-  let suggestion = '';
-  if (rep === 'tenant_rep' || rep === 'buyer_rep') suggestion = pick('v-lb-company') || pick('v-lb-contact');
-  else if (rep === 'landlord_rep' || rep === 'seller_rep') suggestion = pick('v-ls-company') || pick('v-ls-contact');
-  if (suggestion) {
-    clientEl.value = suggestion;
-    clientEl.dispatchEvent(new Event('input', { bubbles: true }));
+  if (rep === 'tenant_rep' || rep === 'buyer_rep') return pick('v-lb-company') || pick('v-lb-contact');
+  if (rep === 'landlord_rep' || rep === 'seller_rep') return pick('v-ls-company') || pick('v-ls-contact');
+  return pick('v-lb-company') || pick('v-ls-company') || pick('v-lb-contact') || pick('v-ls-contact');
+}
+
+function syncVoucherRepresentedClientHidden() {
+  const el = document.getElementById('v-on-behalf');
+  if (!el) return;
+  el.value = voucherRepresentedClientName();
+}
+
+function suggestVoucherInvoiceFromRep(force) {
+  const rep = document.getElementById('v-rep-type')?.value || '';
+  const invoiceTo = document.getElementById('v-invoice-to');
+  if (!invoiceTo) return;
+  const map = {
+    tenant_rep: 'lessor',
+    buyer_rep: 'lessor',
+    landlord_rep: 'lessee',
+    seller_rep: 'lessee',
+  };
+  const suggested = map[rep];
+  if (!suggested) return;
+  if (force || !String(invoiceTo.value || '').trim()) {
+    invoiceTo.value = suggested;
+    invoiceTo.dispatchEvent(new Event('change', { bubbles: true }));
   }
+}
+
+function onVoucherRepTypeChange() {
+  updateDistributionForRepresentation();
+  const rep = document.getElementById('v-rep-type')?.value || '';
+  const hint = document.getElementById('v-rep-type-hint');
+  if (hint) hint.textContent = VOUCHER_REP_HINTS[rep] || VOUCHER_REP_HINTS.other;
+  suggestVoucherInvoiceFromRep(false);
+  syncVoucherRepresentedClientHidden();
+  syncDealGlance();
 }
 
 function syncVoucherInvoicePartyFields() {
   const invoiceTo = document.getElementById('v-invoice-to')?.value || '';
   const ls = document.getElementById('v-ls-invoice');
   const lb = document.getElementById('v-lb-invoice');
-  if (!ls || !lb) return;
-  ls.value = invoiceTo === 'lessor' ? 'yes' : 'no';
-  lb.value = invoiceTo === 'lessee' ? 'yes' : 'no';
+  const la = document.getElementById('v-la-invoice');
+  const pa = document.getElementById('v-pa-invoice');
+  if (ls) ls.value = invoiceTo === 'lessor' ? 'yes' : 'no';
+  if (lb) lb.value = invoiceTo === 'lessee' ? 'yes' : 'no';
+  if (la) la.value = invoiceTo === 'listing_agent' ? 'yes' : 'no';
+  if (pa) pa.value = invoiceTo === 'procuring_agent' ? 'yes' : 'no';
 }
 
 function toggleVoucherMoreActions(btn) {
@@ -5874,7 +5966,6 @@ function validateVoucherBeforeReview() {
   req('Deal SF', '1', Boolean(String(document.getElementById('v-l-dealsf')?.value || '').trim()));
   req('Representation type', '1', Boolean(document.getElementById('v-rep-type')?.value));
   req('Deal subtype', '1', Boolean(document.getElementById('v-deal-type-req')?.value));
-  req('Your client', '1', Boolean(String(document.getElementById('v-on-behalf')?.value || '').trim()));
   req('Listing agent name', '2', Boolean(String(document.getElementById('v-la-name')?.value || '').trim()));
   req('Procuring agent name', '2', Boolean(String(document.getElementById('v-pa-name')?.value || '').trim()));
   req('Lessor/seller contact & company', '3', Boolean(String(document.getElementById('v-ls-contact')?.value || '').trim()) &&
@@ -5912,7 +6003,7 @@ function validateVoucherBeforeReview() {
 function getVoucherStepCompletion() {
   const checks = {
     upload: () => hasVoucherDealDocumentUpload(),
-    '1': () => validateVoucherBeforeReview().items.every(i => !['Transaction type', 'Property address', 'City, state, zip', 'Deal SF', 'Representation type', 'Deal subtype', 'Your client'].includes(i.label)),
+    '1': () => validateVoucherBeforeReview().items.every(i => !['Transaction type', 'Property address', 'City, state, zip', 'Deal SF', 'Representation type', 'Deal subtype'].includes(i.label)),
     '2': () => Boolean(String(document.getElementById('v-la-name')?.value || '').trim()) &&
       Boolean(String(document.getElementById('v-pa-name')?.value || '').trim()),
     '3': () => Boolean(String(document.getElementById('v-ls-contact')?.value || '').trim()) &&
@@ -6061,7 +6152,8 @@ function calcCommSummary() {
     const avgRateSfDisplay = document.getElementById('v-avg-rate-sf-display');
     if (avgMonthlyDisplay) avgMonthlyDisplay.textContent = avgMonthlyText || '—';
     if (avgRateSfDisplay) avgRateSfDisplay.textContent = avgRateSfText || '—';
-    updateVoucherRentTotals(totalMonths, totalConsideration);
+    updateAllRentRowCommissionCells();
+    updateVoucherRentTotals(totalMonths, totalConsideration, leaseComm);
   } else {
     const price = parseFloat(document.getElementById('v-s-price')?.value?.replace(/[^0-9.]/g, '')) || 0;
     const pct = parseFloat(document.getElementById('v-s-comm-pct')?.value) || 0;
@@ -6224,6 +6316,8 @@ function copyToSign() {
   };
   setAndNotify('s-address', document.getElementById('l-address')?.value);
   setAndNotify('s-city', document.getElementById('l-city')?.value);
+  setAndNotify('s-state', document.getElementById('l-state')?.value);
+  setAndNotify('s-zip', document.getElementById('l-zip')?.value);
   setAndNotify('s-cross', document.getElementById('l-cross')?.value);
   // Copy listing agents to sign request
   const agents = getListingAgents();
@@ -7215,25 +7309,27 @@ function exportVoucherPdf() {
       doc.setTextColor(0);
       const rentData = [];
       const dealSf = parseFloat(getVal('v-l-dealsf').replace(/[^0-9.]/g, '')) || 0;
+      const commRate = parseFloat(getVal('v-l-comm-rate').replace(/[^0-9.]/g, '')) || 0;
       rentRows.forEach((tr, i) => {
         const isFree = tr.querySelector('.rent-free')?.checked;
         const monthly = isFree ? 'Free' : (tr.querySelector('.rent-monthly')?.value || '');
         const months = tr.querySelector('.rent-months')?.value || '';
         const monthlyNum = isFree ? 0 : (parseFloat(String(monthly).replace(/[^0-9.\-]/g, '')) || 0);
-        const rateSf = isFree ? '—' : (dealSf > 0 && monthlyNum > 0 ? '$' + (monthlyNum / dealSf).toFixed(4) : '—');
         const monthsNum = parseInt(months, 10) || 0;
         const consideration = monthlyNum * monthsNum;
+        const commDue = consideration * (commRate / 100);
         rentData.push([
           String(i + 1),
-          monthly,
-          rateSf,
           months,
-          consideration > 0 ? '$' + consideration.toLocaleString() : (isFree ? '$0' : '')
+          monthly,
+          isFree ? 'Yes' : 'No',
+          commRate > 0 ? (commRate + '%') : '—',
+          commDue > 0 ? '$' + commDue.toLocaleString() : (isFree ? '$0' : '—')
         ]);
       });
       doc.autoTable({
         startY: y, margin: { left: margin, right: margin },
-        head: [['#', 'MONTHLY RENT', 'RATE/SF/MO', 'MONTHS', 'CONSIDERATION']],
+        head: [['#', 'MONTHS', 'MONTHLY RENT', 'FREE', 'COMM %', 'COMM DUE']],
         body: rentData,
         styles: { fontSize: 8, cellPadding: 4, lineColor: [0, 0, 0], lineWidth: 0.5 },
         headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', lineColor: [0, 0, 0], lineWidth: 0.5 },
@@ -9521,8 +9617,17 @@ function initCompReportDropdowns() {
       if (cityEl._filterCrOptions) cityEl._filterCrOptions(allowed);
     }
 
-    marketEl.addEventListener('change', updateCityOptions);
+    const marketPanel = marketEl.querySelector('.cr-dd-panel');
+    if (marketPanel) marketPanel.addEventListener('change', updateCityOptions);
     updateCityOptions();
+  }
+}
+
+function ensureCompReportFilterDropdowns() {
+  const cityEl = document.getElementById('cr-city');
+  if (cityEl && !cityEl.querySelector('.cr-dd-btn')) {
+    initCompReportDropdowns();
+    initCompReportRangeInputs();
   }
 }
 
@@ -9554,10 +9659,13 @@ function initCompReportRangeInputs() {
 // INIT
 // ═══════════════════════════════════════════════════════════════════════════════
 // Set default dates
-document.getElementById('l-date-entered').value = new Date().toISOString().split('T')[0];
-document.getElementById('s-date').value = new Date().toISOString().split('T')[0];
-document.getElementById('v-date-filled').value = new Date().toISOString().split('T')[0];
-document.getElementById('c-date').value = new Date().toISOString().split('T')[0];
+(function setDefaultFormDates() {
+  const today = new Date().toISOString().split('T')[0];
+  ['l-date-entered', 's-date', 'v-date-filled', 'c-date'].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.value = today;
+  });
+})();
 
 // Load public settings (branding + workflow + notifications) before wiring up setting-driven behaviors.
 let LBT_PUBLIC_SETTINGS = null;
@@ -9761,24 +9869,28 @@ void loadPublicToolSettings().then(function() {
 });
 
 // Initialize property type sections
-onPropTypeChange();
-onTxnTypeChange();
-syncVoucherDealAliases();
-onVoucherTxnChange();
+try { onPropTypeChange(); } catch (e) { console.warn('onPropTypeChange init:', e); }
+try { onTxnTypeChange(); } catch (e) { console.warn('onTxnTypeChange init:', e); }
+try { syncVoucherDealAliases(); } catch (e) { console.warn('syncVoucherDealAliases init:', e); }
+try { onVoucherTxnChange(); } catch (e) { console.warn('onVoucherTxnChange init:', e); }
 (function initVoucherDateFilled() {
   const el = document.getElementById('v-date-filled');
   if (el && !el.value) el.value = new Date().toISOString().slice(0, 10);
 })();
-onCompTypeChange();
+try { onCompTypeChange(); } catch (e) { console.warn('onCompTypeChange init:', e); }
 
 // Auth initialization runs after the shared API helper is declared later in the page.
 
 // Populate comp form dropdowns
-initCompFormSelects();
+try { initCompFormSelects(); } catch (e) { console.warn('initCompFormSelects init:', e); }
 
-// Build comp reports filter dropdowns
-initCompReportDropdowns();
-initCompReportRangeInputs();
+// Build comp reports filter dropdowns (also re-run from DOMContentLoaded / comp-reports tab)
+try {
+  initCompReportDropdowns();
+  initCompReportRangeInputs();
+} catch (e) { console.warn('initCompReportDropdowns init:', e); }
+window.initCompReportDropdowns = initCompReportDropdowns;
+window.ensureCompReportFilterDropdowns = ensureCompReportFilterDropdowns;
 
 // Add initial suite rows
 addSuiteRow('office');
@@ -9804,9 +9916,6 @@ initAgentPicker('s-requested-by');
 initAgentPicker('v-la-name', {
   onSelect: function(u) {
     document.getElementById('v-la-house').value = 'Lee & Associates - Newport Beach';
-    // Auto-fill On Behalf Of with the agent's name as a starting point
-    const behalfEl = document.getElementById('v-on-behalf');
-    if (behalfEl && !behalfEl.value) behalfEl.value = u.name || '';
   }
 });
 
@@ -13089,7 +13198,7 @@ async function applyZipMarketSubmarket(zip) {
 }
 
 function initZipMarketSubmarketAutofill() {
-  const ids = ['l-zip', 'v-zip', 'v-ls-zip', 'v-lb-zip'];
+  const ids = ['l-zip', 'v-zip', 'v-ls-zip', 'v-lb-zip', 's-zip', 'c-zip'];
   ids.forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -13102,9 +13211,9 @@ function initZipMarketSubmarketAutofill() {
 function initFreeAutocomplete() {
   const addressFieldGroups = [
     { addr: 'l-address', city: 'l-city', zip: 'l-zip' },       // Listing
-    { addr: 's-address', city: 's-city', zip: null },          // Sign Note: no specific zip field currently visible
-    { addr: 'v-address', city: 'v-city', zip: 'v-zip' },       // Voucher
-    { addr: 'c-address', city: 'c-city', zip: null },          // Comp Input
+    { addr: 's-address', city: 's-city', zip: 's-zip' },
+    { addr: 'v-address', city: 'v-city', zip: 'v-zip' },
+    { addr: 'c-address', city: 'c-city', zip: 'c-zip' },
     { addr: 'v-ls-address', city: 'v-ls-city', zip: 'v-ls-zip' }, // Voucher Lessor
     { addr: 'v-lb-address', city: 'v-lb-city', zip: 'v-lb-zip' }  // Voucher Lessee
   ];
@@ -16523,7 +16632,6 @@ function compReportSetWorkspaceMode(hasDataset) {
   if (layout) layout.classList.toggle('dataset-missing', !hasDataset);
   if (emptyState) emptyState.classList.toggle('comp-report-hidden', hasDataset);
   if (resultsCard) resultsCard.classList.toggle('comp-report-hidden', !hasDataset);
-  if (searchCard) searchCard.classList.toggle('comp-report-hidden', !hasDataset);
   if (searchForm) searchForm.classList.toggle('comp-report-form-disabled', !hasDataset);
   setHiddenState(searchNote, hasDataset);
 }
@@ -16917,6 +17025,7 @@ async function compReportLoadLatest(allowRetry = true) {
 }
 
 async function initCompReports(forceRefresh) {
+  if (typeof ensureCompReportFilterDropdowns === 'function') ensureCompReportFilterDropdowns();
   if (compReportsInitialized && !forceRefresh) return;
 
   compReportsUser = await ensureSharedBrokerSession();
@@ -17140,10 +17249,6 @@ function hasListingComplianceAttachments() {
   return listingDocumentIsExecuted('agencyDisclosure') && listingDocumentIsExecuted('listingAgreement');
 }
 
-function hasListingDealDocumentUpload() {
-  return Array.isArray(uploadedFiles['l-deal-documents']) && uploadedFiles['l-deal-documents'].length > 0;
-}
-
 function hasListingCoreRequiredFields() {
   const required = ['l-prop-type', 'l-address', 'l-date-entered', 'l-txn-type', 'l-listing-expiration'];
   return required.every((fieldId) => {
@@ -17169,10 +17274,6 @@ function hasVoucherComplianceAttachments() {
   const docsReady = voucherDocExecuted('agencyDisclosure') && voucherDocExecuted('listingAgreement');
   if (!voucherTransactionRequiresComplianceDocs()) return true;
   return docsReady;
-}
-
-function hasVoucherDealDocumentUpload() {
-  return Array.isArray(uploadedFiles['v-deal-documents']) && uploadedFiles['v-deal-documents'].length > 0;
 }
 
 function validateVoucherDocumentRequirements(showFeedback = false) {
@@ -18573,6 +18674,8 @@ function initializeBrokerToolEnhancements() {
     document.querySelectorAll(selector).forEach(btn => btn.classList.add('add-row-btn'));
   });
 
+  if (typeof ensureCompReportFilterDropdowns === 'function') ensureCompReportFilterDropdowns();
+
   renderHelpPanel();
 }
 
@@ -18909,8 +19012,8 @@ function deleteDraft(key) {
     { inputId: 'v-inv-address', cityId: null,  stateId: null,      zipId: null      },
     { inputId: 'v-la-address', cityId: null,   stateId: null,      zipId: null      },
     { inputId: 'v-pa-address', cityId: null,   stateId: null,      zipId: null      },
-    { inputId: 's-address', cityId: 's-city', stateId: null,      zipId: null      },
-    { inputId: 'c-address', cityId: 'c-city', stateId: null,      zipId: null      },
+    { inputId: 's-address', cityId: 's-city', stateId: 's-state', zipId: 's-zip' },
+    { inputId: 'c-address', cityId: 'c-city', stateId: 'c-state', zipId: 'c-zip' },
     { inputId: 'ci-party1-address', cityId: null, stateId: null,   zipId: null      },
     { inputId: 'ci-agent-address', cityId: null, stateId: null,    zipId: null      },
     { inputId: 'ci-prop-address', cityId: 'ci-prop-city', stateId: 'ci-prop-state', zipId: 'ci-prop-zip' },
@@ -18974,11 +19077,18 @@ function deleteDraft(key) {
       if (cfg.stateId) { var st = document.getElementById(cfg.stateId); if (st) st.value = s.state || 'CA'; }
       if (cfg.zipId)   { var z = document.getElementById(cfg.zipId);   if (z)  z.value = s.zip; }
       hideDropdown();
-      // Fire change events so form listeners react
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
       [cfg.cityId, cfg.stateId, cfg.zipId].filter(Boolean).forEach(function(id) {
         var el = document.getElementById(id);
-        if (el) el.dispatchEvent(new Event('change', { bubbles: true }));
+        if (el) {
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+        }
       });
+      if (cfg.zipId && s.zip) {
+        try { applyZipMarketSubmarket(s.zip); } catch (e) { /* no-op */ }
+      }
     }
 
     input.addEventListener('input', function() {
@@ -18988,7 +19098,7 @@ function deleteDraft(key) {
       setFieldLoading(input.parentNode, true);
       timer = setTimeout(async function() {
         try {
-          var res = await fetch('/api/maps/places/autocomplete?input=' + encodeURIComponent(val));
+          var res = await fetch('/api/places/autocomplete?input=' + encodeURIComponent(val));
           var data = await res.json();
           showDropdown(data.results || []);
         } catch (_) {
