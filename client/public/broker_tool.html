@@ -867,9 +867,8 @@
 
   <div class="deal-shell" id="v-deal-shell">
   <div class="deal-main" id="voucher-main">
-
   <!-- Upload Deal Documents -->
-  <div class="card ai-shortcut-card" id="vstep-upload" >
+  <div class="card ai-shortcut-card" id="vstep-upload" data-vstep="upload" >
     <h2>Upload Deal Documents <span class="inline-badge">AI Auto-Fill</span></h2>
     <div class="brochure-zone" id="v-brochure-zone" tabindex="0" role="button" aria-label="Upload deal documents" onclick="document.getElementById('v-brochure-file').click()" onkeydown="onVoucherDocZoneKeydown(event)">
       <input type="file" id="v-brochure-file" class="hidden-file-input" accept=".pdf,.jpg,.jpeg,.png" multiple aria-label="Upload deal documents" onchange="onVoucherDealDocumentsSelected(this)">
@@ -896,10 +895,8 @@
     <p class="upload-senior-hint">Double-check commission amounts and tenant/landlord names before sending — errors slow down admin processing.</p>
   </div>
 
-
-
-  <!-- ═══ SECTION 1: DEAL BASICS (matches Excel rows 1-9) ═══ -->
-  <div class="card required-section voucher-section" id="vstep-1" >
+  <!-- Deal Basics -->
+  <div class="card required-section voucher-section" id="vstep-1" data-vstep="1">
     <div class="voucher-section-header">Deal Basics</div>
     <div class="tip is-hidden top-gap-sm" id="voucher-confidential-warning"></div>
     <div class="row c4">
@@ -909,12 +906,25 @@
       <div class="field"><label class="req">Property Type</label>
         <select id="v-prop-type"><option value="industrial">Industrial</option><option value="office">Office</option><option value="retail">Retail</option><option value="land">Land</option><option value="other">Other</option></select>
       </div>
-      <div class="field"><label class="req">Active Listing?</label><select id="v-active-listing"><option value="yes">Yes</option><option value="no">No</option></select></div>
-      <div class="field"><label>Close this Listing?</label><select id="v-close-listing"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+      <div class="field"><label class="req">Representation Type</label>
+        <select id="v-rep-type" onchange="updateDistributionForRepresentation(); suggestVoucherClientFromRep()">
+          <option value="tenant_rep">Tenant Rep</option>
+          <option value="landlord_rep">Landlord Rep</option>
+          <option value="buyer_rep">Buyer Rep</option>
+          <option value="seller_rep">Seller Rep</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="field"><label class="req">Suite / Unit</label><input id="v-suite" placeholder="Ste 100"></div>
     </div>
     <div class="row c4">
-      <div class="field"><label class="req">Confidential?</label><select id="v-confidential"><option value="no">No</option><option value="yes">Yes</option></select></div>
-      <div class="field"><label class="req">Date Filled</label><input id="v-date-filled" type="date"></div>
+      <div class="field"><label class="req">Deal subtype</label>
+        <select id="v-deal-type-req">
+          <option value="">—</option>
+          <option>New</option><option>Renewal</option><option>Expansion</option><option>Relocation</option><option>Blend &amp; Extend</option>
+        </select>
+      </div>
+      <div class="field"><label class="req">Your client (who you represent)</label><input id="v-on-behalf"><div class="field-hint">The party you represented in this deal (tenant, landlord, buyer, or seller).</div></div>
       <div class="field is-hidden" id="v-other-type-field"><label>If Other, Explain</label><input id="v-other-type"></div>
       <div class="field"></div>
     </div>
@@ -922,7 +932,6 @@
     <div class="voucher-sub-header">Property Address</div>
     <div class="row c23">
       <div class="field"><label class="req">Street Address</label><input id="v-address"></div>
-      <div class="field"><label>APN / Parcel</label><input id="v-apn" placeholder="Optional"></div>
     </div>
     <div class="row c4">
       <div class="field"><label class="req">City</label><input id="v-city"></div>
@@ -933,38 +942,93 @@
     <input id="v-deal-sf" type="hidden">
     <input id="v-land-sf" type="hidden">
 
-    <div class="voucher-sub-header">Deal Details</div>
-    <div class="row c4">
-      <div class="field"><label class="req">Representation Type</label>
-        <select id="v-rep-type" onchange="updateDistributionForRepresentation()">
-          <option value="tenant_rep">Tenant Rep</option>
-          <option value="landlord_rep">Landlord Rep</option>
-          <option value="buyer_rep">Buyer Rep</option>
-          <option value="seller_rep">Seller Rep</option>
-          <option value="other">Other</option>
-        </select>
+    <details class="voucher-accordion top-gap-sm">
+      <summary>Listing &amp; compliance details</summary>
+      <div class="voucher-accordion-body">
+        <div class="row c4">
+          <div class="field"><label class="req">Active Listing?</label><select id="v-active-listing"><option value="yes">Yes</option><option value="no">No</option></select></div>
+          <div class="field"><label>Close this Listing?</label><select id="v-close-listing"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+          <div class="field"><label class="req">Confidential?</label><select id="v-confidential"><option value="no">No</option><option value="yes">Yes</option></select></div>
+          <div class="field"><label class="req">Date Filled</label><input id="v-date-filled" type="date"></div>
+        </div>
+        <div class="row c2">
+          <div class="field"><label>APN / Parcel</label><input id="v-apn" placeholder="Optional"></div>
+          <div class="field"></div>
+        </div>
       </div>
-      <div class="field"><label class="req">Suite / Unit</label><input id="v-suite" placeholder="Ste 100"></div>
-      <div class="field"><label class="req">Deal Type</label>
-        <select id="v-deal-type-req">
-          <option value="">—</option>
-          <option>New</option><option>Renewal</option><option>Expansion</option><option>Relocation</option><option>Blend &amp; Extend</option>
-        </select>
+    </details>
+  </div>
+
+  <!-- ═══ SECTION 5: BROKER REPRESENTATION (matches Excel rows 78-92) ═══ -->
+  <div class="card voucher-section" id="vstep-2" data-vstep="2" >
+    <div class="voucher-section-header">Broker Representation</div>
+    <div class="row c2 micro-copy-bottom-sm">
+      <div class="field"><label>Same Listing &amp; Procuring Agent?</label>
+        <select id="v-same-agent" onchange="onSameAgentChange()"><option value="no">No</option><option value="yes">Yes</option></select>
       </div>
-      <div class="field"><label class="req">Client Name</label><input id="v-on-behalf"><div class="field-hint">Client / Company name</div></div>
+      <div class="align-end-copy">House name, agent name &amp; city are usually sufficient</div>
+    </div>
+    <div class="row c2 voucher-agent-grid">
+      <div>
+        <div class="sub-divider-label">Listing Agent</div>
+        <div class="field"><label class="req">Agent Name</label>
+          <div class="agent-picker" id="picker-v-la-name">
+            <input id="v-la-name" autocomplete="off"><div class="field-hint">Start typing agent name...</div>
+            <div class="agent-dd" id="dd-v-la-name"></div>
+          </div>
+        </div>
+        <div class="field"><label>House</label><input id="v-la-house"></div>
+        <div class="field"><label>Invoice Listing Agent?</label><select id="v-la-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div class="field"><label>Address</label><input id="v-la-address"></div>
+        <div class="row c3">
+          <div class="field"><label>City</label><input id="v-la-city"></div>
+          <div class="field"><label>State</label><input id="v-la-state" value="CA"></div>
+          <div class="field"><label>Zip</label><input id="v-la-zip"></div>
+        </div>
+        <div class="row c2">
+          <div class="field"><label>Phone</label><input id="v-la-phone" type="tel"></div>
+          <div class="field"><label>Pay fee from commission?</label><select id="v-la-pay-fee"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        </div>
+      </div>
+      <div id="procuring-section">
+        <div class="sub-divider-label">Procuring Agent</div>
+        <div class="field"><label class="req">Agent Name</label>
+          <div class="agent-picker" id="picker-v-pa-name">
+            <input id="v-pa-name" autocomplete="off"><div class="field-hint">Start typing agent name...</div>
+            <div class="agent-dd" id="dd-v-pa-name"></div>
+          </div>
+        </div>
+        <div class="field"><label>House</label><input id="v-pa-house"><div class="field-hint">Brokerage name</div></div>
+        <div class="field"><label>Invoice Procuring Agent?</label><select id="v-pa-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div class="field"><label>Address</label><input id="v-pa-address"></div>
+        <div class="row c3">
+          <div class="field"><label>City</label><input id="v-pa-city"></div>
+          <div class="field"><label>State</label><input id="v-pa-state" value="CA"></div>
+          <div class="field"><label>Zip</label><input id="v-pa-zip"></div>
+        </div>
+        <div class="row c2">
+          <div class="field"><label>Phone</label><input id="v-pa-phone" type="tel"></div>
+          <div class="field"><label>Pay fee from commission?</label><select id="v-pa-pay-fee"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        </div>
+      </div>
+    </div>
+    <div class="top-gap-md voucher-subsection">
+      <div class="sub-divider-label">Additional Internal Agents (Collaborators)</div>
+      <table class="broker-table table-top-gap-sm" id="v-collab-table">
+        <thead><tr><th>Agent Name</th><th class="table-col-role">Role / Team</th><th class="table-col-narrow"></th></tr></thead>
+        <tbody id="v-collab-body"></tbody>
+      </table>
+      <button class="btn btn-gray top-gap-sm" onclick="addVoucherCollab()">+ Add Agent</button>
     </div>
   </div>
 
   <!-- ═══ SECTION 2: LESSOR/SELLER & LESSEE/BUYER (matches Excel rows 11-18) ═══ -->
-  <div class="card voucher-section" id="vstep-3" >
+  <div class="card voucher-section" id="vstep-3" data-vstep="3" >
     <div class="voucher-section-header">Lessor/Seller &amp; Lessee/Buyer</div>
     <div class="row c2 voucher-party-grid">
       <div>
         <div class="sub-divider-label" id="v-lbl-lessor">Lessor / Seller</div>
-        <div class="row c2">
-          <div class="field"><label>Invoice?</label><select id="v-ls-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
-          <div class="field"></div>
-        </div>
+        <select id="v-ls-invoice" class="is-hidden" aria-hidden="true" tabindex="-1"><option value="no">No</option><option value="yes">Yes</option></select>
         <div class="field"><label class="req">Contact Name</label><input id="v-ls-contact"><div class="field-hint">Full name</div></div>
         <div class="field"><label class="req">Company</label><input id="v-ls-company"><div class="field-hint">Company name</div></div>
         <div class="row c2">
@@ -980,10 +1044,7 @@
       </div>
       <div>
         <div class="sub-divider-label" id="v-lbl-lessee">Lessee / Buyer</div>
-        <div class="row c2">
-          <div class="field"><label>Invoice?</label><select id="v-lb-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
-          <div class="field"></div>
-        </div>
+        <select id="v-lb-invoice" class="is-hidden" aria-hidden="true" tabindex="-1"><option value="no">No</option><option value="yes">Yes</option></select>
         <div class="field"><label class="req">Contact Name</label><input id="v-lb-contact"><div class="field-hint">Full name</div></div>
         <div class="field"><label class="req">Company</label><input id="v-lb-company"><div class="field-hint">Company name</div></div>
         <div class="row c2">
@@ -1000,10 +1061,11 @@
     </div>
   </div>
 
-  <!-- ═══ SECTION 3: PROPERTY INFORMATION (matches Excel rows 20-31) ═══ -->
-  <div class="card voucher-section">
-    <div class="voucher-section-header">Property Information</div>
-    <div class="row c4 compact">
+  <!-- Optional property details -->
+  <details class="voucher-accordion voucher-section" id="vstep-prop">
+    <summary class="voucher-section-header">Optional property details (for comps)</summary>
+    <div class="voucher-accordion-body">
+<div class="row c4 compact">
       <div class="field"><label>Occ. Type</label><select id="v-occ-type"><option value="">—</option><option>Direct</option><option>Sublease</option><option>Renewal</option><option>Expansion</option></select></div>
       <div class="field"><label>Sub-Market</label><input id="v-submarket"></div>
       <div class="field"><label>Prior Tenant Location</label><input id="v-prior-loc"><div class="field-hint">City or address</div></div>
@@ -1022,19 +1084,12 @@
       <div class="field"><label>Load Factor</label><input id="v-load-factor"></div>
     </div>
     <div class="field" style="margin-top:12px"><label>Additional Comp Comments</label><textarea id="v-comp-comments" rows="2" placeholder="HVAC, expenses, maintenance, taxes, anything you would like to add"></textarea></div>
-  </div>
-
-  <!-- ═══ SECTION 4: LEASE TRANSACTION DETAILS (matches Excel rows 34-48) ═══ -->
-  <div class="card voucher-section" id="vstep-4" >
-    <div class="voucher-section-header">Transaction Details &amp; Commission</div>
-    <div class="branch-toggle-wrap">
-      <label class="branch-toggle-label">Deal Branch</label>
-      <div class="branch-toggle" id="voucher-branch-toggle">
-        <button type="button" data-branch="lease" onclick="setVoucherBranch('lease')">Lease</button>
-        <button type="button" data-branch="sale" onclick="setVoucherBranch('sale')">Sale</button>
-      </div>
     </div>
+  </details>
 
+  <!-- Lease/Sale Terms -->
+  <div class="card voucher-section" id="vstep-4" data-vstep="4">
+    <div class="voucher-section-header">Lease/Sale Terms</div>
     <!-- Lease Details -->
     <div id="v-req-lease">
       <div class="voucher-sub-header">Lease Terms</div>
@@ -1050,7 +1105,7 @@
         <div class="field"><label>Asking Rate/SF</label><input id="v-l-asking-rate" placeholder="$0.00"></div>
         <div class="field"><label>Total Consideration</label><input id="v-l-consideration" class="readonly-fill-strong" placeholder="$0" readonly></div>
       </div>
-      <div class="row c4">
+    <div id="v-lease-nnn-row" class="row c4">
         <div class="field"><label>Property Taxes</label><input id="v-l-taxes" placeholder="$0.00" oninput="calcNNNTotal()"></div>
         <div class="field"><label>Insurance</label><input id="v-l-insurance" placeholder="$0.00" oninput="calcNNNTotal()"></div>
         <div class="field"><label>Miscellaneous</label><input id="v-l-misc" placeholder="$0.00" oninput="calcNNNTotal()"></div>
@@ -1067,10 +1122,41 @@
         <div class="field"><label>IG Eff Rate</label><input id="v-l-ig-eff" placeholder="$0.00"></div>
         <div class="field"><label>NNN Eff Rate</label><input id="v-l-nnn-eff" placeholder="$0.00"></div>
       </div>
+      <div class="field" style="margin-top:12px"><label>Additional Lease Comments</label><textarea id="v-lease-comments" rows="2" placeholder="Additional lease terms or notes"></textarea></div>
+    </div>
 
+    <!-- Sale Details -->
+    <div id="v-req-sale" class="is-hidden">
+      <div class="voucher-sub-header">Sale Terms</div>
+      <div class="row c3">
+        <div class="field"><label class="req">Total Consideration / Sale Price</label><input id="v-s-price" placeholder="$0" oninput="calcVoucherSale()"></div>
+        <div class="field"><label>Price / SF</label><input id="v-s-price-sf" class="readonly-fill" placeholder="$0.00" readonly></div>
+        <div class="field"><label>Land Price / SF</label><input id="v-s-land-sf" class="readonly-fill" placeholder="$0.00" readonly></div>
+      </div>
+      <div class="row c3">
+        <div class="field"><label>User, Investor, or Developer</label><select id="v-s-buyer-type"><option value="">—</option><option>User</option><option>Investor</option><option>Developer</option></select></div>
+        <div class="field"><label>Asking Price</label><input id="v-s-asking" placeholder="$0"></div>
+        <div class="field" id="v-sale-cap-field"><label>CAP Rate %</label><input id="v-s-cap"></div>
+      </div>
+      <div class="row c2">
+        <div class="field"><label>Escrow Company</label><input id="v-s-escrow"><div class="field-hint">Company name</div></div>
+        <div class="field"><label>Check/Wire from Escrow?</label><select id="v-s-escrow-check"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+      </div>
+      <div class="field"><label>Months on Market</label><input id="v-s-months-mkt" placeholder="0"></div>
+    </div>
+  </div>
+
+  <!-- Rent Schedule -->
+  <div class="card voucher-section" id="vstep-5" data-vstep="5">
       <!-- Rent Schedule — Dealius-style lease calculator -->
       <div id="v-req-rent-inline" class="v-rent-schedule-shell top-gap-sm">
-        <div class="voucher-sub-header">Lease Calculator &amp; Rent Schedule</div>
+        <div class="voucher-sub-header">Rent Schedule</div>
+        <div class="v-rent-steps" id="v-rent-steps" aria-label="Rent schedule steps">
+          <div class="v-rent-step" data-step="1"><span class="v-rent-step-num">1</span> Set rate, term &amp; SF</div>
+          <div class="v-rent-step" data-step="2"><span class="v-rent-step-num">2</span> Generate schedule</div>
+          <div class="v-rent-step" data-step="3"><span class="v-rent-step-num">3</span> Confirm consideration</div>
+        </div>
+
         <p class="review-copy micro-copy-bottom-sm">Set lease variables, generate the schedule, then edit rows as needed. Regenerate after changing rate or term.</p>
 
         <div class="v-lease-calc">
@@ -1136,40 +1222,22 @@
         </div>
       </div>
 
-      <div class="field" style="margin-top:12px"><label>Additional Lease Comments</label><textarea id="v-lease-comments" rows="2" placeholder="Additional lease terms or notes"></textarea></div>
-    </div>
 
-    <!-- Sale Details -->
-    <div id="v-req-sale" class="is-hidden">
-      <div class="voucher-sub-header">Sale Terms</div>
-      <div class="row c3">
-        <div class="field"><label class="req">Total Consideration / Sale Price</label><input id="v-s-price" placeholder="$0" oninput="calcVoucherSale()"></div>
-        <div class="field"><label>Price / SF</label><input id="v-s-price-sf" class="readonly-fill" placeholder="$0.00" readonly></div>
-        <div class="field"><label>Land Price / SF</label><input id="v-s-land-sf" class="readonly-fill" placeholder="$0.00" readonly></div>
-      </div>
-      <div class="row c3">
-        <div class="field"><label>User, Investor, or Developer</label><select id="v-s-buyer-type"><option value="">—</option><option>User</option><option>Investor</option><option>Developer</option></select></div>
-        <div class="field"><label>Asking Price</label><input id="v-s-asking" placeholder="$0"></div>
-        <div class="field"><label>CAP Rate %</label><input id="v-s-cap"></div>
-      </div>
-      <div class="row c2">
-        <div class="field"><label>Escrow Company</label><input id="v-s-escrow"><div class="field-hint">Company name</div></div>
-        <div class="field"><label>Check/Wire from Escrow?</label><select id="v-s-escrow-check"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
-      </div>
-      <div class="field"><label>Months on Market</label><input id="v-s-months-mkt" placeholder="0"></div>
-    </div>
+  </div>
 
+  <!-- Commission & Invoice -->
+  <div class="card voucher-section" id="vstep-6" data-vstep="6">
     <!-- Commission Section -->
-    <div class="voucher-sub-header" style="margin-top:20px">Commission &amp; Invoice</div>
+    <div class="voucher-section-header">Commission &amp; Invoice</div>
     <div id="v-req-comm-lease">
-      <div class="row c4">
-        <div class="field"><label class="req">Commission Rate %</label><input id="v-l-comm-rate" oninput="calcCommSummary()"></div>
+      <div class="row c4 v-lease-comm-primary-row">
+        <div class="field"><label class="req">Commission Rate %</label><input id="v-l-comm-rate" oninput="calcCommSummary(); updateVoucherCommRateWarn()"><div class="field-hint field-hint-warn is-hidden" id="v-comm-rate-warn">Generate a rent schedule before setting commission rate.</div></div>
         <div class="field"><label>Lease Commission Due</label><input id="v-l-comm-due" class="readonly-fill-strong" placeholder="$0" readonly></div>
         <div class="field"><label>Additional Bonus / (Adjustment)</label><input id="v-comm-bonus" placeholder="$0" oninput="calcCommSummary()"></div>
         <div class="field"><label class="invoice-highlight-label">TOTAL INVOICE</label><input id="v-total-invoice" class="invoice-highlight-input" placeholder="$0" readonly></div>
       </div>
       <div class="row c3">
-        <div class="field"><label>Consulting/Referral / Flat Fee</label><input id="v-comm-consulting" placeholder="$0" oninput="calcCommSummary()"></div>
+        <div class="field v-simplified-fee-field"><label>Consulting/Referral / Flat Fee</label><input id="v-comm-consulting" placeholder="$0" oninput="calcCommSummary()"></div>
         <div class="field"></div>
         <div class="field"></div>
       </div>
@@ -1214,78 +1282,16 @@
     </table>
     <button class="btn btn-gray top-gap-sm" onclick="addPaymentRow()">+ Add Payment</button>
 
+
     <!-- AI Deal Analysis -->
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid #E7EAEE">
-      <div class="voucher-sub-header">AI Deal Analysis</div>
-      <p class="micro-copy">Let AI verify the financials and flag anything that looks off.</p>
+      <div class="voucher-sub-header">Double-check my numbers</div>
+      <p class="micro-copy">Verifies commission math against uploaded documents. Upload AI at the top remains the primary auto-fill.</p>
       <button class="btn btn-outline" id="v-ai-calc-btn" onclick="runVoucherAICalculate()">
         <svg class="ui-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:5px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        Analyze with AI
+        Verify commission math
       </button>
       <div id="v-ai-calc-panel" class="is-hidden" style="margin-top:14px;"></div>
-    </div>
-  </div>
-
-  <!-- ═══ SECTION 5: BROKER REPRESENTATION (matches Excel rows 78-92) ═══ -->
-  <div class="card voucher-section" id="vstep-2" >
-    <div class="voucher-section-header">Broker Representation</div>
-    <div class="row c2 micro-copy-bottom-sm">
-      <div class="field"><label>Same Listing &amp; Procuring Agent?</label>
-        <select id="v-same-agent" onchange="onSameAgentChange()"><option value="no">No</option><option value="yes">Yes</option></select>
-      </div>
-      <div class="align-end-copy">House name, agent name &amp; city are usually sufficient</div>
-    </div>
-    <div class="row c2 voucher-agent-grid">
-      <div>
-        <div class="sub-divider-label">Listing Agent</div>
-        <div class="field"><label class="req">Agent Name</label>
-          <div class="agent-picker" id="picker-v-la-name">
-            <input id="v-la-name" autocomplete="off"><div class="field-hint">Start typing agent name...</div>
-            <div class="agent-dd" id="dd-v-la-name"></div>
-          </div>
-        </div>
-        <div class="field"><label>House</label><input id="v-la-house"></div>
-        <div class="field"><label>Invoice Listing Agent?</label><select id="v-la-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
-        <div class="field"><label>Address</label><input id="v-la-address"></div>
-        <div class="row c3">
-          <div class="field"><label>City</label><input id="v-la-city"></div>
-          <div class="field"><label>State</label><input id="v-la-state" value="CA"></div>
-          <div class="field"><label>Zip</label><input id="v-la-zip"></div>
-        </div>
-        <div class="row c2">
-          <div class="field"><label>Phone</label><input id="v-la-phone" type="tel"></div>
-          <div class="field"><label>Pay fee from commission?</label><select id="v-la-pay-fee"><option value="no">No</option><option value="yes">Yes</option></select></div>
-        </div>
-      </div>
-      <div id="procuring-section">
-        <div class="sub-divider-label">Procuring Agent</div>
-        <div class="field"><label class="req">Agent Name</label>
-          <div class="agent-picker" id="picker-v-pa-name">
-            <input id="v-pa-name" autocomplete="off"><div class="field-hint">Start typing agent name...</div>
-            <div class="agent-dd" id="dd-v-pa-name"></div>
-          </div>
-        </div>
-        <div class="field"><label>House</label><input id="v-pa-house"><div class="field-hint">Brokerage name</div></div>
-        <div class="field"><label>Invoice Procuring Agent?</label><select id="v-pa-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
-        <div class="field"><label>Address</label><input id="v-pa-address"></div>
-        <div class="row c3">
-          <div class="field"><label>City</label><input id="v-pa-city"></div>
-          <div class="field"><label>State</label><input id="v-pa-state" value="CA"></div>
-          <div class="field"><label>Zip</label><input id="v-pa-zip"></div>
-        </div>
-        <div class="row c2">
-          <div class="field"><label>Phone</label><input id="v-pa-phone" type="tel"></div>
-          <div class="field"><label>Pay fee from commission?</label><select id="v-pa-pay-fee"><option value="no">No</option><option value="yes">Yes</option></select></div>
-        </div>
-      </div>
-    </div>
-    <div class="top-gap-md voucher-subsection">
-      <div class="sub-divider-label">Additional Internal Agents (Collaborators)</div>
-      <table class="broker-table table-top-gap-sm" id="v-collab-table">
-        <thead><tr><th>Agent Name</th><th class="table-col-role">Role / Team</th><th class="table-col-narrow"></th></tr></thead>
-        <tbody id="v-collab-body"></tbody>
-      </table>
-      <button class="btn btn-gray top-gap-sm" onclick="addVoucherCollab()">+ Add Agent</button>
     </div>
   </div>
 
@@ -1316,7 +1322,7 @@
   </div>
 
   <!-- ═══ SECTION 7: COMMISSION DISTRIBUTION (matches Excel rows 116-131) ═══ -->
-  <div class="card voucher-section" id="vstep-8" >
+  <div class="card voucher-section" id="vstep-8" data-vstep="8" >
     <div class="voucher-section-header">Commission Distribution</div>
     <div id="voucher-attachment-required-msg" class="tip text-error is-hidden" role="alert"></div>
     <div class="row c3 field-stack-gap-sm voucher-summary-row">
@@ -1325,21 +1331,25 @@
       <div class="field"><label>Gross $$ to Distribute</label><input id="v-gross-dist" class="invoice-highlight-input" placeholder="$0" readonly></div>
     </div>
     <table class="broker-table" id="v-dist-table">
-      <thead><tr><th>Agent Name</th><th class="table-col-100">Side</th><th class="table-col-65">Gross %</th><th data-dist-gross="listing">Listing Gross</th><th data-dist-gross="procuring">Procuring Gross</th><th data-dist-gross="both">Both Gross</th><th data-dist-gross="other">Other Gross</th><th data-dist-gross="referring">Referring Gross</th><th>NET (ck amt)</th><th class="table-col-compact"></th></tr></thead>
+      <thead><tr><th>Agent Name</th><th class="table-col-100">Side</th><th class="table-col-65">Gross %</th><th class="dist-gross-col" data-dist-gross="listing">Listing Gross</th><th class="dist-gross-col" data-dist-gross="procuring">Procuring Gross</th><th class="dist-gross-col" data-dist-gross="both">Both Gross</th><th class="dist-gross-col" data-dist-gross="other">Other Gross</th><th class="dist-gross-col" data-dist-gross="referring">Referring Gross</th><th>Net $</th><th class="table-col-compact"></th></tr></thead>
       <tbody id="v-dist-body"></tbody>
     </table>
     <button class="btn btn-gray top-gap-sm" onclick="addDistRow()">+ Add Agent</button>
   </div>
 
   <!-- Action Buttons -->
-  <div class="btn-bar">
-    <button class="btn btn-gray" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Excel Voucher</span></button>
-    <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'voucher')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
+  <div class="btn-bar voucher-action-bar">
+    <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'voucher')"><span class="btn-spinner"></span><span class="btn-label">Review Before Send</span></button>
     <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('voucher', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
-    <button class="btn btn-outline" onclick="switchTab('sign')">Remove Signs &rarr;</button>
-    <button class="btn btn-gray" onclick="setBtnLoading(this,true,'Clearing…');setTimeout(()=>{clearVoucher();setBtnLoading(this,false);},80)"><span class="btn-spinner"></span><span class="btn-label">Clear Form</span></button>
+    <button class="btn btn-gray" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Excel</span></button>
+    <div class="btn-more-wrap">
+      <button type="button" class="btn btn-outline btn-more" onclick="toggleVoucherMoreActions(this)" aria-expanded="false" aria-controls="voucher-more-menu">More ▾</button>
+      <div class="btn-more-menu is-hidden" id="voucher-more-menu" role="menu">
+        <button type="button" class="btn btn-outline" role="menuitem" onclick="switchTab('sign')">Remove Signs &rarr;</button>
+        <button type="button" class="btn btn-gray" role="menuitem" onclick="setBtnLoading(this,true,'Clearing…');setTimeout(()=>{clearVoucher();setBtnLoading(this,false);},80)"><span class="btn-spinner"></span><span class="btn-label">Clear Form</span></button>
+      </div>
+    </div>
   </div>
-
   </div><!-- /deal-main -->
 
   <aside class="deal-aside" id="v-deal-aside" aria-label="Deal at a glance">
@@ -1377,18 +1387,20 @@
     <div class="deal-card deal-card-progress">
       <div class="deal-eyebrow">Progress</div>
       <ol class="deal-steps" id="dg-steps">
-        <li data-step="0"><span class="deal-step-dot"></span><span class="deal-step-label">Upload Docs</span></li>
-        <li data-step="1"><span class="deal-step-dot"></span><span class="deal-step-label">Deal Basics</span></li>
-        <li data-step="2"><span class="deal-step-dot"></span><span class="deal-step-label">Broker Info</span></li>
-        <li data-step="3"><span class="deal-step-dot"></span><span class="deal-step-label">Parties</span></li>
-        <li data-step="4"><span class="deal-step-dot"></span><span class="deal-step-label">Financials</span></li>
-        <li data-step="8"><span class="deal-step-dot"></span><span class="deal-step-label">Distribution</span></li>
+        <li data-step="upload" data-vstep="upload"><span class="deal-step-dot"></span><span class="deal-step-label">Upload Docs</span></li>
+        <li data-step="1" data-vstep="1"><span class="deal-step-dot"></span><span class="deal-step-label">Deal Basics</span></li>
+        <li data-step="2" data-vstep="2"><span class="deal-step-dot"></span><span class="deal-step-label">Broker Info</span></li>
+        <li data-step="3" data-vstep="3"><span class="deal-step-dot"></span><span class="deal-step-label">Parties</span></li>
+        <li data-step="4" data-vstep="4"><span class="deal-step-dot"></span><span class="deal-step-label">Deal Math</span></li>
+        <li data-step="6" data-vstep="6"><span class="deal-step-dot"></span><span class="deal-step-label">Commission</span></li>
+        <li data-step="8" data-vstep="8"><span class="deal-step-dot"></span><span class="deal-step-label">Distribution</span></li>
       </ol>
     </div>
 
     <div class="deal-actions">
-      <button class="btn btn-gray" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Excel Voucher</span></button>
       <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'voucher')"><span class="btn-spinner"></span><span class="btn-label">Review Before Send</span></button>
+      <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('voucher', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
+      <button class="btn btn-gray" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Excel</span></button>
     </div>
   </aside>
   </div><!-- /deal-shell -->
@@ -3134,6 +3146,18 @@
   </div>
 </div>
 
+
+<div class="modal-overlay is-hidden" id="voucher-validation-modal" role="dialog" aria-labelledby="voucher-validation-title" aria-modal="true">
+  <div class="modal-card voucher-validation-card">
+    <h2 id="voucher-validation-title">Complete these items before review</h2>
+    <p class="micro-copy">Fix the items below, then try Review Before Send again.</p>
+    <ul class="voucher-validation-list" id="voucher-validation-list"></ul>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-red" onclick="closeVoucherValidationModal()">Go fix items</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="send-admin-modal">
   <div class="modal modal-sm">
     <h2 id="send-admin-modal-title" class="modal-heading-row">Send to Admin</h2>
@@ -4187,6 +4211,13 @@ function openReviewSnapshotWithSpinner(btn, context) {
   if (btn) { setBtnLoading(btn, true, 'Loading…'); btn.disabled = true; }
   setTimeout(() => {
     try {
+      if (context === 'voucher') {
+        const validation = validateVoucherBeforeReview();
+        if (!validation.ok) {
+          showVoucherValidationChecklist(validation.items);
+          return;
+        }
+      }
       (window.openReviewSnapshot || openReviewSnapshot)(context);
     } catch (err) {
       console.error('Review snapshot error:', err);
@@ -5067,26 +5098,25 @@ function syncDealGlance() {
   const gross = _dgVal('v-gross-dist');
   _dgSet('dg-gross', gross || '$0');
 
-  // Progress steps — driven by step flow position when available
+  // Progress steps — completion state
   const stepsEl = document.getElementById('dg-steps');
-  const flow = window.__stepFlows && window.__stepFlows['voucher-main'];
-  if (flow && typeof flow.renderSummaries === 'function') flow.renderSummaries();
+  const completion = getVoucherStepCompletion();
   if (stepsEl) {
-    stepsEl.querySelectorAll('li').forEach((li, idx) => {
-      if (flow) {
-        li.classList.toggle('is-done', idx < flow.current);
-        li.classList.toggle('is-active', idx === flow.current);
-        li.classList.toggle('done', idx < flow.current);
-        li.classList.toggle('current', idx === flow.current);
-      } else {
-        const n = li.getAttribute('data-step');
-        const state = _dgStepState(n);
-        li.classList.toggle('is-done', state === 'done');
-        li.classList.toggle('is-active', state === 'active');
-        li.classList.toggle('done', state === 'done');
-        li.classList.toggle('current', state === 'active');
-      }
+    stepsEl.querySelectorAll('li').forEach(li => {
+      const stepKey = li.getAttribute('data-vstep') || li.getAttribute('data-step');
+      const done = Boolean(completion[stepKey]);
+      li.classList.toggle('is-done', done);
+      li.classList.toggle('done', done);
+      li.classList.toggle('is-active', false);
+      li.classList.toggle('current', false);
     });
+    const firstIncomplete = [...stepsEl.querySelectorAll('li')].find(li => {
+      const stepKey = li.getAttribute('data-vstep') || li.getAttribute('data-step');
+      return !completion[stepKey];
+    });
+    if (firstIncomplete) {
+      firstIncomplete.classList.add('is-active', 'current');
+    }
   }
 }
 // Wire up live updates for voucher inputs (delegated)
@@ -5605,11 +5635,11 @@ function addDistRow() {
       '<span class="side-chip cursor-pointer" onclick="openDistSideSelect(this.previousElementSibling)"></span>' +
     '</div></td>' +
     '<td><input class="w-55" placeholder="%" oninput="updateDistPctTotal()"></td>' +
-    '<td data-dist-gross="listing"><input placeholder="$0"></td>' +
-    '<td data-dist-gross="procuring"><input placeholder="$0"></td>' +
-    '<td data-dist-gross="both"><input placeholder="$0"></td>' +
-    '<td data-dist-gross="other"><input placeholder="$0"></td>' +
-    '<td data-dist-gross="referring"><input placeholder="$0"></td>' +
+    '<td class="dist-gross-col" data-dist-gross="listing"><input placeholder="$0"></td>' +
+    '<td class="dist-gross-col" data-dist-gross="procuring"><input placeholder="$0"></td>' +
+    '<td class="dist-gross-col" data-dist-gross="both"><input placeholder="$0"></td>' +
+    '<td class="dist-gross-col" data-dist-gross="other"><input placeholder="$0"></td>' +
+    '<td class="dist-gross-col" data-dist-gross="referring"><input placeholder="$0"></td>' +
     '<td><input class="text-strong" placeholder="$0"></td>' +
     '<td><button class="remove-row" onclick="this.closest(\'tr\').remove();updateDistributionGrossColumns();updateDistPctTotal();">&times;</button></td>';
   body.appendChild(tr);
@@ -5688,15 +5718,196 @@ function calcVoucherSale() {
 function setVoucherBranch(branch) {
   const select = document.getElementById('v-txn-type');
   if (!select || !branch) return;
-  select.value = branch;
+  if (branch === 'sale') select.value = 'sale';
+  else if (['referral', 'sublease', 'renewal', 'other'].includes(branch)) select.value = branch;
+  else select.value = 'lease';
   onVoucherTxnChange();
 }
 
 function syncVoucherBranchToggle() {
-  const active = document.getElementById('v-txn-type')?.value === 'sale' ? 'sale' : 'lease';
-  document.querySelectorAll('#voucher-branch-toggle button').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.branch === active);
+  /* Branch toggle removed — v-txn-type is the single control. */
+}
+
+function voucherTxnIsSimplified() {
+  const txn = document.getElementById('v-txn-type')?.value || 'lease';
+  return txn === 'referral' || txn === 'sublease' || txn === 'renewal' || txn === 'other';
+}
+
+function voucherTxnIsLease() {
+  const txn = document.getElementById('v-txn-type')?.value || 'lease';
+  return txn === 'lease';
+}
+
+function suggestVoucherClientFromRep() {
+  const clientEl = document.getElementById('v-on-behalf');
+  if (!clientEl || String(clientEl.value || '').trim()) return;
+  const rep = document.getElementById('v-rep-type')?.value || '';
+  const pick = (id) => String(document.getElementById(id)?.value || '').trim();
+  let suggestion = '';
+  if (rep === 'tenant_rep' || rep === 'buyer_rep') suggestion = pick('v-lb-company') || pick('v-lb-contact');
+  else if (rep === 'landlord_rep' || rep === 'seller_rep') suggestion = pick('v-ls-company') || pick('v-ls-contact');
+  if (suggestion) {
+    clientEl.value = suggestion;
+    clientEl.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+}
+
+function syncVoucherInvoicePartyFields() {
+  const invoiceTo = document.getElementById('v-invoice-to')?.value || '';
+  const ls = document.getElementById('v-ls-invoice');
+  const lb = document.getElementById('v-lb-invoice');
+  if (!ls || !lb) return;
+  ls.value = invoiceTo === 'lessor' ? 'yes' : 'no';
+  lb.value = invoiceTo === 'lessee' ? 'yes' : 'no';
+}
+
+function toggleVoucherMoreActions(btn) {
+  const menu = document.getElementById('voucher-more-menu');
+  if (!menu) return;
+  const open = menu.classList.toggle('is-hidden');
+  if (btn) btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+}
+
+function voucherHasRentScheduleRows() {
+  return document.querySelectorAll('#v-rent-body tr').length > 0;
+}
+
+function updateVoucherCommRateWarn() {
+  const warn = document.getElementById('v-comm-rate-warn');
+  const rateEl = document.getElementById('v-l-comm-rate');
+  if (!warn || !rateEl) return;
+  const show = voucherTxnIsLease() && !voucherHasRentScheduleRows() && String(rateEl.value || '').trim();
+  warn.classList.toggle('is-hidden', !show);
+}
+
+function updateVoucherRentStepIndicator() {
+  const steps = document.querySelectorAll('#v-rent-steps .v-rent-step');
+  if (!steps.length) return;
+  const hasRate = Boolean(String(document.getElementById('v-l-rate')?.value || '').trim());
+  const hasTerm = Boolean(String(document.getElementById('v-l-term')?.value || '').trim());
+  const hasSf = Boolean(String(document.getElementById('v-l-dealsf')?.value || '').trim());
+  const step1 = hasRate && hasTerm && hasSf;
+  const step2 = voucherHasRentScheduleRows();
+  const consid = parseFloat(String(document.getElementById('v-l-consideration')?.value || '').replace(/[^0-9.]/g, '')) || 0;
+  const step3 = step2 && consid > 0;
+  steps.forEach(el => {
+    const n = el.getAttribute('data-step');
+    el.classList.toggle('is-done', (n === '1' && step1) || (n === '2' && step2) || (n === '3' && step3));
+    el.classList.toggle('is-active', (n === '1' && !step1) || (n === '2' && step1 && !step2) || (n === '3' && step2 && !step3));
   });
+  updateVoucherCommRateWarn();
+}
+
+function closeVoucherValidationModal() {
+  const modal = document.getElementById('voucher-validation-modal');
+  if (modal) modal.classList.add('is-hidden');
+}
+
+function showVoucherValidationChecklist(items) {
+  const modal = document.getElementById('voucher-validation-modal');
+  const list = document.getElementById('voucher-validation-list');
+  if (!modal || !list) return;
+  list.innerHTML = items.map(item =>
+    '<li><button type="button" class="voucher-validation-item" data-scroll="' + item.scrollId + '">' + item.label + '</button></li>'
+  ).join('');
+  list.querySelectorAll('.voucher-validation-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      closeVoucherValidationModal();
+      const scrollId = btn.getAttribute('data-scroll') || '';
+      const target = document.getElementById('vstep-' + scrollId) ||
+        document.querySelector('[data-vstep="' + scrollId + '"]');
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        target.classList.add('voucher-validation-highlight');
+        setTimeout(() => target.classList.remove('voucher-validation-highlight'), 2400);
+      }
+    });
+  });
+  modal.classList.remove('is-hidden');
+}
+
+function validateVoucherBeforeReview() {
+  const items = [];
+  const req = (label, scrollId, ok) => { if (!ok) items.push({ label, scrollId }); };
+
+  req('Transaction type', '1', Boolean(document.getElementById('v-txn-type')?.value));
+  req('Property address', '1', Boolean(String(document.getElementById('v-address')?.value || '').trim()));
+  req('City, state, zip', '1', Boolean(String(document.getElementById('v-city')?.value || '').trim()) &&
+    Boolean(String(document.getElementById('v-state')?.value || '').trim()) &&
+    Boolean(String(document.getElementById('v-zip')?.value || '').trim()));
+  req('Deal SF', '1', Boolean(String(document.getElementById('v-l-dealsf')?.value || '').trim()));
+  req('Representation type', '1', Boolean(document.getElementById('v-rep-type')?.value));
+  req('Deal subtype', '1', Boolean(document.getElementById('v-deal-type-req')?.value));
+  req('Your client', '1', Boolean(String(document.getElementById('v-on-behalf')?.value || '').trim()));
+  req('Listing agent name', '2', Boolean(String(document.getElementById('v-la-name')?.value || '').trim()));
+  req('Procuring agent name', '2', Boolean(String(document.getElementById('v-pa-name')?.value || '').trim()));
+  req('Lessor/seller contact & company', '3', Boolean(String(document.getElementById('v-ls-contact')?.value || '').trim()) &&
+    Boolean(String(document.getElementById('v-ls-company')?.value || '').trim()));
+  req('Lessee/buyer contact & company', '3', Boolean(String(document.getElementById('v-lb-contact')?.value || '').trim()) &&
+    Boolean(String(document.getElementById('v-lb-company')?.value || '').trim()));
+
+  const txn = document.getElementById('v-txn-type')?.value || 'lease';
+  if (txn === 'lease') {
+    req('Lease start & end dates', '4', Boolean(document.getElementById('v-l-start')?.value) && Boolean(document.getElementById('v-l-end')?.value));
+    req('Rate per SF', '4', Boolean(String(document.getElementById('v-l-rate')?.value || '').trim()));
+    req('Rent schedule', '5', voucherHasRentScheduleRows());
+    req('Commission rate %', '6', Boolean(String(document.getElementById('v-l-comm-rate')?.value || '').trim()));
+  } else if (txn === 'sale') {
+    req('Sale price', '4', Boolean(String(document.getElementById('v-s-price')?.value || '').trim()));
+    req('Commission %', '6', Boolean(String(document.getElementById('v-s-comm-pct')?.value || '').trim()));
+  } else {
+    req('Flat fee or commission amount', '6', Boolean(String(document.getElementById('v-comm-consulting')?.value || '').trim()) ||
+      Boolean(String(document.getElementById('v-l-comm-rate')?.value || '').trim()) ||
+      Boolean(String(document.getElementById('v-s-comm-pct')?.value || '').trim()));
+  }
+
+  if (workflowCommissionSplitMustSum100()) {
+    let total = 0;
+    document.querySelectorAll('#v-dist-body tr').forEach(tr => {
+      const pctInput = tr.querySelector('input[placeholder="%"]');
+      if (pctInput) total += parseFloat(pctInput.value) || 0;
+    });
+    req('Commission distribution totals 100%', '8', Math.abs(Math.round(total * 10) / 10 - 100) < 0.1);
+  }
+
+  return { ok: items.length === 0, items };
+}
+
+function getVoucherStepCompletion() {
+  const checks = {
+    upload: () => hasVoucherDealDocumentUpload(),
+    '1': () => validateVoucherBeforeReview().items.every(i => !['Transaction type', 'Property address', 'City, state, zip', 'Deal SF', 'Representation type', 'Deal subtype', 'Your client'].includes(i.label)),
+    '2': () => Boolean(String(document.getElementById('v-la-name')?.value || '').trim()) &&
+      Boolean(String(document.getElementById('v-pa-name')?.value || '').trim()),
+    '3': () => Boolean(String(document.getElementById('v-ls-contact')?.value || '').trim()) &&
+      Boolean(String(document.getElementById('v-lb-contact')?.value || '').trim()),
+    '4': () => {
+      const txn = document.getElementById('v-txn-type')?.value || 'lease';
+      if (txn === 'sale') return Boolean(String(document.getElementById('v-s-price')?.value || '').trim());
+      if (voucherTxnIsSimplified()) return true;
+      const termsOk = Boolean(document.getElementById('v-l-start')?.value) &&
+        Boolean(String(document.getElementById('v-l-rate')?.value || '').trim());
+      return termsOk && voucherHasRentScheduleRows();
+    },
+    '6': () => {
+      const txn = document.getElementById('v-txn-type')?.value || 'lease';
+      if (txn === 'lease') return Boolean(String(document.getElementById('v-l-comm-rate')?.value || '').trim());
+      if (txn === 'sale') return Boolean(String(document.getElementById('v-s-comm-pct')?.value || '').trim());
+      return Boolean(String(document.getElementById('v-comm-consulting')?.value || '').trim());
+    },
+    '8': () => {
+      if (!workflowCommissionSplitMustSum100()) return document.querySelectorAll('#v-dist-body tr').length > 0;
+      let total = 0;
+      document.querySelectorAll('#v-dist-body tr').forEach(tr => {
+        const pctInput = tr.querySelector('input[placeholder="%"]');
+        if (pctInput) total += parseFloat(pctInput.value) || 0;
+      });
+      return Math.abs(Math.round(total * 10) / 10 - 100) < 0.1;
+    }
+  };
+  const out = {};
+  Object.keys(checks).forEach(k => { out[k] = checks[k](); });
+  return out;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -5704,24 +5915,35 @@ function syncVoucherBranchToggle() {
 // ═══════════════════════════════════════════════════════════════════════════════
 function onVoucherTxnChange() {
   const txn = document.getElementById('v-txn-type').value;
+  const simplified = voucherTxnIsSimplified();
+  const isLease = voucherTxnIsLease();
+  const isSale = txn === 'sale';
   syncVoucherDealAliases();
-  setHiddenState(document.getElementById('v-req-lease'), txn !== 'lease');
-  setHiddenState(document.getElementById('v-sale-section'), txn !== 'sale');
-  setHiddenState(document.getElementById('v-req-rent-inline'), txn !== 'lease');
-  // Toggle required sections
-  const reqLease = document.getElementById('v-req-lease');
-  const reqSale = document.getElementById('v-req-sale');
+  setHiddenState(document.getElementById('v-req-lease'), !isLease);
+  setHiddenState(document.getElementById('v-req-sale'), !isSale);
+  setHiddenState(document.getElementById('v-req-rent-inline'), !isLease);
+  setHiddenState(document.getElementById('vstep-5'), !isLease);
+  setHiddenState(document.getElementById('v-lease-nnn-row'), simplified || !isLease);
+  setHiddenState(document.getElementById('v-sale-cap-field'), simplified || !isSale);
+  setHiddenState(document.getElementById('vstep-prop'), simplified);
   const reqCommLease = document.getElementById('v-req-comm-lease');
   const reqCommSale = document.getElementById('v-req-comm-sale');
-  setHiddenState(reqLease, txn !== 'lease');
-  setHiddenState(reqSale, txn !== 'sale');
-  setHiddenState(reqCommLease, txn !== 'lease');
-  setHiddenState(reqCommSale, txn !== 'sale');
-  document.getElementById('v-lbl-lessor').textContent = txn === 'sale' ? 'Seller' : 'Lessor / Seller';
-  document.getElementById('v-lbl-lessee').textContent = txn === 'sale' ? 'Buyer' : 'Lessee / Buyer';
+  setHiddenState(reqCommLease, !isLease && !simplified);
+  setHiddenState(reqCommSale, !isSale);
+  document.querySelectorAll('.v-simplified-fee-field').forEach(el => {
+    el.classList.toggle('v-simplified-fee-prominent', simplified);
+  });
+  document.querySelectorAll('.v-lease-comm-primary-row').forEach(el => {
+    setHiddenState(el, simplified);
+  });
+  document.getElementById('v-lbl-lessor').textContent = isSale ? 'Seller' : 'Lessor / Seller';
+  document.getElementById('v-lbl-lessee').textContent = isSale ? 'Buyer' : 'Lessee / Buyer';
+  setHiddenState(document.getElementById('v-other-type-field'), txn !== 'other');
   safeUpdateVoucherRequiredDocStatus();
   syncVoucherBranchToggle();
   calcCommSummary();
+  updateVoucherRentStepIndicator();
+  syncVoucherInvoicePartyFields();
   syncDealGlance();
 }
 
@@ -5740,6 +5962,7 @@ document.getElementById('v-invoice-to')?.addEventListener('change', function() {
   const isThirdParty = this.value === 'third_party';
   setHiddenState(document.getElementById('v-third-party-section'), !isThirdParty);
   setHiddenState(document.getElementById('v-third-party-addr'), !isThirdParty);
+  syncVoucherInvoicePartyFields();
 });
 
 // Same agent toggle
@@ -5829,6 +6052,7 @@ function calcCommSummary() {
   const grossDist = totalInvoice - totalOutside;
   document.getElementById('v-gross-dist').value = '$' + grossDist.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
   syncDealGlance();
+  updateVoucherRentStepIndicator();
 }
 
 // Auto-calc NNN total
@@ -5943,7 +6167,7 @@ async function runVoucherAICalculate() {
     panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header">AI Deal Analysis</div><div class="text-error">Error: ' + escHtml(err.message || String(err)) + '</div></div>';
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '<svg class="ui-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:5px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Analyze with AI';
+    btn.innerHTML = '<svg class="ui-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:5px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Verify commission math';
   }
 }
 
@@ -9477,6 +9701,10 @@ onPropTypeChange();
 onTxnTypeChange();
 syncVoucherDealAliases();
 onVoucherTxnChange();
+(function initVoucherDateFilled() {
+  const el = document.getElementById('v-date-filled');
+  if (el && !el.value) el.value = new Date().toISOString().slice(0, 10);
+})();
 onCompTypeChange();
 
 // Auth initialization runs after the shared API helper is declared later in the page.

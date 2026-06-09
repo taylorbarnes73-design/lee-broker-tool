@@ -153,19 +153,15 @@ function _copyListingToVoucherCore() {
     window.onVoucherTxnChange = function() {
       if (typeof origOnVoucherTxnChange === 'function') origOnVoucherTxnChange.apply(this, arguments);
       const txn = (document.getElementById('v-txn-type') || {}).value || 'lease';
-      const isLease = txn === 'lease' || txn === 'sublease' || txn === 'renewal';
+      const isLease = txn === 'lease';
       const isSale = txn === 'sale';
-      // Hide/show rent schedule step
-      const rentStep = document.getElementById('vstep-6');
+      const rentStep = document.getElementById('vstep-5');
       if (rentStep) setHiddenState(rentStep, !isLease);
-      // Hide/show sale section
-      const saleSection = document.getElementById('v-sale-section');
+      const saleSection = document.getElementById('v-req-sale');
       if (saleSection) setHiddenState(saleSection, !isSale);
-      // Hide/show lease section
       const leaseSection = document.getElementById('v-req-lease');
       if (leaseSection) setHiddenState(leaseSection, !isLease);
     };
-    // Run once on load
     try { window.onVoucherTxnChange(); } catch(e) {}
   });
 })();
@@ -1188,7 +1184,7 @@ window.aiParseFromPaste = async function() {
         var parsed = await window.callTrpc('aiAssist.extractVoucherDocument', { fileUrl: file.url, mimeType: mime });
         if (!parsed || !parsed.success) return;
         if (typeof window.applyAiFields === 'function') {
-          window.applyAiFields('voucher', parsed.fields || {}, { sourceKey: file.fileKey || '' });
+          window.applyAiFields('voucher', parsed.fields || {}, { sourceToken: file.fileKey || file.url || '' });
         }
       } catch(e) { console.warn('Voucher re-analysis error:', e); }
     }));

@@ -480,3 +480,167 @@ body.broker-active #tab-voucher #v-payment-table {
     overflow-x: auto;
   }
 }
+
+/* ── Voucher UX overhaul ── */
+body.broker-active #tab-voucher .voucher-accordion {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0;
+  background: #fafbfc;
+}
+
+body.broker-active #tab-voucher .voucher-accordion > summary {
+  cursor: pointer;
+  padding: 12px 16px;
+  font-weight: 700;
+  font-size: 14px;
+  list-style: none;
+}
+
+body.broker-active #tab-voucher .voucher-accordion > summary::-webkit-details-marker {
+  display: none;
+}
+
+body.broker-active #tab-voucher .voucher-accordion > summary::after {
+  content: '▾';
+  float: right;
+  color: #6b7280;
+}
+
+body.broker-active #tab-voucher .voucher-accordion[open] > summary::after {
+  transform: rotate(180deg);
+}
+
+body.broker-active #tab-voucher .voucher-accordion-body {
+  padding: 0 16px 16px;
+}
+
+body.broker-active #tab-voucher #v-dist-table .dist-gross-col {
+  display: none;
+}
+
+body.broker-active #tab-voucher #v-dist-table {
+  min-width: 480px;
+}
+
+body.broker-active #tab-voucher .v-rent-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+body.broker-active #tab-voucher .v-rent-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  background: #fff;
+}
+
+body.broker-active #tab-voucher .v-rent-step.is-active {
+  border-color: #c41230;
+  color: #111827;
+  background: #fff5f6;
+}
+
+body.broker-active #tab-voucher .v-rent-step.is-done {
+  border-color: #059669;
+  color: #065f46;
+  background: #ecfdf5;
+}
+
+body.broker-active #tab-voucher .v-rent-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+body.broker-active #tab-voucher .field-hint-warn {
+  color: #b45309;
+}
+
+body.broker-active #tab-voucher .v-simplified-fee-prominent {
+  padding: 12px;
+  border: 2px solid #c41230;
+  border-radius: 10px;
+  background: #fff5f6;
+}
+
+body.broker-active #tab-voucher .voucher-action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+body.broker-active #tab-voucher .btn-more-wrap {
+  position: relative;
+  margin-left: auto;
+}
+
+body.broker-active #tab-voucher .btn-more-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+  padding: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  z-index: 5;
+}
+
+body.broker-active #tab-voucher .voucher-validation-highlight {
+  outline: 2px solid #c41230;
+  outline-offset: 4px;
+}
+
+#voucher-validation-modal .voucher-validation-card {
+  max-width: 520px;
+}
+
+#voucher-validation-modal .voucher-validation-list {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+#voucher-validation-modal .voucher-validation-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  cursor: pointer;
+  font: inherit;
+}
+
+body.broker-active #tab-voucher .voucher-validation-highlight {
+  outline: 2px solid #c41230;
+  outline-offset: 4px;
+}
+
+@media (max-width: 720px) {
+  body.broker-active #tab-voucher .v-rent-steps {
+    grid-template-columns: 1fr;
+  }
+}
