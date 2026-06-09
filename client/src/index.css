@@ -51,9 +51,9 @@
   /* Restored to the official Lee & Associates brand red (PMS 202). */
   --lee-red: #98002E;
   --lee-red-deep: #7A0024;
-  --lee-fog: #F9FAFB;
+  --lee-fog: #F8F7F4;
   --lee-cloud: #FFFFFF;
-  --lee-stone: #D1D5DB;
+  --lee-stone: #D4D1CA;
   --lee-slate: #7E8083;
   --primary: var(--lee-red);
   --primary-foreground: #FFFFFF;
@@ -65,28 +65,28 @@
   --chart-4: #8A941E;
   --chart-5: #A9C3CB;
   --radius: 0.65rem;
-  --background: #F9FAFB;
+  --background: #F8F7F4;
   --foreground: #303C42;
   --card: #FFFFFF;
   --card-foreground: #303C42;
   --popover: #FFFFFF;
   --popover-foreground: #303C42;
-  --secondary: #F0F2F4;
+  --secondary: #F0EFEC;
   --secondary-foreground: #303C42;
-  --muted: #F0F2F4;
+  --muted: #F0EFEC;
   --muted-foreground: #7E8083;
   --accent: #F4E3E8;
   --accent-foreground: #7A0024;
   --destructive: #CD1442;
   --destructive-foreground: #FFFFFF;
-  --border: #D1D5DB;
-  --input: #D1D5DB;
+  --border: #D4D1CA;
+  --input: #D4D1CA;
   --ring: rgba(152, 0, 46, 0.24);
   --sidebar: #FFFFFF;
   --sidebar-foreground: #303C42;
-  --sidebar-accent: #F0F2F4;
+  --sidebar-accent: #F0EFEC;
   --sidebar-accent-foreground: #303C42;
-  --sidebar-border: #D1D5DB;
+  --sidebar-border: #D4D1CA;
   --sidebar-ring: rgba(152, 0, 46, 0.24);
 }
 
@@ -262,13 +262,19 @@
 @import './design/tokens.css';
 
 .admin-portal {
-  --admin-accent: var(--lee-crimson, #98002E);
+  /* Align portal chrome with broker_tool.html surfaces & type */
+  --admin-accent: var(--lee-red, #98002E);
   display: grid;
   grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
   grid-template-rows: 1fr; /* single row that fills full height */
   min-height: 100dvh;
   background: var(--ink-50);
   color: var(--ink-900);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Mobile overlay + slide-in drawer for the sidebar. */
@@ -355,12 +361,24 @@
     width: 100%;
     padding: 16px 14px 48px;
   }
+
+  .admin-portal-header-home span,
+  .admin-portal-header-workspace span {
+    display: none;
+  }
+
+  .admin-portal-header-home,
+  .admin-portal-header-workspace {
+    width: 36px;
+    padding: 0;
+    justify-content: center;
+  }
   .admin-portal-hero {
     flex-direction: column;
     padding: 18px 18px;
   }
   .admin-portal-hero h1 {
-    font-size: clamp(24px, 6vw, 34px);
+    font-size: clamp(22px, 5vw, 28px);
   }
 }
 
@@ -389,6 +407,22 @@
   margin-bottom: 8px;
 }
 
+.admin-portal-sidebar-home {
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--r-8);
+  transition: background 0.14s var(--ease-out);
+}
+
+.admin-portal-sidebar-home:hover {
+  background: var(--ink-100);
+}
+
+.admin-portal-sidebar-home:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-crimson);
+}
+
 .admin-portal-sidebar-brand img,
 .admin-portal-sidebar-logo {
   height: 32px;
@@ -405,11 +439,11 @@
 }
 
 .admin-portal-sidebar-subtitle {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 10.5px;
+  font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--lee-slate, #7E8083);
+  color: #6B7178;
 }
 
 .admin-portal-sidebar-nav {
@@ -448,6 +482,40 @@
   border-bottom: 1px solid var(--ink-200);
   background: rgba(255, 255, 255, 0.94);
   box-shadow: var(--shadow-sm);
+}
+
+.admin-portal-header-home,
+.admin-portal-header-workspace {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-6);
+  background: var(--ink-0);
+  color: var(--ink-700);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.14s var(--ease-out), border-color 0.14s var(--ease-out), color 0.14s var(--ease-out);
+}
+
+.admin-portal-header-home:hover,
+.admin-portal-header-workspace:hover {
+  background: var(--ink-100);
+  color: var(--ink-900);
+  border-color: var(--ink-300);
+}
+
+.admin-portal-header-home.active {
+  background: rgba(152, 0, 46, 0.06);
+  border-color: rgba(152, 0, 46, 0.22);
+  color: var(--admin-accent, var(--lee-red));
+}
+
+.admin-portal-header-workspace {
+  color: var(--ink-600);
 }
 
 .admin-portal-header-spacer {
@@ -577,11 +645,11 @@
 
 .admin-portal-kicker,
 .admin-portal-eyebrow {
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--ink-500);
+  color: #6B7178;
 }
 
 .admin-portal-brand-title {
@@ -611,16 +679,17 @@
 }
 
 .admin-portal-nav-item.active {
-  background: color-mix(in srgb, var(--admin-accent) 8%, var(--ink-0));
-  border-color: color-mix(in srgb, var(--admin-accent) 18%, var(--ink-200));
+  background: rgba(152, 0, 46, 0.06);
+  border-color: rgba(152, 0, 46, 0.18);
   color: var(--admin-accent);
 }
 
 .admin-portal-nav-item span {
   font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: none;
+  line-height: 1.3;
 }
 
 .admin-portal-nav-item small {
@@ -645,11 +714,11 @@
   justify-content: space-between;
   gap: 24px;
   align-items: flex-start;
-  padding: 26px 28px;
+  padding: 22px 24px;
   border: 1px solid var(--ink-200);
-  border-radius: var(--r-16);
+  border-radius: 12px;
   background: var(--ink-0);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 1px 2px rgba(48, 60, 66, 0.05);
 }
 
 .admin-portal-hero-text {
@@ -658,20 +727,21 @@
 }
 
 .admin-portal-hero h1 {
-  margin: 10px 0 0;
-  font-family: var(--font-serif);
-  font-size: clamp(28px, 3vw, 42px);
-  font-weight: 600;
-  line-height: 1.12;
-  letter-spacing: -0.01em;
+  margin: 8px 0 0;
+  font-family: var(--font-sans);
+  font-size: clamp(24px, 2.4vw, 28px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: #0F1419;
 }
 
 .admin-portal-hero p {
-  max-width: 760px;
-  margin: 12px 0 0;
-  color: var(--ink-500);
-  font-size: 14px;
-  line-height: 1.65;
+  max-width: 680px;
+  margin: 10px 0 0;
+  color: #6B7280;
+  font-size: 13px;
+  line-height: 1.55;
 }
 
 .admin-portal-actions {

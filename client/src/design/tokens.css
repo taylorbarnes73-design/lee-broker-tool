@@ -44,13 +44,13 @@
   --lee-crimson-ink: var(--lee-red-hover);
   --lee-crimson-wash: var(--lee-red-wash);
   --lee-crimson-glow: var(--lee-red-glow);
-  --lee-slate-wash: #F0F2F4;
+  --lee-slate-wash: #F0EFEC;
 
   /* App-surface aliases (nexus-* names retained for compatibility) */
-  --nexus-bg: #F9FAFB;
+  --nexus-bg: #F8F7F4;
   --nexus-surface: #FFFFFF;
-  --nexus-surface-alt: #F4F5F7;
-  --nexus-border: #D1D5DB;
+  --nexus-surface-alt: #F0EFEC;
+  --nexus-border: #D4D1CA;
   --nexus-text: #303C42;
   --nexus-muted: #7E8083;
   --nexus-faint: #A8AAAD;
@@ -71,10 +71,10 @@
   --ink-500: #7E8083;          /* slate — muted text */
   --ink-400: #9C9FA1;
   --ink-300: #A8AAAD;          /* faint */
-  --ink-200: #D1D5DB;          /* default border */
-  --ink-150: #E2E5EA;
-  --ink-100: #F0F2F4;          /* soft border / subtle fill */
-  --ink-50:  #F9FAFB;          /* page background (neutral) */
+  --ink-200: #D4D1CA;          /* stone border — matches broker tool */
+  --ink-150: #E2E1DD;          /* sand divider */
+  --ink-100: #F0EFEC;          /* warm subtle fill */
+  --ink-50:  #F8F7F4;          /* page background — matches broker tool */
   --ink-0:   #FFFFFF;          /* card / surface */
   /* Success — Lee green PMS 384 */
   --ok-700: #5A6213;

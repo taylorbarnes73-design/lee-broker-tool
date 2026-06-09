@@ -52,14 +52,14 @@ function PublicHome() {
           style={{ height: 56, width: "auto", display: "inline-block" }}
         />
         <h1 style={{
-          fontFamily: "var(--font-serif)",
-          fontSize: 38,
-          fontWeight: 600,
+          fontFamily: "var(--font-sans)",
+          fontSize: 28,
+          fontWeight: 800,
           color: "var(--ink-900)",
           marginTop: 20,
           marginBottom: 10,
-          letterSpacing: "-0.01em",
-          lineHeight: 1.1,
+          letterSpacing: "-0.025em",
+          lineHeight: 1.15,
         }}>
           Broker Portal
         </h1>
@@ -197,7 +197,7 @@ function AdminAccessRequired() {
         >
           <Lock size={20} aria-hidden />
         </div>
-        <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 26, fontWeight: 600, color: "var(--ink-900)", margin: 0, letterSpacing: "-0.01em" }}>
+        <h1 style={{ fontFamily: "var(--font-sans)", fontSize: 24, fontWeight: 800, color: "var(--ink-900)", margin: 0, letterSpacing: "-0.025em", lineHeight: 1.15 }}>
           Administrator access required
         </h1>
         <p style={{ fontSize: 14, color: "var(--ink-500)", lineHeight: 1.6, marginTop: 10, marginBottom: 22 }}>
