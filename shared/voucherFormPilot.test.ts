@@ -11,12 +11,16 @@ describe("voucherFormPilot", () => {
       ...EMPTY_VOUCHER_PILOT_FIELDS,
       clientName: "Acme Logistics",
       address: "123 Main St",
+      suite: "Suite 200",
       city: "Irvine",
       zip: "92618",
+      dealSf: "12500",
     });
     expect(payload.tab).toBe("voucher");
     expect(payload.fields.clientName).toBe("Acme Logistics");
     expect(payload.fields.address).toBe("123 Main St");
+    expect(payload.fields.suite).toBe("Suite 200");
+    expect(payload.fields.dealSf).toBe("12500");
   });
 
   it("requires address, city, and client name", () => {

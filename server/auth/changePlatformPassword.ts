@@ -4,6 +4,11 @@ import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { appUsers } from "../../drizzle/schema";
 import { getDb } from "../db";
+import {
+  isPasswordChangeRateLimited,
+  recordPasswordChangeFailure,
+} from "./passwordChangeRateLimiter";
+import { getRequestIp } from "./requestIp";
 import { writeAuditLog } from "./writeAuditLog";
 
 const changePasswordBody = z.object({
@@ -15,6 +20,15 @@ export async function handleChangePlatformPassword(req: Request, res: Response):
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ success: false, error: "Not authenticated." });
+    return;
+  }
+
+  const ip = getRequestIp(req);
+  if (isPasswordChangeRateLimited(userId, ip)) {
+    res.status(429).json({
+      success: false,
+      error: "Too many password change attempts. Try again later.",
+    });
     return;
   }
 
@@ -48,6 +62,7 @@ export async function handleChangePlatformPassword(req: Request, res: Response):
 
   const ok = await compare(currentPassword, user.passwordHash);
   if (!ok) {
+    recordPasswordChangeFailure(userId, ip);
     res.status(401).json({ success: false, error: "Current password is incorrect." });
     return;
   }

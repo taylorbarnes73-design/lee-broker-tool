@@ -13,10 +13,12 @@ export type VoucherPilotFields = {
   representationType: string;
   clientName: string;
   address: string;
+  suite: string;
   city: string;
   state: string;
   zip: string;
   propertyType: string;
+  dealSf: string;
 };
 
 export const EMPTY_VOUCHER_PILOT_FIELDS: VoucherPilotFields = {
@@ -24,10 +26,12 @@ export const EMPTY_VOUCHER_PILOT_FIELDS: VoucherPilotFields = {
   representationType: "Tenant Rep",
   clientName: "",
   address: "",
+  suite: "",
   city: "",
   state: "CA",
   zip: "",
   propertyType: "",
+  dealSf: "",
 };
 
 export function voucherPilotFieldsToPrefill(
@@ -42,10 +46,12 @@ export function voucherPilotFieldsToPrefill(
   assign("representationType", fields.representationType);
   assign("clientName", fields.clientName);
   assign("address", fields.address);
+  assign("suite", fields.suite);
   assign("city", fields.city);
   assign("state", fields.state);
   assign("zip", fields.zip);
   assign("propertyType", fields.propertyType);
+  assign("dealSf", fields.dealSf);
   return out;
 }
 

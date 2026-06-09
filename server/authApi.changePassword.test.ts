@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import express from "express";
 import request from "supertest";
 import { authApiRouter } from "./authApi";
+import { clearPasswordChangeRateLimiterForTests } from "./auth/passwordChangeRateLimiter";
 
 const compareMock = vi.fn();
 const hashMock = vi.fn();
@@ -60,6 +61,7 @@ function buildApp() {
 
 describe("PUT /api/auth/me/password", () => {
   beforeEach(() => {
+    clearPasswordChangeRateLimiterForTests();
     vi.clearAllMocks();
     selectLimitMock.mockResolvedValue([
       {
@@ -83,6 +85,10 @@ describe("PUT /api/auth/me/password", () => {
     expect(writeAuditLogMock).toHaveBeenCalled();
   });
 
+  afterEach(() => {
+    clearPasswordChangeRateLimiterForTests();
+  });
+
   it("rejects incorrect current password", async () => {
     compareMock.mockResolvedValue(false);
 
@@ -93,5 +99,24 @@ describe("PUT /api/auth/me/password", () => {
 
     expect(res.status).toBe(401);
     expect(res.body.error).toContain("Current password");
+  });
+
+  it("rate limits repeated incorrect current password attempts", async () => {
+    compareMock.mockResolvedValue(false);
+
+    for (let i = 0; i < 5; i += 1) {
+      const res = await request(buildApp()).put("/api/auth/me/password").send({
+        currentPassword: "wrong",
+        newPassword: "new-password-123",
+      });
+      expect(res.status).toBe(401);
+    }
+
+    const blocked = await request(buildApp()).put("/api/auth/me/password").send({
+      currentPassword: "wrong",
+      newPassword: "new-password-123",
+    });
+    expect(blocked.status).toBe(429);
+    expect(blocked.body.error).toContain("Too many password change attempts");
   });
 });

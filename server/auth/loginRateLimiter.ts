@@ -1,31 +1,23 @@
-import { LOGIN_RATE_LIMIT_MAX_FAILURES, LOGIN_RATE_LIMIT_WINDOW_MS } from "./constants";
+import {
+  LOGIN_RATE_LIMIT_MAX_FAILURES,
+  LOGIN_RATE_LIMIT_WINDOW_MS,
+} from "./constants";
+import { SlidingWindowRateLimiter } from "./slidingWindowRateLimiter";
 
-type Entry = {
-  failuresAt: number[];
-};
-
-const store = new Map<string, Entry>();
-
-function prune(entry: Entry, now: number) {
-  const cutoff = now - LOGIN_RATE_LIMIT_WINDOW_MS;
-  entry.failuresAt = entry.failuresAt.filter(t => t > cutoff);
-}
+const loginLimiter = new SlidingWindowRateLimiter(
+  LOGIN_RATE_LIMIT_MAX_FAILURES,
+  LOGIN_RATE_LIMIT_WINDOW_MS
+);
 
 export function recordLoginFailure(ip: string) {
-  const now = Date.now();
-  let entry = store.get(ip);
-  if (!entry) {
-    entry = { failuresAt: [] };
-    store.set(ip, entry);
-  }
-  prune(entry, now);
-  entry.failuresAt.push(now);
+  loginLimiter.recordFailure(ip);
 }
 
 export function isLoginRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = store.get(ip);
-  if (!entry) return false;
-  prune(entry, now);
-  return entry.failuresAt.length >= LOGIN_RATE_LIMIT_MAX_FAILURES;
+  return loginLimiter.isLimited(ip);
+}
+
+/** Test-only reset */
+export function clearLoginRateLimiterForTests() {
+  loginLimiter.clear();
 }

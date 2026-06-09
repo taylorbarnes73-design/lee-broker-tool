@@ -89,13 +89,28 @@ export default function PortalVoucherForm() {
               />
             </Field>
 
-            <Field label="Property address">
-              <Input
-                value={fields.address}
-                onChange={e => update("address", e.target.value)}
-                placeholder="123 Main St"
-              />
-            </Field>
+            <div
+              style={{
+                display: "grid",
+                gap: 14,
+                gridTemplateColumns: "minmax(0, 2fr) minmax(120px, 1fr)",
+              }}
+            >
+              <Field label="Property address">
+                <Input
+                  value={fields.address}
+                  onChange={e => update("address", e.target.value)}
+                  placeholder="123 Main St"
+                />
+              </Field>
+              <Field label="Suite / unit">
+                <Input
+                  value={fields.suite}
+                  onChange={e => update("suite", e.target.value)}
+                  placeholder="Suite 200"
+                />
+              </Field>
+            </div>
 
             <div
               style={{
@@ -118,6 +133,14 @@ export default function PortalVoucherForm() {
                   value={fields.propertyType}
                   onChange={e => update("propertyType", e.target.value)}
                   placeholder="Industrial"
+                />
+              </Field>
+              <Field label="Deal SF">
+                <Input
+                  value={fields.dealSf}
+                  onChange={e => update("dealSf", e.target.value)}
+                  placeholder="12,500"
+                  inputMode="numeric"
                 />
               </Field>
             </div>
