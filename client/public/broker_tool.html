@@ -2869,64 +2869,80 @@
 
     <div id="admin-dealentry" class="admin-page">
       <div class="admin-page-shell">
-        <div class="admin-page-header">
-          <div>
-            <div class="admin-page-eyebrow">Admin Portal</div>
-            <h1>Dealius Entry</h1>
-            <p class="page-desc">Use approved listing and voucher data to prefill Dealius, build listing-side records, complete downstream deal setup, and assign brokers without leaving this workspace.</p>
+        <div class="admin-page-header dx-page-intro">
+          <div class="dx-page-intro-main">
+            <img class="dx-page-logo" src="lee-newport-beach-fullcolor.png" alt="Lee &amp; Associates Newport Beach">
+            <div>
+              <div class="admin-page-eyebrow">Dealius workspace</div>
+              <h1>Push deals &amp; listings to Dealius</h1>
+              <p class="page-desc">Import a commission voucher to prefill, review the record, then submit to Dealius with rent schedule and broker assignments.</p>
+            </div>
           </div>
         </div>
 
       <div id="dealius-tool">
-        <div class="dx-header">
-          <div class="dx-header-left">
-            <img class="dx-header-logo" src="lee-newport-beach-fullcolor.png" alt="Lee &amp; Associates Newport Beach">
-            <div class="dx-header-titles">
-              <h1>Dealius Entry Workspace</h1>
-              <span class="dx-header-tag">Lee &amp; Associates &middot; Listings and Deals</span>
+        <details class="dx-card dx-cred-details" id="dxCredCard" open>
+          <summary class="dx-cred-summary">
+            <span class="dx-cred-summary-label">Dealius sign-in</span>
+            <span class="dx-cred-status" id="dxCredStatus" data-state="idle">Not saved</span>
+          </summary>
+          <div class="dx-cred-body">
+            <p class="dx-cred-hint" id="dxCredHint">Saved to your broker account when signed in. Also kept in this browser as a fallback.</p>
+            <div class="dx-cred-grid">
+              <div class="dx-field"><label>Dealius email</label><input type="email" id="demail" class="mono" autocomplete="username" oninput="dxSaveCreds()"/><span class="dx-saved-badge" id="demailSaved">&check; Saved</span></div>
+              <div class="dx-field"><label>Dealius password</label><input type="password" id="dpass" class="mono" placeholder="••••••••" autocomplete="current-password" oninput="dxSaveCreds()"/><span class="dx-saved-badge" id="dpassSaved">&check; Saved</span></div>
             </div>
           </div>
-          <span class="dx-version-badge">Up to date ✓</span>
-        </div>
+        </details>
 
-        <div class="dx-card dx-setup-card">
-          <div class="dx-card-title">Dealius Credentials</div>
-          <div class="dx-cred-grid">
-            <div class="dx-field"><label>Dealius Email</label><input type="email" id="demail" class="mono" autocomplete="off" oninput="dxSaveCreds()"/><span class="dx-saved-badge" id="demailSaved">&check; Saved</span></div>
-            <div class="dx-field"><label>Dealius Password</label><input type="password" id="dpass" class="mono" placeholder="••••••••" autocomplete="off" oninput="dxSaveCreds()"/><span class="dx-saved-badge" id="dpassSaved">&check; Saved</span></div>
+        <div class="dx-workflow-panel">
+          <div class="dx-workflow-top">
+            <div class="dx-mode-bar">
+              <button type="button" class="dx-mode-btn active" id="dxModeDeal" onclick="dxSetEntryMode('deal')">Deal entry</button>
+              <button type="button" class="dx-mode-btn" id="dxModeListing" onclick="dxSetEntryMode('listing')">Listing entry</button>
+            </div>
+            <p class="dx-mode-copy" id="dxModeCopy">Build a Dealius deal from a voucher or manual entry, including deal facts, rent schedule, and broker assignments.</p>
+          </div>
+          <div class="dx-intake-panel">
+            <div class="dx-drop" id="dxDz">
+              <input type="file" id="dxFi" accept=".xlsm,.xlsx"/>
+              <span class="dx-drop-icon"><svg class="ui-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+              <div class="dx-drop-copy">
+                <h3>Import commission voucher</h3>
+                <p>Drop a Lee &amp; Associates Excel voucher here, or click to browse. You can also fill the form manually below.</p>
+              </div>
+            </div>
+            <div class="dx-status" id="dxSt"><div class="dx-spin" id="dxSp"></div><span id="dxSm"></span></div>
           </div>
         </div>
-
-        <div class="dx-drop" id="dxDz">
-          <input type="file" id="dxFi" accept=".xlsm,.xlsx"/>
-          <span class="dx-drop-icon"><svg class="ui-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></span>
-          <h3>Drop Voucher File Here (Excel)</h3>
-          <p>Drag it here or click to choose your Lee &amp; Associates commission voucher.</p>
-        </div>
-
-        <div class="dx-status" id="dxSt"><div class="dx-spin" id="dxSp"></div><span id="dxSm"></span></div>
-
-        <div class="dx-mode-bar">
-          <button type="button" class="dx-mode-btn active" id="dxModeDeal" onclick="dxSetEntryMode('deal')">Deal Entry</button>
-          <button type="button" class="dx-mode-btn" id="dxModeListing" onclick="dxSetEntryMode('listing')">Listing Entry</button>
-        </div>
-        <div class="dx-mode-copy" id="dxModeCopy">Build a Dealius deal from a voucher or manual entry, including deal facts, rent schedule, and broker assignments.</div>
 
         <div class="dx-preview" id="dxPv">
-          <div class="dx-card">
-            <div class="dx-card-title" id="dxEntryTitle">Deal Entry</div>
-            <div class="dx-deal-name-row">
-              <input type="text" id="dxDn"/><div class="field-hint">Deal name</div>
-              <select id="dxRb" class="dx-rep-select" onchange="dxOnRepTypeChange()">
-                <option value="4">Landlord Rep</option>
-                <option value="3">Tenant Rep</option>
-                <option value="2">Seller Rep</option>
-                <option value="1">Buyer Rep</option>
-              </select>
+          <div class="dx-form-card">
+            <div class="dx-form-head">
+              <div>
+                <div class="dx-card-title" id="dxEntryTitle">Deal Entry</div>
+                <p class="dx-form-subtitle">Review every field before submitting to Dealius.</p>
+              </div>
             </div>
 
-            <div id="dxListingModeFields" class="is-hidden">
-              <div class="dx-slabel">Listing Setup</div>
+            <div class="dx-deal-name-row">
+              <div class="dx-field dx-deal-name-field">
+                <label for="dxDn">Deal name</label>
+                <input type="text" id="dxDn"/>
+              </div>
+              <div class="dx-field dx-rep-field">
+                <label for="dxRb">Representation</label>
+                <select id="dxRb" class="dx-rep-select" onchange="dxOnRepTypeChange()">
+                  <option value="4">Landlord Rep</option>
+                  <option value="3">Tenant Rep</option>
+                  <option value="2">Seller Rep</option>
+                  <option value="1">Buyer Rep</option>
+                </select>
+              </div>
+            </div>
+
+            <section id="dxListingModeFields" class="dx-section is-hidden">
+              <h3 class="dx-section-title">Listing setup</h3>
               <div class="dx-edit-grid dx-cols3">
                 <div class="dx-field"><label>Listing Transaction</label>
                   <select id="dxListingTransaction" onchange="dxOnListingTransactionChange()">
@@ -2949,10 +2965,11 @@
               </div>
               <div class="dx-field"><label>Listing Notes</label><textarea id="dx_listingNotes" rows="3"></textarea><div class="field-hint">Internal notes for this listing-side Dealius entry</div></div>
               <div class="dx-subtle-note">Listing entry creates a listing-side Dealius record shell using the property, client, pricing, and broker information entered here.</div>
-            </div>
+            </section>
 
-            <div class="dx-slabel">Property</div>
-            <div class="dx-edit-grid dx-cols3">
+            <section class="dx-section">
+              <h3 class="dx-section-title">Property</h3>
+              <div class="dx-edit-grid dx-cols3">
               <div class="dx-field"><label>Address</label><input type="text" id="dx_address"/></div>
               <div class="dx-field"><label>City</label><input type="text" id="dx_city"/></div>
               <div class="dx-field"><label>ZIP</label><input type="text" id="dx_zip"/></div>
@@ -2972,24 +2989,30 @@
               <div class="dx-field"><label>DH Doors</label><input type="number" id="dx_dhDoors"/></div>
               <div class="dx-field"><label>GL Doors</label><input type="number" id="dx_glDoors"/></div>
               <div class="dx-field"><label>Parking Spaces</label><input type="number" id="dx_numParkingSpaces"/></div>
-            </div>
+              </div>
+            </section>
 
-            <div id="dx_lease_section">
-              <div class="dx-slabel">Lease Parties</div>
-              <div class="dx-edit-grid">
-                <div class="dx-field"><label>Landlord / Client Co.</label><input type="text" id="dx_clientCo"/></div>
-                <div class="dx-field"><label>Tenant / Opposite Co.</label><input type="text" id="dx_oppositeCo"/></div>
+            <section id="dx_lease_section" class="dx-section">
+              <h3 class="dx-section-title">Lease parties</h3>
+              <p class="dx-party-note" id="dxPartyNote">Your client is the side you represent. The opposite side is the other party in the transaction.</p>
+              <div class="dx-party-columns">
+                <div class="dx-party-col">
+                  <div class="dx-party-col-label" id="dx_clientPartyHeading">Your client</div>
+                  <div class="dx-field"><label id="dx_clientCoLabel">Company</label><input type="text" id="dx_clientCo"/></div>
+                  <div class="dx-field"><label id="dx_clientContactLabel">Contact</label><input type="text" id="dx_clientContactName" placeholder="First Last"/></div>
+                  <div class="dx-field"><label>Email</label><input type="email" id="dx_clientContactEmail" placeholder="email@company.com"/></div>
+                  <div class="dx-field"><label>Phone</label><input type="text" id="dx_clientContactPhone" placeholder="(555) 555-5555"/></div>
+                </div>
+                <div class="dx-party-col dx-party-col-opposite">
+                  <div class="dx-party-col-label" id="dx_oppositePartyHeading">Opposite side</div>
+                  <div class="dx-field"><label id="dx_oppositeCoLabel">Company</label><input type="text" id="dx_oppositeCo"/></div>
+                  <div class="dx-field"><label id="dx_oppositeContactLabel">Contact</label><input type="text" id="dx_oppositeContactName" placeholder="First Last"/></div>
+                  <div class="dx-field"><label>Email</label><input type="email" id="dx_oppositeContactEmail" placeholder="email@company.com"/></div>
+                  <div class="dx-field"><label>Phone</label><input type="text" id="dx_oppositeContactPhone" placeholder="(555) 555-5555"/></div>
+                </div>
               </div>
-              <div class="dx-edit-grid dx-cols3 dx-top-gap-sm">
-                <div class="dx-field"><label>Client Contact Name</label><input type="text" id="dx_clientContactName"/><div class="field-hint">First Last</div></div>
-                <div class="dx-field"><label>Client Contact Email</label><input type="email" id="dx_clientContactEmail"/><div class="field-hint">email@company.com</div></div>
-                <div class="dx-field"><label>Client Contact Phone</label><input type="text" id="dx_clientContactPhone" placeholder="(555) 555-5555"/></div>
-                <div class="dx-field"><label>Opposite Contact Name</label><input type="text" id="dx_oppositeContactName"/><div class="field-hint">First Last</div></div>
-                <div class="dx-field"><label>Opposite Contact Email</label><input type="email" id="dx_oppositeContactEmail"/><div class="field-hint">email@company.com</div></div>
-                <div class="dx-field"><label>Opposite Contact Phone</label><input type="text" id="dx_oppositeContactPhone" placeholder="(555) 555-5555"/></div>
-              </div>
-              <div id="dxLeaseCloseoutFields">
-                <div class="dx-slabel">Lease Dates</div>
+              <div id="dxLeaseCloseoutFields" class="dx-subsection">
+                <h4 class="dx-subsection-title">Lease dates</h4>
                 <div class="dx-edit-grid">
                   <div class="dx-field"><label>Lease Start (Commencement)</label><input type="date" id="dx_startDate"/></div>
                   <div class="dx-field"><label>Lease End (Term Date)</label><input type="date" id="dx_endDate"/></div>
@@ -2997,8 +3020,9 @@
                   <div class="dx-field"><label>Occupancy Date</label><input type="date" id="dx_occupancyDate"/></div>
                 </div>
               </div>
-              <div class="dx-slabel">Additional Transaction Info</div>
-              <div class="dx-edit-grid dx-cols3">
+              <div class="dx-subsection">
+                <h4 class="dx-subsection-title">Lease economics</h4>
+                <div class="dx-edit-grid dx-cols3">
                 <div class="dx-field"><label>Asking Rate ($/SF/yr)</label><input type="number" step="0.01" id="dx_askingRate"/></div>
                 <div class="dx-field"><label>Avg Escalation (%)</label><input type="number" step="0.01" id="dx_escalation"/></div>
                 <div class="dx-field"><label>NNN ($/SF/yr)</label><input type="number" step="0.01" id="dx_totalNNN"/></div>
@@ -3008,22 +3032,25 @@
                 <div class="dx-field"><label>TI Allowance ($/SF)</label><input type="number" step="0.01" id="dx_tiPerSF"/></div>
                 <div class="dx-field"><label>CAMs ($/SF/yr)</label><input type="number" step="0.01" id="dx_cams"/></div>
                 <div class="dx-field"><label>Months on Market</label><input type="number" id="dx_monthsOnMkt"/></div>
-              </div>
-              <div id="dxRentScheduleBlock">
-                <div class="dx-slabel dx-inline-between">
-                  <span>Rent Schedule</span>
-                  <button class="dx-btn dx-ghost dx-btn-inline-sm" onclick="dxAddRentRow()">+ Add Row</button>
                 </div>
-                <table class="dx-rtable" id="dxRt">
-                  <thead><tr><th>#</th><th>Months</th><th>Monthly Rent ($)</th><th>Free Rent</th><th>Monthly $/SF</th><th></th></tr></thead>
-                  <tbody id="dxRb2"></tbody>
-                </table>
-                <p class="dx-hint">All fields are editable. Monthly $/SF auto-calculates from Monthly Rent &divide; Deal SF.</p>
               </div>
-            </div>
+              <div id="dxRentScheduleBlock" class="dx-subsection">
+                <div class="dx-subsection-head">
+                  <h4 class="dx-subsection-title">Rent schedule</h4>
+                  <button class="dx-btn dx-ghost dx-btn-inline-sm" type="button" onclick="dxAddRentRow()">+ Add period</button>
+                </div>
+                <div class="dx-table-wrap">
+                  <table class="dx-rtable" id="dxRt">
+                    <thead><tr><th>#</th><th>Months</th><th>Monthly rent</th><th>Free</th><th>$/SF mo</th><th></th></tr></thead>
+                    <tbody id="dxRb2"></tbody>
+                  </table>
+                </div>
+                <p class="dx-hint">Rates push to Dealius as monthly $/SF. Monthly $/SF is calculated from monthly rent &divide; deal SF.</p>
+              </div>
+            </section>
 
-            <div id="dx_sale_section" class="is-hidden">
-              <div class="dx-slabel">Sale Parties</div>
+            <section id="dx_sale_section" class="dx-section is-hidden">
+              <h3 class="dx-section-title">Sale parties</h3>
               <div class="dx-edit-grid">
                 <div class="dx-field"><label>Seller / Client Co.</label><input type="text" id="dx_sellerCo"/></div>
                 <div class="dx-field"><label>Buyer / Opposite Co.</label><input type="text" id="dx_buyerCo"/></div>
@@ -3036,43 +3063,52 @@
                 <div class="dx-field"><label>Buyer Contact Email</label><input type="email" id="dx_buyerContactEmail"/><div class="field-hint">email@company.com</div></div>
                 <div class="dx-field"><label>Buyer Contact Phone</label><input type="text" id="dx_buyerContactPhone" placeholder="(555) 555-5555"/></div>
               </div>
-              <div class="dx-slabel">Sale Financials</div>
-              <div class="dx-edit-grid">
-                <div class="dx-field"><label>Purchase Price ($)</label><input type="number" step="0.01" id="dx_totalConsideration"/></div>
-                <div class="dx-field"><label>Commission (%)</label><input type="number" step="0.01" id="dx_saleCommPct"/></div>
+              <div class="dx-subsection">
+                <h4 class="dx-subsection-title">Sale financials</h4>
+                <div class="dx-edit-grid">
+                  <div class="dx-field"><label>Purchase price</label><input type="number" step="0.01" id="dx_totalConsideration"/></div>
+                  <div class="dx-field"><label>Commission %</label><input type="number" step="0.01" id="dx_saleCommPct"/></div>
+                </div>
               </div>
-            </div>
+            </section>
 
-            <div class="dx-divider"></div>
-
-            <div class="dx-slabel">Brokers (from voucher — reference only)</div>
-            <div id="dxBd"></div>
-            <div class="dx-outside-warn" id="dxOw">&x26A0; Outside broker(s) must be added manually in Dealius.</div>
-            <p class="dx-hint">Broker commission assignments are not submitted via API — add them in Dealius after the deal is created.</p>
+            <section class="dx-section dx-brokers-section">
+              <div class="dx-subsection-head">
+                <h3 class="dx-section-title" id="dxBrokerLabel">Brokers</h3>
+                <button class="dx-btn dx-ghost dx-btn-inline-sm" type="button" onclick="dxAddBrokerRow()">+ Add broker</button>
+              </div>
+              <div id="dxBd"></div>
+              <div class="dx-outside-warn" id="dxOw">&x26A0; Outside broker(s) may still need to be added manually in Dealius.</div>
+              <p class="dx-hint">Lead broker and commission splits from the voucher are submitted with the deal when names match your Dealius directory.</p>
+            </section>
 
             <div id="dxAiPanel" class="is-hidden section-heading-top"></div>
 
-            <div class="dx-btns">
-              <button class="dx-btn dx-primary btn" id="dxSb" onclick="dxSubmitDeal()"><span class="btn-spinner"></span><span class="btn-label">Submit to Dealius</span></button>
-              <button class="dx-btn dx-ghost is-hidden" id="dxAib" onclick="dxRunAIReview()">AI Review</button>
-              <button class="dx-btn dx-ghost" onclick="dxResetTool()">Reset</button>
+            <div id="dxStepBar" class="dx-step-panel is-hidden">
+              <div class="dx-step-panel-label">Push progress</div>
+              <div class="dx-steps">
+                <div class="dx-step" id="dxS1">Property</div>
+                <div class="dx-step" id="dxS2">Space</div>
+                <div class="dx-step" id="dxS3">Companies</div>
+                <div class="dx-step" id="dxS4">Contacts</div>
+                <div class="dx-step" id="dxS5">Deal</div>
+                <div class="dx-step" id="dxS6">Financials</div>
+                <div class="dx-step" id="dxS7">Rent &amp; brokers</div>
+              </div>
+            </div>
+
+            <div class="dx-log-panel">
+              <div class="dx-log-head">Activity log</div>
+              <div class="dx-log" id="dxLg"></div>
+            </div>
+
+            <div class="dx-action-bar">
+              <button class="dx-btn dx-primary btn" type="button" id="dxSb" onclick="dxSubmitDeal()"><span class="btn-spinner"></span><span class="btn-label">Submit to Dealius</span></button>
+              <button class="dx-btn dx-ghost is-hidden" type="button" id="dxAib" onclick="dxRunAIReview()">AI review</button>
+              <button class="dx-btn dx-ghost" type="button" onclick="dxResetTool()">Reset form</button>
             </div>
           </div>
         </div>
-
-        <div id="dxStepBar" class="is-hidden">
-          <div class="dx-steps">
-            <div class="dx-step" id="dxS1">1 &middot; Property</div>
-            <div class="dx-step" id="dxS2">2 &middot; Space</div>
-            <div class="dx-step" id="dxS3">3 &middot; Companies</div>
-            <div class="dx-step" id="dxS4">4 &middot; Contacts</div>
-            <div class="dx-step" id="dxS5">5 &middot; Deal</div>
-            <div class="dx-step" id="dxS6">6 &middot; Financials</div>
-            <div class="dx-step" id="dxS7">7 &middot; Rent &amp; Brokers</div>
-          </div>
-        </div>
-
-        <div class="dx-log" id="dxLg"></div>
       </div>
     </div>
 
@@ -11169,26 +11205,98 @@ function dxPushVoucher(id) {
 /* ═══ DEALIUS TOOL JS ═══ */
 const DX_BASE = 'https://leenewportbeach.dealius.com/api';
 const DX_SPACE_TYPES = { industrial: 3, office: 2, retail: 1, land: 5, 'multi-family': 4, medical: 8 };
+const DX_RATE_PER_MONTH = 1;
 const DX_RATE_PER_YEAR = 2;
 const DX_AMT_PCT = 2;
+let dxCredSaveTimer = null;
 const DX_LEASE_TYPE_NEW = 1003;
 let DX_P = null;
 let DX_ENTRY_MODE = 'deal';
 let DX_BROKER_ROW_COUNTER = 0;
 
-// Credential persistence
-(function dxLoadCreds() {
+function dxSetCredStatus(state, text) {
+  const el = document.getElementById('dxCredStatus');
+  if (!el) return;
+  el.dataset.state = state;
+  if (text) el.textContent = text;
+  dxSyncCredDetailsOpen();
+}
+
+function dxSyncCredDetailsOpen() {
+  const card = document.getElementById('dxCredCard');
+  const demail = document.getElementById('demail')?.value.trim();
+  const dpass = document.getElementById('dpass')?.value.trim();
+  if (card && card.tagName === 'DETAILS') {
+    card.open = !(demail && dpass);
+  }
+}
+
+// Credential persistence (browser + signed-in account)
+(function dxLoadCredsFromBrowser() {
   const demail = localStorage.getItem('dealius_email');
   const dpass  = localStorage.getItem('dealius_pass');
-  if (demail) { const el = document.getElementById('demail'); if(el) el.value = demail; dxShowSaved('demailSaved'); }
-  if (dpass)  { const el = document.getElementById('dpass');  if(el) el.value = dpass;  dxShowSaved('dpassSaved'); }
+  if (demail) { const el = document.getElementById('demail'); if (el) el.value = demail; }
+  if (dpass)  { const el = document.getElementById('dpass');  if (el) el.value = dpass; }
+  if (demail || dpass) dxSetCredStatus('local', 'Saved in browser');
+  dxSyncCredDetailsOpen();
 })();
+
+async function dxLoadAccountCreds() {
+  try {
+    const res = await fetch('/api/auth/me/dealius-credentials', { credentials: 'include' });
+    if (!res.ok) return;
+    const body = await res.json().catch(() => ({}));
+    const data = body.data ?? body;
+    const email = String(data.username || '').trim();
+    const pass = String(data.password || '');
+    if (email) {
+      const el = document.getElementById('demail');
+      if (el) el.value = email;
+      localStorage.setItem('dealius_email', email);
+    }
+    if (pass) {
+      const el = document.getElementById('dpass');
+      if (el) el.value = pass;
+      localStorage.setItem('dealius_pass', pass);
+    }
+    if (email && pass) {
+      dxSetCredStatus('saved', 'Saved to your account');
+      dxShowSaved('demailSaved');
+      dxShowSaved('dpassSaved');
+    }
+  } catch (_) { /* offline or unsigned */ }
+}
 
 function dxSaveCreds() {
   const demail = document.getElementById('demail').value.trim();
   const dpass  = document.getElementById('dpass').value.trim();
   if (demail) { localStorage.setItem('dealius_email', demail); dxShowSaved('demailSaved'); }
   if (dpass)  { localStorage.setItem('dealius_pass',  dpass);  dxShowSaved('dpassSaved'); }
+  dxSetCredStatus('local', 'Saved in browser');
+  clearTimeout(dxCredSaveTimer);
+  dxCredSaveTimer = setTimeout(() => void dxSaveCredsToAccount(), 700);
+}
+
+async function dxSaveCredsToAccount() {
+  const demail = document.getElementById('demail')?.value.trim();
+  const dpass = document.getElementById('dpass')?.value.trim();
+  if (!demail || !dpass) return;
+  try {
+    const res = await fetch('/api/auth/me/dealius-credentials', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: demail.toLowerCase(), password: dpass }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (res.ok) {
+      dxSetCredStatus('saved', 'Saved to your account');
+      return;
+    }
+    if (body.error) dxSetCredStatus('error', body.error);
+  } catch (_) {
+    /* keep browser copy only */
+  }
 }
 
 function dxShowSaved(id) {
@@ -11206,6 +11314,8 @@ function dxGetEntryPrefix(isSale) {
 function dxEnsurePreviewVisible() {
   const preview = document.getElementById('dxPv');
   if (preview) preview.classList.add('on');
+  const tool = document.getElementById('dealius-tool');
+  if (tool) tool.classList.add('dx-has-preview');
 }
 
 function dxCurrentPrimaryBrokerSide() {
@@ -11235,12 +11345,6 @@ function dxFormatPercentValue(value) {
 function dxEnsureBrokerSectionShell() {
   const host = document.getElementById('dxBd');
   if (!host) return;
-
-  const label = host.previousElementSibling;
-  if (label) {
-    label.classList.add('dx-inline-between');
-    label.innerHTML = '<span id="dxBrokerLabel"></span><button class="dx-btn dx-ghost dx-btn-inline-sm" type="button" onclick="dxAddBrokerRow()">+ Add Broker</button>';
-  }
 
   if (!document.getElementById('dxBrokerBody')) {
     host.innerHTML = '' +
@@ -11750,8 +11854,66 @@ function dxRenderPreview(d) {
   dxRenderBrokerEditor(entry.brokers || []);
   dxRenderOutsideBrokerMeta(entry.outsideBrokers || []);
   dxOnRepTypeChange();
+  if (!entry.isSale) dxUpdatePartyLabels(entry.repTypeID);
   document.getElementById('dxPv').classList.add('on');
   document.getElementById('dxLg').classList.add('on');
+}
+
+function dxUpdatePartyLabels(repID) {
+  const clientCoLabel = document.getElementById('dx_clientCoLabel');
+  const oppositeCoLabel = document.getElementById('dx_oppositeCoLabel');
+  const clientContactLabel = document.getElementById('dx_clientContactLabel');
+  const oppositeContactLabel = document.getElementById('dx_oppositeContactLabel');
+  const partyNote = document.getElementById('dxPartyNote');
+  const clientPartyHeading = document.getElementById('dx_clientPartyHeading');
+  const oppositePartyHeading = document.getElementById('dx_oppositePartyHeading');
+  const labels = {
+    3: {
+      clientParty: 'Tenant — your client',
+      oppositeParty: 'Landlord — opposite side',
+      clientCo: 'Tenant company',
+      oppositeCo: 'Landlord company',
+      clientContact: 'Tenant contact',
+      oppositeContact: 'Landlord contact',
+      note: 'Tenant rep: your client is the tenant. Landlord details go on the opposite side.',
+    },
+    4: {
+      clientParty: 'Landlord — your client',
+      oppositeParty: 'Tenant — opposite side',
+      clientCo: 'Landlord company',
+      oppositeCo: 'Tenant company',
+      clientContact: 'Landlord contact',
+      oppositeContact: 'Tenant contact',
+      note: 'Landlord rep: your client is the landlord. Tenant details go on the opposite side.',
+    },
+  };
+  const L = labels[repID] || {
+    clientParty: 'Your client',
+    oppositeParty: 'Opposite side',
+    clientCo: 'Client company',
+    oppositeCo: 'Opposite company',
+    clientContact: 'Client contact',
+    oppositeContact: 'Opposite contact',
+    note: 'Your client is the side you represent. The opposite side is the other party in the transaction.',
+  };
+  if (clientPartyHeading) clientPartyHeading.textContent = L.clientParty;
+  if (oppositePartyHeading) oppositePartyHeading.textContent = L.oppositeParty;
+  if (clientCoLabel) clientCoLabel.textContent = L.clientCo;
+  if (oppositeCoLabel) oppositeCoLabel.textContent = L.oppositeCo;
+  if (clientContactLabel) clientContactLabel.textContent = L.clientContact;
+  if (oppositeContactLabel) oppositeContactLabel.textContent = L.oppositeContact;
+  if (partyNote) partyNote.textContent = L.note;
+}
+
+function dxLeasePartiesFromForm(repTypeID, clientCo, oppositeCo, clientID, oppositeID) {
+  const isTenantRep = repTypeID === 3;
+  const isLandlordRep = repTypeID === 4;
+  return {
+    lesseeID: isTenantRep ? clientID : oppositeID,
+    lessorID: isLandlordRep ? clientID : oppositeID,
+    lesseeCo: isTenantRep ? clientCo : oppositeCo,
+    lessorCo: isLandlordRep ? clientCo : oppositeCo,
+  };
 }
 
 function dxOnRepTypeChange() {
@@ -11767,6 +11929,7 @@ function dxOnRepTypeChange() {
   const dn = document.getElementById('dxDn');
   const name = dn.value.replace(/^(Leased|Sold|Leased:|Sold:|For Lease:|For Sale:)\s*/i, '').trim();
   dn.value = dxGetEntryPrefix(isSale) + name;
+  if (!isSale) dxUpdatePartyLabels(repID);
   dxUpdateBrokerSectionCopy();
 }
 
@@ -12076,18 +12239,28 @@ async function dxSubmitDeal() {
     const rawCommInput = d.saleCommPct != null ? d.saleCommPct : null;
     const feePct = rawCommInput != null ? (rawCommInput <= 1 ? rawCommInput * 100 : rawCommInput) : null;
 
+    const leaseParties = d.isLease
+      ? dxLeasePartiesFromForm(d.repTypeID, d.clientCo, d.oppositeCo, clientID, oppositeID)
+      : null;
+
     const createPayload = dxOmitNulls({
       DealName: d.dealName, RepresentationTypeID: d.repTypeID, SpaceTypeID: stid,
       EstimatedCloseDate: new Date().toISOString(),
       PropertyID: propertyID || undefined, PropertySpaceID: propertySpaceID || undefined,
       ClientID: (clientID && clientID > 0) ? clientID : undefined,
+      Client: d.clientCo || undefined,
       OppositeSideID: (oppositeID && oppositeID > 0) ? oppositeID : undefined,
+      OppositeSide: d.oppositeCo || undefined,
       ...(d.isLease ? dxOmitNulls({
         LeaseTypeID: DX_LEASE_TYPE_NEW, LeaseTerm: d.term,
         LeaseCommencementDate: toISO(d.startDate), LeaseTermDate: toISO(d.endDate),
         LeaseOccupancyDate: toISO(d.occupancyDate),
         LeaseCurrentSquareFeetOccupied: d.sqft ? Math.round(d.sqft) : undefined,
         RequestedSpace: d.sqft ? Math.round(d.sqft) : undefined,
+        LesseeID: leaseParties?.lesseeID || undefined,
+        LessorID: leaseParties?.lessorID || undefined,
+        Lessee: leaseParties?.lesseeCo || undefined,
+        Lessor: leaseParties?.lessorCo || undefined,
       }) : {}),
       ...(d.isSale ? dxOmitNulls({
         SaleAskingPriceAmount: d.totalConsideration, SalePurchasePriceAmount: d.totalConsideration,
@@ -12124,12 +12297,19 @@ async function dxSubmitDeal() {
       const finPayload = dxOmitNulls({
         DealID: dealID, DealName: d.dealName,
         ClientID: (clientID && clientID > 0) ? clientID : undefined,
+        OppositeSideID: (oppositeID && oppositeID > 0) ? oppositeID : undefined,
+        OppositeSide: d.oppositeCo || undefined,
         PropertyID: propertyID || undefined, PropertySpaceID: propertySpaceID || undefined,
         LeaseCommencementDate: toISO(d.startDate), LeaseTermDate: toISO(d.endDate),
         LeaseOccupancyDate: toISO(d.occupancyDate), LeaseTerm: effectiveTerm,
         LeaseTypeID: DX_LEASE_TYPE_NEW,
         LeaseCurrentSquareFeetOccupied: d.sqft ? Math.round(d.sqft) : undefined,
         RequestedSpace: d.sqft ? Math.round(d.sqft) : undefined,
+        LesseeID: leaseParties?.lesseeID || undefined,
+        LessorID: leaseParties?.lessorID || undefined,
+        Lessee: leaseParties?.lesseeCo || undefined,
+        Lessor: leaseParties?.lessorCo || undefined,
+        ...(d.rentRows && d.rentRows.length ? { RentPerSfType: DX_RATE_PER_MONTH } : {}),
         ...(commFeePct != null ? { ClientRepFee: commFeePct, OppositeSideRepFee: commFeePct } : {}),
         ...(d.askingRate != null ? { LeaseAskingRatePerSf: d.askingRate, LeaseAskingRatePerSfType: DX_RATE_PER_YEAR } : {}),
         ...(d.totalNNN   != null ? { LeaseNNNPerSF: d.totalNNN, LeaseNNNPerSFType: DX_RATE_PER_YEAR } : {}),
@@ -12164,7 +12344,7 @@ async function dxSubmitDeal() {
         MonthlyRatePerSf: r.free ? null : parseFloat((r.monthly / sqft).toFixed(6)),
       }));
       dxAddLog('info', 'POST /deals/rents — ' + rents.length + ' period(s), SF=' + sqft);
-      const rentRaw = await dxCallAPIRaw('POST', '/deals/rents', H, { DealID: dealID, Rents: rents });
+      const rentRaw = await dxCallAPIRaw('POST', '/deals/rents', H, { DealID: dealID, RentPerSfType: DX_RATE_PER_MONTH, Rents: rents });
       if (rentRaw.status >= 200 && rentRaw.status < 300) {
         dxAddLog('ok', 'Rent schedule posted — ' + rents.length + ' period(s)');
       } else {
@@ -15975,6 +16155,7 @@ async function ensureSharedBrokerSession() {
       if (me && me.email) {
         compReportsUser = me;
         applySharedBrokerIdentity(me);
+        if (typeof dxLoadAccountCreds === 'function') void dxLoadAccountCreds();
         return me;
       }
     } catch (error) {

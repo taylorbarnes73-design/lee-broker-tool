@@ -61,6 +61,10 @@ export const appUsers = mysqlTable(
       .notNull()
       .default(sql`CURRENT_TIMESTAMP(3)`),
     deactivatedAt: datetime("deactivated_at", { mode: "date", fsp: 3 }),
+    /** Encrypted Dealius login email (per-user, optional). */
+    dealiusUsername: varchar("dealius_username", { length: 320 }),
+    /** AES-GCM envelope JSON for Dealius password (per-user, optional). */
+    dealiusPasswordEnc: json("dealius_password_enc"),
   },
   table => ({
     emailUnique: uniqueIndex("app_users_email_unique").on(table.email),

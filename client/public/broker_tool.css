@@ -833,44 +833,105 @@ body.admin-mode .header .sub { display: none; }
   .qty-stepper { width: 100%; justify-content: flex-start; }
 }
 /* ═══ DEALIUS TOOL STYLES ═══ */
-#dealius-tool { max-width: 900px; }
-#dealius-tool .dx-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 20px 28px; margin-bottom: 28px;
-  background: #f7f7f3;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: 0 10px 24px rgba(31,35,40,.05);
+#dealius-tool {
+  display: grid;
+  gap: 16px;
 }
-#dealius-tool .dx-header-left { display: flex; align-items: center; gap: 14px; }
-#dealius-tool .dx-header-logo {
-  width: 58px;
+.dx-page-intro {
+  padding: 22px 24px !important;
+}
+.dx-page-intro-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+.dx-page-logo {
+  width: 52px;
   height: auto;
-  display: block;
+  flex-shrink: 0;
+  margin-top: 4px;
 }
-#dealius-tool .dx-header-titles { display: flex; flex-direction: column; gap: 2px; }
-#dealius-tool .dx-header h1 { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -.2px; line-height: 1.2; margin: 0; padding: 0; border: none; }
-#dealius-tool .dx-header-tag { font-size: 11px; font-weight: 600; letter-spacing: .5px; color: var(--text2); }
-#dealius-tool .dx-version-badge {
-  font-size: 10px; background: #fff; color: var(--text2);
-  border: 1px solid var(--border); border-radius: 20px; padding: 3px 12px;
-  font-weight: 700; letter-spacing: .5px;
+.dx-page-intro .page-desc {
+  max-width: 62ch;
+  margin-top: 8px !important;
 }
 #dealius-tool .dx-card {
-  background: #fff; border: 1px solid #e2e5ec; border-radius: 14px;
-  box-shadow: 0 1px 3px rgba(0,0,0,.06); padding: 22px 26px; margin-bottom: 16px;
-  transition: box-shadow .2s;
+  background: #fff;
+  border: 1px solid #e2e5ec;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+  padding: 0;
+  margin-bottom: 0;
+  overflow: hidden;
 }
-#dealius-tool .dx-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
 #dealius-tool .dx-card-title {
-  font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
-  color: var(--navy); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--navy);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 #dealius-tool .dx-card-title::before {
-  content: ''; display: inline-block; width: 3px; height: 14px;
-  background: var(--red); border-radius: 2px;
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 14px;
+  background: var(--red);
+  border-radius: 2px;
 }
-#dealius-tool .dx-cred-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+#dealius-tool .dx-cred-details {
+  padding: 0;
+}
+#dealius-tool .dx-cred-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+#dealius-tool .dx-cred-summary::-webkit-details-marker { display: none; }
+#dealius-tool .dx-cred-summary::after {
+  content: '▾';
+  color: #94a3b8;
+  font-size: 12px;
+  transition: transform .2s ease;
+}
+#dealius-tool .dx-cred-details[open] .dx-cred-summary::after {
+  transform: rotate(180deg);
+}
+#dealius-tool .dx-cred-summary-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #334155;
+}
+#dealius-tool .dx-cred-body {
+  padding: 0 18px 18px;
+  border-top: 1px solid #eef2f7;
+}
+#dealius-tool .dx-cred-hint {
+  margin: 14px 0 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text2);
+}
+#dealius-tool .dx-cred-status {
+  flex-shrink: 0; font-size: 11px; font-weight: 700; letter-spacing: .2px;
+  padding: 5px 10px; border-radius: 999px; border: 1px solid #e2e5ec; background: #f8fafc; color: #64748b;
+}
+#dealius-tool .dx-cred-status[data-state="saved"] { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
+#dealius-tool .dx-cred-status[data-state="local"] { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+#dealius-tool .dx-cred-status[data-state="error"] { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+#dealius-tool .dx-cred-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+#dealius-tool .dx-party-note { margin: 0 0 12px; font-size: 12px; line-height: 1.45; color: var(--text2); }
 #dealius-tool .dx-saved-badge { font-size: 10px; color: #059669; font-weight: 600; margin-top: 4px; display: none; }
 #dealius-tool .dx-field { display: flex; flex-direction: column; gap: 6px; }
 #dealius-tool .dx-field label { font-size: 11px; font-weight: 600; color: #475569; letter-spacing: .2px; }
@@ -884,19 +945,74 @@ body.admin-mode .header .sub { display: none; }
   border-color: var(--red); box-shadow: var(--shadow-focus);
 }
 #dealius-tool .dx-field input.mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+#dealius-tool .dx-workflow-panel {
+  background: #fff;
+  border: 1px solid #e2e5ec;
+  border-radius: 16px;
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+}
+#dealius-tool .dx-workflow-top {
+  display: grid;
+  gap: 10px;
+}
+#dealius-tool .dx-intake-panel {
+  display: grid;
+  gap: 10px;
+}
+#dealius-tool.dx-has-preview .dx-drop {
+  padding: 18px 20px;
+}
+#dealius-tool.dx-has-preview .dx-drop-copy p {
+  display: none;
+}
 #dealius-tool .dx-drop {
-  border: 2px dashed #cdd2db; border-radius: 14px; padding: 48px 24px;
-  text-align: center; cursor: pointer; transition: all .25s ease;
-  background: #fff; margin-bottom: 16px; position: relative;
+  border: 1.5px dashed #cfd6e3;
+  border-radius: 14px;
+  padding: 28px 22px;
+  cursor: pointer;
+  transition: all .2s ease;
+  background: linear-gradient(180deg, #fcfcfd 0%, #f8fafc 100%);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: left;
 }
-#dealius-tool .dx-drop:hover, #dealius-tool .dx-drop.over {
-  border-color: var(--red); background: rgba(152, 0, 46, .06);
-  box-shadow: 0 0 0 4px rgba(152, 0, 46, .08);
+#dealius-tool .dx-drop:hover,
+#dealius-tool .dx-drop.over {
+  border-color: var(--red);
+  background: rgba(152, 0, 46, .04);
+  box-shadow: 0 0 0 4px rgba(152, 0, 46, .07);
 }
-#dealius-tool .dx-drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-#dealius-tool .dx-drop-icon { font-size: 32px; margin-bottom: 10px; display: block; }
-#dealius-tool .dx-drop h3 { font-size: 15px; font-weight: 600; color: #0f172a; margin-bottom: 4px; }
-#dealius-tool .dx-drop p { font-size: 12px; color: #94a3b8; }
+#dealius-tool .dx-drop input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+#dealius-tool .dx-drop-icon {
+  flex-shrink: 0;
+  color: var(--red);
+  display: flex;
+}
+#dealius-tool .dx-drop-copy h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px;
+}
+#dealius-tool .dx-drop-copy p {
+  font-size: 12px;
+  line-height: 1.55;
+  color: #64748b;
+  margin: 0;
+  max-width: 46ch;
+}
 #dealius-tool .dx-status {
   display: none; align-items: center; gap: 10px;
   padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; margin-bottom: 14px;
@@ -912,8 +1028,8 @@ body.admin-mode .header .sub { display: none; }
 #dealius-tool .dx-mode-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin: 18px 0 12px;
+  gap: 8px;
+  margin: 0;
 }
 #dealius-tool .dx-mode-btn {
   appearance: none;
@@ -940,29 +1056,125 @@ body.admin-mode .header .sub { display: none; }
   box-shadow: 0 10px 20px rgba(152, 0, 46, .14);
 }
 #dealius-tool .dx-mode-copy {
-  border: 1px solid #ece8df;
-  background: #fbfaf6;
-  border-radius: 12px;
-  padding: 12px 14px;
-  font-size: 12px;
-  line-height: 1.7;
-  color: #5f6771;
-  margin-bottom: 14px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #64748b;
 }
-#dealius-tool .dx-deal-name-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-#dealius-tool .dx-deal-name-row input {
-  background: #f7f8fa; border: 2px solid var(--navy); border-radius: 10px; color: #0f172a;
-  font-size: 16px; font-weight: 600; padding: 10px 14px; outline: none; flex: 1;
+#dealius-tool .dx-form-card {
+  background: #fff;
+  border: 1px solid #e2e5ec;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .04);
+  padding: 22px 24px 0;
+  overflow: hidden;
 }
-#dealius-tool .dx-deal-name-row input:focus { box-shadow: 0 0 0 4px rgba(152, 0, 46, .1); background: #fff; border-color: var(--red); }
+#dealius-tool .dx-form-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+#dealius-tool .dx-form-subtitle {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #64748b;
+}
+#dealius-tool .dx-deal-name-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+#dealius-tool .dx-deal-name-field input {
+  font-size: 15px;
+  font-weight: 600;
+}
 #dealius-tool .dx-rep-select {
-  font-size: 12px; font-weight: 600; padding: 8px 14px; border-radius: 24px;
-  letter-spacing: .3px; text-transform: uppercase; white-space: nowrap;
-  background: #f2f2ef; color: var(--text); border: 1.5px solid var(--border);
-  cursor: pointer; outline: none; font-family: inherit;
+  width: 100%;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: var(--text);
+  border: 1.5px solid #e2e8f0;
+  cursor: pointer;
+  outline: none;
+  font-family: inherit;
 }
-#dealius-tool .dx-rep-select:hover { background: #ebebe7; }
-#dealius-tool .dx-rep-select:focus { box-shadow: 0 0 0 3px rgba(152, 0, 46, .08); }
+#dealius-tool .dx-rep-select:hover { background: #f1f5f9; }
+#dealius-tool .dx-rep-select:focus {
+  border-color: var(--red);
+  box-shadow: var(--shadow-focus);
+  background: #fff;
+}
+#dealius-tool .dx-section {
+  padding: 20px 0;
+  border-top: 1px solid #eef2f7;
+}
+#dealius-tool .dx-section:first-of-type {
+  border-top: none;
+  padding-top: 8px;
+}
+#dealius-tool .dx-section-title {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -.01em;
+}
+#dealius-tool .dx-subsection {
+  margin-top: 18px;
+}
+#dealius-tool .dx-subsection-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+#dealius-tool .dx-subsection-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+#dealius-tool .dx-party-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+#dealius-tool .dx-party-col {
+  background: #f8fafc;
+  border: 1px solid #e8edf3;
+  border-radius: 14px;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+#dealius-tool .dx-party-col-opposite {
+  background: #fff;
+}
+#dealius-tool .dx-party-col-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--navy);
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e8edf3;
+  margin-bottom: 2px;
+}
+#dealius-tool .dx-table-wrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #e2e5ec;
+}
 #dealius-tool .dx-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
 #dealius-tool .dx-edit-grid.dx-cols3 { grid-template-columns: 1fr 1fr 1fr; }
 #dealius-tool .dx-edit-grid.dx-cols1 { grid-template-columns: 1fr; }
@@ -1003,11 +1215,50 @@ body.admin-mode .header .sub { display: none; }
   line-height: 1.7;
   color: #6b7280;
 }
-#dealius-tool .dx-divider { height: 1px; background: #e2e5ec; margin: 22px 0; }
 #dealius-tool .dx-slabel { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #94a3b8; margin: 20px 0 12px; }
 #dealius-tool .dx-slabel:first-child { margin-top: 0; }
-#dealius-tool .dx-hint { font-size: 11px; color: #94a3b8; margin-top: 8px; line-height: 1.6; }
-#dealius-tool .dx-btns { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+#dealius-tool .dx-hint { font-size: 12px; color: #64748b; margin-top: 10px; line-height: 1.55; }
+#dealius-tool .dx-step-panel {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #eef2f7;
+}
+#dealius-tool .dx-step-panel-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 10px;
+}
+#dealius-tool .dx-log-panel {
+  margin-top: 16px;
+}
+#dealius-tool .dx-log-head {
+  display: none;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+#dealius-tool .dx-log-panel:has(.dx-log.on) .dx-log-head {
+  display: block;
+}
+#dealius-tool .dx-action-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 -24px;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, .94);
+  border-top: 1px solid #e8edf3;
+  backdrop-filter: blur(8px);
+}
 #dealius-tool .dx-btn {
   font-family: inherit; font-size: 13px; font-weight: 600;
   padding: 11px 24px; border-radius: 10px; border: none; cursor: pointer;
@@ -1022,11 +1273,24 @@ body.admin-mode .header .sub { display: none; }
 #dealius-tool .dx-btn.dx-primary:disabled { background: #cdd2db; color: #94a3b8; cursor: not-allowed; transform: none; box-shadow: none; }
 #dealius-tool .dx-btn.dx-ghost { background: #fff; color: #475569; border: 1.5px solid #e2e5ec; }
 #dealius-tool .dx-btn.dx-ghost:hover { border-color: var(--navy); color: var(--navy); background: var(--sand); }
-#dealius-tool .dx-steps { display: flex; gap: 0; margin-bottom: 16px; border: 1px solid #e2e5ec; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+#dealius-tool .dx-steps {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0;
+  border: 1px solid #e2e5ec;
+  border-radius: 12px;
+  overflow: hidden;
+}
 #dealius-tool .dx-step {
-  flex: 1; padding: 10px 6px; text-align: center;
-  font-size: 10px; font-weight: 700; letter-spacing: .3px;
-  color: #94a3b8; background: #fff; border-right: 1px solid #e2e5ec; transition: all .25s;
+  padding: 10px 6px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: #94a3b8;
+  background: #fff;
+  border-right: 1px solid #e2e5ec;
+  transition: all .2s;
 }
 #dealius-tool .dx-step:last-child { border-right: none; }
 #dealius-tool .dx-step.active { background: rgba(152, 0, 46, .05); color: var(--text); box-shadow: inset 0 -2px 0 var(--red); }
@@ -1068,12 +1332,37 @@ body.admin-mode .header .sub { display: none; }
 .ai-calc-row { display: flex; flex-direction: column; gap: 1px; }
 .ai-calc-label { font-size: 10px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
 .ai-calc-val { font-size: 14px; font-weight: 700; color: var(--ink-800, var(--text)); }
+@media (max-width: 900px) {
+  #dealius-tool .dx-party-columns,
+  #dealius-tool .dx-deal-name-row {
+    grid-template-columns: 1fr;
+  }
+  #dealius-tool .dx-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 @media (max-width: 640px) {
+  .dx-page-intro-main {
+    flex-direction: column;
+    gap: 12px;
+  }
   #dealius-tool .dx-cred-grid { grid-template-columns: 1fr; }
-  #dealius-tool .dx-edit-grid, #dealius-tool .dx-edit-grid.dx-cols3 { grid-template-columns: 1fr 1fr; }
-  #dealius-tool .dx-header { padding: 16px 20px; }
-  #dealius-tool .dx-steps { flex-wrap: wrap; }
-  #dealius-tool .dx-step { min-width: 50%; }
+  #dealius-tool .dx-edit-grid,
+  #dealius-tool .dx-edit-grid.dx-cols3 { grid-template-columns: 1fr; }
+  #dealius-tool .dx-drop {
+    flex-direction: column;
+    text-align: center;
+  }
+  #dealius-tool .dx-form-card {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  #dealius-tool .dx-action-bar {
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
 }
 
 /* ── Sub-tab bar (Listing: Add vs Modification) ── */

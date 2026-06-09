@@ -380,6 +380,17 @@ describe("pushDealEntryToDealius — end-to-end happy path", () => {
     expect(paths.has("PUT /deals")).toBe(true);
     expect(paths.has("POST /deals/rents")).toBe(true);
     expect(paths.has("POST /deals/brokers")).toBe(true);
+
+    const createPayload = currentClient.calls.find(c => c.method === "POST" && c.path === "/deals")?.data as any;
+    expect(createPayload).toMatchObject({
+      OppositeSideID: 5522,
+      OppositeSide: "Other Side LLC",
+      LesseeID: 5511,
+      LessorID: 5522,
+    });
+
+    const rentPayload = currentClient.calls.find(c => c.method === "POST" && c.path === "/deals/rents")?.data as any;
+    expect(rentPayload.RentPerSfType).toBe(1);
   });
 });
 

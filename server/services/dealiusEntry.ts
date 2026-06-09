@@ -26,6 +26,10 @@ export type DealiusListingEntry = Record<string, unknown> & {
   zip?: unknown;
 };
 
+/** Dealius lookup: 1 = per month, 2 = per year (annual). */
+export const DEALIUS_RATE_PER_SF_MONTH = 1;
+export const DEALIUS_RATE_PER_SF_YEAR = 2;
+
 type PushLog = {
   warnings: string[];
   steps: Array<{ key: string; ok: boolean; detail?: string }>;
@@ -545,6 +549,27 @@ export function validateListingEntryForDealiusPush(entry: Record<string, unknown
   return { ok: true };
 }
 
+/** Map client/opposite (who we represent vs other side) to lessee/lessor for Dealius lease deals. */
+export function leasePartiesFromClientOpposite(params: {
+  repTypeID: number;
+  clientCo: string;
+  oppositeCo: string;
+  clientID: number | null;
+  oppositeID: number | null;
+  clientContactID: number | null;
+  oppositeContactID: number | null;
+}) {
+  const isTenantRep = params.repTypeID === 3;
+  const isLandlordRep = params.repTypeID === 4;
+  const lesseeID = isTenantRep ? params.clientID : params.oppositeID;
+  const lessorID = isLandlordRep ? params.clientID : params.oppositeID;
+  const lesseeCo = isTenantRep ? params.clientCo : params.oppositeCo;
+  const lessorCo = isLandlordRep ? params.clientCo : params.oppositeCo;
+  const lesseeContactID = isTenantRep ? params.clientContactID : params.oppositeContactID;
+  const lessorContactID = isLandlordRep ? params.clientContactID : params.oppositeContactID;
+  return { lesseeID, lessorID, lesseeCo, lessorCo, lesseeContactID, lessorContactID };
+}
+
 async function resolveCompanyId(params: {
   client: DealiusClient;
   token: string;
@@ -824,6 +849,18 @@ export async function pushDealEntryToDealius(params: { entry: Record<string, unk
         })
       : null;
 
+  const leaseParties = d.isLease
+    ? leasePartiesFromClientOpposite({
+        repTypeID: d.repTypeID,
+        clientCo: d.clientCo,
+        oppositeCo: d.oppositeCo,
+        clientID,
+        oppositeID,
+        clientContactID,
+        oppositeContactID,
+      })
+    : null;
+
   const dealPayload = omitEmpty({
     DealName: d.dealName,
     RepresentationTypeID: d.repTypeID,
@@ -837,9 +874,10 @@ export async function pushDealEntryToDealius(params: { entry: Record<string, unk
     ClientID: clientID || undefined,
     Client: d.clientCo || undefined,
     OppositeSideID: oppositeID || undefined,
+    OppositeSide: d.oppositeCo || undefined,
     ClientRepFee: d.feePercent ?? undefined,
     OppositeSideRepFee: d.feePercent ?? undefined,
-    ...(d.isLease
+    ...(d.isLease && leaseParties
       ? omitEmpty({
           LeaseTypeID: 1003,
           LeaseTerm: d.term,
@@ -848,6 +886,10 @@ export async function pushDealEntryToDealius(params: { entry: Record<string, unk
           LeaseOccupancyDate: isoDate(d.occupancyDate),
           LeaseCurrentSquareFeetOccupied: d.sqft,
           RequestedSpace: d.sqft,
+          LesseeID: leaseParties.lesseeID || undefined,
+          LessorID: leaseParties.lessorID || undefined,
+          Lessee: leaseParties.lesseeCo || undefined,
+          Lessor: leaseParties.lessorCo || undefined,
         })
       : {}),
     ...(d.isSale
@@ -872,7 +914,16 @@ export async function pushDealEntryToDealius(params: { entry: Record<string, unk
   }
   log.steps.push({ key: "deal", ok: true, detail: String(dealID) });
 
+  const contactIdsToLink = new Set<number>();
   for (const contactID of [clientContactID, oppositeContactID].filter(Boolean) as number[]) {
+    contactIdsToLink.add(contactID);
+  }
+  if (leaseParties) {
+    for (const contactID of [leaseParties.lesseeContactID, leaseParties.lessorContactID].filter(Boolean) as number[]) {
+      contactIdsToLink.add(contactID);
+    }
+  }
+  for (const contactID of contactIdsToLink) {
     const link = await client.request<any>({
       token,
       method: "POST",
@@ -887,6 +938,8 @@ export async function pushDealEntryToDealius(params: { entry: Record<string, unk
     DealID: dealID,
     DealName: d.dealName,
     ClientID: clientID || undefined,
+    OppositeSideID: oppositeID || undefined,
+    OppositeSide: d.oppositeCo || undefined,
     PropertyID: propertyID,
     PropertySpaceID: propertySpaceID || undefined,
     ...(d.feePercent != null ? { ClientRepFee: d.feePercent, OppositeSideRepFee: d.feePercent } : {}),
@@ -897,22 +950,31 @@ export async function pushDealEntryToDealius(params: { entry: Record<string, unk
     LeaseTypeID: d.isLease ? 1003 : undefined,
     LeaseCurrentSquareFeetOccupied: d.isLease ? d.sqft : undefined,
     RequestedSpace: d.isLease ? d.sqft : undefined,
+    ...(leaseParties
+      ? omitEmpty({
+          LesseeID: leaseParties.lesseeID || undefined,
+          LessorID: leaseParties.lessorID || undefined,
+          Lessee: leaseParties.lesseeCo || undefined,
+          Lessor: leaseParties.lessorCo || undefined,
+        })
+      : {}),
     LeaseAskingRatePerSf: d.askingRate ?? undefined,
-    LeaseAskingRatePerSfType: d.askingRate != null ? 2 : undefined,
+    LeaseAskingRatePerSfType: d.askingRate != null ? DEALIUS_RATE_PER_SF_YEAR : undefined,
     LeaseNNNPerSF: d.totalNNN ?? undefined,
-    LeaseNNNPerSFType: d.totalNNN != null ? 2 : undefined,
+    LeaseNNNPerSFType: d.totalNNN != null ? DEALIUS_RATE_PER_SF_YEAR : undefined,
     LeaseTaxes: d.propTaxes ?? undefined,
-    LeaseTaxesType: d.propTaxes != null ? 2 : undefined,
+    LeaseTaxesType: d.propTaxes != null ? DEALIUS_RATE_PER_SF_YEAR : undefined,
     LeaseInsurance: d.insurance ?? undefined,
-    LeaseInsuranceType: d.insurance != null ? 2 : undefined,
+    LeaseInsuranceType: d.insurance != null ? DEALIUS_RATE_PER_SF_YEAR : undefined,
     LeaseOpex: d.opex ?? undefined,
     LeaseOpexType: d.opex != null ? 2 : undefined,
     LeaseCamsPerSf: d.cams ?? undefined,
-    LeaseCamsPerSfType: d.cams != null ? 2 : undefined,
+    LeaseCamsPerSfType: d.cams != null ? DEALIUS_RATE_PER_SF_YEAR : undefined,
     LeaseTiAllowancePerSf: d.tiPerSF ?? undefined,
-    LeaseTiAllowancePerSfType: d.tiPerSF != null ? 2 : undefined,
+    LeaseTiAllowancePerSfType: d.tiPerSF != null ? DEALIUS_RATE_PER_SF_YEAR : undefined,
     LeaseAvgEscalation: d.escalation ?? undefined,
     LeaseAvgEscalationType: d.escalation != null ? 2 : undefined,
+    ...(d.isLease && d.rentRows.length ? { RentPerSfType: DEALIUS_RATE_PER_SF_MONTH } : {}),
     SaleAskingPriceAmount: d.isSale ? d.totalConsideration ?? undefined : undefined,
     SalePurchasePriceAmount: d.isSale ? d.totalConsideration ?? undefined : undefined,
     PaymentDate: isoDate(d.paymentDate),
@@ -938,10 +1000,20 @@ export async function pushDealEntryToDealius(params: { entry: Record<string, unk
       Months: r.months,
       MonthlyRatePerSf: r.free ? null : Number(((r.monthly ?? 0) / Math.max(1, d.sqft)).toFixed(6)),
     }));
-    const primary = await client.request<any>({ token, method: "POST", path: "/deals/rents", data: { DealID: dealID, Rents: rents } });
+    const primary = await client.request<any>({
+      token,
+      method: "POST",
+      path: "/deals/rents",
+      data: { DealID: dealID, RentPerSfType: DEALIUS_RATE_PER_SF_MONTH, Rents: rents },
+    });
     if (primary.status < 200 || primary.status >= 300) {
       const fallback = rents.map(r => ({ ...r, MonthlyRatePerSf: r.MonthlyRatePerSf == null ? 0 : r.MonthlyRatePerSf }));
-      const retry = await client.request<any>({ token, method: "POST", path: "/deals/rents", data: { DealID: dealID, Rents: fallback } });
+      const retry = await client.request<any>({
+        token,
+        method: "POST",
+        path: "/deals/rents",
+        data: { DealID: dealID, RentPerSfType: DEALIUS_RATE_PER_SF_MONTH, Rents: fallback },
+      });
       if (retry.status < 200 || retry.status >= 300) {
         log.warnings.push(`Rent schedule returned HTTP ${primary.status} (retry HTTP ${retry.status}).`);
       }

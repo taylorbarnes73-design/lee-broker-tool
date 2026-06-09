@@ -153,6 +153,68 @@ function representationLabelFromId(raw: unknown): string {
   return (map[str(raw)] ?? str(raw)) || "Missing";
 }
 
+type PartyLabels = {
+  clientParty: string;
+  oppositeParty: string;
+  clientCo: string;
+  oppositeCo: string;
+  clientContact: string;
+  oppositeContact: string;
+  note: string;
+};
+
+function partyLabelsFromRepType(repTypeID: string): PartyLabels {
+  const map: Record<string, PartyLabels> = {
+    "1": {
+      clientParty: "Buyer — your client",
+      oppositeParty: "Seller — opposite side",
+      clientCo: "Buyer company",
+      oppositeCo: "Seller company",
+      clientContact: "Buyer contact",
+      oppositeContact: "Seller contact",
+      note: "Buyer rep: your client is the buyer. Seller details go on the opposite side.",
+    },
+    "2": {
+      clientParty: "Seller — your client",
+      oppositeParty: "Buyer — opposite side",
+      clientCo: "Seller company",
+      oppositeCo: "Buyer company",
+      clientContact: "Seller contact",
+      oppositeContact: "Buyer contact",
+      note: "Seller rep: your client is the seller. Buyer details go on the opposite side.",
+    },
+    "3": {
+      clientParty: "Tenant — your client",
+      oppositeParty: "Landlord — opposite side",
+      clientCo: "Tenant company",
+      oppositeCo: "Landlord company",
+      clientContact: "Tenant contact",
+      oppositeContact: "Landlord contact",
+      note: "Tenant rep: your client is the tenant. Landlord details go on the opposite side.",
+    },
+    "4": {
+      clientParty: "Landlord — your client",
+      oppositeParty: "Tenant — opposite side",
+      clientCo: "Landlord company",
+      oppositeCo: "Tenant company",
+      clientContact: "Landlord contact",
+      oppositeContact: "Tenant contact",
+      note: "Landlord rep: your client is the landlord. Tenant details go on the opposite side.",
+    },
+  };
+  return (
+    map[repTypeID] ?? {
+      clientParty: "Your client",
+      oppositeParty: "Opposite side",
+      clientCo: "Client company",
+      oppositeCo: "Opposite company",
+      clientContact: "Client contact",
+      oppositeContact: "Opposite contact",
+      note: "Your client is the side you represent. The opposite side is the other party in the transaction.",
+    }
+  );
+}
+
 function emptyEntry(mode: EntryMode): DealiusEntry {
   const today = new Date().toISOString().slice(0, 10);
   return {
@@ -338,6 +400,11 @@ export default function PortalAdminDealiusTools() {
   const canPush = checklist.every(item => item.ok);
   const dealID = pushResult?.dealID;
   const listingID = pushResult?.listingID;
+  const partyLabels = useMemo(() => partyLabelsFromRepType(entry.repTypeID), [entry.repTypeID]);
+  const modeCopy =
+    entry.entryMode === "listing"
+      ? "Create a listing-side Dealius record with pricing, parties, timeline fields, and broker assignments."
+      : "Build a Dealius deal from a voucher or manual entry, including deal facts, rent schedule, and broker assignments.";
 
   function patchEntry(patch: Partial<DealiusEntry>) {
     setEntry(current => {
@@ -490,49 +557,21 @@ export default function PortalAdminDealiusTools() {
     <AdminPortalShell
       section="dealius-tools"
       title="Dealius tools"
-      description="Create and push Dealius entries without starting from a submission. Admin-only."
+      description="Import a voucher to prefill, review the record, then push deals and listings to Dealius."
     >
       <div className="dealius-workspace">
         {dealiusStatus.state === "mock" && (
-          <div
-            role="status"
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 10,
-              padding: "12px 14px",
-              borderRadius: 8,
-              background: "var(--warn-100)",
-              border: "1px solid var(--warn-500)",
-              color: "var(--warn-700)",
-              fontSize: 13,
-              lineHeight: 1.4,
-            }}
-          >
+          <div role="status" className="dealius-status-banner mock">
             <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 2 }} />
             <div>
               <strong>Dealius is in mock mode.</strong>{" "}
-              {dealiusStatus.message ?? "No real credentials are configured, so pushes won’t reach Dealius."}{" "}
+              {dealiusStatus.message ?? "No server credentials are configured, so pushes won't reach Dealius."}{" "}
               Set <code>DEALIUS_USERNAME</code> and <code>DEALIUS_PASSWORD</code> in the server environment to enable live pushes.
             </div>
           </div>
         )}
         {dealiusStatus.state === "error" && (
-          <div
-            role="alert"
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 10,
-              padding: "12px 14px",
-              borderRadius: 8,
-              background: "var(--err-50)",
-              border: "1px solid var(--err-200)",
-              color: "var(--err-700)",
-              fontSize: 13,
-              lineHeight: 1.4,
-            }}
-          >
+          <div role="alert" className="dealius-status-banner error">
             <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 2 }} />
             <div>
               <strong>Dealius connection failed.</strong>{" "}
@@ -541,48 +580,14 @@ export default function PortalAdminDealiusTools() {
           </div>
         )}
         {dealiusStatus.state === "ok" && (
-          <div
-            role="status"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "6px 12px",
-              borderRadius: 999,
-              background: "var(--ok-100)",
-              border: "1px solid var(--ok-200)",
-              color: "var(--ok-600)",
-              fontSize: 12,
-              alignSelf: "flex-start",
-            }}
-          >
+          <div role="status" className="dealius-status-pill">
             <CheckCircle2 size={14} />
             <span>Connected to Dealius</span>
           </div>
         )}
-        <section className="dealius-flow-panel">
-          <div>
-            <div className="dealius-flow-kicker">Admin tool</div>
-            <div className="dealius-flow-title">Dealius entry workspace</div>
-          </div>
-          <div className="dealius-flow-steps">
-            <div className="complete">
-              <span>Compose</span>
-              <strong>{entry.entryMode === "listing" ? "Listing" : "Deal"}</strong>
-            </div>
-            <div className={canPush ? "complete" : ""}>
-              <span>Validate</span>
-              <strong>{canPush ? "Ready" : "Review"}</strong>
-            </div>
-            <div className={docTargetId ? "complete" : ""}>
-              <span>Attach</span>
-              <strong>{docTargetId ? `${docTargetType} ${docTargetId}` : "Optional"}</strong>
-            </div>
-          </div>
-        </section>
 
-        <div className="dealius-toolbar">
-          <div className="dealius-toolbar-left">
+        <section className="dealius-workflow-panel">
+          <div className="dealius-workflow-top">
             <div className="dealius-mode-control" aria-label="Dealius entry mode">
               <button
                 type="button"
@@ -596,7 +601,7 @@ export default function PortalAdminDealiusTools() {
                   setDocTargetId("");
                 }}
               >
-                Deal
+                Deal entry
               </button>
               <button
                 type="button"
@@ -610,9 +615,12 @@ export default function PortalAdminDealiusTools() {
                   setDocTargetId("");
                 }}
               >
-                Listing
+                Listing entry
               </button>
             </div>
+            <p className="dealius-mode-copy">{modeCopy}</p>
+          </div>
+          <div className="dealius-workflow-actions">
             <div className="dealius-toolbar-actions">
               <Button
                 type="button"
@@ -621,7 +629,7 @@ export default function PortalAdminDealiusTools() {
                 disabled={scraping}
                 onClick={() => scrapeFileRef.current?.click()}
               >
-                {scraping ? "Scraping..." : "Scrape voucher / listing PDF"}
+                {scraping ? "Scraping..." : "Import voucher / listing PDF"}
               </Button>
               <input
                 ref={scrapeFileRef}
@@ -636,21 +644,43 @@ export default function PortalAdminDealiusTools() {
                 }}
               />
             </div>
+            <div className="dealius-toolbar-status">
+              <Badge tone={canPush ? "success" : "warn"}>{canPush ? "Ready to push" : "Needs review"}</Badge>
+              {dealID && (
+                <a href={`https://leenewportbeach.dealius.com/deals/${dealID}`} target="_blank" rel="noreferrer">
+                  Deal {dealID} <ExternalLink size={12} />
+                </a>
+              )}
+              {listingID && (
+                <a href={`https://leenewportbeach.dealius.com/listings/${listingID}`} target="_blank" rel="noreferrer">
+                  Listing {listingID} <ExternalLink size={12} />
+                </a>
+              )}
+            </div>
           </div>
-          <div className="dealius-toolbar-status">
-            <Badge tone={canPush ? "success" : "warn"}>{canPush ? "Ready" : "Needs review"}</Badge>
-            {dealID && (
-              <a href={`https://leenewportbeach.dealius.com/deals/${dealID}`} target="_blank" rel="noreferrer">
-                Deal {dealID} <ExternalLink size={12} />
-              </a>
-            )}
-            {listingID && (
-              <a href={`https://leenewportbeach.dealius.com/listings/${listingID}`} target="_blank" rel="noreferrer">
-                Listing {listingID} <ExternalLink size={12} />
-              </a>
-            )}
+        </section>
+
+        <div className="dealius-form-card">
+          <div className="dealius-form-head">
+            <div>
+              <div className="dealius-section-title">{entry.entryMode === "listing" ? "Listing entry" : "Deal entry"}</div>
+              <p className="dealius-form-subtitle">Review every field before submitting to Dealius.</p>
+            </div>
+            <div className="dealius-flow-steps">
+              <div className="complete">
+                <span>Compose</span>
+                <strong>{entry.entryMode === "listing" ? "Listing" : "Deal"}</strong>
+              </div>
+              <div className={canPush ? "complete" : ""}>
+                <span>Validate</span>
+                <strong>{canPush ? "Ready" : "Review"}</strong>
+              </div>
+              <div className={docTargetId ? "complete" : ""}>
+                <span>Attach</span>
+                <strong>{docTargetId ? `${docTargetType} ${docTargetId}` : "Optional"}</strong>
+              </div>
+            </div>
           </div>
-        </div>
 
         <section className="dealius-panel">
           <div className="dealius-section-title">{entry.entryMode === "listing" ? "Listing setup" : "Deal setup"}</div>
@@ -761,102 +791,114 @@ export default function PortalAdminDealiusTools() {
         </section>
 
         {entry.entryMode === "deal" && (
-          <section className="dealius-panel">
-            <div className="dealius-section-title">Parties and economics</div>
-            <div className="dealius-subsection-title">Parties</div>
-            <div className="dealius-form-grid">
-              <Field label="Client company">
-                <Input value={entry.clientCo} onChange={(e: any) => patchEntry({ clientCo: e.target.value })} />
-              </Field>
-              <Field label="Opposite company">
-                <Input value={entry.oppositeCo} onChange={(e: any) => patchEntry({ oppositeCo: e.target.value })} />
-              </Field>
-              <Field label="Client contact">
-                <Input value={entry.clientContactName} onChange={(e: any) => patchEntry({ clientContactName: e.target.value })} />
-              </Field>
-              <Field label="Client contact email">
-                <Input type="email" value={entry.clientContactEmail} onChange={(e: any) => patchEntry({ clientContactEmail: e.target.value })} />
-              </Field>
-              <Field label="Client contact phone">
-                <Input value={entry.clientContactPhone} onChange={(e: any) => patchEntry({ clientContactPhone: e.target.value })} />
-              </Field>
-              <Field label="Opposite contact">
-                <Input value={entry.oppositeContactName} onChange={(e: any) => patchEntry({ oppositeContactName: e.target.value })} />
-              </Field>
-              <Field label="Opposite contact email">
-                <Input type="email" value={entry.oppositeContactEmail} onChange={(e: any) => patchEntry({ oppositeContactEmail: e.target.value })} />
-              </Field>
-              <Field label="Opposite contact phone">
-                <Input value={entry.oppositeContactPhone} onChange={(e: any) => patchEntry({ oppositeContactPhone: e.target.value })} />
-              </Field>
-            </div>
-
-            <div className="dealius-subsection-title">Dates</div>
-            <div className="dealius-form-grid">
-              <Field label="Start date">
-                <Input type="date" value={entry.startDate} onChange={(e: any) => patchEntry({ startDate: e.target.value })} />
-              </Field>
-              <Field label="End date">
-                <Input type="date" value={entry.endDate} onChange={(e: any) => patchEntry({ endDate: e.target.value })} />
-              </Field>
-              <Field label="Term months">
-                <Input type="number" value={entry.term} onChange={(e: any) => patchEntry({ term: e.target.value })} />
-              </Field>
-              <Field label="Occupancy date">
-                <Input type="date" value={entry.occupancyDate} onChange={(e: any) => patchEntry({ occupancyDate: e.target.value })} />
-              </Field>
-            </div>
-
-            <div className="dealius-subsection-title">Financials</div>
-            <div className="dealius-form-grid">
-              <Field label={String(entry.repTypeID) === "5" ? "Internal fee" : "Fee percent (from voucher)"}>
-                <Input type="number" step="0.01" value={entry.feePercent} onChange={(e: any) => patchEntry({ feePercent: e.target.value })} suffix="%" />
-              </Field>
-              {String(entry.repTypeID) === "5" && (
-                <>
-                  <Field label="Commission amount">
-                    <Input type="number" step="0.01" value={entry.paymentAmount} onChange={(e: any) => patchEntry({ paymentAmount: e.target.value })} prefix="$" />
+          <>
+            <section className="dealius-panel">
+              <div className="dealius-section-title">Lease parties</div>
+              <p className="dealius-party-note">{partyLabels.note}</p>
+              <div className="dealius-party-columns">
+                <div className="dealius-party-col">
+                  <div className="dealius-party-col-label">{partyLabels.clientParty}</div>
+                  <Field label={partyLabels.clientCo}>
+                    <Input value={entry.clientCo} onChange={(e: any) => patchEntry({ clientCo: e.target.value })} />
                   </Field>
-                  <Field label="Payment date">
-                    <Input type="date" value={entry.paymentDate} onChange={(e: any) => patchEntry({ paymentDate: e.target.value })} />
+                  <Field label={partyLabels.clientContact}>
+                    <Input value={entry.clientContactName} onChange={(e: any) => patchEntry({ clientContactName: e.target.value })} />
                   </Field>
-                </>
-              )}
-              <Field label={entry.transactionType === "Sale" ? "Sale price" : "Asking rate"}>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={entry.transactionType === "Sale" ? entry.totalConsideration : entry.askingRate}
-                  onChange={(e: any) =>
-                    entry.transactionType === "Sale"
-                      ? patchEntry({ totalConsideration: e.target.value })
-                      : patchEntry({ askingRate: e.target.value })
-                  }
-                />
-              </Field>
-              <Field label="NNN ($/SF/yr)">
-                <Input type="number" step="0.01" value={entry.totalNNN} onChange={(e: any) => patchEntry({ totalNNN: e.target.value })} />
-              </Field>
-              <Field label="Avg escalation">
-                <Input type="number" step="0.01" value={entry.escalation} onChange={(e: any) => patchEntry({ escalation: e.target.value })} suffix="%" />
-              </Field>
-              <Field label="Prop taxes">
-                <Input type="number" step="0.01" value={entry.propTaxes} onChange={(e: any) => patchEntry({ propTaxes: e.target.value })} />
-              </Field>
-              <Field label="Insurance">
-                <Input type="number" step="0.01" value={entry.insurance} onChange={(e: any) => patchEntry({ insurance: e.target.value })} />
-              </Field>
-              <Field label="OPEX">
-                <Input type="number" step="0.01" value={entry.opex} onChange={(e: any) => patchEntry({ opex: e.target.value })} suffix="%" />
-              </Field>
-              <Field label="CAMs">
-                <Input type="number" step="0.01" value={entry.cams} onChange={(e: any) => patchEntry({ cams: e.target.value })} />
-              </Field>
-              <Field label="TI allowance">
-                <Input type="number" step="0.01" value={entry.tiPerSF} onChange={(e: any) => patchEntry({ tiPerSF: e.target.value })} />
-              </Field>
-            </div>
-          </section>
+                  <Field label="Email">
+                    <Input type="email" value={entry.clientContactEmail} onChange={(e: any) => patchEntry({ clientContactEmail: e.target.value })} />
+                  </Field>
+                  <Field label="Phone">
+                    <Input value={entry.clientContactPhone} onChange={(e: any) => patchEntry({ clientContactPhone: e.target.value })} />
+                  </Field>
+                </div>
+                <div className="dealius-party-col dealius-party-col-opposite">
+                  <div className="dealius-party-col-label">{partyLabels.oppositeParty}</div>
+                  <Field label={partyLabels.oppositeCo}>
+                    <Input value={entry.oppositeCo} onChange={(e: any) => patchEntry({ oppositeCo: e.target.value })} />
+                  </Field>
+                  <Field label={partyLabels.oppositeContact}>
+                    <Input value={entry.oppositeContactName} onChange={(e: any) => patchEntry({ oppositeContactName: e.target.value })} />
+                  </Field>
+                  <Field label="Email">
+                    <Input type="email" value={entry.oppositeContactEmail} onChange={(e: any) => patchEntry({ oppositeContactEmail: e.target.value })} />
+                  </Field>
+                  <Field label="Phone">
+                    <Input value={entry.oppositeContactPhone} onChange={(e: any) => patchEntry({ oppositeContactPhone: e.target.value })} />
+                  </Field>
+                </div>
+              </div>
+            </section>
+
+            <section className="dealius-panel">
+              <div className="dealius-section-title">Dates &amp; term</div>
+              <div className="dealius-form-grid">
+                <Field label="Start date">
+                  <Input type="date" value={entry.startDate} onChange={(e: any) => patchEntry({ startDate: e.target.value })} />
+                </Field>
+                <Field label="End date">
+                  <Input type="date" value={entry.endDate} onChange={(e: any) => patchEntry({ endDate: e.target.value })} />
+                </Field>
+                <Field label="Term months">
+                  <Input type="number" value={entry.term} onChange={(e: any) => patchEntry({ term: e.target.value })} />
+                </Field>
+                <Field label="Occupancy date">
+                  <Input type="date" value={entry.occupancyDate} onChange={(e: any) => patchEntry({ occupancyDate: e.target.value })} />
+                </Field>
+              </div>
+            </section>
+
+            <section className="dealius-panel">
+              <div className="dealius-section-title">Economics</div>
+              <div className="dealius-form-grid">
+                <Field label={String(entry.repTypeID) === "5" ? "Internal fee" : "Fee percent (from voucher)"}>
+                  <Input type="number" step="0.01" value={entry.feePercent} onChange={(e: any) => patchEntry({ feePercent: e.target.value })} suffix="%" />
+                </Field>
+                {String(entry.repTypeID) === "5" && (
+                  <>
+                    <Field label="Commission amount">
+                      <Input type="number" step="0.01" value={entry.paymentAmount} onChange={(e: any) => patchEntry({ paymentAmount: e.target.value })} prefix="$" />
+                    </Field>
+                    <Field label="Payment date">
+                      <Input type="date" value={entry.paymentDate} onChange={(e: any) => patchEntry({ paymentDate: e.target.value })} />
+                    </Field>
+                  </>
+                )}
+                <Field label={entry.transactionType === "Sale" ? "Sale price" : "Asking rate"}>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={entry.transactionType === "Sale" ? entry.totalConsideration : entry.askingRate}
+                    onChange={(e: any) =>
+                      entry.transactionType === "Sale"
+                        ? patchEntry({ totalConsideration: e.target.value })
+                        : patchEntry({ askingRate: e.target.value })
+                    }
+                  />
+                </Field>
+                <Field label="NNN ($/SF/yr)">
+                  <Input type="number" step="0.01" value={entry.totalNNN} onChange={(e: any) => patchEntry({ totalNNN: e.target.value })} />
+                </Field>
+                <Field label="Avg escalation">
+                  <Input type="number" step="0.01" value={entry.escalation} onChange={(e: any) => patchEntry({ escalation: e.target.value })} suffix="%" />
+                </Field>
+                <Field label="Prop taxes">
+                  <Input type="number" step="0.01" value={entry.propTaxes} onChange={(e: any) => patchEntry({ propTaxes: e.target.value })} />
+                </Field>
+                <Field label="Insurance">
+                  <Input type="number" step="0.01" value={entry.insurance} onChange={(e: any) => patchEntry({ insurance: e.target.value })} />
+                </Field>
+                <Field label="OPEX">
+                  <Input type="number" step="0.01" value={entry.opex} onChange={(e: any) => patchEntry({ opex: e.target.value })} suffix="%" />
+                </Field>
+                <Field label="CAMs">
+                  <Input type="number" step="0.01" value={entry.cams} onChange={(e: any) => patchEntry({ cams: e.target.value })} />
+                </Field>
+                <Field label="TI allowance">
+                  <Input type="number" step="0.01" value={entry.tiPerSF} onChange={(e: any) => patchEntry({ tiPerSF: e.target.value })} />
+                </Field>
+              </div>
+            </section>
+          </>
         )}
 
         {entry.entryMode === "listing" && (
@@ -973,11 +1015,14 @@ export default function PortalAdminDealiusTools() {
                     onClick={() => patchEntry({ rentRows: entry.rentRows.filter((_, i) => i !== index) })}
                     aria-label="Remove rent row"
                   >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
             </div>
+            <p className="dealius-hint">
+              Rates push to Dealius as monthly $/SF. Monthly $/SF is calculated from monthly rent ÷ deal SF.
+            </p>
           </section>
         )}
 
@@ -1027,13 +1072,16 @@ export default function PortalAdminDealiusTools() {
                   aria-label="Remove broker row"
                 >
                   <Trash2 size={14} />
-                </button>
-              </div>
-            ))}
+              </button>
+            </div>
+          ))}
           </div>
+          <p className="dealius-hint">
+            Lead broker and commission splits are submitted with the deal when names match your Dealius directory.
+          </p>
         </section>
 
-        <section className="dealius-panel dealius-action-panel">
+        <section className="dealius-sticky-action-bar">
           <div>
             <div className="dealius-section-title">Pre-flight</div>
             <div className="dealius-checklist">
@@ -1046,26 +1094,9 @@ export default function PortalAdminDealiusTools() {
             </div>
             {pushError && <div className="dealius-error">{pushError}</div>}
             {pushResult?.mockMode && (
-              <div
-                role="status"
-                style={{
-                  marginTop: 10,
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 8,
-                  padding: "10px 12px",
-                  borderRadius: 8,
-                  background: "var(--warn-100)",
-                  border: "1px solid var(--warn-500)",
-                  color: "var(--warn-700)",
-                  fontSize: 12,
-                  lineHeight: 1.4,
-                }}
-              >
+              <div role="status" className="dealius-status-banner mock" style={{ marginTop: 10 }}>
                 <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-                <div>
-                  This push was simulated — no data was sent to Dealius because credentials are missing.
-                </div>
+                <div>This push was simulated — no data was sent to Dealius because credentials are missing.</div>
               </div>
             )}
           </div>
@@ -1080,6 +1111,7 @@ export default function PortalAdminDealiusTools() {
             {pushing ? "Pushing…" : entry.entryMode === "listing" ? "Push listing" : "Push deal"}
           </Button>
         </section>
+        </div>
 
         <section className="dealius-panel">
           <div className="dealius-section-heading-row">

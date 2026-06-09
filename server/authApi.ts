@@ -18,6 +18,12 @@ import {
 import { resolvePlatformUserFromRequest, findAppUserByUsernameOrEmail } from "./auth/platformSession";
 import { linkPlatformSessionAfterLegacyLogin } from "./auth/linkPlatformSessionAfterLegacyLogin";
 import { isAdminByPolicy } from "./auth/isAdminByPolicy";
+import { requireAuth } from "./middleware/requireAuth";
+import {
+  clearUserDealiusCredentials,
+  getUserDealiusCredentials,
+  saveUserDealiusCredentials,
+} from "./services/userDealiusCredentials";
 
 const loginSchema = z.object({
   email: z.string().trim().min(1).max(320),
@@ -171,6 +177,38 @@ authApiRouter.post("/logout", async (req, res) => {
   await handlePlatformLogout(req, res);
   const cookieOptions = getSessionCookieOptions(req);
   res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+  res.json({ success: true });
+});
+
+const dealiusCredentialsBody = z.object({
+  username: z.string().trim().min(1).max(320),
+  password: z.string().min(1).max(512),
+});
+
+authApiRouter.get("/me/dealius-credentials", requireAuth, async (req, res) => {
+  const creds = await getUserDealiusCredentials(req.user!.id);
+  res.json({
+    success: true,
+    data: creds ? { username: creds.username, password: creds.password } : { username: null, password: null },
+  });
+});
+
+authApiRouter.put("/me/dealius-credentials", requireAuth, async (req, res) => {
+  const parsed = dealiusCredentialsBody.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" });
+    return;
+  }
+  const result = await saveUserDealiusCredentials(req.user!.id, parsed.data.username, parsed.data.password);
+  if (!result.success) {
+    res.status(400).json({ success: false, error: result.message });
+    return;
+  }
+  res.json({ success: true, message: result.message });
+});
+
+authApiRouter.delete("/me/dealius-credentials", requireAuth, async (req, res) => {
+  await clearUserDealiusCredentials(req.user!.id);
   res.json({ success: true });
 });
 

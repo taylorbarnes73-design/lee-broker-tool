@@ -1225,6 +1225,181 @@
   margin-top: 10px;
 }
 
+.dealius-status-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--r-8);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.dealius-status-banner strong {
+  font-weight: 800;
+}
+
+.dealius-status-banner code {
+  font-size: 12px;
+}
+
+.dealius-status-banner.mock {
+  background: var(--warn-100);
+  border: 1px solid var(--warn-500);
+  color: var(--warn-700);
+}
+
+.dealius-status-banner.error {
+  background: var(--err-50);
+  border: 1px solid var(--err-200);
+  color: var(--err-700);
+}
+
+.dealius-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--ok-100);
+  border: 1px solid var(--ok-200);
+  color: var(--ok-600);
+  font-size: 12px;
+  font-weight: 700;
+  align-self: flex-start;
+}
+
+.dealius-workflow-panel {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-12);
+  background: var(--ink-50);
+}
+
+.dealius-workflow-top {
+  display: grid;
+  gap: 10px;
+}
+
+.dealius-mode-copy {
+  margin: 0;
+  color: var(--ink-600);
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 62ch;
+}
+
+.dealius-workflow-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dealius-form-card {
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-12);
+  background: var(--ink-0);
+  overflow: hidden;
+}
+
+.dealius-form-card > .dealius-panel,
+.dealius-form-card > .dealius-flow-panel {
+  border: none;
+  border-radius: 0;
+  border-top: 1px solid var(--ink-150);
+  background: transparent;
+}
+
+.dealius-form-card > .dealius-panel:first-child,
+.dealius-form-card > .dealius-flow-panel:first-child {
+  border-top: none;
+}
+
+.dealius-form-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 18px 0;
+}
+
+.dealius-form-subtitle {
+  margin: 4px 0 0;
+  color: var(--ink-500);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.dealius-party-note {
+  margin: 0 0 12px;
+  color: var(--ink-500);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.dealius-party-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.dealius-party-col {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--ink-150);
+  border-radius: var(--r-8);
+  background: var(--ink-50);
+}
+
+.dealius-party-col-opposite {
+  background: var(--ink-0);
+}
+
+.dealius-party-col-label {
+  color: var(--ink-700);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dealius-hint {
+  margin: 10px 0 0;
+  color: var(--ink-500);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.dealius-sticky-action-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+  padding: 16px 18px;
+  background: rgba(255, 255, 255, 0.94);
+  border-top: 1px solid var(--ink-200);
+  backdrop-filter: blur(8px);
+}
+
+.dealius-sticky-action-bar .dealius-section-title {
+  margin-bottom: 8px;
+}
+
+.dealius-sticky-action-bar .dealius-checklist {
+  min-width: 0;
+}
+
 .buildout-import-workspace {
   display: flex;
   flex-direction: column;
@@ -1844,7 +2019,8 @@
   }
 
   .dealius-flow-panel,
-  .dealius-intake-panel {
+  .dealius-intake-panel,
+  .dealius-party-columns {
     grid-template-columns: 1fr;
   }
 
