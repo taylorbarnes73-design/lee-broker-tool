@@ -47,7 +47,7 @@ const dashboard: HelpEntry = {
       <h3>In progress summary</h3>
       <p>
         The banner shows how many of your submissions are still pending or being processed. Open{" "}
-        <strong>My submissions</strong> for the full list, queue position, and detail pages.
+        <strong>My submissions</strong> for the full submission log and detail pages.
       </p>
     </>
   ),
@@ -58,20 +58,16 @@ const mySubmissions: HelpEntry = {
   body: (
     <>
       <p>
-        Everything you've submitted to the office, with the latest status. By default you see <strong>in progress</strong> work
-        only (pending or being processed). Use <strong>View all submissions</strong> for your full history.
+        A chronological log of everything you've submitted to the office, newest first. Open any row for the full record,
+        attached files, and current status.
       </p>
       <h3>Statuses</h3>
       <ul>
-        <li><strong>Pending</strong> — submitted and waiting in the office queue.</li>
+        <li><strong>Pending</strong> — submitted and waiting for the office to start review.</li>
         <li><strong>In progress</strong> — an admin claimed it and is actively working on it (Dealius, vendors, validation).</li>
         <li><strong>Complete</strong> — approved and processed.</li>
         <li><strong>Rejected</strong> — not accepted; check the detail page or contact admin.</li>
       </ul>
-      <h3>Queue messaging</h3>
-      <p>
-        Pending items show your place in line when the office publishes queue order. In-progress items no longer count against queue position.
-      </p>
     </>
   ),
 };
@@ -85,13 +81,13 @@ const submissionDetail: HelpEntry = {
       </p>
       <h3>Tabs</h3>
       <ul>
-        <li><strong>Summary</strong> — key fields, queue status, and <em>What happens next</em> guidance.</li>
-        <li><strong>Activity</strong> — status changes and when the request entered the queue.</li>
+        <li><strong>Summary</strong> — key fields, current status, and what happens next.</li>
+        <li><strong>Activity</strong> — status changes over time.</li>
         <li><strong>Files</strong> — uploads (signed forms, broker docs, photos).</li>
       </ul>
       <h3>In progress vs pending</h3>
       <p>
-        <strong>Pending</strong> means your request is still in the shared queue. <strong>In progress</strong> means an admin picked it up — you typically do not need to take action unless the office contacts you.
+        <strong>Pending</strong> means your request was submitted and is waiting for review. <strong>In progress</strong> means an admin picked it up — you typically do not need to take action unless the office contacts you.
       </p>
       <h3>Admin actions</h3>
       <p>

@@ -7,7 +7,6 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import { Button, Card } from "../design/index.jsx";
 import {
   brokerAdminStatusTone,
-  brokerQueueStatusText,
   formatBrokerAdminStatus,
   formatFormType,
   formatSubmissionStatus,
@@ -104,56 +103,7 @@ function StatCard({ label, value, hint, loading }: { label: string; value: numbe
   );
 }
 
-/* ── progress pipeline (broker-facing) ────────────────────────────── */
-const PIPELINE_STEPS = ["Submitted", "In progress", "Complete"] as const;
-
-function stepIndexForStatus(status: string): number {
-  switch (status) {
-    case "pending": return 0;
-    case "in_review": return 1;
-    case "approved":
-    case "closed": return 2;
-    default: return 0;
-  }
-}
-
-function ProgressPipeline({ status, queuePosition }: { status: string; queuePosition: number | null }) {
-  const isRejected = status === "rejected" || status === "cancelled";
-  const activeStep = stepIndexForStatus(status);
-  const accent = "#98002E"; // keep literal — used in template literals for box-shadow alpha
-  const dotGreen = "rgba(138, 148, 30, 0.9)";
-  return (
-    <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 0, marginTop: 8, marginBottom: 6 }}>
-        {PIPELINE_STEPS.map((label, idx) => {
-          const done = activeStep > idx;
-          const active = activeStep === idx && !isRejected;
-          const dotColor = done ? dotGreen : active ? accent : "var(--ink-200)";
-          const textColor = done || active ? "var(--ink-900)" : "var(--ink-400)";
-          return (
-            <div key={label} style={{ display: "flex", alignItems: "center", flexShrink: idx === 1 ? 1 : 0 }}>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, minWidth: 64 }}>
-                <div style={{ width: 12, height: 12, borderRadius: "50%", background: dotColor, flexShrink: 0, boxShadow: active ? `0 0 0 3px ${accent}22` : "none" }} />
-                <span style={{ fontSize: 11, fontWeight: done || active ? 700 : 400, color: textColor, whiteSpace: "nowrap" }}>{label}</span>
-              </div>
-              {idx < PIPELINE_STEPS.length - 1 && (
-                <div style={{ flex: 1, height: 2, minWidth: 24, maxWidth: 48, background: done ? dotGreen : "var(--ink-150)", margin: "0 2px", marginBottom: 14 }} />
-              )}
-            </div>
-          );
-        })}
-        {isRejected && (
-          <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 700, color: "var(--err-700)", marginBottom: 12 }}>Not accepted</span>
-        )}
-      </div>
-      <div style={{ fontSize: 12, color: "var(--ink-500)" }}>
-        {brokerQueueStatusText(status, queuePosition)}
-      </div>
-    </div>
-  );
-}
-
-/* ── broker view: own submissions ─────────────────────────────────── */
+/* ── broker view: submission log ──────────────────────────────────── */
 function BrokerSubmissions() {
   const [items, setItems] = useState<SubmissionRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -162,7 +112,7 @@ function BrokerSubmissions() {
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    fetch("/api/submissions?limit=100&includeQueue=1", { credentials: "include" })
+    fetch("/api/submissions?limit=100", { credentials: "include" })
       .then(r => r.json().then(b => ({ ok: r.ok, b })))
       .then(({ ok, b }) => {
         if (!alive) return;
@@ -196,10 +146,10 @@ function BrokerSubmissions() {
             <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>#{s.id} · {s.reference || "(untitled)"}</div>
             <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>{formatDateTime(s.createdAt)}</div>
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <span style={{ fontSize: 12, color: "var(--ink-500)" }}>{formatFormType(s.formType)}</span>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 4 }}>
+            <StatusBadge tone={submissionStatusTone(s.status)} size="sm">{formatSubmissionStatus(s.status)}</StatusBadge>
+            <StatusBadge tone={{ bg: "var(--ink-100)", fg: "var(--ink-700)", border: "var(--ink-200)" }} size="sm">{formatFormType(s.formType)}</StatusBadge>
           </div>
-          <ProgressPipeline status={s.status} queuePosition={s.queuePosition} />
         </Link>
       ))}
     </div>
@@ -475,7 +425,7 @@ export default function PortalSubmissions() {
   const title = isAdmin ? "Submissions" : "My submissions";
   const description = isAdmin
     ? "Review broker work, triage inbox requests, and push approved deals to Dealius."
-    : "Track your submissions and check status at any time.";
+    : "A log of everything you've submitted, newest first.";
 
   return (
     <AdminPortalShell
@@ -484,14 +434,15 @@ export default function PortalSubmissions() {
       title={title}
       description={description}
     >
-      {/* Stats row */}
-      <div className="admin-portal-card">
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16 }}>
-          <StatCard label="Pending" value={stats?.pending ?? 0} loading={statsLoading} hint="Awaiting first review." />
-          <StatCard label="In progress" value={stats?.inReview ?? 0} loading={statsLoading} hint="Claimed and being processed." />
-          <StatCard label="Active submissions" value={stats?.active ?? 0} loading={statsLoading} hint="Pending + in progress combined." />
+      {isAdmin && (
+        <div className="admin-portal-card">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16 }}>
+            <StatCard label="Pending" value={stats?.pending ?? 0} loading={statsLoading} hint="Awaiting first review." />
+            <StatCard label="In progress" value={stats?.inReview ?? 0} loading={statsLoading} hint="Claimed and being processed." />
+            <StatCard label="Active submissions" value={stats?.active ?? 0} loading={statsLoading} hint="Pending + in progress combined." />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* List panel */}
       <div className="admin-portal-card">

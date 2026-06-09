@@ -36,31 +36,17 @@ export function brokerInReviewExplainer(): string {
   return "A member of the admin team has claimed your submission and is working on it—reviewing details, preparing documents, or coordinating vendors. You usually do not need to do anything unless they reach out.";
 }
 
-/**
- * Returns a short broker-facing status phrase.
- * queuePosition is 1-based (1 = next in line, so 0 submissions are ahead).
- * Pass null when position is not available.
- */
-export function brokerQueueStatusText(
-  status: string | null | undefined,
-  queuePosition: number | null
-): string {
+/** Short broker-facing status phrase (no queue position). */
+export function brokerQueueStatusText(status: string | null | undefined): string {
   if (!status) return "Submitted";
   switch (status) {
     case "pending":
-      if (queuePosition !== null && queuePosition > 1) {
-        const ahead = queuePosition - 1;
-        return `${ahead} submission${ahead === 1 ? "" : "s"} ahead of yours in the office queue`;
-      }
-      if (queuePosition === 1) {
-        return "You're next — the office will pick this up soon";
-      }
-      return "Waiting for the office to start review";
+      return "Submitted — waiting for the office to start review";
     case "in_review":
-      return "An admin is actively working on this request";
+      return "In progress — an admin is working on this request";
     case "approved":
     case "closed":
-      return "Completed — no further action needed";
+      return "Complete — no further action needed";
     case "rejected":
     case "cancelled":
       return "Not accepted — contact the admin team if you have questions";
@@ -84,7 +70,7 @@ export function brokerSubmissionNextSteps(
   const kind = formatFormType(formType).toLowerCase();
   switch (status) {
     case "pending":
-      return `Your ${kind} is in the office queue. You'll get an email when an admin starts working on it (if notifications are on).`;
+      return `Your ${kind} was submitted and is waiting for review. You'll get an email when an admin starts working on it (if notifications are on).`;
     case "in_review":
       return `In progress means an admin claimed your ${kind} and is processing it. ${brokerInReviewExplainer()}`;
     case "approved":

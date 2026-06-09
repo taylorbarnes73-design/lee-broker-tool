@@ -214,7 +214,7 @@ export default function PortalSubmissionDetail() {
   }
 
   async function reloadQueue() {
-    if (!Number.isFinite(id)) return;
+    if (!Number.isFinite(id) || user?.role !== "admin") return;
     const response = await fetch(`/api/submissions/${id}/queue`, { credentials: "include" });
     const body = await response.json().catch(() => ({}));
     if (response.ok) setQueueMeta(body?.data ?? null);
@@ -244,19 +244,21 @@ export default function PortalSubmissionDetail() {
         if (alive) setError(e?.message ?? "Failed to load submission");
       });
 
-    fetch(`/api/submissions/${id}/queue`, { credentials: "include" })
-      .then(response => response.json().then(body => ({ ok: response.ok, body })))
-      .then(({ ok, body }) => {
-        if (alive && ok) setQueueMeta(body?.data ?? null);
-      })
-      .catch(() => {
-        // Queue status is helpful, but the detail view can still render without it.
-      });
+    if (user?.role === "admin") {
+      fetch(`/api/submissions/${id}/queue`, { credentials: "include" })
+        .then(response => response.json().then(body => ({ ok: response.ok, body })))
+        .then(({ ok, body }) => {
+          if (alive && ok) setQueueMeta(body?.data ?? null);
+        })
+        .catch(() => {
+          // Queue status is admin-only context; detail still renders without it.
+        });
+    }
 
     return () => {
       alive = false;
     };
-  }, [id]);
+  }, [id, user?.role]);
 
   async function updateStatus(status: string) {
     if (!item || user?.role !== "admin") return;
@@ -350,8 +352,9 @@ export default function PortalSubmissionDetail() {
     }
   }
 
+  const isAdmin = user?.role === "admin";
   const tabs: Array<[typeof activeTab, string, string]> = [
-    ["summary", "Summary", "Status and queue"],
+    ["summary", "Summary", isAdmin ? "Status and queue" : "Status and details"],
     ["deal", "Dealius", "Create deal or listing"],
     ["documents", "Documents", "Imports and extraction"],
     ["payload", "Payload", "Raw data"],
@@ -368,7 +371,7 @@ export default function PortalSubmissionDetail() {
       }
       actions={
         <LinkButton href="/portal/submissions" variant="secondary">
-          Back to queue
+          {isAdmin ? "Back to submissions" : "Back to my submissions"}
         </LinkButton>
       }
     >
@@ -400,7 +403,7 @@ export default function PortalSubmissionDetail() {
                   >
                     {formatFormType(item.formType)}
                   </StatusBadge>
-                  {queueMeta?.position !== null && queueMeta?.position !== undefined && (
+                  {isAdmin && queueMeta?.position !== null && queueMeta?.position !== undefined && (
                     <span style={{ fontSize: 12, color: "var(--ink-500)" }}>
                       Queue #{queueMeta.position} of {queueMeta.totalActive}
                       {typeof queueMeta.aheadOfYou === "number" ? ` · ${queueMeta.aheadOfYou} ahead` : ""}
@@ -500,7 +503,7 @@ export default function PortalSubmissionDetail() {
                     <span>Updated</span>
                     <strong>{new Date(item.updatedAt).toLocaleString()}</strong>
                   </div>
-                  {queueMeta?.position !== null && queueMeta?.position !== undefined && (
+                  {isAdmin && queueMeta?.position !== null && queueMeta?.position !== undefined && (
                     <div>
                       <span>Queue</span>
                       <strong>

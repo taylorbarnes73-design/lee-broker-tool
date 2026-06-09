@@ -8180,6 +8180,18 @@ body.broker-active .sub-tab-bar {
 #tab-queue .queue-card {
   margin-top: 0;
 }
+
+.submission-log-item {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.submission-log-item:hover {
+  border-color: #CBD5E0;
+  box-shadow: 0 2px 8px rgba(48, 60, 66, 0.06);
+}
 .drafts-empty {
   display: flex;
   flex-direction: column;

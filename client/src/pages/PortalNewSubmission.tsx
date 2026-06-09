@@ -114,7 +114,7 @@ export default function PortalNewSubmission() {
   useEffect(() => {
     if (isAdmin) return;
     let alive = true;
-    const params = new URLSearchParams({ limit: "100", includeQueue: "1", needsAction: "1" });
+    const params = new URLSearchParams({ limit: "100", needsAction: "1" });
     fetch(`/api/submissions?${params}`, { credentials: "include" })
       .then(r => r.json().then(b => ({ ok: r.ok, b })))
       .then(({ ok, b }) => {
@@ -161,7 +161,7 @@ export default function PortalNewSubmission() {
                     ? "Loading active submissions…"
                     : inProgressCount === 0
                       ? "Nothing pending or in progress — start a request below when you are ready."
-                      : `${inProgressCount} submission${inProgressCount === 1 ? "" : "s"} in the office queue or being processed.`}
+                      : `${inProgressCount} submission${inProgressCount === 1 ? "" : "s"} still pending or in progress.`}
                 </div>
               </div>
               {inProgressCount !== null && inProgressCount > 0 && (

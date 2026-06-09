@@ -2583,25 +2583,10 @@
     <div class="page-head-left">
       <div class="page-eyebrow">Broker Desk</div>
       <h1 class="page-h1">My submissions</h1>
-      <p class="submissions-hint">Track active requests and where each sits in the office processing line.</p>
+      <p class="submissions-hint">A log of everything you've submitted, newest first.</p>
     </div>
     <div class="page-head-right">
       <button type="button" class="btn btn-outline" id="btn-broker-queue-refresh" onclick="refreshBrokerQueue()"><span class="btn-spinner"></span><span class="btn-label">Refresh</span></button>
-    </div>
-  </div>
-
-  <div class="stat-grid queue-stat-grid">
-    <div class="stat-card">
-      <div class="stat-header"><span class="stat-label">Your active submissions</span></div>
-      <div class="stat-value" id="queue-stat-yours">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-header"><span class="stat-label">Office queue total</span></div>
-      <div class="stat-value" id="queue-stat-total">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-header"><span class="stat-label">Next in line</span></div>
-      <div class="stat-value" id="queue-stat-next">&mdash;</div>
     </div>
   </div>
 
@@ -15121,7 +15106,7 @@ function getCurrentFormState(tab) {
 const TRPC_QUERY_PROCEDURES = new Set([
   'auth.me',
   'submissions.adminList',
-  'submissions.queueMine',
+  'submissions.mine',
   'compData.latest',
   'compData.search',
 ]);
@@ -15261,6 +15246,19 @@ function formatQueueDate(value) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+function formatSubmissionStatusLabel(status) {
+  const labels = {
+    pending: 'Pending',
+    in_review: 'In progress',
+    approved: 'Complete',
+    closed: 'Complete',
+    rejected: 'Not accepted',
+    cancelled: 'Cancelled',
+    waiting_on_broker: 'Waiting on you'
+  };
+  return labels[status] || cap(String(status || 'Submitted').replace(/_/g, ' '));
+}
+
 function setQueueStatus(message, isError) {
   const status = document.getElementById('broker-queue-status');
   if (!status) return;
@@ -15281,72 +15279,48 @@ function renderBrokerQueueError() {
   list.innerHTML = '<div class="empty-state queue-empty"><div class="empty-icon"></div><h3>Submissions unavailable</h3><p>Your submissions are still saved, but the live status could not be loaded right now.</p><button type="button" class="btn btn-gray btn-sm" onclick="refreshBrokerQueue()">Try Again</button></div>';
 }
 
-function renderBrokerQueue(data) {
+function renderBrokerQueue(rows) {
   const refreshBtn = document.getElementById('btn-broker-queue-refresh');
   if (refreshBtn) {
     refreshBtn.classList.remove('queue-retry-ready');
     const label = refreshBtn.querySelector('.btn-label');
     if (label) label.textContent = label.dataset.idle || 'Refresh';
   }
-  const requests = Array.isArray(data?.requests) ? data.requests : [];
-  const totalActive = Number(data?.totalActive ?? data?.totalPending ?? 0) || 0;
-  const positions = requests.map(item => Number(item.position)).filter(Number.isFinite);
-  const nextPosition = positions.length ? Math.min(...positions) : null;
-  const setText = (id, value) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = String(value);
-  };
-  setText('queue-stat-yours', requests.length);
-  setText('queue-stat-total', totalActive);
-  setText('queue-stat-next', nextPosition ? '#' + nextPosition : '-');
-
+  const submissions = Array.isArray(rows) ? rows : [];
   const list = document.getElementById('broker-queue-list');
   if (!list) return;
-  if (!requests.length) {
-    setQueueStatus('No active submissions right now.');
-    list.innerHTML = '<div class="empty-state queue-empty"><div class="empty-icon"></div><h3>No active submissions</h3><p>Once you submit a listing, sign request, voucher, contract, or comp input, it will appear here while it is pending or in review.</p></div>';
+  if (!submissions.length) {
+    setQueueStatus('');
+    list.innerHTML = '<div class="empty-state queue-empty"><div class="empty-icon"></div><h3>No submissions yet</h3><p>Once you submit a listing, sign request, voucher, contract, or comp input, it will appear here.</p></div>';
     return;
   }
 
-  setQueueStatus('Showing your active submissions. Admins can still review full submission detail in the Admin Portal.');
-  list.innerHTML = requests
+  setQueueStatus('Showing ' + submissions.length + ' submission' + (submissions.length === 1 ? '' : 's') + ', newest first.');
+  list.innerHTML = submissions
     .slice()
-    .sort((a, b) => Number(a.position || 0) - Number(b.position || 0))
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
     .map(item => {
       const status = item.status || 'pending';
-      const ahead = Number(item.aheadCount) || 0;
-      const reference = item.reference || item.payload?.address || item.payload?.propertyAddress || 'No property reference';
-      const isDone = status === 'approved' || status === 'closed';
-      const isInProgress = status === 'in_review';
-      const isRejected = status === 'rejected' || status === 'cancelled';
-      const step2 = isInProgress || isDone;
-      const step3 = isDone;
-      const dot = (on) => '<span class="q-dot' + (on ? ' q-dot-on' : '') + '"></span>';
-      const line = (on) => '<span class="q-line' + (on ? ' q-line-on' : '') + '"></span>';
-      const lbl = (label, on) => '<span class="q-step-label' + (on ? ' q-step-label-on' : '') + '">' + escapeQueueHtml(label) + '</span>';
-      let queueText;
-      if (isDone) queueText = 'Your submission is complete.';
-      else if (isInProgress) queueText = 'Your submission is being processed.';
-      else if (isRejected) queueText = 'Not accepted.';
-      else if (ahead === 0) queueText = "You're next in queue.";
-      else queueText = ahead + ' submission' + (ahead === 1 ? '' : 's') + ' ahead of yours.';
-      const pipelineHtml = isRejected
-        ? '<div class="q-pipeline q-rejected"><span class="q-not-accepted">Not accepted</span></div>'
-        : '<div class="q-pipeline">' +
-            '<div class="q-step">' + dot(true) + lbl('Submitted', true) + '</div>' +
-            line(step2) +
-            '<div class="q-step">' + dot(step2) + lbl('In progress', step2) + '</div>' +
-            line(step3) +
-            '<div class="q-step">' + dot(step3) + lbl('Complete', step3) + '</div>' +
-          '</div>';
-      return '<div class="queue-item">' +
+      const reference = item.reference || item.payload?.address || item.payload?.propertyAddress || '(untitled)';
+      const statusLabel = formatSubmissionStatusLabel(status);
+      const statusClass = status === 'approved' || status === 'closed'
+        ? 'badge-approved'
+        : status === 'in_review'
+          ? 'badge-review'
+          : status === 'rejected' || status === 'cancelled'
+            ? 'badge-rejected'
+            : 'badge-pending';
+      return '<a class="queue-item submission-log-item" href="/portal/submissions/' + encodeURIComponent(String(item.id)) + '">' +
         '<div class="queue-item-main">' +
-          '<div class="queue-item-top"><span class="badge badge-pending">' + escapeQueueHtml(formatQueueFormType(item.formType)) + '</span><span class="cell-mono-sm">SUB-' + escapeQueueHtml(String(item.id).padStart(4, '0')) + '</span></div>' +
+          '<div class="queue-item-top">' +
+            '<span class="badge ' + statusClass + '">' + escapeQueueHtml(statusLabel) + '</span>' +
+            '<span class="badge badge-pending">' + escapeQueueHtml(formatQueueFormType(item.formType)) + '</span>' +
+            '<span class="cell-mono-sm">#' + escapeQueueHtml(String(item.id)) + '</span>' +
+          '</div>' +
           '<div class="queue-item-title queue-title">' + escapeQueueHtml(reference) + '</div>' +
-          pipelineHtml +
-          '<div class="queue-item-meta queue-detail">' + escapeQueueHtml(queueText) + ' &middot; Submitted ' + escapeQueueHtml(formatQueueDate(item.createdAt)) + '</div>' +
+          '<div class="queue-item-meta queue-detail">Submitted ' + escapeQueueHtml(formatQueueDate(item.createdAt)) + '</div>' +
         '</div>' +
-      '</div>';
+      '</a>';
     })
     .join('');
 }
@@ -15362,8 +15336,8 @@ async function refreshBrokerQueue() {
   setQueueStatus('Loading submissions...');
   try {
     await ensureSharedBrokerSession();
-    const data = await callTrpc('submissions.queueMine', { limit: 50 });
-    renderBrokerQueue(data);
+    const rows = await callTrpc('submissions.mine', { limit: 100 });
+    renderBrokerQueue(rows);
   } catch (error) {
     console.warn('Unable to load broker queue:', error && error.message ? error.message : error);
     renderBrokerQueueError();
@@ -17668,9 +17642,9 @@ const HELP_PANEL_CONTENT = {
   'queue': {
     title: 'My submissions — how this page works',
     body: `
-      <p>My submissions shows your active requests and where each one sits in the office processing line.</p>
+      <p>My submissions is a log of everything you've sent to the office, newest first.</p>
       <h4>What you'll see</h4>
-      <p>Each row includes the form type, submission reference, current status, and how many requests are ahead of yours in line.</p>
+      <p>Each row includes the submission ID, form type, reference, current status, and submitted date. Open a row for the full detail page in the portal.</p>
     `,
   },
   'default': {
