@@ -129,6 +129,15 @@ body.broker-active .field textarea {
   box-sizing: border-box;
 }
 
+body.broker-active .field input[type="date"] {
+  cursor: pointer;
+  min-height: 40px;
+}
+
+body.broker-active .field.autocomplete-parent {
+  overflow: visible;
+}
+
 body.broker-active .row.c2,
 body.broker-active .row.c3,
 body.broker-active .row.c4,
@@ -143,7 +152,11 @@ body.broker-active .listing-type-grid {
 
 body.broker-active .card {
   margin-bottom: 14px;
-  overflow: hidden;
+  overflow: visible;
+}
+
+body.broker-active .listing-type-field {
+  position: relative;
 }
 
 body.broker-active .page-head {

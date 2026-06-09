@@ -3950,9 +3950,24 @@ function onPropTypeChange() {
 function setListingType(type) {
   const select = document.getElementById('l-prop-type');
   if (!select || !type) return;
-  select.value = type;
+  if (select.value !== type) {
+    select.value = type;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  }
   onPropTypeChange();
 }
+
+(function initListingTypePicker() {
+  const picker = document.getElementById('listing-type-picker');
+  if (!picker || picker.dataset.bound === '1') return;
+  picker.dataset.bound = '1';
+  picker.addEventListener('click', function(e) {
+    const btn = e.target.closest('.listing-type-opt[data-type]');
+    if (!btn || !picker.contains(btn)) return;
+    e.preventDefault();
+    setListingType(btn.dataset.type);
+  });
+})();
 
 function onTxnTypeChange() {
   const txn = document.getElementById('l-txn-type').value;
@@ -4296,8 +4311,13 @@ function openReviewSnapshotWithSpinner(btn, context) {
 function showListingReviewWithSpinner(btn) {
   if (btn) { setBtnLoading(btn, true, 'Loading…'); btn.disabled = true; }
   setTimeout(() => {
-    showListingReview();
-    if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
+    try {
+      showListingReview();
+    } catch (err) {
+      console.error('Listing review error:', err);
+    } finally {
+      if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
+    }
   }, 80);
 }
 
@@ -19223,10 +19243,20 @@ function deleteDraft(key) {
     input.parentNode.appendChild(dropdown);
 
     var timer = null;
+    var fetchSeq = 0;
+    var suppressInput = false;
     var currentSuggestions = [];
     var activeIdx = -1;
 
+    function inputHasFocus() {
+      return document.activeElement === input;
+    }
+
     function showDropdown(items) {
+      if (!inputHasFocus()) {
+        hideDropdown();
+        return;
+      }
       currentSuggestions = items;
       activeIdx = -1;
       if (!items.length) { dropdown.classList.add('is-hidden'); return; }
@@ -19261,12 +19291,12 @@ function deleteDraft(key) {
     function selectSuggestion(idx) {
       var s = currentSuggestions[idx];
       if (!s) return;
+      suppressInput = true;
       input.value = s.address;
       if (cfg.cityId)  { var c = document.getElementById(cfg.cityId);  if (c)  c.value = s.city; }
       if (cfg.stateId) { var st = document.getElementById(cfg.stateId); if (st) st.value = s.state || 'CA'; }
       if (cfg.zipId)   { var z = document.getElementById(cfg.zipId);   if (z)  z.value = s.zip; }
       hideDropdown();
-      input.dispatchEvent(new Event('input', { bubbles: true }));
       input.dispatchEvent(new Event('change', { bubbles: true }));
       [cfg.cityId, cfg.stateId, cfg.zipId].filter(Boolean).forEach(function(id) {
         var el = document.getElementById(id);
@@ -19278,22 +19308,26 @@ function deleteDraft(key) {
       if (cfg.zipId && s.zip) {
         try { applyZipMarketSubmarket(s.zip); } catch (e) { /* no-op */ }
       }
+      suppressInput = false;
     }
 
     input.addEventListener('input', function() {
+      if (suppressInput) return;
       clearTimeout(timer);
       var val = input.value.trim();
       if (val.length < 3) { hideDropdown(); setFieldLoading(input.parentNode, false); return; }
       setFieldLoading(input.parentNode, true);
+      var seq = ++fetchSeq;
       timer = setTimeout(async function() {
         try {
           var res = await fetch('/api/places/autocomplete?input=' + encodeURIComponent(val));
+          if (seq !== fetchSeq || !inputHasFocus()) return;
           var data = await res.json();
           showDropdown(data.results || []);
         } catch (_) {
-          hideDropdown();
+          if (seq === fetchSeq) hideDropdown();
         } finally {
-          setFieldLoading(input.parentNode, false);
+          if (seq === fetchSeq) setFieldLoading(input.parentNode, false);
         }
       }, 280);
     });
@@ -19306,7 +19340,18 @@ function deleteDraft(key) {
       else if (e.key === 'Escape') { hideDropdown(); }
     });
 
-    input.addEventListener('blur', function() { setTimeout(hideDropdown, 150); });
+    input.addEventListener('blur', function() {
+      fetchSeq++;
+      clearTimeout(timer);
+      setFieldLoading(input.parentNode, false);
+      setTimeout(hideDropdown, 150);
+    });
+
+    document.addEventListener('mousedown', function(e) {
+      if (dropdown.classList.contains('is-hidden')) return;
+      if (input.contains(e.target) || dropdown.contains(e.target)) return;
+      hideDropdown();
+    });
   });
 })();
 </script>
