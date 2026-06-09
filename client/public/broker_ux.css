@@ -515,7 +515,7 @@ body.broker-active #tab-voucher .voucher-accordion-body {
   padding: 0 16px 16px;
 }
 
-body.broker-active #tab-voucher #v-dist-table .dist-gross-col {
+body.broker-active #tab-voucher #v-dist-table .dist-gross-col.is-hidden {
   display: none;
 }
 
