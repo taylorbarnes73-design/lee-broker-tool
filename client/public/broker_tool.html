@@ -904,12 +904,9 @@
   <div class="card required-section voucher-section" id="vstep-1" data-vstep="1">
     <div class="voucher-section-header">Deal Basics</div>
     <div class="tip is-hidden top-gap-sm" id="voucher-confidential-warning"></div>
-    <div class="row c4">
+    <div class="row c2">
       <div class="field"><label class="req">Transaction Type</label>
         <select id="v-txn-type" onchange="onVoucherTxnChange()"><option value="lease">Lease</option><option value="sale">Sale</option><option value="referral">Referral</option><option value="sublease">Sublease</option><option value="renewal">Renewal</option><option value="other">Other</option></select>
-      </div>
-      <div class="field"><label class="req">Property Type</label>
-        <select id="v-prop-type"><option value="industrial">Industrial</option><option value="office">Office</option><option value="retail">Retail</option><option value="land">Land</option><option value="other">Other</option></select>
       </div>
       <div class="field"><label class="req">Representation Type</label>
         <select id="v-rep-type" onchange="onVoucherRepTypeChange()">
@@ -921,6 +918,11 @@
         </select>
         <div class="field-hint" id="v-rep-type-hint">Tenant rep — you represent the lessee/buyer in this deal.</div>
       </div>
+    </div>
+    <div class="row c4" id="v-req-deal-meta-extra">
+      <div class="field"><label class="req">Property Type</label>
+        <select id="v-prop-type"><option value="industrial">Industrial</option><option value="office">Office</option><option value="retail">Retail</option><option value="land">Land</option><option value="other">Other</option></select>
+      </div>
       <div class="field"><label class="req">Deal subtype</label>
         <select id="v-deal-type-req">
           <option value="">—</option>
@@ -931,6 +933,7 @@
     </div>
     <input id="v-on-behalf" type="hidden" aria-hidden="true">
 
+    <div id="v-req-property-block">
     <div class="voucher-sub-header">Property Address</div>
     <div class="row c2">
       <div class="field"><label class="req">Street Address</label><input id="v-address" placeholder="Start typing an address…" autocomplete="off"></div>
@@ -942,10 +945,11 @@
       <div class="field"><label class="req">Zip</label><input id="v-zip" placeholder="92618" onblur="voucherZipAutofill(this.value)"></div>
       <div class="field"><label class="req">Deal SF</label><input id="v-l-dealsf" placeholder="0" oninput="syncVoucherDealAliases(); calcVoucherLease(); vMarkRentStale()"></div>
     </div>
+    </div>
     <input id="v-deal-sf" type="hidden">
     <input id="v-land-sf" type="hidden">
 
-    <details class="voucher-accordion top-gap-sm">
+    <details class="voucher-accordion top-gap-sm" id="v-req-deal-compliance">
       <summary>Listing &amp; compliance details</summary>
       <div class="voucher-accordion-body">
         <div class="row c4">
@@ -1248,12 +1252,12 @@
     <div class="voucher-section-header">Commission &amp; Invoice</div>
     <div id="v-req-comm-lease">
       <div class="row c3 v-lease-comm-primary-row">
-        <div class="field"><label>Additional Bonus / (Adjustment)</label><input id="v-comm-bonus" placeholder="$0" oninput="calcCommSummary()"></div>
+        <div class="field" id="v-comm-bonus-field"><label>Additional Bonus / (Adjustment)</label><input id="v-comm-bonus" placeholder="$0" oninput="calcCommSummary()"></div>
         <div class="field"></div>
         <div class="field"><label class="invoice-highlight-label">TOTAL INVOICE</label><input id="v-total-invoice" class="invoice-highlight-input" placeholder="$0" readonly></div>
       </div>
       <div class="row c3">
-        <div class="field v-simplified-fee-field"><label>Consulting/Referral / Flat Fee</label><input id="v-comm-consulting" placeholder="$0" oninput="calcCommSummary()"></div>
+        <div class="field v-simplified-fee-field"><label id="v-comm-consulting-label">Consulting/Referral / Flat Fee</label><input id="v-comm-consulting" placeholder="$0" oninput="calcCommSummary()"></div>
         <div class="field"></div>
         <div class="field"></div>
       </div>
@@ -5287,20 +5291,25 @@ function vRentRowMonths(tr) {
   return parseInt(tr.querySelector('.rent-months')?.value, 10) || 0;
 }
 
+function vRentRowCommissionRate(tr) {
+  const input = tr?.querySelector('.rent-comm-pct-input');
+  if (input && String(input.value || '').trim() !== '') {
+    return parseFloat(input.value) || 0;
+  }
+  return parseFloat(document.getElementById('v-l-comm-rate')?.value) || 0;
+}
+
 function vRentRowCommissionDue(tr) {
   const monthly = vRentRowMonthly(tr);
   const months = vRentRowMonths(tr);
-  const rate = parseFloat(document.getElementById('v-l-comm-rate')?.value) || 0;
+  const rate = vRentRowCommissionRate(tr);
   return monthly * months * (rate / 100);
 }
 
 function updateRentRowCommissionCells(tr) {
   if (!tr) return;
-  const rate = parseFloat(document.getElementById('v-l-comm-rate')?.value) || 0;
-  const pctCell = tr.querySelector('.rent-comm-pct');
   const dueCell = tr.querySelector('.rent-comm-due');
   const due = vRentRowCommissionDue(tr);
-  if (pctCell) pctCell.textContent = rate > 0 ? (rate + '%') : '—';
   if (dueCell) {
     dueCell.textContent = due > 0
       ? '$' + due.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -5318,6 +5327,7 @@ function addRentRow(months, monthly, free) {
   const isFree = !!free;
   const monthsVal = months != null && months !== '' ? String(months) : '12';
   const monthlyVal = isFree ? '' : (monthly != null && monthly !== '' ? String(monthly) : '');
+  const globalRate = String(document.getElementById('v-l-comm-rate')?.value || '').trim();
   const tr = document.createElement('tr');
   if (isFree) tr.classList.add('free-rent-row');
   tr.innerHTML =
@@ -5325,7 +5335,7 @@ function addRentRow(months, monthly, free) {
     '<td><input class="rent-months" type="number" min="1" placeholder="12" value="' + monthsVal + '" oninput="calcRentRow(this)"></td>' +
     '<td><input class="rent-monthly" type="number" step="0.01" min="0" placeholder="0" value="' + monthlyVal + '" oninput="calcRentRow(this)"' + (isFree ? ' disabled' : '') + '></td>' +
     '<td class="text-center"><input type="checkbox" class="rent-free"' + (isFree ? ' checked' : '') + ' onchange="vOnFreeRentChange(this)"></td>' +
-    '<td class="rent-comm-pct text-center text-muted-sm">—</td>' +
+    '<td class="text-center"><input class="rent-comm-pct-input" type="number" step="0.01" min="0" placeholder="%" value="' + globalRate + '" oninput="calcRentRow(this)"></td>' +
     '<td class="rent-comm-due text-right text-strong">—</td>' +
     '<td><button type="button" class="del-row" onclick="this.closest(\'tr\').remove();vRenumberRentRows();calcCommSummary()" title="Remove row">&times;</button></td>';
   body.appendChild(tr);
@@ -5593,8 +5603,17 @@ function voucherZipAutofill(zip) {
 }
 
 function getSideChipClass(side) {
-  const map = { 'Listing': 'listing', 'Procuring': 'procuring', 'Both': 'both', 'Referring': 'referral', 'Other': 'other' };
+  const map = { 'Listing': 'listing', 'Procuring': 'procuring', 'Both': 'both', 'Referring': 'referral', 'Referral': 'referral', 'Other': 'other' };
   return map[side] || 'other';
+}
+
+function voucherParseMoney(value) {
+  return parseFloat(String(value || '').replace(/[^0-9.\-]/g, '')) || 0;
+}
+
+function formatVoucherMoney(amount) {
+  if (!Number.isFinite(amount) || amount === 0) return '';
+  return '$' + amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function distributionSideForRepresentation() {
@@ -5663,7 +5682,26 @@ function updateDistChips() {
   updateDistPctTotal();
 }
 
+function updateDistributionAmounts() {
+  const grossDist = voucherParseMoney(document.getElementById('v-gross-dist')?.value);
+  document.querySelectorAll('#v-dist-body tr').forEach(tr => {
+    const pctInput = tr.querySelector('input[placeholder="%"]');
+    const pct = parseFloat(pctInput?.value) || 0;
+    const sideKey = distributionGrossKey(tr.querySelector('select.chip-select')?.value || '');
+    const amount = grossDist > 0 && pct > 0 ? grossDist * (pct / 100) : 0;
+    const formatted = formatVoucherMoney(amount);
+    tr.querySelectorAll('td.dist-gross-col input').forEach(input => {
+      const colKey = input.closest('[data-dist-gross]')?.dataset.distGross || '';
+      input.value = colKey === sideKey ? formatted : '';
+    });
+    const netInput = tr.querySelector('input.dist-net-input');
+    if (netInput) netInput.value = formatted;
+  });
+}
+
 function updateDistPctTotal() {
+  updateDistributionAmounts();
+
   let indicator = document.getElementById('dist-pct-total');
   if (!workflowCommissionSplitMustSum100()) {
     if (indicator) indicator.classList.add('is-hidden');
@@ -5673,8 +5711,6 @@ function updateDistPctTotal() {
 
   let total = 0;
   document.querySelectorAll('#v-dist-body tr').forEach(tr => {
-    // inputs[0]=agent name, inputs[1]=hidden select (no), inputs[2]=gross %
-    // Use the placeholder to find the correct % input reliably
     const pctInput = tr.querySelector('input[placeholder="%"]');
     if (pctInput) total += parseFloat(pctInput.value) || 0;
   });
@@ -5693,6 +5729,46 @@ function updateDistPctTotal() {
     indicator.className = 'pct-total-err';
     indicator.textContent = rounded + '% allocated - must total 100%';
   }
+}
+
+function syncDistributionFromBrokers(options) {
+  const force = Boolean(options && options.force);
+  const la = String(document.getElementById('v-la-name')?.value || '').trim();
+  const pa = String(document.getElementById('v-pa-name')?.value || '').trim();
+  const sameAgent = document.getElementById('v-same-agent')?.value === 'yes';
+  const defaultSide = distributionSideForRepresentation();
+  const body = document.getElementById('v-dist-body');
+  if (!body) return;
+
+  const rows = Array.from(body.querySelectorAll('tr'));
+  const hasNamedRows = rows.some(tr => String(tr.querySelector('input[placeholder="Agent name"]')?.value || '').trim());
+  if (hasNamedRows && !force) return;
+
+  const brokers = [];
+  if (sameAgent && la) {
+    brokers.push({ name: la, pct: 100 });
+  } else {
+    if (la) brokers.push({ name: la, pct: pa ? 50 : 100 });
+    if (pa && pa !== la) brokers.push({ name: pa, pct: la ? 50 : 100 });
+  }
+  if (!brokers.length) return;
+
+  body.innerHTML = '';
+  distRowCount = 0;
+  brokers.forEach(broker => {
+    addDistRow();
+    const tr = body.lastElementChild;
+    const nameInput = tr.querySelector('input[placeholder="Agent name"]');
+    const pctInput = tr.querySelector('input[placeholder="%"]');
+    const select = tr.querySelector('select.chip-select');
+    if (nameInput) nameInput.value = broker.name;
+    if (pctInput) pctInput.value = String(broker.pct);
+    if (select) {
+      select.value = defaultSide;
+      handleDistSideChange(select, false);
+    }
+  });
+  updateDistPctTotal();
 }
 
 function openDistSideSelect(selectEl) {
@@ -5724,12 +5800,12 @@ function addDistRow() {
       '<span class="side-chip cursor-pointer" onclick="openDistSideSelect(this.previousElementSibling)"></span>' +
     '</div></td>' +
     '<td><input class="w-55" placeholder="%" oninput="updateDistPctTotal()"></td>' +
-    '<td class="dist-gross-col" data-dist-gross="listing"><input placeholder="$0"></td>' +
-    '<td class="dist-gross-col" data-dist-gross="procuring"><input placeholder="$0"></td>' +
-    '<td class="dist-gross-col" data-dist-gross="both"><input placeholder="$0"></td>' +
-    '<td class="dist-gross-col" data-dist-gross="other"><input placeholder="$0"></td>' +
-    '<td class="dist-gross-col" data-dist-gross="referring"><input placeholder="$0"></td>' +
-    '<td><input class="text-strong" placeholder="$0"></td>' +
+    '<td class="dist-gross-col" data-dist-gross="listing"><input class="readonly-fill" placeholder="$0" readonly tabindex="-1"></td>' +
+    '<td class="dist-gross-col" data-dist-gross="procuring"><input class="readonly-fill" placeholder="$0" readonly tabindex="-1"></td>' +
+    '<td class="dist-gross-col" data-dist-gross="both"><input class="readonly-fill" placeholder="$0" readonly tabindex="-1"></td>' +
+    '<td class="dist-gross-col" data-dist-gross="other"><input class="readonly-fill" placeholder="$0" readonly tabindex="-1"></td>' +
+    '<td class="dist-gross-col" data-dist-gross="referring"><input class="readonly-fill" placeholder="$0" readonly tabindex="-1"></td>' +
+    '<td><input class="text-strong dist-net-input readonly-fill" placeholder="$0" readonly tabindex="-1"></td>' +
     '<td><button class="remove-row" onclick="this.closest(\'tr\').remove();updateDistributionGrossColumns();updateDistPctTotal();">&times;</button></td>';
   body.appendChild(tr);
   const sel = tr.querySelector('select');
@@ -5827,6 +5903,42 @@ function voucherTxnIsLease() {
   return txn === 'lease';
 }
 
+function voucherRepIsOther() {
+  return document.getElementById('v-rep-type')?.value === 'other';
+}
+
+function syncVoucherRepTypeVisibility() {
+  const repOther = voucherRepIsOther();
+  const txn = document.getElementById('v-txn-type')?.value || 'lease';
+  const isLease = voucherTxnIsLease();
+  const isSale = txn === 'sale';
+  const simplified = voucherTxnIsSimplified();
+
+  setHiddenState(document.getElementById('v-req-property-block'), repOther);
+  setHiddenState(document.getElementById('v-req-deal-meta-extra'), repOther);
+  setHiddenState(document.getElementById('v-req-deal-compliance'), repOther);
+  setHiddenState(document.getElementById('vstep-3'), repOther);
+  setHiddenState(document.getElementById('vstep-4'), repOther);
+  setHiddenState(document.getElementById('v-req-rent-inline'), repOther || !isLease);
+  setHiddenState(document.getElementById('vstep-5'), repOther || !isLease);
+  setHiddenState(document.getElementById('vstep-prop'), repOther || simplified);
+  setHiddenState(document.getElementById('v-req-lease'), repOther || !isLease);
+  setHiddenState(document.getElementById('v-req-sale'), repOther || !isSale);
+  setHiddenState(document.getElementById('v-lease-nnn-row'), repOther || simplified || !isLease);
+  setHiddenState(document.getElementById('v-sale-cap-field'), repOther || simplified || !isSale);
+  setHiddenState(document.getElementById('v-req-comm-lease'), !repOther && !isLease && !simplified);
+  setHiddenState(document.getElementById('v-req-comm-sale'), !isSale);
+  setHiddenState(document.getElementById('v-comm-bonus-field'), simplified || repOther);
+  document.querySelectorAll('.v-simplified-fee-field').forEach(el => {
+    el.classList.toggle('v-simplified-fee-prominent', simplified || repOther);
+  });
+  document.querySelectorAll('.v-lease-comm-primary-row').forEach(el => {
+    setHiddenState(el, simplified);
+  });
+  const consultingLabel = document.getElementById('v-comm-consulting-label');
+  if (consultingLabel) consultingLabel.classList.toggle('req', repOther);
+}
+
 const VOUCHER_REP_HINTS = {
   tenant_rep: 'Tenant rep — you represent the lessee/buyer. Invoice the opposite party unless noted below.',
   landlord_rep: 'Landlord rep — you represent the lessor/seller. Invoice the opposite party unless noted below.',
@@ -5914,11 +6026,14 @@ function suggestVoucherInvoiceFromRep(force) {
 
 function onVoucherRepTypeChange() {
   updateDistributionForRepresentation();
+  syncDistributionFromBrokers();
   const rep = document.getElementById('v-rep-type')?.value || '';
   const hint = document.getElementById('v-rep-type-hint');
   if (hint) hint.textContent = VOUCHER_REP_HINTS[rep] || VOUCHER_REP_HINTS.other;
   suggestVoucherInvoiceFromRep(false);
   syncVoucherRepresentedClientHidden();
+  syncVoucherRepTypeVisibility();
+  calcCommSummary();
   syncDealGlance();
 }
 
@@ -6002,28 +6117,37 @@ function showVoucherValidationChecklist(items) {
 function validateVoucherBeforeReview() {
   const items = [];
   const req = (label, scrollId, ok) => { if (!ok) items.push({ label, scrollId }); };
+  const repOther = voucherRepIsOther();
 
   req('Transaction type', '1', Boolean(document.getElementById('v-txn-type')?.value));
-  req('Property address', '1', Boolean(String(document.getElementById('v-address')?.value || '').trim()));
-  req('City, state, zip', '1', Boolean(String(document.getElementById('v-city')?.value || '').trim()) &&
-    Boolean(String(document.getElementById('v-state')?.value || '').trim()) &&
-    Boolean(String(document.getElementById('v-zip')?.value || '').trim()));
-  req('Deal SF', '1', Boolean(String(document.getElementById('v-l-dealsf')?.value || '').trim()));
+  if (!repOther) {
+    req('Property address', '1', Boolean(String(document.getElementById('v-address')?.value || '').trim()));
+    req('City, state, zip', '1', Boolean(String(document.getElementById('v-city')?.value || '').trim()) &&
+      Boolean(String(document.getElementById('v-state')?.value || '').trim()) &&
+      Boolean(String(document.getElementById('v-zip')?.value || '').trim()));
+    req('Deal SF', '1', Boolean(String(document.getElementById('v-l-dealsf')?.value || '').trim()));
+    req('Deal subtype', '1', Boolean(document.getElementById('v-deal-type-req')?.value));
+  }
   req('Representation type', '1', Boolean(document.getElementById('v-rep-type')?.value));
-  req('Deal subtype', '1', Boolean(document.getElementById('v-deal-type-req')?.value));
   req('Listing agent name', '2', Boolean(String(document.getElementById('v-la-name')?.value || '').trim()));
   req('Procuring agent name', '2', Boolean(String(document.getElementById('v-pa-name')?.value || '').trim()));
-  req('Lessor/seller contact & company', '3', Boolean(String(document.getElementById('v-ls-contact')?.value || '').trim()) &&
-    Boolean(String(document.getElementById('v-ls-company')?.value || '').trim()));
-  req('Lessee/buyer contact & company', '3', Boolean(String(document.getElementById('v-lb-contact')?.value || '').trim()) &&
-    Boolean(String(document.getElementById('v-lb-company')?.value || '').trim()));
+  if (!repOther) {
+    req('Lessor/seller contact & company', '3', Boolean(String(document.getElementById('v-ls-contact')?.value || '').trim()) &&
+      Boolean(String(document.getElementById('v-ls-company')?.value || '').trim()));
+    req('Lessee/buyer contact & company', '3', Boolean(String(document.getElementById('v-lb-contact')?.value || '').trim()) &&
+      Boolean(String(document.getElementById('v-lb-company')?.value || '').trim()));
+  }
 
   const txn = document.getElementById('v-txn-type')?.value || 'lease';
-  if (txn === 'lease') {
+  if (repOther) {
+    req('Flat fee amount', '6', Boolean(String(document.getElementById('v-comm-consulting')?.value || '').trim()));
+  } else if (txn === 'lease') {
     req('Lease start & end dates', '4', Boolean(document.getElementById('v-l-start')?.value) && Boolean(document.getElementById('v-l-end')?.value));
     req('Rate per SF', '4', Boolean(String(document.getElementById('v-l-rate')?.value || '').trim()));
     req('Rent schedule', '5', voucherHasRentScheduleRows());
-    req('Commission rate %', '6', Boolean(String(document.getElementById('v-l-comm-rate')?.value || '').trim()));
+    req('Commission rate %', '6', Boolean(String(document.getElementById('v-l-comm-rate')?.value || '').trim()) ||
+      document.querySelectorAll('#v-rent-body tr .rent-comm-pct-input').length > 0 &&
+      Array.from(document.querySelectorAll('#v-rent-body tr .rent-comm-pct-input')).some(el => String(el.value || '').trim()));
   } else if (txn === 'sale') {
     req('Sale price', '4', Boolean(String(document.getElementById('v-s-price')?.value || '').trim()));
     req('Commission %', '6', Boolean(String(document.getElementById('v-s-comm-pct')?.value || '').trim()));
@@ -6046,14 +6170,29 @@ function validateVoucherBeforeReview() {
 }
 
 function getVoucherStepCompletion() {
+  const repOther = voucherRepIsOther();
   const checks = {
     upload: () => hasVoucherDealDocumentUpload(),
-    '1': () => validateVoucherBeforeReview().items.every(i => !['Transaction type', 'Property address', 'City, state, zip', 'Deal SF', 'Representation type', 'Deal subtype'].includes(i.label)),
+    '1': () => {
+      const baseOk = Boolean(document.getElementById('v-txn-type')?.value) &&
+        Boolean(document.getElementById('v-rep-type')?.value);
+      if (repOther) return baseOk;
+      return baseOk &&
+        Boolean(String(document.getElementById('v-address')?.value || '').trim()) &&
+        Boolean(String(document.getElementById('v-city')?.value || '').trim()) &&
+        Boolean(String(document.getElementById('v-state')?.value || '').trim()) &&
+        Boolean(String(document.getElementById('v-zip')?.value || '').trim()) &&
+        Boolean(String(document.getElementById('v-l-dealsf')?.value || '').trim()) &&
+        Boolean(document.getElementById('v-deal-type-req')?.value);
+    },
     '2': () => Boolean(String(document.getElementById('v-la-name')?.value || '').trim()) &&
       Boolean(String(document.getElementById('v-pa-name')?.value || '').trim()),
-    '3': () => Boolean(String(document.getElementById('v-ls-contact')?.value || '').trim()) &&
-      Boolean(String(document.getElementById('v-lb-contact')?.value || '').trim()),
+    '3': () => repOther || (
+      Boolean(String(document.getElementById('v-ls-contact')?.value || '').trim()) &&
+      Boolean(String(document.getElementById('v-lb-contact')?.value || '').trim())
+    ),
     '4': () => {
+      if (repOther) return true;
       const txn = document.getElementById('v-txn-type')?.value || 'lease';
       if (txn === 'sale') return Boolean(String(document.getElementById('v-s-price')?.value || '').trim());
       if (voucherTxnIsSimplified()) return true;
@@ -6062,8 +6201,12 @@ function getVoucherStepCompletion() {
       return termsOk && voucherHasRentScheduleRows();
     },
     '6': () => {
+      if (repOther) return Boolean(String(document.getElementById('v-comm-consulting')?.value || '').trim());
       const txn = document.getElementById('v-txn-type')?.value || 'lease';
-      if (txn === 'lease') return Boolean(String(document.getElementById('v-l-comm-rate')?.value || '').trim());
+      if (txn === 'lease') {
+        return Boolean(String(document.getElementById('v-l-comm-rate')?.value || '').trim()) ||
+          Array.from(document.querySelectorAll('#v-rent-body tr .rent-comm-pct-input')).some(el => String(el.value || '').trim());
+      }
       if (txn === 'sale') return Boolean(String(document.getElementById('v-s-comm-pct')?.value || '').trim());
       return Boolean(String(document.getElementById('v-comm-consulting')?.value || '').trim());
     },
@@ -6087,30 +6230,13 @@ function getVoucherStepCompletion() {
 // ═══════════════════════════════════════════════════════════════════════════════
 function onVoucherTxnChange() {
   const txn = document.getElementById('v-txn-type').value;
-  const simplified = voucherTxnIsSimplified();
   const isLease = voucherTxnIsLease();
   const isSale = txn === 'sale';
   syncVoucherDealAliases();
-  setHiddenState(document.getElementById('v-req-lease'), !isLease);
-  setHiddenState(document.getElementById('v-req-sale'), !isSale);
-  setHiddenState(document.getElementById('v-req-rent-inline'), !isLease);
-  setHiddenState(document.getElementById('vstep-5'), !isLease);
-  setHiddenState(document.getElementById('v-lease-nnn-row'), simplified || !isLease);
-  setHiddenState(document.getElementById('v-sale-cap-field'), simplified || !isSale);
-  setHiddenState(document.getElementById('vstep-prop'), simplified);
-  const reqCommLease = document.getElementById('v-req-comm-lease');
-  const reqCommSale = document.getElementById('v-req-comm-sale');
-  setHiddenState(reqCommLease, !isLease && !simplified);
-  setHiddenState(reqCommSale, !isSale);
-  document.querySelectorAll('.v-simplified-fee-field').forEach(el => {
-    el.classList.toggle('v-simplified-fee-prominent', simplified);
-  });
-  document.querySelectorAll('.v-lease-comm-primary-row').forEach(el => {
-    setHiddenState(el, simplified);
-  });
+  syncVoucherRepTypeVisibility();
+  setHiddenState(document.getElementById('v-other-type-field'), txn !== 'other');
   document.getElementById('v-lbl-lessor').textContent = isSale ? 'Seller' : 'Lessor / Seller';
   document.getElementById('v-lbl-lessee').textContent = isSale ? 'Buyer' : 'Lessee / Buyer';
-  setHiddenState(document.getElementById('v-other-type-field'), txn !== 'other');
   safeUpdateVoucherRequiredDocStatus();
   syncVoucherBranchToggle();
   calcCommSummary();
@@ -6150,6 +6276,7 @@ function onSameAgentChange() {
     document.getElementById('v-pa-phone').value = document.getElementById('v-la-phone').value;
     document.getElementById('v-pa-address').value = document.getElementById('v-la-address').value;
   }
+  syncDistributionFromBrokers({ force: true });
 }
 
 // Payment schedule rows
@@ -6174,16 +6301,17 @@ function calcCommSummary() {
     let totalConsideration = 0;
     let totalMonths = 0;
     let weightedRent = 0;
+    let totalCommDue = 0;
     document.querySelectorAll('#v-rent-body tr').forEach(tr => {
       const monthly = vRentRowMonthly(tr);
       const months = vRentRowMonths(tr);
       totalConsideration += monthly * months;
       totalMonths += months;
       weightedRent += monthly * months;
+      totalCommDue += vRentRowCommissionDue(tr);
     });
     document.getElementById('v-l-consideration').value = totalConsideration > 0 ? '$' + totalConsideration.toLocaleString() : '';
-    const globalCommRate = parseFloat(document.getElementById('v-l-comm-rate').value) || 0;
-    leaseComm = totalConsideration * (globalCommRate / 100);
+    leaseComm = totalCommDue;
     document.getElementById('v-l-comm-due').value = leaseComm > 0 ? '$' + leaseComm.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '';
 
     const dealSf = parseFloat(document.getElementById('v-l-dealsf')?.value?.replace(/[^0-9.]/g, '')) || 0;
@@ -6224,6 +6352,7 @@ function calcCommSummary() {
   document.getElementById('v-dist-total-outside').value = totalOutside > 0 ? '$' + totalOutside.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '$0.00';
   const grossDist = totalInvoice - totalOutside;
   document.getElementById('v-gross-dist').value = '$' + grossDist.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+  updateDistributionAmounts();
   syncDealGlance();
   updateVoucherRentStepIndicator();
 }
@@ -7354,15 +7483,14 @@ function exportVoucherPdf() {
       doc.setTextColor(0);
       const rentData = [];
       const dealSf = parseFloat(getVal('v-l-dealsf').replace(/[^0-9.]/g, '')) || 0;
-      const commRate = parseFloat(getVal('v-l-comm-rate').replace(/[^0-9.]/g, '')) || 0;
       rentRows.forEach((tr, i) => {
         const isFree = tr.querySelector('.rent-free')?.checked;
         const monthly = isFree ? 'Free' : (tr.querySelector('.rent-monthly')?.value || '');
         const months = tr.querySelector('.rent-months')?.value || '';
         const monthlyNum = isFree ? 0 : (parseFloat(String(monthly).replace(/[^0-9.\-]/g, '')) || 0);
         const monthsNum = parseInt(months, 10) || 0;
-        const consideration = monthlyNum * monthsNum;
-        const commDue = consideration * (commRate / 100);
+        const commRate = vRentRowCommissionRate(tr);
+        const commDue = vRentRowCommissionDue(tr);
         rentData.push([
           String(i + 1),
           months,
@@ -7662,12 +7790,11 @@ function voucherWorkbookResolveInvoiceTarget() {
 }
 
 function voucherWorkbookRentRows() {
-  const rate = voucherWorkbookPercentNumber(getVal('v-l-comm-rate'));
   return Array.from(document.querySelectorAll('#v-rent-body tr'))
     .map(tr => ({
       monthly: voucherWorkbookParseNumber(tr.querySelector('.rent-monthly')?.value),
       months: voucherWorkbookParseNumber(tr.querySelector('.rent-months')?.value),
-      commissionRate: rate,
+      commissionRate: vRentRowCommissionRate(tr),
     }))
     .filter(row => (row.monthly != null || row.months != null) && (row.monthly != null || row.months));
 }
@@ -9961,6 +10088,7 @@ initAgentPicker('s-requested-by');
 initAgentPicker('v-la-name', {
   onSelect: function(u) {
     document.getElementById('v-la-house').value = 'Lee & Associates - Newport Beach';
+    syncDistributionFromBrokers();
   }
 });
 
@@ -9968,7 +10096,14 @@ initAgentPicker('v-pa-name', {
   showAll: true,
   onSelect: function(u) {
     document.getElementById('v-pa-house').value = 'Lee & Associates - Newport Beach';
+    syncDistributionFromBrokers();
   }
+});
+
+['v-la-name', 'v-pa-name'].forEach(id => {
+  document.getElementById(id)?.addEventListener('blur', function() {
+    syncDistributionFromBrokers();
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -10701,6 +10836,7 @@ function collectVoucherData() {
       monthly: monthly || 0,
       months: months || 0,
       free: isFree,
+      commissionRate: vRentRowCommissionRate(tr),
     };
   }).filter(row => row.months > 0);
   return {

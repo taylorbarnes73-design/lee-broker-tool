@@ -440,7 +440,8 @@ div.row.comp-sale-only { display: none !important; }
 #v-req-rent-inline .v-rent-table .col-months { width: 72px; }
 #v-req-rent-inline .v-rent-table .col-monthly { width: auto; }
 #v-req-rent-inline .v-rent-table .col-free { width: 48px; text-align: center; }
-#v-req-rent-inline .v-rent-table .col-comm-pct { width: 64px; text-align: center; }
+#v-req-rent-inline .v-rent-table .col-comm-pct { width: 72px; text-align: center; }
+#v-req-rent-inline .v-rent-table .rent-comm-pct-input { text-align: center; }
 #v-req-rent-inline .v-rent-table .col-comm-due { width: 96px; text-align: right; }
 #v-req-rent-inline .v-rent-table .rent-comm-due { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
 #v-req-rent-inline .v-rent-comm-bar { margin-top: 8px; }
