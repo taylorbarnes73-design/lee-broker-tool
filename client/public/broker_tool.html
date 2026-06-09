@@ -1351,10 +1351,13 @@
       <div class="field"><label>Gross $$ to Distribute</label><input id="v-gross-dist" class="invoice-highlight-input" placeholder="$0" readonly></div>
     </div>
     <table class="broker-table" id="v-dist-table">
-      <thead><tr><th>Agent Name</th><th class="table-col-100">Side</th><th class="table-col-65">Gross %</th><th class="dist-gross-col" data-dist-gross="listing">Listing Gross</th><th class="dist-gross-col" data-dist-gross="procuring">Procuring Gross</th><th class="dist-gross-col" data-dist-gross="both">Both Gross</th><th class="dist-gross-col" data-dist-gross="other">Other Gross</th><th class="dist-gross-col" data-dist-gross="referring">Referring Gross</th><th>Net $</th><th class="table-col-compact"></th></tr></thead>
+      <thead><tr><th>Agent Name</th><th class="table-col-100">Side</th><th class="table-col-65">Gross %</th><th class="dist-gross-col" data-dist-gross="listing">Listing Gross</th><th class="dist-gross-col" data-dist-gross="procuring">Procuring Gross</th><th class="dist-gross-col" data-dist-gross="both">Both Gross</th><th class="dist-gross-col" data-dist-gross="other">Other Gross</th><th class="dist-gross-col" data-dist-gross="referring">Referring Gross</th><th class="dist-gross-col" data-dist-gross="outside">Outside Gross</th><th>Net $</th><th class="table-col-compact"></th></tr></thead>
       <tbody id="v-dist-body"></tbody>
     </table>
-    <button class="btn btn-gray top-gap-sm" onclick="addDistRow()">+ Add Agent</button>
+    <div class="top-gap-sm" style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-gray" onclick="addDistRow()">+ Add Agent</button>
+      <button class="btn btn-gray" onclick="addOutsideDistRow()">+ Add Outside Broker</button>
+    </div>
   </div>
 
   <!-- Action Buttons -->
@@ -5179,7 +5182,7 @@ function syncDealGlance() {
   _dgSet('dg-commpct', commPct ? (commPct + '%') : '—');
   const commDue = isLease ? _dgVal('v-l-comm-due') : _dgVal('v-s-comm-due');
   _dgSet('dg-commdue', commDue || '$0');
-  const outside = _dgVal('v-total-outside');
+  const outside = _dgVal('v-dist-total-outside') || _dgVal('v-total-outside');
   _dgSet('dg-outside', outside || '$0');
   const gross = _dgVal('v-gross-dist');
   _dgSet('dg-gross', gross || '$0');
@@ -5623,7 +5626,7 @@ function voucherZipAutofill(zip) {
 }
 
 function getSideChipClass(side) {
-  const map = { 'Listing': 'listing', 'Procuring': 'procuring', 'Both': 'both', 'Referring': 'referral', 'Referral': 'referral', 'Other': 'other' };
+  const map = { 'Listing': 'listing', 'Procuring': 'procuring', 'Both': 'both', 'Referring': 'referral', 'Referral': 'referral', 'Other': 'other', 'Outside': 'outside' };
   return map[side] || 'other';
 }
 
@@ -5667,7 +5670,10 @@ function handleDistSideChange(selectEl, userSelected = true) {
   }
   closeDistSideSelect(selectEl);
   updateDistributionGrossColumns();
+  const tr = selectEl.closest('tr');
+  if (tr) syncDistRowFromPct(tr);
   updateDistPctTotal();
+  if (tr && distRowIsOutside(tr)) calcCommSummary();
 }
 
 function updateDistributionForRepresentation() {
@@ -5702,20 +5708,142 @@ function updateDistChips() {
   updateDistPctTotal();
 }
 
-function updateDistributionAmounts() {
-  const grossDist = voucherParseMoney(document.getElementById('v-gross-dist')?.value);
+let distSyncDepth = 0;
+
+function withDistSync(fn) {
+  distSyncDepth += 1;
+  try { fn(); } finally { distSyncDepth -= 1; }
+}
+
+function getDistributionGrossPool() {
+  return voucherParseMoney(document.getElementById('v-gross-dist')?.value);
+}
+
+function getDistributionInvoiceTotal() {
+  return voucherParseMoney(document.getElementById('v-dist-total-invoice')?.value);
+}
+
+function distRowSide(tr) {
+  return tr?.querySelector('select.chip-select')?.value || '';
+}
+
+function distRowIsOutside(tr) {
+  return distRowSide(tr) === 'Outside';
+}
+
+function distRowActiveGrossInput(tr) {
+  const sideKey = distributionGrossKey(distRowSide(tr));
+  return tr?.querySelector('td.dist-gross-col[data-dist-gross="' + sideKey + '"] input');
+}
+
+function setDistRowGrossAmount(tr, sideKey, amount) {
+  const rounded = Math.round(amount * 100) / 100;
+  const formatted = formatVoucherMoney(rounded);
+  tr.querySelectorAll('td.dist-gross-col input').forEach(input => {
+    const colKey = input.closest('[data-dist-gross]')?.dataset.distGross || '';
+    input.value = colKey === sideKey ? formatted : '';
+  });
+  const netInput = tr.querySelector('input.dist-net-input');
+  if (netInput) netInput.value = distRowIsOutside(tr) ? '' : formatted;
+}
+
+function syncDistRowFromPct(tr) {
+  if (!tr || distSyncDepth) return;
+  const pctInput = tr.querySelector('input[placeholder="%"]');
+  const pct = parseFloat(pctInput?.value) || 0;
+  const sideKey = distributionGrossKey(distRowSide(tr));
+  let amount = 0;
+  if (distRowIsOutside(tr)) {
+    const invoice = getDistributionInvoiceTotal();
+    amount = invoice > 0 && pct > 0 ? invoice * (pct / 100) : 0;
+  } else {
+    const pool = getDistributionGrossPool();
+    amount = pool > 0 && pct > 0 ? pool * (pct / 100) : 0;
+  }
+  setDistRowGrossAmount(tr, sideKey, amount);
+}
+
+function syncDistRowFromGross(tr, grossInput) {
+  if (!tr || distSyncDepth) return;
+  const amount = voucherParseMoney(grossInput?.value);
+  const sideKey = distributionGrossKey(distRowSide(tr));
+  let pct = 0;
+  if (distRowIsOutside(tr)) {
+    const invoice = getDistributionInvoiceTotal();
+    pct = invoice > 0 && amount > 0 ? (amount / invoice) * 100 : 0;
+  } else {
+    const pool = getDistributionGrossPool();
+    pct = pool > 0 && amount > 0 ? (amount / pool) * 100 : 0;
+  }
+  const pctInput = tr.querySelector('input[placeholder="%"]');
+  if (pctInput) {
+    pctInput.value = pct > 0 ? String(Math.round(pct * 100) / 100) : '';
+  }
+  setDistRowGrossAmount(tr, sideKey, amount);
+}
+
+function handleDistPctInput(inputEl) {
+  if (distSyncDepth) return;
+  const tr = inputEl?.closest('tr');
+  if (!tr) return;
+  withDistSync(function() {
+    syncDistRowFromPct(tr);
+    updateDistPctTotal();
+    if (distRowIsOutside(tr)) calcCommSummary();
+  });
+}
+
+function handleDistGrossInput(inputEl) {
+  if (distSyncDepth) return;
+  const tr = inputEl?.closest('tr');
+  if (!tr) return;
+  withDistSync(function() {
+    syncDistRowFromGross(tr, inputEl);
+    updateDistPctTotal();
+    if (distRowIsOutside(tr)) calcCommSummary();
+  });
+}
+
+function getOutsideAgentsTableTotal() {
+  let total = 0;
+  document.querySelectorAll('#v-outside-body tr').forEach(tr => {
+    const inputs = tr.querySelectorAll('input');
+    const amtInput = inputs[inputs.length - 1];
+    total += voucherParseMoney(amtInput?.value);
+  });
+  return total;
+}
+
+function getDistributionOutsideTotal() {
+  let total = 0;
   document.querySelectorAll('#v-dist-body tr').forEach(tr => {
-    const pctInput = tr.querySelector('input[placeholder="%"]');
-    const pct = parseFloat(pctInput?.value) || 0;
-    const sideKey = distributionGrossKey(tr.querySelector('select.chip-select')?.value || '');
-    const amount = grossDist > 0 && pct > 0 ? grossDist * (pct / 100) : 0;
-    const formatted = formatVoucherMoney(amount);
-    tr.querySelectorAll('td.dist-gross-col input').forEach(input => {
-      const colKey = input.closest('[data-dist-gross]')?.dataset.distGross || '';
-      input.value = colKey === sideKey ? formatted : '';
-    });
-    const netInput = tr.querySelector('input.dist-net-input');
-    if (netInput) netInput.value = formatted;
+    if (!distRowIsOutside(tr)) return;
+    total += voucherParseMoney(distRowActiveGrossInput(tr)?.value);
+  });
+  return total;
+}
+
+function getCombinedOutsideTotal() {
+  return getOutsideAgentsTableTotal() + getDistributionOutsideTotal();
+}
+
+function updateDistributionAmounts() {
+  if (distSyncDepth) return;
+  const grossDist = getDistributionGrossPool();
+  const agentRows = Array.from(document.querySelectorAll('#v-dist-body tr')).filter(tr => !distRowIsOutside(tr));
+  let allocated = 0;
+  agentRows.forEach((tr, index) => {
+    const pct = parseFloat(tr.querySelector('input[placeholder="%"]')?.value) || 0;
+    let amount = grossDist > 0 && pct > 0 ? grossDist * (pct / 100) : 0;
+    amount = Math.round(amount * 100) / 100;
+    if (index === agentRows.length - 1 && agentRows.length > 1 && grossDist > 0) {
+      amount = Math.max(0, Math.round((grossDist - allocated) * 100) / 100);
+    }
+    allocated += amount;
+    setDistRowGrossAmount(tr, distributionGrossKey(distRowSide(tr)), amount);
+  });
+  document.querySelectorAll('#v-dist-body tr').forEach(tr => {
+    if (distRowIsOutside(tr)) syncDistRowFromPct(tr);
   });
 }
 
@@ -5731,6 +5859,7 @@ function updateDistPctTotal() {
 
   let total = 0;
   document.querySelectorAll('#v-dist-body tr').forEach(tr => {
+    if (distRowIsOutside(tr)) return;
     const pctInput = tr.querySelector('input[placeholder="%"]');
     if (pctInput) total += parseFloat(pctInput.value) || 0;
   });
@@ -5739,7 +5868,7 @@ function updateDistPctTotal() {
     indicator.id = 'dist-pct-total';
     indicator.className = 'status-copy text-strong';
     const btn = document.querySelector('button[onclick="addDistRow()"]');
-    if (btn) btn.after(indicator);
+    if (btn && btn.parentElement) btn.parentElement.after(indicator);
   }
   const rounded = Math.round(total * 10) / 10;
   if (Math.abs(rounded - 100) < 0.1) {
@@ -5803,35 +5932,51 @@ function closeDistSideSelect(selectEl) {
 }
 
 let distRowCount = 0;
-function addDistRow() {
+function addDistRow(options) {
   const body = document.getElementById('v-dist-body');
   if (!body) return;
   distRowCount += 1;
   const nameId = 'v-dist-agent-' + distRowCount;
-  const defaultSide = distributionSideForRepresentation();
+  const presetSide = options && options.side ? options.side : '';
+  const defaultSide = presetSide || distributionSideForRepresentation();
+  const grossInputAttrs = 'class="dist-gross-input" placeholder="$0" oninput="handleDistGrossInput(this)"';
   const tr = document.createElement('tr');
   tr.innerHTML = '<td><div class="agent-picker" id="picker-' + nameId + '">' +
       '<input id="' + nameId + '" autocomplete="off" placeholder="Agent name">' +
       '<div class="agent-dd" id="dd-' + nameId + '"></div></div></td>' +
     '<td><div class="inline-select-chip">' +
-      '<select class="chip-select" data-auto-side="true" onchange="handleDistSideChange(this)" onblur="closeDistSideSelect(this)">' +
-        '<option>Listing</option><option>Procuring</option><option>Both</option><option>Other</option><option>Referring</option>' +
+      '<select class="chip-select" data-auto-side="' + (presetSide ? 'false' : 'true') + '" onchange="handleDistSideChange(this)" onblur="closeDistSideSelect(this)">' +
+        '<option>Listing</option><option>Procuring</option><option>Both</option><option>Other</option><option>Referring</option><option>Outside</option>' +
       '</select>' +
       '<span class="side-chip cursor-pointer" onclick="openDistSideSelect(this.previousElementSibling)"></span>' +
     '</div></td>' +
-    '<td><input class="w-55" placeholder="%" oninput="updateDistPctTotal()"></td>' +
-    '<td class="dist-gross-col" data-dist-gross="listing"><input class="readonly-fill" placeholder="$0" readonly tabindex="-1"></td>' +
-    '<td class="dist-gross-col" data-dist-gross="procuring"><input class="readonly-fill" placeholder="$0" readonly tabindex="-1"></td>' +
-    '<td class="dist-gross-col" data-dist-gross="both"><input class="readonly-fill" placeholder="$0" readonly tabindex="-1"></td>' +
-    '<td class="dist-gross-col" data-dist-gross="other"><input class="readonly-fill" placeholder="$0" readonly tabindex="-1"></td>' +
-    '<td class="dist-gross-col" data-dist-gross="referring"><input class="readonly-fill" placeholder="$0" readonly tabindex="-1"></td>' +
+    '<td><input class="w-55 dist-pct-input" placeholder="%" oninput="handleDistPctInput(this)"></td>' +
+    '<td class="dist-gross-col" data-dist-gross="listing"><input ' + grossInputAttrs + '></td>' +
+    '<td class="dist-gross-col" data-dist-gross="procuring"><input ' + grossInputAttrs + '></td>' +
+    '<td class="dist-gross-col" data-dist-gross="both"><input ' + grossInputAttrs + '></td>' +
+    '<td class="dist-gross-col" data-dist-gross="other"><input ' + grossInputAttrs + '></td>' +
+    '<td class="dist-gross-col" data-dist-gross="referring"><input ' + grossInputAttrs + '></td>' +
+    '<td class="dist-gross-col" data-dist-gross="outside"><input ' + grossInputAttrs + '></td>' +
     '<td><input class="text-strong dist-net-input readonly-fill" placeholder="$0" readonly tabindex="-1"></td>' +
-    '<td><button class="remove-row" onclick="this.closest(\'tr\').remove();updateDistributionGrossColumns();updateDistPctTotal();">&times;</button></td>';
+    '<td><button class="remove-row" onclick="this.closest(\'tr\').remove();updateDistributionGrossColumns();updateDistPctTotal();calcCommSummary();">&times;</button></td>';
   body.appendChild(tr);
   const sel = tr.querySelector('select');
   sel.value = defaultSide;
   handleDistSideChange(sel, false);
   initAgentPicker(nameId, { users: VOUCHER_DISTRIBUTION_AGENTS });
+  if (options && options.name) {
+    const nameInput = tr.querySelector('input[placeholder="Agent name"]');
+    if (nameInput) nameInput.value = options.name;
+  }
+}
+
+function addOutsideDistRow() {
+  addDistRow({ side: 'Outside' });
+  const toggle = document.getElementById('v-outside-toggle');
+  if (toggle && !toggle.checked) {
+    toggle.checked = true;
+    toggleOutsideAgents(true);
+  }
 }
 
 function syncVoucherDealAliases() {
@@ -6180,6 +6325,7 @@ function validateVoucherBeforeReview() {
   if (workflowCommissionSplitMustSum100()) {
     let total = 0;
     document.querySelectorAll('#v-dist-body tr').forEach(tr => {
+      if (distRowIsOutside(tr)) return;
       const pctInput = tr.querySelector('input[placeholder="%"]');
       if (pctInput) total += parseFloat(pctInput.value) || 0;
     });
@@ -6368,7 +6514,7 @@ function calcCommSummary() {
 
   // Update distribution summary
   document.getElementById('v-dist-total-invoice').value = document.getElementById('v-total-invoice').value;
-  const totalOutside = parseFloat(document.getElementById('v-total-outside')?.value?.replace(/[^0-9.\-]/g, '')) || 0;
+  const totalOutside = getCombinedOutsideTotal();
   document.getElementById('v-dist-total-outside').value = totalOutside > 0 ? '$' + totalOutside.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '$0.00';
   const grossDist = totalInvoice - totalOutside;
   document.getElementById('v-gross-dist').value = '$' + grossDist.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -6391,13 +6537,8 @@ function calcNNNTotal() {
 
 // Auto-calc outside agent totals
 function calcOutsideTotals() {
-  let total = 0;
-  document.querySelectorAll('#v-outside-body tr').forEach(tr => {
-    const inputs = tr.querySelectorAll('input');
-    const amtInput = inputs[inputs.length - 1]; // last input is amount
-    total += parseFloat(amtInput?.value?.replace(/[^0-9.\-]/g, '')) || 0;
-  });
-  document.getElementById('v-total-outside').value = total > 0 ? '$' + total.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '';
+  const tableTotal = getOutsideAgentsTableTotal();
+  document.getElementById('v-total-outside').value = tableTotal > 0 ? '$' + tableTotal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '';
   calcCommSummary();
 }
 document.getElementById('v-outside-body')?.addEventListener('input', calcOutsideTotals);
@@ -7840,6 +7981,7 @@ function voucherWorkbookDistributionSide(side) {
   if (normalized === 'both') return 'Both';
   if (normalized === 'other') return 'Other';
   if (normalized === 'referring') return 'Referring';
+  if (normalized === 'outside') return 'Outside';
   if (normalized === 'listing') return 'Listing';
   return '';
 }

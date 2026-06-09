@@ -546,6 +546,7 @@ div.row.comp-sale-only { display: none !important; }
 .side-chip.procuring { background: #D1FAE5; color: #065F46; }
 .side-chip.both { background: #FEF2F2; color: #991B1B; }
 .side-chip.referral { background: #FEF3C7; color: #92400E; }
+.side-chip.outside { background: #FFF7ED; color: #9A3412; }
 .side-chip.other { background: #F3F4F6; color: #374151; }
 /* % total validation indicator */
 .pct-total-ok { color: var(--green); font-weight: 700; }
@@ -1473,6 +1474,7 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 .side-chip.procuring  { background: #ECFDF5; color: #065F46; }
 .side-chip.both       { background: #FEF2F2; color: #991B1B; }
 .side-chip.referral   { background: #FFF7ED; color: #9A3412; }
+.side-chip.outside    { background: #FFF7ED; color: #9A3412; }
 .side-chip.other      { background: #F3F4F6; color: #374151; }
 
 /* ── % total indicator ── */
