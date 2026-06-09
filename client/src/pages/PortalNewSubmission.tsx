@@ -23,8 +23,9 @@ const PRIMARY_FORMS: FormCard[] = [
   },
   {
     title: "Sign request",
-    description: "Order signs, upload placement docs, and send specs to admin.",
-    href: "/tool?tab=sign",
+    description: "Property details in the portal, then sign types and placement in the workspace.",
+    href: "/portal/forms/sign",
+    badge: "Portal pilot",
   },
   {
     title: "Commission voucher",
@@ -99,7 +100,9 @@ function FormActionCard({ card, accent }: { card: FormCard; accent: string }) {
         )}
       </div>
       <p style={{ margin: 0, fontSize: 13, color: "var(--ink-600)", lineHeight: 1.45 }}>{card.description}</p>
-      <span style={{ fontSize: 12, fontWeight: 700, color: accent, marginTop: 4 }}>Open in broker tool →</span>
+      <span style={{ fontSize: 12, fontWeight: 700, color: accent, marginTop: 4 }}>
+        {card.href.startsWith("/portal/forms/") ? "Start in portal →" : "Open in broker tool →"}
+      </span>
     </a>
   );
 }

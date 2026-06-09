@@ -14,6 +14,7 @@ import PortalAdminDealiusTools from "./pages/PortalAdminDealiusTools";
 import PortalAdminListingImport from "./pages/PortalAdminListingImport";
 import PortalNewSubmission from "./pages/PortalNewSubmission";
 import PortalVoucherForm from "./pages/PortalVoucherForm";
+import PortalSignForm from "./pages/PortalSignForm";
 import PortalQuickConvert from "./pages/PortalQuickConvert";
 import PortalAccount from "./pages/PortalAccount";
 import PortalAdminAuditLog from "./pages/PortalAdminAuditLog";
@@ -323,6 +324,11 @@ function Router() {
       <Route path="/portal/forms/voucher">
         <PortalRoute>
           <PortalVoucherForm />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/forms/sign">
+        <PortalRoute>
+          <PortalSignForm />
         </PortalRoute>
       </Route>
       <Route path="/portal/convert">
