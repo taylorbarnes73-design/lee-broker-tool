@@ -41,7 +41,7 @@
         <div class="header-user-email" id="header-user-email"></div>
       </div>
       <nav class="header-portal-actions" aria-label="Portal links">
-        <button type="button" class="submission-queue-button" onclick="switchTab('queue')">Queue</button>
+        <button type="button" class="submission-queue-button" onclick="switchTab('queue')">Submissions</button>
         <button type="button" class="submission-queue-button" onclick="switchTab('drafts')">Drafts</button>
         <a class="header-portal-link" href="/portal">Portal</a>
         <button type="button" class="header-sign-out-btn" onclick="signOut()">Sign Out</button>
@@ -124,7 +124,7 @@
     </div>
     <div class="tab broker-nav-item" data-tab="queue" onclick="switchTab('queue')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-      <span>My Queue</span>
+      <span>My submissions</span>
     </div>
     <div class="tab broker-nav-item" data-tab="drafts" onclick="switchTab('drafts')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -2387,15 +2387,16 @@
 
 <div id="tab-marketing-request" class="panel" data-pane="marketing-request">
   <div class="marketing-request-shell">
-    <div class="card-head">
-      <div class="card-head-left">
-        <div class="card-eyebrow">Marketing</div>
-        <h2>Marketing Request</h2>
+    <div class="page-head broker-page-head">
+      <div class="page-head-left">
+        <div class="page-eyebrow">Marketing</div>
+        <h1 class="page-h1">Marketing Request</h1>
+        <p class="marketing-request-intro">Request flyers, campaigns, social content, signage, and other marketing deliverables. Complete the sections below and attach source files when you have them.</p>
       </div>
     </div>
 
-    <div class="card marketing-request-card">
-      <div class="form-section-title">Requestor Information</div>
+    <div class="card marketing-request-card broker-form-card">
+      <div class="form-section-title">Requestor information</div>
       <div class="row c2">
         <div class="field">
           <label for="mr-requester-name">Requester Name <span class="muted-label">(Required)</span></label>
@@ -2411,8 +2412,8 @@
         <input id="mr-team" placeholder="Team, department, or point of contact">
       </div>
 
-      <div class="marketing-request-section">
-        <div class="form-section-title">Project Overview</div>
+      <div class="form-section">
+        <div class="form-section-title">Project overview</div>
         <div class="field">
           <label for="mr-project-title">Project Title <span class="muted-label">(Required)</span></label>
           <input id="mr-project-title" placeholder="Example: 6255 W Sunset listing flyer">
@@ -2455,8 +2456,8 @@
         </div>
       </div>
 
-      <div class="marketing-request-section">
-        <div class="form-section-title">Deliverables Needed</div>
+      <div class="form-section">
+        <div class="form-section-title">Deliverables needed</div>
         <div class="check-group marketing-request-check-grid">
           <label><input type="checkbox" name="mr-deliverables" value="Print Collateral"> Print collateral</label>
           <label><input type="checkbox" name="mr-deliverables" value="Digital Graphic"> Digital graphic</label>
@@ -2473,9 +2474,9 @@
         </div>
       </div>
 
-      <div class="marketing-request-section">
+      <div class="form-section">
         <div class="form-section-title">Timeline</div>
-        <div class="row c3">
+        <div class="row c3 marketing-request-timeline-row">
           <div class="field">
             <label for="mr-due-date">Requested Due Date <span class="muted-label">(Required)</span></label>
             <input id="mr-due-date" type="date">
@@ -2511,8 +2512,8 @@
         </div>
       </div>
 
-      <div class="marketing-request-section">
-        <div class="form-section-title">Content &amp; Assets</div>
+      <div class="form-section">
+        <div class="form-section-title">Content &amp; assets</div>
         <div class="field">
           <label for="mr-copy">Copy / Messaging</label>
           <textarea id="mr-copy" rows="4" placeholder="Paste approved copy or describe what needs to be written."></textarea>
@@ -2533,8 +2534,8 @@
         </div>
       </div>
 
-      <div class="marketing-request-section">
-        <div class="form-section-title">Audience &amp; Distribution</div>
+      <div class="form-section">
+        <div class="form-section-title">Audience &amp; distribution</div>
         <div class="field">
           <label for="mr-target-audience">Target Audience</label>
           <input id="mr-target-audience" placeholder="Clients, prospects, brokers, investors, tenants...">
@@ -2549,8 +2550,8 @@
         </div>
       </div>
 
-      <div class="marketing-request-section">
-        <div class="form-section-title">Additional Notes &amp; Attachments</div>
+      <div class="form-section">
+        <div class="form-section-title">Additional notes &amp; attachments</div>
         <div class="field">
           <label for="mr-notes">Additional Notes</label>
           <textarea id="mr-notes" rows="4" placeholder="Anything else the marketing team should know?"></textarea>
@@ -2578,34 +2579,35 @@
 </div><!-- /tab-marketing-request -->
 
 <div id="tab-queue" class="panel">
-  <div class="queue-shell">
-    <div class="queue-header">
-      <div>
-        <div class="admin-page-eyebrow">Broker Desk</div>
-        <h2>Submission Queue</h2>
-      </div>
-      <button type="button" class="btn btn-outline" id="btn-broker-queue-refresh" onclick="refreshBrokerQueue()"><span class="btn-spinner"></span><span class="btn-label">Refresh Queue</span></button>
+  <div class="page-head broker-page-head">
+    <div class="page-head-left">
+      <div class="page-eyebrow">Broker Desk</div>
+      <h1 class="page-h1">My submissions</h1>
+      <p class="submissions-hint">Track active requests and where each sits in the office processing line.</p>
     </div>
+    <div class="page-head-right">
+      <button type="button" class="btn btn-outline" id="btn-broker-queue-refresh" onclick="refreshBrokerQueue()"><span class="btn-spinner"></span><span class="btn-label">Refresh</span></button>
+    </div>
+  </div>
 
-    <div class="stat-grid queue-stat-grid">
-      <div class="stat-card">
-        <div class="stat-header"><span class="stat-label">Your Active Requests</span></div>
-        <div class="stat-value" id="queue-stat-yours">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-header"><span class="stat-label">Total Active Queue</span></div>
-        <div class="stat-value" id="queue-stat-total">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-header"><span class="stat-label">Next Position</span></div>
-        <div class="stat-value" id="queue-stat-next">&mdash;</div>
-      </div>
+  <div class="stat-grid queue-stat-grid">
+    <div class="stat-card">
+      <div class="stat-header"><span class="stat-label">Your active submissions</span></div>
+      <div class="stat-value" id="queue-stat-yours">0</div>
     </div>
+    <div class="stat-card">
+      <div class="stat-header"><span class="stat-label">Office queue total</span></div>
+      <div class="stat-value" id="queue-stat-total">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-header"><span class="stat-label">Next in line</span></div>
+      <div class="stat-value" id="queue-stat-next">&mdash;</div>
+    </div>
+  </div>
 
-    <div class="card">
-      <div id="broker-queue-status" class="queue-status">Loading queue&hellip;</div>
-      <div id="broker-queue-list" class="queue-list"></div>
-    </div>
+  <div class="card queue-card">
+    <div id="broker-queue-status" class="queue-status">Loading submissions&hellip;</div>
+    <div id="broker-queue-list" class="queue-list"></div>
   </div>
 </div><!-- /tab-queue -->
 
@@ -15268,7 +15270,7 @@ function setQueueStatus(message, isError) {
 
 function renderBrokerQueueError() {
   const list = document.getElementById('broker-queue-list');
-  setQueueStatus("We couldn't load your active queue right now. Try refreshing again in a moment.", true);
+  setQueueStatus("We couldn't load your submissions right now. Try refreshing again in a moment.", true);
   const btn = document.getElementById('btn-broker-queue-refresh');
   if (btn) {
     btn.classList.add('queue-retry-ready');
@@ -15276,7 +15278,7 @@ function renderBrokerQueueError() {
     if (label) label.textContent = 'Try Again';
   }
   if (!list) return;
-  list.innerHTML = '<div class="empty-state queue-empty"><div class="empty-icon"></div><h3>Queue unavailable</h3><p>Your submissions are still saved, but the live queue could not be loaded right now.</p><button type="button" class="btn btn-gray btn-sm" onclick="refreshBrokerQueue()">Try Again</button></div>';
+  list.innerHTML = '<div class="empty-state queue-empty"><div class="empty-icon"></div><h3>Submissions unavailable</h3><p>Your submissions are still saved, but the live status could not be loaded right now.</p><button type="button" class="btn btn-gray btn-sm" onclick="refreshBrokerQueue()">Try Again</button></div>';
 }
 
 function renderBrokerQueue(data) {
@@ -15284,7 +15286,7 @@ function renderBrokerQueue(data) {
   if (refreshBtn) {
     refreshBtn.classList.remove('queue-retry-ready');
     const label = refreshBtn.querySelector('.btn-label');
-    if (label) label.textContent = label.dataset.idle || 'Refresh Queue';
+    if (label) label.textContent = label.dataset.idle || 'Refresh';
   }
   const requests = Array.isArray(data?.requests) ? data.requests : [];
   const totalActive = Number(data?.totalActive ?? data?.totalPending ?? 0) || 0;
@@ -15301,8 +15303,8 @@ function renderBrokerQueue(data) {
   const list = document.getElementById('broker-queue-list');
   if (!list) return;
   if (!requests.length) {
-    setQueueStatus('No active submissions in queue.');
-    list.innerHTML = '<div class="empty-state queue-empty"><div class="empty-icon"></div><h3>No active queue items</h3><p>Once you submit a listing, sign request, voucher, contract, or comp input, its queue position will appear here while it is pending or in review.</p></div>';
+    setQueueStatus('No active submissions right now.');
+    list.innerHTML = '<div class="empty-state queue-empty"><div class="empty-icon"></div><h3>No active submissions</h3><p>Once you submit a listing, sign request, voucher, contract, or comp input, it will appear here while it is pending or in review.</p></div>';
     return;
   }
 
@@ -15357,7 +15359,7 @@ async function refreshBrokerQueue() {
     btn.classList.remove('queue-retry-ready');
     setBtnLoading(btn, true, 'Refreshing…');
   }
-  setQueueStatus('Loading queue...');
+  setQueueStatus('Loading submissions...');
   try {
     await ensureSharedBrokerSession();
     const data = await callTrpc('submissions.queueMine', { limit: 50 });
@@ -17664,11 +17666,11 @@ const HELP_PANEL_CONTENT = {
     `,
   },
   'queue': {
-    title: 'Submission Queue — how this page works',
+    title: 'My submissions — how this page works',
     body: `
-      <p>The queue shows your active submissions and where each one sits in the office processing line.</p>
+      <p>My submissions shows your active requests and where each one sits in the office processing line.</p>
       <h4>What you'll see</h4>
-      <p>Each row includes the form type, submission reference, current status, and how many requests are ahead of it in line.</p>
+      <p>Each row includes the form type, submission reference, current status, and how many requests are ahead of yours in line.</p>
     `,
   },
   'default': {

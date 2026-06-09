@@ -472,10 +472,10 @@ export default function PortalSubmissions() {
     return () => { alive = false; };
   }, [isAdmin]);
 
-  const title = "Submissions";
+  const title = isAdmin ? "Submissions" : "My submissions";
   const description = isAdmin
     ? "Review broker work, triage inbox requests, and push approved deals to Dealius."
-    : "Track your submissions through the admin queue and check status at any time.";
+    : "Track your submissions and check status at any time.";
 
   return (
     <AdminPortalShell
@@ -489,7 +489,7 @@ export default function PortalSubmissions() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16 }}>
           <StatCard label="Pending" value={stats?.pending ?? 0} loading={statsLoading} hint="Awaiting first review." />
           <StatCard label="In progress" value={stats?.inReview ?? 0} loading={statsLoading} hint="Claimed and being processed." />
-          <StatCard label="Active in queue" value={stats?.active ?? 0} loading={statsLoading} hint="Pending + in progress combined." />
+          <StatCard label="Active submissions" value={stats?.active ?? 0} loading={statsLoading} hint="Pending + in progress combined." />
         </div>
       </div>
 

@@ -163,7 +163,7 @@ export default function AdminPortalShell({
               : undefined
           }
         >
-          <span>Submissions</span>
+          <span>{isAdmin ? "Submissions" : "My submissions"}</span>
           <small>{isAdmin ? "Queue & inbox" : "Track status"}</small>
         </Link>
         <a href="/tool" className="admin-portal-nav-item">
