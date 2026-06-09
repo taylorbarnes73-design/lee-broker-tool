@@ -18,8 +18,9 @@ type FormCard = {
 const PRIMARY_FORMS: FormCard[] = [
   {
     title: "Listing entry",
-    description: "New listing or modification — property details, pricing, and service notifications.",
-    href: "/tool?tab=listing",
+    description: "Property and pricing basics in the portal, then notifications and submit in the workspace.",
+    href: "/portal/forms/listing",
+    badge: "Portal pilot",
   },
   {
     title: "Sign request",
