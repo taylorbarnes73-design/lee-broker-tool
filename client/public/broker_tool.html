@@ -3226,11 +3226,11 @@
     <div id="sta-submission-summary" class="sta-submission-summary is-hidden"></div>
     <div class="field">
       <label>Your Name (Broker)</label>
-      <input id="sta-broker-name" value="Taylor Barnes">
+      <input id="sta-broker-name" placeholder="Your name">
     </div>
     <div class="field">
       <label>Your Email (for CC)</label>
-      <input id="sta-sender-email" value="tbarnes@lee-associates.com">
+      <input id="sta-sender-email" placeholder="you@lee-associates.com">
     </div>
     <div class="field">
       <label>Notes to Admin <span class="optional-note">(optional)</span></label>
@@ -17550,7 +17550,14 @@ function openSendToAdminModal(formType) {
       return;
     }
   }
-  applySharedBrokerIdentity(getSignedInBrokerIdentity());
+  const signedInUser = getSignedInBrokerIdentity();
+  applySharedBrokerIdentity(signedInUser);
+  if (signedInUser) {
+    const nameEl = document.getElementById('sta-broker-name');
+    const emailEl = document.getElementById('sta-sender-email');
+    if (nameEl && signedInUser.name) nameEl.value = signedInUser.name;
+    if (emailEl && signedInUser.email) emailEl.value = signedInUser.email;
+  }
   void ensureSharedBrokerSession();
   const modal = document.getElementById('send-admin-modal');
   const title = document.getElementById('send-admin-modal-title');
@@ -18690,7 +18697,12 @@ function ciDownloadDataSheet() {
     '',
     '\u2550'.repeat(64),
     'Enter these values into AIR CRE Contracts at https://www.aircre.com',
-    'Taylor Barnes | Lee & Associates Newport Beach | (949) 724-4755',
+    (() => {
+      const user = getSignedInBrokerIdentity();
+      const name = user?.name || 'Lee Broker';
+      const office = user?.office || 'Lee & Associates Newport Beach';
+      return `${name} | ${office}`;
+    })(),
   ].filter(l => l !== null && l !== '  : ');
 
   const text = rows.join('\n');

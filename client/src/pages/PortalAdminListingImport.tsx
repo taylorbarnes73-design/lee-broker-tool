@@ -80,7 +80,7 @@ const FIELD_GROUPS: Array<{
     title: "Marketing notes",
     description: "These details are merged into the Buildout description.",
     fields: [
-      { key: "listingAgentName", label: "Listing agent", placeholder: "Taylor Barnes" },
+      { key: "listingAgentName", label: "Listing agent", placeholder: "Agent name" },
       { key: "listingAgentLicense", label: "Agent license", placeholder: "DRE #..." },
     ],
   },

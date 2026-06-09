@@ -1,6 +1,6 @@
 const DEFAULT_LEE_DOMAIN = "lee-associates.com";
 
-/** Local part before @lee-associates.com (e.g. tbarnes). */
+/** Local part before @lee-associates.com (e.g. jsmith). */
 const LEE_USERNAME_PATTERN = /^[a-z0-9][a-z0-9._-]{0,63}$/;
 
 export type LeeLoginIdentifier = {
@@ -34,7 +34,7 @@ export function parseLeeLoginIdentifier(
     if (!trimmed.endsWith(suffix)) {
       return {
         ok: false,
-        error: `Use your @${authDomain} email or Lee username only (e.g. tbarnes).`,
+        error: `Use your @${authDomain} email or Lee username only (e.g. jsmith).`,
       };
     }
     const username = trimmed.slice(0, -suffix.length);
@@ -50,7 +50,7 @@ export function parseLeeLoginIdentifier(
   if (!LEE_USERNAME_PATTERN.test(trimmed)) {
     return {
       ok: false,
-      error: "Enter your Lee username (e.g. tbarnes) or full @lee-associates.com email.",
+      error: "Enter your Lee username (e.g. jsmith) or full @lee-associates.com email.",
     };
   }
 

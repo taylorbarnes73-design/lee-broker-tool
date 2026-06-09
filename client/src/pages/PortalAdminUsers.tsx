@@ -711,12 +711,12 @@ function UserFormDialog({
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <Field label="Full Name" required error={fieldErrors.full_name}>
-            <Input value={fullName} onChange={e => setFullName(e.target.value)} disabled={submitting} placeholder="Taylor Barnes" />
+            <Input value={fullName} onChange={e => setFullName(e.target.value)} disabled={submitting} placeholder="Jane Smith" />
           </Field>
           <Field
             label="Username"
             required
-            help={mode === "add" ? "Lowercase: first initial + last name, e.g., tbarnes" : undefined}
+            help={mode === "add" ? "Lowercase: first initial + last name, e.g., jsmith" : undefined}
             error={fieldErrors.username}
           >
             <Input

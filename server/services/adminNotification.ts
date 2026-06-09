@@ -1,7 +1,7 @@
 /**
  * Admin Notification Service
  *
- * Sends an email notification to the admin (tbarnes@lee-associates.com)
+ * Sends an email notification to the configured admin inbox (ADMIN_EMAIL).
  * whenever a new submission is recorded in the admin queue.
  */
 import { execSync } from "child_process";
@@ -9,7 +9,7 @@ import nodemailer from "nodemailer";
 import { ENV } from "../_core/env";
 
 function getAdminNotifyEmail(): string {
-  return ENV.adminEmail || "tbarnes@lee-associates.com";
+  return ENV.adminEmail;
 }
 
 function isSmtpConfigured(): boolean {

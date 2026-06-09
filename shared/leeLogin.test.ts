@@ -25,7 +25,7 @@ describe("parseLeeLoginIdentifier", () => {
     const result = parseLeeLoginIdentifier("tbarnes@gmail.com");
     expect(result).toEqual({
       ok: false,
-      error: "Use your @lee-associates.com email or Lee username only (e.g. tbarnes).",
+      error: "Use your @lee-associates.com email or Lee username only (e.g. jsmith).",
     });
   });
 

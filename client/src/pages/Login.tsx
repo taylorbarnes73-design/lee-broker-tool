@@ -187,7 +187,7 @@ export default function Login() {
                 onBlur={() => setIdentifier(normalizeLoginIdentifier(identifier))}
                 required
                 autoComplete="username"
-                placeholder="tbarnes or tbarnes@lee-associates.com"
+                placeholder="jsmith or jsmith@lee-associates.com"
               />
             </div>
 

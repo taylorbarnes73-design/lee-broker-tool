@@ -489,10 +489,10 @@ function AppShell({ activeTab, onTab, profile, onProfileClick, onAiClick, childr
             background: 'var(--lee-crimson)', color: '#fff',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 12, fontWeight: 700,
-          }}>{profile?.initials || 'TB'}</div>
+          }}>{profile?.initials || 'JB'}</div>
           <div style={{ textAlign: 'left', lineHeight: 1.15 }}>
-            <div style={{ fontSize: 12, fontWeight: 600 }}>{profile?.name || 'Taylor Barnes'}</div>
-            <div style={{ fontSize: 10, color: 'var(--ink-400)' }}>{profile?.title || 'Broker · DRE #02135478'}</div>
+            <div style={{ fontSize: 12, fontWeight: 600 }}>{profile?.name || 'Jane Broker'}</div>
+            <div style={{ fontSize: 10, color: 'var(--ink-400)' }}>{profile?.title || 'Broker · DRE #01234567'}</div>
           </div>
           <Icons.ChevronDown size={14} style={{ color: 'var(--ink-400)' }}/>
         </button>
@@ -1133,7 +1133,7 @@ function SignRequestScreen() {
                   <div style={{ fontSize: 13, fontWeight: 600 }}>Name rider <span style={{ fontWeight: 500, color: 'var(--ink-500)' }}>· Optional</span></div>
                   <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Add broker name to rider panel</div>
                 </div>
-                {nameRider && <Input defaultValue="Taylor Barnes · 714.555.0142" style={{ width: 280 }}/>}
+                {nameRider && <Input defaultValue="Jane Broker · 714.555.0142" style={{ width: 280 }}/>}
               </div>
             </div>
           </Card>
@@ -1141,7 +1141,7 @@ function SignRequestScreen() {
           <Card>
             <SectionHeader eyebrow="Step 4" title="Requested by &amp; access" description="Who's the point of contact; how do installers get on site?"/>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-              <Field label="Agent" required><Input defaultValue="Taylor Barnes"/></Field>
+              <Field label="Agent" required><Input defaultValue="Jane Broker"/></Field>
               <Field label="Shared Expense %"><Input suffix="%" defaultValue="50"/></Field>
               <Field label="Install by"><Input prefix={<Icons.Calendar size={14}/>} defaultValue="Apr 28, 2026"/></Field>
               <Field label="Access" span={3}>
@@ -1331,7 +1331,7 @@ function VoucherScreen() {
 
 function CommissionTable() {
   const rows = [
-    {name:'Taylor Barnes', side:'Procuring', pct: 40, chipTone:'success', split:'Internal'},
+    {name:'Jane Broker', side:'Procuring', pct: 40, chipTone:'success', split:'Internal'},
     {name:'Rick Turner', side:'Listing', pct: 35, chipTone:'crimson', split:'Internal'},
     {name:'Janice Lee (CBRE)', side:'Referral', pct: 15, chipTone:'warn', split:'Outside'},
     {name:'House override', side:'Both', pct: 10, chipTone:'ai', split:'House'},
@@ -1577,10 +1577,10 @@ function ProfileModal({ open, onClose }) {
         </div>
 
         <div style={{ padding: '0 24px', marginTop: -40, display: 'flex', alignItems:'flex-end', gap: 16 }}>
-          <div style={{ width: 80, height: 80, borderRadius: 16, background: 'var(--lee-crimson)', color: '#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize: 26, fontWeight: 800, border: '4px solid var(--ink-0)', boxShadow: 'var(--shadow-md)' }}>TB</div>
+          <div style={{ width: 80, height: 80, borderRadius: 16, background: 'var(--lee-crimson)', color: '#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize: 26, fontWeight: 800, border: '4px solid var(--ink-0)', boxShadow: 'var(--shadow-md)' }}>JB</div>
           <div style={{ flex: 1, paddingBottom: 6 }}>
-            <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em' }}>Taylor Barnes</div>
-            <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>Senior Broker · Industrial · DRE #02135478</div>
+            <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em' }}>Jane Broker</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-500)' }}>Senior Broker · Industrial · DRE #01234567</div>
           </div>
           <Badge tone="success" size="sm" icon={<Icons.Check size={10} strokeWidth={3}/>}>Signed in</Badge>
         </div>
@@ -1589,9 +1589,9 @@ function ProfileModal({ open, onClose }) {
           <div>
             <div className="lee-eyebrow" style={{ marginBottom: 10 }}>Account</div>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap: 12 }}>
-              <Field label="First name" required><Input defaultValue="Taylor"/></Field>
-              <Field label="Last name" required><Input defaultValue="Barnes"/></Field>
-              <Field label="Email" required span={2}><Input prefix="@" defaultValue="taylor.barnes@lee-associates.com" auto/></Field>
+              <Field label="First name" required><Input defaultValue="Jane"/></Field>
+              <Field label="Last name" required><Input defaultValue="Broker"/></Field>
+              <Field label="Email" required span={2}><Input prefix="@" defaultValue="jbroker@lee-associates.com" auto/></Field>
             </div>
             <div style={{ fontSize: 11, color: 'var(--ink-500)', marginTop: 6, display:'flex', alignItems:'center', gap: 4 }}>
               <Icons.Info size={11}/> Email is tied to your sign-in and can't be changed here. Contact Admin to update.

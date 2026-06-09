@@ -128,7 +128,7 @@ const defs: SettingDef[] = [
     category: "branding",
     sensitive: false,
     valueSchema: z.string().email(),
-    defaultValue: "tbarnes@lee-associates.com",
+    defaultValue: "_NewportBeach-BrokerAdmin@lee-associates.com",
   },
   {
     key: "branding.logo_url",
