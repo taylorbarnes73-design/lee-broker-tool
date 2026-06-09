@@ -21,7 +21,7 @@ ENV PORT=3000
 ENV QUICK_CONVERT_SOFFICE_PATH=/usr/bin/soffice
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends libreoffice-writer libreoffice-core-nogui \
+  && apt-get install -y --no-install-recommends libreoffice-writer-nogui \
   && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /app/package.json ./package.json
