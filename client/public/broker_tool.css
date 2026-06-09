@@ -329,6 +329,188 @@ div.row.comp-sale-only { display: none !important; }
 .rent-table input { width: 100%; border: 1px solid #E5E7EB; border-radius: 4px; padding: 5px 8px; font-size: 12px; font-family: 'JetBrains Mono', monospace; text-align: right; }
 .rent-table input:focus { border-color: var(--red); outline: none; }
 
+/* Voucher lease calculator & compact rent schedule (Dealius-style) */
+.v-rent-schedule-shell { margin-top: 12px; }
+.v-lease-calc {
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: #f7f7f3;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.v-lease-calc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.v-lease-calc-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text2);
+}
+.v-rate-basis-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+.v-rate-basis-toggle button {
+  border: none;
+  background: transparent;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+}
+.v-rate-basis-toggle button.active {
+  background: var(--red);
+  color: #fff;
+}
+.v-lease-calc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 12px;
+  align-items: end;
+}
+.v-lease-calc-grid .field label { font-size: 11px; margin-bottom: 4px; }
+.v-lease-calc-grid input {
+  padding: 6px 8px;
+  font-size: 13px;
+}
+.v-lease-calc-actions .btn { width: 100%; justify-content: center; }
+.v-rent-stale-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #92400e;
+}
+.v-rent-table-panel { margin-top: 12px; }
+.v-rent-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+}
+.v-rent-table-wrap {
+  overflow: visible;
+  width: 100%;
+}
+#v-req-rent-inline .v-rent-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #e2e5ec;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 0;
+}
+#v-req-rent-inline .v-rent-table th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  padding: 8px 10px;
+  border-bottom: 1px solid #e2e5ec;
+  background: #f7f8fa;
+}
+#v-req-rent-inline .v-rent-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #e2e5ec;
+  text-align: left;
+  font-family: inherit;
+  font-size: 13px;
+  vertical-align: middle;
+}
+#v-req-rent-inline .v-rent-table tr:last-child td { border-bottom: none; }
+#v-req-rent-inline .v-rent-table tbody tr:hover td { background: #f7f8fa; }
+#v-req-rent-inline .v-rent-table .col-rn { width: 36px; text-align: center; }
+#v-req-rent-inline .v-rent-table .col-months { width: 72px; }
+#v-req-rent-inline .v-rent-table .col-monthly { width: auto; }
+#v-req-rent-inline .v-rent-table .col-free { width: 48px; text-align: center; }
+#v-req-rent-inline .v-rent-table .col-rpsf { width: 88px; }
+#v-req-rent-inline .v-rent-table .col-del { width: 40px; text-align: center; }
+#v-req-rent-inline .v-rent-table input[type="number"],
+#v-req-rent-inline .v-rent-table input[type="text"] {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #e2e5ec;
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  text-align: right;
+}
+#v-req-rent-inline .v-rent-table input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--red);
+  cursor: pointer;
+}
+#v-req-rent-inline .v-rent-table .rent-rpsf {
+  font-size: 12px;
+  color: #94a3b8;
+  font-family: 'JetBrains Mono', monospace;
+  text-align: right;
+}
+#v-req-rent-inline .v-rent-table .del-row {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  line-height: 1;
+}
+#v-req-rent-inline .v-rent-table .del-row:hover {
+  color: #dc2626;
+  background: #fef2f2;
+}
+#v-req-rent-inline .v-rent-table .free-rent-row td {
+  background: #fffbeb !important;
+}
+#v-req-rent-inline .v-rent-totals-row td {
+  font-weight: 700;
+  background: #f7f8fa !important;
+  border-top: 2px solid #e2e5ec;
+  font-size: 12px;
+}
+#v-req-rent-inline .v-rent-totals-row .text-right { text-align: right; }
+#v-req-rent-inline .v-rent-totals-row #v-rent-total-consideration {
+  font-family: 'JetBrains Mono', monospace;
+  text-align: right;
+}
+.v-rent-summary-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text2);
+}
+.v-rent-summary-bar strong {
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+}
+
 /* Broker split table */
 .broker-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
 .broker-table th {
@@ -633,12 +815,13 @@ body.admin-mode .header .sub { display: none; }
   /* Sticky action buttons at bottom */
   .btn-bar { position: sticky; bottom: 0; background: #fff; padding: 12px 16px; margin: 0 -16px; border-top: 1px solid var(--border); box-shadow: 0 -2px 8px rgba(0,0,0,.06); z-index: 50; }
   .btn-bar .btn-red { flex: 1; justify-content: center; }
-  /* Horizontal scroll on all tables */
-  .rent-table-wrap, .broker-table-wrap, table.rent-table, table.broker-table { overflow-x: auto; display: block; width: 100%; }
-  table.rent-table, table.broker-table { min-width: 540px; }
-  /* Fade hint on right edge of scrollable tables */
-  .rent-table-wrap { position: relative; }
-  .rent-table-wrap::after { content: ''; position: sticky; right: 0; top: 0; bottom: 0; width: 24px; background: rgba(255,255,255,.94); pointer-events: none; }
+  /* Horizontal scroll on wide tables (voucher rent schedule stays compact) */
+  .rent-table-wrap:not(.v-rent-table-wrap), .broker-table-wrap, table.broker-table { overflow-x: auto; display: block; width: 100%; }
+  table.broker-table { min-width: 540px; }
+  table.rent-table:not(.v-rent-table) { min-width: 540px; overflow-x: auto; display: block; width: 100%; }
+  .rent-table-wrap:not(.v-rent-table-wrap) { position: relative; }
+  .rent-table-wrap:not(.v-rent-table-wrap)::after { content: ''; position: sticky; right: 0; top: 0; bottom: 0; width: 24px; background: rgba(255,255,255,.94); pointer-events: none; }
+  .v-lease-calc-grid { grid-template-columns: 1fr; }
   /* Progress bar below sticky tab bar */
   .progress-bar-wrap { top: 48px; padding: 6px 16px; }
   /* Larger tap targets */

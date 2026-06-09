@@ -77,3 +77,4 @@ The `.npmrc` in the repo must contain `onlyBuiltDependencies=@tailwindcss/oxide,
 - The app gracefully handles missing `DATABASE_URL` (returns null from `getDb()`), so it starts without a DB but most features won't work.
 - Tests (`pnpm test`) do NOT require a running database — they mock DB access.
 - Optional services (AI/LLM, S3, SMTP, OAuth, Microsoft Graph, Dealius, Buildout, Google Maps) all degrade gracefully when unconfigured.
+- **Document auto-fill** (lease/voucher PDF upload): prefers `ANTHROPIC_API_KEY` (Claude reads PDFs directly); falls back to `GEMINI_API_KEY`, then text extraction + `OPENAI_API_KEY`. You do not need Gemini if Anthropic is configured.

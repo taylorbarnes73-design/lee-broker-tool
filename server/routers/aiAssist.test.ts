@@ -363,8 +363,8 @@ describe("aiAssist.extractDocument", () => {
       state: "CA",
       zip: "92618",
     });
-    expect(result.fields.buildingSf).toBeUndefined();
-    expect(result.fieldCount).toBe(10);
+    expect(result.fields.buildingSf).toBe("99999");
+    expect(result.fieldCount).toBe(11);
     expect(mockPdfParse).toHaveBeenCalledTimes(1);
   });
 

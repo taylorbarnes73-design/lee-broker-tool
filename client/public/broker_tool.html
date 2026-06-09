@@ -928,7 +928,7 @@
       <div class="field"><label class="req">City</label><input id="v-city"></div>
       <div class="field"><label class="req">State</label><input id="v-state" value="CA"></div>
       <div class="field"><label class="req">Zip</label><input id="v-zip" placeholder="92618" onblur="voucherZipAutofill(this.value)"></div>
-      <div class="field"><label class="req">Deal SF</label><input id="v-l-dealsf" placeholder="0" oninput="syncVoucherDealAliases(); calcVoucherLease()"></div>
+      <div class="field"><label class="req">Deal SF</label><input id="v-l-dealsf" placeholder="0" oninput="syncVoucherDealAliases(); calcVoucherLease(); vMarkRentStale()"></div>
     </div>
     <input id="v-deal-sf" type="hidden">
     <input id="v-land-sf" type="hidden">
@@ -1042,10 +1042,10 @@
         <div class="field"><label class="req">Start Date</label><input id="v-l-start" type="date" onchange="calcVoucherTermFromDates()"></div>
         <div class="field"><label class="req">End Date</label><input id="v-l-end" type="date" onchange="calcVoucherTermFromDates()"></div>
         <div class="field"><label>Occupancy Date</label><input id="v-l-occ" type="date"></div>
-        <div class="field"><label>Term (months)</label><input id="v-l-term" oninput="calcVoucherLease()"></div>
+        <div class="field"><label>Term (months)</label><input id="v-l-term" oninput="calcVoucherLease(); vMarkRentStale()"></div>
       </div>
       <div class="row c4">
-        <div class="field"><label class="req">Rate per SF/Mo</label><input id="v-l-rate" placeholder="$0.00" oninput="calcVoucherLease()"></div>
+        <div class="field"><label class="req" id="v-l-rate-label">Rate per SF/Mo</label><input id="v-l-rate" placeholder="$0.00" oninput="calcVoucherLease(); vMarkRentStale()"></div>
         <div class="field"><label>Rate Type</label><select id="v-l-rate-type"><option value="NNN">NNN</option><option value="FSG">FSG</option><option value="MG">MG</option><option value="G">Gross</option></select></div>
         <div class="field"><label>Asking Rate/SF</label><input id="v-l-asking-rate" placeholder="$0.00"></div>
         <div class="field"><label>Total Consideration</label><input id="v-l-consideration" class="readonly-fill-strong" placeholder="$0" readonly></div>
@@ -1068,20 +1068,71 @@
         <div class="field"><label>NNN Eff Rate</label><input id="v-l-nnn-eff" placeholder="$0.00"></div>
       </div>
 
-      <!-- Rent Schedule -->
-      <div id="v-req-rent-inline" class="top-gap-sm">
-        <div class="voucher-sub-header">Monthly &amp; Free Rent Schedule</div>
-        <p class="review-copy micro-copy-bottom-sm">Enter $0 for free rent months so effective rates calculate correctly.</p>
-        <table class="rent-table" id="v-rent-table">
-          <thead><tr><th class="table-col-compact">#</th><th>Monthly Rent $</th><th>Rate/SF/Mo</th><th>Months</th><th>Consideration</th><th title="Commission rate override for this period">Comm %</th><th class="table-col-compact"></th></tr></thead>
-          <tbody id="v-rent-body"></tbody>
-        </table>
-        <button class="btn btn-gray top-gap-sm" onclick="addRentRow()">+ Add Period</button>
-        <div class="row c4" style="margin-top:14px">
-          <div class="field"><label>Average Rate/SF/Mo</label><input id="v-avg-rate-sf" class="readonly-fill" placeholder="$0.00" readonly></div>
-          <div class="field"><label>Average Monthly Rent</label><input id="v-avg-monthly" class="readonly-fill" placeholder="$0" readonly></div>
-          <div class="field"></div>
-          <div class="field"></div>
+      <!-- Rent Schedule — Dealius-style lease calculator -->
+      <div id="v-req-rent-inline" class="v-rent-schedule-shell top-gap-sm">
+        <div class="voucher-sub-header">Lease Calculator &amp; Rent Schedule</div>
+        <p class="review-copy micro-copy-bottom-sm">Set lease variables, generate the schedule, then edit rows as needed. Regenerate after changing rate or term.</p>
+
+        <div class="v-lease-calc">
+          <div class="v-lease-calc-head">
+            <span class="v-lease-calc-title">Lease variables</span>
+            <div class="v-rate-basis-toggle" id="v-rate-basis-toggle">
+              <button type="button" class="active" data-basis="month" onclick="setVoucherRateBasis('month')">Per month</button>
+              <button type="button" data-basis="year" onclick="setVoucherRateBasis('year')">Per year</button>
+            </div>
+          </div>
+          <div class="v-lease-calc-grid">
+            <div class="field">
+              <label>Annual increase %</label>
+              <input id="v-l-esc-annual-pct" placeholder="e.g. 3" oninput="syncVoucherEscalationFields(); vMarkRentStale()">
+            </div>
+            <div class="field">
+              <label>Free rent (months)</label>
+              <input id="v-l-free-months" type="number" min="0" placeholder="0" oninput="vMarkRentStale()">
+            </div>
+            <div class="field v-lease-calc-actions">
+              <label>&nbsp;</label>
+              <button type="button" class="btn btn-red btn-sm" onclick="generateVoucherRentSchedule()">Generate schedule</button>
+            </div>
+          </div>
+          <p class="v-rent-stale-hint is-hidden" id="v-rent-stale-hint">Variables changed — regenerate schedule to update the table.</p>
+        </div>
+
+        <div class="v-rent-table-panel">
+          <div class="v-rent-table-toolbar">
+            <span>Rent schedule</span>
+            <button type="button" class="btn btn-gray btn-sm" onclick="addRentRow()">+ Add row</button>
+          </div>
+          <div class="v-rent-table-wrap">
+            <table class="v-rent-table rent-table" id="v-rent-table">
+              <thead>
+                <tr>
+                  <th class="col-rn">#</th>
+                  <th class="col-months">Months</th>
+                  <th class="col-monthly">Monthly rent</th>
+                  <th class="col-free">Free</th>
+                  <th class="col-rpsf">$/SF mo</th>
+                  <th class="col-del"></th>
+                </tr>
+              </thead>
+              <tbody id="v-rent-body"></tbody>
+              <tfoot>
+                <tr class="v-rent-totals-row">
+                  <td class="text-strong">Σ</td>
+                  <td id="v-rent-total-months">0 mo</td>
+                  <td colspan="2" class="text-right text-strong">Total consideration</td>
+                  <td id="v-rent-total-consideration" class="text-strong">$0</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <div class="v-rent-summary-bar">
+            <span>Avg monthly: <strong id="v-avg-monthly-display">—</strong></span>
+            <span>Avg $/SF/mo: <strong id="v-avg-rate-sf-display">—</strong></span>
+            <input type="hidden" id="v-avg-monthly" value="">
+            <input type="hidden" id="v-avg-rate-sf" value="">
+          </div>
         </div>
       </div>
 
@@ -5077,33 +5128,300 @@ function switchTabWithProgress(id) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// VOUCHER: RENT SCHEDULE TABLE
+// VOUCHER: RENT SCHEDULE TABLE (Dealius-style lease calculator)
 // ═══════════════════════════════════════════════════════════════════════════════
 let rentRowCount = 0;
-function addRentRow() {
-  rentRowCount++;
+let voucherRateBasis = 'month';
+
+function setVoucherRateBasis(basis) {
+  const next = basis === 'year' ? 'year' : 'month';
+  const prev = voucherRateBasis;
+  voucherRateBasis = next;
+  document.querySelectorAll('#v-rate-basis-toggle button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.basis === voucherRateBasis);
+  });
+  const rateLabel = document.getElementById('v-l-rate-label');
+  if (rateLabel) rateLabel.textContent = voucherRateBasis === 'year' ? 'Rate per SF/Yr' : 'Rate per SF/Mo';
+  const rateEl = document.getElementById('v-l-rate');
+  if (rateEl && prev !== voucherRateBasis) {
+    const val = parseFloat(String(rateEl.value || '').replace(/[^0-9.]/g, '')) || 0;
+    if (val > 0) {
+      rateEl.value = voucherRateBasis === 'year'
+        ? (val * 12).toFixed(4)
+        : (val / 12).toFixed(4);
+      calcVoucherLease();
+    }
+  }
+  vMarkRentStale();
+}
+
+function getVoucherMonthlyRateSf() {
+  const rate = parseFloat(document.getElementById('v-l-rate')?.value?.replace(/[^0-9.\-]/g, '')) || 0;
+  if (!rate) return 0;
+  return voucherRateBasis === 'year' ? rate / 12 : rate;
+}
+
+function vMarkRentStale() {
+  const hint = document.getElementById('v-rent-stale-hint');
+  if (hint) hint.classList.remove('is-hidden');
+}
+
+function vClearRentStale() {
+  const hint = document.getElementById('v-rent-stale-hint');
+  if (hint) hint.classList.add('is-hidden');
+}
+
+function vRenumberRentRows() {
+  rentRowCount = 0;
+  document.querySelectorAll('#v-rent-body tr').forEach((tr, i) => {
+    rentRowCount = i + 1;
+    const rn = tr.querySelector('.rent-rn');
+    if (rn) rn.textContent = String(rentRowCount);
+  });
+}
+
+function vRentRowMonthly(tr) {
+  if (tr.querySelector('.rent-free')?.checked) return 0;
+  return parseFloat(tr.querySelector('.rent-monthly')?.value?.replace(/[^0-9.\-]/g, '')) || 0;
+}
+
+function vRentRowMonths(tr) {
+  return parseInt(tr.querySelector('.rent-months')?.value, 10) || 0;
+}
+
+function addRentRow(months, monthly, free) {
   const body = document.getElementById('v-rent-body');
+  if (!body) return;
+  const isFree = !!free;
+  const monthsVal = months != null && months !== '' ? String(months) : '12';
+  const monthlyVal = isFree ? '' : (monthly != null && monthly !== '' ? String(monthly) : '');
+  const dealSf = parseFloat(document.getElementById('v-l-dealsf')?.value?.replace(/[^0-9.]/g, '')) || 0;
+  const monthlyNum = parseFloat(monthlyVal) || 0;
+  const rpsfHtml = isFree
+    ? '<em class="text-muted-sm">Free</em>'
+    : (dealSf > 0 && monthlyNum > 0 ? '$' + (monthlyNum / dealSf).toFixed(4) : '—');
   const tr = document.createElement('tr');
-  tr.innerHTML = '<td class="text-center text-strong">' + rentRowCount + '</td>' +
-    '<td><input class="rent-monthly" placeholder="$0" oninput="calcRentRow(this)"></td>' +
-    '<td><input class="rent-rate-sf readonly-fill" placeholder="$0.00" readonly></td>' +
-    '<td><input class="rent-months" placeholder="12" value="12" oninput="calcRentRow(this)"></td>' +
-    '<td><input class="rent-consideration readonly-fill" placeholder="$0" readonly></td>' +
-    '<td><input class="rent-row-comm-rate" placeholder="—" style="width:52px;text-align:center" oninput="calcCommSummary()" title="Override commission rate for this period (%)"></td>' +
-    '<td style="white-space:nowrap"><button class="remove-row" onclick="this.closest(\'tr\').remove();calcCommSummary()" title="Remove row">&times;</button><button class="btn-icon-sm" onclick="duplicateRentRow(this)" title="Duplicate row" style="margin-left:4px">&#10063;</button></td>';
+  if (isFree) tr.classList.add('free-rent-row');
+  tr.innerHTML =
+    '<td class="rent-rn text-center text-strong">' + (body.rows.length + 1) + '</td>' +
+    '<td><input class="rent-months" type="number" min="1" placeholder="12" value="' + monthsVal + '" oninput="calcRentRow(this)"></td>' +
+    '<td><input class="rent-monthly" type="number" step="0.01" min="0" placeholder="0" value="' + monthlyVal + '" oninput="calcRentRow(this)"' + (isFree ? ' disabled' : '') + '></td>' +
+    '<td class="text-center"><input type="checkbox" class="rent-free"' + (isFree ? ' checked' : '') + ' onchange="vOnFreeRentChange(this)"></td>' +
+    '<td class="rent-rpsf">' + rpsfHtml + '</td>' +
+    '<td><button type="button" class="del-row" onclick="this.closest(\'tr\').remove();vRenumberRentRows();calcCommSummary()" title="Remove row">&times;</button></td>';
   body.appendChild(tr);
+  vRenumberRentRows();
+  if (!isFree && monthlyVal) calcRentRow(tr.querySelector('.rent-monthly'));
+  else calcCommSummary();
+}
+
+function vOnFreeRentChange(cb) {
+  const tr = cb.closest('tr');
+  const monthlyInput = tr.querySelector('.rent-monthly');
+  const psfCell = tr.querySelector('.rent-rpsf');
+  tr.classList.toggle('free-rent-row', cb.checked);
+  if (cb.checked) {
+    monthlyInput.disabled = true;
+    monthlyInput.value = '';
+    if (psfCell) psfCell.innerHTML = '<em class="text-muted-sm">Free</em>';
+  } else {
+    monthlyInput.disabled = false;
+    calcRentRow(monthlyInput);
+    return;
+  }
+  calcCommSummary();
 }
 
 function calcRentRow(el) {
   const tr = el.closest('tr');
-  const monthly = parseFloat(tr.querySelector('.rent-monthly').value.replace(/[^0-9.\-]/g, '')) || 0;
-  const months = parseInt(tr.querySelector('.rent-months').value) || 0;
-  const dealSf = parseFloat(document.getElementById('v-l-dealsf').value.replace(/[^0-9.]/g, '')) || 0;
-  const rateSf = dealSf > 0 ? (monthly / dealSf) : 0;
-  const consideration = monthly * months;
-  tr.querySelector('.rent-rate-sf').value = rateSf > 0 ? '$' + rateSf.toFixed(4) : '';
-  tr.querySelector('.rent-consideration').value = consideration > 0 ? '$' + consideration.toLocaleString() : '';
+  const isFree = tr.querySelector('.rent-free')?.checked;
+  const monthly = isFree ? 0 : (parseFloat(tr.querySelector('.rent-monthly')?.value?.replace(/[^0-9.\-]/g, '')) || 0);
+  const dealSf = parseFloat(document.getElementById('v-l-dealsf')?.value?.replace(/[^0-9.]/g, '')) || 0;
+  const psfCell = tr.querySelector('.rent-rpsf');
+  if (psfCell) {
+    psfCell.innerHTML = isFree
+      ? '<em class="text-muted-sm">Free</em>'
+      : (dealSf > 0 && monthly > 0 ? '$' + (monthly / dealSf).toFixed(4) : '—');
+  }
   calcCommSummary();
+}
+
+function generateVoucherRentSchedule() {
+  const dealSf = parseFloat(document.getElementById('v-l-dealsf')?.value?.replace(/[^0-9.]/g, '')) || 0;
+  const monthlyRateSf = getVoucherMonthlyRateSf();
+  const baseMonthly = dealSf > 0 ? monthlyRateSf * dealSf : 0;
+  const term = parseInt(document.getElementById('v-l-term')?.value, 10) || 0;
+  const freeMonths = parseInt(document.getElementById('v-l-free-months')?.value, 10) || 0;
+  syncVoucherEscalationFields();
+  const annualPct = parseVoucherAnnualPct();
+
+  const body = document.getElementById('v-rent-body');
+  if (body) body.innerHTML = '';
+  rentRowCount = 0;
+
+  if (term <= 0) {
+    addRentRow(12, '', false);
+    vClearRentStale();
+    return;
+  }
+
+  let usedMonths = 0;
+  if (freeMonths > 0) {
+    const fm = Math.min(freeMonths, term);
+    addRentRow(fm, 0, true);
+    usedMonths += fm;
+  }
+
+  let remaining = term - usedMonths;
+  let yearIndex = 0;
+  while (remaining > 0) {
+    const periodMonths = annualPct > 0 ? Math.min(12, remaining) : remaining;
+    const escalatedMonthly = annualPct > 0
+      ? baseMonthly * Math.pow(1 + annualPct / 100, yearIndex)
+      : baseMonthly;
+    addRentRow(
+      periodMonths,
+      escalatedMonthly > 0 ? escalatedMonthly.toFixed(2) : '',
+      false
+    );
+    remaining -= periodMonths;
+    if (annualPct > 0) yearIndex += 1;
+  }
+
+  vClearRentStale();
+  calcCommSummary();
+}
+
+function updateVoucherRentTotals(totalMonths, totalConsideration) {
+  const monthsEl = document.getElementById('v-rent-total-months');
+  const consEl = document.getElementById('v-rent-total-consideration');
+  if (monthsEl) monthsEl.textContent = totalMonths > 0 ? totalMonths + ' mo' : '0 mo';
+  if (consEl) {
+    consEl.textContent = totalConsideration > 0
+      ? '$' + totalConsideration.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : '$0';
+  }
+}
+
+function parseVoucherAnnualPct() {
+  const pctEl = document.getElementById('v-l-esc-annual-pct');
+  const direct = parseFloat(pctEl?.value?.replace(/[^0-9.]/g, '') || '') || 0;
+  if (direct > 0) return direct;
+  const esc = String(document.getElementById('v-l-escalations')?.value || '');
+  const match = esc.match(/(\d+(?:\.\d+)?)\s*%/);
+  return match ? (parseFloat(match[1]) || 0) : 0;
+}
+
+function syncVoucherEscalationFields() {
+  const pctEl = document.getElementById('v-l-esc-annual-pct');
+  const escEl = document.getElementById('v-l-escalations');
+  if (!pctEl || !escEl) return;
+  const pct = parseFloat(pctEl.value.replace(/[^0-9.]/g, '') || '') || 0;
+  if (pct > 0 && !String(escEl.value || '').trim()) {
+    escEl.value = pct + '% annual';
+  } else if (!pct && String(escEl.value || '').trim() && !String(pctEl.value || '').trim()) {
+    const match = escEl.value.match(/(\d+(?:\.\d+)?)\s*%/);
+    if (match) pctEl.value = match[1];
+  }
+}
+
+function voucherDealSfFromForm(fieldsContext) {
+  const fromForm = parseFloat(document.getElementById('v-l-dealsf')?.value?.replace(/[^0-9.]/g, '') || '') || 0;
+  if (fromForm > 0) return fromForm;
+  const fromFields = parseFloat(String(fieldsContext?.dealSf || fieldsContext?.buildingSf || '').replace(/[^0-9.]/g, '')) || 0;
+  return fromFields;
+}
+
+function applyVoucherRateField(el, key, value, fieldsContext) {
+  const dealSf = voucherDealSfFromForm(fieldsContext);
+  const numVal = parseFloat(String(value).replace(/[^0-9.\-]/g, '')) || 0;
+  if (!numVal) return;
+
+  if (key === 'rateSfYr') {
+    voucherRateBasis = 'year';
+    document.querySelectorAll('#v-rate-basis-toggle button').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.basis === 'year');
+    });
+    const rateLabel = document.getElementById('v-l-rate-label');
+    if (rateLabel) rateLabel.textContent = 'Rate per SF/Yr';
+    el.value = numVal.toFixed(4);
+    return;
+  }
+
+  if (key === 'rateSfMo') {
+    voucherRateBasis = 'month';
+    document.querySelectorAll('#v-rate-basis-toggle button').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.basis === 'month');
+    });
+    const rateLabel = document.getElementById('v-l-rate-label');
+    if (rateLabel) rateLabel.textContent = 'Rate per SF/Mo';
+    el.value = numVal.toFixed(4);
+    return;
+  }
+
+  // baseRent — may be monthly $/SF, annual $/SF, or total monthly rent
+  voucherRateBasis = 'month';
+  document.querySelectorAll('#v-rate-basis-toggle button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.basis === 'month');
+  });
+  const rateLabel = document.getElementById('v-l-rate-label');
+  if (rateLabel) rateLabel.textContent = 'Rate per SF/Mo';
+
+  if (dealSf > 0 && numVal >= 100) {
+    el.value = (numVal / dealSf).toFixed(4);
+    return;
+  }
+  if (dealSf > 0 && numVal > 15 && numVal <= 250) {
+    const monthlySf = numVal / 12;
+    if (monthlySf >= 0.25 && monthlySf <= 25) {
+      voucherRateBasis = 'year';
+      document.querySelectorAll('#v-rate-basis-toggle button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.basis === 'year');
+      });
+      if (rateLabel) rateLabel.textContent = 'Rate per SF/Yr';
+      el.value = numVal.toFixed(4);
+      return;
+    }
+  }
+  el.value = numVal.toFixed(4);
+}
+
+function voucherCanAutoGenerateSchedule() {
+  const dealSf = parseFloat(document.getElementById('v-l-dealsf')?.value?.replace(/[^0-9.]/g, '') || '') || 0;
+  const rate = getVoucherMonthlyRateSf();
+  const term = parseInt(document.getElementById('v-l-term')?.value, 10) || 0;
+  return dealSf > 0 && rate > 0 && term > 0;
+}
+
+function reconcileVoucherFinancials(options) {
+  const opts = options && typeof options === 'object' ? options : {};
+  const autoGenerateSchedule = opts.autoGenerateSchedule !== false;
+
+  try { syncVoucherDealAliases(); } catch (e) {}
+
+  const termEl = document.getElementById('v-l-term');
+  const startEl = document.getElementById('v-l-start');
+  const endEl = document.getElementById('v-l-end');
+  if (termEl && startEl && endEl && !String(termEl.value || '').trim() && startEl.value && endEl.value) {
+    try { calcVoucherTermFromDates(); } catch (e) {}
+  }
+
+  const dealSfEl = document.getElementById('v-l-dealsf');
+  const buildingSf = parseFloat(String(opts.fields?.buildingSf || '').replace(/[^0-9.]/g, '')) || 0;
+  if (dealSfEl && buildingSf > 0 && !String(dealSfEl.value || '').trim()) {
+    dealSfEl.value = String(Math.round(buildingSf));
+    dealSfEl.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  try { syncVoucherEscalationFields(); } catch (e) {}
+  try { calcVoucherLease(); } catch (e) {}
+
+  if (autoGenerateSchedule && voucherCanAutoGenerateSchedule()) {
+    try { generateVoucherRentSchedule(); } catch (e) {}
+  } else {
+    try { calcCommSummary(); } catch (e) {}
+  }
+  try { syncDealGlance(); } catch (e) {}
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -5322,16 +5640,21 @@ function calcVoucherTermFromDates() {
   if (end.getDate() >= start.getDate()) months += 1;
   if (months > 0) {
     termEl.value = String(months);
-    calcVoucherLease();
+    vMarkRentStale();
+    if (voucherCanAutoGenerateSchedule()) {
+      try { generateVoucherRentSchedule(); } catch (e) {}
+    } else {
+      calcVoucherLease();
+    }
   }
 }
 
 function calcVoucherLease() {
   syncVoucherDealAliases();
   const dealSf = parseFloat(document.getElementById('v-l-dealsf')?.value?.replace(/[^0-9.]/g, '')) || 0;
-  const rate = parseFloat(document.getElementById('v-l-rate')?.value?.replace(/[^0-9.\-]/g, '')) || 0;
+  const monthlyRateSf = getVoucherMonthlyRateSf();
   const term = parseInt(document.getElementById('v-l-term')?.value, 10) || 0;
-  const monthly = dealSf > 0 ? rate * dealSf : 0;
+  const monthly = dealSf > 0 ? monthlyRateSf * dealSf : 0;
   const consideration = monthly * term;
 
   const totalField = document.getElementById('v-l-consideration');
@@ -5345,7 +5668,8 @@ function calcVoucherLease() {
   if (rentRows.length === 1) {
     const monthlyInput = rentRows[0].querySelector('.rent-monthly');
     const monthsInput = rentRows[0].querySelector('.rent-months');
-    if (monthlyInput && monthsInput && !String(monthlyInput.value || '').trim()) {
+    const isFree = rentRows[0].querySelector('.rent-free')?.checked;
+    if (monthlyInput && monthsInput && !isFree && !String(monthlyInput.value || '').trim()) {
       monthlyInput.value = monthly > 0 ? monthly.toFixed(2) : '';
       monthsInput.value = term > 0 ? String(term) : monthsInput.value;
       calcRentRow(monthlyInput);
@@ -5452,42 +5776,33 @@ function calcCommSummary() {
   let saleComm = 0;
 
   if (txn === 'lease') {
-    // Calculate total consideration from rent schedule
     let totalConsideration = 0;
-    document.querySelectorAll('#v-rent-body tr').forEach(tr => {
-      const monthly = parseFloat(tr.querySelector('.rent-monthly')?.value.replace(/[^0-9.\-]/g, '')) || 0;
-      const months = parseInt(tr.querySelector('.rent-months')?.value) || 0;
-      totalConsideration += monthly * months;
-    });
-        document.getElementById('v-l-consideration').value = totalConsideration > 0 ? '$' + totalConsideration.toLocaleString() : '';
-    const globalCommRate = parseFloat(document.getElementById('v-l-comm-rate').value) || 0;
-    // Per-row commission: use row-level rate if set, else fall back to global rate
-    leaseComm = 0;
-    document.querySelectorAll('#v-rent-body tr').forEach(tr => {
-      const monthly = parseFloat(tr.querySelector('.rent-monthly')?.value.replace(/[^0-9.\-]/g, '')) || 0;
-      const months = parseInt(tr.querySelector('.rent-months')?.value) || 0;
-      const rowConsideration = monthly * months;
-      const rowRateEl = tr.querySelector('.rent-row-comm-rate');
-      const rowRate = rowRateEl && rowRateEl.value.trim() ? (parseFloat(rowRateEl.value) || 0) : globalCommRate;
-      leaseComm += rowConsideration * (rowRate / 100);
-    });
-    const commRate = globalCommRate;
-    document.getElementById('v-l-comm-due').value = leaseComm > 0 ? '$' + leaseComm.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '';
-
-    // Average rate/sf and monthly
-    const dealSf = parseFloat(document.getElementById('v-l-dealsf')?.value?.replace(/[^0-9.]/g, '')) || 0;
     let totalMonths = 0;
     let weightedRent = 0;
     document.querySelectorAll('#v-rent-body tr').forEach(tr => {
-      const monthly = parseFloat(tr.querySelector('.rent-monthly')?.value.replace(/[^0-9.\-]/g, '')) || 0;
-      const months = parseInt(tr.querySelector('.rent-months')?.value) || 0;
+      const monthly = vRentRowMonthly(tr);
+      const months = vRentRowMonths(tr);
+      totalConsideration += monthly * months;
       totalMonths += months;
       weightedRent += monthly * months;
     });
+    document.getElementById('v-l-consideration').value = totalConsideration > 0 ? '$' + totalConsideration.toLocaleString() : '';
+    const globalCommRate = parseFloat(document.getElementById('v-l-comm-rate').value) || 0;
+    leaseComm = totalConsideration * (globalCommRate / 100);
+    document.getElementById('v-l-comm-due').value = leaseComm > 0 ? '$' + leaseComm.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '';
+
+    const dealSf = parseFloat(document.getElementById('v-l-dealsf')?.value?.replace(/[^0-9.]/g, '')) || 0;
     const avgMonthly = totalMonths > 0 ? weightedRent / totalMonths : 0;
     const avgRateSf = dealSf > 0 ? avgMonthly / dealSf : 0;
-    document.getElementById('v-avg-rate-sf').value = avgRateSf > 0 ? '$' + avgRateSf.toFixed(4) : '';
-    document.getElementById('v-avg-monthly').value = avgMonthly > 0 ? '$' + avgMonthly.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '';
+    const avgMonthlyText = avgMonthly > 0 ? '$' + avgMonthly.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '';
+    const avgRateSfText = avgRateSf > 0 ? '$' + avgRateSf.toFixed(4) : '';
+    document.getElementById('v-avg-rate-sf').value = avgRateSfText;
+    document.getElementById('v-avg-monthly').value = avgMonthlyText;
+    const avgMonthlyDisplay = document.getElementById('v-avg-monthly-display');
+    const avgRateSfDisplay = document.getElementById('v-avg-rate-sf-display');
+    if (avgMonthlyDisplay) avgMonthlyDisplay.textContent = avgMonthlyText || '—';
+    if (avgRateSfDisplay) avgRateSfDisplay.textContent = avgRateSfText || '—';
+    updateVoucherRentTotals(totalMonths, totalConsideration);
   } else {
     const price = parseFloat(document.getElementById('v-s-price')?.value?.replace(/[^0-9.]/g, '')) || 0;
     const pct = parseFloat(document.getElementById('v-s-comm-pct')?.value) || 0;
@@ -5759,6 +6074,15 @@ function clearVoucher() {
    'v-avg-rate-sf', 'v-avg-monthly', 'v-total-outside', 'v-dist-total-invoice', 'v-dist-total-outside', 'v-gross-dist'
   ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   rentRowCount = 0;
+  voucherRateBasis = 'month';
+  setVoucherRateBasis('month');
+  vClearRentStale();
+  const avgMonthlyDisplay = document.getElementById('v-avg-monthly-display');
+  const avgRateSfDisplay = document.getElementById('v-avg-rate-sf-display');
+  if (avgMonthlyDisplay) avgMonthlyDisplay.textContent = '—';
+  if (avgRateSfDisplay) avgRateSfDisplay.textContent = '—';
+  updateVoucherRentTotals(0, 0);
+  addRentRow();
   distRowCount = 0;
   addDistRow();
   delete uploadedFiles['v-deal-documents'];
@@ -6602,16 +6926,26 @@ function exportVoucherPdf() {
       doc.text('Include free rent months in the schedule (enter $0 for free months). Effective rates calculate automatically.', margin, y); y += 10;
       doc.setTextColor(0);
       const rentData = [];
+      const dealSf = parseFloat(getVal('v-l-dealsf').replace(/[^0-9.]/g, '')) || 0;
       rentRows.forEach((tr, i) => {
-        const monthly = tr.querySelector('.rent-monthly')?.value || '';
-        const rateSf = tr.querySelector('.rent-rate-sf')?.value || '';
+        const isFree = tr.querySelector('.rent-free')?.checked;
+        const monthly = isFree ? 'Free' : (tr.querySelector('.rent-monthly')?.value || '');
         const months = tr.querySelector('.rent-months')?.value || '';
-        const consideration = tr.querySelector('.rent-consideration')?.value || '';
-        rentData.push([String(i + 1), monthly, rateSf, months, consideration]);
+        const monthlyNum = isFree ? 0 : (parseFloat(String(monthly).replace(/[^0-9.\-]/g, '')) || 0);
+        const rateSf = isFree ? '—' : (dealSf > 0 && monthlyNum > 0 ? '$' + (monthlyNum / dealSf).toFixed(4) : '—');
+        const monthsNum = parseInt(months, 10) || 0;
+        const consideration = monthlyNum * monthsNum;
+        rentData.push([
+          String(i + 1),
+          monthly,
+          rateSf,
+          months,
+          consideration > 0 ? '$' + consideration.toLocaleString() : (isFree ? '$0' : '')
+        ]);
       });
       doc.autoTable({
         startY: y, margin: { left: margin, right: margin },
-        head: [['#', 'MONTHLY RENT', 'RATE/SF', 'MONTHS', 'CONSIDERATION']],
+        head: [['#', 'MONTHLY RENT', 'RATE/SF/MO', 'MONTHS', 'CONSIDERATION']],
         body: rentData,
         styles: { fontSize: 8, cellPadding: 4, lineColor: [0, 0, 0], lineWidth: 0.5 },
         headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], fontStyle: 'bold', lineColor: [0, 0, 0], lineWidth: 0.5 },
@@ -9914,12 +10248,13 @@ function saveSubmission(type) {
 function collectVoucherData() {
   const gv = id => { const el = document.getElementById(id); if (!el) return ''; return el.tagName === 'SELECT' ? (el.selectedOptions[0]?.text || '') : el.value; };
   const rentRows = Array.from(document.querySelectorAll('#v-rent-body tr')).map(tr => {
-    const monthly = dxParseNumberish(tr.querySelector('.rent-monthly')?.value);
+    const isFree = !!tr.querySelector('.rent-free')?.checked;
+    const monthly = isFree ? 0 : (dxParseNumberish(tr.querySelector('.rent-monthly')?.value) || 0);
     const months = dxParseNumberish(tr.querySelector('.rent-months')?.value);
     return {
       monthly: monthly || 0,
       months: months || 0,
-      free: !monthly || monthly === 0,
+      free: isFree,
     };
   }).filter(row => row.months > 0);
   return {
@@ -13486,7 +13821,7 @@ async function runVoucherAiAnalysis() {
         const errText = String(parsed?.error || '').toLowerCase();
         if (errText.includes('password') || errText.includes('corrupt') || errText.includes('read')) out.hadUnreadable = true;
         if (errText.includes('timeout')) out.hadTimeout = true;
-        if (errText.includes('no llm backend') || errText.includes('gemini_api_key') || errText.includes('openai_api_key') || errText.includes('api key')) out.hadConfigError = true;
+        if (errText.includes('no llm backend') || errText.includes('anthropic_api_key') || errText.includes('gemini_api_key') || errText.includes('openai_api_key') || errText.includes('api key')) out.hadConfigError = true;
         return out;
       }
       out.parsed = parsed;
@@ -13497,7 +13832,7 @@ async function runVoucherAiAnalysis() {
       out.hadFailure = true;
       if (msg.includes('timeout')) out.hadTimeout = true;
       if (msg.includes('password') || msg.includes('corrupt') || msg.includes('read')) out.hadUnreadable = true;
-      if (msg.includes('no llm backend') || msg.includes('gemini_api_key') || msg.includes('openai_api_key') || msg.includes('api key')) out.hadConfigError = true;
+      if (msg.includes('no llm backend') || msg.includes('anthropic_api_key') || msg.includes('gemini_api_key') || msg.includes('openai_api_key') || msg.includes('api key')) out.hadConfigError = true;
       return out;
     }
   });
@@ -13546,12 +13881,16 @@ async function runVoucherAiAnalysis() {
   if (voucherDocumentDetection.agencyDisclosure.executed) voucherDocumentManualOverride.agencyDisclosure = false;
   if (voucherDocumentDetection.listingAgreement.executed) voucherDocumentManualOverride.listingAgreement = false;
 
+  if (!result.hadFailures && !result.hadTimeout && !result.hadUnreadable && !result.hadConfigError) {
+    try { reconcileVoucherFinancials({ autoGenerateSchedule: true }); } catch (e) {}
+  }
+
   if (result.hadTimeout) {
     voucherAnalysisStatus = { state: 'error', error: 'Auto-fill unavailable — fill manually.' };
   } else if (result.hadUnreadable) {
     voucherAnalysisStatus = { state: 'error', error: "Couldn't read this file. Try a different format or remove password protection." };
   } else if (result.hadConfigError) {
-    voucherAnalysisStatus = { state: 'error', error: 'AI not configured — add GEMINI_API_KEY to server .env to enable auto-fill.' };
+    voucherAnalysisStatus = { state: 'error', error: 'AI not configured — add ANTHROPIC_API_KEY (or GEMINI_API_KEY) to server .env to enable auto-fill.' };
   } else if (result.hadFailures) {
     voucherAnalysisStatus = { state: 'error', error: 'Auto-fill unavailable — fill manually.' };
   } else {
@@ -14789,6 +15128,26 @@ function getActiveTabKey() {
   return 'listing';
 }
 
+// Apply AI fields in dependency order so rates/SF/term reconcile correctly.
+const VOUCHER_AI_FIELD_ORDER = [
+  'transactionType', 'propertyType', 'representationType',
+  'address', 'city', 'state', 'zip', 'suite',
+  'buildingSf', 'dealSf',
+  'commencementDate', 'expirationDate', 'occupancyDate', 'term',
+  'leaseType',
+  'rateSfYr', 'rateSfMo', 'baseRent',
+  'freeRentMonths', 'annualEscalationPct',
+  'commissionRate',
+  'lessorName', 'lesseeName', 'clientName',
+  'listingAgentName', 'procuringAgentName',
+  'totalConsideration', 'salePrice', 'notes',
+];
+
+function voucherAiFieldSort(keys) {
+  const rank = new Map(VOUCHER_AI_FIELD_ORDER.map((key, index) => [key, index]));
+  return [...keys].sort((a, b) => (rank.get(a) ?? 999) - (rank.get(b) ?? 999));
+}
+
 // Field ID maps per tab — maps AI field names to HTML element IDs
 const AI_FIELD_MAP = {
   listing: {
@@ -14824,12 +15183,18 @@ const AI_FIELD_MAP = {
     state: 'v-state',
     zip: 'v-zip',
     suite: 'v-suite',
+    buildingSf: 'v-l-dealsf',
     dealSf: 'v-l-dealsf',
     commissionRate: 'v-l-comm-rate',
     term: 'v-l-term',
     commencementDate: 'v-l-start',
     expirationDate: 'v-l-end',
+    occupancyDate: 'v-l-occ',
+    rateSfMo: 'v-l-rate',
+    rateSfYr: 'v-l-rate',
     baseRent: 'v-l-rate',
+    freeRentMonths: 'v-l-free-months',
+    annualEscalationPct: 'v-l-esc-annual-pct',
     leaseType: 'v-l-rate-type',
     lessorName: 'v-ls-company',
     lesseeName: 'v-lb-company',
@@ -14950,7 +15315,11 @@ function applyAiFields(tab, fields, options = {}) {
     } catch(e) { console.warn('[applyAiFields] agent auto-fill error:', e); }
   }
 
-  Object.entries(fields).forEach(([key, value]) => {
+  const fieldEntries = tab === 'voucher'
+    ? voucherAiFieldSort(Object.keys(fields)).map(key => [key, fields[key]])
+    : Object.entries(fields);
+
+  fieldEntries.forEach(([key, value]) => {
     const elId = map[key];
     if (!elId || elId.startsWith('__')) return; // skip sentinel values
     const el = document.getElementById(elId);
@@ -14967,22 +15336,14 @@ function applyAiFields(tab, fields, options = {}) {
       const normalizedDate = normalizeAiDateValue(value);
       if (!normalizedDate) return;
       el.value = normalizedDate;
+    } else if (tab === 'voucher' && (key === 'baseRent' || key === 'rateSfMo' || key === 'rateSfYr')) {
+      applyVoucherRateField(el, key, value, fields);
     } else {
-      // Fix: If AI returns monthly base rent instead of rate/SF, auto-convert
-      if (tab === 'voucher' && key === 'baseRent') {
-        const numVal = parseFloat(String(value).replace(/[^0-9.\-]/g, '')) || 0;
-        const dealSfEl = document.getElementById('v-l-dealsf');
-        const dealSfVal = parseFloat(dealSfEl?.value?.replace(/[^0-9.]/g, '') || fields.dealSf || '0') || 0;
-        // If value > 50, it's almost certainly a monthly rent amount, not rate/SF
-        // Typical rate/SF ranges from $0.50 to $50.00; monthly rents are $1000+
-        if (numVal > 50 && dealSfVal > 0) {
-          el.value = (numVal / dealSfVal).toFixed(4);
-        } else {
-          el.value = value;
-        }
-      } else {
-        el.value = value;
-      }
+      el.value = value;
+    }
+
+    if (tab === 'voucher' && key === 'annualEscalationPct') {
+      try { syncVoucherEscalationFields(); } catch (e) {}
     }
 
     el.classList.add('ai-filled');
@@ -15017,17 +15378,16 @@ function applyAiFields(tab, fields, options = {}) {
 
   if (tab === 'voucher' && applied > 0) {
     try { onVoucherTxnChange(); } catch(e) {}
-    try { syncVoucherDealAliases(); } catch(e) {}
-    try { calcVoucherLease(); } catch(e) {}
     try { calcVoucherSale(); } catch(e) {}
-    try { calcCommSummary(); } catch(e) {}
-    try { syncDealGlance(); } catch(e) {}
+    try { reconcileVoucherFinancials({ fields, autoGenerateSchedule: true }); } catch(e) {}
     const flow = window.__stepFlows && window.__stepFlows['voucher-main'];
     if (flow && typeof flow.renderNav === 'function') flow.renderNav();
   }
 
   return applied;
 }
+
+window.AI_FIELD_MAP = AI_FIELD_MAP;
 
 function clearListingAutofillFromSource(sourceKey) {
   if (!sourceKey) return;
@@ -15068,8 +15428,13 @@ function applyAiFieldsForce(tab, fields) {
       const normalizedDate = normalizeAiDateValue(value);
       if (!normalizedDate) return;
       el.value = normalizedDate;
+    } else if (tab === 'voucher' && (key === 'baseRent' || key === 'rateSfMo' || key === 'rateSfYr')) {
+      applyVoucherRateField(el, key, value, fields);
     } else {
       el.value = value;
+    }
+    if (tab === 'voucher' && key === 'annualEscalationPct') {
+      try { syncVoucherEscalationFields(); } catch (e) {}
     }
     el.classList.add('ai-smart');
     const badge = addAiBadge(el);
@@ -15084,11 +15449,8 @@ function applyAiFieldsForce(tab, fields) {
   });
   if (tab === 'voucher' && applied > 0) {
     try { onVoucherTxnChange(); } catch(e) {}
-    try { syncVoucherDealAliases(); } catch(e) {}
-    try { calcVoucherLease(); } catch(e) {}
     try { calcVoucherSale(); } catch(e) {}
-    try { calcCommSummary(); } catch(e) {}
-    try { syncDealGlance(); } catch(e) {}
+    try { reconcileVoucherFinancials({ fields, autoGenerateSchedule: true }); } catch(e) {}
   }
   return applied;
 }
@@ -18153,6 +18515,6 @@ function deleteDraft(key) {
   });
 })();
 </script>
-<script src="/features_patch.js?v=20260608.3"></script>
+<script src="/features_patch.js?v=20260609.1"></script>
 </body>
 </html>

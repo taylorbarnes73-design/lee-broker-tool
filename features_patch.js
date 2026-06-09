@@ -119,48 +119,7 @@ function _copyListingToVoucherCore() {
   });
 })();
 
-// ── Feature 10: Duplicate rent row ──
-window.duplicateRentRow = function(btn) {
-  const tr = btn.closest('tr');
-  if (!tr) return;
-  const newTr = tr.cloneNode(true);
-  // Update the row number
-  const body = document.getElementById('v-rent-body');
-  const newIdx = body.querySelectorAll('tr').length + 1;
-  const numCell = newTr.querySelector('td:first-child');
-  if (numCell) numCell.textContent = newIdx;
-  // Clear readonly fields so they recalculate
-  newTr.querySelectorAll('.rent-rate-sf, .rent-consideration').forEach(function(el) { el.value = ''; });
-  // Fix onclick for remove button
-  const removeBtn = newTr.querySelector('.remove-row');
-  if (removeBtn) removeBtn.setAttribute('onclick', "this.closest('tr').remove()");
-  body.appendChild(newTr);
-  calcCommSummary();
-};
-
-// ── Feature 9: Per-row commission rate in addRentRow ──
-(function patchAddRentRow() {
-  document.addEventListener('DOMContentLoaded', function() {
-    // Patch addRentRow to include per-row comm rate and duplicate button
-    const origAddRentRow = window.addRentRow;
-    window.addRentRow = function() {
-      rentRowCount++;
-      const body = document.getElementById('v-rent-body');
-      const tr = document.createElement('tr');
-      tr.innerHTML = '<td class="text-center text-strong">' + rentRowCount + '</td>' +
-        '<td><input class="rent-monthly" placeholder="$0" oninput="calcRentRow(this)"></td>' +
-        '<td><input class="rent-rate-sf readonly-fill" placeholder="$0.00" readonly></td>' +
-        '<td><input class="rent-months" placeholder="12" value="12" oninput="calcRentRow(this)"></td>' +
-        '<td><input class="rent-consideration readonly-fill" placeholder="$0" readonly></td>' +
-        '<td><input class="rent-row-comm-rate" placeholder="—" style="width:52px;text-align:center" oninput="calcCommSummary()" title="Override commission rate for this period (%)"></td>' +
-        '<td style="white-space:nowrap">' +
-          '<button class="remove-row" onclick="this.closest(\'tr\').remove();calcCommSummary()" title="Remove row">&times;</button>' +
-          '<button class="btn-icon-sm" onclick="duplicateRentRow(this)" title="Duplicate row" style="margin-left:4px">&#10063;</button>' +
-        '</td>';
-      body.appendChild(tr);
-    };
-  });
-})();
+// Rent schedule UI lives in broker_tool.html (Dealius-style lease calculator).
 
 // ── Feature 6: Live commission calculator ──
 (function wireCommissionLive() {

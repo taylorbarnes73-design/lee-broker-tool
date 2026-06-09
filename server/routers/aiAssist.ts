@@ -40,12 +40,18 @@ const voucherFields = z.object({
   state: z.string().optional(),
   zip: z.string().optional(),
   suite: z.string().optional(),
+  buildingSf: z.string().optional(),
   dealSf: z.string().optional(),
   commissionRate: z.string().optional(),
   term: z.string().optional(),
   commencementDate: z.string().optional(),
   expirationDate: z.string().optional(),
+  occupancyDate: z.string().optional(),
+  rateSfMo: z.string().optional(),
+  rateSfYr: z.string().optional(),
   baseRent: z.string().optional(),
+  freeRentMonths: z.string().optional(),
+  annualEscalationPct: z.string().optional(),
   leaseType: z.string().optional(),
   lessorName: z.string().optional(),
   lesseeName: z.string().optional(),
@@ -383,13 +389,18 @@ function sanitizeFieldValue(field: string, raw: unknown) {
     case "totalConsideration":
       return normalizeIntegerString(value, { min: 1, max: 100_000_000_000 });
     case "rateSfMo":
+    case "rateSfYr":
     case "leaseRate":
     case "pricePerSf":
     case "commissionRate":
     case "baseRent":
+    case "annualEscalationPct":
       return normalizeDecimalString(value, { min: 0, max: 100_000, maxDecimals: 2 });
+    case "freeRentMonths":
+      return normalizeIntegerString(value, { min: 0, max: 120 });
     case "commencementDate":
     case "expirationDate":
+    case "occupancyDate":
       return normalizeDate(value);
     case "listingAgentName":
     case "brokerName":
@@ -527,14 +538,33 @@ function deriveSmartSuggestions(tab: FormTab, currentFields: Record<string, stri
     if (derivedState) suggestions.state = derivedState;
   }
 
-  if (
-    tab === "voucher" || tab === "comp"
-  ) {
+  if (tab === "voucher" || tab === "comp") {
     const start = parseUsDate(currentFields.commencementDate);
     const end = parseUsDate(currentFields.expirationDate);
     if (emptyFields.has("term") && start && end && end.date > start.date) {
       const months = wholeMonthDiff(start.date, end.date);
       if (months > 0) suggestions.term = String(months);
+    }
+  }
+
+  if (tab === "voucher") {
+    if (emptyFields.has("dealSf")) {
+      const buildingSf = parseScaledNumber(currentFields.buildingSf);
+      if (Number.isFinite(buildingSf) && (buildingSf as number) > 0) {
+        suggestions.dealSf = String(Math.round(buildingSf as number));
+      }
+    }
+    if (emptyFields.has("rateSfMo")) {
+      const dealSf = parseScaledNumber(currentFields.dealSf) ?? parseScaledNumber(currentFields.buildingSf);
+      const baseRent = parseScaledNumber(currentFields.baseRent);
+      if (
+        Number.isFinite(dealSf) &&
+        Number.isFinite(baseRent) &&
+        (dealSf as number) > 0 &&
+        (baseRent as number) > 50
+      ) {
+        suggestions.rateSfMo = Number((baseRent as number) / (dealSf as number)).toFixed(4);
+      }
     }
   }
 
@@ -815,9 +845,13 @@ FIELD EXTRACTION GUIDE:
 - representationType: "Tenant Rep", "Landlord Rep", "Buyer Rep", "Seller Rep", or "Dual".
 - leaseType: "NNN" (triple net), "FSG" (full service gross), "MG" (modified gross), "Gross", or "Net".
 - buildingSf / suiteSf / dealSf: Total square footage as integer string without commas. "12,500 SF" → "12500".
-- rateSfMo / leaseRate / baseRent: Monthly rate PER SQUARE FOOT as decimal string (NOT the total monthly rent). "$1.25/SF/Mo" → "1.25". If annual, divide by 12. If rate says "$15.00 NNN" (annual), return "1.25". IMPORTANT: If the document states a total monthly rent (e.g. "$15,000/month"), you MUST divide by the square footage to get the per-SF rate. For example, $15,000/month on 10,000 SF = "1.50".
+- rateSfMo: Monthly rate PER SQUARE FOOT as decimal string. "$1.25/SF/Mo" → "1.25". Use this when the document states a monthly per-SF rate.
+- rateSfYr: Annual rate PER SQUARE FOOT as decimal string. "$18.00/SF/Yr" → "18.00". Use this when the document states an annual per-SF rate (do NOT divide by 12).
+- baseRent / leaseRate: Monthly rate PER SQUARE FOOT when clearly per-SF; if only total monthly rent is stated (e.g. "$15,000/month"), divide by dealSf/buildingSf and return the per-SF monthly rate ("1.50" for $15,000 on 10,000 SF).
+- freeRentMonths: Number of free/abated rent months as integer string. "2 months free rent" → "2".
+- annualEscalationPct: Annual rent increase percentage as decimal string. "3% annual increase" → "3".
 - term: Lease duration in MONTHS as integer string. "5 years" → "60". "36 months" → "36".
-- commencementDate / expirationDate / listingExpiration / dateEntered: Dates in MM/DD/YYYY format.
+- commencementDate / expirationDate / occupancyDate / listingExpiration / dateEntered: Dates in MM/DD/YYYY format.
 - askingPrice / salePrice / totalConsideration: Dollar amount as integer string without $ or commas. "$2,500,000" → "2500000".
 - pricePerSf: Price per square foot as decimal string. "$250.00/SF" → "250.00".
 - commissionRate: Commission percentage as decimal string. "6%" → "6". "3.5%" → "3.5".
@@ -1653,7 +1687,7 @@ export const aiAssistRouter = router({
       // Build a tab-specific context prefix for the user message
       const tabContextMap: Record<string, string> = {
         listing: "You are extracting data for a commercial real estate LISTING form. Focus on property address, type, lease rate, term, building SF, suite SF, expiration date, and listing agent details.",
-        voucher: "You are extracting data for a commercial real estate COMMISSION VOUCHER. Focus on parties (lessor/lessee or buyer/seller), deal SF, commencement/expiration dates, rent schedule, commission rate, and agent names.",
+        voucher: "You are extracting data for a commercial real estate COMMISSION VOUCHER from lease agreements, commission agreements, or deal packages. Focus on parties (lessor/lessee or buyer/seller), deal/building SF, commencement/expiration/occupancy dates, lease term, rent rate ($/SF/mo or $/SF/yr), free rent months, annual escalation %, commission rate, and agent names.",
         sign: "You are extracting data for a SIGN REQUEST form. Focus on property address, sign type, size, quantity, name rider, and any special placement instructions.",
         comp: "You are extracting data for a COMPARABLE TRANSACTION (comp) entry. Focus on address, deal SF, lease rate or sale price, term, tenant/landlord names, and transaction date.",
       };
