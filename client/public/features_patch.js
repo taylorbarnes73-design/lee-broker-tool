@@ -830,6 +830,15 @@ window.onSignLocationPhotoChange = function(input) {
           } catch(e) {}
         }, 50);
       }
+      if ((tab === 'sign' || tab === 'listing') && count > 0) {
+        setTimeout(function() {
+          try {
+            const flowKey = tab === 'sign' ? 'sign-main' : 'listing-main';
+            const flow = window.__stepFlows && window.__stepFlows[flowKey];
+            if (flow && typeof flow.go === 'function') flow.go(0);
+          } catch(e) {}
+        }, 50);
+      }
       return count;
     };
   });

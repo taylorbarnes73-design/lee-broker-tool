@@ -6450,9 +6450,10 @@ function pdfHelpers(doc) {
 function exportListingPdf() {
   const type = document.getElementById('l-prop-type').value;
   if (type === 'industrial') exportIndustrialPdf();
-  else if (type === 'office') exportOfficePdf();
+  else if (type === 'office' || type === 'medical' || type === 'multifamily') exportOfficePdf();
   else if (type === 'retail') exportRetailPdf();
   else if (type === 'land') exportLandPdf();
+  else exportIndustrialPdf();
 }
 
 function getVal(id) { const el = document.getElementById(id); return el ? (el.value || '').trim() : ''; }
@@ -6883,7 +6884,18 @@ function exportSignPdf() {
 
   // Helper functions
   function sLabel(text, x, yy) { doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text(text, x, yy); }
-  function sValue(text, x, yy) { doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.text(String(text || ''), x, yy); }
+  function sValue(text, x, yy, maxW) {
+    doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+    const raw = String(text || '').trim();
+    if (!raw) return 0;
+    if (maxW) {
+      const lines = doc.splitTextToSize(raw, maxW);
+      doc.text(lines, x, yy);
+      return Math.max(1, lines.length) * 12;
+    }
+    doc.text(raw, x, yy);
+    return 12;
+  }
   function sLine(x, yy, w) { doc.setDrawColor(160); doc.setLineWidth(0.5); doc.line(x, yy + 2, x + w, yy + 2); }
   function sCheckbox(checked, text, x, yy) {
     doc.setDrawColor(0); doc.setLineWidth(0.5); doc.rect(x, yy - 8, 9, 9);
@@ -6901,20 +6913,27 @@ function exportSignPdf() {
   sLabel('DATE', margin, y); sValue(getVal('s-date'), margin + 40, y);
   sLine(margin + 35, y, 100);
   sLabel('ORDER IS FOR', margin + 180, y);
-  const orderType = getSelect('s-order-type');
-  sCheckbox(orderType === 'Installation', 'INSTALLATION', margin + 270, y);
-  sCheckbox(orderType === 'Removal', 'REMOVAL', margin + 380, y);
-  sCheckbox(orderType === 'Maintenance', 'MAINTENANCE', W - margin - 100, y);
+  const orderType = (getSelect('s-order-type') || '').toLowerCase();
+  sCheckbox(orderType === 'installation', 'INSTALLATION', margin + 270, y);
+  sCheckbox(orderType === 'removal', 'REMOVAL', margin + 380, y);
+  sCheckbox(orderType === 'maintenance', 'MAINTENANCE', W - margin - 100, y);
   y += 22;
 
   // PO
   sLabel('PO:', margin, y); sValue(getVal('s-po'), margin + 25, y); sLine(margin + 22, y, 100); y += 22;
 
   // PROPERTY ADDRESS
-  sLabel('PROPERTY ADDRESS', margin, y); sValue(getVal('s-address') + (getVal('s-city') ? ', ' + getVal('s-city') : ''), margin + 120, y); sLine(margin + 118, y, W - margin * 2 - 118); y += 22;
+  sLabel('PROPERTY ADDRESS', margin, y);
+  const signAddress = [getVal('s-address'), getVal('s-city')].filter(Boolean).join(', ');
+  const addressLineH = sValue(signAddress, margin + 120, y, W - margin * 2 - 130);
+  sLine(margin + 118, y + Math.max(0, addressLineH - 10), W - margin * 2 - 118);
+  y += Math.max(22, addressLineH + 10);
 
   // CROSS STREETS
-  sLabel('CROSS STREETS, BUILDING NAME, ETC.', margin, y); sValue(getVal('s-cross'), margin + 230, y); sLine(margin + 228, y, W - margin * 2 - 228); y += 22;
+  sLabel('CROSS STREETS, BUILDING NAME, ETC.', margin, y);
+  const crossLineH = sValue(getVal('s-cross'), margin + 230, y, W - margin * 2 - 240);
+  sLine(margin + 228, y + Math.max(0, crossLineH - 10), W - margin * 2 - 228);
+  y += Math.max(22, crossLineH + 10);
 
   // ACCESS
   sLabel('ACCESS NECESSARY?', margin, y);
@@ -6939,8 +6958,14 @@ function exportSignPdf() {
   y = doc.lastAutoTable.finalY + 16;
 
   // NAME RIDER / CUSTOM RIDER
-  sLabel('NAME RIDER:', margin, y); sValue(getVal('s-rider'), margin + 85, y); sLine(margin + 83, y, W - margin * 2 - 83); y += 18;
-  sLabel('CUSTOM RIDER:', margin, y); sValue(getVal('s-custom-rider'), margin + 100, y); sLine(margin + 98, y, W - margin * 2 - 98); y += 22;
+  sLabel('NAME RIDER:', margin, y);
+  const riderLineH = sValue(getVal('s-rider'), margin + 85, y, W - margin * 2 - 95);
+  sLine(margin + 83, y + Math.max(0, riderLineH - 10), W - margin * 2 - 83);
+  y += Math.max(18, riderLineH + 8);
+  sLabel('CUSTOM RIDER:', margin, y);
+  const customRiderLineH = sValue(getVal('s-custom-rider'), margin + 100, y, W - margin * 2 - 110);
+  sLine(margin + 98, y + Math.max(0, customRiderLineH - 10), W - margin * 2 - 98);
+  y += Math.max(22, customRiderLineH + 10);
 
   // Diagram box
   doc.setDrawColor(0); doc.setLineWidth(1);
@@ -6967,7 +6992,10 @@ function exportSignPdf() {
   y += 82;
 
   // COMMENTS
-  sLabel('COMMENTS:', margin, y); sValue(getVal('s-comments'), margin + 80, y); sLine(margin + 78, y, W - margin * 2 - 78); y += 22;
+  sLabel('COMMENTS:', margin, y);
+  const commentsLineH = sValue(getVal('s-comments'), margin + 80, y, W - margin * 2 - 90);
+  sLine(margin + 78, y + Math.max(0, commentsLineH - 10), W - margin * 2 - 78);
+  y += Math.max(22, commentsLineH + 10);
 
   // Double line divider
   doc.setDrawColor(0); doc.setLineWidth(1);
@@ -15580,6 +15608,7 @@ const AI_FIELD_MAP = {
     listingAgentName: '__listing_agent_name__',
     listingAgentLicense: '__listing_agent_license__',
     comments: 'l-comments',
+    ownerName: 'l-owner-name',
   },
   voucher: {
     representationType: 'v-rep-type',
@@ -15617,10 +15646,10 @@ const AI_FIELD_MAP = {
     city: 's-city',
     state: 's-state',
     zip: 's-zip',
-    nameRider: 's-rider-text',
-    requestedBy: 's-req-name',
-    specialInstructions: 's-special',
-    accessInstructions: 's-access',
+    nameRider: 's-rider',
+    requestedBy: 's-requested-by',
+    specialInstructions: 's-comments',
+    accessInstructions: 's-access-contact',
   },
   comp: {
     compType: 'c-comp-type',
@@ -15730,6 +15759,58 @@ function applyAiFields(tab, fields, options = {}) {
   fieldEntries.forEach(([key, value]) => {
     const elId = map[key];
     if (!elId || elId.startsWith('__')) return; // skip sentinel values
+
+    if (tab === 'sign' && key === 'nameRider') {
+      try {
+        const toggle = document.getElementById('s-rider-toggle');
+        if (toggle && !toggle.checked) {
+          toggle.checked = true;
+          if (typeof toggleNameRider === 'function') toggleNameRider(true);
+        }
+      } catch (e) { console.warn('[applyAiFields] sign rider toggle error:', e); }
+    }
+
+    if (tab === 'sign' && key === 'specialInstructions') {
+      const commentsEl = document.getElementById('s-comments');
+      const incoming = String(value || '').trim();
+      if (commentsEl && incoming && shouldApplyAiField(tab, key, commentsEl, commentsEl.value)) {
+        const merged = commentsEl.value.trim()
+          ? commentsEl.value.trim() + '\n' + incoming
+          : incoming;
+        commentsEl.value = merged;
+        commentsEl.classList.add('ai-filled');
+        addAiBadge(commentsEl);
+        commentsEl.dispatchEvent(new Event('change', { bubbles: true }));
+        commentsEl.dispatchEvent(new Event('input', { bubbles: true }));
+        applied++;
+      }
+      return;
+    }
+
+    if (tab === 'sign' && key === 'accessInstructions') {
+      const text = String(value || '').trim();
+      if (!text) return;
+      const accessEl = document.getElementById('s-access');
+      const contactEl = document.getElementById('s-access-contact');
+      if (/^(yes|no)$/i.test(text) && accessEl) {
+        accessEl.value = text.toLowerCase();
+        accessEl.classList.add('ai-filled');
+        addAiBadge(accessEl);
+        accessEl.dispatchEvent(new Event('change', { bubbles: true }));
+        applied++;
+        return;
+      }
+      if (contactEl && shouldApplyAiField(tab, key, contactEl, contactEl.value)) {
+        contactEl.value = text;
+        contactEl.classList.add('ai-filled');
+        addAiBadge(contactEl);
+        contactEl.dispatchEvent(new Event('change', { bubbles: true }));
+        contactEl.dispatchEvent(new Event('input', { bubbles: true }));
+        applied++;
+      }
+      return;
+    }
+
     const el = document.getElementById(elId);
     if (!el) return;
     const oldVal = el.value || '';
@@ -15789,6 +15870,12 @@ function applyAiFields(tab, fields, options = {}) {
     try { calcVoucherSale(); } catch(e) {}
     try { reconcileVoucherFinancials({ fields, autoGenerateSchedule: true }); } catch(e) {}
     const flow = window.__stepFlows && window.__stepFlows['voucher-main'];
+    if (flow && typeof flow.renderNav === 'function') flow.renderNav();
+  }
+
+  if (tab === 'sign' && applied > 0) {
+    try { syncSignGlance(); } catch(e) {}
+    const flow = window.__stepFlows && window.__stepFlows['sign-main'];
     if (flow && typeof flow.renderNav === 'function') flow.renderNav();
   }
 
