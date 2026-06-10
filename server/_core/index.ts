@@ -153,6 +153,23 @@ async function startServer() {
     }
   });
 
+  // Commission voucher Excel template — must be registered before SPA/Vite fallthrough
+  // so fetch() receives a real .xlsm, not HTML.
+  app.get("/templates/commission-voucher-template.xlsm", (_req, res) => {
+    const candidates = [
+      path.join(process.cwd(), "dist/public/templates/commission-voucher-template.xlsm"),
+      path.join(process.cwd(), "client/public/templates/commission-voucher-template.xlsm"),
+    ];
+    const templatePath = candidates.find(candidate => fs.existsSync(candidate));
+    if (!templatePath) {
+      res.status(404).json({ success: false, error: "Voucher template not found" });
+      return;
+    }
+    res.setHeader("Content-Type", "application/vnd.ms-excel.sheet.macroEnabled.12");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.sendFile(templatePath);
+  });
+
   // Legacy broker HTML entry points (not the marketing / SPA root).
   // `/` is served by the React shell (Vite dev or `serveStatic`); `/tool` stays the HTML workspace.
   app.get(["/beta", "/beta/*", "/404"], (req, res) => {

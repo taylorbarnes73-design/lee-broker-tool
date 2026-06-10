@@ -1,5 +1,8 @@
-import { readFileSync } from "node:fs";
+import express from "express";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
 import { resolve } from "node:path";
+import request from "supertest";
 import { describe, expect, it } from "vitest";
 
 const brokerToolHtml = readFileSync(
@@ -134,6 +137,52 @@ describe("broker_tool.html wiring", () => {
     expect(pickerHtml).toContain('data-type="medical"');
     expect(pickerHtml).toContain('<span class="lto-title">Medical</span>');
     expect(pickerHtml).not.toContain("lto-sub");
+  });
+
+  it("ships the commission voucher Excel template for client export", async () => {
+    const templatePath = resolve(
+      process.cwd(),
+      "client/public/templates/commission-voucher-template.xlsm"
+    );
+    expect(existsSync(templatePath)).toBe(true);
+    const bytes = readFileSync(templatePath);
+    expect(bytes[0]).toBe(0x50);
+    expect(bytes[1]).toBe(0x4b);
+    expect(brokerToolHtml).toContain(
+      "const VOUCHER_EXCEL_TEMPLATE_URL = '/templates/commission-voucher-template.xlsm';"
+    );
+    expect(brokerToolHtml).toContain("header[0] !== 0x50 || header[1] !== 0x4B");
+
+    const app = express();
+    app.get("/templates/commission-voucher-template.xlsm", (_req, res) => {
+      const candidates = [
+        path.join(process.cwd(), "dist/public/templates/commission-voucher-template.xlsm"),
+        path.join(process.cwd(), "client/public/templates/commission-voucher-template.xlsm"),
+      ];
+      const found = candidates.find(candidate => existsSync(candidate));
+      if (!found) {
+        res.status(404).json({ success: false, error: "Voucher template not found" });
+        return;
+      }
+      res.setHeader("Content-Type", "application/vnd.ms-excel.sheet.macroEnabled.12");
+      res.sendFile(found);
+    });
+
+    const res = await request(app)
+      .get("/templates/commission-voucher-template.xlsm")
+      .buffer(true)
+      .parse((response, callback) => {
+        const chunks: Buffer[] = [];
+        response.on("data", chunk => chunks.push(Buffer.from(chunk)));
+        response.on("end", () => callback(null, Buffer.concat(chunks)));
+      });
+    expect(res.status).toBe(200);
+    expect(String(res.headers["content-type"]).toLowerCase()).toContain(
+      "application/vnd.ms-excel.sheet.macroenabled.12"
+    );
+    const body = res.body as Buffer;
+    expect(body[0]).toBe(0x50);
+    expect(body[1]).toBe(0x4b);
   });
 
   it("lets AI overwrite untouched Listing Entry defaults and match select labels", () => {

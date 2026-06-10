@@ -8954,6 +8954,10 @@ async function buildVoucherExcelBlob() {
   const response = await fetch(VOUCHER_EXCEL_TEMPLATE_URL, { credentials: 'same-origin' });
   if (!response.ok) throw new Error('Unable to load the voucher template.');
   const templateBuffer = await response.arrayBuffer();
+  const header = new Uint8Array(templateBuffer.slice(0, 2));
+  if (header[0] !== 0x50 || header[1] !== 0x4B) {
+    throw new Error('Voucher template could not be loaded. Please refresh and try again.');
+  }
   const zip = await JSZip.loadAsync(templateBuffer);
 
   // Find the main worksheet (usually xl/worksheets/sheet1.xml)
