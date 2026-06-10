@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolveBundledAssetPath } from "../lib/bundledAssets";
 import { getSetting } from "../settings/getSetting";
 import { storageGetBytes, isStoredFileReference } from "../storage";
 import {
@@ -11,23 +11,10 @@ import {
   type QuickConvertKind,
 } from "@shared/quickConvert";
 
-const SERVICE_DIR = path.dirname(fileURLToPath(import.meta.url));
-export const BUNDLED_LETTERHEAD_DOTX = path.join(
-  SERVICE_DIR,
-  "../assets/templates/lanb-letterhead.dotx"
-);
-export const BUNDLED_LETTERHEAD_DOC = path.join(
-  SERVICE_DIR,
-  "../assets/templates/lanb-letterhead-copy.doc"
-);
-export const BUNDLED_LETTERHEAD_DOCX = path.join(
-  SERVICE_DIR,
-  "../assets/templates/lanb-letterhead-copy.docx"
-);
-export const BUNDLED_LETTERHEAD_PDF_CACHE = path.join(
-  SERVICE_DIR,
-  "../assets/templates/lanb-letterhead.pdf"
-);
+export const BUNDLED_LETTERHEAD_DOTX = resolveBundledAssetPath("templates/lanb-letterhead.dotx");
+export const BUNDLED_LETTERHEAD_DOC = resolveBundledAssetPath("templates/lanb-letterhead-copy.doc");
+export const BUNDLED_LETTERHEAD_DOCX = resolveBundledAssetPath("templates/lanb-letterhead-copy.docx");
+export const BUNDLED_LETTERHEAD_PDF_CACHE = resolveBundledAssetPath("templates/lanb-letterhead.pdf");
 
 const SOFFICE_CANDIDATES = [
   process.env.QUICK_CONVERT_SOFFICE_PATH,
@@ -124,13 +111,13 @@ export async function resolveLetterheadTemplatePath(): Promise<{
     }
   }
 
-  if (await pathExists(BUNDLED_LETTERHEAD_DOTX)) {
+  if (BUNDLED_LETTERHEAD_DOTX && (await pathExists(BUNDLED_LETTERHEAD_DOTX))) {
     return { source: "bundled", path: BUNDLED_LETTERHEAD_DOTX };
   }
-  if (await pathExists(BUNDLED_LETTERHEAD_DOC)) {
+  if (BUNDLED_LETTERHEAD_DOC && (await pathExists(BUNDLED_LETTERHEAD_DOC))) {
     return { source: "bundled", path: BUNDLED_LETTERHEAD_DOC };
   }
-  if (await pathExists(BUNDLED_LETTERHEAD_DOCX)) {
+  if (BUNDLED_LETTERHEAD_DOCX && (await pathExists(BUNDLED_LETTERHEAD_DOCX))) {
     return { source: "bundled", path: BUNDLED_LETTERHEAD_DOCX };
   }
   return { source: "missing", path: null };
@@ -249,7 +236,7 @@ export async function validatePdfBytes(bytes: Buffer): Promise<{ ok: true } | { 
 }
 
 async function loadLetterheadCoverPdf(templatePath: string | null): Promise<Buffer> {
-  if (await pathExists(BUNDLED_LETTERHEAD_PDF_CACHE)) {
+  if (BUNDLED_LETTERHEAD_PDF_CACHE && (await pathExists(BUNDLED_LETTERHEAD_PDF_CACHE))) {
     return Buffer.from(await fs.readFile(BUNDLED_LETTERHEAD_PDF_CACHE));
   }
 
@@ -259,7 +246,9 @@ async function loadLetterheadCoverPdf(templatePath: string | null): Promise<Buff
     try {
       const pdfPath = await convertOfficeToPdfWithSoffice(sofficePath, templatePath, tmpDir);
       const bytes = Buffer.from(await fs.readFile(pdfPath));
-      await fs.writeFile(BUNDLED_LETTERHEAD_PDF_CACHE, bytes).catch(() => undefined);
+      if (BUNDLED_LETTERHEAD_PDF_CACHE) {
+        await fs.writeFile(BUNDLED_LETTERHEAD_PDF_CACHE, bytes).catch(() => undefined);
+      }
       return bytes;
     } finally {
       await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => undefined);

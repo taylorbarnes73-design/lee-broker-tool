@@ -29,6 +29,7 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/drizzle ./drizzle
 COPY --from=build /app/server/assets/templates ./assets/templates
+COPY --from=build /app/dist/public/templates/commission-voucher-template.xlsm ./assets/templates/commission-voucher-template.xlsm
 
 EXPOSE 3000
 CMD ["node", "dist/index.js"]

@@ -3,16 +3,14 @@ import {
   mapContractExtractionToVoucherFields,
   validateQuickConvertUpload,
 } from "@shared/quickConvert";
-import {
-  BUNDLED_LETTERHEAD_DOTX,
-  resolveSofficePath,
-  validatePdfBytes,
-} from "./quickConvert";
+import { resolveSofficePath, validatePdfBytes } from "./quickConvert";
+import { requireBundledAssetPath } from "../lib/bundledAssets";
 import fs from "node:fs/promises";
 
 describe("quickConvert service", () => {
   it("exposes bundled letterhead dotx template in repo", async () => {
-    await expect(fs.access(BUNDLED_LETTERHEAD_DOTX)).resolves.toBeUndefined();
+    const letterheadPath = requireBundledAssetPath("templates/lanb-letterhead.dotx");
+    await expect(fs.access(letterheadPath)).resolves.toBeUndefined();
   });
 
   it("reports soffice availability without throwing", () => {

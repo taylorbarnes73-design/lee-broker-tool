@@ -1,9 +1,9 @@
 import express from "express";
-import { existsSync, readFileSync } from "node:fs";
-import path from "node:path";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
+import { requireCommissionVoucherTemplatePath } from "./lib/bundledAssets";
 
 const brokerToolHtml = readFileSync(
   resolve(process.cwd(), "client/public/broker_tool.html"),
@@ -140,11 +140,7 @@ describe("broker_tool.html wiring", () => {
   });
 
   it("ships the commission voucher Excel template for client export", async () => {
-    const templatePath = resolve(
-      process.cwd(),
-      "client/public/templates/commission-voucher-template.xlsm"
-    );
-    expect(existsSync(templatePath)).toBe(true);
+    const templatePath = requireCommissionVoucherTemplatePath();
     const bytes = readFileSync(templatePath);
     expect(bytes[0]).toBe(0x50);
     expect(bytes[1]).toBe(0x4b);
@@ -155,17 +151,8 @@ describe("broker_tool.html wiring", () => {
 
     const app = express();
     app.get("/templates/commission-voucher-template.xlsm", (_req, res) => {
-      const candidates = [
-        path.join(process.cwd(), "dist/public/templates/commission-voucher-template.xlsm"),
-        path.join(process.cwd(), "client/public/templates/commission-voucher-template.xlsm"),
-      ];
-      const found = candidates.find(candidate => existsSync(candidate));
-      if (!found) {
-        res.status(404).json({ success: false, error: "Voucher template not found" });
-        return;
-      }
       res.setHeader("Content-Type", "application/vnd.ms-excel.sheet.macroEnabled.12");
-      res.sendFile(found);
+      res.sendFile(templatePath);
     });
 
     const res = await request(app)
@@ -202,6 +189,26 @@ describe("broker_tool.html wiring", () => {
     );
     expect(css).toMatch(/\.chip-select\s*\{[^}]*pointer-events:\s*none/);
     expect(css).toMatch(/\.chip-select\.is-open\s*\{[^}]*pointer-events:\s*auto/);
+  });
+
+  it("keeps client-side export entry points wired in broker_tool.html", () => {
+    const exportHandlers = [
+      "exportListingPdfWithSpinner",
+      "exportSignPdfWithSpinner",
+      "exportVoucherExcelWithSpinner",
+      "exportCompPdfWithSpinner",
+      "compReportExportCsvWithSpinner",
+      "compReportExportPdfWithSpinner",
+      "downloadMarketingRequestPdf",
+      "ciDownloadDataSheet",
+      "submitSendToAdmin",
+    ];
+    for (const handler of exportHandlers) {
+      expect(brokerToolHtml).toContain(`${handler}(`);
+    }
+    expect(brokerToolHtml).toContain("const VOUCHER_EXCEL_TEMPLATE_URL = '/templates/commission-voucher-template.xlsm';");
+    expect(brokerToolHtml).toContain("fetch('/api/marketing-request/pdf'");
+    expect(brokerToolHtml).toContain("fetch('/api/trpc/email.sendToAdmin'");
   });
 
   it("lets AI overwrite untouched Listing Entry defaults and match select labels", () => {

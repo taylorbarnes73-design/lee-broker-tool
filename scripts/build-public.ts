@@ -13,19 +13,25 @@ async function ensureDir(dir: string) {
   await fs.mkdir(dir, { recursive: true });
 }
 
-async function copyDirFlat(params: { from: string; to: string }) {
+async function copyRecursive(params: { from: string; to: string }) {
+  await ensureDir(params.to);
   const entries = await fs.readdir(params.from, { withFileTypes: true });
   for (const ent of entries) {
-    if (!ent.isFile()) continue;
     const fromPath = path.join(params.from, ent.name);
     const toPath = path.join(params.to, ent.name);
-    await fs.copyFile(fromPath, toPath);
+    if (ent.isDirectory()) {
+      await copyRecursive({ from: fromPath, to: toPath });
+      continue;
+    }
+    if (ent.isFile()) {
+      await fs.copyFile(fromPath, toPath);
+    }
   }
 }
 
 async function main() {
   await ensureDir(outDir);
-  await copyDirFlat({ from: srcDir, to: outDir });
+  await copyRecursive({ from: srcDir, to: outDir });
   // eslint-disable-next-line no-console
   console.log(`Copied public assets → ${path.relative(repoRoot, outDir)}`);
 }
@@ -35,4 +41,3 @@ main().catch(err => {
   console.error(err);
   process.exit(1);
 });
-

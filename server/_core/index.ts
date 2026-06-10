@@ -33,6 +33,7 @@ import { dealiusAdminApiRouter } from "../dealiusAdminApi";
 import { brokerAdminIngestRouter } from "../brokerAdminIngestApi";
 import { dealiusApiAdminRouter } from "../dealiusApiAdmin";
 import { marketingRequestApiRouter } from "../marketingRequestApi";
+import { resolveCommissionVoucherTemplatePath } from "../lib/bundledAssets";
 import { startBrokerAdminIngestScheduler } from "../jobs/ingestBrokerAdminEmails";
 import { storageGetBytes } from "../storage";
 import { getDb } from "../db";
@@ -156,11 +157,7 @@ async function startServer() {
   // Commission voucher Excel template — must be registered before SPA/Vite fallthrough
   // so fetch() receives a real .xlsm, not HTML.
   app.get("/templates/commission-voucher-template.xlsm", (_req, res) => {
-    const candidates = [
-      path.join(process.cwd(), "dist/public/templates/commission-voucher-template.xlsm"),
-      path.join(process.cwd(), "client/public/templates/commission-voucher-template.xlsm"),
-    ];
-    const templatePath = candidates.find(candidate => fs.existsSync(candidate));
+    const templatePath = resolveCommissionVoucherTemplatePath();
     if (!templatePath) {
       res.status(404).json({ success: false, error: "Voucher template not found" });
       return;

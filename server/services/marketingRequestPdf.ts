@@ -1,7 +1,6 @@
 import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { PDFDocument } from "pdf-lib";
+import { requireBundledAssetPath } from "../lib/bundledAssets";
 
 export type MarketingRequestFormData = {
   requesterName?: string;
@@ -29,20 +28,8 @@ export type MarketingRequestFormData = {
   additionalNotes?: string;
 };
 
-const SERVICE_DIR = path.dirname(fileURLToPath(import.meta.url));
-
 export function resolveMarketingRequestTemplatePath(): string {
-  const candidates = [
-    path.join(SERVICE_DIR, "../assets/templates/marketing-project-request-fillable.pdf"),
-    path.join(process.cwd(), "server/assets/templates/marketing-project-request-fillable.pdf"),
-    path.join(process.cwd(), "server/assets/marketing-project-request-fillable.pdf"),
-  ];
-  for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) return candidate;
-  }
-  throw new Error(
-    `Marketing request PDF template not found. Checked: ${candidates.join(", ")}`
-  );
+  return requireBundledAssetPath("templates/marketing-project-request-fillable.pdf");
 }
 
 const DELIVERABLE_CHECKBOXES: Record<string, string> = {
