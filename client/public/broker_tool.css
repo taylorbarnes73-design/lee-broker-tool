@@ -3000,6 +3000,61 @@ body.admin-mode #admin-view {
   justify-content: center;
 }
 
+.review-validation-banner {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid #ECE8DF;
+  margin-bottom: 4px;
+}
+
+.review-validation-ok {
+  background: #F3FAF0;
+  border-color: #C8E6C0;
+  color: #2A5520;
+}
+
+.review-validation-errors {
+  background: #FFF5F5;
+  border-color: rgba(152, 0, 46, 0.22);
+}
+
+.review-validation-warns {
+  background: #FFFBEB;
+  border-color: #F0D48A;
+  margin-top: 10px;
+}
+
+.review-validation-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #303C42;
+  margin-bottom: 8px;
+}
+
+.review-validation-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #303C42;
+}
+
+.review-validation-hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #6B7178;
+}
+
+.review-deal-summary {
+  margin-top: 12px;
+}
+
+.review-voucher-ai-check {
+  margin-top: 12px;
+}
+
 .review-overview {
   display: grid;
   gap: 14px;

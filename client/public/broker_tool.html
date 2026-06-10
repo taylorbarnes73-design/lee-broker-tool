@@ -970,20 +970,23 @@
   <div class="card voucher-section" id="vstep-2" data-vstep="2" >
     <div class="voucher-section-header">Broker Representation</div>
     <div class="row c2 micro-copy-bottom-sm">
-      <div class="field"><label>Same Listing &amp; Procuring Agent?</label>
+      <div class="field"><label>Are the Listing Agent(s) and Procuring Agent(s) the same?</label>
         <select id="v-same-agent" onchange="onSameAgentChange()"><option value="no">No</option><option value="yes">Yes</option></select>
       </div>
       <div class="align-end-copy">House name, agent name &amp; city are usually sufficient</div>
     </div>
-    <div class="row c2 voucher-agent-grid">
-      <div>
-        <div class="sub-divider-label">Listing Agent</div>
-        <div class="field"><label class="req">Agent Name</label>
-          <div class="agent-picker" id="picker-v-la-name">
-            <input id="v-la-name" autocomplete="off"><div class="field-hint">Start typing agent name...</div>
-            <div class="agent-dd" id="dd-v-la-name"></div>
+    <div class="row c2 voucher-agent-grid" id="voucher-broker-grid">
+      <div id="voucher-listing-col">
+        <div class="sub-divider-label">Listing Agent(s)</div>
+        <div class="v-broker-chip-panel">
+          <div class="v-broker-chips" id="v-la-chips" aria-live="polite"></div>
+          <div class="agent-picker v-broker-picker-wrap" id="picker-v-la-add">
+            <button type="button" class="btn btn-gray btn-sm v-broker-add-btn" onclick="voucherBrokerAddFocus('la')">+ Add Broker</button>
+            <input id="v-la-add-input" class="v-broker-search-input" autocomplete="off" placeholder="Search brokers…" aria-label="Search listing brokers">
+            <div class="agent-dd" id="dd-v-la-add-input"></div>
           </div>
         </div>
+        <input type="hidden" id="v-la-name">
         <div class="field"><label>House</label><input id="v-la-house"></div>
         <div class="field is-hidden" aria-hidden="true"><label>Invoice Listing Agent?</label><select id="v-la-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
         <div class="field"><label>Address</label><input id="v-la-address"></div>
@@ -998,13 +1001,16 @@
         </div>
       </div>
       <div id="procuring-section">
-        <div class="sub-divider-label">Procuring Agent</div>
-        <div class="field"><label class="req">Agent Name</label>
-          <div class="agent-picker" id="picker-v-pa-name">
-            <input id="v-pa-name" autocomplete="off"><div class="field-hint">Start typing agent name...</div>
-            <div class="agent-dd" id="dd-v-pa-name"></div>
+        <div class="sub-divider-label">Procuring Agent(s)</div>
+        <div class="v-broker-chip-panel">
+          <div class="v-broker-chips" id="v-pa-chips" aria-live="polite"></div>
+          <div class="agent-picker v-broker-picker-wrap" id="picker-v-pa-add">
+            <button type="button" class="btn btn-gray btn-sm v-broker-add-btn" onclick="voucherBrokerAddFocus('pa')">+ Add Broker</button>
+            <input id="v-pa-add-input" class="v-broker-search-input" autocomplete="off" placeholder="Search brokers…" aria-label="Search procuring brokers">
+            <div class="agent-dd" id="dd-v-pa-add-input"></div>
           </div>
         </div>
+        <input type="hidden" id="v-pa-name">
         <div class="field"><label>House</label><input id="v-pa-house"><div class="field-hint">Brokerage name</div></div>
         <div class="field is-hidden" aria-hidden="true"><label>Invoice Procuring Agent?</label><select id="v-pa-invoice"><option value="no">No</option><option value="yes">Yes</option></select></div>
         <div class="field"><label>Address</label><input id="v-pa-address"></div>
@@ -1193,25 +1199,30 @@
 
         <div class="v-rent-comm-bar row c2 top-gap-sm">
           <div class="field">
-            <label class="req">Commission Rate %</label>
-            <input id="v-l-comm-rate" placeholder="e.g. 4" oninput="calcCommSummary(); updateVoucherCommRateWarn()">
+            <label>Commission Rate %</label>
+            <input id="v-l-comm-rate" placeholder="e.g. 4" oninput="vClearLeaseCommOverride(); calcCommSummary(); updateVoucherCommRateWarn()">
             <div class="field-hint field-hint-warn is-hidden" id="v-comm-rate-warn">Generate a rent schedule before setting commission rate.</div>
           </div>
           <div class="field">
             <label>Lease Commission Due</label>
-            <input id="v-l-comm-due" class="readonly-fill-strong" placeholder="$0" readonly>
+            <input id="v-l-comm-due" class="readonly-fill-strong" placeholder="$0" oninput="onVoucherLeaseCommDueInput()">
+            <div class="field-hint">Override total commission due if needed</div>
           </div>
         </div>
 
         <div class="v-rent-table-panel">
           <div class="v-rent-table-toolbar">
             <span>Rent schedule</span>
-            <button type="button" class="btn btn-gray btn-sm" onclick="addRentRow()">+ Add row</button>
+            <div class="v-rent-table-toolbar-actions">
+              <button type="button" class="btn btn-gray btn-sm" onclick="saveVoucherRentSchedule(this)"><span class="btn-spinner"></span><span class="btn-label">Save schedule</span></button>
+              <button type="button" class="btn btn-gray btn-sm" onclick="addRentRow()">+ Add row</button>
+            </div>
           </div>
           <div class="v-rent-table-wrap">
             <table class="v-rent-table rent-table" id="v-rent-table">
               <thead>
                 <tr>
+                  <th class="col-drag" aria-label="Reorder"></th>
                   <th class="col-rn">#</th>
                   <th class="col-months">Months</th>
                   <th class="col-monthly">Monthly rent</th>
@@ -1224,6 +1235,7 @@
               <tbody id="v-rent-body"></tbody>
               <tfoot>
                 <tr class="v-rent-totals-row">
+                  <td></td>
                   <td class="text-strong">Σ</td>
                   <td id="v-rent-total-months">0 mo</td>
                   <td id="v-rent-total-consideration" class="text-strong" colspan="2">$0</td>
@@ -1303,16 +1315,6 @@
     <button class="btn btn-gray top-gap-sm" onclick="addPaymentRow()">+ Add Payment</button>
 
 
-    <!-- AI Deal Analysis -->
-    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #E7EAEE">
-      <div class="voucher-sub-header">Double-check my numbers</div>
-      <p class="micro-copy">Verifies commission math against uploaded documents. Upload AI at the top remains the primary auto-fill.</p>
-      <button class="btn btn-outline" id="v-ai-calc-btn" onclick="runVoucherAICalculate()">
-        <svg class="ui-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:5px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        Verify commission math
-      </button>
-      <div id="v-ai-calc-panel" class="is-hidden" style="margin-top:14px;"></div>
-    </div>
   </div>
 
   <!-- ═══ SECTION 6: OUTSIDE AGENTS (matches Excel rows 94-103) ═══ -->
@@ -4282,6 +4284,8 @@ function _saveCurrentDraftCore(context) {
         savedAt: Date.now(),
         values: lbtCollectDraftFields('#v-deal-shell'),
         voucherUploads: collectVoucherUploadDraftState(),
+        rentSchedule: collectVoucherRentScheduleState(),
+        voucherBrokers: collectVoucherBrokerDraftState(),
       }));
     }
     showToast('Draft saved');
@@ -4295,13 +4299,6 @@ function openReviewSnapshotWithSpinner(btn, context) {
   if (btn) { setBtnLoading(btn, true, 'Loading…'); btn.disabled = true; }
   setTimeout(() => {
     try {
-      if (context === 'voucher') {
-        const validation = validateVoucherBeforeReview();
-        if (!validation.ok) {
-          showVoucherValidationChecklist(validation.items);
-          return;
-        }
-      }
       (window.openReviewSnapshot || openReviewSnapshot)(context);
     } catch (err) {
       console.error('Review snapshot error:', err);
@@ -4502,6 +4499,134 @@ function renderReviewSummary(rows, sections) {
     : '';
   return overview + sectionHtml;
 }
+
+function renderVoucherReviewValidationBanner(validation) {
+  const errors = validation.items.filter(item => item.level !== 'warn');
+  const warnings = validation.items.filter(item => item.level === 'warn');
+  if (!errors.length && !warnings.length) {
+    return '<div class="review-validation-banner review-validation-ok" role="status">' +
+      '<strong>Validation passed.</strong> Required fields and commission math look complete.</div>';
+  }
+  let html = '';
+  if (errors.length) {
+    html += '<div class="review-validation-banner review-validation-errors" role="alert">' +
+      '<div class="review-validation-title">Fix before sending</div>' +
+      '<ul class="review-validation-list">' +
+      errors.map(item => '<li>' + escHtml(item.label) + '</li>').join('') +
+      '</ul></div>';
+  }
+  if (warnings.length) {
+    html += '<div class="review-validation-banner review-validation-warns" role="status">' +
+      '<div class="review-validation-title">Review these items</div>' +
+      '<ul class="review-validation-list">' +
+      warnings.map(item => '<li>' + escHtml(item.label) + '</li>').join('') +
+      '</ul></div>';
+  }
+  html += '<p class="review-validation-hint">Use Back to Edit to fix anything, then review again.</p>';
+  return html;
+}
+
+function buildVoucherDealSummaryHtml() {
+  const gv = (id) => reviewDisplayValue(id);
+  const txn = document.getElementById('v-txn-type')?.value || 'lease';
+  const isLease = voucherTxnIsLease();
+  const isSale = txn === 'sale';
+  const addr = [gv('v-address', ''), gv('v-city', ''), gv('v-state', '')].filter(v => v && v !== '—').join(', ') || '—';
+  const consideration = isLease ? gv('v-l-consideration') : (isSale ? gv('v-s-price') : gv('v-comm-consulting'));
+  const commDue = isLease ? gv('v-l-comm-due') : (isSale ? gv('v-s-comm-due') : gv('v-comm-consulting'));
+  const txnLabel = gv('v-txn-type');
+  return '<div class="voucher-summary-card review-deal-summary">' +
+    '<div class="voucher-summary-card-title">Deal Summary</div>' +
+    '<div class="voucher-summary-grid">' +
+      '<div class="voucher-summary-item full-width"><dt>Property</dt><dd>' + escHtml(addr) + '</dd></div>' +
+      '<hr class="voucher-summary-divider">' +
+      '<div class="voucher-summary-item"><dt>' + (isSale ? 'Buyer' : 'Lessee') + '</dt><dd>' + escHtml(gv('v-lb-company')) + '</dd></div>' +
+      '<div class="voucher-summary-item"><dt>' + (isSale ? 'Seller' : 'Lessor') + '</dt><dd>' + escHtml(gv('v-ls-company')) + '</dd></div>' +
+      '<div class="voucher-summary-item"><dt>Listing Agent(s)</dt><dd>' + escHtml(gv('v-la-name')) + '</dd></div>' +
+      '<div class="voucher-summary-item"><dt>Procuring Agent(s)</dt><dd>' + escHtml(gv('v-pa-name')) + '</dd></div>' +
+      '<hr class="voucher-summary-divider">' +
+      '<div class="voucher-summary-item"><dt>Deal SF</dt><dd class="mono">' + escHtml(gv('v-l-dealsf')) + '</dd></div>' +
+      '<div class="voucher-summary-item"><dt>Transaction</dt><dd>' + escHtml(txnLabel) + '</dd></div>' +
+      '<div class="voucher-summary-item voucher-summary-highlight"><dt>Total Consideration</dt><dd class="mono">' + escHtml(consideration) + '</dd></div>' +
+      '<div class="voucher-summary-item voucher-summary-highlight"><dt>Commission Due</dt><dd class="mono">' + escHtml(commDue) + '</dd></div>' +
+      '<div class="voucher-summary-item voucher-summary-highlight"><dt>Total Invoice</dt><dd class="mono">' + escHtml(gv('v-total-invoice')) + '</dd></div>' +
+    '</div></div>' +
+    '<div id="review-voucher-ai-check" class="review-voucher-ai-check" aria-live="polite"></div>';
+}
+
+function collectVoucherReviewSections() {
+  const gv = (id, fb = '—') => reviewDisplayValue(id, fb);
+  const sections = [];
+
+  sections.push({
+    title: 'Broker Representation',
+    fields: [
+      { label: 'Listing Agent(s)', value: gv('v-la-name') },
+      { label: 'Procuring Agent(s)', value: gv('v-pa-name') },
+      { label: 'Representation', value: gv('v-rep-type') },
+    ].filter(field => field.value && field.value !== '—'),
+  });
+
+  if (!voucherRepIsOther()) {
+    sections.push({
+      title: 'Parties',
+      fields: [
+        { label: 'Lessor / Seller', value: [gv('v-ls-company', ''), gv('v-ls-contact', '')].filter(v => v && v !== '—').join(' — ') || '—' },
+        { label: 'Lessee / Buyer', value: [gv('v-lb-company', ''), gv('v-lb-contact', '')].filter(v => v && v !== '—').join(' — ') || '—' },
+      ],
+    });
+
+    const txn = document.getElementById('v-txn-type')?.value || 'lease';
+    if (txn === 'lease') {
+      const termFields = [
+        { label: 'Lease start', value: gv('v-l-start', '') },
+        { label: 'Lease end', value: gv('v-l-end', '') },
+        { label: 'Rate / SF', value: gv('v-l-rate', '') },
+        { label: 'Commission rate %', value: gv('v-l-comm-rate', '') },
+      ].filter(field => field.value);
+      if (termFields.length) sections.push({ title: 'Lease Terms', fields: termFields });
+
+      const rentFields = [];
+      document.querySelectorAll('#v-rent-body tr').forEach((row, index) => {
+        const months = String(row.querySelector('.rent-months')?.value || '').trim();
+        const monthly = String(row.querySelector('.rent-monthly')?.value || '').trim();
+        const commPct = String(row.querySelector('.rent-comm-pct-input')?.value || '').trim();
+        if (!months && !monthly) return;
+        const parts = [];
+        if (months) parts.push(months + ' mo');
+        if (monthly) parts.push('$' + monthly + '/mo');
+        if (commPct) parts.push(commPct + '% comm');
+        rentFields.push({ label: 'Period ' + (index + 1), value: parts.join(' · ') });
+      });
+      if (rentFields.length) sections.push({ title: 'Rent Schedule', fields: rentFields });
+    } else if (txn === 'sale') {
+      sections.push({
+        title: 'Sale Terms',
+        fields: [
+          { label: 'Sale price', value: gv('v-s-price') },
+          { label: 'Commission %', value: gv('v-s-comm-pct') },
+          { label: 'Commission due', value: gv('v-s-comm-due') },
+        ].filter(field => field.value && field.value !== '—'),
+      });
+    }
+  }
+
+  const distFields = [];
+  document.querySelectorAll('#v-dist-body tr').forEach((row, index) => {
+    const name = String(row.querySelector('input[placeholder="Name"]')?.value || row.querySelector('input[type="text"]')?.value || '').trim();
+    const pct = String(row.querySelector('input[placeholder="%"]')?.value || '').trim();
+    const amt = String(row.querySelector('input[placeholder="$"]')?.value || '').trim();
+    if (!name && !pct && !amt) return;
+    const parts = [];
+    if (pct) parts.push(pct + '%');
+    if (amt) parts.push('$' + amt);
+    distFields.push({ label: name || ('Broker ' + (index + 1)), value: parts.join(' · ') || '—' });
+  });
+  if (distFields.length) sections.push({ title: 'Commission Distribution', fields: distFields });
+
+  return sections.filter(section => section.fields.length);
+}
+
 function openReviewSnapshot(context) {
   reviewSnapshotContext = context;
   const config = reviewContextConfig(context);
@@ -4518,10 +4643,22 @@ function openReviewSnapshot(context) {
   reviewReturnScrollTop = activePanel?.scrollTop || 0;
 
   const rows = reviewSnapshotRowsFor(context);
-  const sections = collectReviewSections(context);
+  let sections = collectReviewSections(context);
+  let voucherPrefix = '';
+  if (context === 'voucher') {
+    try { syncVoucherBrokerHiddenFields(); } catch (e) {}
+    try { calcCommSummary(); } catch (e) {}
+    const validation = validateVoucherBeforeReview();
+    voucherPrefix = renderVoucherReviewValidationBanner(validation) + buildVoucherDealSummaryHtml();
+    sections = collectVoucherReviewSections().concat(sections);
+  }
   title.textContent = config.title;
-  if (copy) copy.textContent = 'Confirm the submission summary below before continuing.';
-  content.innerHTML = renderReviewSummary(rows, sections);
+  if (copy) {
+    copy.textContent = context === 'voucher'
+      ? 'We checked your numbers automatically — confirm the summary below before continuing.'
+      : 'Confirm the submission summary below before continuing.';
+  }
+  content.innerHTML = voucherPrefix + renderReviewSummary(rows, sections);
   if (submitLabel) submitLabel.textContent = config.submitLabel;
   if (openCompReportsBtn) setHiddenState(openCompReportsBtn, context !== 'comp');
 
@@ -4531,6 +4668,10 @@ function openReviewSnapshot(context) {
   const reviewBar = document.getElementById('broker-review-bar');
   if (reviewBar) reviewBar.classList.add('is-hidden');
   closeHelpPanel();
+  if (context === 'voucher') {
+    const aiPanel = document.getElementById('review-voucher-ai-check');
+    if (aiPanel) void runVoucherDealAnalysis(aiPanel);
+  }
 }
 
 function closeReviewSnapshot() {
@@ -5258,10 +5399,215 @@ function switchTabWithProgress(id) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// VOUCHER: MULTI-BROKER CHIP UI
+// ═══════════════════════════════════════════════════════════════════════════════
+const voucherBrokerState = { la: [], pa: [] };
+
+function parseBrokerNamesList(value) {
+  return String(value || '')
+    .split(/[;]|,(?![^()]*\))/g)
+    .map(part => part.replace(/\band\b/gi, ' ').trim())
+    .flatMap(part => part.split(/\s{2,}/))
+    .map(name => name.trim())
+    .filter(Boolean);
+}
+
+function findDxUserByName(name) {
+  const q = String(name || '').trim().toLowerCase();
+  if (!q) return null;
+  return DX_SORTED.find(u => u.name.toLowerCase() === q) ||
+    DX_SORTED.find(u => u.name.toLowerCase().includes(q));
+}
+
+function getVoucherBrokers(side) {
+  const key = side === 'pa' ? 'pa' : 'la';
+  return voucherBrokerState[key].map(b => ({ ...b }));
+}
+
+function syncVoucherBrokerHiddenFields() {
+  const laEl = document.getElementById('v-la-name');
+  const paEl = document.getElementById('v-pa-name');
+  if (laEl) laEl.value = voucherBrokerState.la.map(b => b.name).filter(Boolean).join('; ');
+  if (paEl) paEl.value = voucherBrokerState.pa.map(b => b.name).filter(Boolean).join('; ');
+}
+
+function renderVoucherBrokerChips(side) {
+  const key = side === 'pa' ? 'pa' : 'la';
+  const container = document.getElementById('v-' + key + '-chips');
+  if (!container) return;
+  const brokers = voucherBrokerState[key];
+  if (!brokers.length) {
+    container.innerHTML = '<span class="v-broker-chips-empty">No brokers added</span>';
+    return;
+  }
+  container.innerHTML = brokers.map((broker, index) =>
+    '<span class="v-broker-chip">' +
+      '<span class="v-broker-chip-label">' + escHtml(broker.name) + '</span>' +
+      '<button type="button" class="v-broker-chip-remove" onclick="removeVoucherBroker(\'' + key + '\',' + index + ')" aria-label="Remove ' + escHtml(broker.name) + '">&times;</button>' +
+    '</span>'
+  ).join('');
+}
+
+function addVoucherBroker(side, user, options) {
+  const key = side === 'pa' ? 'pa' : 'la';
+  const opts = options && typeof options === 'object' ? options : {};
+  const name = String(user?.name || user || '').trim();
+  if (!name) return false;
+  if (voucherBrokerState[key].some(b => b.name.toLowerCase() === name.toLowerCase())) return false;
+  const entry = {
+    id: user?.id || '',
+    name,
+    email: user?.email || '',
+  };
+  const found = findDxUserByName(name);
+  if (found) {
+    entry.id = entry.id || found.id;
+    entry.email = entry.email || found.email;
+  }
+  voucherBrokerState[key].push(entry);
+  renderVoucherBrokerChips(key);
+  syncVoucherBrokerHiddenFields();
+  if (key === 'la' && voucherBrokerState.la.length === 1 && !opts.skipHouse) {
+    const houseEl = document.getElementById('v-la-house');
+    if (houseEl && !String(houseEl.value || '').trim()) houseEl.value = 'Lee & Associates - Newport Beach';
+  }
+  if (key === 'pa' && voucherBrokerState.pa.length === 1 && !opts.skipHouse) {
+    const houseEl = document.getElementById('v-pa-house');
+    if (houseEl && !String(houseEl.value || '').trim()) houseEl.value = 'Lee & Associates - Newport Beach';
+  }
+  if (key === 'la' && document.getElementById('v-same-agent')?.value === 'yes') {
+    syncVoucherProcuringFromListing({ skipDist: true });
+  }
+  if (!opts.skipDist) syncDistributionFromBrokers({ force: true });
+  return true;
+}
+
+function removeVoucherBroker(side, index) {
+  const key = side === 'pa' ? 'pa' : 'la';
+  voucherBrokerState[key].splice(index, 1);
+  renderVoucherBrokerChips(key);
+  syncVoucherBrokerHiddenFields();
+  if (key === 'la' && document.getElementById('v-same-agent')?.value === 'yes') {
+    syncVoucherProcuringFromListing({ skipDist: true });
+  }
+  syncDistributionFromBrokers({ force: true });
+}
+
+function setVoucherBrokersFromNames(side, names, options) {
+  const key = side === 'pa' ? 'pa' : 'la';
+  const opts = options && typeof options === 'object' ? options : {};
+  voucherBrokerState[key] = [];
+  const list = Array.isArray(names) ? names : parseBrokerNamesList(names);
+  list.forEach(name => {
+    if (!name) return;
+    const found = findDxUserByName(name);
+    voucherBrokerState[key].push({
+      id: found?.id || '',
+      name,
+      email: found?.email || '',
+    });
+  });
+  renderVoucherBrokerChips(key);
+  syncVoucherBrokerHiddenFields();
+  if (key === 'la' && document.getElementById('v-same-agent')?.value === 'yes') {
+    syncVoucherProcuringFromListing({ skipDist: true });
+  }
+  if (!opts.skipDist) syncDistributionFromBrokers({ force: true });
+}
+
+function syncVoucherProcuringFromListing(options) {
+  const opts = options && typeof options === 'object' ? options : {};
+  voucherBrokerState.pa = voucherBrokerState.la.map(b => ({ ...b }));
+  renderVoucherBrokerChips('pa');
+  syncVoucherBrokerHiddenFields();
+  ['house', 'address', 'city', 'state', 'zip', 'phone'].forEach(field => {
+    const laEl = document.getElementById('v-la-' + field);
+    const paEl = document.getElementById('v-pa-' + field);
+    if (laEl && paEl) paEl.value = laEl.value;
+  });
+  if (!opts.skipDist) syncDistributionFromBrokers({ force: true });
+}
+
+function syncVoucherBrokerColumnLayout() {
+  const same = document.getElementById('v-same-agent')?.value === 'yes';
+  const procuring = document.getElementById('procuring-section');
+  const grid = document.getElementById('voucher-broker-grid');
+  if (procuring) setHiddenState(procuring, same);
+  if (grid) grid.classList.toggle('voucher-broker-same', same);
+}
+
+function voucherBrokerAddFocus(side) {
+  const input = document.getElementById('v-' + side + '-add-input');
+  if (!input) return;
+  input.classList.add('is-open');
+  input.focus();
+}
+
+function initVoucherBrokerPickers() {
+  ['la', 'pa'].forEach(side => {
+    initAgentPicker('v-' + side + '-add-input', {
+      onSelect: function(u) {
+        addVoucherBroker(side, u);
+        const input = document.getElementById('v-' + side + '-add-input');
+        if (input) {
+          input.value = '';
+          input.classList.remove('is-open');
+        }
+      },
+    });
+    const input = document.getElementById('v-' + side + '-add-input');
+    input?.addEventListener('blur', function() {
+      setTimeout(() => input.classList.remove('is-open'), 150);
+    });
+  });
+  renderVoucherBrokerChips('la');
+  renderVoucherBrokerChips('pa');
+  syncVoucherBrokerHiddenFields();
+  syncVoucherBrokerColumnLayout();
+}
+
+function collectVoucherBrokerDraftState() {
+  return {
+    la: voucherBrokerState.la.map(b => ({ ...b })),
+    pa: voucherBrokerState.pa.map(b => ({ ...b })),
+  };
+}
+
+function restoreVoucherBrokerDraftState(state) {
+  if (!state || typeof state !== 'object') return;
+  voucherBrokerState.la = Array.isArray(state.la) ? state.la.map(b => ({ ...b })) : [];
+  voucherBrokerState.pa = Array.isArray(state.pa) ? state.pa.map(b => ({ ...b })) : [];
+  if (!voucherBrokerState.la.length) {
+    const laNames = document.getElementById('v-la-name')?.value || '';
+    if (laNames) setVoucherBrokersFromNames('la', laNames, { skipDist: true });
+  }
+  if (!voucherBrokerState.pa.length) {
+    const paNames = document.getElementById('v-pa-name')?.value || '';
+    if (paNames) setVoucherBrokersFromNames('pa', paNames, { skipDist: true });
+  }
+  renderVoucherBrokerChips('la');
+  renderVoucherBrokerChips('pa');
+  syncVoucherBrokerHiddenFields();
+  syncVoucherBrokerColumnLayout();
+}
+
+function applyVoucherBrokersFromAiFields(fields) {
+  if (!fields || typeof fields !== 'object') return;
+  if (fields.listingAgentName) {
+    setVoucherBrokersFromNames('la', fields.listingAgentName, { skipDist: true });
+  }
+  if (fields.procuringAgentName) {
+    setVoucherBrokersFromNames('pa', fields.procuringAgentName, { skipDist: true });
+  }
+  syncDistributionFromBrokers({ force: true });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // VOUCHER: RENT SCHEDULE TABLE (Dealius-style lease calculator)
 // ═══════════════════════════════════════════════════════════════════════════════
 let rentRowCount = 0;
 let voucherRateBasis = 'month';
+let rentDragSrc = null;
 
 function setVoucherRateBasis(basis) {
   const next = basis === 'year' ? 'year' : 'month';
@@ -5328,51 +5674,213 @@ function vRentRowCommissionRate(tr) {
 }
 
 function vRentRowCommissionDue(tr) {
+  const dueInput = tr?.querySelector('.rent-comm-due-input');
+  if (dueInput && dueInput.dataset.override === '1') {
+    return parseFloat(String(dueInput.value || '').replace(/[^0-9.\-]/g, '')) || 0;
+  }
   const monthly = vRentRowMonthly(tr);
   const months = vRentRowMonths(tr);
   const rate = vRentRowCommissionRate(tr);
   return monthly * months * (rate / 100);
 }
 
+function formatRentCommissionDueValue(amount, isFree) {
+  if (amount > 0) {
+    return '$' + amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  return isFree ? '$0' : '';
+}
+
 function updateRentRowCommissionCells(tr) {
   if (!tr) return;
-  const dueCell = tr.querySelector('.rent-comm-due');
+  const dueInput = tr.querySelector('.rent-comm-due-input');
+  if (!dueInput || dueInput.dataset.override === '1') return;
   const due = vRentRowCommissionDue(tr);
-  if (dueCell) {
-    dueCell.textContent = due > 0
-      ? '$' + due.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-      : (tr.querySelector('.rent-free')?.checked ? '$0' : '—');
-  }
+  dueInput.value = formatRentCommissionDueValue(due, !!tr.querySelector('.rent-free')?.checked);
+}
+
+function onRentCommissionDueInput(el) {
+  if (!el) return;
+  el.dataset.override = '1';
+  vClearLeaseCommOverride();
+  calcCommSummary();
+}
+
+function vClearLeaseCommOverride() {
+  const commDueEl = document.getElementById('v-l-comm-due');
+  if (commDueEl) delete commDueEl.dataset.override;
+}
+
+function onVoucherLeaseCommDueInput() {
+  const commDueEl = document.getElementById('v-l-comm-due');
+  if (commDueEl) commDueEl.dataset.override = '1';
+  calcCommSummary();
 }
 
 function updateAllRentRowCommissionCells() {
   document.querySelectorAll('#v-rent-body tr').forEach(updateRentRowCommissionCells);
 }
 
-function addRentRow(months, monthly, free) {
+function addRentRow(months, monthly, free, rowState) {
   const body = document.getElementById('v-rent-body');
   if (!body) return;
-  const isFree = !!free;
-  const monthsVal = months != null && months !== '' ? String(months) : '12';
-  const monthlyVal = isFree ? '' : (monthly != null && monthly !== '' ? String(monthly) : '');
-  const globalRate = String(document.getElementById('v-l-comm-rate')?.value || '').trim();
+  const state = rowState && typeof rowState === 'object' ? rowState : {};
+  const isFree = state.free != null ? !!state.free : !!free;
+  const monthsVal = state.months != null && state.months !== ''
+    ? String(state.months)
+    : (months != null && months !== '' ? String(months) : '12');
+  const monthlyVal = isFree
+    ? ''
+    : (state.monthly != null && state.monthly !== ''
+      ? String(state.monthly)
+      : (monthly != null && monthly !== '' ? String(monthly) : ''));
+  const globalRate = state.commPct != null && state.commPct !== ''
+    ? String(state.commPct)
+    : String(document.getElementById('v-l-comm-rate')?.value || '').trim();
+  const commDueVal = state.commDue != null ? String(state.commDue) : '';
+  const commDueOverride = state.commDueOverride ? ' data-override="1"' : '';
   const tr = document.createElement('tr');
   if (isFree) tr.classList.add('free-rent-row');
   tr.innerHTML =
+    '<td class="rent-drag-cell"><button type="button" class="rent-drag-handle" draggable="true" title="Drag to reorder" aria-label="Drag to reorder">⋮⋮</button></td>' +
     '<td class="rent-rn text-center text-strong">' + (body.rows.length + 1) + '</td>' +
     '<td><input class="rent-months" type="number" min="1" placeholder="12" value="' + monthsVal + '" oninput="calcRentRow(this)"></td>' +
     '<td><input class="rent-monthly" type="number" step="0.01" min="0" placeholder="0" value="' + monthlyVal + '" oninput="calcRentRow(this)"' + (isFree ? ' disabled' : '') + '></td>' +
     '<td class="text-center"><input type="checkbox" class="rent-free"' + (isFree ? ' checked' : '') + ' onchange="vOnFreeRentChange(this)"></td>' +
-    '<td class="text-center"><input class="rent-comm-pct-input" type="number" step="0.01" min="0" placeholder="%" value="' + globalRate + '" oninput="calcRentRow(this)"></td>' +
-    '<td class="rent-comm-due text-right text-strong">—</td>' +
+    '<td class="text-center"><input class="rent-comm-pct-input" type="number" step="0.01" min="0" placeholder="%" value="' + globalRate + '" oninput="vClearLeaseCommOverride(); calcRentRow(this)"></td>' +
+    '<td><input class="rent-comm-due-input text-right text-strong" placeholder="$0" value="' + commDueVal + '"' + commDueOverride + ' oninput="onRentCommissionDueInput(this)"></td>' +
     '<td><button type="button" class="del-row" onclick="this.closest(\'tr\').remove();vRenumberRentRows();calcCommSummary()" title="Remove row">&times;</button></td>';
   body.appendChild(tr);
+  initRentRowDragDrop();
   vRenumberRentRows();
   if (!isFree && monthlyVal) calcRentRow(tr.querySelector('.rent-monthly'));
   else {
     updateRentRowCommissionCells(tr);
     calcCommSummary();
   }
+}
+
+function initRentRowDragDrop() {
+  const body = document.getElementById('v-rent-body');
+  if (!body || body.dataset.dragInit === '1') return;
+  body.dataset.dragInit = '1';
+  body.addEventListener('dragstart', (event) => {
+    const handle = event.target.closest('.rent-drag-handle');
+    const tr = handle?.closest('tr');
+    if (!handle || !tr) {
+      event.preventDefault();
+      return;
+    }
+    rentDragSrc = tr;
+    tr.classList.add('rent-dragging');
+    event.dataTransfer.effectAllowed = 'move';
+    try { event.dataTransfer.setData('text/plain', ''); } catch (e) {}
+  });
+  body.addEventListener('dragend', () => {
+    if (rentDragSrc) rentDragSrc.classList.remove('rent-dragging');
+    rentDragSrc = null;
+    body.querySelectorAll('tr.rent-drag-over').forEach(row => row.classList.remove('rent-drag-over'));
+  });
+  body.addEventListener('dragover', (event) => {
+    event.preventDefault();
+    const tr = event.target.closest('tr');
+    if (tr && tr !== rentDragSrc) tr.classList.add('rent-drag-over');
+  });
+  body.addEventListener('dragleave', (event) => {
+    const tr = event.target.closest('tr');
+    if (tr) tr.classList.remove('rent-drag-over');
+  });
+  body.addEventListener('drop', (event) => {
+    event.preventDefault();
+    const tr = event.target.closest('tr');
+    if (!rentDragSrc || !tr || rentDragSrc === tr) return;
+    tr.classList.remove('rent-drag-over');
+    const rect = tr.getBoundingClientRect();
+    const after = event.clientY > rect.top + rect.height / 2;
+    if (after) tr.after(rentDragSrc);
+    else tr.before(rentDragSrc);
+    vRenumberRentRows();
+    calcCommSummary();
+  });
+}
+
+function collectVoucherRentScheduleState() {
+  const rows = [];
+  document.querySelectorAll('#v-rent-body tr').forEach(tr => {
+    rows.push({
+      months: tr.querySelector('.rent-months')?.value || '',
+      monthly: tr.querySelector('.rent-monthly')?.value || '',
+      free: !!tr.querySelector('.rent-free')?.checked,
+      commPct: tr.querySelector('.rent-comm-pct-input')?.value || '',
+      commDue: tr.querySelector('.rent-comm-due-input')?.value || '',
+      commDueOverride: tr.querySelector('.rent-comm-due-input')?.dataset.override === '1',
+    });
+  });
+  const commDueEl = document.getElementById('v-l-comm-due');
+  return {
+    rows,
+    leaseCommOverride: commDueEl?.dataset.override === '1',
+    leaseCommDue: commDueEl?.value || '',
+    commRate: document.getElementById('v-l-comm-rate')?.value || '',
+    escAnnual: document.getElementById('v-l-esc-annual-pct')?.value || '',
+    freeMonths: document.getElementById('v-l-free-months')?.value || '',
+  };
+}
+
+function restoreVoucherRentScheduleState(state) {
+  if (!state || typeof state !== 'object') return;
+  const body = document.getElementById('v-rent-body');
+  if (!body) return;
+  body.innerHTML = '';
+  rentRowCount = 0;
+  const rows = Array.isArray(state.rows) ? state.rows : [];
+  if (rows.length) {
+    rows.forEach(row => addRentRow(null, null, null, row));
+  } else {
+    addRentRow();
+  }
+  if (state.commRate != null) {
+    const commRateEl = document.getElementById('v-l-comm-rate');
+    if (commRateEl) commRateEl.value = state.commRate;
+  }
+  if (state.escAnnual != null) {
+    const escEl = document.getElementById('v-l-esc-annual-pct');
+    if (escEl) escEl.value = state.escAnnual;
+  }
+  if (state.freeMonths != null) {
+    const freeEl = document.getElementById('v-l-free-months');
+    if (freeEl) freeEl.value = state.freeMonths;
+  }
+  const commDueEl = document.getElementById('v-l-comm-due');
+  if (commDueEl) {
+    if (state.leaseCommDue != null) commDueEl.value = state.leaseCommDue;
+    if (state.leaseCommOverride) commDueEl.dataset.override = '1';
+    else delete commDueEl.dataset.override;
+  }
+  vClearRentStale();
+  calcCommSummary();
+}
+
+function saveVoucherRentSchedule(btn) {
+  if (btn) { setBtnLoading(btn, true, 'Saving…'); btn.disabled = true; }
+  setTimeout(() => {
+    try {
+      const key = LBT_AUTOSAVE_KEYS.voucher;
+      let parsed = {};
+      try { parsed = JSON.parse(localStorage.getItem(key) || '{}'); } catch (e) {}
+      parsed.savedAt = Date.now();
+      parsed.values = lbtCollectDraftFields('#v-deal-shell');
+      parsed.voucherUploads = collectVoucherUploadDraftState();
+      parsed.rentSchedule = collectVoucherRentScheduleState();
+      parsed.voucherBrokers = collectVoucherBrokerDraftState();
+      localStorage.setItem(key, JSON.stringify(parsed));
+      showToast('Rent schedule saved');
+    } catch (e) {
+      showToast('Rent schedule could not be saved', 'error');
+    } finally {
+      if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
+    }
+  }, 30);
 }
 
 function vOnFreeRentChange(cb) {
@@ -5405,6 +5913,8 @@ function generateVoucherRentSchedule() {
   const freeMonths = parseInt(document.getElementById('v-l-free-months')?.value, 10) || 0;
   syncVoucherEscalationFields();
   const annualPct = parseVoucherAnnualPct();
+  vClearLeaseCommOverride();
+  document.querySelectorAll('#v-rent-body .rent-comm-due-input').forEach(input => delete input.dataset.override);
 
   const body = document.getElementById('v-rent-body');
   if (body) body.innerHTML = '';
@@ -5887,9 +6397,10 @@ function updateDistPctTotal() {
 
 function syncDistributionFromBrokers(options) {
   const force = Boolean(options && options.force);
-  const la = String(document.getElementById('v-la-name')?.value || '').trim();
-  const pa = String(document.getElementById('v-pa-name')?.value || '').trim();
+  const laBrokers = getVoucherBrokers('la');
+  const paBrokers = getVoucherBrokers('pa');
   const sameAgent = document.getElementById('v-same-agent')?.value === 'yes';
+  const effectivePa = sameAgent ? laBrokers : paBrokers;
   const defaultSide = distributionSideForRepresentation();
   const body = document.getElementById('v-dist-body');
   if (!body) return;
@@ -5899,13 +6410,44 @@ function syncDistributionFromBrokers(options) {
   if (hasNamedRows && !force) return;
 
   const brokers = [];
-  if (sameAgent && la) {
-    brokers.push({ name: la, pct: 100 });
+  if (sameAgent && laBrokers.length) {
+    const pctEach = 100 / laBrokers.length;
+    laBrokers.forEach(broker => {
+      brokers.push({
+        name: broker.name,
+        pct: pctEach,
+        side: defaultSide === 'Other' ? 'Both' : defaultSide,
+      });
+    });
   } else {
-    if (la) brokers.push({ name: la, pct: pa ? 50 : 100 });
-    if (pa && pa !== la) brokers.push({ name: pa, pct: la ? 50 : 100 });
+    const laCount = laBrokers.length;
+    const paCount = effectivePa.length;
+    if (laCount && paCount) {
+      const laPctEach = 50 / laCount;
+      const paPctEach = 50 / paCount;
+      laBrokers.forEach(broker => brokers.push({ name: broker.name, pct: laPctEach, side: 'Listing' }));
+      effectivePa.forEach(broker => {
+        if (!laBrokers.some(item => item.name.toLowerCase() === broker.name.toLowerCase())) {
+          brokers.push({ name: broker.name, pct: paPctEach, side: 'Procuring' });
+        }
+      });
+    } else if (laCount) {
+      const pctEach = 100 / laCount;
+      laBrokers.forEach(broker => brokers.push({ name: broker.name, pct: pctEach, side: 'Listing' }));
+    } else if (paCount) {
+      const pctEach = 100 / paCount;
+      effectivePa.forEach(broker => brokers.push({ name: broker.name, pct: pctEach, side: 'Procuring' }));
+    }
   }
   if (!brokers.length) return;
+
+  let pctTotal = 0;
+  brokers.forEach((broker, index) => {
+    broker.pct = index === brokers.length - 1
+      ? Math.max(0, Math.round((100 - pctTotal) * 100) / 100)
+      : Math.round(broker.pct * 100) / 100;
+    pctTotal += broker.pct;
+  });
 
   body.innerHTML = '';
   distRowCount = 0;
@@ -5918,7 +6460,8 @@ function syncDistributionFromBrokers(options) {
     if (nameInput) nameInput.value = broker.name;
     if (pctInput) pctInput.value = String(broker.pct);
     if (select) {
-      select.value = defaultSide;
+      const side = broker.side || defaultSide;
+      select.value = Array.from(select.options).some(opt => opt.value === side) ? side : defaultSide;
       handleDistSideChange(select, false);
     }
   });
@@ -6258,7 +6801,10 @@ function updateVoucherRentStepIndicator() {
 
 function closeVoucherValidationModal() {
   const modal = document.getElementById('voucher-validation-modal');
-  if (modal) modal.classList.add('is-hidden');
+  if (modal) {
+    modal.classList.add('is-hidden');
+    modal.classList.remove('open');
+  }
 }
 
 function showVoucherValidationChecklist(items) {
@@ -6282,11 +6828,12 @@ function showVoucherValidationChecklist(items) {
     });
   });
   modal.classList.remove('is-hidden');
+  modal.classList.add('open');
 }
 
 function validateVoucherBeforeReview() {
   const items = [];
-  const req = (label, scrollId, ok) => { if (!ok) items.push({ label, scrollId }); };
+  const req = (label, scrollId, ok, level = 'error') => { if (!ok) items.push({ label, scrollId, level }); };
   const repOther = voucherRepIsOther();
 
   req('Transaction type', '1', Boolean(document.getElementById('v-txn-type')?.value));
@@ -6299,8 +6846,9 @@ function validateVoucherBeforeReview() {
     req('Deal subtype', '1', Boolean(document.getElementById('v-deal-type-req')?.value));
   }
   req('Representation type', '1', Boolean(document.getElementById('v-rep-type')?.value));
-  req('Listing agent name', '2', Boolean(String(document.getElementById('v-la-name')?.value || '').trim()));
-  req('Procuring agent name', '2', Boolean(String(document.getElementById('v-pa-name')?.value || '').trim()));
+  const sameAgent = document.getElementById('v-same-agent')?.value === 'yes';
+  req('Listing agent name', '2', getVoucherBrokers('la').length > 0);
+  if (!sameAgent) req('Procuring agent name', '2', getVoucherBrokers('pa').length > 0);
   if (!repOther) {
     req('Lessor/seller contact & company', '3', Boolean(String(document.getElementById('v-ls-contact')?.value || '').trim()) &&
       Boolean(String(document.getElementById('v-ls-company')?.value || '').trim()));
@@ -6315,9 +6863,6 @@ function validateVoucherBeforeReview() {
     req('Lease start & end dates', '4', Boolean(document.getElementById('v-l-start')?.value) && Boolean(document.getElementById('v-l-end')?.value));
     req('Rate per SF', '4', Boolean(String(document.getElementById('v-l-rate')?.value || '').trim()));
     req('Rent schedule', '5', voucherHasRentScheduleRows());
-    req('Commission rate %', '6', Boolean(String(document.getElementById('v-l-comm-rate')?.value || '').trim()) ||
-      document.querySelectorAll('#v-rent-body tr .rent-comm-pct-input').length > 0 &&
-      Array.from(document.querySelectorAll('#v-rent-body tr .rent-comm-pct-input')).some(el => String(el.value || '').trim()));
   } else if (txn === 'sale') {
     req('Sale price', '4', Boolean(String(document.getElementById('v-s-price')?.value || '').trim()));
     req('Commission %', '6', Boolean(String(document.getElementById('v-s-comm-pct')?.value || '').trim()));
@@ -6337,7 +6882,24 @@ function validateVoucherBeforeReview() {
     req('Commission distribution totals 100%', '8', Math.abs(Math.round(total * 10) / 10 - 100) < 0.1);
   }
 
-  return { ok: items.length === 0, items };
+  const txn = document.getElementById('v-txn-type')?.value || 'lease';
+  if (!repOther && txn === 'lease') {
+    const consideration = parseFloat(String(document.getElementById('v-l-consideration')?.value || '').replace(/[^0-9.]/g, '')) || 0;
+    const commDue = parseFloat(String(document.getElementById('v-l-comm-due')?.value || '').replace(/[^0-9.]/g, '')) || 0;
+    if (voucherHasRentScheduleRows() && consideration <= 0) {
+      req('Rent schedule totals', '5', false, 'warn');
+    }
+    if (consideration > 0 && commDue <= 0) {
+      req('Commission due amount', '6', false, 'warn');
+    }
+  }
+  const totalInvoice = parseFloat(String(document.getElementById('v-total-invoice')?.value || '').replace(/[^0-9.]/g, '')) || 0;
+  if (!repOther && totalInvoice <= 0) {
+    req('Total invoice amount', '6', false, 'warn');
+  }
+
+  const errors = items.filter(item => item.level !== 'warn');
+  return { ok: errors.length === 0, items };
 }
 
 function getVoucherStepCompletion() {
@@ -6356,8 +6918,10 @@ function getVoucherStepCompletion() {
         Boolean(String(document.getElementById('v-l-dealsf')?.value || '').trim()) &&
         Boolean(document.getElementById('v-deal-type-req')?.value);
     },
-    '2': () => Boolean(String(document.getElementById('v-la-name')?.value || '').trim()) &&
-      Boolean(String(document.getElementById('v-pa-name')?.value || '').trim()),
+    '2': () => {
+      const same = document.getElementById('v-same-agent')?.value === 'yes';
+      return getVoucherBrokers('la').length > 0 && (same || getVoucherBrokers('pa').length > 0);
+    },
     '3': () => repOther || (
       Boolean(String(document.getElementById('v-ls-contact')?.value || '').trim()) &&
       Boolean(String(document.getElementById('v-lb-contact')?.value || '').trim())
@@ -6483,7 +7047,15 @@ function calcCommSummary() {
     });
     document.getElementById('v-l-consideration').value = totalConsideration > 0 ? '$' + totalConsideration.toLocaleString() : '';
     leaseComm = totalCommDue;
-    document.getElementById('v-l-comm-due').value = leaseComm > 0 ? '$' + leaseComm.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '';
+    const commDueEl = document.getElementById('v-l-comm-due');
+    const commDueOverridden = commDueEl?.dataset?.override === '1';
+    if (commDueEl && !commDueOverridden) {
+      commDueEl.value = leaseComm > 0
+        ? '$' + leaseComm.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        : '';
+    } else if (commDueEl && commDueOverridden) {
+      leaseComm = parseFloat(String(commDueEl.value || '').replace(/[^0-9.\-]/g, '')) || 0;
+    }
 
     const dealSf = parseFloat(document.getElementById('v-l-dealsf')?.value?.replace(/[^0-9.]/g, '')) || 0;
     const avgMonthly = totalMonths > 0 ? weightedRent / totalMonths : 0;
@@ -6548,18 +7120,12 @@ function calcOutsideTotals() {
 }
 document.getElementById('v-outside-body')?.addEventListener('input', calcOutsideTotals);
 
-// ── AI Deal Analysis ──────────────────────────────────────────────────────────
-async function runVoucherAICalculate() {
-  const btn = document.getElementById('v-ai-calc-btn');
-  const panel = document.getElementById('v-ai-calc-panel');
-  if (!btn || !panel) return;
+// ── AI Deal Analysis (auto-runs on voucher review) ─────────────────────────────
+async function runVoucherDealAnalysis(panel) {
+  if (!panel) return;
 
-  btn.disabled = true;
-  btn.textContent = 'Analyzing…';
-  setHiddenState(panel, false);
-  panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header">AI Deal Analysis</div><div class="ai-review-status-row"><div class="dx-spin dx-spin-accent"></div> AI is reviewing the deal financials…</div></div>';
+  panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header">Commission Number Check</div><div class="ai-review-status-row"><div class="dx-spin dx-spin-accent"></div> Checking commission math…</div></div>';
 
-  // Collect the current voucher form state
   const txnType = document.getElementById('v-txn-type')?.value || '';
   const repType = document.getElementById('v-rep-type')?.value || '';
   const address = document.getElementById('v-address')?.value || '';
@@ -6579,7 +7145,6 @@ async function runVoucherAICalculate() {
   const consulting = document.getElementById('v-comm-consulting')?.value || '';
   const totalOutside = document.getElementById('v-total-outside')?.value || '';
 
-  // Collect rent schedule
   const rentRows = [];
   document.querySelectorAll('#v-rent-body tr').forEach(tr => {
     const monthly = tr.querySelector('.rent-monthly')?.value || '';
@@ -6603,7 +7168,7 @@ async function runVoucherAICalculate() {
     const result = await callTrpc('aiAssist.calculateDeal', { dealData });
     const a = result && result.analysis ? result.analysis : null;
     if (!a) {
-      panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header">AI Deal Analysis</div><div class="text-error">No analysis returned. Fill in more fields and try again.</div></div>';
+      panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header">Commission Number Check</div><div class="micro-copy">Add more financial details to run an automated cross-check.</div></div>';
       return;
     }
 
@@ -6612,7 +7177,7 @@ async function runVoucherAICalculate() {
     const flags = Array.isArray(a.flags) && a.flags.length ? a.flags : null;
 
     let html = '<div class="ai-panel">';
-    html += '<div class="ai-panel-header"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> AI Deal Analysis</div>';
+    html += '<div class="ai-panel-header">Commission Number Check</div>';
     if (a.summary) html += '<div style="font-size:13px;font-weight:600;color:var(--ink-800);margin-bottom:8px;">' + escHtml(a.summary) + '</div>';
     html += '<div class="ai-calc-grid">';
     html += '<div class="ai-calc-row"><span class="ai-calc-label">Total Consideration</span><span class="ai-calc-val">' + fmt(a.totalConsideration) + '</span></div>';
@@ -6632,10 +7197,7 @@ async function runVoucherAICalculate() {
     html += '</div>';
     panel.innerHTML = html;
   } catch (err) {
-    panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header">AI Deal Analysis</div><div class="text-error">Error: ' + escHtml(err.message || String(err)) + '</div></div>';
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<svg class="ui-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right:5px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Verify commission math';
+    panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header">Commission Number Check</div><div class="micro-copy">Automated cross-check unavailable — review totals manually before sending.</div></div>';
   }
 }
 
@@ -6768,9 +7330,16 @@ function clearVoucher() {
    'v-avg-rate-sf', 'v-avg-monthly', 'v-total-outside', 'v-dist-total-invoice', 'v-dist-total-outside', 'v-gross-dist'
   ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   rentRowCount = 0;
+  voucherBrokerState.la = [];
+  voucherBrokerState.pa = [];
+  renderVoucherBrokerChips('la');
+  renderVoucherBrokerChips('pa');
+  syncVoucherBrokerHiddenFields();
+  syncVoucherBrokerColumnLayout();
   voucherRateBasis = 'month';
   setVoucherRateBasis('month');
   vClearRentStale();
+  vClearLeaseCommOverride();
   const avgMonthlyDisplay = document.getElementById('v-avg-monthly-display');
   const avgRateSfDisplay = document.getElementById('v-avg-rate-sf-display');
   if (avgMonthlyDisplay) avgMonthlyDisplay.textContent = '—';
@@ -10186,6 +10755,8 @@ function startWorkflowAutosaveTimer() {
         savedAt: Date.now(),
         values: lbtCollectDraftFields('#v-deal-shell'),
         voucherUploads: collectVoucherUploadDraftState(),
+        rentSchedule: collectVoucherRentScheduleState(),
+        voucherBrokers: collectVoucherBrokerDraftState(),
       }));
       const ts = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
       const msg = 'Draft autosaved at ' + ts;
@@ -10252,26 +10823,7 @@ addListingAgent();
 
 initAgentPicker('s-requested-by');
 
-initAgentPicker('v-la-name', {
-  onSelect: function(u) {
-    document.getElementById('v-la-house').value = 'Lee & Associates - Newport Beach';
-    syncDistributionFromBrokers();
-  }
-});
-
-initAgentPicker('v-pa-name', {
-  showAll: true,
-  onSelect: function(u) {
-    document.getElementById('v-pa-house').value = 'Lee & Associates - Newport Beach';
-    syncDistributionFromBrokers();
-  }
-});
-
-['v-la-name', 'v-pa-name'].forEach(id => {
-  document.getElementById(id)?.addEventListener('blur', function() {
-    syncDistributionFromBrokers();
-  });
-});
+initVoucherBrokerPickers();
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ADMIN PORTAL LOGIC
@@ -11004,6 +11556,7 @@ function collectVoucherData() {
       months: months || 0,
       free: isFree,
       commissionRate: vRentRowCommissionRate(tr),
+      commissionDue: vRentRowCommissionDue(tr),
     };
   }).filter(row => row.months > 0);
   return {
@@ -13326,7 +13879,12 @@ function bpApplyProfile(id) {
   }
 
   if (activeTab === 'voucher') {
-    bpFillIfPresent('v-la-name', profile.name);
+    if (typeof addVoucherBroker === 'function') {
+      addVoucherBroker('la', { name: profile.name, email: profile.email || '' }, { skipDist: true });
+      syncDistributionFromBrokers({ force: true });
+    } else {
+      bpFillIfPresent('v-la-name', profile.name);
+    }
     bpFillIfPresent('v-la-house', profile.company);
     bpFillIfPresent('v-la-city', 'Newport Beach');
   }
@@ -16194,6 +16752,26 @@ function applyAiFields(tab, fields, options = {}) {
   const sourceKey = typeof options.sourceKey === 'string' ? options.sourceKey : '';
   let applied = 0;
 
+  if (tab === 'voucher' && (fields.listingAgentName || fields.procuringAgentName)) {
+    try {
+      if (fields.listingAgentName) {
+        const hasListing = getVoucherBrokers('la').length > 0;
+        if (!hasListing || shouldApplyAiField(tab, 'listingAgentName', document.getElementById('v-la-name') || { classList: { contains: () => false }, getAttribute: () => null }, document.getElementById('v-la-name')?.value || '')) {
+          setVoucherBrokersFromNames('la', fields.listingAgentName, { skipDist: true });
+          applied++;
+        }
+      }
+      if (fields.procuringAgentName) {
+        const hasProcuring = getVoucherBrokers('pa').length > 0;
+        if (!hasProcuring || shouldApplyAiField(tab, 'procuringAgentName', document.getElementById('v-pa-name') || { classList: { contains: () => false }, getAttribute: () => null }, document.getElementById('v-pa-name')?.value || '')) {
+          setVoucherBrokersFromNames('pa', fields.procuringAgentName, { skipDist: true });
+          applied++;
+        }
+      }
+      syncDistributionFromBrokers({ force: true });
+    } catch (e) { console.warn('[applyAiFields] voucher broker auto-fill error:', e); }
+  }
+
   // Special handling for listing agent fields (dynamic rows)
   if (tab === 'listing' && (fields.listingAgentName || fields.listingAgentLicense)) {
     try {
@@ -16216,6 +16794,7 @@ function applyAiFields(tab, fields, options = {}) {
   fieldEntries.forEach(([key, value]) => {
     const elId = map[key];
     if (!elId || elId.startsWith('__')) return; // skip sentinel values
+    if (tab === 'voucher' && (key === 'listingAgentName' || key === 'procuringAgentName')) return;
 
     if (tab === 'sign' && key === 'nameRider') {
       try {
@@ -16680,7 +17259,11 @@ function applySharedBrokerIdentity(user) {
   fillFieldIfEmpty('c-source', user.name || '');
   fillFieldIfEmpty('c-broker-name', user.name || '');
   fillFieldIfEmpty('cs-broker-name', user.name || '');
-  fillFieldIfEmpty('v-la-name', user.name || '');
+  if (typeof addVoucherBroker === 'function') {
+    if (!getVoucherBrokers('la').length) addVoucherBroker('la', user, { skipDist: true });
+  } else {
+    fillFieldIfEmpty('v-la-name', user.name || '');
+  }
 
   const listingBody = document.getElementById('listing-agent-body');
   if (listingBody && !listingBody.children.length && typeof addListingAgent === 'function') {
@@ -19352,6 +19935,13 @@ function resumeDraft(key) {
     switchTab(cfg.tab);
     if (cfg.sub === 'mod' && typeof switchListingMode === 'function') switchListingMode('mod');
     lbtRestoreDraftFields(parsed.values);
+    if (cfg.tab === 'voucher') {
+      restoreVoucherBrokerDraftState(parsed.voucherBrokers);
+      restoreVoucherRentScheduleState(parsed.rentSchedule);
+      restoreVoucherUploadDraftState(parsed.voucherUploads);
+    } else if (cfg.tab === 'listing') {
+      restoreListingUploadDraftState(parsed.listingUploads);
+    }
     showToast('Draft loaded.');
   } catch (e) {
     showToast('Could not load draft.', 'error');
