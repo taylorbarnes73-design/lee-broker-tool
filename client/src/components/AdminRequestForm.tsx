@@ -89,7 +89,7 @@ export function AdminRequestForm({ requestType, onBack }: AdminRequestFormProps)
     }
 
     toast.success("Request submitted! Check your email app — attach documents before sending.");
-    setLocation("/portal/request-hub/my-requests");
+    setLocation("/portal/new");
   };
 
   const Icon = requestType.icon;

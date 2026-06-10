@@ -73,4 +73,11 @@ test.describe("portal smoke", () => {
     await page.goto("/portal/submissions");
     await expect(page.getByText(/submission/i).first()).toBeVisible({ timeout: 15_000 });
   });
+
+  test("admin request page shows request categories", async ({ page }) => {
+    await page.goto("/portal/admin-request");
+    await expect(page.getByRole("heading", { name: "Admin request" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /HR Request/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /General Request/i })).toBeVisible();
+  });
 });

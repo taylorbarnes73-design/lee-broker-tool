@@ -21,6 +21,7 @@ import PortalAccount from "./pages/PortalAccount";
 import PortalAdminAuditLog from "./pages/PortalAdminAuditLog";
 import PortalSubmissionDetail from "./pages/PortalSubmissionDetail";
 import PortalSubmissions from "./pages/PortalSubmissions";
+import PortalAdminRequest from "./pages/PortalAdminRequest";
 
 /** Redirect component for renamed/merged routes */
 function Redirect({ to }: { to: string }) {
@@ -335,6 +336,11 @@ function Router() {
       <Route path="/portal/forms/listing">
         <PortalRoute>
           <PortalListingForm />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/admin-request">
+        <PortalRoute>
+          <PortalAdminRequest />
         </PortalRoute>
       </Route>
       <Route path="/portal/convert">
