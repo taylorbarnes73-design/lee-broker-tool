@@ -543,17 +543,20 @@
       </div>
 
       <div class="deal-actions">
+        <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'listing')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
         <button class="btn btn-gray" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
+        <button class="btn btn-gray btn-download-send" type="button" onclick="openSendToAdminModal('listing')"><span class="btn-spinner"></span><span class="btn-label">Download &amp; Send to Admin</span></button>
         <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
         <button class="btn btn-copy-to-voucher" type="button" onclick="copyListingToVoucher(this)"><span class="btn-spinner"></span><span class="btn-label">Copy to Voucher</span></button>
       </div>
     </aside>
     </div><!-- /deal-shell -->
 
-    <div class="btn-bar is-hidden" id="listing-form-actions">
-      <button class="btn btn-red" onclick="showListingReviewWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
+    <div class="btn-bar submission-action-bar" id="listing-form-actions">
+      <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'listing')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
       <button class="btn btn-gray" id="btn-listing-pdf" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
-    <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
+      <button class="btn btn-gray btn-download-send" type="button" onclick="openSendToAdminModal('listing')"><span class="btn-spinner"></span><span class="btn-label">Download &amp; Send to Admin</span></button>
+      <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
       <button class="btn btn-copy-to-voucher" type="button" onclick="copyListingToVoucher(this)"><span class="btn-spinner"></span><span class="btn-label">Copy to Voucher</span></button>
       <button class="btn btn-gray" onclick="setBtnLoading(this,true,'Clearing…');setTimeout(()=>{clearListing();setBtnLoading(this,false);},80)"><span class="btn-spinner"></span><span class="btn-label">Clear Form</span></button>
     </div>
@@ -618,8 +621,9 @@
         <label><input type="checkbox" name="lm-services" value="other"> Other (specify in notes)</label>
       </div>
     </div>
-    <div class="btn-bar" id="listing-mod-form-actions">
+    <div class="btn-bar submission-action-bar" id="listing-mod-form-actions">
       <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'listing-mod')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
+      <button class="btn btn-gray btn-download-send" type="button" onclick="openEmailModal('listing-mod')"><span class="btn-spinner"></span><span class="btn-label">Send to Admin</span></button>
       <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing-mod', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
       <button class="btn btn-gray" onclick="clearListingModificationWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Clear Form</span></button>
     </div>
@@ -864,13 +868,16 @@
       </ol>
     </div>
     <div class="deal-actions">
+      <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'sign')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
       <button class="btn btn-gray" onclick="exportSignPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
+      <button class="btn btn-gray btn-download-send" type="button" onclick="openSendToAdminModal('sign')"><span class="btn-spinner"></span><span class="btn-label">Download &amp; Send to Admin</span></button>
     </div>
   </aside>
   </div><!-- /deal-shell -->
-  <div class="btn-bar btn-bar-top-md">
+  <div class="btn-bar btn-bar-top-md submission-action-bar">
+    <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'sign')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
     <button class="btn btn-gray" onclick="exportSignPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
-    <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'sign')"><span class="btn-spinner"></span><span class="btn-label">Review Before Send</span></button>
+    <button class="btn btn-gray btn-download-send" type="button" onclick="openSendToAdminModal('sign')"><span class="btn-spinner"></span><span class="btn-label">Download &amp; Send to Admin</span></button>
     <button class="btn btn-gray" onclick="setBtnLoading(this,true,'Clearing…');setTimeout(()=>{clearSign();setBtnLoading(this,false);},80)"><span class="btn-spinner"></span><span class="btn-label">Clear Form</span></button>
   </div>
 </div>
@@ -1410,10 +1417,11 @@
   </div>
 
   <!-- Action Buttons -->
-  <div class="btn-bar voucher-action-bar">
-    <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'voucher')"><span class="btn-spinner"></span><span class="btn-label">Review Before Send</span></button>
+  <div class="btn-bar voucher-action-bar submission-action-bar">
+    <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'voucher')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
+    <button class="btn btn-gray" id="v-download-excel-bar" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Excel</span></button>
+    <button class="btn btn-gray btn-download-send" id="v-download-send-bar" type="button" onclick="openSendToAdminModal('voucher')"><span class="btn-spinner"></span><span class="btn-label">Download &amp; Send to Admin</span></button>
     <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('voucher', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
-    <button class="btn btn-gray btn-download-send" id="v-download-send-bar" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download &amp; Send to Admin</span></button>
     <div class="btn-more-wrap">
       <button type="button" class="btn btn-outline btn-more" onclick="toggleVoucherMoreActions(this)" aria-expanded="false" aria-controls="voucher-more-menu">More ▾</button>
       <div class="btn-more-menu is-hidden" id="voucher-more-menu" role="menu">
@@ -1470,8 +1478,10 @@
     </div>
 
     <div class="deal-actions">
+      <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'voucher')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
+      <button class="btn btn-gray" id="v-download-excel-aside" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Excel</span></button>
+      <button class="btn btn-gray btn-download-send" id="v-download-send-aside" type="button" onclick="openSendToAdminModal('voucher')"><span class="btn-spinner"></span><span class="btn-label">Download &amp; Send to Admin</span></button>
       <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('voucher', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
-      <button class="btn btn-gray btn-download-send" id="v-download-send-aside" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download &amp; Send to Admin</span></button>
     </div>
   </aside>
   </div><!-- /deal-shell -->
@@ -1786,9 +1796,10 @@
     </div><!-- end optional-body -->
   </div><!-- end optional-wrapper -->
 
-  <div class="btn-bar btn-bar-top-md">
-    <button class="btn btn-gray" onclick="exportCompPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
+  <div class="btn-bar btn-bar-top-md submission-action-bar">
     <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'comp')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
+    <button class="btn btn-gray" onclick="exportCompPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
+    <button class="btn btn-gray btn-download-send" type="button" onclick="submissionSendToAdmin('comp', this)"><span class="btn-spinner"></span><span class="btn-label">Send to Admin</span></button>
     <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('comp', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
     <button class="btn btn-gray" onclick="setBtnLoading(this,true,'Clearing…');setTimeout(()=>{clearComp();setBtnLoading(this,false);},80)"><span class="btn-spinner"></span><span class="btn-label">Clear Form</span></button>
   </div>
@@ -2488,7 +2499,7 @@
       <ol>
         <li>Choose a request type and write a clear subject line.</li>
         <li>Describe what you need and attach any supporting files.</li>
-        <li>Tap <strong>Submit Request</strong> — your email app opens with a draft to admin.</li>
+        <li>Tap <strong>Review</strong>, then <strong>Download &amp; Send to Admin</strong> — your email app opens with a draft to admin.</li>
       </ol>
     </div>
 
@@ -2530,8 +2541,9 @@
         </div>
         <div class="upload-status" id="us-ar-attachments"></div>
       </div>
-      <div class="btn-bar btn-bar-top-lg">
-        <button class="btn btn-red" id="btn-ar-submit" onclick="submitAdminRequest(this)"><span class="btn-spinner"></span><span class="btn-label">Submit Request</span></button>
+      <div class="btn-bar btn-bar-top-lg submission-action-bar">
+        <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'admin-request')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
+        <button class="btn btn-gray btn-download-send" id="btn-ar-submit" onclick="submitAdminRequest(this)"><span class="btn-spinner"></span><span class="btn-label">Send to Admin</span></button>
         <button class="btn btn-gray" onclick="resetAdminRequestForm()">Clear Form</button>
       </div>
       <div id="ar-status" class="status-copy"></div>
@@ -2556,7 +2568,7 @@
       <ol>
         <li>Confirm your contact info and describe the deliverable.</li>
         <li>Attach source files, logos, or brand assets when you have them.</li>
-        <li>Tap <strong>Submit Request</strong> — your email app opens with a draft to marketing.</li>
+        <li>Tap <strong>Review</strong>, then <strong>Send to Admin</strong> — your email app opens with a draft to marketing.</li>
       </ol>
       <p class="recipient-inbox-hint" id="mr-recipient-hint" role="note"></p>
     </div>
@@ -2775,9 +2787,10 @@
         </div>
       </div>
 
-      <div class="btn-bar btn-bar-top-lg">
-        <button class="btn btn-red" id="btn-mr-submit" onclick="submitMarketingRequest(this)"><span class="btn-spinner"></span><span class="btn-label">Submit Request</span></button>
-        <button type="button" class="btn btn-outline" id="btn-mr-download-pdf" onclick="downloadMarketingRequestPdf(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
+      <div class="btn-bar btn-bar-top-lg submission-action-bar">
+        <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'marketing-request')"><span class="btn-spinner"></span><span class="btn-label">Review</span></button>
+        <button type="button" class="btn btn-gray" id="btn-mr-download-pdf" onclick="downloadMarketingRequestPdf(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
+        <button class="btn btn-gray btn-download-send" id="btn-mr-submit" onclick="submitMarketingRequest(this)"><span class="btn-spinner"></span><span class="btn-label">Send to Admin</span></button>
         <button class="btn btn-gray" onclick="resetMarketingRequestForm()">Clear Form</button>
       </div>
       <div id="mr-status" class="status-copy"></div>
@@ -2841,8 +2854,9 @@
 
     <div class="btn-bar review-summary-actions">
       <button type="button" class="btn btn-gray" onclick="closeReviewSnapshot()">&#8592; Back to Edit</button>
+      <button type="button" class="btn btn-gray is-hidden" id="review-download-btn" onclick="submissionDownloadForContext(reviewSnapshotContext, this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
       <button type="button" class="btn btn-outline is-hidden" id="review-open-comp-reports" onclick="closeReviewSnapshot(); switchTab('comp-reports')">Open Comp Reports</button>
-      <button type="button" class="btn btn-red btn-lg" id="review-submit-btn" onclick="submitReviewSnapshot()"><span class="btn-spinner"></span><span class="btn-label">Continue to Admin Email</span></button>
+      <button type="button" class="btn btn-red btn-lg" id="review-submit-btn" onclick="submitReviewSnapshot()"><span class="btn-spinner"></span><span class="btn-label">Download &amp; Send to Admin</span></button>
     </div>
   </div>
 </div><!-- /tab-review-summary -->
@@ -3337,7 +3351,7 @@
 <div class="modal-overlay is-hidden" id="voucher-validation-modal" role="dialog" aria-labelledby="voucher-validation-title" aria-modal="true">
   <div class="modal-card voucher-validation-card">
     <h2 id="voucher-validation-title">Complete these items before review</h2>
-    <p class="micro-copy">Fix the items below, then try Review Before Send again.</p>
+    <p class="micro-copy">Fix the items below, then try Review again.</p>
     <ul class="voucher-validation-list" id="voucher-validation-list"></ul>
     <div class="modal-actions">
       <button type="button" class="btn btn-red" onclick="closeVoucherValidationModal()">Go fix items</button>
@@ -4533,6 +4547,25 @@ function reviewSnapshotRowsFor(context) {
       ['Uploaded Deal Documents', docNames],
     ];
   }
+  if (context === 'admin-request') {
+    const attachments = Array.isArray(uploadedFiles['ar-doc-attachments']) ? uploadedFiles['ar-doc-attachments'] : [];
+    return [
+      ['Request Type', reviewDisplayValue('ar-request-type')],
+      ['Subject', reviewDisplayValue('ar-subject')],
+      ['Related Property', reviewDisplayValue('ar-property')],
+      ['Attachments', attachments.length ? `${attachments.length} file${attachments.length === 1 ? '' : 's'}` : '—'],
+    ];
+  }
+  if (context === 'marketing-request') {
+    return [
+      ['Project Title', reviewDisplayValue('mr-project-title')],
+      ['Request Type', reviewDisplayValue('mr-request-type')],
+      ['Priority', reviewDisplayValue('mr-priority')],
+      ['Due Date', reviewDisplayValue('mr-due-date')],
+      ['Requester', reviewDisplayValue('mr-requester-name')],
+      ['Property', reviewDisplayValue('mr-property')],
+    ];
+  }
   return [
     ['Comp Type', reviewDisplayValue('c-comp-type')],
     ['Broker Source', reviewDisplayValue('c-source')],
@@ -4542,11 +4575,43 @@ function reviewSnapshotRowsFor(context) {
 }
 
 function reviewContextConfig(context) {
-  if (context === 'listing') return { panelId: 'tab-listing', title: 'Review Listing Entry', submitLabel: 'Continue to Admin Email' };
-  if (context === 'listing-mod') return { panelId: 'tab-listing', title: 'Review Listing Modification', submitLabel: 'Open Email Draft' };
-  if (context === 'sign') return { panelId: 'tab-sign', title: 'Review Sign Request', submitLabel: 'Continue to Admin Email' };
-  if (context === 'voucher') return { panelId: 'tab-voucher', title: 'Review Commission Voucher', submitLabel: 'Continue to Admin Email' };
-  return { panelId: 'tab-comp', title: 'Review Comp Input', submitLabel: 'Submit Comp to Admin' };
+  if (context === 'listing') return { panelId: 'tab-listing', title: 'Review Listing Entry', submitLabel: 'Download & Send to Admin', downloadLabel: 'Download PDF' };
+  if (context === 'listing-mod') return { panelId: 'tab-listing', title: 'Review Listing Modification', submitLabel: 'Send to Admin', downloadLabel: '' };
+  if (context === 'sign') return { panelId: 'tab-sign', title: 'Review Sign Request', submitLabel: 'Download & Send to Admin', downloadLabel: 'Download PDF' };
+  if (context === 'voucher') return { panelId: 'tab-voucher', title: 'Review Commission Voucher', submitLabel: 'Download & Send to Admin', downloadLabel: 'Download Excel' };
+  if (context === 'admin-request') return { panelId: 'tab-admin-request', title: 'Review Admin Request', submitLabel: 'Send to Admin', downloadLabel: '' };
+  if (context === 'marketing-request') return { panelId: 'tab-marketing-request', title: 'Review Marketing Request', submitLabel: 'Send to Admin', downloadLabel: 'Download PDF' };
+  return { panelId: 'tab-comp', title: 'Review Comp Input', submitLabel: 'Send to Admin', downloadLabel: 'Download PDF' };
+}
+
+function submissionDownloadForContext(context, btn) {
+  if (context === 'listing') exportListingPdfWithSpinner(btn);
+  else if (context === 'sign') exportSignPdfWithSpinner(btn);
+  else if (context === 'voucher') exportVoucherExcelWithSpinner(btn);
+  else if (context === 'comp') exportCompPdfWithSpinner(btn);
+  else if (context === 'marketing-request') downloadMarketingRequestPdf(btn || document.getElementById('btn-mr-download-pdf'));
+}
+
+function submissionSendToAdmin(context, btn) {
+  if (context === 'listing' || context === 'sign' || context === 'voucher') {
+    openSendToAdminModal(context);
+    return;
+  }
+  if (context === 'listing-mod') {
+    openEmailModal('listing-mod');
+    return;
+  }
+  if (context === 'comp') {
+    void submitCompDirect();
+    return;
+  }
+  if (context === 'admin-request') {
+    submitAdminRequest(btn || document.getElementById('btn-ar-submit'));
+    return;
+  }
+  if (context === 'marketing-request') {
+    submitMarketingRequest(btn || document.getElementById('btn-mr-submit'));
+  }
 }
 
 function reviewControlValue(control) {
@@ -4575,14 +4640,21 @@ function collectReviewSections(context) {
         ? '#sign-main'
         : context === 'voucher'
           ? '#voucher-main'
-          : '#tab-comp';
+          : context === 'admin-request'
+            ? '#tab-admin-request .admin-request-card'
+            : context === 'marketing-request'
+              ? '#tab-marketing-request .marketing-request-card'
+              : '#tab-comp';
   const container = document.querySelector(selector);
   if (!container) return [];
 
-  const cards = Array.from(container.querySelectorAll('.card')).filter(card => {
+  let cards = Array.from(container.querySelectorAll('.card')).filter(card => {
     const parentCard = card.parentElement?.closest('.card');
     return !parentCard || !container.contains(parentCard);
   });
+  if (!cards.length && container.classList.contains('card')) {
+    cards = [container];
+  }
 
   return cards.map((card, index) => {
     const fields = [];
@@ -4784,6 +4856,8 @@ function openReviewSnapshot(context) {
   const copy = document.getElementById('review-summary-copy');
   const content = document.getElementById('review-summary-content');
   const submitLabel = document.querySelector('#review-submit-btn .btn-label');
+  const downloadBtn = document.getElementById('review-download-btn');
+  const downloadLabel = document.querySelector('#review-download-btn .btn-label');
   const openCompReportsBtn = document.getElementById('review-open-comp-reports');
   if (!reviewPanel || !title || !content) return;
 
@@ -4813,6 +4887,11 @@ function openReviewSnapshot(context) {
   }
   content.innerHTML = voucherPrefix + renderReviewSummary(rows, sections);
   if (submitLabel) submitLabel.textContent = config.submitLabel;
+  if (downloadBtn) {
+    const showDownload = Boolean(config.downloadLabel);
+    setHiddenState(downloadBtn, !showDownload);
+    if (downloadLabel && config.downloadLabel) downloadLabel.textContent = config.downloadLabel;
+  }
   if (openCompReportsBtn) setHiddenState(openCompReportsBtn, context !== 'comp');
 
   document.querySelectorAll('#broker-view > .panel').forEach(panel => panel.classList.remove('active'));
@@ -4857,9 +4936,17 @@ async function submitReviewSnapshot() {
     openEmailModal('listing-mod');
     return;
   }
+  if (context === 'admin-request') {
+    submissionSendToAdmin('admin-request', document.getElementById('btn-ar-submit'));
+    return;
+  }
+  if (context === 'marketing-request') {
+    submissionSendToAdmin('marketing-request', document.getElementById('btn-mr-submit'));
+    return;
+  }
   if (btn) { btn.classList.add('loading'); btn.disabled = true; const lbl = btn.querySelector('.btn-label'); if (lbl) lbl.textContent = 'Submitting…'; }
   await submitCompDirect();
-  if (btn) { btn.classList.remove('loading'); btn.disabled = false; const lbl = btn.querySelector('.btn-label'); if (lbl) lbl.textContent = 'Submit to Admin'; }
+  if (btn) { btn.classList.remove('loading'); btn.disabled = false; const lbl = btn.querySelector('.btn-label'); if (lbl) lbl.textContent = 'Send to Admin'; }
 }
 
 function exportListingPdfWithSpinner(btn) {
@@ -5514,7 +5601,7 @@ function syncDealGlance() {
 const VOUCHER_WF_TIPS = {
   upload: 'Step 1: Upload your deal documents (PDF, JPG, or PNG) to get started.',
   analyze: 'Step 2: Tap Analyze Documents & Fill Form — the AI reads your PDFs and fills the voucher.',
-  review: 'Step 3: Verify parties, dollar amounts, and commission distribution, then tap Review Before Send.',
+  review: 'Step 3: Verify parties, dollar amounts, and commission distribution, then tap Review.',
   send: 'Step 4: Download & Send to Admin when everything looks correct.',
 };
 
@@ -5571,11 +5658,11 @@ function updateVoucherWorkflow() {
   const tip = document.getElementById('voucher-workflow-tip');
   if (tip) tip.textContent = VOUCHER_WF_TIPS[state.active] || VOUCHER_WF_TIPS.upload;
 
-  const downloadBtns = [
+  const sendBtns = [
     document.getElementById('v-download-send-aside'),
     document.getElementById('v-download-send-bar'),
   ];
-  downloadBtns.forEach(btn => {
+  sendBtns.forEach(btn => {
     if (!btn) return;
     btn.classList.toggle('is-ready', state.sendReady);
     btn.classList.toggle('btn-red', state.sendReady);

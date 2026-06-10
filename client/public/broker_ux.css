@@ -839,6 +839,14 @@ body.broker-active #tab-voucher .voucher-section-done {
   background: linear-gradient(180deg, #fff 0%, #f0fdf4 100%);
 }
 
+body.broker-active .submission-action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+body.broker-active .submission-action-bar .btn-download-send.is-ready,
 body.broker-active #tab-voucher .btn-download-send.is-ready {
   font-weight: 800;
   box-shadow: 0 6px 16px rgba(152, 0, 46, 0.22);

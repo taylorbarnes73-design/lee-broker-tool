@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -423,8 +424,21 @@ export default function PortalAdminUsers() {
                           <RolePill role={u.role} />
                         </td>
                         <td style={{ padding: "14px 16px", color: "var(--ink-600)", maxWidth: 160 }}>{u.office || "—"}</td>
-                        <td style={{ padding: "14px 16px", color: "var(--ink-600)" }} title={fullTimestamp(u.last_login_at)}>
-                          {formatRelative(u.last_login_at)}
+                        <td style={{ padding: "14px 16px", color: "var(--ink-600)" }}>
+                          {u.last_login_at ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span tabIndex={0} style={{ cursor: "default" }}>
+                                  {formatRelative(u.last_login_at)}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent sideOffset={4}>
+                                {fullTimestamp(u.last_login_at)}
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            formatRelative(u.last_login_at)
+                          )}
                         </td>
                         <td style={{ padding: "14px 16px" }}>
                           {u.is_active ? (
