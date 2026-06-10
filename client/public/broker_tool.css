@@ -4478,6 +4478,31 @@ body {
   padding: 8px 12px;
   font-size: 13px;
 }
+.cr-transaction-select,
+#cr-comp-type {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--ink-0, #fff);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6' width='10' height='6' fill='none' stroke='%236B7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 34px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ink-800, #1f2937);
+  border: 1px solid var(--ink-200, #e5e7eb);
+  border-radius: var(--r-6, 6px);
+}
+.cr-transaction-select:hover,
+#cr-comp-type:hover {
+  border-color: var(--ink-300, #d1d5db);
+}
+.cr-transaction-select:focus,
+#cr-comp-type:focus {
+  border-color: var(--lee-crimson, #98002e);
+  box-shadow: 0 0 0 3px rgba(152, 0, 46, 0.1);
+  outline: none;
+}
 /* Custom checkbox dropdown for comp report filters */
 .cr-dd {
   position: relative;
@@ -4767,17 +4792,17 @@ body {
 .cr-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 14px;
 }
 .cr-table thead th {
   background: var(--ink-100);
   color: var(--ink-600);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: .14em;
+  letter-spacing: .1em;
   text-transform: uppercase;
   text-align: left;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--ink-200);
   white-space: nowrap;
 }
@@ -4790,15 +4815,16 @@ body {
 .cr-table tbody tr.is-open { background: var(--ink-50); }
 .cr-table tbody tr.is-open + tr.cr-drawer-row { background: var(--ink-50); }
 .cr-table tbody td {
-  padding: 10px 14px;
+  padding: 13px 16px;
   vertical-align: middle;
   color: var(--ink-800);
+  line-height: 1.45;
 }
 .cr-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .cr-table td.cr-idx {
   width: 38px;
   color: var(--ink-400);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
 }
 .cr-table td.cr-photo {
@@ -8111,6 +8137,11 @@ body.broker-active .sub-tab-bar {
   border: 1px solid #E8EAEE;
 }
 
+#tab-marketing-request .page-head-right #mr-autosave {
+  text-align: right;
+  min-height: 1.25em;
+}
+
 @media (max-width: 720px) {
   .marketing-request-check-grid,
   #tab-marketing-request .marketing-request-timeline-row {
@@ -9762,6 +9793,11 @@ body.broker-active {
   font-size: 13px;
   color: #374151;
 }
+.cr-table td {
+  padding: 13px 16px;
+  font-size: 14px;
+  line-height: 1.45;
+}
 
 .suite-table tbody tr:last-child td,
 .rent-table tbody tr:last-child td,
@@ -10836,12 +10872,12 @@ input[type="date"],
 .cr-table thead th,
 .cr-tbl thead th,
 #cr-table-head th {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #6B7280;
-  padding: 10px 12px;
+  padding: 14px 16px;
   border-bottom: 2px solid #E5E7EB;
   background: #F9FAFB;
   white-space: nowrap;
@@ -10867,8 +10903,9 @@ input[type="date"],
 .cr-table td,
 .cr-tbl td,
 #cr-table-body td {
-  padding: 10px 12px;
-  font-size: 13px;
+  padding: 13px 16px;
+  font-size: 14px;
+  line-height: 1.45;
   color: #374151;
   vertical-align: middle;
 }
@@ -10946,17 +10983,21 @@ input[type="date"],
   color: #374151;
 }
 
-/* ── D. Comp Reports view toggle buttons (Table / Map) ────────────────── */
-.cr-view-toggle,
-.cr-results-meta .cr-filters-actions-right {
+/* ── D. Comp Reports view toggle buttons (Table / Map / Excel) ─────────── */
+.cr-results-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.cr-view-toggle {
   display: flex;
   gap: 0;
   border: 1px solid #E5E7EB;
   border-radius: 8px;
   overflow: hidden;
 }
-.cr-view-toggle button,
-.cr-results-meta .cr-filters-actions-right button {
+.cr-view-toggle .cr-view-btn {
   padding: 8px 16px;
   font-size: 13px;
   font-weight: 600;
@@ -10967,17 +11008,20 @@ input[type="date"],
   transition: all 0.15s ease;
   border-right: 1px solid #E5E7EB;
 }
-.cr-view-toggle button:last-child,
-.cr-results-meta .cr-filters-actions-right button:last-child {
+.cr-view-toggle .cr-view-btn:last-child {
   border-right: none;
 }
-.cr-view-toggle button.active,
-.cr-results-meta .cr-filters-actions-right button.active,
+.cr-view-toggle .cr-view-btn.active,
 #cr-view-table-btn.active,
 #cr-view-map-btn.active {
   background: #1F2937;
   color: #FFFFFF;
   font-weight: 700;
+}
+.cr-download-report-btn {
+  flex-shrink: 0;
+  font-weight: 700;
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.06));
 }
 
 /* ── E. Comp Reports filter grid — ensure proper spacing ──────────────── */

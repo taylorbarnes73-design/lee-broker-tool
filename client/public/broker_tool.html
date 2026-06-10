@@ -1846,8 +1846,8 @@
       <form id="cr-search-form" onsubmit="event.preventDefault(); compReportRunSearch();">
         <div class="cr-filters-grid">
           <div class="field">
-            <label>Transaction</label>
-            <select id="cr-comp-type">
+            <label for="cr-comp-type">Transaction</label>
+            <select id="cr-comp-type" class="cr-transaction-select" aria-label="Transaction type">
               <option value="lease">Lease</option>
               <option value="sale">Sale</option>
             </select>
@@ -1901,13 +1901,13 @@
 
     <div class="cr-results-meta">
       <div id="cr-results-count">No results loaded.</div>
-      <div class="cr-filters-actions-right">
-        <div class="cr-view-toggle">
+      <div class="cr-results-toolbar">
+        <div class="cr-view-toggle" role="group" aria-label="Comp report view">
           <button class="cr-view-btn active" id="cr-view-table-btn" type="button" onclick="crSetView('table')">Table</button>
           <button class="cr-view-btn" id="cr-view-map-btn" type="button" onclick="crSetView('map')">Map</button>
+          <button class="cr-view-btn" type="button" id="cr-export-csv-btn" onclick="compReportExportCsvWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Excel file</span></button>
         </div>
-        <button class="btn btn-gray" type="button" id="cr-export-csv-btn" onclick="compReportExportCsvWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Excel file</span></button>
-        <button class="btn btn-outline" type="button" id="cr-export-pdf-btn" onclick="compReportExportPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Comp Report</span></button>
+        <button class="btn btn-red cr-download-report-btn" type="button" id="cr-export-pdf-btn" onclick="compReportExportPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Comp Report</span></button>
       </div>
     </div>
     <div id="cr-map-container" class="is-hidden"></div>
@@ -2549,6 +2549,9 @@
         <div class="page-eyebrow">Marketing</div>
         <h1 class="page-h1">Marketing Request</h1>
         <p class="page-desc marketing-request-intro">Request flyers, campaigns, social content, signage, and other marketing deliverables.</p>
+      </div>
+      <div class="page-head-right">
+        <div class="micro-copy micro-copy-top" id="mr-autosave" aria-live="polite"></div>
       </div>
     </div>
     <div class="broker-pane-guide" role="note">
@@ -3712,6 +3715,10 @@ function switchTab(name) {
   }
   if (name === 'comp-reports') {
     void initCompReports();
+  }
+  if (name === 'marketing-request') {
+    clearMarketingRequestStatus();
+    syncMarketingRequesterFromUser(getSignedInBrokerIdentity());
   }
   if (name === 'drafts') {
     renderDraftsPanel();
@@ -10570,8 +10577,21 @@ const BROKER_EMAIL_MAP = {
   'kmorris@lee-associates.com': 'Kelsey Morris',
 };
 
+function normalizeBrokerSessionUser(raw) {
+  if (!raw || !raw.email) return null;
+  return {
+    openId: raw.openId || '',
+    name: String(raw.name || raw.full_name || '').trim(),
+    email: String(raw.email || '').trim().toLowerCase(),
+    role: raw.role || 'user',
+    office: raw.office != null && raw.office !== '' ? String(raw.office).trim() : '',
+    id: raw.id,
+  };
+}
+
 function showBrokerTool(user) {
-  setAdminAccessForUser(user || null);
+  const sessionUser = normalizeBrokerSessionUser(user);
+  setAdminAccessForUser(sessionUser || null);
   document.body.classList.add('broker-active');
   const brokerViewEl = document.getElementById('broker-view');
   if (brokerViewEl) {
@@ -10579,10 +10599,10 @@ function showBrokerTool(user) {
     brokerViewEl.classList.remove('is-ready');
     requestAnimationFrame(() => brokerViewEl.classList.add('is-ready'));
   }
-  if (user) {
-    applySharedBrokerIdentity(user);
-    compReportsUser = user;
-    updateHeaderUserDisplay(user);
+  if (sessionUser) {
+    applySharedBrokerIdentity(sessionUser);
+    compReportsUser = sessionUser;
+    updateHeaderUserDisplay(sessionUser);
   }
   void refreshBrokerQueue();
   window.queueMicrotask(applyBrokerToolInitialTabFromUrl);
@@ -11022,7 +11042,11 @@ function wireListingExpirationListeners() {
   }
 }
 
-const LBT_AUTOSAVE_KEYS = { listing: 'lbt_autosave_listing_v1', voucher: 'lbt_autosave_voucher_v1' };
+const LBT_AUTOSAVE_KEYS = {
+  listing: 'lbt_autosave_listing_v1',
+  voucher: 'lbt_autosave_voucher_v1',
+  marketing: 'lbt_autosave_marketing_v1',
+};
 
 function restoreVoucherUploadStateFromAutosave() {
   try {
@@ -11082,12 +11106,22 @@ function startWorkflowAutosaveTimer() {
         rentSchedule: collectVoucherRentScheduleState(),
         voucherBrokers: collectVoucherBrokerDraftState(),
       }));
+      localStorage.setItem(LBT_AUTOSAVE_KEYS.marketing, JSON.stringify({
+        savedAt: Date.now(),
+        values: lbtCollectDraftFields('#tab-marketing-request'),
+      }));
       const ts = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
       const msg = 'Draft autosaved at ' + ts;
       const elL = document.getElementById('lg-autosave');
       const elV = document.getElementById('dg-autosave');
+      const elM = document.getElementById('mr-autosave');
       if (elL) elL.textContent = msg;
       if (elV) elV.textContent = msg;
+      if (elM) {
+        elM.textContent = msg;
+        elM.classList.add('autosave-saving');
+        setTimeout(function () { elM.classList.remove('autosave-saving'); }, 2000);
+      }
     } catch (e) { /* storage full or disabled */ }
   }
   setInterval(tick, sec * 1000);
@@ -11597,10 +11631,30 @@ function applyMarketingRequesterEmailFromName() {
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('mr-requester-name')?.addEventListener('change', applyMarketingRequesterEmailFromName);
+  clearMarketingRequestStatus();
 });
 
-async function downloadMarketingRequestPdf(btn) {
+let mrPdfDownloadAttempted = false;
+
+function clearMarketingRequestStatus() {
+  mrPdfDownloadAttempted = false;
   const status = document.getElementById('mr-status');
+  if (!status) return;
+  status.classList.remove('text-error', 'status-success', 'status-strong');
+  status.textContent = '';
+}
+
+function setMarketingRequestStatus(message, kind) {
+  const status = document.getElementById('mr-status');
+  if (!status) return;
+  status.classList.remove('text-error', 'status-success', 'status-strong');
+  if (kind === 'error') status.classList.add('text-error', 'status-strong');
+  if (kind === 'success') status.classList.add('status-success', 'status-strong');
+  status.innerHTML = message;
+}
+
+async function downloadMarketingRequestPdf(btn) {
+  mrPdfDownloadAttempted = true;
   const payload = collectMarketingRequestPayload();
   const missingFields = [];
   if (!payload.requesterName) missingFields.push('requester name');
@@ -11611,15 +11665,17 @@ async function downloadMarketingRequestPdf(btn) {
   if (!payload.objective) missingFields.push('project description / objective');
   if (!payload.dueDate) missingFields.push('requested due date');
 
+  const status = document.getElementById('mr-status');
   if (status) {
     status.classList.remove('text-error', 'status-success', 'status-strong');
     status.textContent = '';
   }
 
   if (missingFields.length > 0) {
-    if (status) {
-      status.innerHTML = '<span class="text-error status-strong">Missing required fields: ' + escHtml(missingFields.join(', ')) + '.</span>';
-    }
+    setMarketingRequestStatus(
+      '<span class="text-error status-strong">Missing required fields: ' + escHtml(missingFields.join(', ')) + '.</span>',
+      'error'
+    );
     return;
   }
 
@@ -11680,13 +11736,17 @@ async function downloadMarketingRequestPdf(btn) {
     link.click();
     URL.revokeObjectURL(link.href);
 
-    if (status) {
-      status.innerHTML = '<span class="status-success status-strong">Filled marketing request PDF downloaded.</span>';
-    }
+    setMarketingRequestStatus(
+      '<span class="status-success status-strong">Filled marketing request PDF downloaded.</span>',
+      'success'
+    );
   } catch (error) {
     console.error('Marketing request PDF download failed:', error);
-    if (status) {
-      status.innerHTML = '<span class="text-error status-strong">' + escHtml(error.message || 'PDF download failed. Please try again.') + '</span>';
+    if (mrPdfDownloadAttempted) {
+      setMarketingRequestStatus(
+        '<span class="text-error status-strong">' + escHtml(error.message || 'PDF download failed. Please try again.') + '</span>',
+        'error'
+      );
     }
   } finally {
     setBtnLoading(btn, false);
@@ -11932,11 +11992,10 @@ function resetMarketingRequestForm() {
   if (flexibleEl) flexibleEl.value = 'Yes';
   document.querySelectorAll('input[name="mr-deliverables"]').forEach(el => { el.checked = false; });
   clearUpload('mr-doc-attachments', 'us-mr-attachments');
-  const status = document.getElementById('mr-status');
-  if (status) {
-    status.classList.remove('text-error', 'status-success', 'status-strong');
-    status.textContent = '';
-  }
+  const au = document.getElementById('mr-autosave');
+  if (au) au.textContent = '';
+  try { localStorage.removeItem(LBT_AUTOSAVE_KEYS.marketing); } catch (e) {}
+  clearMarketingRequestStatus();
   syncMarketingRequesterFromUser(getSignedInBrokerIdentity());
 }
 
@@ -17562,13 +17621,14 @@ function readSharedBrokerIdentity() {
       if (!raw || raw === 'undefined' || raw === 'null') continue;
       const parsed = JSON.parse(raw);
       if (!parsed || !parsed.email) continue;
-      return {
+      return normalizeBrokerSessionUser({
         openId: parsed.openId || '',
-        name: String(parsed.name || '').trim(),
-        email: String(parsed.email || '').trim().toLowerCase(),
+        name: parsed.name || parsed.full_name || '',
+        email: parsed.email,
         role: parsed.role || 'user',
         office: parsed.office || '',
-      };
+        id: parsed.id,
+      });
     } catch {}
   }
   return null;
@@ -17576,12 +17636,14 @@ function readSharedBrokerIdentity() {
 
 function writeSharedBrokerIdentity(user) {
   if (!user || !user.email) return;
+  const officeRaw = String(user.office || '').trim();
+  const office = /^\d+$/.test(officeRaw) ? '' : officeRaw;
   const payload = JSON.stringify({
     openId: user.openId || '',
     name: user.name || '',
     email: String(user.email || '').trim().toLowerCase(),
     role: user.role || 'user',
-    office: user.office || '',
+    office,
   });
   localStorage.setItem(SHARED_AUTH_STORAGE_KEY, payload);
   localStorage.setItem(LEGACY_AUTH_STORAGE_KEY, payload);
@@ -17783,11 +17845,31 @@ function applySharedBrokerIdentity(user) {
   syncMarketingRequesterFromUser(user);
 }
 
+const DEFAULT_BROKER_TEAM_LABEL = 'Lee & Associates Newport Beach';
+
 function formatBrokerTeamLabel(office) {
   const raw = String(office || '').trim();
-  if (!raw || /^\d+$/.test(raw)) return 'Lee & Associates Newport Beach';
-  if (/newport beach/i.test(raw)) return 'Lee & Associates Newport Beach';
+  if (!raw || /^\d+$/.test(raw)) return DEFAULT_BROKER_TEAM_LABEL;
+  if (/newport beach/i.test(raw)) return DEFAULT_BROKER_TEAM_LABEL;
+  if (/lee\s*&\s*associates/i.test(raw)) {
+    return raw.length > 48 ? DEFAULT_BROKER_TEAM_LABEL : raw;
+  }
   return raw;
+}
+
+function shouldAutoFillMarketingTeam(current, user) {
+  const value = String(current || '').trim();
+  if (!value) return true;
+  if (/^\d+$/.test(value)) return true;
+  if (user && value === String(user.id ?? '').trim()) return true;
+  return false;
+}
+
+function resolveBrokerTeamLabelForUser(user) {
+  if (!user) return DEFAULT_BROKER_TEAM_LABEL;
+  const office = formatBrokerTeamLabel(user.office);
+  if (office !== DEFAULT_BROKER_TEAM_LABEL) return office;
+  return DEFAULT_BROKER_TEAM_LABEL;
 }
 
 function syncMarketingRequesterFromUser(user) {
@@ -17806,11 +17888,8 @@ function syncMarketingRequesterFromUser(user) {
     const mappedEmail = MARKETING_REQUESTER_EMAIL_MAP[nameEl.value] || user.email || '';
     if (mappedEmail) emailEl.value = mappedEmail;
   }
-  if (teamEl) {
-    const current = teamEl.value.trim();
-    if (!current || /^\d+$/.test(current)) {
-      teamEl.value = formatBrokerTeamLabel(user.office);
-    }
+  if (teamEl && shouldAutoFillMarketingTeam(teamEl.value, user)) {
+    teamEl.value = resolveBrokerTeamLabelForUser(user);
   }
 }
 
@@ -17828,11 +17907,12 @@ async function ensureSharedBrokerSession() {
   sharedBrokerSessionPromise = (async () => {
     try {
       const me = await callTrpc('auth.me');
-      if (me && me.email) {
-        compReportsUser = me;
-        applySharedBrokerIdentity(me);
+      const sessionUser = normalizeBrokerSessionUser(me);
+      if (sessionUser && sessionUser.email) {
+        compReportsUser = sessionUser;
+        applySharedBrokerIdentity(sessionUser);
         if (typeof dxLoadAccountCreds === 'function') void dxLoadAccountCreds();
-        return me;
+        return sessionUser;
       }
     } catch (error) {
       console.warn('Unable to verify broker session:', error && error.message ? error.message : error);
