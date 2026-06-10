@@ -6885,7 +6885,6 @@ function validateVoucherBeforeReview() {
     req('Commission distribution totals 100%', '8', Math.abs(Math.round(total * 10) / 10 - 100) < 0.1);
   }
 
-  const txn = document.getElementById('v-txn-type')?.value || 'lease';
   if (!repOther && txn === 'lease') {
     const consideration = parseFloat(String(document.getElementById('v-l-consideration')?.value || '').replace(/[^0-9.]/g, '')) || 0;
     const commDue = parseFloat(String(document.getElementById('v-l-comm-due')?.value || '').replace(/[^0-9.]/g, '')) || 0;
