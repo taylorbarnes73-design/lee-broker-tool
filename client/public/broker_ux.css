@@ -68,6 +68,12 @@ body.broker-active .deal-aside {
   max-height: calc(100dvh - var(--broker-chrome-h) - 32px);
   overflow: visible;
   gap: 8px;
+  z-index: 12;
+}
+
+body.broker-active #tab-voucher .deal-aside {
+  top: 0;
+  max-height: calc(100dvh - var(--broker-chrome-h) - 16px);
 }
 
 body.broker-active .deal-aside .deal-card {
@@ -170,6 +176,10 @@ body.broker-active .broker-pane-guide {
   border-radius: 10px;
 }
 
+body.broker-active #tab-voucher .pane-intro-tip.voucher-required-legend {
+  display: block;
+}
+
 .broker-pane-guide {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
@@ -198,13 +208,39 @@ body.broker-active .broker-pane-guide {
 
 .upload-analyze-btn-primary {
   width: 100%;
-  min-height: 52px;
+  min-height: 56px;
   justify-content: center;
   text-align: left;
+  background: var(--red, #98002e) !important;
+  color: #fff !important;
+  border: 2px solid var(--red-dark, #7a0024) !important;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(152, 0, 46, 0.32);
+  font-size: 15px;
+}
+
+.upload-analyze-btn-primary:not(:disabled):hover {
+  background: var(--red-dark, #7a0024) !important;
+  box-shadow: 0 8px 22px rgba(152, 0, 46, 0.4);
+}
+
+.upload-analyze-btn-primary .upload-analyze-btn-title {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.upload-analyze-btn-primary .upload-analyze-btn-sub {
+  font-size: 12px;
+  opacity: 0.92;
 }
 
 .upload-analyze-btn-primary:disabled {
-  opacity: 0.45;
+  background: #cbd5e1 !important;
+  border-color: #94a3b8 !important;
+  color: #475569 !important;
+  box-shadow: none;
+  opacity: 1;
   cursor: not-allowed;
 }
 
@@ -227,25 +263,8 @@ body.broker-active .broker-pane-guide {
   min-width: 520px;
 }
 
-/* ── Sticky review bar (senior-friendly) ── */
-.broker-review-bar {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 16px;
-  z-index: 120;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  max-width: min(640px, calc(100vw - 24px));
-  padding: 12px 16px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
-}
-
+/* Floating review pill retired — use sidebar + bottom action bar */
+.broker-review-bar,
 .broker-review-bar.is-hidden {
   display: none !important;
 }
@@ -655,5 +674,187 @@ body.broker-active #tab-voucher .voucher-validation-highlight {
 @media (max-width: 720px) {
   body.broker-active #tab-voucher .v-rent-steps {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ── Commission Voucher: workflow stepper + section progress ── */
+body.broker-active #tab-voucher .voucher-required-legend {
+  display: block;
+  margin: 0 0 10px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+body.broker-active #tab-voucher .voucher-workflow {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, #fff 0%, #fbf9f6 100%);
+  border: 1px solid #e8d0d7;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(152, 0, 46, 0.08);
+}
+
+body.broker-active #tab-voucher .voucher-workflow-steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap;
+}
+
+body.broker-active #tab-voucher .voucher-wf-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+body.broker-active #tab-voucher .voucher-wf-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 2px solid #cbd5e1;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+body.broker-active #tab-voucher .voucher-wf-connector {
+  flex: 1;
+  min-width: 16px;
+  max-width: 40px;
+  height: 2px;
+  margin: 0 4px;
+  background: #e2e8f0;
+  list-style: none;
+}
+
+body.broker-active #tab-voucher .voucher-wf-connector.is-done {
+  background: rgba(152, 0, 46, 0.45);
+}
+
+body.broker-active #tab-voucher .voucher-wf-step.is-active {
+  color: #0f172a;
+  background: rgba(152, 0, 46, 0.06);
+}
+
+body.broker-active #tab-voucher .voucher-wf-step.is-active .voucher-wf-num {
+  border-color: var(--red, #98002e);
+  background: var(--red, #98002e);
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(152, 0, 46, 0.14);
+}
+
+body.broker-active #tab-voucher .voucher-wf-step.is-done {
+  color: #166534;
+}
+
+body.broker-active #tab-voucher .voucher-wf-step.is-done .voucher-wf-num {
+  border-color: #16a34a;
+  background: #16a34a;
+  color: #fff;
+}
+
+body.broker-active #tab-voucher .voucher-workflow-tip {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fff5f6;
+  border: 1px solid #f4d4db;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: #7a0024;
+}
+
+body.broker-active #tab-voucher .voucher-section-banner {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  background: #f1f5f9;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+body.broker-active #tab-voucher .v-rent-context-line {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: #334155;
+}
+
+body.broker-active #tab-voucher .field label {
+  font-size: 12.5px;
+  color: #374151;
+  font-weight: 700;
+}
+
+body.broker-active #tab-voucher .voucher-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+body.broker-active #tab-voucher .voucher-section-check {
+  display: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #16a34a;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+body.broker-active #tab-voucher .voucher-section-header.has-check .voucher-section-check {
+  display: inline-block;
+}
+
+body.broker-active #tab-voucher .voucher-section-done {
+  border-color: #bbf7d0;
+  background: linear-gradient(180deg, #fff 0%, #f0fdf4 100%);
+}
+
+body.broker-active #tab-voucher .btn-download-send.is-ready {
+  font-weight: 800;
+  box-shadow: 0 6px 16px rgba(152, 0, 46, 0.22);
+}
+
+@media (max-width: 900px) {
+  body.broker-active #tab-voucher .voucher-workflow-steps {
+    row-gap: 6px;
+  }
+
+  body.broker-active #tab-voucher .voucher-wf-connector {
+    display: none;
+  }
+
+  body.broker-active #tab-voucher .voucher-wf-step {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 140px;
   }
 }

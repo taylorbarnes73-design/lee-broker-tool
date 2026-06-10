@@ -16,8 +16,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-<link rel="stylesheet" href="broker_tool.css?v=20260610.1">
-<link rel="stylesheet" href="broker_ux.css?v=20260608.2">
+<link rel="stylesheet" href="broker_tool.css?v=20260610.2">
+<link rel="stylesheet" href="broker_ux.css?v=20260610.1">
 </head>
 <body>
 
@@ -865,10 +865,34 @@
       <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('voucher', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
     </div>
   </div>
-  <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete all sections for fastest processing.</div>
-  <div class="broker-pane-guide" role="note">
-    <strong>Commission voucher tips:</strong> Upload deal documents, tap <strong>Analyze</strong>, verify parties and dollar amounts, then <strong>Review Before Send</strong>.
-  </div>
+  <div class="tip pane-intro-tip voucher-required-legend">Fields marked <span class="required-mark">*</span> are required.</div>
+
+  <nav class="voucher-workflow" id="voucher-workflow" aria-label="Voucher submission steps">
+    <ol class="voucher-workflow-steps">
+      <li class="voucher-wf-step" data-wf="upload">
+        <span class="voucher-wf-num" aria-hidden="true">1</span>
+        <span class="voucher-wf-label">Upload</span>
+      </li>
+      <li class="voucher-wf-connector" aria-hidden="true"></li>
+      <li class="voucher-wf-step" data-wf="analyze">
+        <span class="voucher-wf-num" aria-hidden="true">2</span>
+        <span class="voucher-wf-label">Analyze &amp; auto-fill</span>
+      </li>
+      <li class="voucher-wf-connector" aria-hidden="true"></li>
+      <li class="voucher-wf-step" data-wf="review">
+        <span class="voucher-wf-num" aria-hidden="true">3</span>
+        <span class="voucher-wf-label">Review</span>
+      </li>
+      <li class="voucher-wf-connector" aria-hidden="true"></li>
+      <li class="voucher-wf-step" data-wf="send">
+        <span class="voucher-wf-num" aria-hidden="true">4</span>
+        <span class="voucher-wf-label">Download &amp; send</span>
+      </li>
+    </ol>
+    <p class="voucher-workflow-tip" id="voucher-workflow-tip" role="status">Step 1: Upload your deal documents (PDF, JPG, or PNG) to get started.</p>
+  </nav>
+
+  <div class="voucher-section-banner" id="voucher-section-banner" aria-live="polite"></div>
 
   <div class="deal-shell" id="v-deal-shell">
   <div class="deal-main" id="voucher-main">
@@ -1170,6 +1194,7 @@
           <div class="v-rent-step" data-step="3"><span class="v-rent-step-num">3</span> Confirm consideration</div>
         </div>
 
+        <p class="v-rent-context-line">Use this tool to automatically calculate your rent schedule based on the term and rate above.</p>
         <p class="review-copy micro-copy-bottom-sm">Set lease variables, generate the schedule, then edit rows as needed. Regenerate after changing rate or term.</p>
 
         <div class="v-lease-calc">
@@ -1366,7 +1391,7 @@
   <div class="btn-bar voucher-action-bar">
     <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'voucher')"><span class="btn-spinner"></span><span class="btn-label">Review Before Send</span></button>
     <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('voucher', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
-    <button class="btn btn-gray" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Excel</span></button>
+    <button class="btn btn-gray btn-download-send" id="v-download-send-bar" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download &amp; Send to Admin</span></button>
     <div class="btn-more-wrap">
       <button type="button" class="btn btn-outline btn-more" onclick="toggleVoucherMoreActions(this)" aria-expanded="false" aria-controls="voucher-more-menu">More ▾</button>
       <div class="btn-more-menu is-hidden" id="voucher-more-menu" role="menu">
@@ -1425,7 +1450,7 @@
     <div class="deal-actions">
       <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'voucher')"><span class="btn-spinner"></span><span class="btn-label">Review Before Send</span></button>
       <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('voucher', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
-      <button class="btn btn-gray" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Excel</span></button>
+      <button class="btn btn-gray btn-download-send" id="v-download-send-aside" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download &amp; Send to Admin</span></button>
     </div>
   </aside>
   </div><!-- /deal-shell -->
@@ -3636,6 +3661,12 @@ function switchTab(name) {
   bootstrapStepFlowFor(name);
   syncBrokerToolUrlTab(name);
   if (typeof renderHelpPanel === 'function') renderHelpPanel();
+  if (name === 'voucher') {
+    setTimeout(function() {
+      try { syncDealGlance(); } catch (e) {}
+      try { updateVoucherWorkflow(); } catch (e) {}
+    }, 0);
+  }
 }
 
 window.addEventListener('hashchange', function () {
@@ -5397,11 +5428,152 @@ function syncDealGlance() {
       firstIncomplete.classList.add('is-active', 'current');
     }
   }
+
+  updateVoucherWorkflow();
+  syncVoucherSectionProgress();
 }
+
+const VOUCHER_WF_TIPS = {
+  upload: 'Step 1: Upload your deal documents (PDF, JPG, or PNG) to get started.',
+  analyze: 'Step 2: Tap Analyze Documents & Fill Form — the AI reads your PDFs and fills the voucher.',
+  review: 'Step 3: Verify parties, dollar amounts, and commission distribution, then tap Review Before Send.',
+  send: 'Step 4: Download & Send to Admin when everything looks correct.',
+};
+
+const VOUCHER_SECTION_LABELS = {
+  upload: 'Upload Documents',
+  1: 'Deal Basics',
+  2: 'Broker Representation',
+  3: 'Lessor/Seller & Lessee/Buyer',
+  4: 'Lease/Sale Terms',
+  5: 'Rent Schedule',
+  6: 'Commission & Invoice',
+  8: 'Commission Distribution',
+};
+
+function getVoucherWorkflowState() {
+  const completion = getVoucherStepCompletion();
+  const hasUpload = Boolean(completion.upload);
+  const analyzed = Boolean(window.__voucherAnalyzeComplete);
+  const reviewReady = Boolean(completion['1'] && completion['2'] && completion['3'] && completion['4'] && completion['6'] && completion['8']);
+  const sendReady = reviewReady;
+  let active = 'upload';
+  if (!hasUpload) active = 'upload';
+  else if (!analyzed) active = 'analyze';
+  else if (!reviewReady) active = 'review';
+  else active = 'send';
+  return { hasUpload, analyzed, reviewReady, sendReady, active };
+}
+
+function updateVoucherWorkflow() {
+  const panel = document.getElementById('tab-voucher');
+  if (!panel) return;
+  const state = getVoucherWorkflowState();
+  const order = ['upload', 'analyze', 'review', 'send'];
+  const doneByKey = {
+    upload: state.hasUpload,
+    analyze: state.analyzed,
+    review: state.reviewReady,
+    send: state.sendReady,
+  };
+  const activeIdx = Math.max(0, order.indexOf(state.active));
+
+  panel.querySelectorAll('.voucher-wf-step').forEach(step => {
+    const key = step.getAttribute('data-wf');
+    const isActive = key === state.active;
+    const done = Boolean(doneByKey[key]) && !isActive;
+    step.classList.toggle('is-done', done);
+    step.classList.toggle('is-active', isActive);
+  });
+
+  panel.querySelectorAll('.voucher-wf-connector').forEach((conn, idx) => {
+    conn.classList.toggle('is-done', idx < activeIdx);
+  });
+
+  const tip = document.getElementById('voucher-workflow-tip');
+  if (tip) tip.textContent = VOUCHER_WF_TIPS[state.active] || VOUCHER_WF_TIPS.upload;
+
+  const downloadBtns = [
+    document.getElementById('v-download-send-aside'),
+    document.getElementById('v-download-send-bar'),
+  ];
+  downloadBtns.forEach(btn => {
+    if (!btn) return;
+    btn.classList.toggle('is-ready', state.sendReady);
+    btn.classList.toggle('btn-red', state.sendReady);
+    btn.classList.toggle('btn-gray', !state.sendReady);
+  });
+}
+
+function getVisibleVoucherSections() {
+  const panel = document.getElementById('tab-voucher');
+  if (!panel) return [];
+  return [...panel.querySelectorAll('#voucher-main > .card[data-vstep], #voucher-main > #vstep-upload, #voucher-main > details.voucher-section')].filter(el => {
+    if (el.classList.contains('is-hidden')) return false;
+    return el.offsetParent !== null || el.tagName === 'DETAILS';
+  });
+}
+
+function syncVoucherSectionProgress() {
+  const completion = getVoucherStepCompletion();
+  const sections = getVisibleVoucherSections();
+  sections.forEach(section => {
+    const key = section.getAttribute('data-vstep') || '';
+    const done = Boolean(completion[key]);
+    section.classList.toggle('voucher-section-done', done);
+    const header = section.querySelector('.voucher-section-header');
+    if (header) {
+      header.classList.toggle('has-check', done);
+      if (!header.querySelector('.voucher-section-check')) {
+        const mark = document.createElement('span');
+        mark.className = 'voucher-section-check';
+        mark.setAttribute('aria-hidden', 'true');
+        mark.textContent = '✓';
+        header.prepend(mark);
+      }
+    }
+  });
+}
+
+let _voucherSectionObserver = null;
+function initVoucherSectionObserver() {
+  const panel = document.getElementById('tab-voucher');
+  const banner = document.getElementById('voucher-section-banner');
+  if (!panel || !banner || _voucherSectionObserver) return;
+
+  const updateBanner = () => {
+    const sections = getVisibleVoucherSections();
+    if (!sections.length) {
+      banner.textContent = '';
+      return;
+    }
+    const panelRect = panel.getBoundingClientRect();
+    const mid = panelRect.top + panelRect.height * 0.35;
+    let current = sections[0];
+    for (const section of sections) {
+      const rect = section.getBoundingClientRect();
+      if (rect.top <= mid) current = section;
+    }
+    const key = current.getAttribute('data-vstep') || 'upload';
+    const idx = sections.indexOf(current);
+    const label = VOUCHER_SECTION_LABELS[key] || 'Form section';
+    banner.textContent = 'Section ' + (idx + 1) + ' of ' + sections.length + ' · ' + label;
+  };
+
+  _voucherSectionObserver = new IntersectionObserver(updateBanner, {
+    root: panel,
+    threshold: [0, 0.15, 0.35, 0.55, 0.75, 1],
+  });
+  panel.addEventListener('scroll', updateBanner, { passive: true });
+  getVisibleVoucherSections().forEach(section => _voucherSectionObserver.observe(section));
+  updateBanner();
+}
+
 // Wire up live updates for voucher inputs (delegated)
 document.addEventListener('DOMContentLoaded', function () {
   const panel = document.getElementById('tab-voucher');
   if (!panel) return;
+  initVoucherSectionObserver();
   const handler = () => { try { syncDealGlance(); } catch(e) {} };
   const partyIds = new Set(['v-ls-contact', 'v-ls-company', 'v-lb-contact', 'v-lb-company', 'v-rep-type']);
   panel.addEventListener('input', function(e) {
@@ -20385,6 +20557,6 @@ function deleteDraft(key) {
   });
 })();
 </script>
-<script src="/features_patch.js?v=20260609.1"></script>
+<script src="/features_patch.js?v=20260610.1"></script>
 </body>
 </html>

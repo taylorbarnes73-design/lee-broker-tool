@@ -1225,10 +1225,17 @@ window.aiParseFromPaste = async function() {
         await reanalyzeVoucherFiles();
       }
       if (resultEl) resultEl.innerHTML = '<span class="upload-analyze-ok">✅ Done — form fields updated from your documents</span>';
+      if (tab === 'voucher') {
+        window.__voucherAnalyzeComplete = true;
+        if (typeof window.updateVoucherWorkflow === 'function') window.updateVoucherWorkflow();
+      }
     } catch (err) {
       if (resultEl) resultEl.innerHTML = '<span class="upload-analyze-error">Could not analyze. Try removing and re-uploading the file.</span>';
     } finally {
       if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+      if (tab === 'voucher' && typeof window.syncDealGlance === 'function') {
+        try { window.syncDealGlance(); } catch (e) {}
+      }
     }
   };
 
@@ -1404,35 +1411,10 @@ window.aiParseFromPaste = async function() {
     });
   }
 
-  function ensureBrokerReviewBar() {
-    if (document.getElementById('broker-review-bar')) return;
-    var bar = document.createElement('div');
-    bar.id = 'broker-review-bar';
-    bar.className = 'broker-review-bar is-hidden';
-    bar.setAttribute('role', 'region');
-    bar.setAttribute('aria-label', 'Review before send');
-    bar.innerHTML =
-      '<button type="button" class="btn btn-red" id="broker-review-bar-btn">Review Before Send</button>';
-    document.body.appendChild(bar);
-    bar.querySelector('#broker-review-bar-btn').addEventListener('click', function() {
-      var tab = bar.getAttribute('data-tab') || '';
-      if (tab === 'listing' && typeof window.showListingReviewWithSpinner === 'function') {
-        window.showListingReviewWithSpinner(this);
-      } else if (tab === 'voucher' && typeof window.openReviewSnapshotWithSpinner === 'function') {
-        window.openReviewSnapshotWithSpinner(this, 'voucher');
-      } else if (tab === 'sign' && typeof window.openReviewSnapshotWithSpinner === 'function') {
-        window.openReviewSnapshotWithSpinner(this, 'sign');
-      }
-    });
-  }
-
-  function updateBrokerReviewBar(tabName) {
-    ensureBrokerReviewBar();
+  /* Floating review pill removed — sidebar + bottom action bar are sufficient. */
+  function hideBrokerReviewBar() {
     var bar = document.getElementById('broker-review-bar');
-    if (!bar) return;
-    var show = tabName === 'listing' || tabName === 'voucher' || tabName === 'sign';
-    bar.classList.toggle('is-hidden', !show);
-    if (show) bar.setAttribute('data-tab', tabName);
+    if (bar) bar.classList.add('is-hidden');
   }
 
   function patchSwitchTabForReviewBar() {
@@ -1440,7 +1422,7 @@ window.aiParseFromPaste = async function() {
     if (typeof orig !== 'function') return;
     window.switchTab = function(name) {
       orig.apply(this, arguments);
-      updateBrokerReviewBar(name);
+      hideBrokerReviewBar();
       if (name === 'voucher') {
         setTimeout(function() { wrapWideTables(document.getElementById('tab-voucher')); }, 0);
       }
@@ -1480,13 +1462,8 @@ window.aiParseFromPaste = async function() {
     patchSignBrochureHandler();
     patchCompBrochureHandler();
     wrapWideTables();
-    ensureBrokerReviewBar();
+    hideBrokerReviewBar();
     syncSignAnalyzeButton();
-
-    var active = document.querySelector('.panel.active');
-    if (active && active.id) {
-      updateBrokerReviewBar(active.id.replace(/^tab-/, ''));
-    }
 
     var preflightModal = document.getElementById('preflight-modal');
     if (preflightModal) {
