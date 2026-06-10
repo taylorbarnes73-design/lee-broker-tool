@@ -139,19 +139,26 @@ function BrokerSubmissions() {
     );
   }
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      {items.map(s => (
-        <Link key={s.id} href={`/portal/submissions/${s.id}`} className="portal-list-item" style={{ textDecoration: "none", display: "flex", flexDirection: "column", gap: 4, padding: "12px 14px", borderRadius: 10, border: "1px solid var(--ink-200)", background: "white", color: "inherit" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-            <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>#{s.id} · {s.reference || "(untitled)"}</div>
-            <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>{formatDateTime(s.createdAt)}</div>
-          </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 4 }}>
-            <StatusBadge tone={submissionStatusTone(s.status)} size="sm">{formatSubmissionStatus(s.status)}</StatusBadge>
-            <StatusBadge tone={{ bg: "var(--ink-100)", fg: "var(--ink-700)", border: "var(--ink-200)" }} size="sm">{formatFormType(s.formType)}</StatusBadge>
-          </div>
-        </Link>
-      ))}
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <p style={{ margin: 0, fontSize: 13, color: "var(--ink-600)", lineHeight: 1.55 }}>
+        <strong style={{ color: "var(--ink-800)" }}>Pending</strong> means your request is in the queue — admin typically responds within 1 business day.
+        {" "}<strong style={{ color: "var(--ink-800)" }}>In progress</strong> means someone has claimed it and is working on it.
+      </p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {items.map(s => (
+          <Link key={s.id} href={`/portal/submissions/${s.id}`} className="portal-list-item" style={{ textDecoration: "none", display: "flex", flexDirection: "column", gap: 6, padding: "12px 14px", borderRadius: 10, border: "1px solid var(--ink-200)", background: "white", color: "inherit" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
+              <StatusBadge tone={{ bg: "rgba(152, 0, 46, 0.08)", fg: "#98002E", border: "rgba(152, 0, 46, 0.22)" }} size="sm">{formatFormType(s.formType)}</StatusBadge>
+              <div style={{ fontSize: 12, color: "var(--ink-500)", flexShrink: 0 }}>{formatDateTime(s.createdAt)}</div>
+            </div>
+            <div style={{ fontWeight: 700, color: "var(--ink-900)", fontSize: 15 }}>{s.reference || "(untitled)"}</div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <StatusBadge tone={submissionStatusTone(s.status)} size="sm">{formatSubmissionStatus(s.status)}</StatusBadge>
+              <span style={{ fontSize: 12, color: "var(--ink-500)" }}>#{s.id}</span>
+            </div>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
@@ -425,7 +432,7 @@ export default function PortalSubmissions() {
   const title = isAdmin ? "Submissions" : "My submissions";
   const description = isAdmin
     ? "Review broker work, triage inbox requests, and push approved deals to Dealius."
-    : "A log of everything you've submitted, newest first.";
+    : "A log of everything you've submitted, newest first. Pending items are usually reviewed within one business day.";
 
   return (
     <AdminPortalShell

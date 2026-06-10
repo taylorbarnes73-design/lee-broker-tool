@@ -14,6 +14,12 @@ import { findAppUserByUsernameOrEmail } from "../auth/platformSession";
 import { createSubmissionRecord } from "../services/submissionCreate";
 import { applySubmissionStatusChange } from "../services/submissionStatusUpdate";
 import { notifyAdminOfSubmission } from "../services/adminNotification";
+import {
+  deriveSubmissionReference,
+  normalizeSubmissionFormType,
+  parseSubmissionObject,
+  toIsoString,
+} from "../submissionsApi";
 
 const submissionSummarySchema = z
   .object({
@@ -91,8 +97,26 @@ function activeQueueStatusCondition() {
   return sql`${submissions.status} in (${sql.join(ACTIVE_QUEUE_STATUSES.map(status => sql`${status}`), sql`, `)})`;
 }
 
+function isMysqlFieldMetadataRow(value: unknown): boolean {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      ("name" in value || "columnType" in value || "charsetNr" in value)
+  );
+}
+
 function normalizeExecuteRows<T = Record<string, unknown>>(result: unknown): T[] {
-  if (Array.isArray(result)) return result as T[];
+  if (Array.isArray(result)) {
+    if (
+      result.length === 2 &&
+      Array.isArray(result[0]) &&
+      Array.isArray(result[1]) &&
+      (result[1].length === 0 || isMysqlFieldMetadataRow(result[1][0]))
+    ) {
+      return result[0] as T[];
+    }
+    return result as T[];
+  }
   if (result && typeof result === "object" && Array.isArray((result as any).rows)) {
     return (result as any).rows as T[];
   }
@@ -469,19 +493,25 @@ export const submissionsRouter = router({
         limit,
       });
 
-      return rows.map(row => ({
-        id: row.id,
-        formType: row.formType,
-        status: row.status,
-        reference: row.reference,
-        submittedBy: row.submittedBy,
-        submittedByEmail: row.submittedByEmail,
-        pdfFileKey: row.pdfFileKey,
-        pdfUrl: normalizeStoredFileUrl(row.pdfUrl, row.pdfFileKey),
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        payload: parsePayload(row.payload),
-      }));
+      return rows
+        .filter(row => row.id != null)
+        .map(row => {
+          const payload = parsePayload(row.payload);
+          const parsedFields = parseSubmissionObject(row.parsedFields);
+          return {
+            id: row.id,
+            formType: normalizeSubmissionFormType(row.formType, payload, parsedFields),
+            status: row.status,
+            reference: deriveSubmissionReference(row.reference, payload, parsedFields),
+            submittedBy: row.submittedBy,
+            submittedByEmail: row.submittedByEmail,
+            pdfFileKey: row.pdfFileKey,
+            pdfUrl: normalizeStoredFileUrl(row.pdfUrl, row.pdfFileKey),
+            createdAt: toIsoString(row.createdAt),
+            updatedAt: toIsoString(row.updatedAt),
+            payload,
+          };
+        });
     }),
 
   queueMine: protectedProcedure

@@ -192,6 +192,7 @@
     <div class="page-head-left">
       <div class="page-eyebrow">Broker Submission</div>
       <h1 class="page-h1">Listing Entry</h1>
+      <p class="page-desc">Capture property basics, pricing, agents, and release instructions before sending to admin.</p>
     </div>
     <div class="page-head-right">
       <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('listing', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
@@ -546,7 +547,6 @@
 
       <div class="deal-actions">
         <button class="btn btn-gray" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
-        <button class="btn btn-red" onclick="showListingReviewWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Review Before Send</span></button>
         <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('listing', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
         <button class="btn btn-copy-to-voucher" type="button" onclick="copyListingToVoucher(this)"><span class="btn-spinner"></span><span class="btn-label">Copy to Voucher</span></button>
       </div>
@@ -576,9 +576,9 @@
       </div>
       <div id="listing-post-submit" class="card success-card is-hidden">
         <div class="success-header">
-          <h2 class="success-title">Listing Submitted to Admin</h2>
+          <h2 class="success-title">Your request has been submitted!</h2>
         </div>
-        <p class="success-copy">Your listing has been sent to admin. Would you like to create a sign order for this property?</p>
+        <p class="success-copy">Admin will follow up shortly. Would you like to create a sign order for this property?</p>
         <div class="btn-bar btn-bar-compact">
           <button class="btn btn-red" onclick="copyToSign()">Create Sign Order &rarr;</button>
           <button class="btn btn-gray" onclick="exportListingPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
@@ -636,6 +636,7 @@
     <div class="page-head-left">
       <div class="page-eyebrow">Broker Submission</div>
       <h1 class="page-h1">Sign Request</h1>
+      <p class="page-desc">Order sign installation, removal, or maintenance for a property.</p>
     </div>
     <div class="page-head-right">
       <div class="page-meta-chip"><span class="dot"></span>All sections on one page</div>
@@ -643,7 +644,7 @@
   </div>
   <div class="tip pane-intro-tip">Fields marked <span class="required-mark">*</span> are required. Review everything before you send.</div>
   <div class="broker-pane-guide" role="note">
-    <strong>Sign request tips:</strong> Upload documents, tap <strong>Analyze</strong>, check the address and quantities, then use <strong>Review Before Send</strong>.
+    <strong>Sign request tips:</strong> Upload documents, tap <strong>Analyze</strong>, check the address and quantities, then use <strong>Review</strong> below.
   </div>
   <div class="deal-shell" id="s-deal-shell">
   <div class="deal-main" id="sign-main">
@@ -867,7 +868,6 @@
     </div>
     <div class="deal-actions">
       <button class="btn btn-gray" onclick="exportSignPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
-      <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'sign')"><span class="btn-spinner"></span><span class="btn-label">Review Before Send</span></button>
     </div>
   </aside>
   </div><!-- /deal-shell -->
@@ -884,6 +884,7 @@
     <div class="page-head-left">
       <div class="page-eyebrow">Broker Submission</div>
       <h1 class="page-h1">Commission Voucher</h1>
+      <p class="page-desc">Build the commission voucher, verify splits, and send completed deal docs to admin.</p>
     </div>
     <div class="page-head-right">
       <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('voucher', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
@@ -1472,7 +1473,6 @@
     </div>
 
     <div class="deal-actions">
-      <button class="btn btn-red" onclick="openReviewSnapshotWithSpinner(this, 'voucher')"><span class="btn-spinner"></span><span class="btn-label">Review Before Send</span></button>
       <button class="btn btn-gray" type="button" onclick="saveCurrentDraft('voucher', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
       <button class="btn btn-gray btn-download-send" id="v-download-send-aside" onclick="exportVoucherExcelWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download &amp; Send to Admin</span></button>
     </div>
@@ -1493,7 +1493,16 @@
       <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('comp', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
     </div>
   </div>
+  <p class="page-desc">Add lease or sale comps to the office dataset.</p>
   <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections for additional detail.</div>
+  <div class="broker-pane-guide" role="note">
+    <strong>How to use this form:</strong>
+    <ol>
+      <li>Upload your deal document (PDF preferred).</li>
+      <li>Tap <strong>Analyze Documents</strong> to prefill comp fields.</li>
+      <li>Review the details, then tap <strong>Review</strong> to submit.</li>
+    </ol>
+  </div>
   <div class="card ai-shortcut-card">
     <h2>Upload Deal Documents <span class="inline-badge">AI Auto-Fill</span></h2>
     <p class="micro-copy">Upload deal documents to parse comp details and prefill the comp form.</p>
@@ -2460,7 +2469,7 @@
     </div>
 
     <div class="btn-bar btn-bar-top-lg">
-      <button class="btn btn-green" id="btn-ci-send" onclick="ciSubmitToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Send Contract to Admin</span></button>
+      <button class="btn btn-red" id="btn-ci-send" onclick="ciSubmitToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Send Contract to Admin</span></button>
       <button class="btn btn-outline" onclick="ciDownloadDataSheet()" title="Download a formatted AIR CRE Data Sheet as a text file">Download AIR CRE Data Sheet</button>
       <button class="btn btn-gray" onclick="setBtnLoading(this,true,'Clearing…');setTimeout(()=>{ciReset();setBtnLoading(this,false);},80)"><span class="btn-spinner"></span><span class="btn-label">Clear Form</span></button>
     </div>
@@ -2470,11 +2479,20 @@
 
 <div id="tab-admin-request" class="panel" data-pane="admin-request">
   <div class="admin-request-shell">
-    <div class="card-head">
-      <div class="card-head-left">
-        <div class="card-eyebrow">Admin</div>
-        <h2>Admin Request</h2>
+    <div class="page-head broker-page-head">
+      <div class="page-head-left">
+        <div class="page-eyebrow">Admin</div>
+        <h1 class="page-h1">Admin Request</h1>
+        <p class="page-desc">Ask the deal desk for listing help, document prep, research, or general admin support.</p>
       </div>
+    </div>
+    <div class="broker-pane-guide" role="note">
+      <strong>How to use this form:</strong>
+      <ol>
+        <li>Choose a request type and write a clear subject line.</li>
+        <li>Describe what you need and attach any supporting files.</li>
+        <li>Tap <strong>Submit Request</strong> — your email app opens with a draft to admin.</li>
+      </ol>
     </div>
 
     <div class="card admin-request-card">
@@ -2516,7 +2534,7 @@
         <div class="upload-status" id="us-ar-attachments"></div>
       </div>
       <div class="btn-bar btn-bar-top-lg">
-        <button class="btn btn-green" id="btn-ar-submit" onclick="submitAdminRequest(this)"><span class="btn-spinner"></span><span class="btn-label">Submit Request</span></button>
+        <button class="btn btn-red" id="btn-ar-submit" onclick="submitAdminRequest(this)"><span class="btn-spinner"></span><span class="btn-label">Submit Request</span></button>
         <button class="btn btn-gray" onclick="resetAdminRequestForm()">Clear Form</button>
       </div>
       <div id="ar-status" class="status-copy"></div>
@@ -2530,8 +2548,16 @@
       <div class="page-head-left">
         <div class="page-eyebrow">Marketing</div>
         <h1 class="page-h1">Marketing Request</h1>
-        <p class="marketing-request-intro">Request flyers, campaigns, social content, signage, and other marketing deliverables. Complete the sections below and attach source files when you have them.</p>
+        <p class="page-desc marketing-request-intro">Request flyers, campaigns, social content, signage, and other marketing deliverables.</p>
       </div>
+    </div>
+    <div class="broker-pane-guide" role="note">
+      <strong>How to use this form:</strong>
+      <ol>
+        <li>Confirm your contact info and describe the deliverable.</li>
+        <li>Attach source files, logos, or brand assets when you have them.</li>
+        <li>Tap <strong>Submit Request</strong> — your email app opens with a draft to marketing.</li>
+      </ol>
     </div>
 
     <div class="card marketing-request-card broker-form-card">
@@ -2749,7 +2775,7 @@
       </div>
 
       <div class="btn-bar btn-bar-top-lg">
-        <button class="btn btn-green" id="btn-mr-submit" onclick="submitMarketingRequest(this)"><span class="btn-spinner"></span><span class="btn-label">Submit Request</span></button>
+        <button class="btn btn-red" id="btn-mr-submit" onclick="submitMarketingRequest(this)"><span class="btn-spinner"></span><span class="btn-label">Submit Request</span></button>
         <button type="button" class="btn btn-outline" id="btn-mr-download-pdf" onclick="downloadMarketingRequestPdf(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
         <button class="btn btn-gray" onclick="resetMarketingRequestForm()">Clear Form</button>
       </div>
@@ -2763,11 +2789,16 @@
     <div class="page-head-left">
       <div class="page-eyebrow">Broker Desk</div>
       <h1 class="page-h1">My submissions</h1>
-      <p class="submissions-hint">A log of everything you've submitted, newest first.</p>
+      <p class="submissions-hint">A log of everything you've submitted, newest first. Pending items are usually reviewed within one business day.</p>
     </div>
     <div class="page-head-right">
       <button type="button" class="btn btn-outline" id="btn-broker-queue-refresh" onclick="refreshBrokerQueue()"><span class="btn-spinner"></span><span class="btn-label">Refresh</span></button>
     </div>
+  </div>
+
+  <div class="submissions-status-legend" role="note">
+    <strong>Pending</strong> — in the admin queue; office typically responds within 1 business day.
+    <strong>In progress</strong> — claimed and being worked on.
   </div>
 
   <div class="card queue-card">
@@ -2783,7 +2814,10 @@
       <h1 class="page-h1">My Drafts</h1>
     </div>
   </div>
-  <p class="drafts-hint">Drafts are saved locally in this browser. Resume any draft to pick up where you left off.</p>
+  <div class="drafts-warning" role="alert">
+    <strong>Browser-only storage</strong>
+    <p>Drafts are saved locally in this browser only — they will not follow you to another device or browser, and signing in does not back them up yet. Clearing site data will erase them. Resume any draft here to pick up where you left off.</p>
+  </div>
   <div id="drafts-list"></div>
 </div><!-- /tab-drafts -->
 
@@ -3333,7 +3367,7 @@
     <div id="sta-status" class="status-copy micro-copy-bottom-sm"></div>
     <div class="btn-bar">
       <button class="btn btn-gray" onclick="closeSendToAdminModal()">Cancel</button>
-      <button class="btn btn-green" id="sta-send-btn" onclick="submitSendToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Prepare Email &amp; Files</span></button>
+      <button class="btn btn-red" id="sta-send-btn" onclick="submitSendToAdmin()"><span class="btn-spinner"></span><span class="btn-label">Prepare Email &amp; Files</span></button>
     </div>
   </div>
 </div>
@@ -11436,9 +11470,9 @@ async function submitAdminRequest(btn) {
     }
     launchMailto(arMailto);
 
-    showToast('Admin request submitted. Email draft opened — don\'t forget to attach your documents!');
+    showToast('Your request has been submitted! Admin will follow up shortly.');
     if (status) {
-      status.innerHTML = '<span class="status-success status-strong">Admin request submitted. Check your email app — attach documents before sending.</span>';
+      status.innerHTML = '<span class="status-success status-strong">Your request has been submitted! Admin will follow up shortly. Check your email app — attach documents before sending.</span>';
     }
     if (typeof refreshBrokerQueue === 'function') refreshBrokerQueue().catch(() => {});
   } catch (error) {
@@ -11836,9 +11870,9 @@ async function submitMarketingRequest(btn) {
     }
     launchMailto(mrMailto);
 
-    showToast('Marketing request submitted. Email draft opened — don\'t forget to attach your documents!');
+    showToast('Your request has been submitted! Admin will follow up shortly.');
     if (status) {
-      status.innerHTML = '<span class="status-success status-strong">Marketing request submitted. Check your email app — attach documents before sending.</span>';
+      status.innerHTML = '<span class="status-success status-strong">Your request has been submitted! Admin will follow up shortly. Check your email app — attach documents before sending.</span>';
     }
     if (typeof refreshBrokerQueue === 'function') refreshBrokerQueue().catch(() => {});
   } catch (error) {
@@ -11890,6 +11924,7 @@ function resetMarketingRequestForm() {
     status.classList.remove('text-error', 'status-success', 'status-strong');
     status.textContent = '';
   }
+  syncMarketingRequesterFromUser(getSignedInBrokerIdentity());
 }
 
 // Generate next submission ID
@@ -17494,7 +17529,8 @@ async function callTrpc(procedure, input) {
     throw new Error(msg || ('API error ' + res.status));
   }
   if (data.error) throw new Error(data.error.message || 'AI error');
-  const payload = data.result?.data;
+  const block = Array.isArray(data) ? data[0] : data;
+  const payload = block?.result?.data;
   if (payload && typeof payload === 'object' && Object.prototype.hasOwnProperty.call(payload, 'json')) {
     return payload.json;
   }
@@ -17643,7 +17679,7 @@ function renderBrokerQueue(rows) {
     const label = refreshBtn.querySelector('.btn-label');
     if (label) label.textContent = label.dataset.idle || 'Refresh';
   }
-  const submissions = Array.isArray(rows) ? rows : [];
+  const submissions = (Array.isArray(rows) ? rows : []).filter(item => item && item.id != null);
   const list = document.getElementById('broker-queue-list');
   if (!list) return;
   if (!submissions.length) {
@@ -17658,7 +17694,7 @@ function renderBrokerQueue(rows) {
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
     .map(item => {
       const status = item.status || 'pending';
-      const reference = item.reference || item.payload?.address || item.payload?.propertyAddress || '(untitled)';
+      const reference = item.reference || item.payload?.address || item.payload?.propertyAddress || item.payload?.subject || '(untitled)';
       const statusLabel = formatSubmissionStatusLabel(status);
       const statusClass = status === 'approved' || status === 'closed'
         ? 'badge-approved'
@@ -17667,15 +17703,19 @@ function renderBrokerQueue(rows) {
           : status === 'rejected' || status === 'cancelled'
             ? 'badge-rejected'
             : 'badge-pending';
+      const formTypeLabel = formatQueueFormType(item.formType);
+      const submittedOn = formatQueueDate(item.createdAt);
       return '<a class="queue-item submission-log-item" href="/portal/submissions/' + encodeURIComponent(String(item.id)) + '">' +
         '<div class="queue-item-main">' +
           '<div class="queue-item-top">' +
-            '<span class="badge ' + statusClass + '">' + escapeQueueHtml(statusLabel) + '</span>' +
-            '<span class="badge badge-pending">' + escapeQueueHtml(formatQueueFormType(item.formType)) + '</span>' +
-            '<span class="cell-mono-sm">#' + escapeQueueHtml(String(item.id)) + '</span>' +
+            '<span class="badge badge-form-type">' + escapeQueueHtml(formTypeLabel) + '</span>' +
+            '<span class="queue-item-date">' + escapeQueueHtml(submittedOn === '-' ? 'Date unavailable' : submittedOn) + '</span>' +
           '</div>' +
           '<div class="queue-item-title queue-title">' + escapeQueueHtml(reference) + '</div>' +
-          '<div class="queue-item-meta queue-detail">Submitted ' + escapeQueueHtml(formatQueueDate(item.createdAt)) + '</div>' +
+          '<div class="queue-item-meta queue-detail">' +
+            '<span class="badge ' + statusClass + '">' + escapeQueueHtml(statusLabel) + '</span>' +
+            '<span class="cell-mono-sm">#' + escapeQueueHtml(String(item.id)) + '</span>' +
+          '</div>' +
         '</div>' +
       '</a>';
     })
@@ -17730,10 +17770,18 @@ function applySharedBrokerIdentity(user) {
   syncMarketingRequesterFromUser(user);
 }
 
+function formatBrokerTeamLabel(office) {
+  const raw = String(office || '').trim();
+  if (!raw || /^\d+$/.test(raw)) return 'Lee & Associates Newport Beach';
+  if (/newport beach/i.test(raw)) return 'Lee & Associates Newport Beach';
+  return raw;
+}
+
 function syncMarketingRequesterFromUser(user) {
   if (!user) return;
   const nameEl = document.getElementById('mr-requester-name');
   const emailEl = document.getElementById('mr-requester-email');
+  const teamEl = document.getElementById('mr-team');
   if (!nameEl || !emailEl) return;
 
   const normalizedName = String(user.name || '').trim();
@@ -17741,9 +17789,16 @@ function syncMarketingRequesterFromUser(user) {
     const match = Array.from(nameEl.options).find(option => option.value === normalizedName);
     if (match) nameEl.value = normalizedName;
   }
-  if (emailEl.value.trim()) return;
-  const mappedEmail = MARKETING_REQUESTER_EMAIL_MAP[nameEl.value] || user.email || '';
-  if (mappedEmail) emailEl.value = mappedEmail;
+  if (!emailEl.value.trim()) {
+    const mappedEmail = MARKETING_REQUESTER_EMAIL_MAP[nameEl.value] || user.email || '';
+    if (mappedEmail) emailEl.value = mappedEmail;
+  }
+  if (teamEl) {
+    const current = teamEl.value.trim();
+    if (!current || /^\d+$/.test(current)) {
+      teamEl.value = formatBrokerTeamLabel(user.office);
+    }
+  }
 }
 
 function splitBrokerName(name) {
@@ -19256,10 +19311,10 @@ async function submitSendToAdmin() {
         attachmentNames: [...downloadedNames, ...supportingNames],
       });
 
-      status.textContent = 'Saved to the admin queue. Opening your email draft...';
+      status.textContent = 'Your request has been submitted! Admin will follow up shortly.';
       status.classList.add('text-success', 'status-strong');
       btn.querySelector('.btn-label').textContent = 'Email Prepared';
-      showToast('Files downloaded. Attach them before sending the email.');
+      showToast('Your request has been submitted! Admin will follow up shortly. Attach downloaded files before sending the email.');
       if (_staFormType === 'listing') {
         const reviewPage = document.getElementById('listing-review-page');
         const postSubmit = document.getElementById('listing-post-submit');
@@ -20325,16 +20380,11 @@ const LBT_DRAFT_CONFIGS = [
 ];
 
 function lbtFormatDraftTime(ts) {
-  if (!ts) return '';
-  const diff = Date.now() - ts;
-  const mins = Math.floor(diff / 60000);
-  const hours = Math.floor(mins / 60);
-  const days = Math.floor(hours / 24);
-  if (mins < 2) return 'Just now';
-  if (mins < 60) return mins + ' min ago';
-  if (hours < 24) return hours + (hours === 1 ? ' hr ago' : ' hrs ago');
-  if (days === 1) return 'Yesterday';
-  return new Date(ts).toLocaleDateString([], { month: 'short', day: 'numeric' });
+  if (!ts) return 'Last edited: unknown';
+  const when = new Date(ts);
+  if (Number.isNaN(when.getTime())) return 'Last edited: unknown';
+  const stamp = when.toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+  return 'Last edited ' + stamp;
 }
 
 function lbtRestoreDraftFields(values) {

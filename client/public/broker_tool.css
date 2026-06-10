@@ -8846,7 +8846,8 @@ body.broker-active .sub-tab-bar {
 
 /* ── Drafts page ── */
 .drafts-hint,
-.submissions-hint {
+.submissions-hint,
+.submissions-status-legend {
   font-size: 13px;
   color: #6B7280;
   line-height: 1.5;
@@ -8856,6 +8857,51 @@ body.broker-active .sub-tab-bar {
 .drafts-hint {
   margin: 0 0 24px;
   padding: 0 var(--panel-h-pad, 24px);
+}
+.submissions-status-legend {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #E2E8F0;
+  background: #F8FAFC;
+  color: #475569;
+  max-width: none;
+}
+.submissions-status-legend strong {
+  color: #1E293B;
+}
+.drafts-warning {
+  margin: 0 var(--panel-h-pad, 24px) 20px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(205, 20, 66, 0.28);
+  background: linear-gradient(180deg, rgba(205, 20, 66, 0.08) 0%, rgba(205, 20, 66, 0.03) 100%);
+  color: #7A1028;
+}
+.drafts-warning strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: #98002E;
+}
+.drafts-warning p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.badge-form-type {
+  background: rgba(152, 0, 46, 0.1) !important;
+  color: #98002E !important;
+  border: 1px solid rgba(152, 0, 46, 0.22) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em;
+}
+.queue-item-date {
+  font-size: 12px;
+  color: #64748B;
+  margin-left: auto;
+  white-space: nowrap;
 }
 #tab-queue .queue-stat-grid {
   margin-bottom: 16px;

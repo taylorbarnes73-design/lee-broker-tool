@@ -156,6 +156,16 @@ describe("submissionsRouter", () => {
     expect(rows[0]?.id).toBe(1);
   });
 
+  it("mine returns normalized broker submissions", async () => {
+    const caller = submissionsRouter.createCaller(testCtx());
+    const rows = await caller.mine({ limit: 10 });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.id).toBe(1);
+    expect(rows[0]?.formType).toBe("voucher");
+    expect(rows[0]?.reference).toBe("123 Main St");
+    expect(rows[0]?.createdAt).toBe("2026-01-01T00:00:00.000Z");
+  });
+
   it("updateStatus applies status change for admin", async () => {
     const caller = submissionsRouter.createCaller(testCtx({ role: "admin" }));
     const result = await caller.updateStatus({ id: 1, status: "approved" });

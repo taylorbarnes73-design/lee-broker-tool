@@ -32,7 +32,7 @@ type SubmissionAttachment = {
   downloadUrl: string;
 };
 
-function parseSubmissionObject(value: unknown): Record<string, unknown> {
+export function parseSubmissionObject(value: unknown): Record<string, unknown> {
   if (!value) return {};
   if (typeof value === "object") return value as Record<string, unknown>;
   if (typeof value !== "string") return {};
@@ -182,14 +182,14 @@ function pickSubmissionString(obj: Record<string, unknown>, keys: string[]): str
   return null;
 }
 
-function toIsoString(value: Date | string | null | undefined): string | null {
+export function toIsoString(value: Date | string | null | undefined): string | null {
   if (!value) return null;
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value.toISOString();
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
 
-function normalizeSubmissionFormType(
+export function normalizeSubmissionFormType(
   formType: string | null | undefined,
   payload: Record<string, unknown>,
   parsedFields: Record<string, unknown>
@@ -205,7 +205,7 @@ function normalizeSubmissionFormType(
   return raw;
 }
 
-function deriveSubmissionReference(
+export function deriveSubmissionReference(
   reference: string | null | undefined,
   payload: Record<string, unknown>,
   parsedFields: Record<string, unknown>
