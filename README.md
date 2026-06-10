@@ -31,7 +31,8 @@ corepack pnpm install
 - `DATABASE_URL` — MySQL connection string
 - `JWT_SECRET` — session signing
 - `LOCAL_AUTH_ENABLED=true` — password login for brokers/admins
-- `ADMIN_EMAIL` — office inbox for send-to-admin emails (defaults to `tbarnes@lee-associates.com`)
+- `ADMIN_EMAIL` — office inbox for send-to-admin emails (defaults to `_NewportBeach-BrokerAdmin@lee-associates.com`)
+- `MARKETING_EMAIL` — marketing project request inbox (defaults to `fperkins@lee-associates.com`)
 - `SMTP_HOST`, `SMTP_FROM` (and credentials if required) — broker notification emails
 
 Optional:

@@ -621,6 +621,31 @@ export default function PortalAdminSettings() {
                   </div>
                   <div style={rowGrid}>
                     <div>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>Marketing email</div>
+                      <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 4 }}>
+                        Brokers send marketing project requests here.
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <Input
+                          type="email"
+                          value={String(b.marketing_email ?? "")}
+                          onChange={e => {
+                            const v = e.target.value;
+                            setGrouped(g =>
+                              g ? { ...g, branding: { ...g.branding, marketing_email: v } } : g
+                            );
+                            schedulePatch("branding.marketing_email", v, 800);
+                          }}
+                          onBlur={() => void patchKey("branding.marketing_email", String(b.marketing_email ?? ""))}
+                        />
+                        <SaveHint k="branding.marketing_email" />
+                      </div>
+                    </div>
+                  </div>
+                  <div style={rowGrid}>
+                    <div>
                       <div style={{ fontWeight: 600, fontSize: 14 }}>Logo</div>
                       <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 4 }}>PNG or SVG recommended. Stored as a secure URL.</div>
                     </div>

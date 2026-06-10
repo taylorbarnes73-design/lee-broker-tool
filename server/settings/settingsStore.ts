@@ -496,6 +496,7 @@ export async function getPublicBranding(): Promise<{
   logo_url: string | null;
   primary_color: string;
   support_email: string;
+  marketing_email: string;
 }> {
   const merged = await ensureSettingsCache();
   return {
@@ -503,6 +504,7 @@ export async function getPublicBranding(): Promise<{
     logo_url: (merged.get("branding.logo_url") as string | null) ?? null,
     primary_color: String(merged.get("branding.primary_color") ?? "#A6192E"),
     support_email: String(merged.get("branding.support_email") ?? ""),
+    marketing_email: String(merged.get("branding.marketing_email") ?? ""),
   };
 }
 
@@ -511,6 +513,7 @@ export async function getPublicToolSettings(): Promise<{
   logo_url: string | null;
   primary_color: string;
   support_email: string;
+  marketing_email: string;
   workflow: {
     confidential_warning_enabled: boolean;
     confidential_warning_text: string;
@@ -533,6 +536,7 @@ export async function getPublicToolSettings(): Promise<{
     logo_url: (merged.get("branding.logo_url") as string | null) ?? null,
     primary_color: String(merged.get("branding.primary_color") ?? "#A6192E"),
     support_email: String(merged.get("branding.support_email") ?? ""),
+    marketing_email: String(merged.get("branding.marketing_email") ?? ""),
     workflow: {
       confidential_warning_enabled: Boolean(merged.get("workflow.confidential_warning_enabled")),
       confidential_warning_text: String(merged.get("workflow.confidential_warning_text") ?? ""),

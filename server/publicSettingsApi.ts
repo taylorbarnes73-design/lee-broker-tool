@@ -9,6 +9,7 @@ const fallbackPublicSettings = {
   logo_url: null,
   primary_color: "#A6192E",
   support_email: "_NewportBeach-BrokerAdmin@lee-associates.com",
+  marketing_email: "fperkins@lee-associates.com",
   workflow: {
     confidential_warning_enabled: true,
     confidential_warning_text: "Confidential deals follow restricted handling per the deal team's instructions.",

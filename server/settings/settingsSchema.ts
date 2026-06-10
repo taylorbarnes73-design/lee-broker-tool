@@ -24,6 +24,7 @@ export const MASKED_SECRET = "•••••••• (set)";
 export type SettingKey =
   | "branding.company_name"
   | "branding.support_email"
+  | "branding.marketing_email"
   | "branding.logo_url"
   | "branding.primary_color"
   | "branding.letterhead_template_url"
@@ -64,6 +65,7 @@ export type SettingKey =
 export const SETTING_KEYS = [
   "branding.company_name",
   "branding.support_email",
+  "branding.marketing_email",
   "branding.logo_url",
   "branding.primary_color",
   "branding.letterhead_template_url",
@@ -129,6 +131,15 @@ const defs: SettingDef[] = [
     sensitive: false,
     valueSchema: z.string().email(),
     defaultValue: "_NewportBeach-BrokerAdmin@lee-associates.com",
+    description: "Broker Admin inbox for send-to-admin submissions and deal desk contact.",
+  },
+  {
+    key: "branding.marketing_email",
+    category: "branding",
+    sensitive: false,
+    valueSchema: z.string().email(),
+    defaultValue: "fperkins@lee-associates.com",
+    description: "Marketing team inbox for marketing project requests.",
   },
   {
     key: "branding.logo_url",

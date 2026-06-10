@@ -51,8 +51,9 @@ export const ENV = {
     awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "",
     awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? "",
 
-    // Admin
+    // Admin / marketing routing
     adminEmail: process.env.ADMIN_EMAIL?.trim() || "_NewportBeach-BrokerAdmin@lee-associates.com",
+    marketingEmail: process.env.MARKETING_EMAIL?.trim() || "fperkins@lee-associates.com",
     // Sign request vendor
     cimarronEmail: process.env.CIMARRON_EMAIL ?? "",
 

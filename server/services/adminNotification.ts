@@ -7,8 +7,13 @@
 import { execSync } from "child_process";
 import nodemailer from "nodemailer";
 import { ENV } from "../_core/env";
+import { getSetting } from "../settings/getSetting";
 
-function getAdminNotifyEmail(): string {
+async function getSubmissionNotifyEmail(formType: string): Promise<string> {
+  if (formType === "marketing-request") {
+    const fromSettings = String(await getSetting("branding.marketing_email")).trim();
+    return fromSettings || ENV.marketingEmail;
+  }
   return ENV.adminEmail;
 }
 
@@ -35,6 +40,7 @@ export function notifyAdminOfSubmission(params: SubmissionNotificationParams): v
 
 async function sendAdminNotification(params: SubmissionNotificationParams): Promise<void> {
   try {
+    const notifyEmail = await getSubmissionNotifyEmail(params.formType);
     const formLabel = formatFormType(params.formType);
     const timestamp = new Date().toLocaleString("en-US", {
       timeZone: "America/Los_Angeles",
@@ -70,7 +76,7 @@ async function sendAdminNotification(params: SubmissionNotificationParams): Prom
 
       await transporter.sendMail({
         from: ENV.smtpFrom,
-        to: getAdminNotifyEmail(),
+        to: notifyEmail,
         subject,
         text: bodyLines,
       });
@@ -78,7 +84,7 @@ async function sendAdminNotification(params: SubmissionNotificationParams): Prom
     }
 
     const message: Record<string, unknown> = {
-      to: [getAdminNotifyEmail()],
+      to: [notifyEmail],
       cc: [],
       subject,
       content: bodyLines,

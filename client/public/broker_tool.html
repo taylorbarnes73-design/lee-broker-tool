@@ -10250,6 +10250,7 @@ async function exportLeeCompReportPdf(compType, rows) {
 // EMAIL MODAL
 // ═══════════════════════════════════════════════════════════════════════════════
 const BROKER_ADMIN_EMAIL = '_NewportBeach-BrokerAdmin@lee-associates.com';
+const MARKETING_REQUEST_EMAIL_DEFAULT = 'fperkins@lee-associates.com';
 let emailContext = '';
 let preparedAdminMailto = '';
 
@@ -10264,7 +10265,7 @@ function openEmailModal(context) {
   const subject = document.getElementById('em-subject');
   const body = document.getElementById('em-body');
 
-  to.value = BROKER_ADMIN_EMAIL;
+  to.value = getBrokerAdminRecipientEmail();
   cc.value = '';
   if (reminder) {
     reminder.textContent = context === 'comp'
@@ -10900,6 +10901,18 @@ async function loadPublicToolSettings() {
   return LBT_PUBLIC_SETTINGS;
 }
 
+function getBrokerAdminRecipientEmail() {
+  const fromSettings = LBT_PUBLIC_SETTINGS && LBT_PUBLIC_SETTINGS.support_email;
+  const trimmed = String(fromSettings || '').trim();
+  return trimmed || BROKER_ADMIN_EMAIL;
+}
+
+function getMarketingRecipientEmail() {
+  const fromSettings = LBT_PUBLIC_SETTINGS && LBT_PUBLIC_SETTINGS.marketing_email;
+  const trimmed = String(fromSettings || '').trim();
+  return trimmed || MARKETING_REQUEST_EMAIL_DEFAULT;
+}
+
 function hexToRgb(hex) {
   const v = String(hex || '').trim();
   if (!/^#[0-9A-Fa-f]{6}$/.test(v)) return null;
@@ -11459,7 +11472,7 @@ async function submitAdminRequest(btn) {
       (authUser?.name || 'Lee & Associates Broker'),
     ].filter(line => line !== '');
     const arSubjectLine = '[Lee Newport Beach] Admin Request — ' + subject;
-    const arMailto = buildMailtoUrl(BROKER_ADMIN_EMAIL, (authUser?.email || ''), arSubjectLine, arBodyLines.join('\n'));
+    const arMailto = buildMailtoUrl(getBrokerAdminRecipientEmail(), (authUser?.email || ''), arSubjectLine, arBodyLines.join('\n'));
     const arAttachmentNames = attachments.map(file => file.filename || file.name || 'Attachment').filter(Boolean);
 
     // Show attachment reminder and open email
@@ -11842,7 +11855,7 @@ async function submitMarketingRequest(btn) {
 
     // Build mailto for marketing request
     const mrBodyLines = [
-      'Hello Broker Admin,',
+      'Hello Marketing Team,',
       '',
       'Please see the attached marketing request.',
       '',
@@ -11859,7 +11872,7 @@ async function submitMarketingRequest(btn) {
       (requesterName || 'Lee & Associates Broker'),
     ].filter(line => line !== '');
     const mrSubjectLine = '[Lee Newport Beach] Marketing Request — ' + projectTitle;
-    const mrMailto = buildMailtoUrl(BROKER_ADMIN_EMAIL, (requesterEmail || ''), mrSubjectLine, mrBodyLines.join('\n'));
+    const mrMailto = buildMailtoUrl(getMarketingRecipientEmail(), (requesterEmail || ''), mrSubjectLine, mrBodyLines.join('\n'));
     const mrAttachmentNames = attachments.map(file => file.filename || file.name || 'Attachment').filter(Boolean);
 
     // Show attachment reminder and open email
@@ -18835,7 +18848,7 @@ function openSendToAdminModal(formType) {
     formType === 'voucher' ? 'Commission Voucher' :
     'Sign Request';
   title.textContent = formType === 'sign' ? `Submit ${label}` : `Send ${label} to Admin`;
-  desc.textContent = `This will save the ${label} to the admin queue, download the generated files, and open an email draft to ${BROKER_ADMIN_EMAIL}.`;
+  desc.textContent = `This will save the ${label} to the admin queue, download the generated files, and open an email draft to ${getBrokerAdminRecipientEmail()}.`;
   status.textContent = '';
   status.classList.remove('text-success', 'text-error', 'status-strong');
   btn.classList.remove('loading');
@@ -19145,7 +19158,7 @@ function buildAdminEmailDraft({ formType, brokerName, senderEmail, address, sect
   return {
     subject,
     body,
-    mailto: buildMailtoUrl(BROKER_ADMIN_EMAIL, senderEmail, subject, body),
+    mailto: buildMailtoUrl(getBrokerAdminRecipientEmail(), senderEmail, subject, body),
   };
 }
 
@@ -19199,8 +19212,6 @@ async function buildSendToAdminPdfAttachment() {
     blob,
   };
 }
-
-const STA_ADMIN_EMAIL = '_NewportBeach-BrokerAdmin@lee-associates.com';
 
 function _staDownloadBlob(base64Data, mimeType, filename) {
   const bytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
@@ -19862,7 +19873,7 @@ async function ciSubmitToAdmin() {
         (authUser?.name || 'Lee & Associates Broker'),
       ].filter(line => line !== '');
       const ciSubjectLine = '[Lee Newport Beach] Contract Intake \u2014 ' + (contractData.contractType || 'AIR CRE') + (ciAddr ? ' \u2014 ' + ciAddr : '');
-      const ciMailto = buildMailtoUrl(BROKER_ADMIN_EMAIL, (authUser?.email || ''), ciSubjectLine, ciBodyLines.join('\n'));
+      const ciMailto = buildMailtoUrl(getBrokerAdminRecipientEmail(), (authUser?.email || ''), ciSubjectLine, ciBodyLines.join('\n'));
       showAttachmentReminder(ciMailto, [], ['Attach the contract document (PDF or signed copy) before sending']);
       launchMailto(ciMailto);
 

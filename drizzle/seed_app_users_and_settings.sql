@@ -84,8 +84,16 @@ INSERT INTO `app_settings` (`key`, `value`, `description`, `category`, `updated_
 ),
 (
   'branding.support_email',
-  JSON_QUOTE('tbarnes@lee-associates.com'),
-  'Inbound support / reply-to',
+  JSON_QUOTE('_NewportBeach-BrokerAdmin@lee-associates.com'),
+  'Broker Admin inbox for send-to-admin submissions',
+  'branding',
+  UTC_TIMESTAMP(3),
+  @admin_id
+),
+(
+  'branding.marketing_email',
+  JSON_QUOTE('fperkins@lee-associates.com'),
+  'Marketing team inbox for marketing project requests',
   'branding',
   UTC_TIMESTAMP(3),
   @admin_id
