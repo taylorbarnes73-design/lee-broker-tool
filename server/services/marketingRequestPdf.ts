@@ -33,7 +33,8 @@ const SERVICE_DIR = path.dirname(fileURLToPath(import.meta.url));
 
 export function resolveMarketingRequestTemplatePath(): string {
   const candidates = [
-    path.join(SERVICE_DIR, "../assets/marketing-project-request-fillable.pdf"),
+    path.join(SERVICE_DIR, "../assets/templates/marketing-project-request-fillable.pdf"),
+    path.join(process.cwd(), "server/assets/templates/marketing-project-request-fillable.pdf"),
     path.join(process.cwd(), "server/assets/marketing-project-request-fillable.pdf"),
   ];
   for (const candidate of candidates) {
