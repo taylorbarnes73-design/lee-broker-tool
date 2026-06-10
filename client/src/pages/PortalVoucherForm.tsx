@@ -86,9 +86,23 @@ export default function PortalVoucherForm() {
             </div>
 
             {repMapsToOther ? (
-              <div style={{ fontSize: 13, color: "var(--ink-600)", lineHeight: 1.5 }}>
-                Dual Agency and Co-op deals continue in the workspace under the simplified Other
-                representation flow. You will choose invoicing and commission details there.
+              <div
+                role="note"
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 10,
+                  border: "1px solid rgba(152, 0, 46, 0.18)",
+                  background: "linear-gradient(180deg, rgba(152, 0, 46, 0.06) 0%, rgba(152, 0, 46, 0.02) 100%)",
+                  fontSize: 13,
+                  color: "var(--ink-700)",
+                  lineHeight: 1.55,
+                }}
+              >
+                <strong style={{ display: "block", marginBottom: 4, color: "var(--ink-800)" }}>
+                  Dual Agency &amp; Co-op — workspace handoff
+                </strong>
+                Capture deal basics here, then finish invoicing and commission splits in the broker
+                workspace under the simplified <em>Other</em> representation flow.
               </div>
             ) : null}
 
@@ -104,7 +118,9 @@ export default function PortalVoucherForm() {
               style={{
                 display: "grid",
                 gap: 14,
-                gridTemplateColumns: "minmax(0, 2fr) minmax(120px, 1fr)",
+                gridTemplateColumns: repMapsToOther
+                  ? "minmax(0, 1fr)"
+                  : "minmax(0, 2fr) minmax(120px, 1fr)",
               }}
             >
               <Field label="Property address">
@@ -120,13 +136,15 @@ export default function PortalVoucherForm() {
                   placeholder="123 Main St"
                 />
               </Field>
-              <Field label="Suite / unit">
-                <Input
-                  value={fields.suite}
-                  onChange={e => update("suite", e.target.value)}
-                  placeholder="Suite 200"
-                />
-              </Field>
+              {repMapsToOther ? null : (
+                <Field label="Suite / unit">
+                  <Input
+                    value={fields.suite}
+                    onChange={e => update("suite", e.target.value)}
+                    placeholder="Suite 200"
+                  />
+                </Field>
+              )}
             </div>
 
             <div
@@ -142,24 +160,28 @@ export default function PortalVoucherForm() {
               <Field label="State">
                 <Input value={fields.state} onChange={e => update("state", e.target.value)} placeholder="CA" />
               </Field>
-              <Field label="Zip">
-                <Input value={fields.zip} onChange={e => update("zip", e.target.value)} placeholder="92618" />
-              </Field>
-              <Field label="Property type">
-                <Select
-                  value={fields.propertyType}
-                  onChange={e => update("propertyType", e.target.value)}
-                  options={[...VOUCHER_PROPERTY_TYPES]}
-                />
-              </Field>
-              <Field label="Deal SF">
-                <Input
-                  value={fields.dealSf}
-                  onChange={e => update("dealSf", e.target.value)}
-                  placeholder="12,500"
-                  inputMode="numeric"
-                />
-              </Field>
+              {repMapsToOther ? null : (
+                <>
+                  <Field label="Zip">
+                    <Input value={fields.zip} onChange={e => update("zip", e.target.value)} placeholder="92618" />
+                  </Field>
+                  <Field label="Property type">
+                    <Select
+                      value={fields.propertyType}
+                      onChange={e => update("propertyType", e.target.value)}
+                      options={[...VOUCHER_PROPERTY_TYPES]}
+                    />
+                  </Field>
+                  <Field label="Deal SF">
+                    <Input
+                      value={fields.dealSf}
+                      onChange={e => update("dealSf", e.target.value)}
+                      placeholder="12,500"
+                      inputMode="numeric"
+                    />
+                  </Field>
+                </>
+              )}
             </div>
 
             {error ? (

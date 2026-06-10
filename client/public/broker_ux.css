@@ -844,6 +844,59 @@ body.broker-active #tab-voucher .btn-download-send.is-ready {
   box-shadow: 0 6px 16px rgba(152, 0, 46, 0.22);
 }
 
+/* ── Sidebar nav: primary voucher + section separation ── */
+.broker-sidebar-nav {
+  gap: 2px;
+}
+
+.broker-sidebar .tab.broker-nav-primary {
+  margin: 2px 0 6px;
+  padding: 11px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--lee-crimson);
+  background: linear-gradient(180deg, rgba(152, 0, 46, 0.1) 0%, rgba(152, 0, 46, 0.04) 100%);
+  border: 1px solid rgba(152, 0, 46, 0.22);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset;
+}
+
+.broker-sidebar .tab.broker-nav-primary:hover {
+  background: linear-gradient(180deg, rgba(152, 0, 46, 0.16) 0%, rgba(152, 0, 46, 0.08) 100%);
+  color: var(--lee-crimson);
+}
+
+.broker-sidebar .tab.broker-nav-primary.active {
+  background: linear-gradient(180deg, rgba(152, 0, 46, 0.2) 0%, rgba(152, 0, 46, 0.12) 100%);
+  border-color: rgba(152, 0, 46, 0.35);
+  box-shadow: inset 3px 0 0 var(--lee-crimson);
+}
+
+.broker-sidebar .tab.broker-nav-primary svg {
+  opacity: 1;
+}
+
+.broker-nav-divider {
+  height: 1px;
+  margin: 8px 8px 10px;
+  background: var(--border);
+  opacity: 0.85;
+}
+
+.broker-nav-standalone {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 2px 0 4px;
+}
+
+.broker-nav-standalone > .tab {
+  margin-left: 10px;
+}
+
+.broker-nav-folder {
+  margin: 2px 0 4px;
+}
+
 @media (max-width: 900px) {
   body.broker-active #tab-voucher .voucher-workflow-steps {
     row-gap: 6px;
