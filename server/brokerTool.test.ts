@@ -190,6 +190,30 @@ describe("broker_tool.html wiring", () => {
     expect(body[1]).toBe(0x4b);
   });
 
+  it("converts UI commission percents to Excel percentage fractions", () => {
+    const source = ["voucherWorkbookParseNumber", "voucherWorkbookPercentNumber"]
+      .map(extractFunctionSource)
+      .join("\n");
+    const { voucherWorkbookPercentNumber } = new Function(
+      `${source}\nreturn { voucherWorkbookPercentNumber };`
+    )() as { voucherWorkbookPercentNumber: (value: unknown) => number | null };
+
+    expect(voucherWorkbookPercentNumber("6")).toBe(0.06);
+    expect(voucherWorkbookPercentNumber("1")).toBe(0.01);
+    expect(voucherWorkbookPercentNumber("50")).toBe(0.5);
+    expect(voucherWorkbookPercentNumber("0.75")).toBe(0.75);
+  });
+
+  it("writes rent schedule commission rates as Excel percentage fractions", () => {
+    const applySource = extractFunctionSource("voucherWorkbookApplyForm");
+    expect(applySource).toContain(
+      "voucherWorkbookSetNumber(ws, 'K' + sheetRow, voucherWorkbookPercentNumber(row.commissionRate))"
+    );
+    expect(applySource).not.toContain(
+      "voucherWorkbookSetNumber(ws, 'K' + sheetRow, row.commissionRate)"
+    );
+  });
+
   it("wraps key voucher money fields in currency-field markup", () => {
     const voucherCurrencyIds = [
       "v-l-rate",

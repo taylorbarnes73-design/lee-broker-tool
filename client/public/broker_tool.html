@@ -8733,7 +8733,8 @@ function voucherWorkbookParseNumber(value) {
 function voucherWorkbookPercentNumber(value) {
   const parsed = voucherWorkbookParseNumber(value);
   if (parsed == null) return null;
-  return parsed > 1 ? parsed / 100 : parsed;
+  // UI percent fields use whole numbers (6 = 6%). Excel percentage cells expect fractions (0.06).
+  return parsed >= 1 ? parsed / 100 : parsed;
 }
 
 function voucherWorkbookDateFromInput(value) {
@@ -9061,7 +9062,7 @@ function voucherWorkbookApplyForm(ws) {
     const sheetRow = 53 + index;
     voucherWorkbookSetNumber(ws, 'A' + sheetRow, row.monthly == null ? 0 : row.monthly);
     voucherWorkbookSetNumber(ws, 'D' + sheetRow, row.months);
-    voucherWorkbookSetNumber(ws, 'K' + sheetRow, row.commissionRate);
+    voucherWorkbookSetNumber(ws, 'K' + sheetRow, voucherWorkbookPercentNumber(row.commissionRate));
   });
   voucherWorkbookSetNumber(ws, 'L70', voucherWorkbookParseNumber(getVal('v-comm-bonus')));
   voucherWorkbookSetNumber(ws, 'L74', voucherWorkbookParseNumber(getVal('v-comm-consulting')));
