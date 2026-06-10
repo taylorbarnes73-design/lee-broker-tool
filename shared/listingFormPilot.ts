@@ -1,6 +1,13 @@
 import type { QuickConvertPrefillPayload } from "./quickConvert";
 
-export const LISTING_PROPERTY_TYPES = ["Industrial", "Office", "Retail", "Land"] as const;
+export const LISTING_PROPERTY_TYPES = [
+  "Industrial",
+  "Office",
+  "Retail",
+  "Medical",
+  "Land",
+  "Multifamily",
+] as const;
 export const LISTING_TRANSACTION_TYPES = ["Lease", "Sale"] as const;
 
 export type ListingPilotFields = {

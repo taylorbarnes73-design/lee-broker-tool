@@ -10,6 +10,8 @@ import {
   buildVoucherPilotPrefill,
   EMPTY_VOUCHER_PILOT_FIELDS,
   validateVoucherPilotFields,
+  voucherPilotRepMapsToOther,
+  VOUCHER_PROPERTY_TYPES,
   VOUCHER_REPRESENTATION_TYPES,
   VOUCHER_TRANSACTION_TYPES,
   type VoucherPilotFields,
@@ -22,6 +24,7 @@ export default function PortalVoucherForm() {
   const { user } = useAuth();
   const [fields, setFields] = useState<VoucherPilotFields>(EMPTY_VOUCHER_PILOT_FIELDS);
   const [error, setError] = useState<string | null>(null);
+  const repMapsToOther = voucherPilotRepMapsToOther(fields.representationType);
 
   function update<K extends keyof VoucherPilotFields>(key: K, value: VoucherPilotFields[K]) {
     setFields(prev => ({ ...prev, [key]: value }));
@@ -81,6 +84,13 @@ export default function PortalVoucherForm() {
               </Field>
             </div>
 
+            {repMapsToOther ? (
+              <div style={{ fontSize: 13, color: "var(--ink-600)", lineHeight: 1.5 }}>
+                Dual Agency and Co-op deals continue in the workspace under the simplified Other
+                representation flow. You will choose invoicing and commission details there.
+              </div>
+            ) : null}
+
             <Field label="Client name">
               <Input
                 value={fields.clientName}
@@ -129,10 +139,10 @@ export default function PortalVoucherForm() {
                 <Input value={fields.zip} onChange={e => update("zip", e.target.value)} placeholder="92618" />
               </Field>
               <Field label="Property type">
-                <Input
+                <Select
                   value={fields.propertyType}
                   onChange={e => update("propertyType", e.target.value)}
-                  placeholder="Industrial"
+                  options={[...VOUCHER_PROPERTY_TYPES]}
                 />
               </Field>
               <Field label="Deal SF">

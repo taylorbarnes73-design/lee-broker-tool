@@ -27,6 +27,24 @@ describe("listingFormPilot", () => {
     expect(payload.fields.listingAgentName).toBe("Taylor Barnes");
   });
 
+  it("includes medical and multifamily property types", () => {
+    const medical = buildListingPilotPrefill({
+      ...EMPTY_LISTING_PILOT_FIELDS,
+      propertyType: "Medical",
+      address: "1 Main",
+      city: "Irvine",
+    });
+    expect(medical.fields.propertyType).toBe("medical");
+
+    const multifamily = buildListingPilotPrefill({
+      ...EMPTY_LISTING_PILOT_FIELDS,
+      propertyType: "Multifamily",
+      address: "2 Main",
+      city: "Irvine",
+    });
+    expect(multifamily.fields.propertyType).toBe("multifamily");
+  });
+
   it("requires property address and city", () => {
     expect(validateListingPilotFields(EMPTY_LISTING_PILOT_FIELDS).ok).toBe(false);
     const valid = validateListingPilotFields({

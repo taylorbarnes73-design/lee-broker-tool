@@ -1,6 +1,13 @@
 import type { QuickConvertPrefillPayload } from "./quickConvert";
 
 export const VOUCHER_TRANSACTION_TYPES = ["Lease", "Sale"] as const;
+export const VOUCHER_PROPERTY_TYPES = [
+  "Industrial",
+  "Office",
+  "Retail",
+  "Land",
+  "Other",
+] as const;
 export const VOUCHER_REPRESENTATION_TYPES = [
   "Tenant Rep",
   "Landlord Rep",
@@ -30,9 +37,26 @@ export const EMPTY_VOUCHER_PILOT_FIELDS: VoucherPilotFields = {
   city: "",
   state: "CA",
   zip: "",
-  propertyType: "",
+  propertyType: "Industrial",
   dealSf: "",
 };
+
+function normalizeSelectValue(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+/** Portal labels → broker tool v-prop-type option values. */
+export function normalizeVoucherPilotPropertyType(label: string): string {
+  const key = normalizeSelectValue(label).replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  const map: Record<string, string> = {
+    industrial: "industrial",
+    office: "office",
+    retail: "retail",
+    land: "land",
+    other: "other",
+  };
+  return map[key] ?? normalizeSelectValue(label);
+}
 
 /** Portal labels → broker tool v-rep-type option values. */
 export function normalizeVoucherPilotRepType(label: string): string {
@@ -56,6 +80,11 @@ export function normalizeVoucherPilotRepType(label: string): string {
     coop: "other",
   };
   return map[key] ?? label.trim();
+}
+
+/** Dual Agency and Co-op prefill as broker tool "other" representation. */
+export function voucherPilotRepMapsToOther(label: string): boolean {
+  return normalizeVoucherPilotRepType(label) === "other";
 }
 
 /** Target AI field for the represented client's company name. */
@@ -89,7 +118,7 @@ export function voucherPilotFieldsToPrefill(
   assign("city", fields.city);
   assign("state", fields.state);
   assign("zip", fields.zip);
-  assign("propertyType", fields.propertyType);
+  assign("propertyType", normalizeVoucherPilotPropertyType(fields.propertyType));
   assign("dealSf", fields.dealSf);
   return out;
 }
