@@ -12,6 +12,7 @@ import {
   validateSignPilotFields,
   type SignPilotFields,
 } from "@shared/signFormPilot";
+import AddressAutocompleteInput from "@/components/AddressAutocompleteInput";
 import { useEffect, useState, type CSSProperties } from "react";
 import { toast } from "sonner";
 import { Button, Card, Field, Input } from "../design/index.jsx";
@@ -81,9 +82,13 @@ export default function PortalSignForm() {
 
           <div style={{ display: "grid", gap: 14 }}>
             <Field label="Property address">
-              <Input
+              <AddressAutocompleteInput
                 value={fields.propertyAddress}
-                onChange={e => update("propertyAddress", e.target.value)}
+                onChange={v => update("propertyAddress", v)}
+                onSelect={s => {
+                  update("propertyAddress", s.address);
+                  if (s.city) update("city", s.city);
+                }}
                 placeholder="500 Anton Blvd"
               />
             </Field>

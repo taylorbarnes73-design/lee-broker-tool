@@ -14,6 +14,7 @@ import {
   validateListingPilotFields,
   type ListingPilotFields,
 } from "@shared/listingFormPilot";
+import AddressAutocompleteInput from "@/components/AddressAutocompleteInput";
 import { useEffect, useState, type CSSProperties } from "react";
 import { toast } from "sonner";
 import { Button, Card, Field, Input, Select } from "../design/index.jsx";
@@ -107,9 +108,15 @@ export default function PortalListingForm() {
             </div>
 
             <Field label="Property address">
-              <Input
+              <AddressAutocompleteInput
                 value={fields.address}
-                onChange={e => update("address", e.target.value)}
+                onChange={v => update("address", v)}
+                onSelect={s => {
+                  update("address", s.address);
+                  if (s.city) update("city", s.city);
+                  if (s.state) update("state", s.state);
+                  if (s.zip) update("zip", s.zip);
+                }}
                 placeholder="1450 Von Karman Ave"
               />
             </Field>

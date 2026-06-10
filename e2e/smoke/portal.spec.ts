@@ -37,6 +37,38 @@ test.describe("portal smoke", () => {
     await expect(page.getByText("Property address is required")).toBeVisible();
   });
 
+  test("listing pilot address autocomplete fills city and state", async ({ page }) => {
+    await page.route("**/api/places/autocomplete**", async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          results: [
+            {
+              address: "1450 Von Karman Ave",
+              city: "Irvine",
+              state: "CA",
+              zip: "92612",
+            },
+          ],
+        }),
+      });
+    });
+
+    await page.goto("/portal/forms/listing");
+    const addressInput = page.getByPlaceholder("1450 Von Karman Ave");
+    await addressInput.fill("1450 Von");
+    await expect(page.getByRole("option", { name: /1450 Von Karman Ave/i })).toBeVisible({
+      timeout: 10_000,
+    });
+    await page.getByRole("option", { name: /1450 Von Karman Ave/i }).click();
+
+    await expect(addressInput).toHaveValue("1450 Von Karman Ave");
+    await expect(page.getByPlaceholder("Irvine")).toHaveValue("Irvine");
+    await expect(page.getByPlaceholder("CA")).toHaveValue("CA");
+    await expect(page.getByPlaceholder("92612")).toHaveValue("92612");
+  });
+
   test("submissions list loads for signed-in broker", async ({ page }) => {
     await page.goto("/portal/submissions");
     await expect(page.getByText(/submission/i).first()).toBeVisible({ timeout: 15_000 });

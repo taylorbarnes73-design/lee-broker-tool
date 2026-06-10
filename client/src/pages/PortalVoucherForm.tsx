@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import AddressAutocompleteInput from "@/components/AddressAutocompleteInput";
 import AdminPortalShell from "@/components/AdminPortalShell";
 import LinkButton from "@/components/ui/LinkButton";
 import {
@@ -107,9 +108,15 @@ export default function PortalVoucherForm() {
               }}
             >
               <Field label="Property address">
-                <Input
+                <AddressAutocompleteInput
                   value={fields.address}
-                  onChange={e => update("address", e.target.value)}
+                  onChange={v => update("address", v)}
+                  onSelect={s => {
+                    update("address", s.address);
+                    if (s.city) update("city", s.city);
+                    if (s.state) update("state", s.state);
+                    if (s.zip) update("zip", s.zip);
+                  }}
                   placeholder="123 Main St"
                 />
               </Field>
