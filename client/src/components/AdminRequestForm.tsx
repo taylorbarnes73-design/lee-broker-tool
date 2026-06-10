@@ -2,6 +2,11 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { ArrowLeft, Send } from "lucide-react";
 import { toast } from "sonner";
+import { usePublicBranding } from "@/hooks/usePublicBranding";
+import {
+  formatBrokerAdminInboxHint,
+  getBrokerAdminRecipientEmail,
+} from "@/lib/recipientEmail";
 
 interface RequestType {
   id: string;
@@ -18,13 +23,14 @@ interface AdminRequestFormProps {
 
 export function AdminRequestForm({ requestType, onBack }: AdminRequestFormProps) {
   const [, setLocation] = useLocation();
+  const branding = usePublicBranding();
+  const brokerAdminEmail = getBrokerAdminRecipientEmail(branding.support_email);
+  const inboxHint = formatBrokerAdminInboxHint(branding.support_email);
   const [formData, setFormData] = useState({
     subject: "",
     description: "",
     priority: "medium",
   });
-
-  const BROKER_ADMIN_EMAIL = '_NewportBeach-BrokerAdmin@lee-associates.com';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,11 +75,11 @@ export function AdminRequestForm({ requestType, onBack }: AdminRequestFormProps)
     const params = new URLSearchParams();
     params.set('subject', emailSubject);
     params.set('body', emailBody);
-    const mailtoUrl = `mailto:${BROKER_ADMIN_EMAIL}?${params.toString()}`;
+    const mailtoUrl = `mailto:${brokerAdminEmail}?${params.toString()}`;
 
     // Show reminder alert before opening email
     const proceed = window.confirm(
-      'Your email app will open with a draft to the Broker Admin.\n\n' +
+      `Your email app will open with a draft to ${brokerAdminEmail}.\n\n` +
       '⚠️ REMINDER: Don\'t forget to attach any relevant documents to the email before sending!\n\n' +
       'Click OK to open your email app.'
     );
@@ -177,6 +183,17 @@ export function AdminRequestForm({ requestType, onBack }: AdminRequestFormProps)
                   <option value="high">High</option>
                   <option value="urgent">Urgent</option>
                 </select>
+              </div>
+
+              <div
+                className="rounded-xl border border-amber-200/80 bg-amber-50/80 px-4 py-3 text-sm text-amber-950"
+                role="note"
+              >
+                <p className="font-semibold">{inboxHint}</p>
+                <p className="mt-1 text-amber-900/90">
+                  Submit opens a mail draft to this inbox. Attach any relevant documents before
+                  sending.
+                </p>
               </div>
 
               <div className="flex gap-3 pt-4">

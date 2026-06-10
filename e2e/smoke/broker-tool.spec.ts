@@ -65,4 +65,44 @@ test.describe("broker tool smoke", () => {
     await grossInput.fill("1500");
     await expect(grossInput).toHaveValue("1500");
   });
+
+  test("marketing request PDF download uses mocked API", async ({ page }) => {
+    let pdfRequestBody: Record<string, unknown> | null = null;
+    await page.route("**/api/marketing-request/pdf", async route => {
+      pdfRequestBody = route.request().postDataJSON() as Record<string, unknown>;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/pdf",
+        headers: { "content-disposition": 'attachment; filename="marketing-smoke.pdf"' },
+        body: Buffer.from("%PDF-1.4 marketing-smoke"),
+      });
+    });
+
+    await loginAsBroker(page, undefined, "/tool#marketing-request");
+    await expect(page.locator("#broker-view")).toBeVisible({ timeout: 15_000 });
+
+    const marketingTab = page.locator('[data-tab="marketing-request"]').first();
+    await marketingTab.click();
+    await expect(page.locator("#tab-marketing-request.active")).toBeVisible({ timeout: 15_000 });
+
+    await page.locator("#mr-requester-name").selectOption("Frank Adler");
+    await page.locator("#mr-requester-email").fill("broker@lee-associates.com");
+    await page.locator("#mr-project-title").fill("Smoke PDF export");
+    await page.locator("#mr-request-type").selectOption("Flyer / brochure");
+    await page.locator("#mr-priority").selectOption("Standard");
+    await page.locator("#mr-objective").fill("Verify marketing PDF export wiring.");
+    await page.locator("#mr-due-date").fill("2026-06-20");
+
+    await page.locator("#btn-mr-download-pdf").click();
+    await expect(page.locator("#mr-status .status-success")).toBeVisible({ timeout: 15_000 });
+    expect(pdfRequestBody).toMatchObject({
+      requesterName: "Frank Adler",
+      email: "broker@lee-associates.com",
+      projectTitle: "Smoke PDF export",
+      requestType: "Flyer / brochure",
+      priority: "Standard",
+      objective: "Verify marketing PDF export wiring.",
+      dueDate: "2026-06-20",
+    });
+  });
 });
