@@ -27,4 +27,35 @@ test.describe("broker tool smoke", () => {
     const panelBox = await cityPanel.boundingBox();
     expect(panelBox?.width ?? 0).toBeGreaterThanOrEqual(240);
   });
+
+  test("commission distribution gross % input stays editable without opening side picker", async ({
+    page,
+  }) => {
+    await loginAsBroker(page, undefined, "/tool#voucher");
+    await expect(page.locator("#broker-view")).toBeVisible({ timeout: 15_000 });
+
+    const voucherTab = page.locator('[data-tab="voucher"]').first();
+    await voucherTab.click();
+    await expect(page.locator("#tab-voucher.active, #tab-voucher.panel.active")).toBeVisible({
+      timeout: 15_000,
+    });
+
+    const distSection = page.locator("#vstep-8");
+    await distSection.scrollIntoViewIfNeeded();
+    await expect(distSection).toBeVisible();
+
+    const distRow = page.locator("#v-dist-body tr").first();
+    await expect(distRow).toBeVisible();
+
+    const sideChip = distRow.locator(".side-chip");
+    await sideChip.click();
+    await expect(distRow.locator("select.chip-select")).toHaveClass(/is-open/);
+
+    const grossPctInput = distRow.locator("input.dist-pct-input");
+    await grossPctInput.click();
+    await expect(distRow.locator("select.chip-select")).not.toHaveClass(/is-open/);
+
+    await grossPctInput.fill("25");
+    await expect(grossPctInput).toHaveValue("25");
+  });
 });

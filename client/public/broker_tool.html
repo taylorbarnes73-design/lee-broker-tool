@@ -1113,27 +1113,27 @@
         <div class="field"><label>Term (months)</label><input id="v-l-term" oninput="calcVoucherLease(); vMarkRentStale()"></div>
       </div>
       <div class="row c4">
-        <div class="field"><label class="req" id="v-l-rate-label">Rate per SF/Mo</label><input id="v-l-rate" placeholder="$0.00" oninput="calcVoucherLease(); vMarkRentStale()"></div>
+        <div class="field"><label class="req" id="v-l-rate-label">Rate per SF/Mo</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-rate" class="currency-input" placeholder="0.00" oninput="calcVoucherLease(); vMarkRentStale()"></div></div>
         <div class="field"><label>Rate Type</label><select id="v-l-rate-type"><option value="NNN">NNN</option><option value="FSG">FSG</option><option value="MG">MG</option><option value="G">Gross</option></select></div>
-        <div class="field"><label>Asking Rate/SF</label><input id="v-l-asking-rate" placeholder="$0.00"></div>
-        <div class="field"><label>Total Consideration</label><input id="v-l-consideration" class="readonly-fill-strong" placeholder="$0" readonly></div>
+        <div class="field"><label>Asking Rate/SF</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-asking-rate" class="currency-input" placeholder="0.00"></div></div>
+        <div class="field"><label>Total Consideration</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-consideration" class="currency-input readonly-fill-strong" placeholder="0" readonly></div></div>
       </div>
     <div id="v-lease-nnn-row" class="row c4">
-        <div class="field"><label>Property Taxes</label><input id="v-l-taxes" placeholder="$0.00" oninput="calcNNNTotal()"></div>
-        <div class="field"><label>Insurance</label><input id="v-l-insurance" placeholder="$0.00" oninput="calcNNNTotal()"></div>
-        <div class="field"><label>Miscellaneous</label><input id="v-l-misc" placeholder="$0.00" oninput="calcNNNTotal()"></div>
-        <div class="field"><label>Total NNN Charges</label><input id="v-l-nnn-total" class="readonly-fill" placeholder="$0.00" readonly></div>
+        <div class="field"><label>Property Taxes</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-taxes" class="currency-input" placeholder="0.00" oninput="calcNNNTotal()"></div></div>
+        <div class="field"><label>Insurance</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-insurance" class="currency-input" placeholder="0.00" oninput="calcNNNTotal()"></div></div>
+        <div class="field"><label>Miscellaneous</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-misc" class="currency-input" placeholder="0.00" oninput="calcNNNTotal()"></div></div>
+        <div class="field"><label>Total NNN Charges</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-nnn-total" class="currency-input readonly-fill" placeholder="0.00" readonly></div></div>
       </div>
       <div class="row c4">
-        <div class="field"><label>TI Allow $/SF</label><input id="v-l-ti-sf" placeholder="$0.00"></div>
-        <div class="field"><label>TI Allow $</label><input id="v-l-ti-total" placeholder="$0"></div>
+        <div class="field"><label>TI Allow $/SF</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-ti-sf" class="currency-input" placeholder="0.00"></div></div>
+        <div class="field"><label>TI Allow $</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-ti-total" class="currency-input" placeholder="0"></div></div>
         <div class="field"><label>Escalations</label><input id="v-l-escalations" placeholder="e.g. 3% annual"></div>
         <div class="field"><label>Options</label><input id="v-l-options" placeholder="e.g. 2x5yr options"></div>
       </div>
       <div class="row c3">
-        <div class="field"><label>Gross Eff Rate</label><input id="v-l-grs-eff" placeholder="$0.00"></div>
-        <div class="field"><label>IG Eff Rate</label><input id="v-l-ig-eff" placeholder="$0.00"></div>
-        <div class="field"><label>NNN Eff Rate</label><input id="v-l-nnn-eff" placeholder="$0.00"></div>
+        <div class="field"><label>Gross Eff Rate</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-grs-eff" class="currency-input" placeholder="0.00"></div></div>
+        <div class="field"><label>IG Eff Rate</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-ig-eff" class="currency-input" placeholder="0.00"></div></div>
+        <div class="field"><label>NNN Eff Rate</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-nnn-eff" class="currency-input" placeholder="0.00"></div></div>
       </div>
       <div class="field" style="margin-top:12px"><label>Additional Lease Comments</label><textarea id="v-lease-comments" rows="2" placeholder="Additional lease terms or notes"></textarea></div>
     </div>
@@ -1142,13 +1142,13 @@
     <div id="v-req-sale" class="is-hidden">
       <div class="voucher-sub-header">Sale Terms</div>
       <div class="row c3">
-        <div class="field"><label class="req">Total Consideration / Sale Price</label><input id="v-s-price" placeholder="$0" oninput="calcVoucherSale()"></div>
-        <div class="field"><label>Price / SF</label><input id="v-s-price-sf" class="readonly-fill" placeholder="$0.00" readonly></div>
-        <div class="field"><label>Land Price / SF</label><input id="v-s-land-sf" class="readonly-fill" placeholder="$0.00" readonly></div>
+        <div class="field"><label class="req">Total Consideration / Sale Price</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-s-price" class="currency-input" placeholder="0" oninput="calcVoucherSale()"></div></div>
+        <div class="field"><label>Price / SF</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-s-price-sf" class="currency-input readonly-fill" placeholder="0.00" readonly></div></div>
+        <div class="field"><label>Land Price / SF</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-s-land-sf" class="currency-input readonly-fill" placeholder="0.00" readonly></div></div>
       </div>
       <div class="row c3">
         <div class="field"><label>User, Investor, or Developer</label><select id="v-s-buyer-type"><option value="">—</option><option>User</option><option>Investor</option><option>Developer</option></select></div>
-        <div class="field"><label>Asking Price</label><input id="v-s-asking" placeholder="$0"></div>
+        <div class="field"><label>Asking Price</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-s-asking" class="currency-input" placeholder="0"></div></div>
         <div class="field" id="v-sale-cap-field"><label>CAP Rate %</label><input id="v-s-cap"></div>
       </div>
       <div class="row c2">
@@ -1205,7 +1205,7 @@
           </div>
           <div class="field">
             <label>Lease Commission Due</label>
-            <input id="v-l-comm-due" class="readonly-fill-strong" placeholder="$0" oninput="onVoucherLeaseCommDueInput()">
+            <div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-comm-due" class="currency-input readonly-fill-strong" placeholder="0" oninput="onVoucherLeaseCommDueInput()"></div>
             <div class="field-hint">Override total commission due if needed</div>
           </div>
         </div>
@@ -1264,12 +1264,12 @@
     <div class="voucher-section-header">Commission &amp; Invoice</div>
     <div id="v-req-comm-lease">
       <div class="row c3 v-lease-comm-primary-row">
-        <div class="field" id="v-comm-bonus-field"><label>Additional Bonus / (Adjustment)</label><input id="v-comm-bonus" placeholder="$0" oninput="calcCommSummary()"></div>
+        <div class="field" id="v-comm-bonus-field"><label>Additional Bonus / (Adjustment)</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-comm-bonus" class="currency-input" placeholder="0" oninput="calcCommSummary()"></div></div>
         <div class="field"></div>
-        <div class="field"><label class="invoice-highlight-label">TOTAL INVOICE</label><input id="v-total-invoice" class="invoice-highlight-input" placeholder="$0" readonly></div>
+        <div class="field"><label class="invoice-highlight-label">TOTAL INVOICE</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-total-invoice" class="currency-input invoice-highlight-input" placeholder="0" readonly></div></div>
       </div>
       <div class="row c3">
-        <div class="field v-simplified-fee-field"><label id="v-comm-consulting-label">Consulting/Referral / Flat Fee</label><input id="v-comm-consulting" placeholder="$0" oninput="calcCommSummary()"></div>
+        <div class="field v-simplified-fee-field"><label id="v-comm-consulting-label">Consulting/Referral / Flat Fee</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-comm-consulting" class="currency-input" placeholder="0" oninput="calcCommSummary()"></div></div>
         <div class="field"></div>
         <div class="field"></div>
       </div>
@@ -1277,9 +1277,9 @@
     <div id="v-req-comm-sale" class="is-hidden">
       <div class="row c4">
         <div class="field"><label class="req">Commission %</label><input id="v-s-comm-pct" oninput="calcVoucherSale()"></div>
-        <div class="field"><label>Sale Commission Due</label><input id="v-s-comm-due" class="readonly-fill-strong" placeholder="$0" readonly></div>
-        <div class="field"><label>SALE Commission (auto)</label><input id="v-comm-sale" class="readonly-fill" placeholder="$0" readonly></div>
-        <div class="field"><label class="invoice-highlight-label">TOTAL INVOICE</label><input id="v-total-invoice-sale" class="invoice-highlight-input" placeholder="$0" readonly></div>
+        <div class="field"><label>Sale Commission Due</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-s-comm-due" class="currency-input readonly-fill-strong" placeholder="0" readonly></div></div>
+        <div class="field"><label>SALE Commission (auto)</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-comm-sale" class="currency-input readonly-fill" placeholder="0" readonly></div></div>
+        <div class="field"><label class="invoice-highlight-label">TOTAL INVOICE</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-total-invoice-sale" class="currency-input invoice-highlight-input" placeholder="0" readonly></div></div>
       </div>
     </div>
 
@@ -1336,7 +1336,7 @@
       </table>
       <button class="btn btn-gray top-gap-sm" onclick="addOutsideAgent()">+ Add Outside Agent</button>
       <div class="row c2 top-gap-md">
-        <div class="field"><label>Total to Outside Agents</label><input id="v-total-outside" class="readonly-fill-strong" placeholder="$0" readonly></div>
+        <div class="field"><label>Total to Outside Agents</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-total-outside" class="currency-input readonly-fill-strong" placeholder="0" readonly></div></div>
         <div></div>
       </div>
       <p class="micro-copy micro-copy-top-xs">Note: A completed W9 must be received on all new co-ops/referrals before commissions can be processed.</p>
@@ -1348,9 +1348,9 @@
     <div class="voucher-section-header">Commission Distribution</div>
     <div id="voucher-attachment-required-msg" class="tip text-error is-hidden" role="alert"></div>
     <div class="row c3 field-stack-gap-sm voucher-summary-row">
-      <div class="field"><label>Total Invoice</label><input id="v-dist-total-invoice" class="readonly-fill-strong" placeholder="$0" readonly></div>
-      <div class="field"><label>Total to Outside Agents</label><input id="v-dist-total-outside" class="readonly-fill" placeholder="$0" readonly></div>
-      <div class="field"><label>Gross $$ to Distribute</label><input id="v-gross-dist" class="invoice-highlight-input" placeholder="$0" readonly></div>
+      <div class="field"><label>Total Invoice</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-dist-total-invoice" class="currency-input readonly-fill-strong" placeholder="0" readonly></div></div>
+      <div class="field"><label>Total to Outside Agents</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-dist-total-outside" class="currency-input readonly-fill" placeholder="0" readonly></div></div>
+      <div class="field"><label>Gross $$ to Distribute</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-gross-dist" class="currency-input invoice-highlight-input" placeholder="0" readonly></div></div>
     </div>
     <table class="broker-table" id="v-dist-table">
       <thead><tr><th>Agent Name</th><th class="table-col-100">Side</th><th class="table-col-65">Gross %</th><th class="dist-gross-col" data-dist-gross="listing">Listing Gross</th><th class="dist-gross-col" data-dist-gross="procuring">Procuring Gross</th><th class="dist-gross-col" data-dist-gross="both">Both Gross</th><th class="dist-gross-col" data-dist-gross="other">Other Gross</th><th class="dist-gross-col" data-dist-gross="referring">Referring Gross</th><th class="dist-gross-col" data-dist-gross="outside">Outside Gross</th><th>Net $</th><th class="table-col-compact"></th></tr></thead>

@@ -172,6 +172,25 @@ describe("broker_tool.html wiring", () => {
     expect(body[1]).toBe(0x4b);
   });
 
+  it("wraps key voucher money fields in currency-field markup", () => {
+    const voucherCurrencyIds = [
+      "v-l-rate",
+      "v-l-consideration",
+      "v-s-price",
+      "v-l-comm-due",
+      "v-comm-bonus",
+      "v-total-invoice",
+      "v-gross-dist",
+    ];
+    for (const id of voucherCurrencyIds) {
+      expect(brokerToolHtml).toMatch(
+        new RegExp(
+          `<div class="currency-field"><span class="currency-prefix">\\$</span><input id="${id}" class="currency-input`
+        )
+      );
+    }
+  });
+
   it("keeps commission distribution inputs editable without side-picker capture", () => {
     expect(brokerToolHtml).toContain("function stopDistSidePickerEvent");
     expect(brokerToolHtml).toContain("function closeAllDistSideSelects");
