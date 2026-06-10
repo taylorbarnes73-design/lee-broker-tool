@@ -51,6 +51,24 @@ function extractFunctionSource(name: string) {
   throw new Error(`Could not parse function ${name}`);
 }
 
+function getVoucherDetectionHelpers() {
+  const source = [
+    "createEmptyVoucherDocStatus",
+    "normalizeVoucherDocStatus",
+    "combineVoucherDocumentStatus",
+  ]
+    .map(extractFunctionSource)
+    .join("\n");
+  return new Function(
+    `${source}\nreturn { combineVoucherDocumentStatus };`
+  )() as {
+    combineVoucherDocumentStatus: (
+      current: unknown,
+      next: unknown
+    ) => { found: boolean; executed: boolean; missingSignatures: string[] };
+  };
+}
+
 function getAiApplyHelpers() {
   const source = [
     "normalizeAiSelectText",
@@ -270,5 +288,27 @@ describe("broker_tool.html wiring", () => {
     );
 
     expect(match?.value).toBe("medical");
+  });
+
+  it("merges voucher document detection across multiple uploaded files", () => {
+    const { combineVoucherDocumentStatus } = getVoucherDetectionHelpers();
+
+    expect(
+      combineVoucherDocumentStatus(
+        { found: true, executed: false, missingSignatures: ["Principal signature"] },
+        { found: true, executed: true, missingSignatures: [] }
+      )
+    ).toEqual({ found: true, executed: true, missingSignatures: [] });
+
+    expect(
+      combineVoucherDocumentStatus(
+        { found: true, executed: false, missingSignatures: ["Principal signature"] },
+        { found: true, executed: false, missingSignatures: ["Broker signature"] }
+      )
+    ).toEqual({
+      found: true,
+      executed: false,
+      missingSignatures: ["Principal signature", "Broker signature"],
+    });
   });
 });

@@ -7,6 +7,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { storagePut, storageGet, storagePublicUrl } from "./storage";
 import { getDb, getUserByOpenId, upsertUser } from "./db";
+import { findAppUserByUsernameOrEmail } from "./auth/platformSession";
 import { uploads } from "../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod/v4";
@@ -150,6 +151,23 @@ export const appRouter = router({
           return {
             success: false as const,
             error: `Use your @${allowedDomain} email or Lee username only.`,
+          };
+        }
+
+        let appUserRecord: Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>> = undefined;
+        try {
+          const db = await getDb();
+          if (db) {
+            appUserRecord = await findAppUserByUsernameOrEmail(db, email);
+          }
+        } catch (err) {
+          console.error("[auth.login] Could not resolve app user:", err);
+        }
+
+        if (appUserRecord && !appUserRecord.isActive) {
+          return {
+            success: false as const,
+            error: "Your account is inactive. Contact an administrator for access.",
           };
         }
 

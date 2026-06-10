@@ -4273,6 +4273,20 @@ function normalizeVoucherDocStatus(value) {
   };
 }
 
+function combineVoucherDocumentStatus(currentValue, nextValue) {
+  const current = normalizeVoucherDocStatus(currentValue);
+  const next = normalizeVoucherDocStatus(nextValue);
+  if (!current.found) return next;
+  if (!next.found) return current;
+  if (!current.executed && next.executed) return next;
+  if (current.executed) return current;
+  return {
+    found: true,
+    executed: false,
+    missingSignatures: Array.from(new Set([...(current.missingSignatures || []), ...(next.missingSignatures || [])])),
+  };
+}
+
 let voucherDocumentDetection = {
   agencyDisclosure: createEmptyVoucherDocStatus(),
   listingAgreement: createEmptyVoucherDocStatus(),
@@ -15414,24 +15428,30 @@ async function uploadAndParseListingDealDocuments(fileList) {
           fileUrl: result.url,
           mimeType: payloads[index]?.mimeType || 'application/pdf',
         }).then((parsed) => {
-          if (!parsed?.success) return;
-          applyAiFields('listing', parsed.fields || {}, { sourceKey });
-          setListingDocumentState(
-            'agencyDisclosure',
-            combineListingDocumentState(listingDocumentDetection.agencyDisclosure, parsed.documentDetection?.agencyDisclosure)
-          );
-          setListingDocumentState(
-            'listingAgreement',
-            combineListingDocumentState(listingDocumentDetection.listingAgreement, parsed.documentDetection?.listingAgreement)
-          );
+          if (!parsed?.success) return null;
+          return { parsed, sourceKey };
         }).catch((parseErr) => {
           console.error('[AI] Listing document parse failed:', parseErr?.message || parseErr);
+          return null;
         })
       );
     });
 
     updateFormOverlay('Analyzing…', 2, 3, 'Extracting field data...');
-    await Promise.all(parseTasks);
+    const parseResults = await Promise.all(parseTasks);
+    parseResults.forEach((result) => {
+      if (!result?.parsed) return;
+      const { parsed, sourceKey } = result;
+      applyAiFields('listing', parsed.fields || {}, { sourceKey });
+      setListingDocumentState(
+        'agencyDisclosure',
+        combineListingDocumentState(listingDocumentDetection.agencyDisclosure, parsed.documentDetection?.agencyDisclosure)
+      );
+      setListingDocumentState(
+        'listingAgreement',
+        combineListingDocumentState(listingDocumentDetection.listingAgreement, parsed.documentDetection?.listingAgreement)
+      );
+    });
     updateFormOverlay('Analyzing…', 3, 3, 'Checking signatures...');
     renderListingDealDocumentsStatusMessage();
     updateListingRequiredDocStatus();
@@ -15890,11 +15910,12 @@ async function runVoucherAiAnalysis() {
     result.appliedCount += applyAiFields('voucher', out.parsed.fields || {}, { sourceToken });
     ['agencyDisclosure', 'listingAgreement'].forEach((kind) => {
       const current = result.detection[kind];
-      if (current.found) return;
       const detection = normalizeVoucherDocStatus(out.parsed?.documentDetection?.[kind]);
       if (!detection.found) return;
-      result.detection[kind] = detection;
-      result.sourceByType[kind] = sourceToken;
+      result.detection[kind] = combineVoucherDocumentStatus(current, detection);
+      if (!current.found || (!current.executed && detection.executed)) {
+        result.sourceByType[kind] = sourceToken;
+      }
     });
   });
 

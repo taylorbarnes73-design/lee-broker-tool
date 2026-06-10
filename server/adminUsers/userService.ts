@@ -3,7 +3,7 @@ import { hash } from "bcryptjs";
 import { and, asc, count, desc, eq, ne, or, like, sql, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/mysql-core";
 import type { Request } from "express";
-import { appUsers, auditLog, users } from "../../drizzle/schema";
+import { appSessions, appUsers, auditLog, users } from "../../drizzle/schema";
 import type { PlatformAuthUser } from "../auth/platformAuthTypes";
 import { writeAuditLog } from "../auth/writeAuditLog";
 import { getDb } from "../db";
@@ -550,6 +550,9 @@ export async function patchUser(db: AppDb, id: string, body: PatchUserBody, acto
   else if (body.role !== undefined && body.role !== current.role) action = "user.role_changed";
 
   await writeAuditLog(actor.id, action, "user", id, { before, after }, req);
+  if (body.is_active === false && current.isActive) {
+    await db.delete(appSessions).where(eq(appSessions.userId, id));
+  }
 
   const creator = alias(appUsers, "creator");
   const [withCreator] = await db
@@ -600,6 +603,7 @@ export async function softDeleteUser(db: AppDb, id: string, actor: PlatformAuthU
     .update(appUsers)
     .set({ isActive: false, deactivatedAt: new Date() })
     .where(eq(appUsers.id, id));
+  await db.delete(appSessions).where(eq(appSessions.userId, id));
 
   await writeAuditLog(actor.id, "user.deactivated", "user", id, {}, req);
 

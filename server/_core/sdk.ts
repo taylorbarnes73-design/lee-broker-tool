@@ -8,6 +8,7 @@ import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
+import { findAppUserByUsernameOrEmail } from "../auth/platformSession";
 import { isAdminByPolicy } from "../auth/isAdminByPolicy";
 import type {
   ExchangeTokenRequest,
@@ -289,6 +290,16 @@ class SDKServer {
 
     if (isLocalOpenId(sessionUserId)) {
       const email = session.email ?? emailFromLocalOpenId(sessionUserId);
+      let appUser: Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>> | undefined;
+      try {
+        const appDb = await db.getDb();
+        appUser = appDb && email ? await findAppUserByUsernameOrEmail(appDb, email) : undefined;
+      } catch (error) {
+        console.error("[Auth] Could not resolve app user for local session:", error);
+      }
+      if (appUser && !appUser.isActive) {
+        throw ForbiddenError("User account is inactive");
+      }
 
       if (!user) {
         await db.upsertUser({

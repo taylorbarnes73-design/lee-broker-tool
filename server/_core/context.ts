@@ -27,6 +27,14 @@ async function resolveSignedLegacyCookie(
   const now = new Date();
   const email = session.email ?? emailFromLocalOpenId(session.openId);
   const name = session.name || email || "Broker";
+  let appUser: Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>> | null = null;
+  try {
+    const db = await getDb();
+    appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
+  } catch (error) {
+    console.error("[trpc.context] Could not resolve app user for signed legacy session:", error);
+  }
+  if (appUser && !appUser.isActive) return null;
 
   return {
     id: 0,
@@ -34,7 +42,10 @@ async function resolveSignedLegacyCookie(
     name,
     email: email ?? null,
     loginMethod: "local",
-    role: isAdminByPolicy(email, name) ? "admin" : "user",
+    role:
+      appUser?.role === "admin" || isAdminByPolicy(email, name, appUser?.username)
+        ? "admin"
+        : "user",
     createdAt: now,
     updatedAt: now,
     lastSignedIn: now,
@@ -82,6 +93,13 @@ export async function createContext(
         appUser = db && email ? await findAppUserByUsernameOrEmail(db, email) : null;
       } catch (error) {
         console.error("[trpc.context] Could not resolve platform user for legacy session:", error);
+      }
+      if (appUser && !appUser.isActive) {
+        return {
+          req: opts.req,
+          res: opts.res,
+          user: null,
+        };
       }
       user = {
         ...legacyUser,
