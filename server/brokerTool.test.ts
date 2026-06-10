@@ -238,6 +238,11 @@ describe("broker_tool.html wiring", () => {
     expect(brokerToolHtml).toContain("const VOUCHER_EXCEL_TEMPLATE_URL = '/templates/commission-voucher-template.xlsm';");
     expect(brokerToolHtml).toContain("fetch('/api/marketing-request/pdf'");
     expect(brokerToolHtml).toContain("fetch('/api/trpc/email.sendToAdmin'");
+    expect(brokerToolHtml).toContain("applyRecipientInboxHints");
+    expect(brokerToolHtml).toContain('id="mr-recipient-hint"');
+    expect(brokerToolHtml).toContain('id="sta-recipient-hint"');
+    expect(brokerToolHtml).toContain("MARKETING_REQUEST_EMAIL_DEFAULT = 'fperkins@lee-associates.com'");
+    expect(brokerToolHtml).toContain("BROKER_ADMIN_EMAIL = '_NewportBeach-BrokerAdmin@lee-associates.com'");
   });
 
   it("lets AI overwrite untouched Listing Entry defaults and match select labels", () => {

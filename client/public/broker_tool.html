@@ -2561,6 +2561,7 @@
         <li>Attach source files, logos, or brand assets when you have them.</li>
         <li>Tap <strong>Submit Request</strong> — your email app opens with a draft to marketing.</li>
       </ol>
+      <p class="recipient-inbox-hint" id="mr-recipient-hint" role="note"></p>
     </div>
 
     <div class="card marketing-request-card broker-form-card">
@@ -3352,6 +3353,7 @@
     <h2 id="send-admin-modal-title" class="modal-heading-row">Send to Admin</h2>
     <p class="modal-copy" id="send-admin-modal-desc">This will prepare an email to the Newport Beach Broker Admin team.</p>
     <div class="admin-email-notice" role="note">
+      <p class="recipient-inbox-hint" id="sta-recipient-hint" role="note"></p>
       <strong>Before sending:</strong> Your generated files will download and your email app will open. Browsers cannot place files into an email draft, so you must attach the downloaded files before you click Send.
     </div>
     <div id="sta-submission-summary" class="sta-submission-summary is-hidden"></div>
@@ -10933,6 +10935,17 @@ function getMarketingRecipientEmail() {
   return trimmed || MARKETING_REQUEST_EMAIL_DEFAULT;
 }
 
+function applyRecipientInboxHints() {
+  const marketingHint = document.getElementById('mr-recipient-hint');
+  if (marketingHint) {
+    marketingHint.textContent = 'Submissions go to ' + getMarketingRecipientEmail() + '.';
+  }
+  const adminHint = document.getElementById('sta-recipient-hint');
+  if (adminHint) {
+    adminHint.textContent = 'Admin inbox: ' + getBrokerAdminRecipientEmail();
+  }
+}
+
 function hexToRgb(hex) {
   const v = String(hex || '').trim();
   if (!/^#[0-9A-Fa-f]{6}$/.test(v)) return null;
@@ -11129,6 +11142,7 @@ function startWorkflowAutosaveTimer() {
 
 void loadPublicToolSettings().then(function() {
   applyBrandingFromSettings();
+  applyRecipientInboxHints();
   applyVoucherConfidentialWarningFromSettings();
   applyDefaultListingExpirationFromStart(true);
   wireListingExpirationListeners();
@@ -18929,6 +18943,7 @@ function openSendToAdminModal(formType) {
     'Sign Request';
   title.textContent = formType === 'sign' ? `Submit ${label}` : `Send ${label} to Admin`;
   desc.textContent = `This will save the ${label} to the admin queue, download the generated files, and open an email draft to ${getBrokerAdminRecipientEmail()}.`;
+  applyRecipientInboxHints();
   status.textContent = '';
   status.classList.remove('text-success', 'text-error', 'status-strong');
   btn.classList.remove('loading');
