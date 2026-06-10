@@ -185,6 +185,25 @@ describe("broker_tool.html wiring", () => {
     expect(body[1]).toBe(0x4b);
   });
 
+  it("keeps commission distribution inputs editable without side-picker capture", () => {
+    expect(brokerToolHtml).toContain("function stopDistSidePickerEvent");
+    expect(brokerToolHtml).toContain("function closeAllDistSideSelects");
+    expect(brokerToolHtml).toContain("function handleDistNetInput");
+
+    const addDistRowSource = extractFunctionSource("addDistRow");
+    expect(addDistRowSource).toContain("stopDistSidePickerEvent(event)");
+    expect(addDistRowSource).toContain('openDistSideSelect(this.previousElementSibling, event)');
+    expect(addDistRowSource).toContain('class="chip-select" tabindex="-1"');
+    expect(addDistRowSource).not.toMatch(/dist-net-input[^>]*readonly/);
+
+    const css = readFileSync(
+      resolve(process.cwd(), "client/public/broker_tool.css"),
+      "utf8"
+    );
+    expect(css).toMatch(/\.chip-select\s*\{[^}]*pointer-events:\s*none/);
+    expect(css).toMatch(/\.chip-select\.is-open\s*\{[^}]*pointer-events:\s*auto/);
+  });
+
   it("lets AI overwrite untouched Listing Entry defaults and match select labels", () => {
     const { findSelectOptionForAiValue, shouldApplyAiField } = getAiApplyHelpers();
     const untouched = {

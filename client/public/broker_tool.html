@@ -6512,15 +6512,45 @@ function syncDistributionFromBrokers(options) {
   updateDistPctTotal();
 }
 
-function openDistSideSelect(selectEl) {
+function closeAllDistSideSelects() {
+  document.querySelectorAll('#v-dist-body select.chip-select.is-open').forEach(closeDistSideSelect);
+}
+
+function stopDistSidePickerEvent(evt) {
+  if (evt) evt.stopPropagation();
+  closeAllDistSideSelects();
+}
+
+function openDistSideSelect(selectEl, evt) {
+  if (evt) {
+    evt.preventDefault();
+    evt.stopPropagation();
+  }
   if (!selectEl) return;
+  closeAllDistSideSelects();
   selectEl.classList.add('is-open');
   selectEl.focus();
+  if (typeof selectEl.showPicker === 'function') {
+    try { selectEl.showPicker(); } catch (e) { /* unsupported */ }
+  }
 }
 
 function closeDistSideSelect(selectEl) {
   if (!selectEl) return;
   selectEl.classList.remove('is-open');
+}
+
+function handleDistNetInput(inputEl) {
+  if (distSyncDepth) return;
+  const tr = inputEl?.closest('tr');
+  if (!tr || distRowIsOutside(tr)) return;
+  const grossInput = distRowActiveGrossInput(tr);
+  if (!grossInput) return;
+  grossInput.value = inputEl.value;
+  withDistSync(function() {
+    syncDistRowFromGross(tr, grossInput);
+    updateDistPctTotal();
+  });
 }
 
 let distRowCount = 0;
@@ -6531,25 +6561,26 @@ function addDistRow(options) {
   const nameId = 'v-dist-agent-' + distRowCount;
   const presetSide = options && options.side ? options.side : '';
   const defaultSide = presetSide || distributionSideForRepresentation();
-  const grossInputAttrs = 'class="dist-gross-input" placeholder="$0" oninput="handleDistGrossInput(this)"';
+  const distInputEvents = 'onclick="stopDistSidePickerEvent(event)" onmousedown="stopDistSidePickerEvent(event)" onfocus="closeAllDistSideSelects()"';
+  const grossInputAttrs = 'class="dist-gross-input" placeholder="$0" oninput="handleDistGrossInput(this)" ' + distInputEvents;
   const tr = document.createElement('tr');
   tr.innerHTML = '<td><div class="agent-picker" id="picker-' + nameId + '">' +
-      '<input id="' + nameId + '" autocomplete="off" placeholder="Agent name">' +
+      '<input id="' + nameId + '" autocomplete="off" placeholder="Agent name" ' + distInputEvents + '>' +
       '<div class="agent-dd" id="dd-' + nameId + '"></div></div></td>' +
     '<td><div class="inline-select-chip">' +
-      '<select class="chip-select" data-auto-side="' + (presetSide ? 'false' : 'true') + '" onchange="handleDistSideChange(this)" onblur="closeDistSideSelect(this)">' +
+      '<select class="chip-select" tabindex="-1" data-auto-side="' + (presetSide ? 'false' : 'true') + '" onchange="handleDistSideChange(this)" onblur="closeDistSideSelect(this)">' +
         '<option>Listing</option><option>Procuring</option><option>Both</option><option>Other</option><option>Referring</option><option>Outside</option>' +
       '</select>' +
-      '<span class="side-chip cursor-pointer" onclick="openDistSideSelect(this.previousElementSibling)"></span>' +
+      '<span class="side-chip cursor-pointer" onclick="openDistSideSelect(this.previousElementSibling, event)"></span>' +
     '</div></td>' +
-    '<td><input class="w-55 dist-pct-input" placeholder="%" oninput="handleDistPctInput(this)"></td>' +
+    '<td><input class="w-55 dist-pct-input" placeholder="%" oninput="handleDistPctInput(this)" ' + distInputEvents + '></td>' +
     '<td class="dist-gross-col" data-dist-gross="listing"><input ' + grossInputAttrs + '></td>' +
     '<td class="dist-gross-col" data-dist-gross="procuring"><input ' + grossInputAttrs + '></td>' +
     '<td class="dist-gross-col" data-dist-gross="both"><input ' + grossInputAttrs + '></td>' +
     '<td class="dist-gross-col" data-dist-gross="other"><input ' + grossInputAttrs + '></td>' +
     '<td class="dist-gross-col" data-dist-gross="referring"><input ' + grossInputAttrs + '></td>' +
     '<td class="dist-gross-col" data-dist-gross="outside"><input ' + grossInputAttrs + '></td>' +
-    '<td><input class="text-strong dist-net-input readonly-fill" placeholder="$0" readonly tabindex="-1"></td>' +
+    '<td><input class="text-strong dist-net-input" placeholder="$0" oninput="handleDistNetInput(this)" ' + distInputEvents + '></td>' +
     '<td><button class="remove-row" onclick="this.closest(\'tr\').remove();updateDistributionGrossColumns();updateDistPctTotal();calcCommSummary();">&times;</button></td>';
   body.appendChild(tr);
   const sel = tr.querySelector('select');

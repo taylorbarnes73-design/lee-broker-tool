@@ -3669,23 +3669,43 @@ body.admin-mode #admin-view {
 }
 
 .inline-select-chip {
-  display: flex;
+  position: relative;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
 .chip-select {
   position: absolute;
-  opacity: 0;
+  top: 0;
+  left: 0;
   width: 1px;
   height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .chip-select.is-open {
   position: static;
-  opacity: 1;
   width: auto;
   height: auto;
+  margin: 0;
+  opacity: 1;
+  overflow: visible;
+  clip: auto;
+  clip-path: none;
+  pointer-events: auto;
+}
+
+.side-chip {
+  pointer-events: auto;
 }
 
 .cursor-pointer {
@@ -8470,6 +8490,8 @@ body.broker-active .sub-tab-bar {
 #tab-voucher #v-dist-table th:nth-child(2),
 #tab-voucher #v-dist-table td:nth-child(2) {
   width: 112px;
+  position: relative;
+  overflow: hidden;
 }
 
 #tab-voucher #v-dist-table th:nth-child(3),
