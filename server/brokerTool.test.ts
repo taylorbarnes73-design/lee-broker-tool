@@ -191,6 +191,16 @@ describe("broker_tool.html wiring", () => {
     }
   });
 
+  it("wraps distribution row gross and net inputs in currency-field markup", () => {
+    const addDistRowSource = extractFunctionSource("addDistRow");
+    expect(addDistRowSource).toContain('class="dist-gross-input currency-input"');
+    expect(addDistRowSource).toContain(
+      '<div class="currency-field"><span class="currency-prefix">$</span><input '
+    );
+    expect(addDistRowSource).toContain("grossInputCell('listing')");
+    expect(addDistRowSource).toMatch(/dist-net-input currency-input/);
+  });
+
   it("keeps commission distribution inputs editable without side-picker capture", () => {
     expect(brokerToolHtml).toContain("function stopDistSidePickerEvent");
     expect(brokerToolHtml).toContain("function closeAllDistSideSelects");

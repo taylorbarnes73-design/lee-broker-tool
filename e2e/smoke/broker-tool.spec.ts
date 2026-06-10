@@ -57,5 +57,12 @@ test.describe("broker tool smoke", () => {
 
     await grossPctInput.fill("25");
     await expect(grossPctInput).toHaveValue("25");
+
+    const grossInput = distRow.locator("td.dist-gross-col .currency-field .dist-gross-input").first();
+    await expect(grossInput).toBeVisible();
+    await grossInput.click();
+    await expect(distRow.locator("select.chip-select")).not.toHaveClass(/is-open/);
+    await grossInput.fill("1500");
+    await expect(grossInput).toHaveValue("1500");
   });
 });

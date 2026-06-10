@@ -6758,7 +6758,10 @@ function addDistRow(options) {
   const presetSide = options && options.side ? options.side : '';
   const defaultSide = presetSide || distributionSideForRepresentation();
   const distInputEvents = 'onclick="stopDistSidePickerEvent(event)" onmousedown="stopDistSidePickerEvent(event)" onfocus="closeAllDistSideSelects()"';
-  const grossInputAttrs = 'class="dist-gross-input" placeholder="$0" oninput="handleDistGrossInput(this)" ' + distInputEvents;
+  const grossInputAttrs = 'class="dist-gross-input currency-input" placeholder="0" oninput="handleDistGrossInput(this)" ' + distInputEvents;
+  const grossInputCell = function(sideKey) {
+    return '<td class="dist-gross-col" data-dist-gross="' + sideKey + '"><div class="currency-field"><span class="currency-prefix">$</span><input ' + grossInputAttrs + '></div></td>';
+  };
   const tr = document.createElement('tr');
   tr.innerHTML = '<td><div class="agent-picker" id="picker-' + nameId + '">' +
       '<input id="' + nameId + '" autocomplete="off" placeholder="Agent name" ' + distInputEvents + '>' +
@@ -6770,13 +6773,13 @@ function addDistRow(options) {
       '<span class="side-chip cursor-pointer" onclick="openDistSideSelect(this.previousElementSibling, event)"></span>' +
     '</div></td>' +
     '<td><input class="w-55 dist-pct-input" placeholder="%" oninput="handleDistPctInput(this)" ' + distInputEvents + '></td>' +
-    '<td class="dist-gross-col" data-dist-gross="listing"><input ' + grossInputAttrs + '></td>' +
-    '<td class="dist-gross-col" data-dist-gross="procuring"><input ' + grossInputAttrs + '></td>' +
-    '<td class="dist-gross-col" data-dist-gross="both"><input ' + grossInputAttrs + '></td>' +
-    '<td class="dist-gross-col" data-dist-gross="other"><input ' + grossInputAttrs + '></td>' +
-    '<td class="dist-gross-col" data-dist-gross="referring"><input ' + grossInputAttrs + '></td>' +
-    '<td class="dist-gross-col" data-dist-gross="outside"><input ' + grossInputAttrs + '></td>' +
-    '<td><input class="text-strong dist-net-input" placeholder="$0" oninput="handleDistNetInput(this)" ' + distInputEvents + '></td>' +
+    grossInputCell('listing') +
+    grossInputCell('procuring') +
+    grossInputCell('both') +
+    grossInputCell('other') +
+    grossInputCell('referring') +
+    grossInputCell('outside') +
+    '<td><div class="currency-field"><span class="currency-prefix">$</span><input class="text-strong dist-net-input currency-input" placeholder="0" oninput="handleDistNetInput(this)" ' + distInputEvents + '></div></td>' +
     '<td><button class="remove-row" onclick="this.closest(\'tr\').remove();updateDistributionGrossColumns();updateDistPctTotal();calcCommSummary();">&times;</button></td>';
   body.appendChild(tr);
   const sel = tr.querySelector('select');

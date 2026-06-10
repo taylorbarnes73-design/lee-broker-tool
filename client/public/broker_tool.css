@@ -8519,6 +8519,20 @@ body.broker-active .sub-tab-bar {
   max-width: 100%;
 }
 
+#tab-voucher #v-dist-table .currency-field {
+  width: 100%;
+}
+
+#tab-voucher #v-dist-table .currency-field .currency-input {
+  width: 100%;
+  padding-left: 22px;
+}
+
+#tab-voucher #v-dist-table .currency-prefix {
+  left: 6px;
+  font-size: 13px;
+}
+
 #tab-voucher #v-dist-table .agent-dd {
   min-width: 300px;
 }
