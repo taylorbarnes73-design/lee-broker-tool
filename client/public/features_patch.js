@@ -88,13 +88,53 @@ function _copyListingToVoucherCore() {
   // Listing agent — first row in the listing agent table
   const laName = (document.getElementById('la-name-1') || {}).value || '';
   const laPhone = (document.getElementById('la-phone-1') || {}).value || '';
-  const laEmail = (document.getElementById('la-email-1') || {}).value || '';
   if (laName) sv('v-la-name', laName);
   if (laPhone) sv('v-la-phone', laPhone);
+
+  // Lease / sale pricing & terms
+  const txnVal = txn || gv('l-txn-type');
+  const showLease = txnVal === 'lease' || txnVal === 'sale-lease' || txnVal === 'sublease';
+  const showSale = txnVal === 'sale' || txnVal === 'sale-lease';
+  if (showLease) {
+    const leaseRate = gv('l-lease-sf');
+    if (leaseRate) {
+      sv('v-l-rate', leaseRate);
+      sv('v-l-asking-rate', leaseRate);
+    }
+    if (gv('l-lease-term-type') === 'custom') sv('v-l-term', gv('l-lease-term'));
+    const leaseType = gv('l-lease-type');
+    if (leaseType) {
+      const rateTypeMap = { NNN: 'NNN', FSG: 'FSG', MG: 'MG', G: 'G', N: 'NNN', MN: 'MG' };
+      sgv('v-l-rate-type', rateTypeMap[leaseType] || leaseType);
+    }
+  }
+  if (showSale) {
+    const salePrice = gv('l-sale-price');
+    if (salePrice) {
+      sv('v-s-price', salePrice);
+      sv('v-s-asking', salePrice);
+    }
+    sv('v-s-cap', gv('l-cap-rate'));
+  }
+
+  // Optional property details (comps section)
+  sv('v-year-built', gv('l-year-built'));
+  sv('v-park-ratio', gv('l-parking-ratio') || gv('l-off-parking'));
+  sv('v-bldg-sf', gv('l-bldg-sf'));
+  const landSf = gv('l-land-sf-gross') || gv('l-land-sf-net');
+  if (landSf) {
+    sv('v-land-sf-input', landSf);
+    sv('v-land-sf', landSf);
+  }
+  sv('v-apn', gv('l-land-apn'));
+  const offClass = gv('l-off-class');
+  if (offClass) sgv('v-bldg-class', offClass);
 
   // Trigger voucher cascade
   try { onVoucherTxnChange(); } catch(e) {}
   try { syncVoucherDealAliases(); } catch(e) {}
+  try { calcVoucherLease(); } catch(e) {}
+  try { calcVoucherSale(); } catch(e) {}
   try { syncDealGlance(); } catch(e) {}
 
   // Switch to voucher tab

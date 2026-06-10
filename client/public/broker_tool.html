@@ -223,22 +223,22 @@
       <div class="field listing-type-field">
         <label class="req">Property Type</label>
           <div class="listing-type-grid" id="listing-type-picker">
-            <button type="button" class="listing-type-opt" data-type="office" onclick="setListingType('office')">
+            <button type="button" class="listing-type-opt" data-type="office">
               <span class="lto-title">Office</span>
             </button>
-            <button type="button" class="listing-type-opt" data-type="industrial" onclick="setListingType('industrial')">
+            <button type="button" class="listing-type-opt" data-type="industrial">
               <span class="lto-title">Industrial</span>
             </button>
-            <button type="button" class="listing-type-opt" data-type="retail" onclick="setListingType('retail')">
+            <button type="button" class="listing-type-opt" data-type="retail">
               <span class="lto-title">Retail</span>
             </button>
-            <button type="button" class="listing-type-opt" data-type="medical" onclick="setListingType('medical')">
+            <button type="button" class="listing-type-opt" data-type="medical">
               <span class="lto-title">Medical</span>
             </button>
-            <button type="button" class="listing-type-opt" data-type="land" onclick="setListingType('land')">
+            <button type="button" class="listing-type-opt" data-type="land">
               <span class="lto-title">Land</span>
             </button>
-            <button type="button" class="listing-type-opt" data-type="multifamily" onclick="setListingType('multifamily')">
+            <button type="button" class="listing-type-opt" data-type="multifamily">
               <span class="lto-title">Multifamily</span>
             </button>
           </div>
@@ -4981,12 +4981,15 @@ function initStepFlow(opts) {
       return true;
     },
     go(i) {
+      if (this._transitioning) return;
       i = Math.max(0, Math.min(cards.length - 1, i));
+      if (i === this.current) return;
       if (i > this.current && !this.canAdvanceTo(i)) {
         this.renderNav();
         this.renderStepper();
         return;
       }
+      this._transitioning = true;
       this.current = i;
       cards.forEach((c, idx) => {
         c.classList.remove('step--current');
@@ -4997,6 +5000,8 @@ function initStepFlow(opts) {
       this.renderSummaries();
       this.renderNav();
       if (typeof opts.onStep === 'function') opts.onStep(i, cards[i]);
+      const self = this;
+      setTimeout(function() { self._transitioning = false; }, 100);
     },
     next() { this.go(this.current + 1); },
     prev() { this.go(this.current - 1); },
