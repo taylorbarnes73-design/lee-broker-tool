@@ -196,7 +196,12 @@ function bpApplyProfile(idxStr) {
   }
 
   // -- COMMISSION VOUCHER: listing agent fields --
-  set('v-la-name', p.name);
+  if (typeof addVoucherBroker === 'function') {
+    addVoucherBroker('la', { name: p.name, email: p.email || '' }, { skipDist: true });
+    if (typeof syncDistributionFromBrokers === 'function') syncDistributionFromBrokers({ force: true });
+  } else {
+    set('v-la-name', p.name);
+  }
   set('v-la-phone', p.phone);
   set('v-la-address', p.address);
 

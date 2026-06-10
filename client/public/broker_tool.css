@@ -401,6 +401,97 @@ div.row.comp-sale-only { display: none !important; }
   font-weight: 600;
   color: var(--text2);
 }
+.v-rent-table-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.v-broker-chip-panel {
+  margin-bottom: 12px;
+}
+.v-broker-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 28px;
+  margin-bottom: 8px;
+}
+.v-broker-chips-empty {
+  font-size: 12px;
+  color: var(--text2);
+  font-style: italic;
+}
+.v-broker-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 10px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.v-broker-chip-remove {
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 2px;
+}
+.v-broker-chip-remove:hover { color: var(--red); }
+.v-broker-picker-wrap {
+  position: relative;
+}
+.v-broker-search-input {
+  display: none;
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.v-broker-search-input.is-open,
+.v-broker-picker-wrap:focus-within .v-broker-search-input.is-open {
+  display: block;
+}
+.voucher-broker-same #voucher-listing-col {
+  grid-column: 1 / -1;
+}
+#voucher-broker-grid.voucher-broker-same {
+  grid-template-columns: 1fr;
+}
+.rent-drag-cell {
+  width: 28px;
+  text-align: center;
+  vertical-align: middle;
+}
+.rent-drag-handle {
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  cursor: grab;
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+.rent-drag-handle:active { cursor: grabbing; }
+#v-rent-body tr.rent-dragging td { opacity: 0.55; }
+#v-rent-body tr.rent-drag-over td { background: #fff7ed !important; }
+#v-req-rent-inline .rent-comm-due-input {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  text-align: right;
+}
 .v-rent-table-wrap {
   overflow: visible;
   width: 100%;
@@ -436,6 +527,7 @@ div.row.comp-sale-only { display: none !important; }
 }
 #v-req-rent-inline .v-rent-table tr:last-child td { border-bottom: none; }
 #v-req-rent-inline .v-rent-table tbody tr:hover td { background: #f7f8fa; }
+#v-req-rent-inline .v-rent-table .col-drag { width: 28px; text-align: center; }
 #v-req-rent-inline .v-rent-table .col-rn { width: 36px; text-align: center; }
 #v-req-rent-inline .v-rent-table .col-months { width: 72px; }
 #v-req-rent-inline .v-rent-table .col-monthly { width: auto; }
@@ -4357,6 +4449,7 @@ body {
 /* Custom checkbox dropdown for comp report filters */
 .cr-dd {
   position: relative;
+  overflow: visible;
 }
 .cr-dd-btn {
   display: flex;
@@ -4399,9 +4492,11 @@ body {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  z-index: 400;
-  min-width: 180px;
-  max-width: 260px;
+  z-index: 9999;
+  box-sizing: border-box;
+  min-width: max(100%, 260px);
+  max-width: 340px;
+  width: max(100%, 260px);
   background: var(--surface-1, #fff);
   border: 1px solid var(--border, #d1d5db);
   border-radius: var(--r-8, 8px);
@@ -4436,8 +4531,7 @@ body {
   padding: 4px 0;
 }
 .cr-dd-opt {
-  display: grid;
-  grid-template-columns: 14px minmax(0, 1fr);
+  display: flex;
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
@@ -4455,14 +4549,15 @@ body {
   height: 14px;
   min-width: 14px;
   min-height: 14px;
+  flex-shrink: 0;
   padding: 0;
   accent-color: var(--lee-crimson, #98002E);
   cursor: pointer;
   margin: 0;
 }
 .cr-dd-opt span {
-  min-width: 0;
-  overflow-wrap: anywhere;
+  flex: 1;
+  white-space: nowrap;
 }
 .cr-dd-footer {
   border-top: 1px solid var(--border, #e5e7eb);
@@ -10456,9 +10551,10 @@ input[type="date"],
   top: calc(100% + 6px);
   left: 0;
   z-index: 9999;
-  min-width: 220px;
-  max-width: 300px;
-  width: max-content;
+  box-sizing: border-box;
+  min-width: max(100%, 260px);
+  max-width: 340px;
+  width: max(100%, 260px);
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
   border-radius: 12px;
@@ -10488,6 +10584,7 @@ input[type="date"],
   background: #FAFAFA;
 }
 .cr-dd-search-input {
+  box-sizing: border-box;
   width: 100%;
   padding: 8px 12px;
   font-size: 13px;
@@ -10527,8 +10624,7 @@ input[type="date"],
 
 /* Individual option row */
 .cr-dd-opt {
-  display: grid;
-  grid-template-columns: 16px minmax(0, 1fr);
+  display: flex;
   align-items: center;
   gap: 10px;
   padding: 8px 14px;
@@ -10545,10 +10641,10 @@ input[type="date"],
   background: #F9FAFB;
 }
 .cr-dd-opt span {
+  flex: 1;
   font-size: 13px;
   line-height: 1.3;
-  min-width: 0;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 
 /* Checkbox styling */
@@ -10557,6 +10653,7 @@ input[type="date"],
   height: 16px;
   min-width: 16px;
   min-height: 16px;
+  flex-shrink: 0;
   padding: 0;
   accent-color: #98002E;
   cursor: pointer;

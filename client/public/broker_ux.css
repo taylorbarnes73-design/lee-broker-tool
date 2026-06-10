@@ -464,7 +464,7 @@ body.broker-active #tab-voucher .broker-table-scroll:has(#v-dist-table) {
 }
 
 body.broker-active #tab-voucher #v-rent-table {
-  min-width: 640px;
+  min-width: 680px;
 }
 
 body.broker-active #tab-voucher #v-payment-table {

@@ -3196,7 +3196,6 @@
   <div class="modal modal-preflight">
     <div class="preflight-header">
       <h2 class="preflight-title">Check Before You Send</h2>
-      <p class="preflight-subtitle">Take a moment to review your submission — you can go back and fix anything.</p>
     </div>
     <div id="preflight-checklist" class="preflight-checklist"></div>
     <div class="btn-bar preflight-btn-bar">
@@ -4654,9 +4653,13 @@ function openReviewSnapshot(context) {
   }
   title.textContent = config.title;
   if (copy) {
-    copy.textContent = context === 'voucher'
-      ? 'We checked your numbers automatically — confirm the summary below before continuing.'
-      : 'Confirm the submission summary below before continuing.';
+    if (context === 'voucher') {
+      copy.textContent = '';
+      copy.classList.add('is-hidden');
+    } else {
+      copy.classList.remove('is-hidden');
+      copy.textContent = 'Confirm the submission summary below before continuing.';
+    }
   }
   content.innerHTML = voucherPrefix + renderReviewSummary(rows, sections);
   if (submitLabel) submitLabel.textContent = config.submitLabel;

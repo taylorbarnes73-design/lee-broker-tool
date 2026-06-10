@@ -88,7 +88,13 @@ function _copyListingToVoucherCore() {
   // Listing agent — first row in the listing agent table
   const laName = (document.getElementById('la-name-1') || {}).value || '';
   const laPhone = (document.getElementById('la-phone-1') || {}).value || '';
-  if (laName) sv('v-la-name', laName);
+  if (laName) {
+    if (typeof setVoucherBrokersFromNames === 'function') {
+      setVoucherBrokersFromNames('la', laName, { skipDist: true });
+    } else {
+      sv('v-la-name', laName);
+    }
+  }
   if (laPhone) sv('v-la-phone', laPhone);
 
   // Lease / sale pricing & terms
@@ -149,7 +155,12 @@ function _copyListingToVoucherCore() {
     if (!sel) return;
     sel.addEventListener('change', function() {
       if (sel.value !== 'yes') return;
-      const fields = ['name','house','address','city','state','zip','phone'];
+      try {
+        if (typeof syncVoucherProcuringFromListing === 'function') {
+          syncVoucherProcuringFromListing({ skipDist: true });
+        }
+      } catch (e) {}
+      const fields = ['house','address','city','state','zip','phone'];
       fields.forEach(function(f) {
         const laEl = document.getElementById('v-la-' + f);
         const paEl = document.getElementById('v-pa-' + f);
@@ -158,7 +169,6 @@ function _copyListingToVoucherCore() {
           paEl.dispatchEvent(new Event('input', {bubbles:true}));
         }
       });
-      // Also copy email and license if they exist
       ['email','license'].forEach(function(f) {
         const laEl = document.getElementById('v-la-' + f);
         const paEl = document.getElementById('v-pa-' + f);
@@ -1402,7 +1412,6 @@ window.aiParseFromPaste = async function() {
     bar.setAttribute('role', 'region');
     bar.setAttribute('aria-label', 'Review before send');
     bar.innerHTML =
-      '<span class="broker-review-bar-text">Take a moment to review your work before sending to admin.</span>' +
       '<button type="button" class="btn btn-red" id="broker-review-bar-btn">Review Before Send</button>';
     document.body.appendChild(bar);
     bar.querySelector('#broker-review-bar-btn').addEventListener('click', function() {
