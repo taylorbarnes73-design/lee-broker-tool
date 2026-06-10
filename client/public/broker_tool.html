@@ -16,7 +16,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-<link rel="stylesheet" href="broker_tool.css?v=20260608.3">
+<link rel="stylesheet" href="broker_tool.css?v=20260610.1">
 <link rel="stylesheet" href="broker_ux.css?v=20260608.2">
 </head>
 <body>
@@ -17810,7 +17810,14 @@ function compReportSetWorkspaceMode(hasDataset) {
   if (emptyState) emptyState.classList.toggle('comp-report-hidden', hasDataset);
   if (resultsCard) resultsCard.classList.toggle('comp-report-hidden', !hasDataset);
   if (searchForm) searchForm.classList.toggle('comp-report-form-disabled', !hasDataset);
-  setHiddenState(searchNote, hasDataset);
+  const searchBtn = document.getElementById('cr-search-btn');
+  if (searchBtn) searchBtn.disabled = !hasDataset;
+  if (searchNote) {
+    setHiddenState(searchNote, hasDataset);
+    if (!hasDataset) {
+      searchNote.textContent = 'Filters are available for preview. Search unlocks once an active comp dataset is published.';
+    }
+  }
 }
 
 function compReportRenderEmptyState() {

@@ -15,6 +15,9 @@ test.describe("broker tool smoke", () => {
     }
 
     await page.locator("#cr-city .cr-dd-btn").click();
+    const cityBtn = page.locator("#cr-city .cr-dd-btn");
+    const cityBtnBox = await cityBtn.boundingBox();
+    expect(cityBtnBox?.width ?? 0).toBeGreaterThanOrEqual(120);
     const cityPanel = page.locator("#cr-city .cr-dd-panel");
     await expect(cityPanel).toHaveClass(/open/);
     await expect(cityPanel.locator(".cr-dd-search-input")).toBeVisible();

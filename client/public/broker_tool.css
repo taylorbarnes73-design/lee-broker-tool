@@ -1923,8 +1923,10 @@ input:checked + .toggle-slider:before { transform:translateX(18px); }
 .comp-report-hidden {
   display: none !important;
 }
-.comp-report-form-disabled {
-  opacity: .55;
+.comp-report-form-disabled #cr-search-btn,
+.comp-report-form-disabled #cr-export-csv-btn,
+.comp-report-form-disabled #cr-export-pdf-btn {
+  opacity: 0.55;
   pointer-events: none;
 }
 .comp-report-form-note {
@@ -4426,8 +4428,18 @@ body {
 }
 .cr-filters-grid {
   display: grid;
-  grid-template-columns: 140px 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-  gap: 10px;
+  grid-template-columns:
+    140px
+    minmax(160px, 1.2fr)
+    repeat(4, minmax(150px, 1fr))
+    minmax(140px, 1fr)
+    minmax(140px, 1fr);
+  gap: 10px 12px;
+  align-items: end;
+  overflow: visible;
+}
+.cr-filters-grid .field:has(.cr-dd) {
+  min-width: 150px;
 }
 .cr-filters-grid .cr-span-2 {
   grid-column: span 2;
@@ -4896,7 +4908,11 @@ body {
 
 @media (max-width: 1100px) {
   .cr-filters-grid {
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+  .cr-filters-grid .cr-date-range-field,
+  .cr-filters-grid .cr-span-2 {
+    grid-column: span 2;
   }
   .cr-date-range-row {
     flex-wrap: wrap;
@@ -10525,6 +10541,11 @@ input[type="date"],
 
 /* Enhanced dropdown button */
 .cr-dd-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
   min-height: 38px;
   padding: 8px 12px;
   background: #FFFFFF;
@@ -10533,6 +10554,10 @@ input[type="date"],
   font-size: 13px;
   font-weight: 500;
   color: #374151;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .cr-dd-btn:hover {
@@ -10547,6 +10572,7 @@ input[type="date"],
 
 /* Enhanced dropdown panel */
 .cr-dd-panel {
+  display: none;
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
@@ -10873,14 +10899,11 @@ input[type="date"],
 }
 
 /* ── E. Comp Reports filter grid — ensure proper spacing ──────────────── */
-.cr-filters-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 12px 14px;
-  align-items: end;
-}
 .cr-filters-grid .field {
   min-width: 0;
+}
+.cr-filters-grid .field:has(.cr-dd) {
+  min-width: 150px;
 }
 .cr-filters-grid .field label {
   font-size: 10px;
@@ -10956,7 +10979,7 @@ input[type="date"],
 /* Responsive: collapse grid on smaller screens */
 @media (max-width: 1100px) {
   .cr-filters-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
   }
   .cr-filters-grid .cr-date-range-field,
   .cr-filters-grid .cr-span-2 {
