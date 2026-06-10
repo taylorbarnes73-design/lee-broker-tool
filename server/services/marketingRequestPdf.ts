@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { PDFDocument } from "pdf-lib";
 
 export type MarketingRequestFormData = {
@@ -28,10 +29,20 @@ export type MarketingRequestFormData = {
   additionalNotes?: string;
 };
 
-const TEMPLATE_PATH = path.join(
-  process.cwd(),
-  "server/assets/marketing-project-request-fillable.pdf"
-);
+const SERVICE_DIR = path.dirname(fileURLToPath(import.meta.url));
+
+export function resolveMarketingRequestTemplatePath(): string {
+  const candidates = [
+    path.join(SERVICE_DIR, "../assets/marketing-project-request-fillable.pdf"),
+    path.join(process.cwd(), "server/assets/marketing-project-request-fillable.pdf"),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  throw new Error(
+    `Marketing request PDF template not found. Checked: ${candidates.join(", ")}`
+  );
+}
 
 const DELIVERABLE_CHECKBOXES: Record<string, string> = {
   "Print collateral": "Deliverable: Print collateral",
@@ -103,7 +114,7 @@ function buildTimelineNotes(data: MarketingRequestFormData): string {
 }
 
 export async function fillMarketingRequestPdf(data: MarketingRequestFormData): Promise<Uint8Array> {
-  const templateBytes = fs.readFileSync(TEMPLATE_PATH);
+  const templateBytes = fs.readFileSync(resolveMarketingRequestTemplatePath());
   const doc = await PDFDocument.load(templateBytes);
   const form = doc.getForm();
 

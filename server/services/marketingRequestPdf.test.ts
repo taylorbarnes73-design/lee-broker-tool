@@ -1,6 +1,15 @@
+import fs from "node:fs";
 import { describe, expect, it } from "vitest";
 import { PDFDocument } from "pdf-lib";
-import { fillMarketingRequestPdf } from "./marketingRequestPdf";
+import { fillMarketingRequestPdf, resolveMarketingRequestTemplatePath } from "./marketingRequestPdf";
+
+describe("resolveMarketingRequestTemplatePath", () => {
+  it("resolves the bundled marketing request PDF template on disk", () => {
+    const templatePath = resolveMarketingRequestTemplatePath();
+    expect(fs.existsSync(templatePath)).toBe(true);
+    expect(templatePath).toMatch(/marketing-project-request-fillable\.pdf$/);
+  });
+});
 
 describe("fillMarketingRequestPdf", () => {
   it("fills the marketing request AcroForm template with submitted values", async () => {

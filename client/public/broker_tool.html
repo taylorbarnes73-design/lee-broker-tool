@@ -11381,6 +11381,11 @@ async function downloadMarketingRequestPdf(btn) {
   if (btn) btn.disabled = true;
 
   try {
+    const sessionUser = await ensureSharedBrokerSession();
+    if (!sessionUser) {
+      throw new Error('Sign in from the home page to download the marketing request PDF.');
+    }
+
     const response = await fetch('/api/marketing-request/pdf', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
