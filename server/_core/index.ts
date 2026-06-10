@@ -32,6 +32,7 @@ import { adminAuditLogRouter } from "../adminAuditLogApi";
 import { dealiusAdminApiRouter } from "../dealiusAdminApi";
 import { brokerAdminIngestRouter } from "../brokerAdminIngestApi";
 import { dealiusApiAdminRouter } from "../dealiusApiAdmin";
+import { marketingRequestApiRouter } from "../marketingRequestApi";
 import { startBrokerAdminIngestScheduler } from "../jobs/ingestBrokerAdminEmails";
 import { storageGetBytes } from "../storage";
 import { getDb } from "../db";
@@ -180,6 +181,7 @@ async function startServer() {
   app.use("/api/admin/dealius", dealiusApiAdminRouter);
   app.use("/api/admin/audit-log", adminAuditLogRouter);
   app.use("/api/settings", publicSettingsRouter);
+  app.use("/api/marketing-request", marketingRequestApiRouter);
 
   // tRPC API
   app.use(

@@ -2490,7 +2490,47 @@
       <div class="row c2">
         <div class="field">
           <label for="mr-requester-name">Requester Name <span class="muted-label">(Required)</span></label>
-          <input id="mr-requester-name" placeholder="Broker or team lead">
+          <select id="mr-requester-name" required>
+            <option value="">Select a name</option>
+            <option value="Frank Adler">Frank Adler</option>
+            <option value="Sean Ahern">Sean Ahern</option>
+            <option value="Tim Arguello">Tim Arguello</option>
+            <option value="Chris Barnett">Chris Barnett</option>
+            <option value="Brian Barson">Brian Barson</option>
+            <option value="David Bolt">David Bolt</option>
+            <option value="Matt Christensen">Matt Christensen</option>
+            <option value="Ethan Davidson">Ethan Davidson</option>
+            <option value="Nick Dumke">Nick Dumke</option>
+            <option value="Matt Durkin">Matt Durkin</option>
+            <option value="Brian Garbutt">Brian Garbutt</option>
+            <option value="John Gessford">John Gessford</option>
+            <option value="Libby Gessford">Libby Gessford</option>
+            <option value="Pitzer Gills">Pitzer Gills</option>
+            <option value="Ken Gould">Ken Gould</option>
+            <option value="Bob Griffin">Bob Griffin</option>
+            <option value="Jeff Grijalva">Jeff Grijalva</option>
+            <option value="Carter Harrington">Carter Harrington</option>
+            <option value="Judd Hietbrink">Judd Hietbrink</option>
+            <option value="Jeff Hirsch">Jeff Hirsch</option>
+            <option value="Jack Hogan">Jack Hogan</option>
+            <option value="David Kluver">David Kluver</option>
+            <option value="Matt Lawer">Matt Lawer</option>
+            <option value="Mike Long">Mike Long</option>
+            <option value="Stephen Madigan">Stephen Madigan</option>
+            <option value="Gary McArdell">Gary McArdell</option>
+            <option value="Jonathan Mejia">Jonathan Mejia</option>
+            <option value="Nima Razaz">Nima Razaz</option>
+            <option value="Brad Schneider">Brad Schneider</option>
+            <option value="Brendan Smith">Brendan Smith</option>
+            <option value="Hayden Toland">Hayden Toland</option>
+            <option value="Miles Toland">Miles Toland</option>
+            <option value="Rick Turner">Rick Turner</option>
+            <option value="Tim Walker">Tim Walker</option>
+            <option value="Tom West">Tom West</option>
+            <option value="Charlie Winn">Charlie Winn</option>
+            <option value="Maddie Zacher">Maddie Zacher</option>
+            <option value="Shannon Zacher">Shannon Zacher</option>
+          </select>
         </div>
         <div class="field">
           <label for="mr-requester-email">Email <span class="muted-label">(Required)</span></label>
@@ -2513,17 +2553,17 @@
             <label for="mr-request-type">Project Type <span class="muted-label">(Required)</span></label>
             <select id="mr-request-type">
               <option value="">Select one</option>
-              <option value="Flyer / Brochure">Flyer / Brochure</option>
-              <option value="Email Campaign">Email Campaign</option>
-              <option value="Social Media">Social Media</option>
-              <option value="Offering Memorandum / Proposal">Offering Memorandum / Proposal</option>
-              <option value="Property Listing Update">Property Listing Update</option>
-              <option value="Presentation / Pitch Deck">Presentation / Pitch Deck</option>
+              <option value="Flyer / brochure">Flyer / brochure</option>
+              <option value="Email campaign">Email campaign</option>
+              <option value="Social media graphic/post">Social media graphic/post</option>
+              <option value="Offering memorandum">Offering memorandum</option>
+              <option value="Property listing update">Property listing update</option>
+              <option value="Presentation / pitch deck">Presentation / pitch deck</option>
               <option value="Signage">Signage</option>
               <option value="Advertisement">Advertisement</option>
-              <option value="Website Update">Website Update</option>
-              <option value="Research / Map / Aerial">Research / Map / Aerial</option>
-              <option value="Other Marketing Request">Other Marketing Request</option>
+              <option value="Website update">Website update</option>
+              <option value="Research / map / aerial">Research / map / aerial</option>
+              <option value="Other">Other</option>
             </select>
           </div>
           <div class="field">
@@ -2532,7 +2572,7 @@
               <option value="">Select one</option>
               <option value="Standard">Standard</option>
               <option value="High">High</option>
-              <option value="Urgent / Time Sensitive">Urgent / Time Sensitive</option>
+              <option value="Urgent / time sensitive">Urgent / time sensitive</option>
             </select>
           </div>
         </div>
@@ -2549,13 +2589,13 @@
       <div class="form-section">
         <div class="form-section-title">Deliverables needed</div>
         <div class="check-group marketing-request-check-grid">
-          <label><input type="checkbox" name="mr-deliverables" value="Print Collateral"> Print collateral</label>
-          <label><input type="checkbox" name="mr-deliverables" value="Digital Graphic"> Digital graphic</label>
+          <label><input type="checkbox" name="mr-deliverables" value="Print collateral"> Print collateral</label>
+          <label><input type="checkbox" name="mr-deliverables" value="Digital graphic"> Digital graphic</label>
           <label><input type="checkbox" name="mr-deliverables" value="Email / Constant Contact"> Email / Constant Contact</label>
-          <label><input type="checkbox" name="mr-deliverables" value="Social Media"> Social media</label>
+          <label><input type="checkbox" name="mr-deliverables" value="Social media"> Social media</label>
           <label><input type="checkbox" name="mr-deliverables" value="Presentation"> Presentation</label>
-          <label><input type="checkbox" name="mr-deliverables" value="Website / Listing"> Website / listing</label>
-          <label><input type="checkbox" name="mr-deliverables" value="Map / Aerial"> Map / aerial</label>
+          <label><input type="checkbox" name="mr-deliverables" value="Website / listing"> Website / listing</label>
+          <label><input type="checkbox" name="mr-deliverables" value="Map / aerial"> Map / aerial</label>
           <label><input type="checkbox" name="mr-deliverables" value="Other"> Other</label>
         </div>
         <div class="field">
@@ -2661,6 +2701,7 @@
 
       <div class="btn-bar btn-bar-top-lg">
         <button class="btn btn-green" id="btn-mr-submit" onclick="submitMarketingRequest(this)"><span class="btn-spinner"></span><span class="btn-label">Submit Request</span></button>
+        <button type="button" class="btn btn-outline" id="btn-mr-download-pdf" onclick="downloadMarketingRequestPdf(this)"><span class="btn-spinner"></span><span class="btn-label">Download PDF</span></button>
         <button class="btn btn-gray" onclick="resetMarketingRequestForm()">Clear Form</button>
       </div>
       <div id="mr-status" class="status-copy"></div>
@@ -11192,35 +11233,210 @@ function resetAdminRequestForm() {
   }
 }
 
-async function submitMarketingRequest(btn) {
-  const status = document.getElementById('mr-status');
+const MARKETING_REQUESTER_EMAIL_MAP = {
+  'Frank Adler': 'fadler@lee-associates.com',
+  'Sean Ahern': 'sahern@lee-associates.com',
+  'Tim Arguello': 'targuello@lee-associates.com',
+  'Chris Barnett': 'cbarnett@lee-associates.com',
+  'Brian Barson': 'bbarson@lee-associates.com',
+  'David Bolt': 'dbolt@lee-associates.com',
+  'Matt Christensen': 'mchristensen@lee-associates.com',
+  'Ethan Davidson': 'edavidson@lee-associates.com',
+  'Nick Dumke': 'ndumke@lee-associates.com',
+  'Matt Durkin': 'mdurkin@lee-associates.com',
+  'Brian Garbutt': 'bgarbutt@lee-associates.com',
+  'John Gessford': 'jgessford@lee-associates.com',
+  'Libby Gessford': 'lgessford@lee-associates.com',
+  'Pitzer Gills': 'pgills@lee-associates.com',
+  'Ken Gould': 'kgould@lee-associates.com',
+  'Bob Griffin': 'bgriffin@lee-associates.com',
+  'Jeff Grijalva': 'jgrijalva@lee-associates.com',
+  'Carter Harrington': 'charrington@lee-associates.com',
+  'Judd Hietbrink': 'jhietbrink@lee-associates.com',
+  'Jeff Hirsch': 'jhirsch@lee-associates.com',
+  'Jack Hogan': 'jhogan@lee-associates.com',
+  'David Kluver': 'dkluver@lee-associates.com',
+  'Matt Lawer': 'mlawer@lee-associates.com',
+  'Mike Long': 'mlong@lee-associates.com',
+  'Stephen Madigan': 'smadigan@lee-associates.com',
+  'Gary McArdell': 'gmcardell@lee-associates.com',
+  'Jonathan Mejia': 'jmejia@lee-associates.com',
+  'Nima Razaz': 'nrazaz@lee-associates.com',
+  'Brad Schneider': 'bschneider@lee-associates.com',
+  'Brendan Smith': 'bsmith@lee-associates.com',
+  'Hayden Toland': 'htoland@lee-associates.com',
+  'Miles Toland': 'mtoland@lee-associates.com',
+  'Rick Turner': 'rturner@lee-associates.com',
+  'Tim Walker': 'timwalker@lee-associates.com',
+  'Tom West': 'twest@lee-associates.com',
+  'Charlie Winn': 'cwinn@lee-associates.com',
+  'Maddie Zacher': 'mzacher@lee-associates.com',
+  'Shannon Zacher': 'shannonzacher@lee-associates.com',
+};
+
+function collectMarketingRequestPayload() {
   const valueOf = id => (document.getElementById(id)?.value || '').trim();
   const checkedValues = name => Array.from(document.querySelectorAll('input[name="' + name + '"]:checked')).map(el => el.value);
   const authUser = getSignedInBrokerIdentity();
-  const requesterName = valueOf('mr-requester-name') || authUser?.name || '';
-  const requesterEmail = valueOf('mr-requester-email') || authUser?.email || '';
-  const team = valueOf('mr-team');
-  const projectTitle = valueOf('mr-project-title');
-  const requestType = valueOf('mr-request-type') || 'Other Marketing Request';
-  const priority = valueOf('mr-priority');
-  const propertyAddress = (document.getElementById('mr-property')?.value || '').trim();
-  const objective = valueOf('mr-objective');
-  const deliverables = checkedValues('mr-deliverables');
-  const finalSpecs = valueOf('mr-final-specs');
-  const dueDate = valueOf('mr-due-date');
-  const launchDate = valueOf('mr-launch-date');
-  const dateFlexible = valueOf('mr-date-flexible');
-  const timelineNotes = valueOf('mr-timeline-notes');
-  const briefingTime = valueOf('mr-briefing-time');
-  const copyMessaging = valueOf('mr-copy');
-  const assetLinks = valueOf('mr-asset-links');
-  const approverName = valueOf('mr-approver-name');
-  const approverEmail = valueOf('mr-approver-email');
-  const targetAudience = valueOf('mr-target-audience');
-  const market = valueOf('mr-market');
-  const distribution = valueOf('mr-distribution');
-  const additionalNotes = valueOf('mr-notes');
-  const attachments = Array.isArray(uploadedFiles['mr-doc-attachments']) ? uploadedFiles['mr-doc-attachments'] : [];
+  return {
+    requesterName: valueOf('mr-requester-name') || authUser?.name || '',
+    requesterEmail: valueOf('mr-requester-email') || authUser?.email || '',
+    team: valueOf('mr-team'),
+    projectTitle: valueOf('mr-project-title'),
+    requestType: valueOf('mr-request-type'),
+    priority: valueOf('mr-priority'),
+    propertyAddress: valueOf('mr-property'),
+    objective: valueOf('mr-objective'),
+    deliverables: checkedValues('mr-deliverables'),
+    finalSpecs: valueOf('mr-final-specs'),
+    dueDate: valueOf('mr-due-date'),
+    launchDate: valueOf('mr-launch-date'),
+    dateFlexible: valueOf('mr-date-flexible'),
+    timelineNotes: valueOf('mr-timeline-notes'),
+    briefingTime: valueOf('mr-briefing-time'),
+    copyMessaging: valueOf('mr-copy'),
+    assetLinks: valueOf('mr-asset-links'),
+    approverName: valueOf('mr-approver-name'),
+    approverEmail: valueOf('mr-approver-email'),
+    targetAudience: valueOf('mr-target-audience'),
+    market: valueOf('mr-market'),
+    distribution: valueOf('mr-distribution'),
+    additionalNotes: valueOf('mr-notes'),
+    attachments: Array.isArray(uploadedFiles['mr-doc-attachments']) ? uploadedFiles['mr-doc-attachments'] : [],
+  };
+}
+
+function applyMarketingRequesterEmailFromName() {
+  const nameEl = document.getElementById('mr-requester-name');
+  const emailEl = document.getElementById('mr-requester-email');
+  if (!nameEl || !emailEl) return;
+  const mappedEmail = MARKETING_REQUESTER_EMAIL_MAP[nameEl.value];
+  if (mappedEmail) emailEl.value = mappedEmail;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('mr-requester-name')?.addEventListener('change', applyMarketingRequesterEmailFromName);
+});
+
+async function downloadMarketingRequestPdf(btn) {
+  const status = document.getElementById('mr-status');
+  const payload = collectMarketingRequestPayload();
+  const missingFields = [];
+  if (!payload.requesterName) missingFields.push('requester name');
+  if (!payload.requesterEmail) missingFields.push('email');
+  if (!payload.projectTitle) missingFields.push('project title');
+  if (!payload.requestType) missingFields.push('project type');
+  if (!payload.priority) missingFields.push('priority');
+  if (!payload.objective) missingFields.push('project description / objective');
+  if (!payload.dueDate) missingFields.push('requested due date');
+
+  if (status) {
+    status.classList.remove('text-error', 'status-success', 'status-strong');
+    status.textContent = '';
+  }
+
+  if (missingFields.length > 0) {
+    if (status) {
+      status.innerHTML = '<span class="text-error status-strong">Missing required fields: ' + escHtml(missingFields.join(', ')) + '.</span>';
+    }
+    return;
+  }
+
+  setBtnLoading(btn, true, 'Generating PDF...');
+  if (btn) btn.disabled = true;
+
+  try {
+    const response = await fetch('/api/marketing-request/pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        requesterName: payload.requesterName,
+        email: payload.requesterEmail,
+        team: payload.team,
+        projectTitle: payload.projectTitle,
+        requestType: payload.requestType,
+        priority: payload.priority,
+        propertyAddress: payload.propertyAddress,
+        objective: payload.objective,
+        deliverables: payload.deliverables,
+        finalSpecs: payload.finalSpecs,
+        dueDate: payload.dueDate,
+        launchDate: payload.launchDate,
+        dateFlexible: payload.dateFlexible,
+        timelineNotes: payload.timelineNotes,
+        briefingTime: payload.briefingTime,
+        copyMessaging: payload.copyMessaging,
+        assetLinks: payload.assetLinks,
+        approverName: payload.approverName,
+        approverEmail: payload.approverEmail,
+        targetAudience: payload.targetAudience,
+        market: payload.market,
+        distribution: payload.distribution,
+        additionalNotes: payload.additionalNotes,
+      }),
+    });
+
+    if (!response.ok) {
+      let message = 'Could not generate marketing request PDF.';
+      try {
+        const errorBody = await response.json();
+        if (errorBody && errorBody.error) message = errorBody.error;
+      } catch (_) {}
+      throw new Error(message);
+    }
+
+    const blob = await response.blob();
+    const safeTitle = (payload.projectTitle || 'marketing-project-request').replace(/[^\w\s.-]+/g, '').trim() || 'marketing-project-request';
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = safeTitle + '.pdf';
+    link.click();
+    URL.revokeObjectURL(link.href);
+
+    if (status) {
+      status.innerHTML = '<span class="status-success status-strong">Filled marketing request PDF downloaded.</span>';
+    }
+  } catch (error) {
+    console.error('Marketing request PDF download failed:', error);
+    if (status) {
+      status.innerHTML = '<span class="text-error status-strong">' + escHtml(error.message || 'PDF download failed. Please try again.') + '</span>';
+    }
+  } finally {
+    setBtnLoading(btn, false);
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function submitMarketingRequest(btn) {
+  const status = document.getElementById('mr-status');
+  const payload = collectMarketingRequestPayload();
+  const {
+    requesterName,
+    requesterEmail,
+    team,
+    projectTitle,
+    requestType,
+    priority,
+    propertyAddress,
+    objective,
+    deliverables,
+    finalSpecs,
+    dueDate,
+    launchDate,
+    dateFlexible,
+    timelineNotes,
+    briefingTime,
+    copyMessaging,
+    assetLinks,
+    approverName,
+    approverEmail,
+    targetAudience,
+    market,
+    distribution,
+    additionalNotes,
+    attachments,
+  } = payload;
 
   if (status) {
     status.classList.remove('text-error', 'status-success', 'status-strong');
@@ -11231,9 +11447,7 @@ async function submitMarketingRequest(btn) {
   if (!requesterName) missingFields.push('requester name');
   if (!requesterEmail) missingFields.push('email');
   if (!projectTitle) missingFields.push('project title');
-  if (!requestType || requestType === 'Other Marketing Request') {
-    if (!valueOf('mr-request-type')) missingFields.push('project type');
-  }
+  if (!requestType) missingFields.push('project type');
   if (!priority) missingFields.push('priority');
   if (!objective) missingFields.push('project description / objective');
   if (!dueDate) missingFields.push('requested due date');
@@ -11249,6 +11463,7 @@ async function submitMarketingRequest(btn) {
   if (btn) btn.disabled = true;
 
   try {
+    const authUser = getSignedInBrokerIdentity();
     const now = new Date().toISOString();
     const attachmentNames = attachments.map(file => file.filename || file.name || 'Attachment').filter(Boolean);
     const body = [
@@ -17273,6 +17488,23 @@ function applySharedBrokerIdentity(user) {
   }
   fillFieldIfEmpty('la-name-1', user.name || '');
   fillFieldIfEmpty('la-email-1', user.email || '');
+  syncMarketingRequesterFromUser(user);
+}
+
+function syncMarketingRequesterFromUser(user) {
+  if (!user) return;
+  const nameEl = document.getElementById('mr-requester-name');
+  const emailEl = document.getElementById('mr-requester-email');
+  if (!nameEl || !emailEl) return;
+
+  const normalizedName = String(user.name || '').trim();
+  if (normalizedName) {
+    const match = Array.from(nameEl.options).find(option => option.value === normalizedName);
+    if (match) nameEl.value = normalizedName;
+  }
+  if (emailEl.value.trim()) return;
+  const mappedEmail = MARKETING_REQUESTER_EMAIL_MAP[nameEl.value] || user.email || '';
+  if (mappedEmail) emailEl.value = mappedEmail;
 }
 
 function splitBrokerName(name) {
