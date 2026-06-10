@@ -58,7 +58,7 @@ test.describe("broker tool smoke", () => {
     await grossPctInput.fill("25");
     await expect(grossPctInput).toHaveValue("25");
 
-    const grossInput = distRow.locator("td.dist-gross-col .currency-field .dist-gross-input").first();
+    const grossInput = distRow.locator("td.dist-gross-col:not(.is-hidden) .dist-gross-input");
     await expect(grossInput).toBeVisible();
     await grossInput.click();
     await expect(distRow.locator("select.chip-select")).not.toHaveClass(/is-open/);
