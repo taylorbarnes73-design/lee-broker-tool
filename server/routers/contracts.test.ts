@@ -39,7 +39,7 @@ vi.mock("../storage", () => ({
   ),
 }));
 
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, invokeClaudeWithFile, isClaudeFallbackAvailable } from "../_core/llm";
 import { execFileSync } from "child_process";
 import { contractsRouter } from "./contracts";
 import { testCtx } from "../testCtx";
@@ -131,6 +131,46 @@ describe("contracts.extractContract", () => {
     // agreementDate should be normalized to ISO
     expect(result.data.agreementDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(result.data.termStart).toBe("2026-04-01");
+  });
+
+  it("parses JSON wrapped in Markdown code fences (invokeLLM path)", async () => {
+    const mockData = {
+      contractType: "excl-sublease",
+      party1Name: "Fenced Response LLC",
+    };
+
+    (invokeLLM as ReturnType<typeof vi.fn>).mockResolvedValue({
+      choices: [{ message: { content: "```json\n" + JSON.stringify(mockData) + "\n```" } }],
+    });
+
+    const result = await callMutation("extractContract", {
+      pdfUrl: STORED_PDF_URL,
+      contractType: "excl-sublease",
+    }) as { success: boolean; data: { party1Name?: string } | null; error: string | null };
+
+    expect(result.success).toBe(true);
+    expect(result.data?.party1Name).toBe("Fenced Response LLC");
+  });
+
+  it("parses fenced JSON with surrounding prose from the Claude file path", async () => {
+    const mockData = {
+      contractType: "excl-sublease",
+      party1Name: "Claude Fenced Corp",
+    };
+
+    (isClaudeFallbackAvailable as ReturnType<typeof vi.fn>).mockReturnValueOnce(true);
+    (invokeClaudeWithFile as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+      "Here is the extracted data:\n```json\n" + JSON.stringify(mockData) + "\n```\nLet me know if you need anything else."
+    );
+
+    const result = await callMutation("extractContract", {
+      pdfUrl: STORED_PDF_URL,
+      contractType: "excl-sublease",
+    }) as { success: boolean; data: { party1Name?: string } | null; error: string | null };
+
+    expect(result.success).toBe(true);
+    expect(result.data?.party1Name).toBe("Claude Fenced Corp");
+    expect(invokeLLM).not.toHaveBeenCalled();
   });
 
   it("returns error when AI returns invalid JSON", async () => {

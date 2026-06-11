@@ -1,5 +1,6 @@
 import { protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable, isClaudeFallbackAvailable, invokeClaudeWithFile } from "../_core/llm";
+import { extractJsonText } from "../_core/llmJson";
 import { z } from "zod/v4";
 import { getSetting } from "../settings/getSetting";
 import { isStoredFileReference, storageGetBytes } from "../storage";
@@ -430,31 +431,9 @@ function sanitizeAiFields(tab: FormTab, parsed: Record<string, unknown>) {
 }
 
 function parseJsonObject(raw: unknown): Record<string, unknown> {
-  // Flatten multipart content (string | TextContent[])
-  let text = "";
-  if (typeof raw === "string") {
-    text = raw;
-  } else if (Array.isArray(raw)) {
-    text = raw
-      .map(part => (part && typeof part === "object" && "text" in part ? String((part as { text?: unknown }).text ?? "") : ""))
-      .join("");
-  }
-  text = text.trim();
+  // Flatten multipart content, strip Markdown fences, slice to outer braces.
+  const text = extractJsonText(raw);
   if (!text) return {};
-
-  // Strip Markdown fences emitted by some models
-  text = text
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/```\s*$/i, "")
-    .trim();
-
-  // Some models include prose before / after the JSON object; slice to the
-  // outer braces if we can spot them.
-  const first = text.indexOf("{");
-  const last = text.lastIndexOf("}");
-  if (first >= 0 && last > first) {
-    text = text.slice(first, last + 1);
-  }
 
   const attempt = (candidate: string) => {
     try {
