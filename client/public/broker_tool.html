@@ -39,7 +39,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <link rel="stylesheet" href="broker_tool.css?v=20260610.2">
-<link rel="stylesheet" href="broker_ux.css?v=20260610.1">
+<link rel="stylesheet" href="broker_ux.css?v=20260611.1">
 </head>
 <body>
 
@@ -912,9 +912,6 @@
       <h1 class="page-h1">Commission Voucher</h1>
       <p class="page-desc">Build the commission voucher, verify splits, and send completed deal docs to admin.</p>
     </div>
-    <div class="page-head-right">
-      <button class="btn btn-gray btn-sm" type="button" onclick="saveCurrentDraft('voucher', this)"><span class="btn-spinner"></span><span class="btn-label">Save Draft</span></button>
-    </div>
   </div>
   <div class="tip pane-intro-tip voucher-required-legend">Fields marked <span class="required-mark">*</span> are required.</div>
 
@@ -943,8 +940,6 @@
     <p class="voucher-workflow-tip" id="voucher-workflow-tip" role="status">Step 1: Upload your deal documents (PDF, JPG, or PNG) to get started.</p>
   </nav>
 
-  <div class="voucher-section-banner" id="voucher-section-banner" aria-live="polite"></div>
-
   <div class="deal-shell" id="v-deal-shell">
   <div class="deal-main" id="voucher-main">
   <!-- Upload Deal Documents -->
@@ -972,7 +967,6 @@
         </span>
       </button>
     </div>
-    <p class="upload-senior-hint">Double-check commission amounts and tenant/landlord names before sending — errors slow down admin processing.</p>
   </div>
 
   <!-- Deal Basics -->
@@ -1189,7 +1183,7 @@
       </div>
       <div class="row c4">
         <div class="field"><label class="req" id="v-l-rate-label">Rate per SF/Mo</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-rate" class="currency-input" placeholder="0.00" oninput="calcVoucherLease(); vMarkRentStale()"></div></div>
-        <div class="field"><label>Rate Type</label><select id="v-l-rate-type"><option value="NNN">NNN</option><option value="FSG">FSG</option><option value="MG">MG</option><option value="G">Gross</option></select></div>
+        <div class="field"><label>Rate Type</label><select id="v-l-rate-type" onchange="calcCommSummary()"><option value="NNN">NNN</option><option value="FSG">FSG</option><option value="MG">MG</option><option value="G">Gross</option></select></div>
         <div class="field"><label>Asking Rate/SF</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-asking-rate" class="currency-input" placeholder="0.00"></div></div>
         <div class="field"><label>Total Consideration</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-consideration" class="currency-input readonly-fill-strong" placeholder="0" readonly></div></div>
       </div>
@@ -1200,15 +1194,15 @@
         <div class="field"><label>Total NNN Charges</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-nnn-total" class="currency-input readonly-fill" placeholder="0.00" readonly></div></div>
       </div>
       <div class="row c4">
-        <div class="field"><label>TI Allow $/SF</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-ti-sf" class="currency-input" placeholder="0.00"></div></div>
-        <div class="field"><label>TI Allow $</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-ti-total" class="currency-input" placeholder="0"></div></div>
+        <div class="field"><label>TI Allow $/SF</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-ti-sf" class="currency-input" placeholder="0.00" oninput="calcVoucherTiTotal()"></div></div>
+        <div class="field"><label>TI Allow $</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-ti-total" class="currency-input" placeholder="0" oninput="onVoucherTiTotalInput(this)"></div><div class="field-hint">Auto: $/SF × deal SF — editable</div></div>
         <div class="field"><label>Escalations</label><input id="v-l-escalations" placeholder="e.g. 3% annual"></div>
         <div class="field"><label>Options</label><input id="v-l-options" placeholder="e.g. 2x5yr options"></div>
       </div>
       <div class="row c3">
-        <div class="field"><label>Gross Eff Rate</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-grs-eff" class="currency-input" placeholder="0.00"></div></div>
-        <div class="field"><label>IG Eff Rate</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-ig-eff" class="currency-input" placeholder="0.00"></div></div>
-        <div class="field"><label>NNN Eff Rate</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-nnn-eff" class="currency-input" placeholder="0.00"></div></div>
+        <div class="field"><label>Gross Eff Rate</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-grs-eff" class="currency-input" placeholder="0.00" oninput="onVoucherEffRateInput(this)"></div></div>
+        <div class="field"><label>IG Eff Rate</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-ig-eff" class="currency-input" placeholder="0.00" oninput="onVoucherEffRateInput(this)"></div></div>
+        <div class="field"><label>NNN Eff Rate</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-l-nnn-eff" class="currency-input" placeholder="0.00" oninput="onVoucherEffRateInput(this)"></div><div class="field-hint">Auto-filled from the rent schedule for the selected rate type — editable</div></div>
       </div>
       <div class="field" style="margin-top:12px"><label>Additional Lease Comments</label><textarea id="v-lease-comments" rows="2" placeholder="Additional lease terms or notes"></textarea></div>
     </div>
@@ -1245,8 +1239,7 @@
           <div class="v-rent-step" data-step="3"><span class="v-rent-step-num">3</span> Confirm consideration</div>
         </div>
 
-        <p class="v-rent-context-line">Use this tool to automatically calculate your rent schedule based on the term and rate above.</p>
-        <p class="review-copy micro-copy-bottom-sm">Set lease variables, generate the schedule, then edit rows as needed. Regenerate after changing rate or term.</p>
+        <p class="v-rent-context-line">Built from the rate, term &amp; SF above — edit any row after generating.</p>
 
         <div class="v-lease-calc">
           <div class="v-lease-calc-head">
@@ -1291,7 +1284,7 @@
             <span>Rent schedule</span>
             <div class="v-rent-table-toolbar-actions">
               <button type="button" class="btn btn-gray btn-sm" onclick="saveVoucherRentSchedule(this)"><span class="btn-spinner"></span><span class="btn-label">Save schedule</span></button>
-              <button type="button" class="btn btn-gray btn-sm" onclick="addRentRow()">+ Add row</button>
+              <button type="button" class="btn btn-gray btn-sm" onclick="vRentTouch();addRentRow()">+ Add row</button>
             </div>
           </div>
           <div class="v-rent-table-wrap">
@@ -1394,7 +1387,7 @@
   </div>
 
   <!-- ═══ SECTION 6: OUTSIDE AGENTS (matches Excel rows 94-103) ═══ -->
-  <div class="card voucher-section">
+  <div class="card voucher-section" id="vstep-7" data-vstep="7">
     <div class="voucher-section-header">Outside Agents</div>
     <p class="micro-copy">Co-operating brokers, referrals, etc.</p>
     <div class="toggle-row" style="margin-top:8px">
@@ -1415,7 +1408,7 @@
         <div class="field"><label>Total to Outside Agents</label><div class="currency-field"><span class="currency-prefix">$</span><input id="v-total-outside" class="currency-input readonly-fill-strong" placeholder="0" readonly></div></div>
         <div></div>
       </div>
-      <p class="micro-copy micro-copy-top-xs">Note: A completed W9 must be received on all new co-ops/referrals before commissions can be processed.</p>
+      <p class="micro-copy micro-copy-top-xs">W9 required for new co-ops/referrals before commission processing.</p>
     </div>
   </div>
 
@@ -5650,6 +5643,7 @@ const VOUCHER_SECTION_LABELS = {
   4: 'Lease/Sale Terms',
   5: 'Rent Schedule',
   6: 'Commission & Invoice',
+  7: 'Outside Agents',
   8: 'Commission Distribution',
 };
 
@@ -5737,46 +5731,16 @@ function syncVoucherSectionProgress() {
   });
 }
 
-let _voucherSectionObserver = null;
-function initVoucherSectionObserver() {
-  const panel = document.getElementById('tab-voucher');
-  const banner = document.getElementById('voucher-section-banner');
-  if (!panel || !banner || _voucherSectionObserver) return;
-
-  const updateBanner = () => {
-    const sections = getVisibleVoucherSections();
-    if (!sections.length) {
-      banner.textContent = '';
-      return;
-    }
-    const panelRect = panel.getBoundingClientRect();
-    const mid = panelRect.top + panelRect.height * 0.35;
-    let current = sections[0];
-    for (const section of sections) {
-      const rect = section.getBoundingClientRect();
-      if (rect.top <= mid) current = section;
-    }
-    const key = current.getAttribute('data-vstep') || 'upload';
-    const idx = sections.indexOf(current);
-    const label = VOUCHER_SECTION_LABELS[key] || 'Form section';
-    banner.textContent = 'Section ' + (idx + 1) + ' of ' + sections.length + ' · ' + label;
-  };
-
-  _voucherSectionObserver = new IntersectionObserver(updateBanner, {
-    root: panel,
-    threshold: [0, 0.15, 0.35, 0.55, 0.75, 1],
-  });
-  panel.addEventListener('scroll', updateBanner, { passive: true });
-  getVisibleVoucherSections().forEach(section => _voucherSectionObserver.observe(section));
-  updateBanner();
-}
-
-// Wire up live updates for voucher inputs (delegated)
+// Wire up live updates for voucher inputs (delegated, debounced — syncDealGlance
+// walks the whole panel, so per-keystroke calls are wasteful).
 document.addEventListener('DOMContentLoaded', function () {
   const panel = document.getElementById('tab-voucher');
   if (!panel) return;
-  initVoucherSectionObserver();
-  const handler = () => { try { syncDealGlance(); } catch(e) {} };
+  let glanceTimer = null;
+  const handler = () => {
+    clearTimeout(glanceTimer);
+    glanceTimer = setTimeout(() => { try { syncDealGlance(); } catch(e) {} }, 120);
+  };
   const partyIds = new Set(['v-ls-contact', 'v-ls-company', 'v-lb-contact', 'v-lb-company', 'v-rep-type']);
   panel.addEventListener('input', function(e) {
     handler();
@@ -6084,9 +6048,29 @@ function getVoucherMonthlyRateSf() {
   return voucherRateBasis === 'year' ? rate / 12 : rate;
 }
 
+let _vRentRegenTimer = null;
 function vMarkRentStale() {
+  // If the current schedule was auto-generated and never hand-edited, just
+  // regenerate it from the new variables instead of asking the user to.
+  const body = document.getElementById('v-rent-body');
+  if (
+    body && body.dataset.autogen === '1' && body.children.length > 0 &&
+    typeof voucherCanAutoGenerateSchedule === 'function' && voucherCanAutoGenerateSchedule()
+  ) {
+    clearTimeout(_vRentRegenTimer);
+    _vRentRegenTimer = setTimeout(() => {
+      try { generateVoucherRentSchedule(); } catch (e) {}
+    }, 400);
+    return;
+  }
   const hint = document.getElementById('v-rent-stale-hint');
   if (hint) hint.classList.remove('is-hidden');
+}
+
+/** Any manual edit to the schedule disables silent auto-regeneration. */
+function vRentTouch() {
+  const body = document.getElementById('v-rent-body');
+  if (body) delete body.dataset.autogen;
 }
 
 function vClearRentStale() {
@@ -6148,6 +6132,7 @@ function updateRentRowCommissionCells(tr) {
 
 function onRentCommissionDueInput(el) {
   if (!el) return;
+  vRentTouch();
   el.dataset.override = '1';
   vClearLeaseCommOverride();
   calcCommSummary();
@@ -6196,7 +6181,7 @@ function addRentRow(months, monthly, free, rowState) {
     '<td class="text-center"><input type="checkbox" class="rent-free"' + (isFree ? ' checked' : '') + ' onchange="vOnFreeRentChange(this)"></td>' +
     '<td class="text-center"><input class="rent-comm-pct-input" type="number" step="0.01" min="0" placeholder="%" value="' + globalRate + '" oninput="vClearLeaseCommOverride(); calcRentRow(this)"></td>' +
     '<td><input class="rent-comm-due-input text-right text-strong" placeholder="$0" value="' + commDueVal + '"' + commDueOverride + ' oninput="onRentCommissionDueInput(this)"></td>' +
-    '<td><button type="button" class="del-row" onclick="this.closest(\'tr\').remove();vRenumberRentRows();calcCommSummary()" title="Remove row">&times;</button></td>';
+    '<td><button type="button" class="del-row" onclick="vRentTouch();this.closest(\'tr\').remove();vRenumberRentRows();calcCommSummary()" title="Remove row">&times;</button></td>';
   body.appendChild(tr);
   initRentRowDragDrop();
   vRenumberRentRows();
@@ -6246,6 +6231,7 @@ function initRentRowDragDrop() {
     const after = event.clientY > rect.top + rect.height / 2;
     if (after) tr.after(rentDragSrc);
     else tr.before(rentDragSrc);
+    vRentTouch();
     vRenumberRentRows();
     calcCommSummary();
   });
@@ -6331,6 +6317,7 @@ function saveVoucherRentSchedule(btn) {
 }
 
 function vOnFreeRentChange(cb) {
+  vRentTouch();
   const tr = cb.closest('tr');
   const monthlyInput = tr.querySelector('.rent-monthly');
   tr.classList.toggle('free-rent-row', cb.checked);
@@ -6347,6 +6334,7 @@ function vOnFreeRentChange(cb) {
 }
 
 function calcRentRow(el) {
+  vRentTouch();
   const tr = el.closest('tr');
   updateRentRowCommissionCells(tr);
   calcCommSummary();
@@ -6364,11 +6352,17 @@ function generateVoucherRentSchedule() {
   document.querySelectorAll('#v-rent-body .rent-comm-due-input').forEach(input => delete input.dataset.override);
 
   const body = document.getElementById('v-rent-body');
-  if (body) body.innerHTML = '';
+  if (body) {
+    body.innerHTML = '';
+    // Until the user hand-edits a row, variable changes silently regenerate
+    // this schedule (see vMarkRentStale) instead of showing a stale hint.
+    body.dataset.autogen = '1';
+  }
   rentRowCount = 0;
 
   if (term <= 0) {
     addRentRow(12, '', false);
+    if (body) body.dataset.autogen = '1';
     vClearRentStale();
     return;
   }
@@ -7061,12 +7055,17 @@ function calcVoucherLease() {
     if (monthlyInput && monthsInput && !isFree && !String(monthlyInput.value || '').trim()) {
       monthlyInput.value = monthly > 0 ? monthly.toFixed(2) : '';
       monthsInput.value = term > 0 ? String(term) : monthsInput.value;
-      calcRentRow(monthlyInput);
+      // Programmatic fill — bypass calcRentRow so it doesn't count as a
+      // manual edit (vRentTouch) and disable schedule auto-regeneration.
+      updateRentRowCommissionCells(rentRows[0]);
+      calcCommSummary();
+      calcVoucherTiTotal();
       return;
     }
   }
 
   calcCommSummary();
+  calcVoucherTiTotal();
 }
 
 function calcVoucherSale() {
@@ -7425,6 +7424,11 @@ function getVoucherStepCompletion() {
       if (txn === 'sale') return Boolean(String(document.getElementById('v-s-comm-pct')?.value || '').trim());
       return Boolean(String(document.getElementById('v-comm-consulting')?.value || '').trim());
     },
+    '7': () => {
+      // Done when outside agents are declared off, or rows exist when on.
+      const toggle = document.getElementById('v-outside-toggle');
+      return !toggle?.checked || document.querySelectorAll('#v-outside-body tr').length > 0;
+    },
     '8': () => {
       if (!workflowCommissionSplitMustSum100()) return document.querySelectorAll('#v-dist-body tr').length > 0;
       let total = 0;
@@ -7525,7 +7529,9 @@ function calcCommSummary() {
       weightedRent += monthly * months;
       totalCommDue += vRentRowCommissionDue(tr);
     });
-    document.getElementById('v-l-consideration').value = totalConsideration > 0 ? '$' + totalConsideration.toLocaleString() : '';
+    document.getElementById('v-l-consideration').value = totalConsideration > 0
+      ? '$' + totalConsideration.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : '';
     leaseComm = totalCommDue;
     const commDueEl = document.getElementById('v-l-comm-due');
     const commDueOverridden = commDueEl?.dataset?.override === '1';
@@ -7548,6 +7554,7 @@ function calcCommSummary() {
     const avgRateSfDisplay = document.getElementById('v-avg-rate-sf-display');
     if (avgMonthlyDisplay) avgMonthlyDisplay.textContent = avgMonthlyText || '—';
     if (avgRateSfDisplay) avgRateSfDisplay.textContent = avgRateSfText || '—';
+    updateVoucherEffectiveRate(avgRateSf);
     updateAllRentRowCommissionCells();
     updateVoucherRentTotals(totalMonths, totalConsideration, leaseComm);
   } else {
@@ -7588,9 +7595,53 @@ function calcNNNTotal() {
   const total = taxes + ins + misc;
   const nnnTotalEl = document.getElementById('v-l-nnn-total'); if (nnnTotalEl) nnnTotalEl.value = total > 0 ? '$' + total.toFixed(2) : '';
 }
-['v-l-taxes', 'v-l-insurance', 'v-l-misc'].forEach(id => {
-  document.getElementById(id)?.addEventListener('input', calcNNNTotal);
-});
+
+// Auto-calc TI allowance total ($/SF × deal SF); typing in the total field
+// sets an override so the auto-fill never clobbers a hand-entered figure.
+function calcVoucherTiTotal() {
+  const totalEl = document.getElementById('v-l-ti-total');
+  if (!totalEl || totalEl.dataset.override === '1') return;
+  const tiSf = parseFloat(document.getElementById('v-l-ti-sf')?.value?.replace(/[^0-9.]/g, '')) || 0;
+  const dealSf = parseFloat(document.getElementById('v-l-dealsf')?.value?.replace(/[^0-9.]/g, '')) || 0;
+  if (tiSf > 0 && dealSf > 0) {
+    totalEl.value = (tiSf * dealSf).toFixed(2);
+  } else if (tiSf === 0) {
+    totalEl.value = '';
+  }
+}
+
+function onVoucherTiTotalInput(el) {
+  if (!el) return;
+  if (String(el.value || '').trim() === '') {
+    delete el.dataset.override;
+    calcVoucherTiTotal();
+  } else {
+    el.dataset.override = '1';
+  }
+}
+
+// Auto-fill the effective-rate field matching the lease's rate type with the
+// schedule's average rate per SF/mo (accounts for free rent + escalations).
+// Hand edits set an override; clearing the field re-enables auto-fill.
+const VOUCHER_EFF_RATE_FIELD_BY_TYPE = { NNN: 'v-l-nnn-eff', G: 'v-l-grs-eff', FSG: 'v-l-grs-eff', MG: 'v-l-ig-eff' };
+function updateVoucherEffectiveRate(avgRateSf) {
+  const rateType = document.getElementById('v-l-rate-type')?.value || '';
+  const id = VOUCHER_EFF_RATE_FIELD_BY_TYPE[rateType];
+  if (!id) return;
+  const el = document.getElementById(id);
+  if (!el || el.dataset.override === '1') return;
+  el.value = avgRateSf > 0 ? avgRateSf.toFixed(2) : '';
+}
+
+function onVoucherEffRateInput(el) {
+  if (!el) return;
+  if (String(el.value || '').trim() === '') {
+    delete el.dataset.override;
+    calcCommSummary();
+  } else {
+    el.dataset.override = '1';
+  }
+}
 
 // Auto-calc outside agent totals
 function calcOutsideTotals() {
