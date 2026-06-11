@@ -1,6 +1,7 @@
 import { z } from "zod/v4";
 import { protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable, isClaudeFallbackAvailable, invokeClaudeWithFile, type Message } from "../_core/llm";
+import { extractJsonText } from "../_core/llmJson";
 import { execFileSync } from "child_process";
 import { ENV } from "../_core/env";
 import { getSetting } from "../settings/getSetting";
@@ -312,7 +313,9 @@ Return JSON with these fields (omit any that are blank):
         }
         let parsed: Record<string, unknown>;
         try {
-          parsed = JSON.parse(rawJson);
+          // Claude/Gemini often wrap the JSON in Markdown fences or prose;
+          // extractJsonText slices down to the object before parsing.
+          parsed = JSON.parse(extractJsonText(rawJson));
         } catch {
           return { success: false, error: "AI returned invalid JSON", data: null };
         }
