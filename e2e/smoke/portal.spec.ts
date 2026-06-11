@@ -9,31 +9,31 @@ test.describe("portal smoke", () => {
   test("broker home shows primary form cards", async ({ page }) => {
     await page.goto("/portal/new");
     await expect(
-      page.getByRole("link", { name: /Listing entry/i })
+      page.getByRole("link", { name: /Add a listing/i })
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /Commission voucher/i })
+      page.getByRole("link", { name: /Submit a closed deal/i })
     ).toBeVisible();
   });
 
   test("voucher pilot form validates required fields", async ({ page }) => {
     await page.goto("/portal/forms/voucher");
-    await expect(page.getByRole("heading", { name: "Commission voucher" })).toBeVisible();
-    await page.getByRole("button", { name: "Continue in workspace" }).click();
+    await expect(page.getByRole("heading", { name: "Submit a closed deal" })).toBeVisible();
+    await page.getByRole("button", { name: /Continue to commission details/i }).click();
     await expect(page.getByText("Property address is required")).toBeVisible();
   });
 
   test("sign pilot form validates required fields", async ({ page }) => {
     await page.goto("/portal/forms/sign");
-    await expect(page.getByRole("heading", { name: "Sign request" })).toBeVisible();
-    await page.getByRole("button", { name: "Continue in workspace" }).click();
+    await expect(page.getByRole("heading", { name: "Order a sign" })).toBeVisible();
+    await page.getByRole("button", { name: /Continue to sign details/i }).click();
     await expect(page.getByText("Property address is required")).toBeVisible();
   });
 
   test("listing pilot form validates required fields", async ({ page }) => {
     await page.goto("/portal/forms/listing");
-    await expect(page.getByRole("heading", { name: "Listing entry" })).toBeVisible();
-    await page.getByRole("button", { name: "Continue in workspace" }).click();
+    await expect(page.getByRole("heading", { name: "Add a listing" })).toBeVisible();
+    await page.getByRole("button", { name: /Continue to listing details/i }).click();
     await expect(page.getByText("Property address is required")).toBeVisible();
   });
 
@@ -76,8 +76,8 @@ test.describe("portal smoke", () => {
 
   test("admin request page shows request categories", async ({ page }) => {
     await page.goto("/portal/admin-request");
-    await expect(page.getByRole("heading", { name: "Admin request" })).toBeVisible();
-    await expect(page.getByRole("button", { name: /HR Request/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Message the admin team" })).toBeVisible();
     await expect(page.getByRole("button", { name: /General Request/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /IT \/ System Issue/i })).toBeVisible();
   });
 });
