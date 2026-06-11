@@ -1050,7 +1050,7 @@
         </div>
         <div class="row c2">
           <div class="field"><label>Phone</label><input id="v-la-phone" type="tel"></div>
-          <div class="field"><label>Pay fee from commission?</label><select id="v-la-pay-fee"><option value="no">No</option><option value="yes">Yes</option></select></div>
+          <div class="field"><label>Fee paid from commission?</label><select id="v-la-pay-fee"><option value="no">No</option><option value="yes">Yes</option></select><div class="field-hint">Yes = broker's fee is deducted from the gross commission before disbursement</div></div>
         </div>
       </div>
       <div id="procuring-section">
@@ -1074,7 +1074,7 @@
         </div>
         <div class="row c2">
           <div class="field"><label>Phone</label><input id="v-pa-phone" type="tel"></div>
-          <div class="field"><label>Pay fee from commission?</label><select id="v-pa-pay-fee"><option value="no">No</option><option value="yes">Yes</option></select></div>
+          <div class="field"><label>Fee paid from commission?</label><select id="v-pa-pay-fee"><option value="no">No</option><option value="yes">Yes</option></select><div class="field-hint">Yes = broker's fee is deducted from the gross commission before disbursement</div></div>
         </div>
       </div>
     </div>
@@ -4626,7 +4626,7 @@ function reviewControlValue(control) {
 }
 
 function reviewSectionTitle(card, index) {
-  const heading = card.querySelector('.voucher-section-header, h2, h3, .card-title');
+  const heading = card.querySelector('.voucher-section-header, h2, h3, .card-title, .voucher-sub-header');
   const title = String(heading?.textContent || '').replace(/\s+/g, ' ').trim();
   return title || `Details ${index + 1}`;
 }
@@ -4669,16 +4669,18 @@ function collectReviewSections(context) {
     Array.from(card.querySelectorAll('table')).forEach(table => {
       if (table.closest('.card') !== card || table.closest('.is-hidden')) return;
       const headers = Array.from(table.querySelectorAll('thead th'))
-        .map(th => String(th.textContent || '').replace(/\s+/g, ' ').trim())
-        .filter(Boolean);
+        .map(th => String(th.textContent || '').replace(/\s+/g, ' ').trim());
       Array.from(table.querySelectorAll('tbody tr')).slice(0, 12).forEach((row, rowIndex) => {
-        const values = Array.from(row.querySelectorAll('td')).map(cell => {
+        const pairs = Array.from(row.querySelectorAll('td')).map((cell, cellIndex) => {
+          const header = headers[cellIndex] || '';
+          if (header === '#' || !header) return null; // skip drag-handle and headerless columns
           const control = cell.querySelector('input, select, textarea');
-          return control ? reviewControlValue(control) : String(cell.textContent || '').replace(/[×❏]/g, '').replace(/\s+/g, ' ').trim();
+          const value = control ? reviewControlValue(control) : String(cell.textContent || '').replace(/[×❏⠿]/g, '').replace(/\s+/g, ' ').trim();
+          if (!value) return null;
+          return `${header}: ${value}`;
         }).filter(Boolean);
-        if (!values.length) return;
-        const parts = values.map((value, valueIndex) => headers[valueIndex] ? `${headers[valueIndex]}: ${value}` : value);
-        fields.push({ label: `Row ${rowIndex + 1}`, value: parts.join(' | ') });
+        if (!pairs.length) return;
+        fields.push({ label: `Row ${rowIndex + 1}`, value: pairs.join(' · ') });
       });
     });
 
@@ -5851,10 +5853,26 @@ function addVoucherBroker(side, user, options) {
   if (key === 'la' && voucherBrokerState.la.length === 1 && !opts.skipHouse) {
     const houseEl = document.getElementById('v-la-house');
     if (houseEl && !String(houseEl.value || '').trim()) houseEl.value = 'Lee & Associates - Newport Beach';
+    const addrEl = document.getElementById('v-la-address');
+    if (addrEl && !String(addrEl.value || '').trim()) addrEl.value = '100 Bayview Circle, Suite 600';
+    const cityEl = document.getElementById('v-la-city');
+    if (cityEl && !String(cityEl.value || '').trim()) cityEl.value = 'Newport Beach';
+    const stateEl = document.getElementById('v-la-state');
+    if (stateEl && !String(stateEl.value || '').trim()) stateEl.value = 'CA';
+    const zipEl = document.getElementById('v-la-zip');
+    if (zipEl && !String(zipEl.value || '').trim()) zipEl.value = '92660';
   }
   if (key === 'pa' && voucherBrokerState.pa.length === 1 && !opts.skipHouse) {
     const houseEl = document.getElementById('v-pa-house');
     if (houseEl && !String(houseEl.value || '').trim()) houseEl.value = 'Lee & Associates - Newport Beach';
+    const addrEl = document.getElementById('v-pa-address');
+    if (addrEl && !String(addrEl.value || '').trim()) addrEl.value = '100 Bayview Circle, Suite 600';
+    const cityEl = document.getElementById('v-pa-city');
+    if (cityEl && !String(cityEl.value || '').trim()) cityEl.value = 'Newport Beach';
+    const stateEl = document.getElementById('v-pa-state');
+    if (stateEl && !String(stateEl.value || '').trim()) stateEl.value = 'CA';
+    const zipEl = document.getElementById('v-pa-zip');
+    if (zipEl && !String(zipEl.value || '').trim()) zipEl.value = '92660';
   }
   if (key === 'la' && document.getElementById('v-same-agent')?.value === 'yes') {
     syncVoucherProcuringFromListing({ skipDist: true });
@@ -5890,6 +5908,19 @@ function setVoucherBrokersFromNames(side, names, options) {
   });
   renderVoucherBrokerChips(key);
   syncVoucherBrokerHiddenFields();
+  // Auto-fill Lee & Associates house and address if empty (mirrors addVoucherBroker behavior)
+  if (voucherBrokerState[key].length > 0) {
+    const houseEl = document.getElementById('v-' + key + '-house');
+    if (houseEl && !String(houseEl.value || '').trim()) houseEl.value = 'Lee & Associates - Newport Beach';
+    const addrEl = document.getElementById('v-' + key + '-address');
+    if (addrEl && !String(addrEl.value || '').trim()) addrEl.value = '100 Bayview Circle, Suite 600';
+    const cityEl = document.getElementById('v-' + key + '-city');
+    if (cityEl && !String(cityEl.value || '').trim()) cityEl.value = 'Newport Beach';
+    const stateEl = document.getElementById('v-' + key + '-state');
+    if (stateEl && !String(stateEl.value || '').trim()) stateEl.value = 'CA';
+    const zipEl = document.getElementById('v-' + key + '-zip');
+    if (zipEl && !String(zipEl.value || '').trim()) zipEl.value = '92660';
+  }
   if (key === 'la' && document.getElementById('v-same-agent')?.value === 'yes') {
     syncVoucherProcuringFromListing({ skipDist: true });
   }
@@ -8849,7 +8880,7 @@ function voucherWorkbookDownloadBlob(blob, filename) {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  window.setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 // ── JSZip-based cell operations (preserves all formatting) ──────────────────
@@ -14562,7 +14593,10 @@ function bpApplyProfile(id) {
       bpFillIfPresent('v-la-name', profile.name);
     }
     bpFillIfPresent('v-la-house', profile.company);
+    bpFillIfPresent('v-la-address', '100 Bayview Circle, Suite 600');
     bpFillIfPresent('v-la-city', 'Newport Beach');
+    bpFillIfPresent('v-la-state', 'CA');
+    bpFillIfPresent('v-la-zip', '92660');
   }
 
   if (activeTab === 'sign') bpFillIfPresent('s-requested-by', profile.name);
