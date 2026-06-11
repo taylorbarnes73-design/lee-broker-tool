@@ -192,13 +192,15 @@ export default function Login() {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>Password</label>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink-700)', marginBottom: 6 }}>
+                Password <span style={{ fontWeight: 400, color: 'var(--ink-500)' }}>(leave blank for email-only sign-in)</span>
+              </label>
               <Input
                 type="password"
                 value={password}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 autoComplete="current-password"
-                placeholder="Enter password if your account uses one"
+                placeholder="••••••••"
               />
             </div>
 

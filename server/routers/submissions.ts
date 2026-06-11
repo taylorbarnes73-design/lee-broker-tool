@@ -1,5 +1,5 @@
 import { submissions } from "../../drizzle/schema";
-import { protectedProcedure, router } from "../_core/trpc";
+import { adminProcedure, protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { and, eq, or, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -627,13 +627,9 @@ export const submissionsRouter = router({
       };
     }),
 
-  adminList: protectedProcedure
+  adminList: adminProcedure
     .input(z.object({ limit: z.number().min(1).max(500).default(200) }).optional())
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
-
+    .query(async ({ input }) => {
       const db = await getDb();
       if (!db) return [];
       const limit = input?.limit ?? 200;
@@ -658,7 +654,7 @@ export const submissionsRouter = router({
       }));
     }),
 
-  updateStatus: protectedProcedure
+  updateStatus: adminProcedure
     .input(
       z.object({
         id: z.number().int().positive(),
@@ -666,10 +662,6 @@ export const submissionsRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
-      }
-
       const db = await getDb();
       if (!db) {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });

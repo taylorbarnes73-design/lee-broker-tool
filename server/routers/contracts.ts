@@ -1,7 +1,7 @@
 import { z } from "zod/v4";
 import { protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM, invokeLLMWithFile, isGeminiDirectAvailable, isClaudeFallbackAvailable, invokeClaudeWithFile, type Message } from "../_core/llm";
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { ENV } from "../_core/env";
 import { getSetting } from "../settings/getSetting";
 import { isStoredFileReference, storageGetBytes } from "../storage";
@@ -392,9 +392,10 @@ Return JSON with these fields (omit any that are blank):
           to_recipients: to,
           cc_recipients: cc,
         });
-        execSync(
-          `mcp-cli tool call outlook_send_messages --server outlook-mail --input '${mcpInput.replace(/'/g, "'\\''")}'`,
-          { timeout: 30000 }
+        execFileSync(
+          "mcp-cli",
+          ["tool", "call", "outlook_send_messages", "--server", "outlook-mail", "--input", mcpInput],
+          { timeout: 30000, stdio: "pipe" }
         );
 
         // Notify admin of new contract submission

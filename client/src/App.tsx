@@ -135,6 +135,21 @@ function BrokerToolRedirect() {
   );
 }
 
+/** Shown for unknown /portal/* paths so typos don't silently bounce users into the broker tool. */
+function PortalNotFound() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, width: "100%", minHeight: "60vh", alignItems: "center", justifyContent: "center", color: "var(--ink-600)", fontSize: 14, padding: 24, textAlign: "center" }}>
+      <div style={{ fontSize: 40 }}>🔎</div>
+      <div style={{ fontSize: 18, fontWeight: 700, color: "var(--ink-900)" }}>Page not found</div>
+      <div>That portal page doesn&apos;t exist. Check the address or head back to your home page.</div>
+      <div style={{ display: "flex", gap: 10, marginTop: 6 }}>
+        <Link href="/portal/new" style={{ color: "#98002E", fontWeight: 600 }}>Broker home</Link>
+        <Link href="/portal/submissions" style={{ color: "#98002E", fontWeight: 600 }}>My submissions</Link>
+      </div>
+    </div>
+  );
+}
+
 /** Bookmark-friendly alias: same login as `/login`, default return to submissions after sign-in. */
 function AdminLoginEntry() {
   useEffect(() => {
@@ -408,6 +423,12 @@ function Router() {
         <AdminPortalRoute>
           <PortalAdminListingImport />
         </AdminPortalRoute>
+      </Route>
+
+      <Route path="/portal/*">
+        <PortalRoute>
+          <PortalNotFound />
+        </PortalRoute>
       </Route>
 
       <Route component={BrokerToolRedirect} />

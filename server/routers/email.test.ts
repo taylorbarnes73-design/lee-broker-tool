@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
-  execSyncMock,
+  execFileSyncMock,
   storagePutMock,
   dbInsertValuesMock,
   sendMailMock,
 } = vi.hoisted(() => ({
-  execSyncMock: vi.fn(),
+  execFileSyncMock: vi.fn(),
   storagePutMock: vi.fn().mockResolvedValue({
     key: "broker-docs/submissions/listing/test-file.pdf",
     url: "https://cdn.example.com/broker-docs/submissions/listing/test-file.pdf",
@@ -16,7 +16,7 @@ const {
 }));
 
 vi.mock("child_process", () => ({
-  execSync: execSyncMock,
+  execFileSync: execFileSyncMock,
 }));
 
 vi.mock("../services/adminNotification", () => ({
@@ -80,8 +80,13 @@ vi.mock("../_core/env", () => ({
   },
 }));
 
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { emailRouter } from "./email";
+
+function getMcpCallText(): string {
+  const call = execFileSyncMock.mock.calls[0];
+  return [call[0], ...((call[1] as string[]) ?? [])].join(" ");
+}
 
 function getSubmissionInsertArg(): Record<string, unknown> {
   const insertArg = dbInsertValuesMock.mock.calls.find(
@@ -124,7 +129,7 @@ const sampleSections = [
 describe("email.sendToAdmin", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    execSyncMock.mockReturnValue(Buffer.from("OK"));
+    execFileSyncMock.mockReturnValue(Buffer.from("OK"));
     storagePutMock.mockResolvedValue({
       key: "broker-docs/submissions/listing/test-file.pdf",
       url: "https://cdn.example.com/broker-docs/submissions/listing/test-file.pdf",
@@ -144,10 +149,10 @@ describe("email.sendToAdmin", () => {
     });
 
     expect(result.success).toBe(true);
-    expect(execSync).toHaveBeenCalledOnce();
+    expect(execFileSync).toHaveBeenCalledOnce();
     expect(getSubmissionInsertArg().formType).toBe("listing");
 
-    const callArg = execSyncMock.mock.calls[0][0] as string;
+    const callArg = getMcpCallText();
     expect(callArg).toContain("outlook_send_messages");
     expect(callArg).toContain("_NewportBeach-BrokerAdmin@lee-associates.com");
     expect(result.submissionId).toBe(101);
@@ -164,7 +169,7 @@ describe("email.sendToAdmin", () => {
       senderEmail: "testuser@example.test",
     });
 
-    const callArg = execSyncMock.mock.calls[0][0] as string;
+    const callArg = getMcpCallText();
     expect(callArg).toContain("testuser@example.test");
   });
 
@@ -198,7 +203,7 @@ describe("email.sendToAdmin", () => {
 
     expect(result.success).toBe(true);
 
-    const callArg = execSyncMock.mock.calls[0][0] as string;
+    const callArg = getMcpCallText();
     expect(callArg).toContain("Supporting Documents");
     expect(callArg).toContain("Agency Disclosure");
     expect(callArg).toContain("agreement.pdf");
@@ -243,7 +248,7 @@ describe("email.sendToAdmin", () => {
     expect(result.archivedFile?.url).toContain("https://cdn.example.com/");
     expect(result.excelFile?.url).toContain("https://cdn.example.com/");
 
-    const callArg = execSyncMock.mock.calls[0][0] as string;
+    const callArg = getMcpCallText();
     expect(callArg).toContain("Voucher_Draft.pdf");
     expect(callArg).toContain("Filled_Voucher.xlsm");
     expect(callArg).toContain("Generated Excel Voucher");
@@ -273,7 +278,7 @@ describe("email.sendToAdmin", () => {
     expect(result.success).toBe(true);
     expect(result.attachmentIncluded).toBe(false);
     expect(result.deliveryMethod).toBe("queue-only");
-    expect(execSyncMock).not.toHaveBeenCalled();
+    expect(execFileSyncMock).not.toHaveBeenCalled();
   });
 
   it("archives and queues a mail-client submission without sending a duplicate email", async () => {
@@ -297,7 +302,7 @@ describe("email.sendToAdmin", () => {
     expect(result.attachmentIncluded).toBe(false);
     expect(result.submissionId).toBe(101);
     expect(storagePutMock).toHaveBeenCalledOnce();
-    expect(execSyncMock).not.toHaveBeenCalled();
+    expect(execFileSyncMock).not.toHaveBeenCalled();
     expect(sendMailMock).not.toHaveBeenCalled();
   });
 
@@ -327,7 +332,7 @@ describe("email.sendToAdmin", () => {
       expect(result.deliveryMethod).toBe("smtp");
       expect(result.attachmentIncluded).toBe(true);
       expect(sendMailMock).toHaveBeenCalledOnce();
-      expect(execSyncMock).not.toHaveBeenCalled();
+      expect(execFileSyncMock).not.toHaveBeenCalled();
 
       const smtpCall = sendMailMock.mock.calls[0][0];
       expect(smtpCall.attachments[0].filename).toBe("Listing_Packet.pdf");

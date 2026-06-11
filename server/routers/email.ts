@@ -1,4 +1,4 @@
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import nodemailer from "nodemailer";
 import { nanoid } from "nanoid";
 import { z } from "zod/v4";
@@ -235,11 +235,11 @@ function sendViaOutlookMcp(params: {
     }
 
     const input = JSON.stringify({ messages: [message] });
-    const escaped = input.replace(/'/g, "'\\''");
-    execSync(`mcp-cli tool call outlook_send_messages --server outlook-mail --input '${escaped}'`, {
-      timeout: 30_000,
-      stdio: "pipe",
-    });
+    execFileSync(
+      "mcp-cli",
+      ["tool", "call", "outlook_send_messages", "--server", "outlook-mail", "--input", input],
+      { timeout: 30_000, stdio: "pipe" }
+    );
 
     return {
       success: true,

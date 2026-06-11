@@ -288,7 +288,7 @@ function AdminInbox() {
     fetch("/api/broker-admin/stats?staleDays=3", { credentials: "include" })
       .then(r => r.json().then(b => ({ ok: r.ok, b })))
       .then(({ ok, b }) => { if (!alive || !ok) return; setStats({ counts: b?.data?.counts ?? [], staleCount: Number(b?.data?.staleCount ?? 0), staleDays: Number(b?.data?.staleDays ?? 3) }); })
-      .catch(() => {});
+      .catch(e => { console.warn("Broker admin stats unavailable:", e); });
     return () => { alive = false; };
   }, [statusFilter, ownerFilter, q]);
 

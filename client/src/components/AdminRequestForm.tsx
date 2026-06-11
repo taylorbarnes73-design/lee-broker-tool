@@ -84,8 +84,16 @@ export function AdminRequestForm({ requestType, onBack }: AdminRequestFormProps)
       'Click OK to open your email app.'
     );
 
-    if (proceed) {
+    if (!proceed) {
+      toast.info("Request not sent — submit again when you're ready.");
+      return;
+    }
+
+    try {
       window.location.href = mailtoUrl;
+    } catch {
+      toast.error(`Could not open your email app. Please email ${brokerAdminEmail} directly.`);
+      return;
     }
 
     toast.success("Request submitted! Check your email app — attach documents before sending.");

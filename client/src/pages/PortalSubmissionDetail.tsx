@@ -654,8 +654,17 @@ export default function PortalSubmissionDetail() {
                     style={{ display: "none" }}
                     onChange={e => {
                       const file = e.target.files?.[0];
-                      if (file) { setStagedExcel(file); }
                       e.target.value = "";
+                      if (!file) return;
+                      if (!/\.(xlsx|xlsm|xls)$/i.test(file.name)) {
+                        toast.error("Please select an Excel voucher file (.xlsx, .xlsm, or .xls).");
+                        return;
+                      }
+                      if (file.size > 20 * 1024 * 1024) {
+                        toast.error("Excel file is too large (max 20 MB).");
+                        return;
+                      }
+                      setStagedExcel(file);
                     }}
                   />
                   <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
@@ -715,8 +724,17 @@ export default function PortalSubmissionDetail() {
                       style={{ display: "none" }}
                       onChange={e => {
                         const file = e.target.files?.[0];
-                        if (file) { setStagedPdf(file); }
                         e.target.value = "";
+                        if (!file) return;
+                        if (file.type !== "application/pdf" && !/\.pdf$/i.test(file.name)) {
+                          toast.error("Please select a PDF document.");
+                          return;
+                        }
+                        if (file.size > 25 * 1024 * 1024) {
+                          toast.error("PDF is too large (max 25 MB).");
+                          return;
+                        }
+                        setStagedPdf(file);
                       }}
                     />
                     <Button variant="secondary" disabled={!item || extracting} loading={extracting} onClick={() => fileInputRef.current?.click()}>

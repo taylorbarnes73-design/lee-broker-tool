@@ -28,6 +28,12 @@ function err(res: Response, status: number, message: string) {
   res.status(status).json({ success: false, error: message });
 }
 
+/** Logs the real error server-side and returns a generic message so internals never leak to the client. */
+function serverError(res: Response, e: unknown) {
+  console.error(`[restApi] ${res.req?.method ?? ""} ${res.req?.originalUrl ?? ""} failed:`, e);
+  err(res, 500, "Internal server error");
+}
+
 function getConnectorApiKey(): string {
   return process.env.CONNECTOR_API_KEY ?? "";
 }
@@ -99,8 +105,8 @@ restApiRouter.post("/submit/listing", async (req: Request, res: Response) => {
       propertyAddress: body.propertyAddress,
       submittedAt: new Date().toISOString(),
     });
-  } catch (e: any) {
-    err(res, 500, e.message ?? "Internal server error");
+  } catch (e: unknown) {
+    serverError(res, e);
   }
 });
 
@@ -131,8 +137,8 @@ restApiRouter.post("/submit/voucher", async (req: Request, res: Response) => {
       totalCommission: body.totalCommission ?? null,
       submittedAt: new Date().toISOString(),
     });
-  } catch (e: any) {
-    err(res, 500, e.message ?? "Internal server error");
+  } catch (e: unknown) {
+    serverError(res, e);
   }
 });
 
@@ -164,8 +170,8 @@ restApiRouter.post("/submit/sign-request", async (req: Request, res: Response) =
       propertyAddress: body.propertyAddress,
       submittedAt: new Date().toISOString(),
     });
-  } catch (e: any) {
-    err(res, 500, e.message ?? "Internal server error");
+  } catch (e: unknown) {
+    serverError(res, e);
   }
 });
 
@@ -196,8 +202,8 @@ restApiRouter.post("/submit/comp", async (req: Request, res: Response) => {
       address: body.address,
       submittedAt: new Date().toISOString(),
     });
-  } catch (e: any) {
-    err(res, 500, e.message ?? "Internal server error");
+  } catch (e: unknown) {
+    serverError(res, e);
   }
 });
 
@@ -231,8 +237,8 @@ restApiRouter.get("/submissions", async (req: Request, res: Response) => {
       submittedBy: r.submittedBy,
       submittedAt: r.createdAt,
     })));
-  } catch (e: any) {
-    err(res, 500, e.message ?? "Internal server error");
+  } catch (e: unknown) {
+    serverError(res, e);
   }
 });
 
@@ -260,8 +266,8 @@ restApiRouter.get("/submissions/:id", async (req: Request, res: Response) => {
       submittedAt: row.createdAt,
       payload: JSON.parse(row.payload ?? "{}"),
     });
-  } catch (e: any) {
-    err(res, 500, e.message ?? "Internal server error");
+  } catch (e: unknown) {
+    serverError(res, e);
   }
 });
 
@@ -299,8 +305,8 @@ restApiRouter.get("/files", async (req: Request, res: Response) => {
       uploaderName: r.uploaderName,
       uploadedAt: r.createdAt,
     })));
-  } catch (e: any) {
-    err(res, 500, e.message ?? "Internal server error");
+  } catch (e: unknown) {
+    serverError(res, e);
   }
 });
 
@@ -316,8 +322,8 @@ restApiRouter.get("/files/url", async (req: Request, res: Response) => {
 
     const { url } = await storageGet(key);
     ok(res, { fileKey: key, url });
-  } catch (e: any) {
-    err(res, 500, e.message ?? "Internal server error");
+  } catch (e: unknown) {
+    serverError(res, e);
   }
 });
 
@@ -431,8 +437,8 @@ restApiRouter.post("/inbox/email", async (req: Request, res: Response) => {
     }
 
     ok(res, { requestId, savedAttachments: saved });
-  } catch (e: any) {
-    err(res, 500, e.message ?? "Internal server error");
+  } catch (e: unknown) {
+    serverError(res, e);
   }
 });
 
@@ -526,7 +532,7 @@ restApiRouter.post("/docusign/completed", async (req: Request, res: Response) =>
     }
 
     ok(res, results);
-  } catch (e: any) {
-    err(res, 500, e.message ?? "Internal server error");
+  } catch (e: unknown) {
+    serverError(res, e);
   }
 });
