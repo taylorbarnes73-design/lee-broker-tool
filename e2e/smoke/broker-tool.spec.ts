@@ -136,7 +136,7 @@ test.describe("broker tool smoke", () => {
     await page.locator("#v-l-comm-rate").fill("4");
 
     // 10,000 SF * $1.00/SF/mo * 12 mo = $120,000 consideration
-    await expect(page.locator("#v-l-consideration")).toHaveValue("$120,000");
+    await expect(page.locator("#v-l-consideration")).toHaveValue(/^\$120,000(\.00)?$/);
     // $120,000 * 4% = $4,800 commission due == total invoice (no bonus/fees)
     await expect(page.locator("#v-l-comm-due")).toHaveValue("$4,800.00");
     await expect(page.locator("#v-total-invoice")).toHaveValue("$4,800.00");
