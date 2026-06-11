@@ -3,22 +3,21 @@ import { loginAsBroker } from "../helpers/auth";
 
 test.describe("broker tool smoke", () => {
   test("comp report filters render dropdown controls", async ({ page }) => {
-    await loginAsBroker(page, undefined, "/tool#comp-reports");
-    await expect(page.locator("#broker-view")).toBeVisible({ timeout: 15_000 });
-    const compReportsTab = page.locator('[data-tab="comp-reports"]').first();
-    await compReportsTab.click();
-    await expect(page.locator("#tab-comp-reports.active")).toBeVisible({ timeout: 15_000 });
+    await loginAsBroker(page, undefined, "/portal/workspace?tab=comp-reports");
+    const tool = page.frameLocator('iframe[title="Broker workflow workspace"]');
+    await expect(tool.locator("#broker-view")).toBeVisible({ timeout: 15_000 });
+    await expect(tool.locator("#tab-comp-reports.active")).toBeVisible({ timeout: 15_000 });
 
     for (const id of ["cr-city", "cr-market", "cr-submarket", "cr-property-type"]) {
-      await expect(page.locator(`#${id} .cr-dd-btn`)).toBeVisible();
-      await expect(page.locator(`#${id} .cr-dd-label`)).toHaveText("All");
+      await expect(tool.locator(`#${id} .cr-dd-btn`)).toBeVisible();
+      await expect(tool.locator(`#${id} .cr-dd-label`)).toHaveText("All");
     }
 
-    await page.locator("#cr-city .cr-dd-btn").click();
-    const cityBtn = page.locator("#cr-city .cr-dd-btn");
+    await tool.locator("#cr-city .cr-dd-btn").click();
+    const cityBtn = tool.locator("#cr-city .cr-dd-btn");
     const cityBtnBox = await cityBtn.boundingBox();
     expect(cityBtnBox?.width ?? 0).toBeGreaterThanOrEqual(120);
-    const cityPanel = page.locator("#cr-city .cr-dd-panel");
+    const cityPanel = tool.locator("#cr-city .cr-dd-panel");
     await expect(cityPanel).toHaveClass(/open/);
     await expect(cityPanel.locator(".cr-dd-search-input")).toBeVisible();
     const anaheimLabel = cityPanel.locator(".cr-dd-opt", { hasText: "Anaheim" });
@@ -31,20 +30,18 @@ test.describe("broker tool smoke", () => {
   test("commission distribution gross % input stays editable without opening side picker", async ({
     page,
   }) => {
-    await loginAsBroker(page, undefined, "/tool#voucher");
-    await expect(page.locator("#broker-view")).toBeVisible({ timeout: 15_000 });
-
-    const voucherTab = page.locator('[data-tab="voucher"]').first();
-    await voucherTab.click();
-    await expect(page.locator("#tab-voucher.active, #tab-voucher.panel.active")).toBeVisible({
+    await loginAsBroker(page, undefined, "/portal/workspace?tab=voucher");
+    const tool = page.frameLocator('iframe[title="Broker workflow workspace"]');
+    await expect(tool.locator("#broker-view")).toBeVisible({ timeout: 15_000 });
+    await expect(tool.locator("#tab-voucher.active, #tab-voucher.panel.active")).toBeVisible({
       timeout: 15_000,
     });
 
-    const distSection = page.locator("#vstep-8");
+    const distSection = tool.locator("#vstep-8");
     await distSection.scrollIntoViewIfNeeded();
     await expect(distSection).toBeVisible();
 
-    const distRow = page.locator("#v-dist-body tr").first();
+    const distRow = tool.locator("#v-dist-body tr").first();
     await expect(distRow).toBeVisible();
 
     const sideChip = distRow.locator(".side-chip");
@@ -78,23 +75,21 @@ test.describe("broker tool smoke", () => {
       });
     });
 
-    await loginAsBroker(page, undefined, "/tool#marketing-request");
-    await expect(page.locator("#broker-view")).toBeVisible({ timeout: 15_000 });
+    await loginAsBroker(page, undefined, "/portal/workspace?tab=marketing-request");
+    const tool = page.frameLocator('iframe[title="Broker workflow workspace"]');
+    await expect(tool.locator("#broker-view")).toBeVisible({ timeout: 15_000 });
+    await expect(tool.locator("#tab-marketing-request.active")).toBeVisible({ timeout: 15_000 });
 
-    const marketingTab = page.locator('[data-tab="marketing-request"]').first();
-    await marketingTab.click();
-    await expect(page.locator("#tab-marketing-request.active")).toBeVisible({ timeout: 15_000 });
+    await tool.locator("#mr-requester-name").selectOption("Frank Adler");
+    await tool.locator("#mr-requester-email").fill("broker@lee-associates.com");
+    await tool.locator("#mr-project-title").fill("Smoke PDF export");
+    await tool.locator("#mr-request-type").selectOption("Flyer / brochure");
+    await tool.locator("#mr-priority").selectOption("Standard");
+    await tool.locator("#mr-objective").fill("Verify marketing PDF export wiring.");
+    await tool.locator("#mr-due-date").fill("2026-06-20");
 
-    await page.locator("#mr-requester-name").selectOption("Frank Adler");
-    await page.locator("#mr-requester-email").fill("broker@lee-associates.com");
-    await page.locator("#mr-project-title").fill("Smoke PDF export");
-    await page.locator("#mr-request-type").selectOption("Flyer / brochure");
-    await page.locator("#mr-priority").selectOption("Standard");
-    await page.locator("#mr-objective").fill("Verify marketing PDF export wiring.");
-    await page.locator("#mr-due-date").fill("2026-06-20");
-
-    await page.locator("#btn-mr-download-pdf").click();
-    await expect(page.locator("#mr-status .status-success")).toBeVisible({ timeout: 15_000 });
+    await tool.locator("#btn-mr-download-pdf").click();
+    await expect(tool.locator("#mr-status .status-success")).toBeVisible({ timeout: 15_000 });
     expect(pdfRequestBody).toMatchObject({
       requesterName: "Frank Adler",
       email: "broker@lee-associates.com",
@@ -104,5 +99,42 @@ test.describe("broker tool smoke", () => {
       objective: "Verify marketing PDF export wiring.",
       dueDate: "2026-06-20",
     });
+  });
+
+  test("voucher lease commission math matches the company Excel voucher", async ({
+    page,
+  }) => {
+    // Regression guard for the calculation chain documented in
+    // docs/SOURCE_OF_TRUTH.md: rent schedule -> consideration -> commission
+    // due -> total invoice -> gross to distribute. Expected values follow the
+    // Excel voucher formulas (consideration = monthly * months; commission =
+    // consideration * rate%).
+    await loginAsBroker(page, undefined, "/portal/workspace?tab=voucher");
+    const tool = page.frameLocator('iframe[title="Broker workflow workspace"]');
+    await expect(tool.locator("#broker-view")).toBeVisible({ timeout: 15_000 });
+    await expect(tool.locator("#tab-voucher.active, #tab-voucher.panel.active")).toBeVisible({
+      timeout: 15_000,
+    });
+
+    await tool.locator("#v-l-dealsf").fill("10000");
+    await tool.locator("#v-l-term").fill("12");
+    await tool.locator("#v-l-rate").fill("1.00");
+
+    await tool.getByRole("button", { name: "Generate schedule" }).click();
+    await expect(tool.locator("#v-rent-body tr")).toHaveCount(1);
+    await expect(tool.locator("#v-rent-body tr .rent-monthly").first()).toHaveValue(
+      /10,?000/
+    );
+
+    await tool.locator("#v-l-comm-rate").fill("4");
+
+    // 10,000 SF * $1.00/SF/mo * 12 mo = $120,000 consideration
+    await expect(tool.locator("#v-l-consideration")).toHaveValue(/^\$120,000(\.00)?$/);
+    // $120,000 * 4% = $4,800 commission due == total invoice (no bonus/fees)
+    await expect(tool.locator("#v-l-comm-due")).toHaveValue("$4,800.00");
+    await expect(tool.locator("#v-total-invoice")).toHaveValue("$4,800.00");
+    // No outside agents, so the full invoice is available to distribute.
+    await expect(tool.locator("#v-dist-total-invoice")).toHaveValue("$4,800.00");
+    await expect(tool.locator("#v-gross-dist")).toHaveValue("$4,800.00");
   });
 });

@@ -35,9 +35,9 @@ export function buildLoginRequestBody(identifier: string, password: string) {
 }
 
 function getSafeNextPath() {
-  if (typeof window === "undefined") return "/portal/new";
+  if (typeof window === "undefined") return "/portal/workspace";
   const next = new URLSearchParams(window.location.search).get("next");
-  if (!next || !next.startsWith("/") || next.startsWith("//")) return "/portal/new";
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return "/portal/workspace";
   return next;
 }
 
@@ -216,12 +216,6 @@ export default function Login() {
           </form>
         </Card>
 
-        <p style={{ textAlign: "center", marginTop: 20, fontSize: 13, color: "var(--ink-600)" }}>
-          <a href="/tool" style={{ color: "var(--ink-800)", fontWeight: 600 }}>
-            Open broker forms &amp; comp workspace
-          </a>{" "}
-          <span style={{ color: "var(--ink-400)" }}>(HTML tool)</span>
-        </p>
       </div>
     </div>
   );

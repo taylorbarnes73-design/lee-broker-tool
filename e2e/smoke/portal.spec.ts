@@ -1,19 +1,33 @@
 import { expect, test } from "@playwright/test";
-import { loginAsBroker } from "../helpers/auth";
+import { loginAsAdmin, loginAsBroker } from "../helpers/auth";
 
 test.describe("portal smoke", () => {
   test.beforeEach(async ({ page }) => {
     await loginAsBroker(page);
   });
 
-  test("broker home shows primary form cards", async ({ page }) => {
-    await page.goto("/portal/new");
+  test("broker home shows guided starts and workspace tools", async ({ page }) => {
+    await page.goto("/portal/workspace");
     await expect(
       page.getByRole("link", { name: /Add a listing/i })
     ).toBeVisible();
     await expect(
       page.getByRole("link", { name: /Submit a closed deal/i })
     ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Commission voucher/i })
+    ).toBeVisible();
+  });
+
+  test("broker sees the shared workspace without admin navigation", async ({ page }) => {
+    await page.goto("/portal/workspace");
+    await expect(page.getByRole("link", { name: /Open broker workspace/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Admin", exact: true })).toHaveCount(0);
+  });
+
+  test("legacy broker home URL redirects to workspace", async ({ page }) => {
+    await page.goto("/portal/new");
+    await expect(page).toHaveURL(/\/portal\/workspace/);
   });
 
   test("voucher pilot form validates required fields", async ({ page }) => {
@@ -79,5 +93,30 @@ test.describe("portal smoke", () => {
     await expect(page.getByRole("heading", { name: "Message the admin team" })).toBeVisible();
     await expect(page.getByRole("button", { name: /General Request/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /IT \/ System Issue/i })).toBeVisible();
+  });
+});
+
+test.describe("admin portal separation", () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAsAdmin(page);
+  });
+
+  test("admin starts on the shared home and enters admin tools explicitly", async ({ page }) => {
+    await expect(page).toHaveURL(/\/portal\/workspace/);
+    await expect(page.getByRole("heading", { name: /Welcome/i })).toBeVisible();
+    const adminEntry = page.getByRole("link", { name: "Admin", exact: true }).first();
+    await expect(adminEntry).toBeVisible();
+    await expect(page.getByRole("link", { name: "Settings" })).toHaveCount(0);
+
+    await adminEntry.click();
+    await expect(page).toHaveURL(/\/portal\/admin\/submissions/);
+    await expect(page.getByRole("link", { name: /Settings/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Users/i })).toBeVisible();
+  });
+
+  test("legacy shared submissions URL redirects admins into the admin area", async ({ page }) => {
+    await page.goto("/portal/submissions");
+    await expect(page).toHaveURL(/\/portal\/admin\/submissions/);
+    await expect(page.getByRole("link", { name: "Exit Admin", exact: true })).toBeVisible();
   });
 });

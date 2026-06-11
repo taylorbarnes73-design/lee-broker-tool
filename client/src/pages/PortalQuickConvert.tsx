@@ -336,14 +336,14 @@ export default function PortalQuickConvert() {
 
   return (
     <AdminPortalShell
-      section={isAdminToolsRoute ? "quick-convert" : "new-submission"}
+      section={isAdminToolsRoute ? "quick-convert" : "forms"}
       eyebrow={isAdminToolsRoute ? "Admin Portal" : "Broker Portal"}
       title="Upload a document — skip the typing"
       description="Upload a lease, exclusive, or agreement and we'll read it and prefill the right form for you (closed deal, listing, or sign order). Also converts Word to PDF and applies LANB letterhead."
       actions={
         <>
-          <LinkButton href="/portal/new" variant="secondary">
-            Broker home
+          <LinkButton href="/portal/workspace" variant="secondary">
+            Workspace
           </LinkButton>
           <LinkButton href="/portal/submissions" variant="secondary">
             My submissions
@@ -445,8 +445,8 @@ export default function PortalQuickConvert() {
           <p style={{ margin: "20px 0 0", fontSize: 12, color: "var(--ink-500)", lineHeight: 1.5 }}>
             Accepted: PDF, Word (.doc, .docx), up to 25 MB. AI prefill requires a configured Gemini, Anthropic, or OpenAI
             key on the server. After prefill, review every field in the{" "}
-            <Link href="/tool" style={{ color: accent, fontWeight: 600 }}>
-              broker tool
+            <Link href="/portal/workspace" style={{ color: accent, fontWeight: 600 }}>
+              workspace
             </Link>{" "}
             and download the official PDF or Excel voucher before submitting.
           </p>

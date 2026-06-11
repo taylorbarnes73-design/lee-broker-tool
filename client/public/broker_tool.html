@@ -20,6 +20,11 @@
 <link rel="stylesheet" href="broker_ux.css?v=20260610.1">
 </head>
 <body>
+<script>
+if (window.location.search.includes('embedded=1')) {
+  document.body.classList.add('workspace-embedded');
+}
+</script>
 
 <div class="header">
   <div class="header-main">
@@ -81,7 +86,7 @@
     <div class="broker-nav-folder" data-folder="admin">
       <div class="broker-nav-folder-label">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-        <span>Admin</span>
+        <span>Broker tools</span>
       </div>
       <div class="broker-nav-folder-items">
         <div class="tab broker-nav-item" data-tab="voucher" data-tab-trigger="voucher" onclick="switchTab('voucher')">
@@ -10812,7 +10817,7 @@ async function initBrokerToolAuth() {
     console.warn('Auth check on load:', e && e.message ? e.message : e);
   }
   setAdminAccessForUser(null);
-  window.location.href = '/login?next=/tool';
+  window.location.href = '/login?next=/portal/workspace';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -12373,8 +12378,9 @@ async function toggleAdminMode() {
   }
 }
 
-// If embedded in iframe, hide header and admin toggle
+// Embedded mode is hosted by the React workspace shell.
 if (window.location.search.includes('embedded=1')) {
+  document.body.classList.add('workspace-embedded');
   var hdr = document.querySelector('.header');
   setHiddenState(hdr, true);
 }

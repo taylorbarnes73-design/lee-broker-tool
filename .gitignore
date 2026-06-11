@@ -107,6 +107,10 @@ tmp/
 temp/
 .deploy/
 
+# Scratch decode/redesign artifacts — never edit these; the broker workspace
+# source of truth is client/public/broker_tool.html (see docs/SOURCE_OF_TRUTH.md)
+build_scratch/
+
 # Database
 *.db
 *.sqlite

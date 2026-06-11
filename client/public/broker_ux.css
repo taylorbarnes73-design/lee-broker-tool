@@ -8,6 +8,35 @@
   --broker-chrome-h: 72px;
 }
 
+body.workspace-embedded {
+  --broker-header-h: 0px;
+  --broker-chrome-h: 0px;
+  min-height: 100dvh;
+  background: #f8f7f4;
+}
+
+body.workspace-embedded .header,
+body.workspace-embedded .broker-sidebar,
+body.workspace-embedded .broker-sidebar-overlay,
+body.workspace-embedded .tab-bar,
+body.workspace-embedded .admin-toggle {
+  display: none !important;
+}
+
+body.workspace-embedded.broker-active #broker-view {
+  width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+}
+
+body.workspace-embedded.broker-active #broker-view > .panel.active {
+  width: 100%;
+  max-width: 1180px;
+  height: 100dvh;
+  max-height: 100dvh;
+  padding: 18px 20px 100px;
+}
+
 /* ── App shell: main area scrolls; side rails fit the window ── */
 body.broker-active {
   height: 100dvh;

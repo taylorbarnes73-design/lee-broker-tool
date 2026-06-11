@@ -107,9 +107,10 @@ async function startServer() {
   app.use(express.json({ limit: "250mb" }));
   app.use(express.urlencoded({ limit: "250mb", extended: true }));
 
-  // Redirect legacy URL to canonical clean URL
-  app.get("/broker_tool.html", (_req, res) => {
-    res.redirect(301, "/tool");
+  // Keep old bookmarks working while the React workspace owns the product URL.
+  app.get(["/tool", "/broker_tool.html"], (req, res) => {
+    const query = req.originalUrl.includes("?") ? req.originalUrl.slice(req.originalUrl.indexOf("?")) : "";
+    res.redirect(302, `/portal/workspace${query}`);
   });
 
   // Health check endpoint for AWS Application Load Balancer
@@ -167,15 +168,14 @@ async function startServer() {
     res.sendFile(templatePath);
   });
 
-  // Legacy broker HTML entry points (not the marketing / SPA root).
-  // `/` is served by the React shell (Vite dev or `serveStatic`); `/tool` stays the HTML workspace.
+  // Legacy beta URLs now enter the shared React workspace.
   app.get(["/beta", "/beta/*", "/404"], (req, res) => {
     const ua = req.headers["user-agent"] || "";
     if (ua.toLowerCase().includes("elb-healthchecker")) {
       res.status(200).send("OK");
       return;
     }
-    res.redirect(302, "/tool");
+    res.redirect(302, "/portal/workspace");
   });
 
   // OAuth callback under /api/oauth/callback

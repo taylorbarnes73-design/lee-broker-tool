@@ -62,13 +62,13 @@ export default function PortalListingForm() {
 
   return (
     <AdminPortalShell
-      section="new-submission"
+      section="forms"
       eyebrow="New listing?"
       title="Add a listing"
       description="Takes about 3 minutes. You'll need the property address, type, and headline pricing. You get the listing filed with the admin team for marketing and records."
       actions={
-        <LinkButton href="/portal/new" variant="secondary">
-          Back to home
+        <LinkButton href="/portal/workspace" variant="secondary">
+          Back to workspace
         </LinkButton>
       }
     >

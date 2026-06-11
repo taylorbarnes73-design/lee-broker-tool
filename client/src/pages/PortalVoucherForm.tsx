@@ -46,13 +46,13 @@ export default function PortalVoucherForm() {
 
   return (
     <AdminPortalShell
-      section="new-submission"
+      section="forms"
       eyebrow="Deal closed?"
       title="Submit a closed deal"
       description="Takes about 5 minutes. You'll need the property address, client name, and deal terms. You get a commission voucher filed with the admin team."
       actions={
-        <LinkButton href="/portal/new" variant="secondary">
-          Back to home
+        <LinkButton href="/portal/workspace" variant="secondary">
+          Back to workspace
         </LinkButton>
       }
     >
