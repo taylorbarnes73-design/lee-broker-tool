@@ -131,9 +131,9 @@ function BrokerSubmissions() {
     return (
       <Empty>
         <div style={{ fontWeight: 700, color: "var(--ink-900)", marginBottom: 6 }}>No submissions yet</div>
-        Build a voucher, listing, or sign request in the broker tool, then send it to admin.
+        Build a voucher, listing, or sign request in the workspace, then send it to admin.
         <div style={{ marginTop: 14 }}>
-          <LinkButton href="/tool" variant="primary">Open broker tool</LinkButton>
+          <LinkButton href="/portal/workspace" variant="primary">Open workspace</LinkButton>
         </div>
       </Empty>
     );
@@ -229,7 +229,7 @@ function AdminSubmissions() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {visible.map(s => (
-            <Link key={s.id} href={`/portal/submissions/${s.id}`} className="portal-list-item" style={{ textDecoration: "none", display: "flex", justifyContent: "space-between", gap: 12, padding: 12, borderRadius: 10, border: "1px solid var(--ink-200)", background: "white", color: "inherit" }}>
+            <Link key={s.id} href={`/portal/admin/submissions/${s.id}`} className="portal-list-item" style={{ textDecoration: "none", display: "flex", justifyContent: "space-between", gap: 12, padding: 12, borderRadius: 10, border: "1px solid var(--ink-200)", background: "white", color: "inherit" }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontWeight: 700, color: "var(--ink-900)" }}>#{s.id} · {s.reference || "(untitled)"}</div>
                 <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6, flexWrap: "wrap" }}>

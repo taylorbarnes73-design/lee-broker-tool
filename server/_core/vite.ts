@@ -15,8 +15,7 @@ const PROD_PUBLIC_ROOT = path.resolve(process.cwd(), "dist/public");
 
 const HTML_ENTRY_TEMPLATES: Record<string, string> = {
   "/": CLIENT_INDEX_TEMPLATE,
-  "/tool": BROKER_TOOL_TEMPLATE,
-  "/broker_tool.html": BROKER_TOOL_TEMPLATE,
+  "/workspace-engine": BROKER_TOOL_TEMPLATE,
 };
 
 const resolveHtmlTemplate = (requestUrl: string) => {
@@ -73,13 +72,13 @@ export function serveStatic(app: Express) {
     );
   }
 
-  // Redirect legacy URL to canonical clean URL
-  app.get("/broker_tool.html", (_req, res) => {
-    res.redirect(301, "/tool");
+  app.get(["/tool", "/broker_tool.html"], (req, res) => {
+    const query = req.originalUrl.includes("?") ? req.originalUrl.slice(req.originalUrl.indexOf("?")) : "";
+    res.redirect(302, `/portal/workspace${query}`);
   });
 
-  // Serve the broker tool at the clean /tool path
-  app.get("/tool", (_req, res) => {
+  // Internal workflow engine. The user-facing route is /portal/workspace.
+  app.get("/workspace-engine", (_req, res) => {
     // Avoid CDN/browser caching hiding updates to the tool UI.
     res.setHeader("Cache-Control", "no-store");
     res.sendFile("broker_tool.html", { root: distPath });
@@ -104,9 +103,9 @@ export function serveStatic(app: Express) {
     }
   );
 
-  // Legacy broker workflows still fall through to broker_tool.html.
+  // Unknown routes use the React shell rather than exposing a second workspace.
   app.use("*", (_req, res) => {
     res.setHeader("Cache-Control", "no-store");
-    res.sendFile("broker_tool.html", { root: distPath });
+    res.sendFile("index.html", { root: distPath });
   });
 }

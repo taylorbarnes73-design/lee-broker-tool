@@ -209,7 +209,7 @@ export function buildBrokerToolTabUrl(tab: string, extraParams?: Record<string, 
       if (value) params.set(key, value);
     });
   }
-  return `/tool?${params.toString()}`;
+  return `/portal/workspace?${params.toString()}`;
 }
 
 function str(raw: unknown): string {

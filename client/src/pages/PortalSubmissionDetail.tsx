@@ -180,8 +180,9 @@ function fileAsBase64(file: File): Promise<string> {
 
 export default function PortalSubmissionDetail() {
   const { user } = useAuth();
-  const [, params] = useRoute("/portal/submissions/:id");
-  const id = Number(params?.id);
+  const [, brokerParams] = useRoute("/portal/submissions/:id");
+  const [, adminParams] = useRoute("/portal/admin/submissions/:id");
+  const id = Number(adminParams?.id ?? brokerParams?.id);
   const [activeTab, setActiveTab] = useState<"summary" | "deal" | "documents" | "payload">("summary");
   const [item, setItem] = useState<SubmissionDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -376,7 +377,7 @@ export default function PortalSubmissionDetail() {
           : "Loading submission detail workspace."
       }
       actions={
-        <LinkButton href="/portal/submissions" variant="secondary">
+        <LinkButton href={isAdmin ? "/portal/admin/submissions" : "/portal/submissions"} variant="secondary">
           {isAdmin ? "Back to submissions" : "Back to my submissions"}
         </LinkButton>
       }

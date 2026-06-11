@@ -7,11 +7,12 @@ listed there.
 
 ## TL;DR
 
-There is **one** live broker tool. The "standalone HTML" workspace is not a
-separate app — it is served by this server at `/tool` and `/broker_tool.html`
-(see `server/_core/vite.ts` and `server/_core/index.ts`). The React portal
-(`client/src/pages/Portal*.tsx`) is the navigation/intake shell that hands off
-to the workspace. Both share the same backend.
+There is **one** user-facing workspace at `/portal/workspace`. Its shell,
+navigation, role visibility, and layout live in React. The proven HTML workflow
+engine is embedded inside that route from the internal `/workspace-engine`
+endpoint so its parsing, upload, draft, voucher calculation, and export behavior
+remain unchanged. `/tool` and `/broker_tool.html` are compatibility redirects
+to the React workspace, not competing product surfaces.
 
 The drift risk came from **stale tracked copies** of the workspace, which have
 now been removed from the repository (see "Removed duplicates" below).
@@ -20,9 +21,11 @@ now been removed from the repository (see "Removed duplicates" below).
 
 | Concern | Source of truth | Notes |
 | --- | --- | --- |
-| Workspace UI layout (voucher, listing, sign, comp tabs) | `client/public/broker_tool.html` | Single-file HTML + inline JS, served at `/tool`. |
+| Shared workspace shell, tool launcher, routing | `client/src/pages/PortalWorkspace.tsx`, `client/src/components/AdminPortalShell.tsx`, `client/src/index.css` | User-facing route: `/portal/workspace`. |
+| Workflow forms and behavior (voucher, listing, sign, comp tabs) | `client/public/broker_tool.html` | Internal engine, served only at `/workspace-engine` and embedded by React. |
 | Workspace UI patches (preflight, analyze panel, prefill banner) | `client/public/features_patch.js` | Loaded alongside `broker_tool.html`. |
-| Workspace styling | `client/public/broker_tool.css`, `client/public/broker_ux.css` | Workspace-only; not shared with the React portal. |
+| Product shell styling | `client/src/index.css` | Shared broker/admin home, navigation, launcher, and embedded workspace frame. |
+| Workflow form styling | `client/public/broker_tool.css`, `client/public/broker_ux.css` | Form internals; embedded mode removes duplicate header/sidebar chrome. |
 | AI parsing / extraction (server) | `server/routers/aiAssist.ts` (+ `server/services/pdfTextScrape.ts`) | One backend used by BOTH the workspace and the portal. Procedures: `parse`, `smartComplete`, `extractDocument`, `extractVoucherDocument`, `extractListingDocument`, `scrapeBrochure`, `reviewVoucher`, `calculateDeal`. |
 | Applying extracted fields to workspace inputs | `AI_FIELD_MAP` + `applyAiFields()` in `client/public/broker_tool.html` | Maps extraction keys → workspace element ids. Regression-tested in `server/brokerTool.test.ts`. |
 | Portal → workspace prefill contract | `shared/quickConvert.ts` (`VOUCHER_AI_FIELD_KEYS`, `LISTING_AI_FIELD_KEYS`, `SIGN_AI_FIELD_KEYS`, sessionStorage payload) | These lists must stay a subset of `AI_FIELD_MAP` keys — enforced by tests. |
@@ -49,8 +52,9 @@ These were tracked copies that caused the drift and were deleted:
 
 ## Rules
 
-1. **Never edit two copies.** All workspace changes go to
-   `client/public/broker_tool.html` / `features_patch.js`.
+1. **Never create a second workspace surface.** Product layout/navigation goes
+   in React. Form behavior goes in `client/public/broker_tool.html` /
+   `features_patch.js`, rendered through `PortalWorkspace`.
 2. **Don't fork the parsing.** Extraction behavior lives server-side in
    `aiAssist.ts`. Client-side, only the field *application* differs between
    portal (prefill payload) and workspace (`applyAiFields`).
@@ -88,7 +92,7 @@ These were tracked copies that caused the drift and were deleted:
 
 ## Manual verification checklist (run after touching any canonical file)
 
-1. **Upload & parse (workspace):** `/tool` → Commission Voucher → upload a deal
+1. **Upload & parse (workspace):** `/portal/workspace?tab=voucher` → upload a deal
    PDF → "Analyze" → confirm fields highlight with the AI badge and values land
    in the right inputs.
 2. **Upload & parse (portal):** `/portal/quick-convert` → upload the same PDF →
