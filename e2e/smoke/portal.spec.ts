@@ -21,11 +21,16 @@ test.describe("portal smoke", () => {
     await expect(page.getByTestId("workspace-frame")).toHaveCount(0);
   });
 
-  test("opening a tool card shows the focused workspace frame", async ({ page }) => {
+  test("opening a tool card shows that tool in the workspace frame", async ({ page }) => {
     await page.goto("/portal/workspace");
     await page.getByRole("link", { name: /Commission voucher/i }).click();
     await expect(page).toHaveURL(/tab=voucher/);
     await expect(page.getByTestId("workspace-frame")).toBeVisible();
+    // The engine must open on the tool the card claims, not its default tab.
+    const tool = page.frameLocator('iframe[title="Broker workflow workspace"]');
+    await expect(tool.locator("#tab-voucher.active, #tab-voucher.panel.active")).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.getByRole("link", { name: /Workspace/i }).first()).toBeVisible();
   });
 
