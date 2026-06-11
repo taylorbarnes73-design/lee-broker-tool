@@ -6,7 +6,7 @@ export const SMOKE_ADMIN_USERNAME = process.env.SMOKE_ADMIN_USER ?? "tbarnes";
 export async function loginAsBroker(
   page: Page,
   username = SMOKE_BROKER_USERNAME,
-  nextPath = "/portal/",
+  nextPath = "/portal/workspace",
 ) {
   const response = await page.request.post("/api/auth/login", {
     data: { email: username },
@@ -19,7 +19,7 @@ export async function loginAsBroker(
 export async function loginAsAdmin(
   page: Page,
   username = SMOKE_ADMIN_USERNAME,
-  nextPath = "/portal/new",
+  nextPath = "/portal/workspace",
 ) {
   const response = await page.request.post("/api/auth/login", {
     data: { email: username },

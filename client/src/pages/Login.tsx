@@ -35,9 +35,9 @@ export function buildLoginRequestBody(identifier: string, password: string) {
 }
 
 function getSafeNextPath() {
-  if (typeof window === "undefined") return "/portal/new";
+  if (typeof window === "undefined") return "/portal/workspace";
   const next = new URLSearchParams(window.location.search).get("next");
-  if (!next || !next.startsWith("/") || next.startsWith("//")) return "/portal/new";
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return "/portal/workspace";
   return next;
 }
 

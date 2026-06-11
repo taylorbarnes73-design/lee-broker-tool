@@ -12,7 +12,6 @@ import PortalAdminUsers from "./pages/PortalAdminUsers";
 import PortalAdminSettings from "./pages/PortalAdminSettings";
 import PortalAdminDealiusTools from "./pages/PortalAdminDealiusTools";
 import PortalAdminListingImport from "./pages/PortalAdminListingImport";
-import PortalNewSubmission from "./pages/PortalNewSubmission";
 import PortalVoucherForm from "./pages/PortalVoucherForm";
 import PortalSignForm from "./pages/PortalSignForm";
 import PortalListingForm from "./pages/PortalListingForm";
@@ -73,7 +72,7 @@ function PublicHome() {
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <a
-            href="/login?next=/portal/new"
+            href="/login?next=/portal/workspace"
             style={{
               display: "block",
               padding: "13px 20px",
@@ -108,7 +107,7 @@ function PortalNotFound() {
       <div style={{ fontSize: 18, fontWeight: 700, color: "var(--ink-900)" }}>Page not found</div>
       <div>That portal page doesn&apos;t exist. Check the address or head back to your home page.</div>
       <div style={{ display: "flex", gap: 10, marginTop: 6 }}>
-        <Link href="/portal/new" style={{ color: "#98002E", fontWeight: 600 }}>Broker home</Link>
+        <Link href="/portal/workspace" style={{ color: "#98002E", fontWeight: 600 }}>Broker home</Link>
         <Link href="/portal/submissions" style={{ color: "#98002E", fontWeight: 600 }}>My submissions</Link>
       </div>
     </div>
@@ -118,7 +117,7 @@ function PortalNotFound() {
 /** Bookmark-friendly alias: same login as `/login`, default return to submissions after sign-in. */
 function AdminLoginEntry() {
   useEffect(() => {
-    window.location.replace("/login?next=" + encodeURIComponent("/portal/submissions"));
+    window.location.replace("/login?next=" + encodeURIComponent("/portal/workspace"));
   }, []);
   return (
     <div className="portal-loading">
@@ -192,7 +191,7 @@ function AdminAccessRequired() {
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <Link
-            href="/portal/submissions"
+            href="/portal/workspace"
             style={{
               display: "block",
               padding: "12px 18px",
@@ -204,23 +203,7 @@ function AdminAccessRequired() {
               fontSize: 14,
             }}
           >
-            Go to broker portal
-          </Link>
-          <Link
-            href="/portal/workspace"
-            style={{
-              display: "block",
-              padding: "12px 18px",
-              borderRadius: 8,
-              border: "1px solid var(--ink-200)",
-              background: "var(--ink-0)",
-              color: "var(--ink-700)",
-              fontWeight: 600,
-              textDecoration: "none",
-              fontSize: 14,
-            }}
-          >
-            Open shared workspace
+            Go to broker home
           </Link>
         </div>
       </div>
@@ -290,17 +273,17 @@ function Router() {
       {/* Legacy / alias routes → redirect to unified submissions */}
       <Route path="/portal">
         <PortalRoute>
-          <Redirect to="/portal/submissions" />
+          <Redirect to="/portal/workspace" />
         </PortalRoute>
       </Route>
       <Route path="/portal/dashboard">
         <PortalRoute>
-          <Redirect to="/portal/submissions" />
+          <Redirect to="/portal/workspace" />
         </PortalRoute>
       </Route>
       <Route path="/dashboard">
         <PortalRoute>
-          <Redirect to="/portal/submissions" />
+          <Redirect to="/portal/workspace" />
         </PortalRoute>
       </Route>
       <Route path="/portal/admin">
@@ -326,10 +309,9 @@ function Router() {
         </AdminPortalRoute>
       </Route>
 
-      {/* Broker home & quick convert */}
       <Route path="/portal/new">
         <PortalRoute>
-          <PortalNewSubmission />
+          <Redirect to="/portal/workspace" />
         </PortalRoute>
       </Route>
       <Route path="/portal/workspace">

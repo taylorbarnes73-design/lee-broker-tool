@@ -59,13 +59,13 @@ export default function PortalSignForm() {
 
   return (
     <AdminPortalShell
-      section="new-submission"
+      section="forms"
       eyebrow="Need a sign?"
       title="Order a sign"
       description="Takes about 2 minutes. We install a standard Lee & Associates for-lease or for-sale sign at the property — orders are typically fulfilled within 2–3 business days."
       actions={
-        <LinkButton href="/portal/new" variant="secondary">
-          Back to home
+        <LinkButton href="/portal/workspace" variant="secondary">
+          Back to workspace
         </LinkButton>
       }
     >

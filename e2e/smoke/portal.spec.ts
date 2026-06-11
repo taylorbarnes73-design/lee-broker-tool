@@ -6,20 +6,28 @@ test.describe("portal smoke", () => {
     await loginAsBroker(page);
   });
 
-  test("broker home shows primary form cards", async ({ page }) => {
-    await page.goto("/portal/new");
+  test("broker home shows guided starts and workspace tools", async ({ page }) => {
+    await page.goto("/portal/workspace");
     await expect(
       page.getByRole("link", { name: /Add a listing/i })
     ).toBeVisible();
     await expect(
       page.getByRole("link", { name: /Submit a closed deal/i })
     ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Commission voucher/i })
+    ).toBeVisible();
   });
 
   test("broker sees the shared workspace without admin navigation", async ({ page }) => {
-    await page.goto("/portal/new");
-    await expect(page.getByRole("link", { name: "Workspace" }).first()).toBeVisible();
+    await page.goto("/portal/workspace");
+    await expect(page.getByRole("link", { name: /Open broker workspace/i })).toBeVisible();
     await expect(page.getByRole("link", { name: "Admin", exact: true })).toHaveCount(0);
+  });
+
+  test("legacy broker home URL redirects to workspace", async ({ page }) => {
+    await page.goto("/portal/new");
+    await expect(page).toHaveURL(/\/portal\/workspace/);
   });
 
   test("voucher pilot form validates required fields", async ({ page }) => {
@@ -94,7 +102,7 @@ test.describe("admin portal separation", () => {
   });
 
   test("admin starts on the shared home and enters admin tools explicitly", async ({ page }) => {
-    await expect(page).toHaveURL(/\/portal\/new/);
+    await expect(page).toHaveURL(/\/portal\/workspace/);
     await expect(page.getByRole("heading", { name: /Welcome/i })).toBeVisible();
     const adminEntry = page.getByRole("link", { name: "Admin", exact: true }).first();
     await expect(adminEntry).toBeVisible();

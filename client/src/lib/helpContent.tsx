@@ -36,14 +36,14 @@ const quickConvert: HelpEntry = {
 };
 
 const dashboard: HelpEntry = {
-  title: "Broker home — how this page works",
+  title: "Broker workspace — how this page works",
   body: (
     <>
       <p>
-        Landing page after sign-in. Each card is a task: <strong>Submit a closed deal</strong> (commission
-        voucher), <strong>Add a listing</strong>, <strong>Order a sign</strong>, or{" "}
-        <strong>Message the admin team</strong>. The card tells you roughly how long it takes and what you
-        get back. More workflows (comps, drafts) are linked below the primary cards.
+        Shared landing page after sign-in. <strong>Guided starts</strong> walk you through common tasks:
+        submit a closed deal, add a listing, order a sign, or message the admin team.{" "}
+        <strong>Workspace tools</strong> below open the full voucher, listing, sign, comp, and marketing
+        workflows in one place.
       </p>
       <h3>Have the paperwork already?</h3>
       <p>
@@ -461,6 +461,7 @@ const ROUTE_MAP: ReadonlyArray<{ match: RegExp; entry: HelpEntry }> = [
   { match: /^\/portal\/submissions\/[^/]+/, entry: submissionDetail },
   { match: /^\/portal\/submissions/, entry: mySubmissions },
   { match: /^\/portal\/convert/, entry: quickConvert },
+  { match: /^\/portal\/workspace/, entry: dashboard },
   { match: /^\/portal\/new/, entry: dashboard },
   { match: /^\/portal\/home/, entry: dashboard },
   { match: /^\/portal\/?$/, entry: dashboard },

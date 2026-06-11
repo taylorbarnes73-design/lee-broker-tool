@@ -43,7 +43,7 @@ export default function PortalAdminRequest() {
 
   return (
     <AdminPortalShell
-      section="new-submission"
+      section="forms"
       eyebrow="Broker Portal"
       title={activeType ? activeType.title : "Message the admin team"}
       description={
@@ -53,12 +53,12 @@ export default function PortalAdminRequest() {
       }
       actions={
         activeType ? (
-          <LinkButton href="/portal/new" variant="secondary">
-            Back to forms
+          <LinkButton href="/portal/workspace" variant="secondary">
+            Back to workspace
           </LinkButton>
         ) : (
-          <LinkButton href="/portal/new" variant="secondary">
-            Back to home
+          <LinkButton href="/portal/workspace" variant="secondary">
+            Back to workspace
           </LinkButton>
         )
       }

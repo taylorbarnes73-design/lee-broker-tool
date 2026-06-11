@@ -336,14 +336,14 @@ export default function PortalQuickConvert() {
 
   return (
     <AdminPortalShell
-      section={isAdminToolsRoute ? "quick-convert" : "new-submission"}
+      section={isAdminToolsRoute ? "quick-convert" : "forms"}
       eyebrow={isAdminToolsRoute ? "Admin Portal" : "Broker Portal"}
       title="Upload a document — skip the typing"
       description="Upload a lease, exclusive, or agreement and we'll read it and prefill the right form for you (closed deal, listing, or sign order). Also converts Word to PDF and applies LANB letterhead."
       actions={
         <>
-          <LinkButton href="/portal/new" variant="secondary">
-            Broker home
+          <LinkButton href="/portal/workspace" variant="secondary">
+            Workspace
           </LinkButton>
           <LinkButton href="/portal/submissions" variant="secondary">
             My submissions

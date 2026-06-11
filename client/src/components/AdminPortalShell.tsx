@@ -2,13 +2,13 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { usePublicBranding } from "@/hooks/usePublicBranding";
 import { Link, useLocation } from "wouter";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { BriefcaseBusiness, HelpCircle, Home, LogOut, Menu, ShieldCheck, User, X } from "lucide-react";
+import { BriefcaseBusiness, HelpCircle, LogOut, Menu, ShieldCheck, User, X } from "lucide-react";
 import HelpPanel from "@/components/HelpPanel";
 import { getHelpForRoute } from "@/lib/helpContent";
 
 type AdminPortalSection =
-  | "new-submission"
   | "workspace"
+  | "forms"
   | "submissions"
   | "quick-convert"
   | "settings"
@@ -143,7 +143,7 @@ export default function AdminPortalShell({
 
   const sidebarContents = (
     <>
-      <Link href="/portal/new" className="admin-portal-sidebar-brand admin-portal-sidebar-home" aria-label="Portal home">
+      <Link href="/portal/workspace" className="admin-portal-sidebar-brand admin-portal-sidebar-home" aria-label="Portal home">
         <img
           src={logoSrc}
           alt="Lee & Associates Newport Beach"
@@ -154,31 +154,22 @@ export default function AdminPortalShell({
       </Link>
 
       <nav className="admin-portal-sidebar-nav" aria-label="Primary">
-        <Link
-          href="/portal/new"
-          className={`admin-portal-nav-item ${section === "new-submission" ? "active" : ""}`}
-          style={
-            section === "new-submission"
-              ? ({ borderColor: `${accent}33`, color: accent } as CSSProperties)
-              : undefined
-          }
-        >
-          <span>Home</span>
-          <small>Start a request</small>
-        </Link>
         {!isAdminArea && (
           <>
             <Link
               href="/portal/workspace"
-              className={`admin-portal-nav-item ${section === "workspace" ? "active" : ""}`}
+              className={`admin-portal-nav-item admin-portal-nav-item-featured ${section === "workspace" ? "active" : ""}`}
               style={
                 section === "workspace"
-                  ? ({ borderColor: `${accent}33`, color: accent } as CSSProperties)
-                  : undefined
+                  ? ({ borderColor: `${accent}44`, color: accent } as CSSProperties)
+                  : ({ ["--featured-accent" as string]: accent } as CSSProperties)
               }
             >
-              <span>Workspace</span>
-              <small>Vouchers, listings & tools</small>
+              <span className="admin-portal-nav-item-featured-label">
+                <BriefcaseBusiness size={14} aria-hidden />
+                Workspace
+              </span>
+              <small>Start here — vouchers, listings & tools</small>
             </Link>
             {!isAdmin && (
               <Link
@@ -299,21 +290,17 @@ export default function AdminPortalShell({
             <Menu size={18} aria-hidden />
           </button>
           <Link
-            href="/portal/new"
-            className={`admin-portal-header-home ${section === "new-submission" ? "active" : ""}`}
-            aria-label="Portal home"
-            aria-current={section === "new-submission" ? "page" : undefined}
+            href="/portal/workspace"
+            className={`admin-portal-header-workspace ${section === "workspace" && !isAdminArea ? "active" : ""}`}
+            aria-label="Open broker workspace"
+            aria-current={section === "workspace" && !isAdminArea ? "page" : undefined}
           >
-            <Home size={16} aria-hidden />
-            <span>Home</span>
-          </Link>
-          <Link href="/portal/workspace" className="admin-portal-header-workspace">
-            <BriefcaseBusiness size={15} aria-hidden />
+            <BriefcaseBusiness size={16} aria-hidden />
             <span>Workspace</span>
           </Link>
           {isAdmin && (
             <Link
-              href={isAdminArea ? "/portal/new" : "/portal/admin/submissions"}
+              href={isAdminArea ? "/portal/workspace" : "/portal/admin/submissions"}
               className={`admin-portal-header-admin ${isAdminArea ? "active" : ""}`}
             >
               <ShieldCheck size={15} aria-hidden />
