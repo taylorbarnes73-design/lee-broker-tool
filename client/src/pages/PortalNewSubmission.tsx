@@ -63,17 +63,17 @@ const MORE_FORMS: FormCard[] = [
   {
     title: "Comp input",
     description: "Add lease or sale comps to the office dataset.",
-    href: "/tool?tab=comp",
+    href: "/portal/workspace?tab=comp",
   },
   {
     title: "Comp reports",
     description: "Run saved comp report templates.",
-    href: "/tool?tab=comp-reports",
+    href: "/portal/workspace?tab=comp-reports",
   },
   {
     title: "My drafts",
     description: "Resume work you saved in the broker workspace.",
-    href: "/tool?tab=drafts",
+    href: "/portal/workspace?tab=drafts",
     badge: "Workspace",
   },
 ];
@@ -227,17 +227,19 @@ export default function PortalNewSubmission() {
   return (
     <AdminPortalShell
       section="new-submission"
-      eyebrow={isAdmin ? "Admin Portal" : "Broker Portal"}
-      title={isAdmin ? "New submission" : firstName ? `Welcome, ${firstName}` : "Broker home"}
-      description={
-        isAdmin
-          ? "Open a broker-tool workflow on behalf of testing, or send brokers here to start requests."
-          : "What do you need to do today? Pick a task below — each one tells you what it takes and what you get back."
-      }
+      eyebrow="Broker workspace"
+      title={firstName ? `Welcome, ${firstName}` : "Home"}
+      description="What do you need to do today? Pick a task below — each one tells you what it takes and what you get back."
       actions={
-        <LinkButton href="/portal/submissions" variant={isAdmin ? "secondary" : "primary"}>
-          {isAdmin ? "Submission queue" : "My submissions"}
-        </LinkButton>
+        isAdmin ? (
+          <LinkButton href="/portal/admin/submissions" variant="primary">
+            Admin
+          </LinkButton>
+        ) : (
+          <LinkButton href="/portal/submissions" variant="primary">
+            My submissions
+          </LinkButton>
+        )
       }
     >
       {!isAdmin && (

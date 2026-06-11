@@ -2,12 +2,13 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { usePublicBranding } from "@/hooks/usePublicBranding";
 import { Link, useLocation } from "wouter";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { ExternalLink, HelpCircle, Home, LogOut, Menu, User, X } from "lucide-react";
+import { BriefcaseBusiness, HelpCircle, Home, LogOut, Menu, ShieldCheck, User, X } from "lucide-react";
 import HelpPanel from "@/components/HelpPanel";
 import { getHelpForRoute } from "@/lib/helpContent";
 
 type AdminPortalSection =
   | "new-submission"
+  | "workspace"
   | "submissions"
   | "quick-convert"
   | "settings"
@@ -110,6 +111,7 @@ export default function AdminPortalShell({
   const [helpOpen, setHelpOpen] = useState(false);
   const helpTriggerRef = useRef<HTMLButtonElement | null>(null);
   const helpEntry = getHelpForRoute(location);
+  const isAdminArea = isAdmin && location.startsWith("/portal/admin");
 
   // Close the mobile drawer whenever the route (section prop) changes.
   useEffect(() => {
@@ -161,25 +163,53 @@ export default function AdminPortalShell({
               : undefined
           }
         >
-          <span>{isAdmin ? "New submission" : "Home"}</span>
-          <small>{isAdmin ? "Listing, sign, voucher" : "Start a request"}</small>
+          <span>Home</span>
+          <small>Start a request</small>
         </Link>
-        <Link
-          href="/portal/submissions"
-          className={`admin-portal-nav-item ${section === "submissions" ? "active" : ""}`}
-          style={
-            section === "submissions"
-              ? ({ borderColor: `${accent}33`, color: accent } as CSSProperties)
-              : undefined
-          }
-        >
-          <span>{isAdmin ? "Submissions" : "My submissions"}</span>
-          <small>{isAdmin ? "Queue & inbox" : "Track status"}</small>
-        </Link>
+        {!isAdminArea && (
+          <>
+            <Link
+              href="/portal/workspace"
+              className={`admin-portal-nav-item ${section === "workspace" ? "active" : ""}`}
+              style={
+                section === "workspace"
+                  ? ({ borderColor: `${accent}33`, color: accent } as CSSProperties)
+                  : undefined
+              }
+            >
+              <span>Workspace</span>
+              <small>Vouchers, listings & tools</small>
+            </Link>
+            {!isAdmin && (
+              <Link
+                href="/portal/submissions"
+                className={`admin-portal-nav-item ${section === "submissions" ? "active" : ""}`}
+                style={
+                  section === "submissions"
+                    ? ({ borderColor: `${accent}33`, color: accent } as CSSProperties)
+                    : undefined
+                }
+              >
+                <span>My submissions</span>
+                <small>Track status</small>
+              </Link>
+            )}
+          </>
+        )}
       </nav>
 
-      {isAdmin && (
+      {isAdminArea && (
         <>
+          <div className="admin-portal-nav-section-label">ADMIN</div>
+          <nav className="admin-portal-sidebar-nav" aria-label="Admin">
+            <Link
+              href="/portal/admin/submissions"
+              className={`admin-portal-nav-item ${section === "submissions" ? "active" : ""}`}
+            >
+              <span>Submissions</span>
+              <small>Queue & voucher review</small>
+            </Link>
+          </nav>
           <div className="admin-portal-nav-section-label">SETTINGS</div>
           <nav className="admin-portal-sidebar-nav" aria-label="Settings">
             <NavBlock items={settingsNav} active={section} accent={accent} />
@@ -277,10 +307,19 @@ export default function AdminPortalShell({
             <Home size={16} aria-hidden />
             <span>Home</span>
           </Link>
-          <a href="/tool" className="admin-portal-header-workspace">
-            <ExternalLink size={15} aria-hidden />
+          <Link href="/portal/workspace" className="admin-portal-header-workspace">
+            <BriefcaseBusiness size={15} aria-hidden />
             <span>Workspace</span>
-          </a>
+          </Link>
+          {isAdmin && (
+            <Link
+              href={isAdminArea ? "/portal/new" : "/portal/admin/submissions"}
+              className={`admin-portal-header-admin ${isAdminArea ? "active" : ""}`}
+            >
+              <ShieldCheck size={15} aria-hidden />
+              <span>{isAdminArea ? "Exit Admin" : "Admin"}</span>
+            </Link>
+          )}
           <div className="admin-portal-header-spacer" />
           <button
             ref={helpTriggerRef}

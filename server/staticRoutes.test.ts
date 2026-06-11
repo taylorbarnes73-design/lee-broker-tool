@@ -48,10 +48,25 @@ describe("production static routes", () => {
     }
   );
 
-  it("keeps broker tool fallback for legacy workflow paths", async () => {
-    const res = await request(buildApp()).get("/listing");
+  it("serves the internal workflow engine only at its implementation route", async () => {
+    const res = await request(buildApp()).get("/workspace-engine");
 
     expect(res.status).toBe(200);
     expect(res.text).toContain("broker tool shell");
+  });
+
+  it("redirects legacy workspace URLs into the React workspace", async () => {
+    const res = await request(buildApp()).get("/tool?tab=voucher");
+
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toBe("/portal/workspace?tab=voucher");
+  });
+
+  it("uses the React shell for unknown routes", async () => {
+    const res = await request(buildApp()).get("/listing");
+
+    expect(res.status).toBe(200);
+    expect(res.text).toContain("portal shell");
+    expect(res.text).not.toContain("broker tool shell");
   });
 });

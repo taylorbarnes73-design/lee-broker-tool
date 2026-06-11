@@ -22,6 +22,7 @@ import PortalAdminAuditLog from "./pages/PortalAdminAuditLog";
 import PortalSubmissionDetail from "./pages/PortalSubmissionDetail";
 import PortalSubmissions from "./pages/PortalSubmissions";
 import PortalAdminRequest from "./pages/PortalAdminRequest";
+import PortalWorkspace from "./pages/PortalWorkspace";
 
 /** Redirect component for renamed/merged routes */
 function Redirect({ to }: { to: string }) {
@@ -34,10 +35,7 @@ function Redirect({ to }: { to: string }) {
   );
 }
 
-/**
- * Public landing for `/` - avoids sending everyone through `/tool` -> `/login`,
- * which felt like an admin-only entry. Broker HTML tool stays at `/tool`.
- */
+/** Public landing for the shared broker/admin product. */
 function PublicHome() {
   return (
     <div
@@ -71,11 +69,11 @@ function PublicHome() {
           Broker Portal
         </h1>
         <p style={{ fontSize: 14, color: "var(--ink-500)", lineHeight: 1.6, marginBottom: 28 }}>
-          Sign in for the submission queue and broker portal, or open the listings and forms workspace.
+          Sign in to open your guided broker workspace and submission tools.
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <a
-            href="/login?next=/portal/submissions"
+            href="/login?next=/portal/new"
             style={{
               display: "block",
               padding: "13px 20px",
@@ -91,22 +89,6 @@ function PublicHome() {
           >
             Sign in to portal
           </a>
-          <a
-            href="/tool"
-            style={{
-              display: "block",
-              padding: "13px 20px",
-              borderRadius: 8,
-              border: "1px solid var(--ink-200)",
-              background: "var(--ink-0)",
-              color: "var(--ink-700)",
-              fontWeight: 600,
-              fontSize: 14,
-              textDecoration: "none",
-            }}
-          >
-            Open broker forms workspace
-          </a>
         </div>
         <p style={{ marginTop: 24, fontSize: 12, color: "var(--ink-400)" }}>
           <Link href="/portal/admin/login" style={{ color: "var(--ink-600)", fontWeight: 600 }}>
@@ -114,23 +96,6 @@ function PublicHome() {
           </Link>
         </p>
       </div>
-    </div>
-  );
-}
-
-/**
- * Full-screen redirect to the legacy broker workflow HTML app.
- *
- * Broker-facing workflows still live in broker_tool.html while the admin portal
- * is integrated into the React app under /portal.
- */
-function BrokerToolRedirect() {
-  useEffect(() => {
-    window.location.replace("/tool");
-  }, []);
-  return (
-    <div style={{ display: "flex", width: "100vw", height: "100vh", alignItems: "center", justifyContent: "center", color: "var(--ink-400)", fontSize: 14 }}>
-      Opening Broker Tool…
     </div>
   );
 }
@@ -223,7 +188,7 @@ function AdminAccessRequired() {
           Administrator access required
         </h1>
         <p style={{ fontSize: 14, color: "var(--ink-500)", lineHeight: 1.6, marginTop: 10, marginBottom: 22 }}>
-          This area is restricted to platform administrators. You can continue with the broker portal or open the forms workspace.
+          This area is restricted to platform administrators. You can continue with the shared broker workspace.
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <Link
@@ -241,8 +206,8 @@ function AdminAccessRequired() {
           >
             Go to broker portal
           </Link>
-          <a
-            href="/tool"
+          <Link
+            href="/portal/workspace"
             style={{
               display: "block",
               padding: "12px 18px",
@@ -255,8 +220,8 @@ function AdminAccessRequired() {
               fontSize: 14,
             }}
           >
-            Open broker forms workspace
-          </a>
+            Open shared workspace
+          </Link>
         </div>
       </div>
     </div>
@@ -284,6 +249,25 @@ function AdminPortalRoute({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+function SharedSubmissionsEntry() {
+  const { user } = useAuth();
+  return user?.role === "admin"
+    ? <Redirect to="/portal/admin/submissions" />
+    : <PortalSubmissions />;
+}
+
+function SharedSubmissionDetailEntry() {
+  const { user } = useAuth();
+  if (user?.role === "admin") {
+    const adminPath = window.location.pathname.replace(
+      "/portal/submissions/",
+      "/portal/admin/submissions/"
+    );
+    return <Redirect to={`${adminPath}${window.location.search}`} />;
+  }
+  return <PortalSubmissionDetail />;
+}
+
 function Router() {
   return (
     <Switch>
@@ -294,12 +278,12 @@ function Router() {
       {/* Primary submissions view (all users, replaces dashboard + separate queues) */}
       <Route path="/portal/submissions">
         <PortalRoute>
-          <PortalSubmissions />
+          <SharedSubmissionsEntry />
         </PortalRoute>
       </Route>
       <Route path="/portal/submissions/:id">
         <PortalRoute>
-          <PortalSubmissionDetail />
+          <SharedSubmissionDetailEntry />
         </PortalRoute>
       </Route>
 
@@ -321,7 +305,17 @@ function Router() {
       </Route>
       <Route path="/portal/admin">
         <AdminPortalRoute>
-          <Redirect to="/portal/admin/settings" />
+          <Redirect to="/portal/admin/submissions" />
+        </AdminPortalRoute>
+      </Route>
+      <Route path="/portal/admin/submissions">
+        <AdminPortalRoute>
+          <PortalSubmissions />
+        </AdminPortalRoute>
+      </Route>
+      <Route path="/portal/admin/submissions/:id">
+        <AdminPortalRoute>
+          <PortalSubmissionDetail />
         </AdminPortalRoute>
       </Route>
 
@@ -336,6 +330,11 @@ function Router() {
       <Route path="/portal/new">
         <PortalRoute>
           <PortalNewSubmission />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/workspace">
+        <PortalRoute>
+          <PortalWorkspace />
         </PortalRoute>
       </Route>
       <Route path="/portal/forms/voucher">
@@ -431,7 +430,7 @@ function Router() {
         </PortalRoute>
       </Route>
 
-      <Route component={BrokerToolRedirect} />
+      <Route component={PublicHome} />
     </Switch>
   );
 }

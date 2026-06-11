@@ -55,9 +55,9 @@ export function brokerQueueStatusText(status: string | null | undefined): string
   }
 }
 
-/** Deep link into the legacy HTML broker tool (`?tab=` or hash). */
+/** Deep link into the shared React workspace. */
 export function brokerToolTabUrl(tab: "voucher" | "listing" | "sign" | "comp"): string {
-  return `/tool?tab=${tab}`;
+  return `/portal/workspace?tab=${tab}`;
 }
 
 /**
