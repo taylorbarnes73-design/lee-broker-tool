@@ -57,6 +57,17 @@ function getInitialTab(search: string): WorkspaceTab {
     : "voucher";
 }
 
+function workspaceHashForTab(tab: WorkspaceTab) {
+  return tab === "listing" ? "" : `#${tab}`;
+}
+
+function syncFrameToTab(frameWindow: Window | null | undefined, tab: WorkspaceTab) {
+  if (!frameWindow) return;
+  const nextHash = workspaceHashForTab(tab);
+  if (frameWindow.location.hash === nextHash) return;
+  frameWindow.location.hash = nextHash;
+}
+
 export default function PortalWorkspace() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const initialTab = useMemo(() => getInitialTab(window.location.search), []);
@@ -64,7 +75,7 @@ export default function PortalWorkspace() {
     const params = new URLSearchParams(window.location.search);
     params.delete("tab");
     params.set("embedded", "1");
-    return `/workspace-engine?${params.toString()}${initialTab === "listing" ? "" : `#${initialTab}`}`;
+    return `/workspace-engine?${params.toString()}${workspaceHashForTab(initialTab)}`;
   }, [initialTab]);
   const [activeTab, setActiveTab] = useState<WorkspaceTab>(initialTab);
 
@@ -78,9 +89,7 @@ export default function PortalWorkspace() {
     }
 
     const frameWindow = iframeRef.current?.contentWindow;
-    if (frameWindow) {
-      frameWindow.location.hash = tab === "listing" ? "" : tab;
-    }
+    syncFrameToTab(frameWindow, tab);
   }
 
   return (
@@ -124,10 +133,7 @@ export default function PortalWorkspace() {
           className="workspace-frame"
           title="Broker workflow workspace"
           src={engineSrc}
-          onLoad={() => {
-            const frameWindow = iframeRef.current?.contentWindow;
-            if (frameWindow) frameWindow.location.hash = activeTab === "listing" ? "" : activeTab;
-          }}
+          onLoad={() => syncFrameToTab(iframeRef.current?.contentWindow, activeTab)}
         />
       </section>
     </AdminPortalShell>
