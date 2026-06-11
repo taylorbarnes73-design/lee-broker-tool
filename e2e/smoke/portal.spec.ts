@@ -6,22 +6,32 @@ test.describe("portal smoke", () => {
     await loginAsBroker(page);
   });
 
-  test("broker home shows guided starts and workspace tools", async ({ page }) => {
+  test("broker home shows the workspace tool launchpad", async ({ page }) => {
     await page.goto("/portal/workspace");
     await expect(
-      page.getByRole("link", { name: /Add a listing/i })
+      page.getByRole("link", { name: /Commission voucher/i })
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /Submit a closed deal/i })
+      page.getByRole("link", { name: /Listing entry/i })
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: /Commission voucher/i })
+      page.getByRole("link", { name: /Sign request/i })
     ).toBeVisible();
+    // Launchpad mode: no iframe until a tool is opened.
+    await expect(page.getByTestId("workspace-frame")).toHaveCount(0);
+  });
+
+  test("opening a tool card shows the focused workspace frame", async ({ page }) => {
+    await page.goto("/portal/workspace");
+    await page.getByRole("link", { name: /Commission voucher/i }).click();
+    await expect(page).toHaveURL(/tab=voucher/);
+    await expect(page.getByTestId("workspace-frame")).toBeVisible();
+    await expect(page.getByRole("link", { name: /Workspace/i }).first()).toBeVisible();
   });
 
   test("broker sees the shared workspace without admin navigation", async ({ page }) => {
     await page.goto("/portal/workspace");
-    await expect(page.getByRole("link", { name: /Open broker workspace/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Commission voucher/i })).toBeVisible();
     await expect(page.getByRole("link", { name: "Admin", exact: true })).toHaveCount(0);
   });
 
@@ -103,7 +113,7 @@ test.describe("admin portal separation", () => {
 
   test("admin starts on the shared home and enters admin tools explicitly", async ({ page }) => {
     await expect(page).toHaveURL(/\/portal\/workspace/);
-    await expect(page.getByRole("heading", { name: /Welcome/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Commission voucher/i })).toBeVisible();
     const adminEntry = page.getByRole("link", { name: "Admin", exact: true }).first();
     await expect(adminEntry).toBeVisible();
     await expect(page.getByRole("link", { name: "Settings" })).toHaveCount(0);
