@@ -1,274 +1,152 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "wouter";
+import { useMemo, useEffect, useRef, type CSSProperties } from "react";
+import { Link, useLocation, useSearch } from "wouter";
 import {
   FileSpreadsheet,
   FileText,
   FolderOpen,
+  Inbox,
+  LogOut,
   Megaphone,
   ReceiptText,
+  Shield,
   Signpost,
   TableProperties,
+  User,
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import AdminPortalShell from "@/components/AdminPortalShell";
-import LinkButton from "@/components/ui/LinkButton";
 import { usePublicBranding } from "@/hooks/usePublicBranding";
 
-const NEEDS_ACTION_STATUSES = new Set(["pending", "in_review"]);
+/**
+ * Portal workspace: clean launchpad at /portal/workspace (no ?tab),
+ * focused tool view at /portal/workspace?tab=X (full-screen iframe).
+ *
+ * The iframe loads broker_tool.html at /workspace-engine?embedded=1 so the
+ * workspace's own duplicate header/sidebar/tab-bar are hidden by broker_ux.css
+ * and this shell owns navigation and the admin entry point.
+ */
 
-const WORKSPACE_TABS = [
-  {
-    id: "voucher",
-    label: "Commission voucher",
-    description: "Build, review, download, and send a commission voucher.",
-    icon: ReceiptText,
-  },
-  {
-    id: "listing",
-    label: "Listing entry",
-    description: "Create a listing or submit a listing modification.",
-    icon: FileText,
-  },
-  {
-    id: "sign",
-    label: "Sign request",
-    description: "Request signs, riders, quantities, and placement.",
-    icon: Signpost,
-  },
-  {
-    id: "comp",
-    label: "Comp input",
-    description: "Add lease or sale comps to the office dataset.",
-    icon: TableProperties,
-  },
-  {
-    id: "comp-reports",
-    label: "Comp reports",
-    description: "Search comps and build saved report formats.",
-    icon: FileSpreadsheet,
-  },
-  {
-    id: "marketing-request",
-    label: "Marketing request",
-    description: "Prepare a clear project brief for the marketing team.",
-    icon: Megaphone,
-  },
-  {
-    id: "drafts",
-    label: "My drafts",
-    description: "Resume work saved in this browser.",
-    icon: FolderOpen,
-  },
+const TOOLS = [
+  { id: "voucher",           label: "Commission voucher",  description: "Calculate and submit a closed deal",     Icon: ReceiptText     },
+  { id: "listing",           label: "Listing entry",       description: "Add a property to office records",       Icon: FileText        },
+  { id: "sign",              label: "Sign request",        description: "Order a Lee & Associates sign",          Icon: Signpost        },
+  { id: "comp",              label: "Comp input",          description: "Record a comparable transaction",        Icon: TableProperties },
+  { id: "comp-reports",      label: "Comp reports",        description: "Search and export comp data",            Icon: FileSpreadsheet },
+  { id: "marketing-request", label: "Marketing request",   description: "Request a flyer, brochure, or campaign", Icon: Megaphone       },
+  { id: "drafts",            label: "My drafts",           description: "Resume work saved in this browser",      Icon: FolderOpen      },
 ] as const;
 
-type WorkspaceTab = (typeof WORKSPACE_TABS)[number]["id"];
+type ToolId = (typeof TOOLS)[number]["id"];
 
-const GUIDED_STARTS = [
-  {
-    prompt: "Deal closed?",
-    title: "Submit a closed deal",
-    description: "Enter commission details and send them to the admin team.",
-    href: "/portal/forms/voucher",
-    time: "~5 min",
-  },
-  {
-    prompt: "New listing?",
-    title: "Add a listing",
-    description: "Get a new property into office records.",
-    href: "/portal/forms/listing",
-    time: "~3 min",
-  },
-  {
-    prompt: "Need a sign?",
-    title: "Order a sign",
-    description: "Request a Lee & Associates sign installation.",
-    href: "/portal/forms/sign",
-    time: "~2 min",
-  },
-  {
-    prompt: "Question for admin?",
-    title: "Message the admin team",
-    description: "Send a request straight to the admin inbox.",
-    href: "/portal/admin-request",
-    time: "~1 min",
-  },
-] as const;
-
-function getInitialTab(search: string): WorkspaceTab {
-  const requested = new URLSearchParams(search).get("tab");
-  return WORKSPACE_TABS.some(tab => tab.id === requested)
-    ? (requested as WorkspaceTab)
-    : "voucher";
+function isValidTab(t: string | null): t is ToolId {
+  return TOOLS.some(tool => tool.id === t);
 }
 
 export default function PortalWorkspace() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const [, setLocation] = useLocation();
+  const search = useSearch();
   const branding = usePublicBranding();
-  const accent = branding.primary_color || "var(--lee-red, #98002E)";
   const isAdmin = user?.role === "admin";
-  const firstName = user?.name?.split(/\s+/)[0];
+  const logoSrc = branding.logo_url?.trim() || "/lee-newport-beach-fullcolor.png";
+  const accent = branding.primary_color || "#98002E";
+
+  const tab = useMemo<ToolId | null>(() => {
+    const t = new URLSearchParams(search).get("tab");
+    return isValidTab(t) ? t : null;
+  }, [search]);
+
+  // Build the iframe src once on mount from the initial URL; tab switches
+  // update the hash in-place so the workspace doesn't reload.
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const initialTab = useMemo(() => getInitialTab(window.location.search), []);
-  const engineSrc = useMemo(() => {
+  const initialSrc = useMemo(() => {
     const params = new URLSearchParams(window.location.search);
     params.delete("tab");
     params.set("embedded", "1");
-    return `/workspace-engine?${params.toString()}${initialTab === "listing" ? "" : `#${initialTab}`}`;
-  }, [initialTab]);
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>(initialTab);
-  const [inProgressCount, setInProgressCount] = useState<number | null>(null);
+    const hash = tab && tab !== "listing" ? `#${tab}` : "";
+    return `/workspace-engine?${params}${hash}`;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps — intentionally built once
 
   useEffect(() => {
-    if (isAdmin) return;
-    let alive = true;
-    const params = new URLSearchParams({ limit: "100", needsAction: "1" });
-    fetch(`/api/submissions?${params}`, { credentials: "include" })
-      .then(r => r.json().then(b => ({ ok: r.ok, b })))
-      .then(({ ok, b }) => {
-        if (!alive) return;
-        if (!ok) {
-          setInProgressCount(0);
-          return;
-        }
-        const rows = (b?.data ?? []) as { status: string }[];
-        setInProgressCount(rows.filter(r => NEEDS_ACTION_STATUSES.has(r.status)).length);
-      })
-      .catch(() => {
-        if (alive) setInProgressCount(null);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [isAdmin]);
+    const frame = iframeRef.current?.contentWindow;
+    if (!frame) return;
+    frame.location.hash = tab && tab !== "listing" ? tab : "";
+  }, [tab]);
 
-  function selectTab(tab: WorkspaceTab) {
-    setActiveTab(tab);
-    const params = new URLSearchParams(window.location.search);
-    params.set("tab", tab);
-    const next = `/portal/workspace?${params.toString()}`;
-    if (`${window.location.pathname}${window.location.search}` !== next) {
-      window.history.replaceState(null, "", next);
-    }
-
-    const frameWindow = iframeRef.current?.contentWindow;
-    if (frameWindow) {
-      frameWindow.location.hash = tab === "listing" ? "" : tab;
-    }
-  }
+  const pageStyle = { ["--admin-accent" as string]: accent } as CSSProperties;
 
   return (
-    <AdminPortalShell
-      section="workspace"
-      eyebrow="Broker workspace"
-      title={firstName ? `Welcome, ${firstName}` : "Home"}
-      description="Choose a tool, follow the guided steps, and send finished work to the office. Admin tools stay behind the Admin button."
-      actions={
-        <>
-          <LinkButton href="/portal/convert" variant="primary">
-            Quick Convert
-          </LinkButton>
-          {!isAdmin && (
-            <LinkButton href="/portal/submissions" variant="secondary">
-              My submissions
-            </LinkButton>
-          )}
-        </>
-      }
-    >
-      {!isAdmin && (
-        <section className="workspace-home-status admin-portal-card" aria-label="Submission status">
-          <div className="workspace-home-status-inner">
-            <div>
-              <div className="workspace-home-status-title">In progress</div>
-              <div className="workspace-home-status-copy">
-                {inProgressCount === null
-                  ? "Loading active submissions…"
-                  : inProgressCount === 0
-                    ? "Nothing pending or in progress — pick a tool below when you are ready."
-                    : `${inProgressCount} submission${inProgressCount === 1 ? "" : "s"} still pending or in progress.`}
-              </div>
-            </div>
-            {inProgressCount !== null && inProgressCount > 0 && (
-              <Link href="/portal/submissions" className="workspace-home-status-link">
-                View in progress →
-              </Link>
-            )}
-          </div>
-        </section>
-      )}
-
-      <section className="workspace-home-quickconvert admin-portal-card" aria-label="Quick Convert">
-        <div className="workspace-home-quickconvert-inner">
-          <div>
-            <div className="workspace-home-quickconvert-title">Have the paperwork already? Skip the typing.</div>
-            <p>
-              Upload a lease, exclusive, or agreement PDF and we&apos;ll read it and prefill the form for you.
-              Works for vouchers, listings, and sign requests.
-            </p>
-          </div>
-          <Link href="/portal/convert" className="workspace-home-quickconvert-link">
-            Upload a document →
+    <div className="portal-workspace-page" style={pageStyle}>
+      <header className="portal-workspace-header">
+        {tab ? (
+          <Link href="/portal/workspace" className="portal-workspace-back" aria-label="Back to workspace">
+            ← Workspace
           </Link>
-        </div>
-      </section>
+        ) : (
+          <Link href="/portal/workspace" className="portal-workspace-brand" aria-label="Portal home">
+            <img src={logoSrc} alt="Lee & Associates Newport Beach" />
+            <span className="portal-workspace-brand-label">Broker Workspace</span>
+          </Link>
+        )}
+        <div className="portal-workspace-header-spacer" />
+        {!tab && (
+          <Link href="/portal/submissions" className="portal-workspace-header-link">
+            <Inbox size={15} aria-hidden />
+            <span>My submissions</span>
+          </Link>
+        )}
+        <Link href="/portal/account" className="portal-workspace-header-link" aria-label="Account">
+          <User size={15} aria-hidden />
+          <span>{user?.name ?? "Account"}</span>
+        </Link>
+        {isAdmin && (
+          <Link href="/portal/admin" className="portal-workspace-admin-btn" data-testid="workspace-admin-button">
+            <Shield size={15} aria-hidden />
+            <span>Admin</span>
+          </Link>
+        )}
+        <button
+          type="button"
+          className="portal-workspace-header-link portal-workspace-signout"
+          onClick={() => logout().finally(() => setLocation("/login"))}
+          aria-label="Sign out"
+        >
+          <LogOut size={15} aria-hidden />
+          <span>Sign out</span>
+        </button>
+      </header>
 
-      <section className="workspace-home-guided admin-portal-card" aria-label="Guided workflows">
-        <div className="workspace-home-section-label">Guided starts</div>
-        <div className="workspace-home-guided-grid">
-          {GUIDED_STARTS.map(card => (
-            <a key={card.href} href={card.href} className="workspace-home-guided-card">
-              <div className="workspace-home-guided-meta">
-                <span className="workspace-home-guided-prompt" style={{ color: accent }}>
-                  {card.prompt}
-                </span>
-                <span className="workspace-home-guided-time">{card.time}</span>
-              </div>
-              <strong>{card.title}</strong>
-              <small>{card.description}</small>
-              <span className="workspace-home-guided-cta" style={{ color: accent }}>
-                Start →
-              </span>
-            </a>
-          ))}
-        </div>
-      </section>
-
-      <section className="workspace-launcher" aria-label="Workspace tools">
-        <div className="workspace-home-section-label workspace-home-section-label-inline">Workspace tools</div>
-        {WORKSPACE_TABS.map(tab => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              className={`workspace-launcher-card ${activeTab === tab.id ? "active" : ""}`}
-              onClick={() => selectTab(tab.id)}
-              aria-pressed={activeTab === tab.id}
-            >
-              <span className="workspace-launcher-icon" aria-hidden>
-                <Icon size={18} />
-              </span>
-              <span>
-                <strong>{tab.label}</strong>
-                <small>{tab.description}</small>
-              </span>
-            </button>
-          );
-        })}
-      </section>
-
-      <section className="workspace-frame-card">
+      {tab ? (
         <iframe
           ref={iframeRef}
-          className="workspace-frame"
           title="Broker workflow workspace"
-          src={engineSrc}
-          onLoad={() => {
-            const frameWindow = iframeRef.current?.contentWindow;
-            if (frameWindow) frameWindow.location.hash = activeTab === "listing" ? "" : activeTab;
-          }}
+          src={initialSrc}
+          className="portal-workspace-frame"
+          data-testid="workspace-frame"
         />
-      </section>
-    </AdminPortalShell>
+      ) : (
+        <main className="portal-workspace-launchpad">
+          <div className="portal-workspace-grid">
+            {TOOLS.map(({ id, label, description, Icon }) => (
+              <Link
+                key={id}
+                href={`/portal/workspace?tab=${id}`}
+                className="portal-workspace-tool-card"
+              >
+                <span className="portal-workspace-tool-icon" aria-hidden>
+                  <Icon size={18} />
+                </span>
+                <span className="portal-workspace-tool-body">
+                  <span className="portal-workspace-tool-label">{label}</span>
+                  <span className="portal-workspace-tool-desc">{description}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+          <nav className="portal-workspace-utilities" aria-label="Utilities">
+            <Link href="/portal/convert" className="portal-workspace-util-link">Quick Convert</Link>
+          </nav>
+        </main>
+      )}
+    </div>
   );
 }
