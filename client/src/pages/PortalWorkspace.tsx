@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useRef, type CSSProperties } from "react";
+import { useMemo, type CSSProperties } from "react";
 import { Link, useLocation, useSearch } from "wouter";
 import {
   FileSpreadsheet,
@@ -55,21 +55,17 @@ export default function PortalWorkspace() {
     return isValidTab(t) ? t : null;
   }, [search]);
 
-  // Build the iframe src once on mount from the initial URL; tab switches
-  // update the hash in-place so the workspace doesn't reload.
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const initialSrc = useMemo(() => {
+  // Derive the iframe src from the active tab. The engine reads the hash on
+  // load and on hashchange, so tool-to-tool transitions (back/forward) are
+  // in-document hash navigations rather than full reloads. The tab is carried
+  // in the hash, not ?tab=, because the engine prefers the query param and a
+  // stale one would pin its internal tab switching.
+  const frameSrc = useMemo(() => {
+    if (!tab) return null;
     const params = new URLSearchParams(window.location.search);
     params.delete("tab");
     params.set("embedded", "1");
-    const hash = tab && tab !== "listing" ? `#${tab}` : "";
-    return `/workspace-engine?${params}${hash}`;
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps — intentionally built once
-
-  useEffect(() => {
-    const frame = iframeRef.current?.contentWindow;
-    if (!frame) return;
-    frame.location.hash = tab && tab !== "listing" ? tab : "";
+    return `/workspace-engine?${params}${tab !== "listing" ? `#${tab}` : ""}`;
   }, [tab]);
 
   const pageStyle = { ["--admin-accent" as string]: accent } as CSSProperties;
@@ -115,11 +111,10 @@ export default function PortalWorkspace() {
         </button>
       </header>
 
-      {tab ? (
+      {frameSrc ? (
         <iframe
-          ref={iframeRef}
           title="Broker workflow workspace"
-          src={initialSrc}
+          src={frameSrc}
           className="portal-workspace-frame"
           data-testid="workspace-frame"
         />
