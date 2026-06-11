@@ -260,6 +260,38 @@ describe("email.sendToAdmin", () => {
     expect(payload.excelFile?.filename).toBe("Filled_Voucher.xlsm");
   });
 
+  it("sends admin-request submissions by email and records them in the queue", async () => {
+    const caller = makeCaller();
+    const result = await caller.sendToAdmin({
+      formType: "admin-request",
+      brokerName: "Test Broker",
+      propertyAddress: "Parking pass renewal",
+      senderEmail: "testuser@example.test",
+      sections: [
+        {
+          title: "Request",
+          fields: [
+            { label: "Request Type", value: "General Request" },
+            { label: "Priority", value: "medium" },
+            { label: "Subject", value: "Parking pass renewal" },
+            { label: "Description", value: "My parking pass expires Friday." },
+          ],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+    expect(execFileSync).toHaveBeenCalledOnce();
+    expect(getSubmissionInsertArg().formType).toBe("admin-request");
+
+    const callArg = getMcpCallText();
+    expect(callArg).toContain("Admin Request");
+    expect(callArg).toContain("Parking pass renewal");
+    expect(callArg).toContain("_NewportBeach-BrokerAdmin@lee-associates.com");
+    expect(result.submissionId).toBe(101);
+    expect(result.status).toBe("pending");
+  });
+
   it("queues sign submissions without sending an email", async () => {
     const caller = makeCaller();
     const result = await caller.sendToAdmin({

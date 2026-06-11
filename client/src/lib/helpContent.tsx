@@ -40,18 +40,106 @@ const dashboard: HelpEntry = {
   body: (
     <>
       <p>
-        Landing page after sign-in. Action cards open the broker tool on the right tab (
-        <code>?tab=voucher</code>, <code>listing</code>, or <code>sign</code>). Use <strong>Quick convert</strong> at{" "}
-        <code>/portal/convert</code> (brokers) or <code>/portal/admin/quick-convert</code> (admin tools) for document
-        uploads (lease → voucher, listing → sign or entry form, letterhead, PDF).
-        More workflows (comps, drafts) are linked below the primary
-        cards.
+        Landing page after sign-in. Each card is a task: <strong>Submit a closed deal</strong> (commission
+        voucher), <strong>Add a listing</strong>, <strong>Order a sign</strong>, or{" "}
+        <strong>Message the admin team</strong>. The card tells you roughly how long it takes and what you
+        get back. More workflows (comps, drafts) are linked below the primary cards.
+      </p>
+      <h3>Have the paperwork already?</h3>
+      <p>
+        Use the <strong>Upload a document</strong> banner — drop in a lease, exclusive, or agreement PDF and
+        the system reads it and prefills the right form for you.
       </p>
       <h3>In progress summary</h3>
       <p>
         The banner shows how many of your submissions are still pending or being processed. Open{" "}
         <strong>My submissions</strong> for the full submission log and detail pages.
       </p>
+    </>
+  ),
+};
+
+const voucherForm: HelpEntry = {
+  title: "Submit a closed deal — how this page works",
+  body: (
+    <>
+      <p>
+        Two steps. <strong>Step 1 (this page):</strong> deal basics — transaction type, client, property
+        address, square footage. <strong>Step 2:</strong> commission splits, documents, and submit; your
+        step-1 answers carry over automatically and show up highlighted.
+      </p>
+      <h3>What you'll need</h3>
+      <ul>
+        <li>Property address and client (tenant or buyer) name.</li>
+        <li>Deal terms — rate, term, commencement date.</li>
+        <li>Signed agreement and closing docs for upload in step 2.</li>
+      </ul>
+      <h3>Faster: upload the agreement</h3>
+      <p>
+        If you have the signed lease or purchase agreement as a PDF, use the <strong>Upload &amp;
+        prefill</strong> banner — most fields fill in automatically.
+      </p>
+    </>
+  ),
+};
+
+const listingForm: HelpEntry = {
+  title: "Add a listing — how this page works",
+  body: (
+    <>
+      <p>
+        Two steps. <strong>Step 1 (this page):</strong> property type, location, and headline pricing.{" "}
+        <strong>Step 2:</strong> expiration dates, contacts, and submit; your step-1 answers carry over
+        automatically.
+      </p>
+      <h3>What you'll need</h3>
+      <ul>
+        <li>Property address and type.</li>
+        <li>Lease rate or asking price.</li>
+        <li>Listing agent name (prefilled with yours).</li>
+      </ul>
+      <h3>Faster: upload the exclusive</h3>
+      <p>
+        Got the signed exclusive or listing agreement? Use the <strong>Upload &amp; prefill</strong> banner
+        and most fields fill in automatically.
+      </p>
+    </>
+  ),
+};
+
+const signForm: HelpEntry = {
+  title: "Order a sign — how this page works",
+  body: (
+    <>
+      <p>
+        Requests installation of a standard Lee &amp; Associates for-lease or for-sale sign at a property.
+        Orders are typically fulfilled within 2–3 business days. <strong>Step 1 (this page):</strong>{" "}
+        location and contact details. <strong>Step 2:</strong> sign types, quantities, placement photos, and
+        submit.
+      </p>
+      <h3>Tips</h3>
+      <ul>
+        <li>A <strong>name rider</strong> is the small add-on strip with your name under the main sign.</li>
+        <li>Include gate codes or an access contact so the installer can get on site.</li>
+      </ul>
+    </>
+  ),
+};
+
+const adminRequest: HelpEntry = {
+  title: "Message the admin team — how this page works",
+  body: (
+    <>
+      <p>
+        Sends a request or question directly to the admin team — no email app involved. Pick a category,
+        write your message, and click <strong>Send to Admin</strong>.
+      </p>
+      <h3>After you send</h3>
+      <ul>
+        <li>The admin team receives your request by email immediately.</li>
+        <li>It appears under <strong>My submissions</strong> so you can track it.</li>
+        <li>Expect a response by email within 1–2 business days.</li>
+      </ul>
     </>
   ),
 };
@@ -366,6 +454,10 @@ const ROUTE_MAP: ReadonlyArray<{ match: RegExp; entry: HelpEntry }> = [
   { match: /^\/portal\/admin\/listing-import/, entry: listingImport },
   { match: /^\/portal\/admin\/quick-convert/, entry: quickConvert },
   { match: /^\/portal\/account/, entry: account },
+  { match: /^\/portal\/forms\/voucher/, entry: voucherForm },
+  { match: /^\/portal\/forms\/listing/, entry: listingForm },
+  { match: /^\/portal\/forms\/sign/, entry: signForm },
+  { match: /^\/portal\/admin-request/, entry: adminRequest },
   { match: /^\/portal\/submissions\/[^/]+/, entry: submissionDetail },
   { match: /^\/portal\/submissions/, entry: mySubmissions },
   { match: /^\/portal\/convert/, entry: quickConvert },
