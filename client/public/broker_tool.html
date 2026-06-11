@@ -5,6 +5,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#98002E">
 <title>Broker Tool</title>
+<script>
+// Embedded-mode boot. The workspace renders inside the portal shell at
+// /portal/workspace (one app chrome, one Admin entry point). Direct top-level
+// visits forward there; ?embedded=1 keeps the page in-place and adds the
+// workspace-embedded body class so broker_ux.css hides duplicate chrome.
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('embedded') === '1') {
+    document.body ? document.body.classList.add('workspace-embedded') : void 0;
+    document.addEventListener('DOMContentLoaded', function () {
+      document.body.classList.add('workspace-embedded');
+    });
+    return;
+  }
+  if (window.self === window.top) {
+    var query = params.toString();
+    window.location.replace(
+      '/portal/workspace' + (query ? '?' + query : '') + window.location.hash
+    );
+  }
+})();
+</script>
 <link rel="icon" type="image/png" href="lee-newport-beach-fullcolor.png">
 <link rel="apple-touch-icon" href="lee-newport-beach-fullcolor.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,11 +42,6 @@
 <link rel="stylesheet" href="broker_ux.css?v=20260610.1">
 </head>
 <body>
-<script>
-if (window.location.search.includes('embedded=1')) {
-  document.body.classList.add('workspace-embedded');
-}
-</script>
 
 <div class="header">
   <div class="header-main">
@@ -10803,7 +10820,9 @@ async function signOut() {
   } catch (e) {
     console.warn('Logout error:', e && e.message ? e.message : e);
   }
-  window.location.href = '/login';
+  // When embedded in the portal shell iframe, sign-out must navigate the top
+  // window, not just the workspace iframe.
+  (window.self !== window.top ? window.top : window).location.href = '/login';
 }
 
 async function initBrokerToolAuth() {
