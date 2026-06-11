@@ -1,3 +1,8 @@
+import {
+  LISTING_AI_FIELD_KEYS,
+  SIGN_AI_FIELD_KEYS,
+  VOUCHER_AI_FIELD_KEYS,
+} from "@shared/quickConvert";
 import express from "express";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -49,6 +54,70 @@ function extractFunctionSource(name: string) {
     if (depth === 0) return brokerToolHtml.slice(start, i + 1);
   }
   throw new Error(`Could not parse function ${name}`);
+}
+
+function extractConstObjectSource(name: string) {
+  const start = brokerToolHtml.indexOf(`const ${name} = {`);
+  if (start === -1) throw new Error(`Missing const ${name}`);
+  const bodyStart = brokerToolHtml.indexOf("{", start);
+  let depth = 0;
+  for (let i = bodyStart; i < brokerToolHtml.length; i++) {
+    const char = brokerToolHtml[i];
+    if (char === "{") depth++;
+    if (char === "}") depth--;
+    if (depth === 0) return brokerToolHtml.slice(bodyStart, i + 1);
+  }
+  throw new Error(`Could not parse const ${name}`);
+}
+
+function getAiFieldMap(): Record<string, Record<string, string>> {
+  return new Function(`return (${extractConstObjectSource("AI_FIELD_MAP")});`)();
+}
+
+function getVoucherRentRowHelpers() {
+  const source = [
+    "vRentRowMonthly",
+    "vRentRowMonths",
+    "vRentRowCommissionRate",
+    "vRentRowCommissionDue",
+  ]
+    .map(extractFunctionSource)
+    .join("\n");
+  return new Function(
+    "document",
+    `${source}\nreturn { vRentRowMonthly, vRentRowMonths, vRentRowCommissionRate, vRentRowCommissionDue };`
+  ) as (doc: unknown) => {
+    vRentRowMonthly: (tr: unknown) => number;
+    vRentRowMonths: (tr: unknown) => number;
+    vRentRowCommissionRate: (tr: unknown) => number;
+    vRentRowCommissionDue: (tr: unknown) => number;
+  };
+}
+
+/** Minimal stand-in for a rent schedule <tr> as read by the calc helpers. */
+function fakeRentRow(fields: {
+  monthly?: string;
+  months?: string;
+  free?: boolean;
+  commPct?: string;
+  commDue?: string;
+  commDueOverride?: boolean;
+}) {
+  const cells: Record<string, unknown> = {
+    ".rent-monthly": fields.monthly != null ? { value: fields.monthly } : null,
+    ".rent-months": fields.months != null ? { value: fields.months } : null,
+    ".rent-free": fields.free != null ? { checked: fields.free } : null,
+    ".rent-comm-pct-input":
+      fields.commPct != null ? { value: fields.commPct } : null,
+    ".rent-comm-due-input":
+      fields.commDue != null
+        ? {
+            value: fields.commDue,
+            dataset: { override: fields.commDueOverride ? "1" : undefined },
+          }
+        : null,
+  };
+  return { querySelector: (selector: string) => cells[selector] ?? null };
 }
 
 function getVoucherDetectionHelpers() {
@@ -312,6 +381,153 @@ describe("broker_tool.html wiring", () => {
     );
 
     expect(match?.value).toBe("medical");
+  });
+
+  it("keeps the portal prefill key lists a subset of AI_FIELD_MAP", () => {
+    // shared/quickConvert.ts *_AI_FIELD_KEYS is the contract for what the
+    // portal (Quick Convert / pilot forms) hands off to the workspace. Every
+    // key it promises must have a target in the workspace's AI_FIELD_MAP, or
+    // the value is silently dropped on apply.
+    const aiFieldMap = getAiFieldMap();
+
+    // Known accepted gap, documented in docs/SOURCE_OF_TRUTH.md: the listing
+    // tab has no commission input, so commissionRate is extracted but never
+    // applied. Remove from this allowlist once the field exists (or the key
+    // is dropped from LISTING_AI_FIELD_KEYS).
+    const acceptedGaps = new Set(["listing:commissionRate"]);
+
+    const contracts: Array<[string, readonly string[]]> = [
+      ["voucher", VOUCHER_AI_FIELD_KEYS],
+      ["listing", LISTING_AI_FIELD_KEYS],
+      ["sign", SIGN_AI_FIELD_KEYS],
+    ];
+
+    const missing: string[] = [];
+    for (const [tab, keys] of contracts) {
+      const map = aiFieldMap[tab] ?? {};
+      for (const key of keys) {
+        if (!(key in map) && !acceptedGaps.has(`${tab}:${key}`)) {
+          missing.push(`${tab}:${key}`);
+        }
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it("maps every AI_FIELD_MAP target to a real element in broker_tool.html", () => {
+    // Pre-existing drift found during the source-of-truth consolidation pass
+    // (docs/SOURCE_OF_TRUTH.md): these targets reference element ids that no
+    // longer exist, so the extracted values are silently dropped. Pinned here
+    // so NEW drift fails CI; shrink this list by fixing the mappings (e.g.
+    // comp.tenantName -> c-lessee) once the intended targets are confirmed.
+    const knownStaleTargets = new Set([
+      "listing.ownerName -> #l-owner-name",
+      "comp.dealSf -> #c-deal-sf",
+      "comp.leaseRate -> #c-lease-rate",
+      "comp.commencementDate -> #c-commence",
+      "comp.tenantName -> #c-tenant",
+      "comp.landlordName -> #c-landlord",
+      "comp.salePrice -> #c-sale-price",
+      "comp.pricePerSf -> #c-price-psf",
+      "comp.brokerName -> #c-broker-name",
+    ]);
+
+    const aiFieldMap = getAiFieldMap();
+    const missingTargets: string[] = [];
+    const healedTargets: string[] = [];
+    for (const [tab, map] of Object.entries(aiFieldMap)) {
+      for (const [key, targetId] of Object.entries(map)) {
+        // __pseudo__ targets are handled specially inside applyAiFields
+        // (e.g. agent picker auto-fill), not by element id.
+        if (targetId.startsWith("__")) continue;
+        const label = `${tab}.${key} -> #${targetId}`;
+        const exists = brokerToolHtml.includes(`id="${targetId}"`);
+        if (!exists && !knownStaleTargets.has(label)) missingTargets.push(label);
+        if (exists && knownStaleTargets.has(label)) healedTargets.push(label);
+      }
+    }
+    expect(missingTargets).toEqual([]);
+    // If a stale mapping is fixed, remove it from knownStaleTargets above.
+    expect(healedTargets).toEqual([]);
+  });
+
+  it("computes rent-row commission the same way as the company Excel voucher", () => {
+    // Excel source of truth (Updated_Voucher rev 3/4/25):
+    //   F53 = months * rate/SF * dealSF  (consideration = monthly * months)
+    //   L53 = comm% * consideration      (commission due per period)
+    const buildHelpers = getVoucherRentRowHelpers();
+
+    // Per-row commission % takes precedence over the global rate.
+    const fakeDocument = {
+      getElementById: (id: string) =>
+        id === "v-l-comm-rate" ? { value: "4" } : null,
+    };
+    const helpers = buildHelpers(fakeDocument);
+
+    const standardRow = fakeRentRow({ monthly: "10,000", months: "12" });
+    expect(helpers.vRentRowMonthly(standardRow)).toBe(10000);
+    expect(helpers.vRentRowMonths(standardRow)).toBe(12);
+    // Falls back to the global commission rate: 10000 * 12 * 4% = 4800
+    expect(helpers.vRentRowCommissionDue(standardRow)).toBeCloseTo(4800, 6);
+
+    const perRowRateRow = fakeRentRow({
+      monthly: "10000",
+      months: "12",
+      commPct: "5",
+    });
+    expect(helpers.vRentRowCommissionDue(perRowRateRow)).toBeCloseTo(6000, 6);
+
+    // Free-rent rows contribute zero consideration and zero commission.
+    const freeRow = fakeRentRow({ monthly: "10000", months: "3", free: true });
+    expect(helpers.vRentRowMonthly(freeRow)).toBe(0);
+    expect(helpers.vRentRowCommissionDue(freeRow)).toBe(0);
+
+    // A manual override on the commission-due cell wins over the formula.
+    const overriddenRow = fakeRentRow({
+      monthly: "10000",
+      months: "12",
+      commDue: "$5,250.00",
+      commDueOverride: true,
+    });
+    expect(helpers.vRentRowCommissionDue(overriddenRow)).toBeCloseTo(5250, 6);
+  });
+
+  it("keeps the voucher Excel export writing to the company template's cell grid", () => {
+    // Anchor cells from the official voucher (Updated_Voucher rev 3/4/25).
+    // If any of these move, the generated download no longer matches the
+    // company's Excel layout that admins file into Dealius.
+    const applySource = extractFunctionSource("voucherWorkbookApplyForm");
+    const anchors: Array<[string, string]> = [
+      ["transaction type", "'D4'"],
+      ["active listing flag", "'K4'"],
+      ["confidential flag", "'L1'"],
+      ["date filled", "'N2'"],
+      ["property street address", "'B9'"],
+      ["property city", "'K9'"],
+      ["property zip", "'N9'"],
+      ["lessor/seller company", "'C12'"],
+      ["lessee/buyer company", "'K12'"],
+      ["deal sq ft", "'C23'"],
+      ["sale consideration", "'M36'"],
+      ["sale commission %", "'M43'"],
+      ["bonus / adjustment", "'L70'"],
+      ["consulting / referral fee", "'L74'"],
+      ["listing agent house", "'C85'"],
+      ["procuring agent house", "'K85'"],
+      ["outside listing-side amount", "'L96'"],
+      ["outside procuring-side amount", "'L98'"],
+      ["invoice company", "'G109'"],
+      ["invoice instructions", "'A113'"],
+      ["overflow notes", "'A133'"],
+    ];
+    for (const [label, cell] of anchors) {
+      expect(applySource, `expected ${label} cell ${cell}`).toContain(cell);
+    }
+    // Rent schedule rows 53-67 and distribution rows 124-130.
+    expect(applySource).toContain("let row = 53; row <= 67");
+    expect(applySource).toContain("53 + index");
+    expect(applySource).toContain("let row = 124; row <= 130");
+    expect(applySource).toContain("124 + index");
   });
 
   it("merges voucher document detection across multiple uploaded files", () => {

@@ -105,4 +105,43 @@ test.describe("broker tool smoke", () => {
       dueDate: "2026-06-20",
     });
   });
+
+  test("voucher lease commission math matches the company Excel voucher", async ({
+    page,
+  }) => {
+    // Regression guard for the calculation chain documented in
+    // docs/SOURCE_OF_TRUTH.md: rent schedule -> consideration -> commission
+    // due -> total invoice -> gross to distribute. Expected values follow the
+    // Excel voucher formulas (consideration = monthly * months; commission =
+    // consideration * rate%).
+    await loginAsBroker(page, undefined, "/tool#voucher");
+    await expect(page.locator("#broker-view")).toBeVisible({ timeout: 15_000 });
+
+    const voucherTab = page.locator('[data-tab="voucher"]').first();
+    await voucherTab.click();
+    await expect(page.locator("#tab-voucher.active, #tab-voucher.panel.active")).toBeVisible({
+      timeout: 15_000,
+    });
+
+    await page.locator("#v-l-dealsf").fill("10000");
+    await page.locator("#v-l-term").fill("12");
+    await page.locator("#v-l-rate").fill("1.00");
+
+    await page.getByRole("button", { name: "Generate schedule" }).click();
+    await expect(page.locator("#v-rent-body tr")).toHaveCount(1);
+    await expect(page.locator("#v-rent-body tr .rent-monthly").first()).toHaveValue(
+      /10,?000/
+    );
+
+    await page.locator("#v-l-comm-rate").fill("4");
+
+    // 10,000 SF * $1.00/SF/mo * 12 mo = $120,000 consideration
+    await expect(page.locator("#v-l-consideration")).toHaveValue("$120,000");
+    // $120,000 * 4% = $4,800 commission due == total invoice (no bonus/fees)
+    await expect(page.locator("#v-l-comm-due")).toHaveValue("$4,800.00");
+    await expect(page.locator("#v-total-invoice")).toHaveValue("$4,800.00");
+    // No outside agents, so the full invoice is available to distribute.
+    await expect(page.locator("#v-dist-total-invoice")).toHaveValue("$4,800.00");
+    await expect(page.locator("#v-gross-dist")).toHaveValue("$4,800.00");
+  });
 });
