@@ -42,7 +42,7 @@ const supportingFileSchema = z.object({
 });
 
 const sendToAdminInput = z.object({
-  formType: z.enum(["listing", "voucher", "sign"]),
+  formType: z.enum(["listing", "voucher", "sign", "admin-request"]),
   deliveryMode: z.enum(["server", "mail-client"]).optional(),
   brokerName: z.string().optional(),
   propertyAddress: z.string().optional(),
@@ -83,7 +83,9 @@ function formLabelFor(formType: FormType): string {
     ? "Listing Entry"
     : formType === "sign"
       ? "Sign Request"
-      : "Commission Voucher";
+      : formType === "admin-request"
+        ? "Admin Request"
+        : "Commission Voucher";
 }
 
 function sanitizeFileName(filename: string, fallbackExtension?: string): string {

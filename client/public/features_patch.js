@@ -1499,10 +1499,12 @@ window.aiParseFromPaste = async function() {
     banner.className = 'qc-prefill-banner';
     banner.setAttribute('role', 'status');
     var label = tab === 'voucher' ? 'voucher' : tab === 'sign' ? 'sign request' : 'listing entry';
-    banner.innerHTML =
-      '<strong>Quick convert prefill</strong> — ' + fieldCount + ' ' + label + ' field(s) highlighted' +
-      (sourceFilename ? ' from <em>' + String(sourceFilename).replace(/</g, '') + '</em>' : '') +
-      '. Review every field before submitting.';
+    banner.innerHTML = sourceFilename
+      ? '<strong>✓ Prefilled from your document</strong> — ' + fieldCount + ' ' + label + ' field(s) filled in' +
+        ' from <em>' + String(sourceFilename).replace(/</g, '') + '</em>' +
+        '. Review the highlighted fields, complete the remaining sections, then click Send to Admin.'
+      : '<strong>✓ Your answers from the portal carried over</strong> — ' + fieldCount + ' ' + label +
+        ' field(s) are already filled in and highlighted. Complete the remaining sections below, then click Send to Admin.';
     if (host === document.body) {
       banner.style.cssText = 'margin:12px 16px;padding:10px 14px;border-radius:8px;background:#F4E3E8;border:1px solid #98002E33;font-size:13px;line-height:1.45;color:#1f2937;';
       host.insertBefore(banner, host.firstChild);
@@ -1531,7 +1533,12 @@ window.aiParseFromPaste = async function() {
       }
       showQuickConvertBanner(tab, applied || fieldCount, payload.sourceFilename);
       if (typeof window.showToast === 'function') {
-        window.showToast('Quick convert: review highlighted ' + tab + ' fields before submitting.', 'info');
+        window.showToast(
+          payload.sourceFilename
+            ? 'Prefilled from your document — review highlighted ' + tab + ' fields before submitting.'
+            : 'Your portal answers carried over — finish the remaining ' + tab + ' sections and submit.',
+          'info'
+        );
       }
     }
 

@@ -105,6 +105,7 @@ const FORM_TYPE_LABELS: Record<string, string> = {
   voucher: "Commission voucher",
   sign: "Sign request",
   "sign-request": "Sign request",
+  "admin-request": "Admin request",
   listing: "Listing",
   "listing-mod": "Listing modification",
   listing_modification: "Listing modification",

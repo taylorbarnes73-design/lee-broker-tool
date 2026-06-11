@@ -60,24 +60,21 @@ export default function PortalSignForm() {
   return (
     <AdminPortalShell
       section="new-submission"
-      eyebrow="Forms"
-      title="Sign request"
-      description="Start property and contact details in the portal, then continue in the broker workspace for sign types, placement, and submit."
+      eyebrow="Need a sign?"
+      title="Order a sign"
+      description="Takes about 2 minutes. We install a standard Lee & Associates for-lease or for-sale sign at the property — orders are typically fulfilled within 2–3 business days."
       actions={
         <LinkButton href="/portal/new" variant="secondary">
-          Back to forms
+          Back to home
         </LinkButton>
       }
     >
       <div style={{ marginTop: 14, display: "grid", gap: 12, maxWidth: 720 }}>
         <Card padding="lg">
           <div style={{ fontSize: 13, color: "var(--ink-600)", marginBottom: 16, lineHeight: 1.5 }}>
-            Portal pilot — captures location and request details only. Sign quantities, placement uploads, and
-            send-to-admin still happen in the{" "}
-            <a href="/tool?tab=sign" style={{ color: "var(--ink-800)", fontWeight: 600 }}>
-              broker tool workspace
-            </a>
-            .
+            <strong>Step 1 of 2:</strong> location and contact details here. <strong>Step 2:</strong> sign
+            types, quantities, placement photos, and submit — the next screen carries these answers over
+            automatically.
           </div>
 
           <div style={{ display: "grid", gap: 14 }}>
@@ -133,11 +130,11 @@ export default function PortalSignForm() {
               />
             </Field>
 
-            <Field label="Access instructions" optional>
+            <Field label="Gate code or access contact" optional>
               <textarea
                 value={fields.accessInstructions}
                 onChange={e => update("accessInstructions", e.target.value)}
-                placeholder="Gate codes, contact on site, placement constraints"
+                placeholder="Gate codes, who to contact for site access, placement constraints"
                 style={textareaStyle}
               />
             </Field>
@@ -149,7 +146,7 @@ export default function PortalSignForm() {
             ) : null}
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-              <Button onClick={continueToWorkspace}>Continue in workspace</Button>
+              <Button onClick={continueToWorkspace}>Continue to sign details →</Button>
               {user?.name ? (
                 <span style={{ fontSize: 12, color: "var(--ink-500)" }}>Signed in as {user.name}</span>
               ) : null}

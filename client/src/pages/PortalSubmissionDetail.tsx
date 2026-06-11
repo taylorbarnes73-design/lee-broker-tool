@@ -353,12 +353,18 @@ export default function PortalSubmissionDetail() {
   }
 
   const isAdmin = user?.role === "admin";
-  const tabs: Array<[typeof activeTab, string, string]> = [
-    ["summary", "Summary", isAdmin ? "Status and queue" : "Status and details"],
-    ["deal", "Dealius", "Create deal or listing"],
-    ["documents", "Documents", "Imports and extraction"],
-    ["payload", "Payload", "Raw data"],
-  ];
+  // Brokers only see tabs they can act on — Dealius controls and raw payload are admin tools.
+  const tabs: Array<[typeof activeTab, string, string]> = isAdmin
+    ? [
+        ["summary", "Summary", "Status and queue"],
+        ["deal", "Dealius", "Create deal or listing"],
+        ["documents", "Documents", "Imports and extraction"],
+        ["payload", "Payload", "Raw data"],
+      ]
+    : [
+        ["summary", "Summary", "Status and details"],
+        ["documents", "Documents", "Attached files"],
+      ];
 
   return (
     <AdminPortalShell
@@ -634,12 +640,6 @@ export default function PortalSubmissionDetail() {
                     No uploaded documents were attached to this submission.
                   </div>
                 )}
-              </section>
-            )}
-
-            {activeTab === "documents" && user?.role !== "admin" && (
-              <section className="admin-detail-panel">
-                <div style={{ color: "var(--ink-500)", fontSize: 13 }}>Admin access is required for document import and extraction tools.</div>
               </section>
             )}
 

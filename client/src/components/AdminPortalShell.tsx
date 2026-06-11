@@ -279,7 +279,7 @@ export default function AdminPortalShell({
           </Link>
           <a href="/tool" className="admin-portal-header-workspace">
             <ExternalLink size={15} aria-hidden />
-            <span>Forms workspace</span>
+            <span>Workspace</span>
           </a>
           <div className="admin-portal-header-spacer" />
           <button
