@@ -214,6 +214,7 @@ function AdminSubmissions() {
           <option value="voucher">Commission voucher</option>
           <option value="listing">Listing</option>
           <option value="sign">Sign request</option>
+          <option value="admin-request">Admin request</option>
           <option value="comp">Comp input</option>
           <option value="lease">Lease</option>
           <option value="sale">Sale</option>
