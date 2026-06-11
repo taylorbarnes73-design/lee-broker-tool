@@ -37,6 +37,20 @@ const LISTING_BROCHURE_MIMES = new Set(["application/pdf", "image/jpeg", "image/
 // Each segment must start with lowercase alphanumeric and then use
 // lowercase alphanumeric, underscore, or hyphen (max 64 chars per segment).
 const CATEGORY_SEGMENT_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+// Executables and scripts have no legitimate place in deal documents; everything
+// else (pdf/office/images/csv/etc.) stays allowed so existing workflows keep working.
+const BLOCKED_UPLOAD_EXTENSIONS = new Set([
+  "exe", "msi", "dll", "scr", "com", "bat", "cmd", "ps1", "vbs", "vbe",
+  "js", "jse", "wsf", "wsh", "sh", "bash", "jar", "apk", "app", "hta", "cpl",
+]);
+
+function uploadFileTypeError(filename: string): string | null {
+  const ext = filename.split(".").pop()?.toLowerCase() ?? "";
+  if (BLOCKED_UPLOAD_EXTENSIONS.has(ext)) {
+    return `File type ".${ext}" is not allowed. Upload documents, spreadsheets, or images instead.`;
+  }
+  return null;
+}
 
 function normalizeLeeLogin(raw: string) {
   const parsed = parseLeeLoginIdentifier(raw, ENV.localAuthEmailDomain);
@@ -320,6 +334,10 @@ export const appRouter = router({
             message: "Brochure uploads must be PDF, JPEG, PNG, or WebP.",
           });
         }
+        const typeError = uploadFileTypeError(filename);
+        if (typeError) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: typeError });
+        }
 
         // Build a unique S3 key with random suffix to prevent enumeration
         const ext = filename.split(".").pop() ?? "bin";
@@ -413,6 +431,10 @@ export const appRouter = router({
                 success: false,
                 error: "Brochure uploads must be PDF, JPEG, PNG, or WebP.",
               };
+            }
+            const typeError = uploadFileTypeError(filename);
+            if (typeError) {
+              return { filename, success: false, error: typeError };
             }
 
             const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "_");

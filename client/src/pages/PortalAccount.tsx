@@ -116,6 +116,7 @@ export default function PortalAccount() {
                   value={currentPassword}
                   onChange={e => setCurrentPassword(e.target.value)}
                   autoComplete="current-password"
+                  disabled={saving}
                 />
               </Field>
               <Field label="New password">
@@ -124,6 +125,7 @@ export default function PortalAccount() {
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
                   autoComplete="new-password"
+                  disabled={saving}
                 />
               </Field>
               <Field label="Confirm new password">
@@ -132,6 +134,7 @@ export default function PortalAccount() {
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
                   autoComplete="new-password"
+                  disabled={saving}
                 />
               </Field>
               <div>

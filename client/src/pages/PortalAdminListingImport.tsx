@@ -369,6 +369,8 @@ export default function PortalAdminListingImport() {
 
               <div
                 className={`buildout-upload-zone ${dragging ? "dragging" : ""}`}
+                role="region"
+                aria-label="Brochure upload drop zone — drop a PDF or image here, or use the Choose file button"
                 onDragEnter={onDragOver}
                 onDragOver={onDragOver}
                 onDragLeave={() => setDragging(false)}

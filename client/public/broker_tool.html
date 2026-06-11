@@ -754,7 +754,7 @@
     <h2>Details</h2>
     <div class="row c2">
       <div class="field">
-        <label>Name Rider <span class="optional-note">(Optional)</span></label>
+        <label>Name Rider <span class="optional-note">(Optional — small add-on strip with your name under the main sign)</span></label>
         <div class="toggle-row">
           <label class="toggle-switch">
             <input type="checkbox" id="s-rider-toggle" onchange="toggleNameRider(this.checked)">
@@ -3911,17 +3911,26 @@ function listingStepPreview(card, n) {
 function canProceedVoucherStep(index, card) {
   if (!card) return true;
   const n = String(card.getAttribute('data-vstep') || '');
-  if (n !== '0') return true;
-  if (voucherAnalysisStatus.state === 'analyzing') return false;
-  return true; // checkboxes are informational, don't block
+  if (n === '0') {
+    if (voucherAnalysisStatus.state === 'analyzing') return false;
+    return true; // checkboxes are informational, don't block
+  }
+  if (n === '1') return getMissingRequiredFieldLabels(card).length === 0;
+  return true;
 }
 
 function getVoucherStepBlockingMessage(index, card) {
   if (!card) return 'Complete required items before continuing.';
   const n = String(card.getAttribute('data-vstep') || '');
-  if (n !== '0') return 'Complete required items before continuing.';
-  if (voucherAnalysisStatus.state === 'analyzing') return 'Wait for document analysis to finish before continuing.';
-  return '';
+  if (n === '0') {
+    if (voucherAnalysisStatus.state === 'analyzing') return 'Wait for document analysis to finish before continuing.';
+    return '';
+  }
+  if (n === '1') {
+    const missing = getMissingRequiredFieldLabels(card);
+    if (missing.length) return 'Complete ' + formatMissingRequiredFields(missing) + ' before continuing.';
+  }
+  return 'Complete required items before continuing.';
 }
 
 function isFieldControlMissing(control) {
@@ -4453,7 +4462,11 @@ function _saveCurrentDraftCore(context) {
     }
     showToast('Draft saved');
   } catch (e) {
-    showToast('Draft could not be saved', 'error');
+    console.warn('Draft save failed:', e);
+    const isQuota = e && (e.name === 'QuotaExceededError' || e.code === 22);
+    showToast(isQuota
+      ? 'Draft could not be saved — browser storage is full. Clear old drafts from the Drafts menu and try again.'
+      : 'Draft could not be saved', 'error');
   }
 }
 
@@ -11048,6 +11061,7 @@ async function loadPublicToolSettings() {
     const j = await r.json();
     LBT_PUBLIC_SETTINGS = j || {};
   } catch (e) {
+    console.warn('Public settings unavailable, using defaults:', e && e.message ? e.message : e);
     LBT_PUBLIC_SETTINGS = {};
   }
   return LBT_PUBLIC_SETTINGS;
@@ -14127,7 +14141,7 @@ async function dxSubmitDeal() {
 
     // Done
     dxStat('ok', 'Deal #' + dealID + ' submitted successfully');
-    document.getElementById('dxLg').innerHTML += '<div class="ll ok"><span class="ts">' + dxTs() + '</span><span class="msg"><a class="rl" href="https://leenewportbeach.dealius.com/deals/' + dealID + '" target="_blank">Open Deal ' + dealID + ' in Dealius</a></span></div>';
+    document.getElementById('dxLg').innerHTML += '<div class="ll ok"><span class="ts">' + dxTs() + '</span><span class="msg"><a class="rl" href="https://leenewportbeach.dealius.com/deals/' + encodeURIComponent(String(dealID)) + '" target="_blank" rel="noopener">Open Deal ' + dxEscHtml(dealID) + ' in Dealius</a></span></div>';
     if (d.outsideBrokers && d.outsideBrokers.length) {
       dxAddLog('warn', 'Outside brokers (add manually): ' + d.outsideBrokers.map(b => b.name + ' — $' + b.amt.toLocaleString()).join(', '));
     }
@@ -19513,6 +19527,15 @@ async function submitSendToAdmin() {
   const cityId = _staFormType === 'listing' ? 'l-city' : _staFormType === 'sign' ? 's-city' : 'v-city';
   const address = [(document.getElementById(addrId)?.value||'').trim(), (document.getElementById(cityId)?.value||'').trim()].filter(Boolean).join(', ');
 
+  if (!address) {
+    status.textContent = 'Property address is required before sending. Add it in the form, then try again.';
+    status.classList.add('text-error', 'status-strong');
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    btn.querySelector('.btn-label').textContent = 'Prepare Email & Files';
+    return;
+  }
+
   try {
     const pdfAttachment = await buildSendToAdminPdfAttachment();
     const excelAttachment = _staFormType === 'voucher' ? await buildVoucherExcelAttachment() : undefined;
@@ -19538,7 +19561,11 @@ async function submitSendToAdmin() {
         }
       })
     });
-    const data = await resp.json();
+    if (!resp.ok) {
+      const errBody = await resp.json().catch(() => null);
+      throw new Error(errBody?.error?.json?.message || errBody?.error?.message || ('Server error (HTTP ' + resp.status + '). Please try again.'));
+    }
+    const data = await resp.json().catch(() => { throw new Error('Unexpected server response. Please try again.'); });
     const result = data?.result?.data?.json;
     if (result?.success) {
       const generatedFiles = [pdfAttachment, excelAttachment].filter(Boolean);

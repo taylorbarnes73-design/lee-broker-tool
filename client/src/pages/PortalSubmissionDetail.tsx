@@ -353,12 +353,18 @@ export default function PortalSubmissionDetail() {
   }
 
   const isAdmin = user?.role === "admin";
-  const tabs: Array<[typeof activeTab, string, string]> = [
-    ["summary", "Summary", isAdmin ? "Status and queue" : "Status and details"],
-    ["deal", "Dealius", "Create deal or listing"],
-    ["documents", "Documents", "Imports and extraction"],
-    ["payload", "Payload", "Raw data"],
-  ];
+  // Brokers only see tabs they can act on — Dealius controls and raw payload are admin tools.
+  const tabs: Array<[typeof activeTab, string, string]> = isAdmin
+    ? [
+        ["summary", "Summary", "Status and queue"],
+        ["deal", "Dealius", "Create deal or listing"],
+        ["documents", "Documents", "Imports and extraction"],
+        ["payload", "Payload", "Raw data"],
+      ]
+    : [
+        ["summary", "Summary", "Status and details"],
+        ["documents", "Documents", "Attached files"],
+      ];
 
   return (
     <AdminPortalShell
@@ -637,12 +643,6 @@ export default function PortalSubmissionDetail() {
               </section>
             )}
 
-            {activeTab === "documents" && user?.role !== "admin" && (
-              <section className="admin-detail-panel">
-                <div style={{ color: "var(--ink-500)", fontSize: 13 }}>Admin access is required for document import and extraction tools.</div>
-              </section>
-            )}
-
             {activeTab === "documents" && user?.role === "admin" && item.formType === "voucher" && (
               <section className="admin-detail-panel">
                 <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 6 }}>Import Lee voucher (Excel)</div>
@@ -654,8 +654,17 @@ export default function PortalSubmissionDetail() {
                     style={{ display: "none" }}
                     onChange={e => {
                       const file = e.target.files?.[0];
-                      if (file) { setStagedExcel(file); }
                       e.target.value = "";
+                      if (!file) return;
+                      if (!/\.(xlsx|xlsm|xls)$/i.test(file.name)) {
+                        toast.error("Please select an Excel voucher file (.xlsx, .xlsm, or .xls).");
+                        return;
+                      }
+                      if (file.size > 20 * 1024 * 1024) {
+                        toast.error("Excel file is too large (max 20 MB).");
+                        return;
+                      }
+                      setStagedExcel(file);
                     }}
                   />
                   <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
@@ -715,8 +724,17 @@ export default function PortalSubmissionDetail() {
                       style={{ display: "none" }}
                       onChange={e => {
                         const file = e.target.files?.[0];
-                        if (file) { setStagedPdf(file); }
                         e.target.value = "";
+                        if (!file) return;
+                        if (file.type !== "application/pdf" && !/\.pdf$/i.test(file.name)) {
+                          toast.error("Please select a PDF document.");
+                          return;
+                        }
+                        if (file.size > 25 * 1024 * 1024) {
+                          toast.error("PDF is too large (max 25 MB).");
+                          return;
+                        }
+                        setStagedPdf(file);
                       }}
                     />
                     <Button variant="secondary" disabled={!item || extracting} loading={extracting} onClick={() => fileInputRef.current?.click()}>

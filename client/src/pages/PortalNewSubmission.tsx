@@ -8,6 +8,50 @@ import { Card } from "../design/index.jsx";
 
 const NEEDS_ACTION_STATUSES = new Set(["pending", "in_review"]);
 
+type OutcomeCard = {
+  prompt: string;
+  title: string;
+  description: string;
+  href: string;
+  time: string;
+  youGet: string;
+};
+
+const OUTCOME_CARDS: OutcomeCard[] = [
+  {
+    prompt: "Deal closed?",
+    title: "Submit a closed deal",
+    description: "Enter your commission details and send them to the admin team for processing.",
+    href: "/portal/forms/voucher",
+    time: "~5 min",
+    youGet: "Commission voucher filed + admin notified",
+  },
+  {
+    prompt: "New listing?",
+    title: "Add a listing",
+    description: "Get a new property into the office records and notify the admin team.",
+    href: "/portal/forms/listing",
+    time: "~3 min",
+    youGet: "Listing filed + admin notified",
+  },
+  {
+    prompt: "Need a sign?",
+    title: "Order a sign",
+    description: "Request a Lee & Associates sign installation at a property.",
+    href: "/portal/forms/sign",
+    time: "~2 min",
+    youGet: "Order queued — typically installed in 2–3 business days",
+  },
+  {
+    prompt: "Question for admin?",
+    title: "Message the admin team",
+    description: "Send a request or question straight to the admin inbox — no email app needed.",
+    href: "/portal/admin-request",
+    time: "~1 min",
+    youGet: "Response by email within 1–2 business days",
+  },
+];
+
 type FormCard = {
   title: string;
   description: string;
@@ -15,34 +59,7 @@ type FormCard = {
   badge?: string;
 };
 
-const PRIMARY_FORMS: FormCard[] = [
-  {
-    title: "Listing entry",
-    description: "Property and pricing basics in the portal, then notifications and submit in the workspace.",
-    href: "/portal/forms/listing",
-    badge: "Portal pilot",
-  },
-  {
-    title: "Sign request",
-    description: "Property details in the portal, then sign types and placement in the workspace.",
-    href: "/portal/forms/sign",
-    badge: "Portal pilot",
-  },
-  {
-    title: "Commission voucher",
-    description: "Deal basics in the portal, then commission splits and submit in the workspace.",
-    href: "/portal/forms/voucher",
-    badge: "Portal pilot",
-  },
-];
-
 const MORE_FORMS: FormCard[] = [
-  {
-    title: "Admin request",
-    description: "General broker requests to the admin inbox — opens a mail draft with your details.",
-    href: "/portal/admin-request",
-    badge: "Portal",
-  },
   {
     title: "Comp input",
     description: "Add lease or sale comps to the office dataset.",
@@ -55,11 +72,73 @@ const MORE_FORMS: FormCard[] = [
   },
   {
     title: "My drafts",
-    description: "Resume work you saved in the broker tool.",
+    description: "Resume work you saved in the broker workspace.",
     href: "/tool?tab=drafts",
-    badge: "Tool",
+    badge: "Workspace",
   },
 ];
+
+function OutcomeActionCard({ card, accent }: { card: OutcomeCard; accent: string }) {
+  return (
+    <a
+      href={card.href}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+        padding: "18px 20px",
+        borderRadius: 12,
+        border: "1px solid var(--ink-200)",
+        background: "var(--ink-0)",
+        textDecoration: "none",
+        color: "inherit",
+        boxShadow: "var(--shadow-sm)",
+        transition: "border-color 0.15s, box-shadow 0.15s",
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.borderColor = `${accent}55`;
+        e.currentTarget.style.boxShadow = `0 0 0 1px ${accent}22`;
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.borderColor = "var(--ink-200)";
+        e.currentTarget.style.boxShadow = "var(--shadow-sm)";
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: accent,
+          }}
+        >
+          {card.prompt}
+        </span>
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            padding: "2px 8px",
+            borderRadius: 999,
+            background: "var(--ink-100)",
+            color: "var(--ink-600)",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {card.time}
+        </span>
+      </div>
+      <span style={{ fontWeight: 700, fontSize: 16, color: "var(--ink-900)" }}>{card.title}</span>
+      <p style={{ margin: 0, fontSize: 13, color: "var(--ink-600)", lineHeight: 1.45 }}>{card.description}</p>
+      <div style={{ fontSize: 12, color: "var(--ink-500)", lineHeight: 1.4 }}>
+        <span style={{ fontWeight: 700, color: "var(--ink-600)" }}>You get:</span> {card.youGet}
+      </div>
+      <span style={{ fontSize: 12, fontWeight: 700, color: accent, marginTop: 2 }}>Start →</span>
+    </a>
+  );
+}
 
 function FormActionCard({ card, accent }: { card: FormCard; accent: string }) {
   return (
@@ -108,7 +187,7 @@ function FormActionCard({ card, accent }: { card: FormCard; accent: string }) {
       </div>
       <p style={{ margin: 0, fontSize: 13, color: "var(--ink-600)", lineHeight: 1.45 }}>{card.description}</p>
       <span style={{ fontSize: 12, fontWeight: 700, color: accent, marginTop: 4 }}>
-        {card.href.startsWith("/portal/") ? "Start in portal →" : "Open in broker tool →"}
+        Open in workspace →
       </span>
     </a>
   );
@@ -153,7 +232,7 @@ export default function PortalNewSubmission() {
       description={
         isAdmin
           ? "Open a broker-tool workflow on behalf of testing, or send brokers here to start requests."
-          : "Start a voucher, listing, or sign request in the broker tool. After you submit, track status under Submissions."
+          : "What do you need to do today? Pick a task below — each one tells you what it takes and what you get back."
       }
       actions={
         <LinkButton href="/portal/submissions" variant={isAdmin ? "secondary" : "primary"}>
@@ -191,12 +270,25 @@ export default function PortalNewSubmission() {
         <Card padding="lg">
           <div
             style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+              gap: 14,
+              marginBottom: 20,
+            }}
+          >
+            {OUTCOME_CARDS.map(card => (
+              <OutcomeActionCard key={card.href} card={card} accent={accent} />
+            ))}
+          </div>
+
+          <div
+            style={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
               gap: 12,
               flexWrap: "wrap",
-              marginBottom: 16,
+              marginBottom: 20,
               padding: "12px 14px",
               borderRadius: 10,
               border: `1px solid ${accent}33`,
@@ -204,9 +296,12 @@ export default function PortalNewSubmission() {
             }}
           >
             <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink-900)" }}>Quick convert</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink-900)" }}>
+                Have the paperwork already? Skip the typing.
+              </div>
               <div style={{ fontSize: 13, color: "var(--ink-600)", marginTop: 4, lineHeight: 1.45 }}>
-                Lease → voucher, exclusive → sign or listing entry, Word → PDF, or LANB letterhead — upload once and go.
+                Upload a lease, exclusive, or agreement PDF and we'll read it and prefill the form for you.
+                Works for vouchers, listings, and sign requests.
               </div>
             </div>
             <Link
@@ -219,25 +314,10 @@ export default function PortalNewSubmission() {
                 whiteSpace: "nowrap",
               }}
             >
-              Open quick convert →
+              Upload a document →
             </Link>
           </div>
-          <div style={{ fontSize: 13, color: "var(--ink-600)", marginBottom: 16, lineHeight: 1.5 }}>
-            Forms still live in the broker tool workspace while we migrate them into the portal. Each card opens the
-            right tab with your signed-in session.
-          </div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-              gap: 12,
-              marginBottom: 20,
-            }}
-          >
-            {PRIMARY_FORMS.map(card => (
-              <FormActionCard key={card.href} card={card} accent={accent} />
-            ))}
-          </div>
+
           <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ink-500)", letterSpacing: "0.08em", marginBottom: 10 }}>
             MORE WORKFLOWS
           </div>

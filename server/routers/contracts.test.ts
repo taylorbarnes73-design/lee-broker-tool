@@ -14,7 +14,7 @@ vi.mock("../_core/llm", () => ({
 }));
 
 vi.mock("child_process", () => ({
-  execSync: vi.fn(),
+  execFileSync: vi.fn(),
 }));
 
 vi.mock("../services/adminNotification", () => ({
@@ -40,7 +40,7 @@ vi.mock("../storage", () => ({
 }));
 
 import { invokeLLM } from "../_core/llm";
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { contractsRouter } from "./contracts";
 import { testCtx } from "../testCtx";
 
@@ -207,7 +207,7 @@ describe("contracts.submitContractToAdmin", () => {
   };
 
   it("sends email via MCP and returns success", async () => {
-    (execSync as ReturnType<typeof vi.fn>).mockReturnValue(Buffer.from("ok"));
+    (execFileSync as ReturnType<typeof vi.fn>).mockReturnValue(Buffer.from("ok"));
 
     const result = await callMutation("submitContractToAdmin", {
       contractData: baseContractData,
@@ -217,28 +217,28 @@ describe("contracts.submitContractToAdmin", () => {
     }) as { success: boolean; error: null };
 
     expect(result.success).toBe(true);
-    expect(execSync).toHaveBeenCalledOnce();
-    const call = (execSync as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    expect(execFileSync).toHaveBeenCalledOnce();
+    const call = (execFileSync as ReturnType<typeof vi.fn>).mock.calls[0].flat(1).join(" ");
     expect(call).toContain("outlook_send_messages");
     expect(call).toContain("Contract Intake");
     expect(call).toContain("Sinclair Pharma");
   });
 
   it("includes redlines in the email body", async () => {
-    (execSync as ReturnType<typeof vi.fn>).mockReturnValue(Buffer.from("ok"));
+    (execFileSync as ReturnType<typeof vi.fn>).mockReturnValue(Buffer.from("ok"));
 
     await callMutation("submitContractToAdmin", {
       contractData: baseContractData,
       brokerName: "Nick Dumke",
     }) as { success: boolean };
 
-    const call = (execSync as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
+    const call = (execFileSync as ReturnType<typeof vi.fn>).mock.calls[0].flat(1).join(" ");
     expect(call).toContain("4.1(b)");
     expect(call).toContain("STRIKETHROUGH");
   });
 
   it("returns error when MCP throws", async () => {
-    (execSync as ReturnType<typeof vi.fn>).mockImplementation(() => {
+    (execFileSync as ReturnType<typeof vi.fn>).mockImplementation(() => {
       throw new Error("MCP connection refused");
     });
 

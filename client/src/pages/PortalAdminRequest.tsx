@@ -1,34 +1,20 @@
 import { useState } from "react";
-import {
-  Calendar,
-  CreditCard,
-  FileText,
-  Package,
-  Settings,
-  Users,
-} from "lucide-react";
+import { Calendar, FileText, Package, Settings } from "lucide-react";
 import AdminPortalShell from "@/components/AdminPortalShell";
 import LinkButton from "@/components/ui/LinkButton";
 import { AdminRequestForm } from "@/components/AdminRequestForm";
 
 const requestTypes = [
   {
-    id: "hr",
-    title: "HR Request",
-    description: "Employee records, benefits, time off",
-    icon: Users,
-    color: "text-blue-600",
-  },
-  {
-    id: "finance",
-    title: "Finance Request",
-    description: "Expenses, reimbursements, invoices",
-    icon: CreditCard,
-    color: "text-green-600",
+    id: "general",
+    title: "General Request",
+    description: "Anything you need from the admin team",
+    icon: FileText,
+    color: "text-gray-600",
   },
   {
     id: "it",
-    title: "IT Support",
+    title: "IT / System Issue",
     description: "Technical issues, software access",
     icon: Settings,
     color: "text-purple-600",
@@ -47,13 +33,6 @@ const requestTypes = [
     icon: Calendar,
     color: "text-pink-600",
   },
-  {
-    id: "general",
-    title: "General Request",
-    description: "Other administrative needs",
-    icon: FileText,
-    color: "text-gray-600",
-  },
 ] as const;
 
 export default function PortalAdminRequest() {
@@ -66,11 +45,11 @@ export default function PortalAdminRequest() {
     <AdminPortalShell
       section="new-submission"
       eyebrow="Broker Portal"
-      title={activeType ? activeType.title : "Admin request"}
+      title={activeType ? activeType.title : "Message the admin team"}
       description={
         activeType
-          ? "Submit opens a mail draft to the broker admin inbox — attach documents before sending."
-          : "Send a general request to the broker admin inbox. Choose a category, then submit to open a mail draft."
+          ? "Fill in the details and click Send — your request goes directly to the admin team and shows up under My Submissions."
+          : "Send a message directly to the admin team and get a response by email, usually within 1–2 business days. Takes about a minute."
       }
       actions={
         activeType ? (
@@ -104,17 +83,13 @@ export default function PortalAdminRequest() {
                   <div className="flex items-start gap-4">
                     <div
                       className={`h-12 w-12 rounded-xl bg-gradient-to-br flex items-center justify-center flex-shrink-0 shadow-lg transition-transform group-hover:scale-110 ${
-                        type.id === "hr"
-                          ? "from-blue-500 to-blue-600 shadow-blue-500/20"
-                          : type.id === "finance"
-                            ? "from-green-500 to-green-600 shadow-green-500/20"
-                            : type.id === "it"
-                              ? "from-purple-500 to-purple-600 shadow-purple-500/20"
-                              : type.id === "facilities"
-                                ? "from-orange-500 to-orange-600 shadow-orange-500/20"
-                                : type.id === "scheduling"
-                                  ? "from-pink-500 to-pink-600 shadow-pink-500/20"
-                                  : "from-gray-500 to-gray-600 shadow-gray-500/20"
+                        type.id === "it"
+                          ? "from-purple-500 to-purple-600 shadow-purple-500/20"
+                          : type.id === "facilities"
+                            ? "from-orange-500 to-orange-600 shadow-orange-500/20"
+                            : type.id === "scheduling"
+                              ? "from-pink-500 to-pink-600 shadow-pink-500/20"
+                              : "from-gray-500 to-gray-600 shadow-gray-500/20"
                       }`}
                     >
                       <Icon className="h-6 w-6 text-white" />

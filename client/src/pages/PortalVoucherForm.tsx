@@ -47,24 +47,45 @@ export default function PortalVoucherForm() {
   return (
     <AdminPortalShell
       section="new-submission"
-      eyebrow="Forms"
-      title="Commission voucher"
-      description="Start deal basics in the portal, then continue in the broker workspace for splits, documents, and submit."
+      eyebrow="Deal closed?"
+      title="Submit a closed deal"
+      description="Takes about 5 minutes. You'll need the property address, client name, and deal terms. You get a commission voucher filed with the admin team."
       actions={
         <LinkButton href="/portal/new" variant="secondary">
-          Back to forms
+          Back to home
         </LinkButton>
       }
     >
       <div style={{ marginTop: 14, display: "grid", gap: 12, maxWidth: 720 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
+            padding: "12px 14px",
+            borderRadius: 10,
+            border: "1px solid rgba(152, 0, 46, 0.2)",
+            background: "rgba(152, 0, 46, 0.04)",
+          }}
+        >
+          <div style={{ fontSize: 13, color: "var(--ink-700)", lineHeight: 1.45 }}>
+            <strong>Got the signed lease or purchase agreement?</strong> Upload it and we'll read it and
+            prefill most of this form for you.
+          </div>
+          <a
+            href="/portal/convert"
+            style={{ fontSize: 13, fontWeight: 700, color: "var(--lee-red, #98002E)", textDecoration: "none", whiteSpace: "nowrap" }}
+          >
+            Upload &amp; prefill →
+          </a>
+        </div>
+
         <Card padding="lg">
           <div style={{ fontSize: 13, color: "var(--ink-600)", marginBottom: 16, lineHeight: 1.5 }}>
-            Portal pilot — captures the first voucher section only. Commission splits, document upload, and
-            send-to-admin still happen in the{" "}
-            <a href="/tool?tab=voucher" style={{ color: "var(--ink-800)", fontWeight: 600 }}>
-              broker tool workspace
-            </a>
-            .
+            <strong>Step 1 of 2:</strong> deal basics here. <strong>Step 2:</strong> commission splits,
+            documents, and submit — the next screen carries these answers over automatically.
           </div>
 
           <div style={{ display: "grid", gap: 14 }}>
@@ -191,7 +212,7 @@ export default function PortalVoucherForm() {
             ) : null}
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-              <Button onClick={continueToWorkspace}>Continue in workspace</Button>
+              <Button onClick={continueToWorkspace}>Continue to commission details →</Button>
               {user?.name ? (
                 <span style={{ fontSize: 12, color: "var(--ink-500)" }}>Signed in as {user.name}</span>
               ) : null}
