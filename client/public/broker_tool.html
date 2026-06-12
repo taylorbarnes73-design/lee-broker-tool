@@ -39,7 +39,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <link rel="stylesheet" href="broker_tool.css?v=20260610.2">
-<link rel="stylesheet" href="broker_ux.css?v=20260612.1">
+<link rel="stylesheet" href="broker_ux.css?v=20260612.2">
 </head>
 <body>
 
@@ -219,7 +219,7 @@
   </div>
 
   <div id="listing-add-mode">
-    <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections as needed.</div>
+    <div class="tip pane-intro-tip">Fields marked <span class="required-mark">*</span> are required.</div>
     <div class="broker-pane-guide" role="note">
       <strong>How to use this form:</strong>
       <ol>
@@ -665,7 +665,7 @@
       <div class="page-meta-chip"><span class="dot"></span>All sections on one page</div>
     </div>
   </div>
-  <div class="tip pane-intro-tip">Fields marked <span class="required-mark">*</span> are required. Review everything before you send.</div>
+  <div class="tip pane-intro-tip">Fields marked <span class="required-mark">*</span> are required.</div>
   <div class="broker-pane-guide" role="note">
     <strong>Sign request tips:</strong> Upload documents, tap <strong>Analyze</strong>, check the address and quantities, then use <strong>Review</strong> below.
   </div>
@@ -910,10 +910,9 @@
     <div class="page-head-left">
       <div class="page-eyebrow">Broker Submission</div>
       <h1 class="page-h1">Commission Voucher</h1>
-      <p class="page-desc">Build the commission voucher, verify splits, and send completed deal docs to admin.</p>
+      <p class="page-desc">Build the voucher, verify splits, and send to admin. Fields marked <span class="required-mark">*</span> are required.</p>
     </div>
   </div>
-  <div class="tip pane-intro-tip voucher-required-legend">Fields marked <span class="required-mark">*</span> are required.</div>
 
   <nav class="voucher-workflow" id="voucher-workflow" aria-label="Voucher submission steps">
     <ol class="voucher-workflow-steps">
@@ -992,7 +991,7 @@
       <div class="field"><label class="req">Property Type</label>
         <select id="v-prop-type"><option value="industrial">Industrial</option><option value="office">Office</option><option value="retail">Retail</option><option value="land">Land</option><option value="other">Other</option></select>
       </div>
-      <div class="field"><label class="req">Deal subtype</label>
+      <div class="field"><label class="req">Deal Subtype</label>
         <select id="v-deal-type-req">
           <option value="">—</option>
           <option>New</option><option>Renewal</option><option>Expansion</option><option>Relocation</option><option>Blend &amp; Extend</option>
@@ -1516,7 +1515,7 @@
     </div>
   </div>
   <p class="page-desc">Add lease or sale comps to the office dataset.</p>
-  <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections for additional detail.</div>
+  <div class="tip pane-intro-tip">Fields marked <span class="required-mark">*</span> are required.</div>
   <div class="broker-pane-guide" role="note">
     <strong>How to use this form:</strong>
     <ol>
@@ -1928,8 +1927,8 @@
         <div class="cr-view-toggle" role="group" aria-label="Comp report view">
           <button class="cr-view-btn active" id="cr-view-table-btn" type="button" onclick="crSetView('table')">Table</button>
           <button class="cr-view-btn" id="cr-view-map-btn" type="button" onclick="crSetView('map')">Map</button>
-          <button class="cr-view-btn" type="button" id="cr-export-csv-btn" onclick="compReportExportCsvWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Excel file</span></button>
         </div>
+        <button class="btn btn-gray" type="button" id="cr-export-csv-btn" onclick="compReportExportCsvWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Export Excel</span></button>
         <button class="btn btn-red cr-download-report-btn" type="button" id="cr-export-pdf-btn" onclick="compReportExportPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Comp Report</span></button>
       </div>
     </div>

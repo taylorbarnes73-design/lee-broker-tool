@@ -205,10 +205,6 @@ body.broker-active .broker-pane-guide {
   border-radius: 10px;
 }
 
-body.broker-active #tab-voucher .pane-intro-tip.voucher-required-legend {
-  display: block;
-}
-
 .broker-pane-guide {
   background: #FAFAF7;
   border: 1px solid var(--border);
@@ -734,17 +730,6 @@ body.broker-active #tab-voucher .voucher-validation-highlight {
 }
 
 /* ── Commission Voucher: workflow stepper + section progress ── */
-body.broker-active #tab-voucher .voucher-required-legend {
-  display: block;
-  margin: 0 0 10px;
-  padding: 10px 14px;
-  background: #FAFAF7;
-  border: 1px solid var(--border);
-  font-size: 14px;
-  font-weight: 600;
-  color: #334155;
-}
-
 body.broker-active #tab-voucher .voucher-workflow {
   position: sticky;
   top: 0;
@@ -1044,4 +1029,72 @@ body.workspace-embedded.broker-active #broker-view > .panel.active {
   body.broker-active .btn {
     padding: 10px 14px;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Comp Reports — UI cleanup
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* The 8-track filter grid overflows the embedded panel (~1140px content)
+   before the base 1100px breakpoint applies; step down to 4 columns first. */
+@media (max-width: 1500px) {
+  body.broker-active .cr-filters-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  body.broker-active .cr-filters-grid .cr-span-2 {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 1100px) {
+  body.broker-active .cr-filters-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  body.broker-active .cr-filters-grid {
+    grid-template-columns: 1fr;
+  }
+  body.broker-active .cr-filters-grid .cr-span-2 {
+    grid-column: auto;
+  }
+}
+
+/* Table/Map segmented control: brand-red active state (a late base ruleset
+   paints it dark gray, which reads as a different product) */
+body.broker-active .cr-view-toggle {
+  border-radius: var(--bt-r-control);
+  border-color: var(--border);
+  background: #fff;
+}
+
+body.broker-active .cr-view-toggle .cr-view-btn,
+body.broker-active .cr-view-toggle button {
+  min-height: 40px;
+  padding: 8px 18px;
+}
+
+body.broker-active .cr-view-toggle .cr-view-btn.active,
+body.broker-active .cr-view-toggle button.active,
+body.broker-active .cr-view-toggle button[aria-pressed="true"] {
+  background: var(--red, #98002E);
+  color: #fff;
+}
+
+body.broker-active .cr-view-toggle .cr-view-btn:hover:not(.active),
+body.broker-active .cr-view-toggle button:hover:not(.active) {
+  background: var(--red-light, #F4E3E8);
+  color: var(--red, #98002E);
+}
+
+/* Surfaces and controls join the shared radius scale */
+body.broker-active .cr-filters,
+body.broker-active .cr-table-wrap,
+body.broker-active #cr-map-container {
+  border-radius: var(--bt-r-surface);
+}
+
+body.broker-active .cr-pagination span {
+  min-width: 110px;
 }
