@@ -39,7 +39,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <link rel="stylesheet" href="broker_tool.css?v=20260610.2">
-<link rel="stylesheet" href="broker_ux.css?v=20260612.2">
+<link rel="stylesheet" href="broker_ux.css?v=20260612.3">
 </head>
 <body>
 
@@ -19589,6 +19589,8 @@ async function submitSendToAdmin() {
   const btn = document.getElementById('sta-send-btn');
   const status = document.getElementById('sta-status');
   if (btn && btn.disabled) return;
+  status.textContent = '';
+  status.classList.remove('status-success', 'text-success', 'text-error', 'status-strong');
   if (_staFormType === 'voucher') {
     const voucherValidation = validateVoucherDocumentRequirements();
     if (!voucherValidation.ok) {
@@ -19606,8 +19608,6 @@ async function submitSendToAdmin() {
   btn.classList.add('loading');
   btn.disabled = true;
   btn.querySelector('.btn-label').textContent = _staFormType === 'voucher' ? 'Preparing files...' : 'Preparing PDF...';
-  status.textContent = '';
-  status.classList.remove('text-success', 'text-error', 'status-strong');
 
   const sections = _staFormType === 'listing'
     ? collectListingSections(notes)
@@ -19679,7 +19679,7 @@ async function submitSendToAdmin() {
       });
 
       status.textContent = 'Your request has been submitted! Admin will follow up shortly.';
-      status.classList.add('text-success', 'status-strong');
+      status.classList.add('status-success', 'status-strong');
       btn.querySelector('.btn-label').textContent = 'Email Prepared';
       showToast('Your request has been submitted! Admin will follow up shortly. Attach downloaded files before sending the email.');
       if (_staFormType === 'listing') {
