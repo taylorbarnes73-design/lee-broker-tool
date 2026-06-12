@@ -9813,7 +9813,7 @@ function exportLeaseCompPdf() {
 
   /* ── LEFT: Location  |  RIGHT: Property Features ── */
   const blockY = y;
-  const subleasePartyLabels = document.getElementById('c-sublease-party-labels')?.checked;
+  const subleasePartyLabels = /sublease/i.test(gv('c-space-type'));
 
   // LEFT column — Location
   leftHeader('Location:'); y += HDR;
