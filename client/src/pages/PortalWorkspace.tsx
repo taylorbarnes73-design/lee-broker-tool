@@ -70,6 +70,10 @@ export default function PortalWorkspace() {
 
   const pageStyle = { ["--admin-accent" as string]: accent } as CSSProperties;
 
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const firstName = user?.name?.trim().split(/\s+/)[0];
+
   return (
     <div className="portal-workspace-page" style={pageStyle}>
       <header className="portal-workspace-header">
@@ -120,6 +124,10 @@ export default function PortalWorkspace() {
         />
       ) : (
         <main className="portal-workspace-launchpad">
+          <h1 className="portal-workspace-greeting">
+            {greeting}
+            {firstName ? `, ${firstName}` : ""}
+          </h1>
           <div className="portal-workspace-grid">
             {TOOLS.map(({ id, label, description, Icon }) => (
               <Link
