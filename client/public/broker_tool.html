@@ -4980,9 +4980,12 @@ async function submitReviewSnapshot() {
 
 function exportListingPdfWithSpinner(btn) {
   if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+  showFormOverlay('Building your listing PDF…', { subMsg: 'Your download will start automatically.' });
   setTimeout(() => {
-    exportListingPdf();
-    if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+    try { exportListingPdf(); } finally {
+      hideFormOverlay();
+      if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+    }
   }, 300);
 }
 
@@ -8385,8 +8388,10 @@ function exportLandPdf() {
 // ═══════════════════════════════════════════════════════════════════════════════
 function exportSignPdfWithSpinner(btn) {
   if (btn) { setBtnLoading(btn, true, 'Generating…'); btn.disabled = true; }
+  showFormOverlay('Building your sign request PDF…', { subMsg: 'Your download will start automatically.' });
   setTimeout(() => {
     try { exportSignPdf(); } finally {
+      hideFormOverlay();
       if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
     }
   }, 80);
@@ -9497,6 +9502,7 @@ async function exportVoucherExcelWithSpinner(btn) {
   if (label) label.textContent = 'Preparing Excel...';
   else if (btn) btn.textContent = 'Preparing Excel...';
 
+  showFormOverlay('Preparing your Excel voucher…', { subMsg: 'Your download will start automatically.' });
   try {
     await exportVoucherExcel();
     if (typeof showToast === 'function') showToast('Excel voucher downloaded');
@@ -9505,6 +9511,7 @@ async function exportVoucherExcelWithSpinner(btn) {
     if (typeof showToast === 'function') showToast(message, 'error');
     else alert(message);
   } finally {
+    hideFormOverlay();
     if (btn) btn.disabled = false;
     if (btn?.classList) btn.classList.remove('loading');
     if (label) label.textContent = originalText;
@@ -9553,8 +9560,10 @@ function clearComp() {
 
 function exportCompPdfWithSpinner(btn) {
   if (btn) { setBtnLoading(btn, true, 'Generating…'); btn.disabled = true; }
+  showFormOverlay('Building your comp PDF…', { subMsg: 'Your download will start automatically.' });
   setTimeout(() => {
     try { exportCompPdf(); } finally {
+      hideFormOverlay();
       if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
     }
   }, 80);
@@ -11677,6 +11686,7 @@ async function submitAdminRequest(btn) {
 
   setBtnLoading(btn, true, 'Submitting...');
   if (btn) btn.disabled = true;
+  showFormOverlay('Submitting your request…', { subMsg: 'Sending to admin — almost done.' });
 
   try {
     const now = new Date().toISOString();
@@ -11760,6 +11770,7 @@ async function submitAdminRequest(btn) {
       status.innerHTML = '<span class="text-error status-strong">' + escHtml(error.message || 'Request failed. Please try again.') + '</span>';
     }
   } finally {
+    hideFormOverlay();
     setBtnLoading(btn, false);
     if (btn) btn.disabled = false;
   }
@@ -11913,6 +11924,7 @@ async function downloadMarketingRequestPdf(btn) {
 
   setBtnLoading(btn, true, 'Generating PDF...');
   if (btn) btn.disabled = true;
+  showFormOverlay('Building your marketing request PDF…', { subMsg: 'Your download will start automatically.' });
 
   try {
     const sessionUser = await ensureSharedBrokerSession();
@@ -11981,6 +11993,7 @@ async function downloadMarketingRequestPdf(btn) {
       );
     }
   } finally {
+    hideFormOverlay();
     setBtnLoading(btn, false);
     if (btn) btn.disabled = false;
   }
@@ -12039,6 +12052,7 @@ async function submitMarketingRequest(btn) {
 
   setBtnLoading(btn, true, 'Submitting...');
   if (btn) btn.disabled = true;
+  showFormOverlay('Submitting your request…', { subMsg: 'Sending to admin — almost done.' });
 
   try {
     const authUser = getSignedInBrokerIdentity();
@@ -12186,6 +12200,7 @@ async function submitMarketingRequest(btn) {
       status.innerHTML = '<span class="text-error status-strong">' + escHtml(error.message || 'Request failed. Please try again.') + '</span>';
     }
   } finally {
+    hideFormOverlay();
     setBtnLoading(btn, false);
     if (btn) btn.disabled = false;
   }
@@ -18604,8 +18619,10 @@ function compReportToggleSelectAll(isChecked) {
 
 function compReportExportCsvWithSpinner(btn) {
   if (btn) { setBtnLoading(btn, true, 'Exporting…'); btn.disabled = true; }
+  showFormOverlay('Preparing your Excel export…', { subMsg: 'Your download will start automatically.' });
   setTimeout(() => {
     try { compReportExportCsv(); } finally {
+      hideFormOverlay();
       if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
     }
   }, 80);
@@ -18783,7 +18800,9 @@ function compReportRunSearch() {
   compReportsPageOffset = 0;
   const btn = document.getElementById('cr-search-btn');
   if (btn) { setBtnLoading(btn, true, 'Searching…'); btn.disabled = true; }
+  showFormOverlay('Searching comps…', { subMsg: 'Pulling matching transactions from office records.' });
   void compReportSearch().finally(() => {
+    hideFormOverlay();
     if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
   });
 }
@@ -20982,6 +21001,6 @@ function deleteDraft(key) {
   });
 })();
 </script>
-<script src="/features_patch.js?v=20260610.1"></script>
+<script src="/features_patch.js?v=20260612.1"></script>
 </body>
 </html>

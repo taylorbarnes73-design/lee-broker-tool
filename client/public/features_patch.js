@@ -1187,13 +1187,24 @@ window.aiParseFromPaste = async function() {
       '</div>';
   }
 
+  // Full-screen loading overlay helpers (defined in broker_tool.html; guarded
+  // so these handlers still work if the overlay is ever removed)
+  function overlayShow(msg, subMsg) {
+    if (typeof window.showFormOverlay === 'function') window.showFormOverlay(msg, { subMsg: subMsg });
+  }
+  function overlayHide() {
+    if (typeof window.hideFormOverlay === 'function') window.hideFormOverlay();
+  }
+
   window.__doAnalyzeSignFiles = async function(btn) {
     if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+    overlayShow('Analyzing your brochure…', 'AI is reading the file and filling the sign request. This can take up to a minute.');
     try {
       if (typeof window.scrapeSignBrochure === 'function') {
         await window.scrapeSignBrochure();
       }
     } finally {
+      overlayHide();
       syncSignAnalyzeButton();
       if (btn) { btn.classList.remove('loading'); btn.disabled = !window.signBrochureFileUrl; }
     }
@@ -1201,11 +1212,13 @@ window.aiParseFromPaste = async function() {
 
   window.__doAnalyzeCompFiles = async function(btn) {
     if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+    overlayShow('Analyzing your document…', 'AI is reading the file and filling the comp form. This can take up to a minute.');
     try {
       if (typeof window.scrapeCompBrochure === 'function') {
         await window.scrapeCompBrochure();
       }
     } finally {
+      overlayHide();
       var compBtn = document.getElementById('c-analyze-primary-btn');
       if (compBtn) {
         compBtn.classList.remove('loading');
@@ -1218,6 +1231,12 @@ window.aiParseFromPaste = async function() {
     if (btn) { btn.classList.add('loading'); btn.disabled = true; }
     var resultEl = document.getElementById(tab + '-analyze-result');
     if (resultEl) resultEl.innerHTML = '<span class="upload-analyzing-text">Analyzing your documents…</span>';
+    var fieldKey = tab === 'listing' ? 'l-deal-documents' : 'v-deal-documents';
+    var fileCount = (window.uploadedFiles && Array.isArray(window.uploadedFiles[fieldKey])) ? window.uploadedFiles[fieldKey].length : 0;
+    overlayShow(
+      'Analyzing your documents…',
+      'AI is reading ' + (fileCount === 1 ? 'your file' : fileCount + ' files') + ' and filling the form. This can take up to a minute — keep this tab open.'
+    );
     try {
       if (tab === 'listing' && typeof window.reanalyzeListingDealDocuments === 'function') {
         await window.reanalyzeListingDealDocuments();
@@ -1232,6 +1251,7 @@ window.aiParseFromPaste = async function() {
     } catch (err) {
       if (resultEl) resultEl.innerHTML = '<span class="upload-analyze-error">Could not analyze. Try removing and re-uploading the file.</span>';
     } finally {
+      overlayHide();
       if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
       if (tab === 'voucher' && typeof window.syncDealGlance === 'function') {
         try { window.syncDealGlance(); } catch (e) {}
@@ -1306,21 +1326,49 @@ window.aiParseFromPaste = async function() {
       items.push({ label: 'Property address', value: gv('s-address'), ok: Boolean(gv('s-address')), req: true });
       items.push({ label: 'Order type', value: gs('s-order-type'), ok: Boolean(gv('s-order-type')), req: true });
       items.push({ label: 'Date', value: gv('s-date'), ok: Boolean(gv('s-date')), req: true });
+    } else if (formType === 'comp') {
+      items.push({ label: 'Comp type', value: gs('c-comp-type'), ok: Boolean(gv('c-comp-type')), req: true });
+      items.push({ label: 'Property address', value: gv('c-address'), ok: Boolean(gv('c-address')), req: true });
+      items.push({ label: 'City', value: gv('c-city'), ok: Boolean(gv('c-city')), req: true });
+      items.push({ label: 'Date', value: gv('c-date'), ok: Boolean(gv('c-date')), req: true });
+      items.push({ label: 'Property type', value: gs('c-prop-type'), ok: Boolean(gv('c-prop-type')), req: false });
+      items.push({ label: 'Broker source', value: gv('c-source'), ok: Boolean(gv('c-source')), req: false });
+    } else if (formType === 'marketing-request') {
+      items.push({ label: 'Requester name', value: gs('mr-requester-name'), ok: Boolean(gv('mr-requester-name')), req: true });
+      items.push({ label: 'Email', value: gv('mr-requester-email'), ok: Boolean(gv('mr-requester-email')), req: true });
+      items.push({ label: 'Project title', value: gv('mr-project-title'), ok: Boolean(gv('mr-project-title')), req: true });
+      items.push({ label: 'Project type', value: gs('mr-request-type'), ok: Boolean(gv('mr-request-type')), req: true });
+      items.push({ label: 'Priority', value: gs('mr-priority'), ok: Boolean(gv('mr-priority')), req: true });
+      items.push({ label: 'Description / objective', value: gv('mr-objective'), ok: Boolean(gv('mr-objective')), req: true });
+      items.push({ label: 'Requested due date', value: gv('mr-due-date'), ok: Boolean(gv('mr-due-date')), req: true });
+    } else if (formType === 'admin-request') {
+      items.push({ label: 'Subject', value: gv('ar-subject'), ok: Boolean(gv('ar-subject')), req: true });
+      items.push({ label: 'Message', value: gv('ar-message'), ok: Boolean(gv('ar-message')), req: true });
     }
     return items;
   }
 
+  var PREFLIGHT_FORM_LABELS = {
+    listing: 'Listing Entry',
+    voucher: 'Commission Voucher',
+    sign: 'Sign Request',
+    comp: 'Comp Input',
+    'marketing-request': 'Marketing Request',
+    'admin-request': 'Admin Request'
+  };
+
   function buildChecklistHTML(formType) {
     var items = buildItems(formType);
     var blockers = items.filter(function(i) { return i.req && !i.ok; });
-    var formLabel = formType === 'listing' ? 'Listing Entry' : formType === 'voucher' ? 'Commission Voucher' : 'Sign Request';
-    var html = '<div class="preflight-form-label">Submitting: <strong>' + esc(formLabel) + '</strong></div>';
+    var formLabel = PREFLIGHT_FORM_LABELS[formType] || 'Submission';
+    var isDownload = arguments.length > 1 && arguments[1] === 'download';
+    var html = '<div class="preflight-form-label">' + (isDownload ? 'Downloading' : 'Submitting') + ': <strong>' + esc(formLabel) + '</strong></div>';
     if (blockers.length) {
       html += '<div class="preflight-warning-banner">' +
         '<span class="preflight-warn-icon">⚠️</span>' +
         '<div><strong>Missing required fields:</strong><br>' +
         blockers.map(function(i) { return '&bull; ' + esc(i.label); }).join('<br>') +
-        '<br><small style="opacity:.8">You can still send, but admin may ask you to re-submit.</small>' +
+        '<br><small style="opacity:.8">' + (isDownload ? 'You can still download, but the document will have blanks.' : 'You can still send, but admin may ask you to re-submit.') + '</small>' +
         '</div></div>';
     }
     html += '<div class="preflight-items">';
@@ -1338,18 +1386,25 @@ window.aiParseFromPaste = async function() {
     return { html: html, hasBlockers: blockers.length > 0 };
   }
 
-  window.openPreflightModal = function(formType, callback) {
+  window.openPreflightModal = function(formType, callback, opts) {
     _preflightFormType = formType;
     _preflightCallback = callback || null;
     var modal = document.getElementById('preflight-modal');
     var checklist = document.getElementById('preflight-checklist');
     var confirmBtn = document.getElementById('preflight-confirm-btn');
     if (!modal || !checklist) { if (callback) callback(); return; }
-    var result = buildChecklistHTML(formType);
+    var isDownload = Boolean(opts && opts.action === 'download');
+    var result = buildChecklistHTML(formType, isDownload ? 'download' : 'send');
     checklist.innerHTML = result.html;
+    var titleEl = modal.querySelector('.preflight-title');
+    if (titleEl) titleEl.textContent = isDownload ? 'Review Before You Download' : 'Check Before You Send';
     if (confirmBtn) {
       var label = confirmBtn.querySelector('.btn-label');
-      if (label) label.textContent = result.hasBlockers ? 'Send Anyway →' : 'Looks Good — Send to Admin →';
+      if (label) {
+        label.textContent = isDownload
+          ? (result.hasBlockers ? 'Download Anyway →' : 'Looks Good — Download →')
+          : (result.hasBlockers ? 'Send Anyway →' : 'Looks Good — Send to Admin →');
+      }
       confirmBtn.disabled = false;
     }
     modal.classList.add('open');
@@ -1367,6 +1422,32 @@ window.aiParseFromPaste = async function() {
     window.closePreflightModal();
     if (typeof cb === 'function') cb();
   };
+
+  // ── Route remaining export/submit entry points through the review step ──
+  // Send-to-admin already goes through preflight via patchSendToAdminModal;
+  // this covers direct downloads and the submits that previously skipped it.
+  function wrapWithPreflight(fnName, formType, action) {
+    var orig = window[fnName];
+    if (typeof orig !== 'function') return;
+    window[fnName] = function() {
+      var self = this;
+      var args = arguments;
+      window.openPreflightModal(formType, function() { return orig.apply(self, args); }, { action: action });
+    };
+  }
+
+  function patchReviewGates() {
+    /* Downloads */
+    wrapWithPreflight('exportListingPdfWithSpinner', 'listing', 'download');
+    wrapWithPreflight('exportSignPdfWithSpinner', 'sign', 'download');
+    wrapWithPreflight('exportCompPdfWithSpinner', 'comp', 'download');
+    wrapWithPreflight('exportVoucherExcelWithSpinner', 'voucher', 'download');
+    wrapWithPreflight('downloadMarketingRequestPdf', 'marketing-request', 'download');
+    /* Submits that bypassed the send-to-admin modal */
+    wrapWithPreflight('submitCompDirect', 'comp', 'send');
+    wrapWithPreflight('submitMarketingRequest', 'marketing-request', 'send');
+    wrapWithPreflight('submitAdminRequest', 'admin-request', 'send');
+  }
 
   // ── Intercept openSendToAdminModal to wrap with preflight ──
   function patchSendToAdminModal() {
@@ -1458,6 +1539,7 @@ window.aiParseFromPaste = async function() {
     patchFileHandler('onVoucherDealDocumentsSelected');
     patchRenderFunctions();
     patchSendToAdminModal();
+    patchReviewGates();
     patchSwitchTabForReviewBar();
     patchSignBrochureHandler();
     patchCompBrochureHandler();
