@@ -39,7 +39,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <link rel="stylesheet" href="broker_tool.css?v=20260610.2">
-<link rel="stylesheet" href="broker_ux.css?v=20260611.1">
+<link rel="stylesheet" href="broker_ux.css?v=20260612.3">
 </head>
 <body>
 
@@ -219,7 +219,7 @@
   </div>
 
   <div id="listing-add-mode">
-    <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections as needed.</div>
+    <div class="tip pane-intro-tip">Fields marked <span class="required-mark">*</span> are required.</div>
     <div class="broker-pane-guide" role="note">
       <strong>How to use this form:</strong>
       <ol>
@@ -665,7 +665,7 @@
       <div class="page-meta-chip"><span class="dot"></span>All sections on one page</div>
     </div>
   </div>
-  <div class="tip pane-intro-tip">Fields marked <span class="required-mark">*</span> are required. Review everything before you send.</div>
+  <div class="tip pane-intro-tip">Fields marked <span class="required-mark">*</span> are required.</div>
   <div class="broker-pane-guide" role="note">
     <strong>Sign request tips:</strong> Upload documents, tap <strong>Analyze</strong>, check the address and quantities, then use <strong>Review</strong> below.
   </div>
@@ -910,10 +910,9 @@
     <div class="page-head-left">
       <div class="page-eyebrow">Broker Submission</div>
       <h1 class="page-h1">Commission Voucher</h1>
-      <p class="page-desc">Build the commission voucher, verify splits, and send completed deal docs to admin.</p>
+      <p class="page-desc">Build the voucher, verify splits, and send to admin. Fields marked <span class="required-mark">*</span> are required.</p>
     </div>
   </div>
-  <div class="tip pane-intro-tip voucher-required-legend">Fields marked <span class="required-mark">*</span> are required.</div>
 
   <nav class="voucher-workflow" id="voucher-workflow" aria-label="Voucher submission steps">
     <ol class="voucher-workflow-steps">
@@ -992,7 +991,7 @@
       <div class="field"><label class="req">Property Type</label>
         <select id="v-prop-type"><option value="industrial">Industrial</option><option value="office">Office</option><option value="retail">Retail</option><option value="land">Land</option><option value="other">Other</option></select>
       </div>
-      <div class="field"><label class="req">Deal subtype</label>
+      <div class="field"><label class="req">Deal Subtype</label>
         <select id="v-deal-type-req">
           <option value="">—</option>
           <option>New</option><option>Renewal</option><option>Expansion</option><option>Relocation</option><option>Blend &amp; Extend</option>
@@ -1516,7 +1515,7 @@
     </div>
   </div>
   <p class="page-desc">Add lease or sale comps to the office dataset.</p>
-  <div class="tip pane-intro-tip">Required fields are marked with <span class="required-mark">*</span> — complete these first, then expand optional sections for additional detail.</div>
+  <div class="tip pane-intro-tip">Fields marked <span class="required-mark">*</span> are required.</div>
   <div class="broker-pane-guide" role="note">
     <strong>How to use this form:</strong>
     <ol>
@@ -1928,8 +1927,8 @@
         <div class="cr-view-toggle" role="group" aria-label="Comp report view">
           <button class="cr-view-btn active" id="cr-view-table-btn" type="button" onclick="crSetView('table')">Table</button>
           <button class="cr-view-btn" id="cr-view-map-btn" type="button" onclick="crSetView('map')">Map</button>
-          <button class="cr-view-btn" type="button" id="cr-export-csv-btn" onclick="compReportExportCsvWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Excel file</span></button>
         </div>
+        <button class="btn btn-gray" type="button" id="cr-export-csv-btn" onclick="compReportExportCsvWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Export Excel</span></button>
         <button class="btn btn-red cr-download-report-btn" type="button" id="cr-export-pdf-btn" onclick="compReportExportPdfWithSpinner(this)"><span class="btn-spinner"></span><span class="btn-label">Download Comp Report</span></button>
       </div>
     </div>
@@ -4981,9 +4980,12 @@ async function submitReviewSnapshot() {
 
 function exportListingPdfWithSpinner(btn) {
   if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+  showFormOverlay('Building your listing PDF…', { subMsg: 'Your download will start automatically.' });
   setTimeout(() => {
-    exportListingPdf();
-    if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+    try { exportListingPdf(); } finally {
+      hideFormOverlay();
+      if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+    }
   }, 300);
 }
 
@@ -8386,8 +8388,10 @@ function exportLandPdf() {
 // ═══════════════════════════════════════════════════════════════════════════════
 function exportSignPdfWithSpinner(btn) {
   if (btn) { setBtnLoading(btn, true, 'Generating…'); btn.disabled = true; }
+  showFormOverlay('Building your sign request PDF…', { subMsg: 'Your download will start automatically.' });
   setTimeout(() => {
     try { exportSignPdf(); } finally {
+      hideFormOverlay();
       if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
     }
   }, 80);
@@ -9498,6 +9502,7 @@ async function exportVoucherExcelWithSpinner(btn) {
   if (label) label.textContent = 'Preparing Excel...';
   else if (btn) btn.textContent = 'Preparing Excel...';
 
+  showFormOverlay('Preparing your Excel voucher…', { subMsg: 'Your download will start automatically.' });
   try {
     await exportVoucherExcel();
     if (typeof showToast === 'function') showToast('Excel voucher downloaded');
@@ -9506,6 +9511,7 @@ async function exportVoucherExcelWithSpinner(btn) {
     if (typeof showToast === 'function') showToast(message, 'error');
     else alert(message);
   } finally {
+    hideFormOverlay();
     if (btn) btn.disabled = false;
     if (btn?.classList) btn.classList.remove('loading');
     if (label) label.textContent = originalText;
@@ -9554,8 +9560,10 @@ function clearComp() {
 
 function exportCompPdfWithSpinner(btn) {
   if (btn) { setBtnLoading(btn, true, 'Generating…'); btn.disabled = true; }
+  showFormOverlay('Building your comp PDF…', { subMsg: 'Your download will start automatically.' });
   setTimeout(() => {
     try { exportCompPdf(); } finally {
+      hideFormOverlay();
       if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
     }
   }, 80);
@@ -9813,7 +9821,7 @@ function exportLeaseCompPdf() {
 
   /* ── LEFT: Location  |  RIGHT: Property Features ── */
   const blockY = y;
-  const subleasePartyLabels = document.getElementById('c-sublease-party-labels')?.checked;
+  const subleasePartyLabels = /sublease/i.test(gv('c-space-type'));
 
   // LEFT column — Location
   leftHeader('Location:'); y += HDR;
@@ -11678,6 +11686,7 @@ async function submitAdminRequest(btn) {
 
   setBtnLoading(btn, true, 'Submitting...');
   if (btn) btn.disabled = true;
+  showFormOverlay('Submitting your request…', { subMsg: 'Sending to admin — almost done.' });
 
   try {
     const now = new Date().toISOString();
@@ -11761,6 +11770,7 @@ async function submitAdminRequest(btn) {
       status.innerHTML = '<span class="text-error status-strong">' + escHtml(error.message || 'Request failed. Please try again.') + '</span>';
     }
   } finally {
+    hideFormOverlay();
     setBtnLoading(btn, false);
     if (btn) btn.disabled = false;
   }
@@ -11914,6 +11924,7 @@ async function downloadMarketingRequestPdf(btn) {
 
   setBtnLoading(btn, true, 'Generating PDF...');
   if (btn) btn.disabled = true;
+  showFormOverlay('Building your marketing request PDF…', { subMsg: 'Your download will start automatically.' });
 
   try {
     const sessionUser = await ensureSharedBrokerSession();
@@ -11982,6 +11993,7 @@ async function downloadMarketingRequestPdf(btn) {
       );
     }
   } finally {
+    hideFormOverlay();
     setBtnLoading(btn, false);
     if (btn) btn.disabled = false;
   }
@@ -12040,6 +12052,7 @@ async function submitMarketingRequest(btn) {
 
   setBtnLoading(btn, true, 'Submitting...');
   if (btn) btn.disabled = true;
+  showFormOverlay('Submitting your request…', { subMsg: 'Sending to admin — almost done.' });
 
   try {
     const authUser = getSignedInBrokerIdentity();
@@ -12187,6 +12200,7 @@ async function submitMarketingRequest(btn) {
       status.innerHTML = '<span class="text-error status-strong">' + escHtml(error.message || 'Request failed. Please try again.') + '</span>';
     }
   } finally {
+    hideFormOverlay();
     setBtnLoading(btn, false);
     if (btn) btn.disabled = false;
   }
@@ -18605,8 +18619,10 @@ function compReportToggleSelectAll(isChecked) {
 
 function compReportExportCsvWithSpinner(btn) {
   if (btn) { setBtnLoading(btn, true, 'Exporting…'); btn.disabled = true; }
+  showFormOverlay('Preparing your Excel export…', { subMsg: 'Your download will start automatically.' });
   setTimeout(() => {
     try { compReportExportCsv(); } finally {
+      hideFormOverlay();
       if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
     }
   }, 80);
@@ -18784,7 +18800,9 @@ function compReportRunSearch() {
   compReportsPageOffset = 0;
   const btn = document.getElementById('cr-search-btn');
   if (btn) { setBtnLoading(btn, true, 'Searching…'); btn.disabled = true; }
+  showFormOverlay('Searching comps…', { subMsg: 'Pulling matching transactions from office records.' });
   void compReportSearch().finally(() => {
+    hideFormOverlay();
     if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
   });
 }
@@ -19571,6 +19589,8 @@ async function submitSendToAdmin() {
   const btn = document.getElementById('sta-send-btn');
   const status = document.getElementById('sta-status');
   if (btn && btn.disabled) return;
+  status.textContent = '';
+  status.classList.remove('status-success', 'text-success', 'text-error', 'status-strong');
   if (_staFormType === 'voucher') {
     const voucherValidation = validateVoucherDocumentRequirements();
     if (!voucherValidation.ok) {
@@ -19588,8 +19608,6 @@ async function submitSendToAdmin() {
   btn.classList.add('loading');
   btn.disabled = true;
   btn.querySelector('.btn-label').textContent = _staFormType === 'voucher' ? 'Preparing files...' : 'Preparing PDF...';
-  status.textContent = '';
-  status.classList.remove('text-success', 'text-error', 'status-strong');
 
   const sections = _staFormType === 'listing'
     ? collectListingSections(notes)
@@ -19661,7 +19679,7 @@ async function submitSendToAdmin() {
       });
 
       status.textContent = 'Your request has been submitted! Admin will follow up shortly.';
-      status.classList.add('text-success', 'status-strong');
+      status.classList.add('status-success', 'status-strong');
       btn.querySelector('.btn-label').textContent = 'Email Prepared';
       showToast('Your request has been submitted! Admin will follow up shortly. Attach downloaded files before sending the email.');
       if (_staFormType === 'listing') {
@@ -20983,6 +21001,6 @@ function deleteDraft(key) {
   });
 })();
 </script>
-<script src="/features_patch.js?v=20260610.1"></script>
+<script src="/features_patch.js?v=20260612.1"></script>
 </body>
 </html>

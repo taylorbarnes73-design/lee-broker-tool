@@ -205,13 +205,9 @@ body.broker-active .broker-pane-guide {
   border-radius: 10px;
 }
 
-body.broker-active #tab-voucher .pane-intro-tip.voucher-required-legend {
-  display: block;
-}
-
 .broker-pane-guide {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: #FAFAF7;
+  border: 1px solid var(--border);
   padding: 12px 14px;
   margin: 0 0 14px;
   color: #334155;
@@ -514,7 +510,7 @@ body.broker-active #tab-voucher .broker-table-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   margin: 8px 0 12px;
-  border: 1px solid #e7eaee;
+  border: 1px solid var(--border);
   border-radius: 10px;
   background: #fff;
 }
@@ -571,10 +567,10 @@ body.broker-active #tab-voucher #v-payment-table {
 
 /* ── Voucher UX overhaul ── */
 body.broker-active #tab-voucher .voucher-accordion {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 0;
-  background: #fafbfc;
+  background: #FAFAF7;
 }
 
 body.broker-active #tab-voucher .voucher-accordion > summary {
@@ -623,7 +619,7 @@ body.broker-active #tab-voucher .v-rent-step {
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 12px;
   color: #6b7280;
@@ -686,7 +682,7 @@ body.broker-active #tab-voucher .btn-more-menu {
   gap: 6px;
   min-width: 180px;
   padding: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 10px;
   background: #fff;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
@@ -734,17 +730,6 @@ body.broker-active #tab-voucher .voucher-validation-highlight {
 }
 
 /* ── Commission Voucher: workflow stepper + section progress ── */
-body.broker-active #tab-voucher .voucher-required-legend {
-  display: block;
-  margin: 0 0 10px;
-  padding: 10px 14px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #334155;
-}
-
 body.broker-active #tab-voucher .voucher-workflow {
   position: sticky;
   top: 0;
@@ -799,7 +784,7 @@ body.broker-active #tab-voucher .voucher-wf-connector {
   max-width: 40px;
   height: 2px;
   margin: 0 4px;
-  background: #e2e8f0;
+  background: var(--border);
   list-style: none;
 }
 
@@ -937,4 +922,179 @@ body.broker-active #tab-voucher .btn-download-send.is-ready {
     flex: 1 1 calc(50% - 6px);
     min-width: 140px;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Global consistency pass — sizing, padding, borders.
+   One radius scale (surfaces 12px, controls 10px, chips 8px), one border
+   weight per role (1px surfaces, 1.5px interactive controls), one grid gap.
+   Loads after broker_tool.css so these win without touching the base file.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bt-r-surface: 12px;
+  --bt-r-control: 10px;
+  --bt-r-chip: 8px;
+}
+
+/* Surfaces: cards, accordions, table wraps, guides share one radius/padding */
+body.broker-active .card {
+  border-radius: var(--bt-r-surface);
+  padding: 20px 22px;
+  margin-bottom: 16px;
+}
+
+body.broker-active .card h2 {
+  margin-bottom: 18px;
+  padding-bottom: 10px;
+}
+
+body.broker-active .card h3 {
+  margin: 18px 0 10px;
+}
+
+body.broker-active .deal-aside .deal-card {
+  border-radius: var(--bt-r-surface);
+}
+
+body.broker-active #tab-voucher .voucher-accordion,
+body.broker-active #tab-voucher .broker-table-scroll,
+body.broker-active .broker-pane-guide,
+body.broker-active .pane-intro-tip,
+body.broker-active #tab-voucher .voucher-workflow {
+  border-radius: var(--bt-r-surface);
+}
+
+/* Controls: inputs and buttons share one radius and one min-height */
+body.broker-active .field input,
+body.broker-active .field select,
+body.broker-active .field textarea {
+  border-radius: var(--bt-r-control);
+  padding: 10px 13px;
+}
+
+body.broker-active .btn {
+  border-radius: var(--bt-r-control);
+  min-height: 44px;
+  padding: 10px 18px;
+}
+
+body.broker-active .upload-analyze-btn-primary {
+  border-radius: var(--bt-r-control);
+}
+
+/* Chips, steps, hint pills */
+body.broker-active #tab-voucher .v-rent-step,
+body.broker-active #tab-voucher .voucher-wf-step,
+body.broker-active #tab-voucher .voucher-workflow-tip {
+  border-radius: var(--bt-r-chip);
+}
+
+/* Demote heavy 2px accents to the standard control weight */
+body.broker-active #tab-voucher .v-simplified-fee-prominent {
+  border-width: 1.5px;
+  border-radius: var(--bt-r-control);
+}
+
+/* Grid rhythm: one gap for rows and the voucher grids */
+body.broker-active .row {
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+body.broker-active #tab-voucher .voucher-party-grid,
+body.broker-active #tab-voucher .voucher-agent-grid {
+  gap: 14px;
+}
+
+/* Panel padding: same rhythm in embedded and standalone modes */
+body.broker-active #broker-view > .panel.active {
+  padding: 20px 20px 96px;
+}
+
+body.workspace-embedded.broker-active #broker-view > .panel.active {
+  padding: 18px 20px 96px;
+}
+
+@media (max-width: 720px) {
+  body.broker-active .card {
+    padding: 16px;
+  }
+
+  body.broker-active #broker-view > .panel.active,
+  body.workspace-embedded.broker-active #broker-view > .panel.active {
+    padding: 14px 12px 96px;
+  }
+
+  body.broker-active .btn {
+    padding: 10px 14px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Comp Reports — UI cleanup
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* The 8-track filter grid overflows the embedded panel (~1140px content)
+   before the base 1100px breakpoint applies; step down to 4 columns first. */
+@media (max-width: 1500px) {
+  body.broker-active .cr-filters-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  body.broker-active .cr-filters-grid .cr-span-2 {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 1100px) {
+  body.broker-active .cr-filters-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  body.broker-active .cr-filters-grid {
+    grid-template-columns: 1fr;
+  }
+  body.broker-active .cr-filters-grid .cr-span-2 {
+    grid-column: auto;
+  }
+}
+
+/* Table/Map segmented control: brand-red active state (a late base ruleset
+   paints it dark gray, which reads as a different product) */
+body.broker-active .cr-view-toggle {
+  border-radius: var(--bt-r-control);
+  border-color: var(--border);
+  background: #fff;
+}
+
+body.broker-active .cr-view-toggle .cr-view-btn,
+body.broker-active .cr-view-toggle button {
+  min-height: 40px;
+  padding: 8px 18px;
+}
+
+body.broker-active .cr-view-toggle .cr-view-btn.active,
+body.broker-active .cr-view-toggle button.active,
+body.broker-active .cr-view-toggle button[aria-pressed="true"] {
+  background: var(--red, #98002E);
+  color: #fff;
+}
+
+body.broker-active .cr-view-toggle .cr-view-btn:hover:not(.active),
+body.broker-active .cr-view-toggle button:hover:not(.active) {
+  background: var(--red-light, #F4E3E8);
+  color: var(--red, #98002E);
+}
+
+/* Surfaces and controls join the shared radius scale */
+body.broker-active .cr-filters,
+body.broker-active .cr-table-wrap,
+body.broker-active #cr-map-container {
+  border-radius: var(--bt-r-surface);
+}
+
+body.broker-active .cr-pagination span {
+  min-width: 110px;
 }

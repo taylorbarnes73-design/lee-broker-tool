@@ -89,6 +89,9 @@ test.describe("broker tool smoke", () => {
     await tool.locator("#mr-due-date").fill("2026-06-20");
 
     await tool.locator("#btn-mr-download-pdf").click();
+    // Downloads now pass through the review checklist first
+    await expect(tool.locator("#preflight-modal")).toHaveClass(/open/);
+    await tool.locator("#preflight-confirm-btn").click();
     await expect(tool.locator("#mr-status .status-success")).toBeVisible({ timeout: 15_000 });
     expect(pdfRequestBody).toMatchObject({
       requesterName: "Frank Adler",
