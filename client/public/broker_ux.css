@@ -409,30 +409,57 @@ body.broker-active #tab-voucher .card {
   max-width: 100%;
 }
 
-/* Override fixed multi-column rows (c2/c3/c4/c23) inside voucher */
-body.broker-active #tab-voucher .row,
-body.broker-active #tab-voucher .row.c2,
-body.broker-active #tab-voucher .row.c23,
-body.broker-active #tab-voucher .row.c3,
-body.broker-active #tab-voucher .row.c4,
-body.broker-active #tab-voucher .row.c5,
-body.broker-active #tab-voucher .voucher-party-grid,
-body.broker-active #tab-voucher .voucher-agent-grid,
-body.broker-active #tab-voucher .voucher-party-grid .row,
-body.broker-active #tab-voucher .voucher-party-grid .row.c2,
-body.broker-active #tab-voucher .voucher-party-grid .row.c3,
-body.broker-active #tab-voucher .voucher-agent-grid .row,
-body.broker-active #tab-voucher .voucher-agent-grid .row.c2,
-body.broker-active #tab-voucher .voucher-agent-grid .row.c3,
-body.broker-active #tab-voucher .voucher-summary-row {
-  grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), 1fr)) !important;
+/* Predictable column counts inside the voucher. The previous auto-fit rule
+   (minmax(132px, 1fr)) reflowed fields unpredictably as the panel resized;
+   fixed counts with explicit breakpoints keep related fields side by side. */
+body.broker-active #tab-voucher .row {
   min-width: 0;
+}
+
+body.broker-active #tab-voucher .row.c2,
+body.broker-active #tab-voucher .row.c23 {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+body.broker-active #tab-voucher .row.c3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+body.broker-active #tab-voucher .row.c4,
+body.broker-active #tab-voucher .row.c5 {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
 }
 
 body.broker-active #tab-voucher .voucher-party-grid,
 body.broker-active #tab-voucher .voucher-agent-grid {
   display: grid !important;
   gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+@media (max-width: 1280px) {
+  body.broker-active #tab-voucher .row.c4,
+  body.broker-active #tab-voucher .row.c5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 1100px) {
+  body.broker-active #tab-voucher .row.c3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  body.broker-active #tab-voucher .row.c2,
+  body.broker-active #tab-voucher .row.c23,
+  body.broker-active #tab-voucher .row.c3,
+  body.broker-active #tab-voucher .row.c4,
+  body.broker-active #tab-voucher .row.c5,
+  body.broker-active #tab-voucher .voucher-party-grid,
+  body.broker-active #tab-voucher .voucher-agent-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 body.broker-active #tab-voucher .voucher-party-grid > div,
@@ -812,17 +839,6 @@ body.broker-active #tab-voucher .voucher-workflow-tip {
   line-height: 1.5;
   font-weight: 600;
   color: #7a0024;
-}
-
-body.broker-active #tab-voucher .voucher-section-banner {
-  margin: 0 0 12px;
-  padding: 8px 12px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #475569;
-  background: #f1f5f9;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
 }
 
 body.broker-active #tab-voucher .v-rent-context-line {
