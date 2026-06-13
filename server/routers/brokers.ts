@@ -70,9 +70,12 @@ export const brokersRouter = router({
         // Map DB roles to roster labels. A specific static-directory label
         // (e.g. a precise title) wins for brokers, but admin/readonly DB roles
         // are authoritative so they are never mislabeled as "Broker".
-        const roleLabel = (dbRole: string, existingLabel: string | undefined): string => {
+        const roleLabel = (
+          dbRole: string,
+          existingLabel: string | undefined
+        ): string => {
           if (dbRole === "admin") return "Office Admin";
-          if (dbRole === "readonly") return "Read Only";
+          if (dbRole === "readonly") return "Read-Only";
           return existingLabel ?? "Broker";
         };
 
@@ -95,7 +98,10 @@ export const brokersRouter = router({
         }
       }
     } catch (error) {
-      console.error("[brokers.list] DB merge failed, returning static directory:", error);
+      console.error(
+        "[brokers.list] DB merge failed, returning static directory:",
+        error
+      );
     }
 
     // Brokers first, then admins; stable alphabetical within each group.
