@@ -520,11 +520,25 @@ window.onSignLocationPhotoChange = function(input) {
     // Geocode addresses and add markers
     var bounds = new google.maps.LatLngBounds();
     var geocoded = 0;
+    var geoFailed = 0;        // addresses Google could not place
+    var geoSkipped = 0;       // results with no address to geocode
+    var totalToGeocode = 0;
 
     // Rate-limit geocoding to avoid OVER_QUERY_LIMIT
     var geocodeQueue = [];
     var geocodeActive = 0;
     var MAX_CONCURRENT = 5;
+
+    function maybeReportGeoResult() {
+      if (geocodeActive > 0 || geocodeQueue.length > 0) return;
+      var unmapped = geoFailed + geoSkipped;
+      if (unmapped > 0 && typeof showToast === 'function') {
+        var total = geocoded + unmapped;
+        showToast(unmapped + ' of ' + total + ' ' + (total === 1 ? 'address' : 'addresses') +
+          ' could not be placed on the map.', 'warn');
+      }
+      updateMapToolbar();
+    }
 
     function processGeoQueue() {
       while (geocodeActive < MAX_CONCURRENT && geocodeQueue.length > 0) {
@@ -533,6 +547,7 @@ window.onSignLocationPhotoChange = function(input) {
         doGeocode(job.addr, job.idx, job.result, function() {
           geocodeActive--;
           processGeoQueue();
+          maybeReportGeoResult();
         });
       }
     }
@@ -550,6 +565,9 @@ window.onSignLocationPhotoChange = function(input) {
           // Retry after delay
           setTimeout(function() { doGeocode(fullAddr, idx, result, done); }, 1000);
           return;
+        } else {
+          // ZERO_RESULTS, REQUEST_DENIED, INVALID_REQUEST, etc.
+          geoFailed++;
         }
         done();
       });
@@ -558,13 +576,16 @@ window.onSignLocationPhotoChange = function(input) {
     results.forEach(function(result, idx) {
       var addr = (result.reportCard && result.reportCard.addressLine) || result.address || '';
       var city = (result.reportCard && result.reportCard.cityLine) || result.city || '';
-      if (!addr) return;
+      if (!addr) { geoSkipped++; return; }
       var fullAddr = addr + (city ? ', ' + city : '') + ', CA';
+      totalToGeocode++;
       geocodeQueue.push({ addr: fullAddr, idx: idx, result: result });
     });
 
     processGeoQueue();
     updateMapToolbar();
+    // If nothing was queueable (all skipped), still surface the result.
+    if (totalToGeocode === 0) maybeReportGeoResult();
   }
 
   function addMarkerForResult(lat, lng, idx, result) {
