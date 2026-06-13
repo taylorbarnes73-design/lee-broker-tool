@@ -38,8 +38,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-<link rel="stylesheet" href="broker_tool.css?v=20260613.1">
-<link rel="stylesheet" href="broker_ux.css?v=20260612.3">
+<link rel="stylesheet" href="broker_tool.css?v=20260613.2">
+<link rel="stylesheet" href="broker_ux.css?v=20260613.2">
 </head>
 <body>
 
@@ -319,7 +319,7 @@
       <div class="row c2">
         <div class="field"><label>Cross Street(s)</label><input id="l-cross"></div>
         <div class="field is-hidden" id="field-corner"><label>Corner</label>
-          <select id="l-corner"><option value="">N/A</option><option value="NE">NE</option><option value="NW">NW</option><option value="SE">SE</option><option value="SW">SW</option></select>
+          <select id="l-corner"><option value="">Select…</option><option value="NE">NE</option><option value="NW">NW</option><option value="SE">SE</option><option value="SW">SW</option></select>
         </div>
       </div>
 
@@ -10771,52 +10771,6 @@ async function submitCompDirect() {
 // ═══════════════════════════════════════════════════════════════════════════════
 // BROKER TOOL AUTH GATE
 // ═══════════════════════════════════════════════════════════════════════════════
-const BROKER_EMAIL_MAP = {
-  'eabrego@lee-associates.com': 'Eva Abrego',
-  'fadler@lee-associates.com': 'Frank Adler',
-  'sahern@lee-associates.com': 'Sean Ahern',
-  'targuello@lee-associates.com': 'Tim Arguello',
-  'tbarnes@lee-associates.com': 'Taylor Barnes',
-  'cbarnett@lee-associates.com': 'Chris Barnett',
-  'bbarson@lee-associates.com': 'Brian Barson',
-  'dbolt@lee-associates.com': 'David Bolt',
-  'mchristensen@lee-associates.com': 'Matt Christensen',
-  'edavidson@lee-associates.com': 'Ethan Davidson',
-  'ndumke@lee-associates.com': 'Nick Dumke',
-  'mdurkin@lee-associates.com': 'Matt Durkin',
-  'bgarbutt@lee-associates.com': 'Brian Garbutt',
-  'jgessford@lee-associates.com': 'John Gessford',
-  'lgessford@lee-associates.com': 'Libby Gessford',
-  'pgills@lee-associates.com': 'Pitzer Gills',
-  'kgould@lee-associates.com': 'Ken Gould',
-  'bgriffin@lee-associates.com': 'Bob Griffin',
-  'jgrijalva@lee-associates.com': 'Jeff Grijalva',
-  'charrington@lee-associates.com': 'Carter Harrington',
-  'jhietbrink@lee-associates.com': 'Judd Hietbrink',
-  'jhirsch@lee-associates.com': 'Jeff Hirsch',
-  'jhogan@lee-associates.com': 'Jack Hogan',
-  'dkluver@lee-associates.com': 'David Kluver',
-  'mlawer@lee-associates.com': 'Matt Lawer',
-  'mlong@lee-associates.com': 'Mike Long',
-  'smadigan@lee-associates.com': 'Steve Madigan',
-  'gmcardell@lee-associates.com': 'Gary McArdell',
-  'jmejia@lee-associates.com': 'Jonathan Mejia',
-  'fperkins@lee-associates.com': 'Frank Perkins',
-  'bschneider@lee-associates.com': 'Brad Schneider',
-  'asherratt@lee-associates.com': 'Alejandro Sherratt',
-  'bsmith@lee-associates.com': 'Brendan Smith',
-  'htoland@lee-associates.com': 'Hayden Toland',
-  'mtoland@lee-associates.com': 'Miles Toland',
-  'rturner@lee-associates.com': 'Rick Turner',
-  'timwalker@lee-associates.com': 'Tim Walker',
-  'twest@lee-associates.com': 'Tom West',
-  'cwinn@lee-associates.com': 'Charlie Winn',
-  'mzacher@lee-associates.com': 'Maddie Zacher',
-  'szacher@lee-associates.com': 'Shannon Zacher',
-  'ekat@lee-associates.com': 'Errissa Kat',
-  'kmorris@lee-associates.com': 'Kelsey Morris',
-};
-
 function normalizeBrokerSessionUser(raw) {
   if (!raw || !raw.email) return null;
   return {
@@ -21017,6 +20971,6 @@ function deleteDraft(key) {
   });
 })();
 </script>
-<script src="/features_patch.js?v=20260613.1"></script>
+<script src="/features_patch.js?v=20260613.2"></script>
 </body>
 </html>

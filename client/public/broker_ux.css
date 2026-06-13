@@ -1098,3 +1098,43 @@ body.broker-active #cr-map-container {
 body.broker-active .cr-pagination span {
   min-width: 110px;
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Accessibility: keyboard focus visibility
+   Custom interactive elements define :hover but historically had no visible
+   focus state, leaving keyboard users unable to see where they are. These
+   :focus-visible rules apply a consistent brand-colored ring only for
+   keyboard navigation (not mouse clicks), so the visual design is unchanged
+   for pointer users.
+   ────────────────────────────────────────────────────────────────────────── */
+body.broker-active button:focus-visible,
+body.broker-active a:focus-visible,
+body.broker-active [role="button"]:focus-visible,
+body.broker-active input:focus-visible,
+body.broker-active select:focus-visible,
+body.broker-active textarea:focus-visible,
+body.broker-active .btn-icon-sm:focus-visible,
+body.broker-active .cr-map-toolbar-btn:focus-visible,
+body.broker-active .cr-view-btn:focus-visible,
+body.broker-active .cr-view-toggle button:focus-visible,
+body.broker-active .tab-btn:focus-visible,
+body.broker-active .upload-remove-btn:focus-visible {
+  outline: 2px solid var(--red, #98002E);
+  outline-offset: 2px;
+  border-radius: var(--bt-r-control, 6px);
+}
+
+/* Preflight / modal action buttons sit on a tinted surface — give the ring a
+   light halo so it stays visible against the brand background. */
+.preflight-modal button:focus-visible,
+.modal-overlay button:focus-visible,
+.modal-overlay a:focus-visible {
+  outline: 2px solid var(--red, #98002E);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(152, 0, 46, 0.18);
+}
+
+/* Never suppress the focus ring for keyboard users, even where a reset removed it. */
+body.broker-active *:focus-visible {
+  outline-color: var(--red, #98002E);
+}

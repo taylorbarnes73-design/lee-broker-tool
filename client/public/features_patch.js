@@ -1250,7 +1250,7 @@ window.aiParseFromPaste = async function() {
       } else if (tab === 'voucher') {
         await reanalyzeVoucherFiles();
       }
-      if (resultEl) resultEl.innerHTML = '<span class="upload-analyze-ok">✅ Done — form fields updated from your documents</span>';
+      if (resultEl) resultEl.innerHTML = '<span class="upload-analyze-ok">Done — form fields updated from your documents</span>';
       if (tab === 'voucher') {
         window.__voucherAnalyzeComplete = true;
         if (typeof window.updateVoucherWorkflow === 'function') window.updateVoucherWorkflow();
@@ -1381,7 +1381,7 @@ window.aiParseFromPaste = async function() {
     html += '<div class="preflight-items">';
     items.forEach(function(item) {
       var cls = item.ok ? 'preflight-item-ok' : (item.req ? 'preflight-item-error' : 'preflight-item-warn');
-      var icon = item.ok ? '✅' : (item.req ? '❌' : '⚠️');
+      var icon = item.ok ? '✓' : (item.req ? '✕' : '!'); // ✓ / ✕ / ! — color comes from the state class
       var val = item.ok ? esc(item.value) : (item.req ? '<em>Missing — required</em>' : '<em>Not filled in</em>');
       html += '<div class="preflight-item ' + cls + '">' +
         '<span class="preflight-item-icon">' + icon + '</span>' +

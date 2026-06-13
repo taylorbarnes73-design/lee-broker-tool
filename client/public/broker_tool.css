@@ -11716,6 +11716,7 @@ body.broker-active .broker-hamburger {
   min-height: 18px;
 }
 .upload-analyze-ok { color: #3a6b2a; font-weight: 600; }
+.upload-analyze-ok::before { content: "\2713\00a0"; font-weight: 800; }
 .upload-analyzing-text { color: #7e8083; font-style: italic; }
 .upload-analyze-warn { color: #86411c; font-weight: 600; }
 .upload-analyze-error { color: #a1102f; font-weight: 600; }
@@ -11850,7 +11851,10 @@ body.broker-active .broker-hamburger {
   background: #fef2f2;
   border-color: #fcc;
 }
-.preflight-item-icon { font-size: 16px; flex-shrink: 0; }
+.preflight-item-icon { font-size: 15px; font-weight: 800; line-height: 1; flex-shrink: 0; width: 18px; text-align: center; }
+.preflight-item-ok .preflight-item-icon { color: #2f7d20; }
+.preflight-item-error .preflight-item-icon { color: #c41230; }
+.preflight-item-warn .preflight-item-icon { color: #b45309; }
 .preflight-item-label {
   flex: 0 0 auto;
   font-weight: 600;
