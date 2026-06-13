@@ -10750,7 +10750,10 @@ async function submitCompDirect() {
       if (badge) { badge.textContent = 'Saved to Comp Reports ✓'; badge.className = 'comp-submit-badge saved'; }
     }
   } catch (e) {
-    const isAuth = e?.message?.toLowerCase().includes('unauthorized') || e?.message?.toLowerCase().includes('sign in');
+    const isAuth = e?.data?.code === 'UNAUTHORIZED' ||
+      e?.message?.includes('10001') ||
+      e?.message?.toLowerCase().includes('please login') ||
+      e?.message?.toLowerCase().includes('unauthorized');
     const msg = isAuth ? 'Not saved — sign in required' : 'Not saved — please try again';
     if (badge) { badge.textContent = msg; badge.className = 'comp-submit-badge error'; }
     showToast(isAuth ? 'Sign in to save your comp.' : 'Could not save comp — please try again.', 'error');
