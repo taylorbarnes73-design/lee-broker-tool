@@ -5105,7 +5105,7 @@ let signUploadData = null;
 function handleSignUpload(input) {
   const file = input.files[0];
   if (!file) return;
-  if (file.size > 10 * 1024 * 1024) { showToast('File too large — max 10 MB.', 'error'); return; }
+  if (file.size > 100 * 1024 * 1024) { showToast('File too large — max 100 MB.', 'error'); return; }
   signUploadData = file;
   const placeholder = document.getElementById('sign-upload-placeholder');
   const preview = document.getElementById('sign-upload-preview');
@@ -9504,7 +9504,7 @@ async function exportVoucherExcelWithSpinner(btn) {
   showFormOverlay('Preparing your Excel voucher…', { subMsg: 'Your download will start automatically.' });
   try {
     await exportVoucherExcel();
-    if (typeof showToast === 'function') showToast('Excel voucher downloaded');
+    if (typeof showToast === 'function') showToast('Excel voucher ready — check your downloads.');
   } catch (error) {
     const message = error && error.message ? error.message : 'The Excel voucher could not be created.';
     if (typeof showToast === 'function') showToast(message, 'error');
@@ -10729,7 +10729,9 @@ function initCompFormSelects() {
   fillSel('c-project', PROJECTS);
 }
 
+let _compSubmitInFlight = false;
 async function submitCompDirect() {
+  if (_compSubmitInFlight) return;
   const addr = document.getElementById('c-address')?.value?.trim();
   if (!addr) {
     const badge = document.getElementById('comp-submit-badge');
@@ -10738,6 +10740,7 @@ async function submitCompDirect() {
     document.getElementById('c-address')?.focus();
     return;
   }
+  _compSubmitInFlight = true;
   const payload = collectCompReportPayload();
   const badge = document.getElementById('comp-submit-badge');
   showFormOverlay('Submitting comp report…', { subMsg: 'Saving your comp data…' });
@@ -10760,6 +10763,7 @@ async function submitCompDirect() {
     console.warn('Comp DB save:', e?.message || e);
   } finally {
     hideFormOverlay();
+    _compSubmitInFlight = false;
   }
   if (saved) openEmailModal('comp');
 }
@@ -11157,6 +11161,8 @@ async function loadPublicToolSettings() {
     console.warn('Public settings unavailable, using defaults:', e && e.message ? e.message : e);
     LBT_PUBLIC_SETTINGS = {};
   }
+  // Mirror to window so external scripts (features_patch.js) can read settings.
+  window.LBT_PUBLIC_SETTINGS = LBT_PUBLIC_SETTINGS;
   return LBT_PUBLIC_SETTINGS;
 }
 
@@ -21011,6 +21017,6 @@ function deleteDraft(key) {
   });
 })();
 </script>
-<script src="/features_patch.js?v=20260612.1"></script>
+<script src="/features_patch.js?v=20260613.1"></script>
 </body>
 </html>

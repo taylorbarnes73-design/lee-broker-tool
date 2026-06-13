@@ -271,7 +271,14 @@ window.onSignLocationPhotoChange = function(input) {
   let crCurrentView = 'table';
   let crGeocoder = null;
   let crGoogleLoaded = false;
-  const CR_MAPS_JS_KEY = 'AIzaSyDVpoCmrINWXAb8Imw1z6hIcxU_fG8drho';
+  // Fallback only — prefer the key served from /api/settings/public (ENV-backed,
+  // single source of truth). A Maps JS key is always browser-visible by design;
+  // restrict it by HTTP referrer in the Google Cloud Console.
+  const CR_MAPS_JS_KEY_FALLBACK = 'AIzaSyDVpoCmrINWXAb8Imw1z6hIcxU_fG8drho';
+  function getMapsJsKey() {
+    var fromSettings = window.LBT_PUBLIC_SETTINGS && window.LBT_PUBLIC_SETTINGS.maps_js_key;
+    return (fromSettings && String(fromSettings).trim()) || CR_MAPS_JS_KEY_FALLBACK;
+  }
 
   // Load Google Maps JS API dynamically
   function loadGoogleMapsApi(callback) {
@@ -281,7 +288,7 @@ window.onSignLocationPhotoChange = function(input) {
       return;
     }
     var script = document.createElement('script');
-    script.src = 'https://maps.googleapis.com/maps/api/js?key=' + CR_MAPS_JS_KEY + '&libraries=marker';
+    script.src = 'https://maps.googleapis.com/maps/api/js?key=' + getMapsJsKey() + '&libraries=marker';
     script.async = true;
     script.defer = true;
     script.onload = function() { crGoogleLoaded = true; callback(); };
