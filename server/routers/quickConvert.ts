@@ -67,7 +67,7 @@ export const quickConvertRouter = router({
         filename: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       if (toolTabForQuickConvertKind(input.kind)) {
         return {
           success: false as const,
