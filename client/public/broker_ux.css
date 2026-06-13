@@ -1138,3 +1138,36 @@ body.broker-active .upload-remove-btn:focus-visible {
 body.broker-active *:focus-visible {
   outline-color: var(--red, #98002E);
 }
+
+/* ── Form-only panels: constrain width so fields don't stretch across wide
+   monitors. Listing/Sign/Voucher stay wide because they host a sidebar. ── */
+body.broker-active #tab-comp.panel,
+body.broker-active #tab-admin-request.panel,
+body.broker-active #tab-marketing-request.panel {
+  max-width: 900px;
+}
+
+/* ── Optional accordion: the global !important card rules re-apply borders
+   inside the body; override them so sections render as a seamless list. ── */
+body.broker-active .optional-body .card {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  margin-bottom: 0 !important;
+  padding: 20px 22px !important;
+  border-bottom: 1px solid #E5E7EB !important;
+  background: #fff !important;
+}
+body.broker-active .optional-body .card:last-child {
+  border-bottom: none !important;
+}
+body.broker-active .optional-body .card:hover {
+  border-bottom-color: #E5E7EB !important;
+}
+
+/* ── Comp photo grid: stack on narrow viewports ── */
+@media (max-width: 640px) {
+  .comp-photo-grid {
+    grid-template-columns: 1fr;
+  }
+}
