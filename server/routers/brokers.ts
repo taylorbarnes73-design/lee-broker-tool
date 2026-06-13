@@ -2,7 +2,6 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { brokerDirectory } from "@shared/brokerDirectory";
 import { getDb } from "../db";
 import { appUsers } from "../../drizzle/schema";
-import { eq } from "drizzle-orm";
 
 type RosterEntry = {
   id: string;
@@ -49,7 +48,11 @@ export const brokersRouter = router({
       });
     }
 
-    // Merge active accounts from the database. Portal-managed users win on conflict.
+    // Merge accounts from the database. The DB is authoritative for anyone it
+    // knows about: active rows are overlaid (portal-managed data wins on
+    // conflict), and inactive rows are removed entirely — so deactivating a
+    // person in the admin portal also drops their static seed entry from the
+    // roster. People with no DB row at all remain from the static directory.
     try {
       const db = await getDb();
       if (db) {
@@ -60,9 +63,9 @@ export const brokersRouter = router({
             fullName: appUsers.fullName,
             role: appUsers.role,
             office: appUsers.office,
+            isActive: appUsers.isActive,
           })
-          .from(appUsers)
-          .where(eq(appUsers.isActive, true));
+          .from(appUsers);
 
         // Map DB roles to roster labels. A specific static-directory label
         // (e.g. a precise title) wins for brokers, but admin/readonly DB roles
@@ -76,6 +79,11 @@ export const brokersRouter = router({
         for (const row of rows) {
           const email = (row.email ?? "").trim().toLowerCase();
           if (!email) continue;
+          if (!row.isActive) {
+            // Deactivated in the portal — remove from the roster (including any static seed).
+            byEmail.delete(email);
+            continue;
+          }
           const existing = byEmail.get(email);
           byEmail.set(email, {
             id: row.id,
