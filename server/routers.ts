@@ -10,7 +10,7 @@ import { getDb, getUserByOpenId, upsertUser } from "./db";
 import { assertCanReadStoredFile, filterReadableUploads } from "./fileAccess";
 import { findAppUserByUsernameOrEmail } from "./auth/platformSession";
 import { uploads } from "../drizzle/schema";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, type SQL } from "drizzle-orm";
 import { z } from "zod/v4";
 import { nanoid } from "nanoid";
 import { aiAssistRouter } from "./routers/aiAssist";
@@ -512,18 +512,22 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) return [];
 
-        const rows = await db
-          .select()
-          .from(uploads)
-          .orderBy(desc(uploads.createdAt))
-          .limit(input.limit);
+        const whereClauses: SQL[] = [];
+        if (ctx.user.role !== "admin") {
+          whereClauses.push(eq(uploads.uploaderOpenId, ctx.user.openId));
+        }
+        if (input.category) {
+          whereClauses.push(eq(uploads.category, input.category));
+        }
+        if (input.reference) {
+          whereClauses.push(eq(uploads.reference, input.reference));
+        }
 
-        // Filter in JS if needed (simple approach)
-        return filterReadableUploads(ctx.user, rows).filter(r => {
-          if (input.category && r.category !== input.category) return false;
-          if (input.reference && r.reference !== input.reference) return false;
-          return true;
-        });
+        const baseQuery = db.select().from(uploads);
+        const filteredQuery = whereClauses.length > 0 ? baseQuery.where(and(...whereClauses)) : baseQuery;
+        const rows = await filteredQuery.orderBy(desc(uploads.createdAt)).limit(input.limit);
+
+        return filterReadableUploads(ctx.user, rows);
       }),
   }),
 });

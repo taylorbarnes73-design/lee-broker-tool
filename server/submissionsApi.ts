@@ -13,6 +13,7 @@ import { DealiusClient } from "./services/dealiusClient";
 import { authenticateConfiguredDealius } from "./services/dealiusAuth";
 import { storageGetBytes, storagePut } from "./storage";
 import { notifyAdminOfSubmission } from "./services/adminNotification";
+import { assertCanReadStoredFile } from "./fileAccess";
 
 const ACTIVE_QUEUE_STATUSES = ["pending", "in_review"] as const;
 type ActiveQueueStatus = (typeof ACTIVE_QUEUE_STATUSES)[number];
@@ -555,12 +556,17 @@ submissionsApiRouter.get("/:id/attachments/:index/download", async (req, res) =>
   }
 
   try {
+    await assertCanReadStoredFile(user, storageKey);
     const { bytes } = await storageGetBytes(storageKey);
     res.setHeader("Content-Type", attachment.mimeType || mimeTypeFromFilename(attachment.filename));
     res.setHeader("Content-Length", String(bytes.length));
     res.setHeader("Content-Disposition", `attachment; filename=\"${downloadFileName(attachment.filename)}\"`);
     res.status(200).send(bytes);
   } catch (err: unknown) {
+    if (err instanceof Error && err.message === "Forbidden") {
+      res.status(403).json({ success: false, error: "Forbidden" });
+      return;
+    }
     const message = err instanceof Error ? err.message : String(err);
     res.status(500).json({ success: false, error: message || "Failed to download attachment" });
   }

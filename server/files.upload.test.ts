@@ -38,6 +38,9 @@ function createCtx() {
 }
 
 function buildDbMock(rows = uploadRows) {
+  const limitedRows = {
+    limit: vi.fn().mockResolvedValue(rows),
+  };
   return {
     insert: vi.fn().mockReturnValue({
       values: vi.fn().mockResolvedValue(undefined),
@@ -45,11 +48,10 @@ function buildDbMock(rows = uploadRows) {
     select: vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue(rows),
+          ...limitedRows,
+          orderBy: vi.fn().mockReturnValue(limitedRows),
         }),
-        orderBy: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue(rows),
-        }),
+        orderBy: vi.fn().mockReturnValue(limitedRows),
       }),
     }),
   };
