@@ -64,6 +64,15 @@ export const brokersRouter = router({
           .from(appUsers)
           .where(eq(appUsers.isActive, true));
 
+        // Map DB roles to roster labels. A specific static-directory label
+        // (e.g. a precise title) wins for brokers, but admin/readonly DB roles
+        // are authoritative so they are never mislabeled as "Broker".
+        const roleLabel = (dbRole: string, existingLabel: string | undefined): string => {
+          if (dbRole === "admin") return "Office Admin";
+          if (dbRole === "readonly") return "Read Only";
+          return existingLabel ?? "Broker";
+        };
+
         for (const row of rows) {
           const email = (row.email ?? "").trim().toLowerCase();
           if (!email) continue;
@@ -72,9 +81,7 @@ export const brokersRouter = router({
             id: row.id,
             name: row.fullName || existing?.name || email,
             email: row.email,
-            // Present DB "admin" as "Office Admin", everything else as "Broker",
-            // unless the static directory already carried a more specific label.
-            role: row.role === "admin" ? "Office Admin" : existing?.role ?? "Broker",
+            role: roleLabel(row.role, existing?.role),
             office: row.office || existing?.office || "",
           });
         }
