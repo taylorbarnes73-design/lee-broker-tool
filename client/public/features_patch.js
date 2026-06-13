@@ -345,7 +345,6 @@ window.onSignLocationPhotoChange = function(input) {
 
   // Select/deselect all from map toolbar
   window.crMapSelectAll = function() {
-    var results = crMapAllResults || window.compReportsResultsCache || [];
     window.compReportsDeselected = new Set();
     // Update table checkboxes too
     document.querySelectorAll('#cr-tbody .cr-row-check').forEach(function(cb) { cb.checked = true; });
@@ -375,13 +374,14 @@ window.onSignLocationPhotoChange = function(input) {
       setTimeout(function() { window.compReportsResultsCache = origCache; }, 100);
     }
   };
-  window.crMapExportPdf = function(btn) {
+  window.crMapExportPdf = async function(btn) {
     var origCache = window.compReportsResultsCache;
     if (crMapAllResults) window.compReportsResultsCache = crMapAllResults;
-    // PDF export is async, restore after it completes
-    compReportExportPdfWithSpinner(btn);
-    // Restore after a generous delay (PDF generation can take seconds)
-    setTimeout(function() { window.compReportsResultsCache = origCache; }, 30000);
+    try {
+      await compReportExportPdfWithSpinner(btn);
+    } finally {
+      window.compReportsResultsCache = origCache;
+    }
   };
 
   // Store all map results separately (not limited by page size)

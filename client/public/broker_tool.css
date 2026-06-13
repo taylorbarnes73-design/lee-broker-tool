@@ -721,7 +721,7 @@ div.row.comp-sale-only { display: none !important; }
 .status { font-size: 12px; margin-top: 8px; font-weight: 500; }
 
 /* Email modal */
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 1000; align-items: center; justify-content: center; }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 3000; align-items: center; justify-content: center; }
 .modal-overlay.open { display: flex; }
 .modal { background: #fff; border-radius: 8px; padding: 24px; width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; }
 .modal h2 { font-size: 16px; color: var(--red); margin-bottom: 16px; }
