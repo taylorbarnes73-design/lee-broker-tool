@@ -1129,16 +1129,21 @@ Return the JSON object now:`;
     promptText
   );
 
-  const response = await invokeLLM({
-    messages: [
-      { role: "system", content: systemContent },
-      { role: "user", content: userContent as any[] },
-    ],
-    response_format: {
-      type: "json_schema",
-      json_schema: buildJsonSchema(`${tab}_document_fields`, fieldNames),
-    },
-  });
+  let response;
+  try {
+    response = await invokeLLM({
+      messages: [
+        { role: "system", content: systemContent },
+        { role: "user", content: userContent as any[] },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: buildJsonSchema(`${tab}_document_fields`, fieldNames),
+      },
+    });
+  } catch (error) {
+    throw friendlyAiError(error);
+  }
 
   const raw = response.choices?.[0]?.message?.content;
   const parsed = parseJsonObject(raw);
@@ -1517,16 +1522,21 @@ Return ONLY valid JSON. No markdown fences, no explanation.`;
       promptText,
       extractedPdfText
     );
-    const response = await invokeLLM({
-      messages: [
-        { role: "system", content: params.systemPrompt },
-        { role: "user", content: userContent as any[] },
-      ],
-      response_format: {
-        type: "json_schema",
-        json_schema: outputSchema,
-      },
-    });
+    let response;
+    try {
+      response = await invokeLLM({
+        messages: [
+          { role: "system", content: params.systemPrompt },
+          { role: "user", content: userContent as any[] },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: outputSchema,
+        },
+      });
+    } catch (error) {
+      throw friendlyAiError(error);
+    }
     const content = response.choices?.[0]?.message?.content;
     raw = typeof content === "string" ? content : "";
   }
