@@ -39,6 +39,10 @@ vi.mock("../storage", () => ({
   ),
 }));
 
+vi.mock("../fileAccess", () => ({
+  assertCanReadStoredFile: vi.fn(),
+}));
+
 import { invokeLLM, invokeClaudeWithFile, isClaudeFallbackAvailable } from "../_core/llm";
 import { execFileSync } from "child_process";
 import { contractsRouter } from "./contracts";

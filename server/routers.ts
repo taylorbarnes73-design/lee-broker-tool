@@ -7,6 +7,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { storagePut, storageGet, storagePublicUrl } from "./storage";
 import { getDb, getUserByOpenId, upsertUser } from "./db";
+import { assertCanReadStoredFile, filterReadableUploads } from "./fileAccess";
 import { findAppUserByUsernameOrEmail } from "./auth/platformSession";
 import { uploads } from "../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
@@ -486,7 +487,12 @@ export const appRouter = router({
      */
     getUrl: protectedProcedure
       .input(z.object({ fileKey: z.string() }))
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
+        try {
+          await assertCanReadStoredFile(ctx.user, input.fileKey);
+        } catch {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Forbidden" });
+        }
         const { url } = await storageGet(input.fileKey);
         return { url };
       }),
@@ -502,7 +508,7 @@ export const appRouter = router({
           limit: z.number().default(50),
         })
       )
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) return [];
 
@@ -513,7 +519,7 @@ export const appRouter = router({
           .limit(input.limit);
 
         // Filter in JS if needed (simple approach)
-        return rows.filter(r => {
+        return filterReadableUploads(ctx.user, rows).filter(r => {
           if (input.category && r.category !== input.category) return false;
           if (input.reference && r.reference !== input.reference) return false;
           return true;

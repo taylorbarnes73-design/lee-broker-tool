@@ -59,9 +59,7 @@ function localGet(relKey: string): { key: string; url: string } {
 
 export function storagePublicUrl(relKey: string): string {
   const safeKey = sanitizeStorageKey(relKey);
-  return isLocalStorage()
-    ? LOCAL_URL_PREFIX + safeKey
-    : `${PUBLIC_FILE_PROXY_PREFIX}${encodeURIComponent(safeKey)}`;
+  return `${PUBLIC_FILE_PROXY_PREFIX}${encodeURIComponent(safeKey)}`;
 }
 
 function tryParseStoredKey(input: string): string | null {
@@ -119,6 +117,10 @@ function tryParseStoredKey(input: string): string | null {
   return null;
 }
 
+export function storageKeyFromReference(urlOrKey: string): string {
+  return sanitizeStorageKey(tryParseStoredKey(urlOrKey) ?? urlOrKey);
+}
+
 export function isStoredFileReference(input: string | null | undefined): boolean {
   const value = String(input ?? "").trim();
   if (!value) return false;
@@ -149,7 +151,7 @@ async function localGetBytes(relKey: string): Promise<{ key: string; bytes: Buff
  * Can also be called with a `/local-uploads/…` URL path directly.
  */
 export async function storageGetBytes(urlOrKey: string): Promise<{ key: string; bytes: Buffer }> {
-  const relKey = sanitizeStorageKey(tryParseStoredKey(urlOrKey) ?? urlOrKey);
+  const relKey = storageKeyFromReference(urlOrKey);
 
   if (isLocalStorage()) {
     return localGetBytes(relKey);

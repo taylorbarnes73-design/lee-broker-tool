@@ -6,6 +6,7 @@ import { execFileSync } from "child_process";
 import { ENV } from "../_core/env";
 import { getSetting } from "../settings/getSetting";
 import { isStoredFileReference, storageGetBytes } from "../storage";
+import { assertCanReadStoredFile } from "../fileAccess";
 import { notifyAdminOfSubmission } from "../services/adminNotification";
 
 // ── Types ──
@@ -173,7 +174,7 @@ export const contractsRouter = router({
           contractType: z.string(),
         })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const systemPrompt = `You are an expert real estate contract analyst. You will be given an AIR CRE contract PDF that a broker has filled out in Adobe Acrobat. Your job is to:
 1. Extract every filled field value exactly as written.
 2. Identify any redlined (struck-through) text and any added/modified text, noting the paragraph number and a brief description.
@@ -234,6 +235,7 @@ Return JSON with these fields (omit any that are blank):
         // Fetch the PDF server-side — use direct FS read for local storage paths
         let pdfBuffer: Buffer;
         if (isStoredFileReference(input.pdfUrl)) {
+          await assertCanReadStoredFile(ctx.user, input.pdfUrl);
           const { bytes } = await storageGetBytes(input.pdfUrl);
           pdfBuffer = bytes;
         } else {

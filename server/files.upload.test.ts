@@ -1,5 +1,16 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
+const { storageGetMock, uploadRows, getDbMock } = vi.hoisted(() => ({
+  storageGetMock: vi.fn((key: string) =>
+    Promise.resolve({
+      key,
+      url: `https://cdn.example.com/${key}`,
+    })
+  ),
+  uploadRows: [] as any[],
+  getDbMock: vi.fn(),
+}));
+
 // Mock storagePut so tests don't hit real S3
 vi.mock("./storage", () => ({
   storagePut: vi.fn((key: string) =>
@@ -8,42 +19,14 @@ vi.mock("./storage", () => ({
       url: `https://cdn.example.com/${key}`,
     })
   ),
-  storageGet: vi.fn((key: string) =>
-    Promise.resolve({
-      key,
-      url: `https://cdn.example.com/${key}`,
-    })
-  ),
+  storageGet: storageGetMock,
   storagePublicUrl: vi.fn((key: string) => `/api/files/content?key=${encodeURIComponent(key)}`),
+  storageKeyFromReference: vi.fn((value: string) => value),
 }));
 
 // Mock getDb so tests don't need a real database
 vi.mock("./db", () => ({
-  getDb: vi.fn().mockResolvedValue({
-    insert: vi.fn().mockReturnValue({
-      values: vi.fn().mockResolvedValue(undefined),
-    }),
-    select: vi.fn().mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        orderBy: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([
-            {
-              id: 1,
-              fileKey: "broker-docs/listing_agreement/test-file.txt",
-              url: "https://cdn.example.com/broker-docs/listing_agreement/test-file.txt",
-              filename: "test-file.txt",
-              mimeType: "text/plain",
-              fileSize: 11,
-              category: "listing_agreement",
-              reference: "123 Main St",
-              uploaderName: "Test User",
-              createdAt: new Date("2026-01-01T00:00:00Z"),
-            },
-          ]),
-        }),
-      }),
-    }),
-  }),
+  getDb: getDbMock,
 }));
 
 import { appRouter } from "./routers";
@@ -53,6 +36,47 @@ import { getDb } from "./db";
 function createCtx() {
   return testCtx();
 }
+
+function buildDbMock(rows = uploadRows) {
+  return {
+    insert: vi.fn().mockReturnValue({
+      values: vi.fn().mockResolvedValue(undefined),
+    }),
+    select: vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue(rows),
+        }),
+        orderBy: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue(rows),
+        }),
+      }),
+    }),
+  };
+}
+
+function makeUpload(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 1,
+    fileKey: "broker-docs/listing_agreement/test-file.txt",
+    url: "https://cdn.example.com/broker-docs/listing_agreement/test-file.txt",
+    filename: "test-file.txt",
+    mimeType: "text/plain",
+    fileSize: 11,
+    category: "listing_agreement",
+    reference: "123 Main St",
+    uploaderName: "Test User",
+    uploaderOpenId: "local:test-user",
+    createdAt: new Date("2026-01-01T00:00:00Z"),
+    ...overrides,
+  };
+}
+
+beforeEach(() => {
+  uploadRows.splice(0, uploadRows.length, makeUpload());
+  getDbMock.mockResolvedValue(buildDbMock());
+  storageGetMock.mockClear();
+});
 
 describe("files.upload", () => {
   it("uploads a file and returns success with url", async () => {
@@ -255,6 +279,20 @@ describe("files.list", () => {
     expect(result[0]).toHaveProperty("url");
     expect(result[0]).toHaveProperty("filename");
   });
+
+  it("does not expose another broker's uploads to non-admin users", async () => {
+    uploadRows.splice(
+      0,
+      uploadRows.length,
+      makeUpload({ id: 1, fileKey: "broker-docs/listing_agreement/own.pdf", uploaderOpenId: "local:test-user" }),
+      makeUpload({ id: 2, fileKey: "broker-docs/listing_agreement/foreign.pdf", uploaderOpenId: "local:other" })
+    );
+    const caller = appRouter.createCaller(createCtx());
+
+    const result = await caller.files.list({});
+
+    expect(result.map(row => row.fileKey)).toEqual(["broker-docs/listing_agreement/own.pdf"]);
+  });
 });
 
 describe("files.getUrl", () => {
@@ -264,5 +302,19 @@ describe("files.getUrl", () => {
       fileKey: "broker-docs/listing_agreement/test-file.txt",
     });
     expect(result.url).toContain("https://");
+  });
+
+  it("rejects download urls for another broker's file key", async () => {
+    getDbMock.mockResolvedValueOnce(buildDbMock([
+      makeUpload({ fileKey: "broker-docs/listing_agreement/foreign.pdf", uploaderOpenId: "local:other" }),
+    ]));
+    const caller = appRouter.createCaller(createCtx());
+
+    await expect(
+      caller.files.getUrl({
+        fileKey: "broker-docs/listing_agreement/foreign.pdf",
+      })
+    ).rejects.toThrow(/forbidden/i);
+    expect(storageGetMock).not.toHaveBeenCalled();
   });
 });

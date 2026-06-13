@@ -4,6 +4,7 @@ import { extractJsonText } from "../_core/llmJson";
 import { z } from "zod/v4";
 import { getSetting } from "../settings/getSetting";
 import { isStoredFileReference, storageGetBytes } from "../storage";
+import { assertCanReadStoredFile, type StoredFileAccessUser } from "../fileAccess";
 
 // ── Field schemas per tab ──
 
@@ -872,13 +873,14 @@ function buildJsonSchema(name: string, fieldNames: string[]) {
   };
 }
 
-async function fetchDocumentBuffer(fileUrl: string) {
+async function fetchDocumentBuffer(fileUrl: string, user: StoredFileAccessUser) {
   const target = fileUrl.trim();
   const isDataUrl = /^data:[^;]+;base64,/i.test(target);
   const isStoredPath = isStoredFileReference(target);
 
   try {
     if (isStoredPath) {
+      await assertCanReadStoredFile(user, target);
       const { bytes } = await storageGetBytes(target);
       return { fileBuffer: bytes, error: null };
     }
@@ -957,10 +959,11 @@ async function extractDocumentFields(
   tab: FormTab,
   fileUrl: string,
   mimeType: AiDocumentMime,
+  user: StoredFileAccessUser,
   options: { listingBrochurePrompt?: boolean } = {}
 ) {
   const fieldNames = Object.keys(tabFieldSchemas[tab].shape);
-  const fetched = await fetchDocumentBuffer(fileUrl);
+  const fetched = await fetchDocumentBuffer(fileUrl, user);
 
   if (!fetched.fileBuffer) {
     return {
@@ -1370,9 +1373,10 @@ async function extractDocumentFieldsAndDetection<TDetection>(params: {
   detectionSchema: typeof voucherDocumentDetectionSchema | typeof listingDocumentDetectionSchema;
   parseDetection: (value: unknown) => TDetection;
   emptyDetection: () => TDetection;
+  user: StoredFileAccessUser;
 }) {
   const fieldNames = Object.keys(tabFieldSchemas[params.tab].shape);
-  const fetched = await fetchDocumentBuffer(params.fileUrl);
+  const fetched = await fetchDocumentBuffer(params.fileUrl, params.user);
 
   if (!fetched.fileBuffer) {
     return {
@@ -1579,7 +1583,8 @@ Return ONLY valid JSON. No markdown fences, no explanation.`;
 
 async function extractVoucherDocumentWithDetection(
   fileUrl: string,
-  mimeType: AiDocumentMime
+  mimeType: AiDocumentMime,
+  user: StoredFileAccessUser
 ) {
   const sysPrompt = await documentSystemPrompt();
   return extractDocumentFieldsAndDetection({
@@ -1590,6 +1595,7 @@ async function extractVoucherDocumentWithDetection(
     detectionSchema: voucherDocumentDetectionSchema,
     parseDetection: parseVoucherDocumentDetection,
     emptyDetection: emptyVoucherDocumentDetection,
+    user,
     systemPrompt: sysPrompt + "\n\nIn addition to extracting fields, you must also classify compliance document status as described in the user prompt.",
     detectionPrompt: `Determine whether this file includes either of these documents and whether each one appears fully executed:
 - Agency Disclosure
@@ -1605,7 +1611,8 @@ Rules:
 
 async function extractListingDocumentWithDetection(
   fileUrl: string,
-  mimeType: AiDocumentMime
+  mimeType: AiDocumentMime,
+  user: StoredFileAccessUser
 ) {
   const sysPrompt = await brochureSystemPrompt();
   return extractDocumentFieldsAndDetection({
@@ -1616,6 +1623,7 @@ async function extractListingDocumentWithDetection(
     detectionSchema: listingDocumentDetectionSchema,
     parseDetection: parseListingDocumentDetection,
     emptyDetection: emptyListingDocumentDetection,
+    user,
     systemPrompt: sysPrompt + "\n\nIn addition to extracting fields, you must also classify compliance document status as described in the user prompt.",
     detectionPrompt: `Identify whether this file contains the following documents and whether each is fully executed:
 
@@ -1764,11 +1772,12 @@ export const aiAssistRouter = router({
           .default("application/pdf"),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       return extractDocumentFields(
         "listing",
         input.fileUrl,
         input.mimeType,
+        ctx.user,
         { listingBrochurePrompt: true }
       );
     }),
@@ -1800,8 +1809,8 @@ export const aiAssistRouter = router({
         tab: z.enum(["listing", "voucher", "sign", "comp"]),
       })
     )
-    .mutation(async ({ input }) =>
-      extractDocumentFields(input.tab, input.fileUrl, input.mimeType)
+    .mutation(async ({ ctx, input }) =>
+      extractDocumentFields(input.tab, input.fileUrl, input.mimeType, ctx.user)
     ),
 
   extractVoucherDocument: protectedProcedure
@@ -1824,8 +1833,8 @@ export const aiAssistRouter = router({
         mimeType: aiDocumentMimeSchema,
       })
     )
-    .mutation(async ({ input }) =>
-      extractVoucherDocumentWithDetection(input.fileUrl, input.mimeType)
+    .mutation(async ({ ctx, input }) =>
+      extractVoucherDocumentWithDetection(input.fileUrl, input.mimeType, ctx.user)
     ),
 
   extractListingDocument: protectedProcedure
@@ -1848,8 +1857,8 @@ export const aiAssistRouter = router({
         mimeType: aiDocumentMimeSchema,
       })
     )
-    .mutation(async ({ input }) =>
-      extractListingDocumentWithDetection(input.fileUrl, input.mimeType)
+    .mutation(async ({ ctx, input }) =>
+      extractListingDocumentWithDetection(input.fileUrl, input.mimeType, ctx.user)
     ),
 
   /**

@@ -10,6 +10,7 @@ import {
   loadQuickConvertSourceBytes,
   processQuickConvertBinary,
 } from "../services/quickConvert";
+import { assertCanReadStoredFile } from "../fileAccess";
 
 const kindSchema = z.enum(QUICK_CONVERT_KINDS);
 
@@ -32,7 +33,7 @@ export const quickConvertRouter = router({
         dataBase64: z.string().min(1),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const bytes = Buffer.from(input.dataBase64, "base64");
       const validation = validateQuickConvertUpload({
         filename: input.filename,
@@ -76,6 +77,7 @@ export const quickConvertRouter = router({
       }
 
       try {
+        await assertCanReadStoredFile(ctx.user, input.fileUrl);
         const { bytes, filename: inferred } = await loadQuickConvertSourceBytes(input.fileUrl);
         const filename = input.filename || inferred;
         const validation = validateQuickConvertUpload({
