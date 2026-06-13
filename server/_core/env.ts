@@ -88,3 +88,19 @@ export const ENV = {
         .map(value => value.trim().toLowerCase())
         .filter(Boolean),
 };
+
+// Warn loudly when submission-routing emails fall back to baked-in defaults.
+// A misconfigured production deploy would otherwise silently route broker
+// submissions to these addresses with no indication anything is wrong.
+if (!process.env.ADMIN_EMAIL?.trim()) {
+    console.warn(
+        `[env] ADMIN_EMAIL is not set — submissions will route to the default "${ENV.adminEmail}". ` +
+        `Set ADMIN_EMAIL to control where broker submissions are sent.`
+    );
+}
+if (!process.env.MARKETING_EMAIL?.trim()) {
+    console.warn(
+        `[env] MARKETING_EMAIL is not set — marketing requests will route to the default "${ENV.marketingEmail}". ` +
+        `Set MARKETING_EMAIL to control where marketing requests are sent.`
+    );
+}
