@@ -1396,7 +1396,7 @@ window.aiParseFromPaste = async function() {
         '<span class="preflight-warn-icon">⚠️</span>' +
         '<div><strong>Missing required fields:</strong><br>' +
         blockers.map(function(i) { return '&bull; ' + esc(i.label); }).join('<br>') +
-        '<br><small style="opacity:.8">' + (isDownload ? 'You can still download, but the document will have blanks.' : 'You can still send, but admin may ask you to re-submit.') + '</small>' +
+        '<br><small style="opacity:.8">' + (isDownload ? 'You can still download, but the document will have blanks.' : 'Please complete these required fields before sending to admin.') + '</small>' +
         '</div></div>';
     }
     html += '<div class="preflight-items">';
@@ -1428,12 +1428,18 @@ window.aiParseFromPaste = async function() {
     if (titleEl) titleEl.textContent = isDownload ? 'Review Before You Download' : 'Check Before You Send';
     if (confirmBtn) {
       var label = confirmBtn.querySelector('.btn-label');
+      // Sends with missing required fields are hard-blocked: incomplete
+      // submissions just get bounced back by admin. Downloads stay soft —
+      // a broker may legitimately want a draft copy. "Go Back and Fix" is
+      // always available, so a blocked send never traps the user.
+      var blockSend = result.hasBlockers && !isDownload;
       if (label) {
         label.textContent = isDownload
           ? (result.hasBlockers ? 'Download Anyway →' : 'Looks Good — Download →')
-          : (result.hasBlockers ? 'Send Anyway →' : 'Looks Good — Send to Admin →');
+          : (result.hasBlockers ? 'Complete Required Fields' : 'Looks Good — Send to Admin →');
       }
-      confirmBtn.disabled = false;
+      confirmBtn.disabled = blockSend;
+      confirmBtn.classList.toggle('is-disabled', blockSend);
     }
     modal.classList.add('open');
   };
