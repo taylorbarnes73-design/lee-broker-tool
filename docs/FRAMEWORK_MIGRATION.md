@@ -27,7 +27,7 @@ backend before the next. The vanilla-JS tool is retired tab-by-tab.
 | Tab (legacy) | Route target (React) | Backend procedures | Status |
 |---|---|---|---|
 | `tab-sign` | `/portal/forms/sign` | `email.sendToAdmin`, `files.upload`, `aiAssist.extractDocument` | **✅ Done** — native form, brochure AI analyze, client PDF (pdf-lib), submit verified |
-| `tab-listing` | `/portal/forms/listing` | `submissions.create`, `files.upload`, `aiAssist.extractListingDocument` | Pilot funnel only |
+| `tab-listing` | `/portal/forms/listing` | `email.sendToAdmin`, `files.uploadBatch`, `aiAssist.extractListingDocument` | **✅ Done** — native form (type picker, lease/sale conditionals, type-specific details, agents, deal-doc AI), client PDF, submit verified |
 | `tab-voucher` | `/portal/forms/voucher` | `submissions.create`, `aiAssist.extractVoucherDocument`, `aiAssist.reviewVoucher` | Pilot funnel only |
 | `tab-comp` (input) | TBD | `compData.submitComp` | Legacy only |
 | `tab-comp-reports` | TBD | `compData.search`, `compData.latest` | Legacy only |
@@ -66,9 +66,29 @@ backend before the next. The vanilla-JS tool is retired tab-by-tab.
   `email.sendToAdmin` accepts the payload + archives the PDF (DB write needs a
   real database, unavailable in the verify env).
 
+## Listing Entry — migration notes (done)
+- New page: `client/src/pages/PortalListingForm.tsx` (replaced the pilot funnel).
+  Data-driven field config keeps the large field set (type picker, lease/sale
+  conditionals, type-specific detail sections, agents, release) compact.
+- PDF builder generalized into `client/src/lib/formPdf.ts` (`buildSectionedPdf`);
+  `signPdf.ts` now delegates to it (re-verified Sign still works).
+- **Fixed a real legacy bug:** the legacy `collectListingSections` read field ids
+  that don't exist (`l-date`, `l-type`, `l-building-sf`, …), so the admin-queue
+  `sections` arrived nearly blank. The React page builds `sections` from the
+  single field model, so the admin now gets complete structured data. Backend
+  contract unchanged (still `email.sendToAdmin`, `formType:"listing"`).
+- Deal documents upload via `files.uploadBatch` + per-doc `aiAssist.extractListingDocument`
+  prefill. `supportingFiles` are only attached when the upload URL is absolute
+  (zod `.url()`); relative dev/local URLs are skipped to keep submit robust.
+  Upload is encouraged but not a hard block (legacy hard-blocked submit on it).
+- Home/workspace "Listings" card now points at `/portal/forms/listing`.
+- Verified at runtime: render, property-type conditionals (Land→acres,
+  Office→project name), lease/sale toggle, validation, and `email.sendToAdmin`
+  accepting the payload + archiving the PDF (DB write needs a real database).
+
 ## Order of work (smallest → largest)
 1. ~~**Sign Orders**~~ ✅ done
-2. Listing entry
+2. ~~Listing entry~~ ✅ done
 3. Commission voucher
 4. Comp input
 5. Comp reports

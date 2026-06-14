@@ -37,7 +37,7 @@ const HOME_TOOLS = [
     title: "Listings",
     desc: "Enter industrial, office, retail or land listings with a guided step flow and push them straight to the office record.",
     meta: "Open listing entry",
-    href: "/portal/workspace?tab=listing",
+    href: "/portal/forms/listing",
   },
   {
     Icon: Icons.Sign,
