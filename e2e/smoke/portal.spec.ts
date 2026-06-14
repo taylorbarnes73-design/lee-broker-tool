@@ -9,15 +9,15 @@ test.describe("portal smoke", () => {
   test("broker home shows the workspace tool launchpad", async ({ page }) => {
     await page.goto("/portal/workspace");
     await expect(
-      page.getByRole("link", { name: /Commission voucher/i })
+      page.getByRole("link", { name: /Commission Vouchers/i })
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /Listing entry/i })
+      page.getByRole("link", { name: /Listings/i })
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /Sign request/i })
+      page.getByRole("link", { name: /Sign Orders/i })
     ).toBeVisible();
-    // Launchpad mode: no iframe until a tool is opened.
+    // Home mode: no iframe until a tool is opened.
     await expect(page.getByTestId("workspace-frame")).toHaveCount(0);
   });
 
@@ -121,7 +121,9 @@ test.describe("admin portal separation", () => {
     await expect(page.getByRole("link", { name: /Commission voucher/i })).toBeVisible();
     const adminEntry = page.getByRole("link", { name: "Admin", exact: true }).first();
     await expect(adminEntry).toBeVisible();
-    await expect(page.getByRole("link", { name: "Settings" })).toHaveCount(0);
+    // Admin nav (Settings/Users) must not appear on the shared home — match the
+    // real nav link by exact name so prose mentioning "settings" doesn't count.
+    await expect(page.getByRole("link", { name: "Settings", exact: true })).toHaveCount(0);
 
     await adminEntry.click();
     await expect(page).toHaveURL(/\/portal\/admin\/submissions/);
