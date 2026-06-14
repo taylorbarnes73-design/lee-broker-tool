@@ -26,7 +26,7 @@ backend before the next. The vanilla-JS tool is retired tab-by-tab.
 ## Legacy tabs → migration status
 | Tab (legacy) | Route target (React) | Backend procedures | Status |
 |---|---|---|---|
-| `tab-sign` | `/portal/forms/sign` | `submissions.create`, `files.upload`, `aiAssist.*`/`contracts.extractContract` | **In progress** |
+| `tab-sign` | `/portal/forms/sign` | `email.sendToAdmin`, `files.upload`, `aiAssist.extractDocument` | **✅ Done** — native form, brochure AI analyze, client PDF (pdf-lib), submit verified |
 | `tab-listing` | `/portal/forms/listing` | `submissions.create`, `files.upload`, `aiAssist.extractListingDocument` | Pilot funnel only |
 | `tab-voucher` | `/portal/forms/voucher` | `submissions.create`, `aiAssist.extractVoucherDocument`, `aiAssist.reviewVoucher` | Pilot funnel only |
 | `tab-comp` (input) | TBD | `compData.submitComp` | Legacy only |
@@ -47,8 +47,27 @@ backend before the next. The vanilla-JS tool is retired tab-by-tab.
   iframe (`?tab=X`) to the native route as each tool reaches parity.
 - Each tool migration ships behind its own commit with a verification note.
 
+## Sign Orders — migration notes (done)
+- New page: `client/src/pages/PortalSignForm.tsx` (replaced the 2-field "pilot"
+  funnel with the full form), PDF generator `client/src/lib/signPdf.ts`.
+- Submit uses `email.sendToAdmin` with `formType:"sign"` and the **identical**
+  `formData` keys (`s-*` ids + `signAgents`) and `sections` the legacy tool
+  produced, so the admin Cimarron PO-# flow (which regenerates the vendor PDF
+  from `formData`) keeps working unchanged.
+- `deliveryMode` omitted → server records the submission as `queue-only` (no
+  server email for sign, same as before). The legacy `mailto:` + manual-attach
+  step was intentionally dropped: the submission + archived PDF land in the
+  portal queue, which is the admin's source of truth.
+- Home/workspace "Sign Orders" card now points at `/portal/forms/sign` (native)
+  instead of the iframe `?tab=sign`. The iframe sign tab remains as a fallback
+  until the iframe is retired.
+- Verified at runtime (headless Chromium, no-DB dev server): page renders the
+  full form, validation fires, steppers/agents/toggles work, PDF downloads, and
+  `email.sendToAdmin` accepts the payload + archives the PDF (DB write needs a
+  real database, unavailable in the verify env).
+
 ## Order of work (smallest → largest)
-1. **Sign Orders** ← current
+1. ~~**Sign Orders**~~ ✅ done
 2. Listing entry
 3. Commission voucher
 4. Comp input

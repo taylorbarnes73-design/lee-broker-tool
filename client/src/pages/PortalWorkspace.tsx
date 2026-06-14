@@ -44,7 +44,7 @@ const HOME_TOOLS = [
     title: "Sign Orders",
     desc: "Configure mount type and panel sizes, add a name rider, and send the order to the vendor with an auto PO #.",
     meta: "Order signage",
-    href: "/portal/workspace?tab=sign",
+    href: "/portal/forms/sign",
   },
   {
     Icon: Icons.Voucher,

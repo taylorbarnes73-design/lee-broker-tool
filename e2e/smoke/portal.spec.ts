@@ -52,11 +52,11 @@ test.describe("portal smoke", () => {
     await expect(page.getByText("Property address is required")).toBeVisible();
   });
 
-  test("sign pilot form validates required fields", async ({ page }) => {
+  test("sign form validates required fields", async ({ page }) => {
     await page.goto("/portal/forms/sign");
     await expect(page.getByRole("heading", { name: "Order a sign" })).toBeVisible();
-    await page.getByRole("button", { name: /Continue to sign details/i }).click();
-    await expect(page.getByText("Property address is required")).toBeVisible();
+    await page.getByRole("button", { name: /Submit to admin/i }).click();
+    await expect(page.getByText(/Property address is required/i)).toBeVisible();
   });
 
   test("listing pilot form validates required fields", async ({ page }) => {
