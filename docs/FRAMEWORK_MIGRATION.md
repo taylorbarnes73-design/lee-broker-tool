@@ -29,7 +29,7 @@ backend before the next. The vanilla-JS tool is retired tab-by-tab.
 | `tab-sign` | `/portal/forms/sign` | `email.sendToAdmin`, `files.upload`, `aiAssist.extractDocument` | **✅ Done** — native form, brochure AI analyze, client PDF (pdf-lib), submit verified |
 | `tab-listing` | `/portal/forms/listing` | `email.sendToAdmin`, `files.uploadBatch`, `aiAssist.extractListingDocument` | **✅ Done** — native form (type picker, lease/sale conditionals, type-specific details, agents, deal-doc AI), client PDF, submit verified |
 | `tab-voucher` | `/portal/forms/voucher` | `submissions.create`, `aiAssist.extractVoucherDocument`, `aiAssist.reviewVoucher` | Pilot funnel only |
-| `tab-comp` (input) | TBD | `compData.submitComp` | Legacy only |
+| `tab-comp` (input) | `/portal/forms/comp` | `compData.submitComp`, `files.upload`, `aiAssist.extractDocument`, `brokers.list` | **✅ Done** — native lease/sale form, brochure AI, roster source, submit verified |
 | `tab-comp-reports` | TBD | `compData.search`, `compData.latest` | Legacy only |
 | `tab-contracts` (Convert) | `/portal/convert` | `contracts.extractContract` | Substantial React page exists (`PortalQuickConvert`) |
 | `tab-marketing-request` | TBD | `submissions.create` | Legacy only |
@@ -86,11 +86,26 @@ backend before the next. The vanilla-JS tool is retired tab-by-tab.
   Office→project name), lease/sale toggle, validation, and `email.sendToAdmin`
   accepting the payload + archiving the PDF (DB write needs a real database).
 
+## Comp input — migration notes (done)
+- New page `client/src/pages/PortalCompForm.tsx`, route `/portal/forms/comp`
+  (added to `App.tsx`); home "Comparables" card now points there.
+- Submits via `compData.submitComp` with `{ compType, record }`; the `record`
+  builder mirrors the legacy `collectCompReportPayload` keys (the server
+  normalizes/allowlists them). Lease/sale branch toggles the field set.
+- Fixed the legacy AI field-map bug (8 of its target ids didn't exist, so
+  AI prefill dropped SF/rate/parties/price) — remapped to the real ids per
+  branch. Preserved the auth-error classification (10001 / "please login").
+- Broker source + agent fields are roster-backed (`brokers.list` datalist).
+  Optional property photo via `files.upload` (sent as `record.photo`, which the
+  server supports — legacy dropped it). Client PDF via the shared builder.
+- Verified at runtime: render, lease/sale toggle, validation, PDF, and
+  `compData.submitComp` accepting the payload (DB write needs a real database).
+
 ## Order of work (revised — safer/verifiable tools before the XL Voucher)
 1. ~~**Sign Orders**~~ ✅ done
 2. ~~Listing entry~~ ✅ done
-3. **Comp input** ← current (`compData.submitComp`)
-4. Marketing request (`email.sendToAdmin`)
+3. ~~Comp input~~ ✅ done (`compData.submitComp`)
+4. **Marketing request** ← current (`email.sendToAdmin`)
 5. Docs / Drafts (low complexity)
 6. **Commission voucher** — done LAST. Its Excel attachment is a macro-enabled
    `.xlsm` Dealius template patched cell-by-cell via JSZip; load-bearing for the

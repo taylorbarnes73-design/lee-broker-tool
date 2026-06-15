@@ -15,6 +15,7 @@ import PortalAdminListingImport from "./pages/PortalAdminListingImport";
 import PortalVoucherForm from "./pages/PortalVoucherForm";
 import PortalSignForm from "./pages/PortalSignForm";
 import PortalListingForm from "./pages/PortalListingForm";
+import PortalCompForm from "./pages/PortalCompForm";
 import PortalQuickConvert from "./pages/PortalQuickConvert";
 import PortalAccount from "./pages/PortalAccount";
 import PortalAdminAuditLog from "./pages/PortalAdminAuditLog";
@@ -332,6 +333,11 @@ function Router() {
       <Route path="/portal/forms/listing">
         <PortalRoute>
           <PortalListingForm />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/forms/comp">
+        <PortalRoute>
+          <PortalCompForm />
         </PortalRoute>
       </Route>
       <Route path="/portal/admin-request">

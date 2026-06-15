@@ -98,6 +98,13 @@ test.describe("portal smoke", () => {
     await expect(page.getByPlaceholder("92612")).toHaveValue("92612");
   });
 
+  test("comp form validates required fields", async ({ page }) => {
+    await page.goto("/portal/forms/comp");
+    await expect(page.getByRole("heading", { name: "Comp input" })).toBeVisible();
+    await page.getByRole("button", { name: /Save comp/i }).click();
+    await expect(page.getByText(/Property address is required/i)).toBeVisible();
+  });
+
   test("submissions list loads for signed-in broker", async ({ page }) => {
     await page.goto("/portal/submissions");
     await expect(page.getByText(/submission/i).first()).toBeVisible({ timeout: 15_000 });

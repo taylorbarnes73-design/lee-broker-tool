@@ -56,9 +56,9 @@ const HOME_TOOLS = [
   {
     Icon: Icons.Comp,
     title: "Comparables",
-    desc: "Build lease or sale comp reports from the office master set and export to a locked PDF template.",
-    meta: "Run a comp report",
-    href: "/portal/workspace?tab=comp",
+    desc: "Record a lease or sale comp — property, terms, brokers and pricing — straight into the office comp set.",
+    meta: "Add a comp",
+    href: "/portal/forms/comp",
   },
   {
     Icon: Icons.Wand,
