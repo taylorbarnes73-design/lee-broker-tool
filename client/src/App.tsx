@@ -16,6 +16,7 @@ import PortalVoucherFullForm from "./pages/PortalVoucherFullForm";
 import PortalSignForm from "./pages/PortalSignForm";
 import PortalListingForm from "./pages/PortalListingForm";
 import PortalCompForm from "./pages/PortalCompForm";
+import PortalCompReports from "./pages/PortalCompReports";
 import PortalMarketingForm from "./pages/PortalMarketingForm";
 import PortalDocuments from "./pages/PortalDocuments";
 import PortalQuickConvert from "./pages/PortalQuickConvert";
@@ -340,6 +341,11 @@ function Router() {
       <Route path="/portal/forms/comp">
         <PortalRoute>
           <PortalCompForm />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/comp-reports">
+        <PortalRoute>
+          <PortalCompReports />
         </PortalRoute>
       </Route>
       <Route path="/portal/forms/marketing-request">

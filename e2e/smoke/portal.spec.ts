@@ -108,6 +108,16 @@ test.describe("portal smoke", () => {
     await expect(page.getByText(/Missing required fields/i)).toBeVisible();
   });
 
+  test("comp reports search page loads and runs a search", async ({ page }) => {
+    await page.goto("/portal/comp-reports");
+    await expect(page.getByRole("heading", { name: "Comp Reports" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Orange County" })).toBeVisible();
+    await page.getByPlaceholder("Address, project, tenant…").fill("Von Karman");
+    await page.getByRole("button", { name: /^Search$/ }).click();
+    // With no published dataset the page must show a graceful empty state, not crash.
+    await expect(page.getByText(/No comps match|result/i).first()).toBeVisible({ timeout: 10_000 });
+  });
+
   test("documents library loads and filters", async ({ page }) => {
     await page.goto("/portal/documents");
     await expect(page.getByRole("heading", { name: "Documents" })).toBeVisible();

@@ -30,7 +30,7 @@ backend before the next. The vanilla-JS tool is retired tab-by-tab.
 | `tab-listing` | `/portal/forms/listing` | `email.sendToAdmin`, `files.uploadBatch`, `aiAssist.extractListingDocument` | **✅ Done** — native form (type picker, lease/sale conditionals, type-specific details, agents, deal-doc AI), client PDF, submit verified |
 | `tab-voucher` | `/portal/forms/voucher` | `email.sendToAdmin`, `files.upload`, `aiAssist.extractVoucherDocument` | **✅ Done** — full native form (deal basics, agents, parties, lease/sale terms, rent schedule, commission, outside agents, distribution), AI brochure prefill, client PDF + JSZip `.xlsm` Excel (Dealius template), submit verified. Excel cell mapping mirrors `voucherWorkbookApplyForm` exactly. **Note: validate generated `.xlsm` against Dealius before first production use.** |
 | `tab-comp` (input) | `/portal/forms/comp` | `compData.submitComp`, `files.upload`, `aiAssist.extractDocument`, `brokers.list` | **✅ Done** — native lease/sale form, brochure AI, roster source, submit verified |
-| `tab-comp-reports` | TBD | `compData.search`, `compData.latest` | Legacy only |
+| `tab-comp-reports` | `/portal/comp-reports` | `compData.search`, `compData.latest` | **✅ Done** — native search/browse (lease/sale toggle, free-text + faceted filters, pagination, expandable detail drawer from server `reportCard.fields`). CSV/PDF export + map view deferred as polish. |
 | `tab-contracts` (Convert) | `/portal/convert` | `contracts.extractContract` | Substantial React page exists (`PortalQuickConvert`) |
 | `tab-marketing-request` | `/portal/forms/marketing-request` | `submissions.create`, `files.uploadBatch`, `brokers.list`, `POST /api/marketing-request/pdf` | **✅ Done** — native form, roster requester, server AcroForm PDF, submit verified |
 | `tab-admin-request` | `/portal/admin-request` | `submissions.create` | React page exists (`PortalAdminRequest`) |
@@ -147,6 +147,27 @@ backend before the next. The vanilla-JS tool is retired tab-by-tab.
 - Verified: TypeScript clean, build passes, form renders with all sections,
   validation fires on empty submit (`email.sendToAdmin` DB write requires real DB).
 
+## Comp Reports — migration notes (done)
+- New page `client/src/pages/PortalCompReports.tsx`, route `/portal/comp-reports`
+  (App.tsx); home "Comp Reports" card added alongside "Comparables" (input form).
+- Reads the published comp dataset via `compData.search` (paged) and
+  `compData.latest` (dataset banner). The server already returns display-ready
+  `reportCard.fields` (formatted strings), so the page renders those directly —
+  lease/sale each get their own column set + a full detail drawer.
+- Filter contract matches the backend exactly: `compType`, `query`, `cities[]`,
+  `markets[]`, `subMarkets[]`, `propertyTypes[]`, `sfMin`, `sfMax`, `dateFrom`,
+  `dateTo`, `limit`, `offset`. Empty filters are omitted (sent as `undefined`).
+  Search is manual (button / Enter), not debounced — matching legacy.
+- Markets + property types are chip multi-selects; cities/submarkets are
+  comma-separated text (split to arrays) to fully cover the contract without a
+  brittle hardcoded city list.
+- CSV "Export Excel", "Download Comp Report" PDF, and the map view from the
+  legacy tab are deferred as polish (the core search/browse/detail is the value).
+- Verified at runtime: page renders, chips + lease/sale toggle work, and a search
+  with no published dataset shows a graceful "No comps match" empty state (no
+  crash). Result rendering needs a real DB with an imported workbook to exercise
+  fully; the response shape is taken directly from the server's `CompSearchResult`.
+
 ## Order of work (completed)
 1. ~~**Sign Orders**~~ ✅ done
 2. ~~Listing entry~~ ✅ done
@@ -154,6 +175,6 @@ backend before the next. The vanilla-JS tool is retired tab-by-tab.
 4. ~~Marketing request~~ ✅ done (`submissions.create`, marketing-inbox routing)
 5. ~~Docs library~~ ✅ done (92 docs, CDN links, no backend)
 6. ~~Commission voucher~~ ✅ done — full form + JSZip `.xlsm` + PDF + `email.sendToAdmin`
-7. **Retire `broker_tool.html` + iframe wrapper** once `.xlsm` is Dealius-validated in production.
-8. **Comp Reports** (`compData.search`, `compData.latest`) — TBD.
+7. ~~Comp Reports~~ ✅ done (`compData.search` / `compData.latest`)
+8. **Retire `broker_tool.html` + iframe wrapper** once `.xlsm` is Dealius-validated in production.
 9. **Drafts** — Deferred (cross-cutting autosave feature).

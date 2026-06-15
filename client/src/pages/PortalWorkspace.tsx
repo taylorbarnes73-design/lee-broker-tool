@@ -61,6 +61,13 @@ const HOME_TOOLS = [
     href: "/portal/forms/comp",
   },
   {
+    Icon: Icons.Comp,
+    title: "Comp Reports",
+    desc: "Search the published lease and sale comp dataset by city, market, size and date — with full property and broker detail.",
+    meta: "Search comps",
+    href: "/portal/comp-reports",
+  },
+  {
     Icon: Icons.Wand,
     title: "Convert",
     desc: "Drop a lease, LOI or exclusive and turn it into a voucher, sign order, listing or branded PDF.",
@@ -188,7 +195,7 @@ export default function PortalWorkspace() {
           <section className="pwh-tools">
             <div className="pwh-section-inner">
               <div className="lee-eyebrow pwh-eyebrow">The toolkit</div>
-              <h2 className="pwh-section-heading">Six tools, one login</h2>
+              <h2 className="pwh-section-heading">Every tool, one login</h2>
               <div className="pwh-tool-grid">
                 {HOME_TOOLS.map(({ Icon, title, desc, meta, href }) => (
                   <Link key={title} href={href} className="pwh-tool-card">
