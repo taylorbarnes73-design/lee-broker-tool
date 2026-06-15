@@ -240,24 +240,39 @@ export default function PortalVoucherFullForm() {
   }, [hasOutside, outsideRows]);
 
   // ── Rent schedule auto-generate ─────────────────────────────────────────
+  // Mirrors legacy generateVoucherRentSchedule(): monthly rent = rate/SF/Mo ×
+  // deal SF, escalated annually. With no escalation, a single row spans the
+  // entire remaining term (NOT capped at 12 months).
   function autoGenerateRentSchedule() {
     const termMonths = n(lTerm);
-    const rate = n(lRate);
-    const escPct = n(lEscPct);
+    const rateSf = n(lRate);
+    const sf = n(dealSf) ?? 0;
+    const escPct = n(lEscPct) ?? 0;
     const freeMonths = n(lFreeMonths) ?? 0;
     const commRate = lCommRate;
-    if (!termMonths || !rate) { toast.error("Enter term and monthly rate first."); return; }
+    if (!termMonths || !rateSf) { toast.error("Enter term and rate/SF/Mo first."); return; }
+    if (sf <= 0) { toast.error("Enter deal SF first — monthly rent is rate × SF."); return; }
+
+    const baseMonthly = rateSf * sf;
     const rows: RentRow[] = [];
-    if (freeMonths > 0) rows.push({ monthly: 0, months: freeMonths, commPct: commRate });
-    let remaining = termMonths - freeMonths;
-    let curRate = rate;
-    const escYears = escPct && n(lEscPct) ? Math.ceil(remaining / 12) : 1;
-    for (let yr = 0; yr < escYears && remaining > 0; yr++) {
-      const months = Math.min(12, remaining);
-      rows.push({ monthly: curRate, months, commPct: commRate });
-      remaining -= months;
-      if (escPct) curRate = curRate * (1 + (n(lEscPct)! > 1 ? n(lEscPct)! / 100 : n(lEscPct)!));
+
+    let usedMonths = 0;
+    if (freeMonths > 0) {
+      const fm = Math.min(freeMonths, termMonths);
+      rows.push({ monthly: 0, months: fm, commPct: commRate });
+      usedMonths += fm;
     }
+
+    let remaining = termMonths - usedMonths;
+    let yearIndex = 0;
+    while (remaining > 0) {
+      const periodMonths = escPct > 0 ? Math.min(12, remaining) : remaining;
+      const escalatedMonthly = escPct > 0 ? baseMonthly * Math.pow(1 + escPct / 100, yearIndex) : baseMonthly;
+      rows.push({ monthly: escalatedMonthly > 0 ? Number(escalatedMonthly.toFixed(2)) : 0, months: periodMonths, commPct: commRate });
+      remaining -= periodMonths;
+      if (escPct > 0) yearIndex += 1;
+    }
+
     setRentRows(rows.length ? rows : [{ ...EMPTY_RENT_ROW }]);
   }
 
