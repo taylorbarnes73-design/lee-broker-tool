@@ -86,9 +86,18 @@ backend before the next. The vanilla-JS tool is retired tab-by-tab.
   Office→project name), lease/sale toggle, validation, and `email.sendToAdmin`
   accepting the payload + archiving the PDF (DB write needs a real database).
 
-## Order of work (smallest → largest)
+## Order of work (revised — safer/verifiable tools before the XL Voucher)
 1. ~~**Sign Orders**~~ ✅ done
 2. ~~Listing entry~~ ✅ done
+3. **Comp input** ← current (`compData.submitComp`)
+4. Marketing request (`email.sendToAdmin`)
+5. Docs / Drafts (low complexity)
+6. **Commission voucher** — done LAST. Its Excel attachment is a macro-enabled
+   `.xlsm` Dealius template patched cell-by-cell via JSZip; load-bearing for the
+   admin→Dealius import and not verifiable in this environment. Port the `.xlsm`
+   pipeline carefully (adds `jszip`) and validate the Excel against Dealius
+   before flipping the route. (Decision 2026-06-15.)
+7. Retire `broker_tool.html` + iframe wrapper once all tabs are native.
 3. Commission voucher
 4. Comp input
 5. Comp reports
