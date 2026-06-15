@@ -68,11 +68,18 @@ const HOME_TOOLS = [
     href: "/portal/convert",
   },
   {
-    Icon: Icons.Docs,
+    Icon: Icons.Send,
     title: "Marketing",
     desc: "Request a flyer, brochure, social post or campaign — with pre-filled property and agent details.",
     meta: "Submit a request",
     href: "/portal/forms/marketing-request",
+  },
+  {
+    Icon: Icons.Docs,
+    title: "Documents",
+    desc: "Blank forms, listing agreements, lease and purchase docs, and reference PDFs — all searchable.",
+    meta: "Browse documents",
+    href: "/portal/documents",
   },
 ] as const;
 

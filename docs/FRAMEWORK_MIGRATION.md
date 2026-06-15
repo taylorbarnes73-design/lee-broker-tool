@@ -34,8 +34,8 @@ backend before the next. The vanilla-JS tool is retired tab-by-tab.
 | `tab-contracts` (Convert) | `/portal/convert` | `contracts.extractContract` | Substantial React page exists (`PortalQuickConvert`) |
 | `tab-marketing-request` | `/portal/forms/marketing-request` | `submissions.create`, `files.uploadBatch`, `brokers.list`, `POST /api/marketing-request/pdf` | **✅ Done** — native form, roster requester, server AcroForm PDF, submit verified |
 | `tab-admin-request` | `/portal/admin-request` | `submissions.create` | React page exists (`PortalAdminRequest`) |
-| `tab-docs` | TBD | (static/templates) | Legacy only |
-| `tab-drafts` | TBD | (localStorage) | Legacy only |
+| `tab-docs` | `/portal/documents` | none (static CDN links) | **✅ Done** — searchable, categorized library (92 docs) |
+| `tab-drafts` | — | localStorage | **Deferred** — see note (cross-cutting autosave feature, not a tab port) |
 
 ## Conventions for migrated pages
 - Reuse design primitives from `client/src/design/index.jsx`

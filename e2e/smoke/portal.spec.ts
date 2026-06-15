@@ -112,6 +112,15 @@ test.describe("portal smoke", () => {
     await expect(page.getByText(/Missing required fields/i)).toBeVisible();
   });
 
+  test("documents library loads and filters", async ({ page }) => {
+    await page.goto("/portal/documents");
+    await expect(page.getByRole("heading", { name: "Documents" })).toBeVisible();
+    await expect(page.getByText("Sign Request Form", { exact: false }).first()).toBeVisible();
+    await page.getByPlaceholder("Search documents…").fill("estoppel");
+    await expect(page.getByText(/Standard Estoppel Certificate/i).first()).toBeVisible();
+    await expect(page.getByText("Sign Request Form", { exact: false })).toHaveCount(0);
+  });
+
   test("submissions list loads for signed-in broker", async ({ page }) => {
     await page.goto("/portal/submissions");
     await expect(page.getByText(/submission/i).first()).toBeVisible({ timeout: 15_000 });
