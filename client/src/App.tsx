@@ -12,7 +12,7 @@ import PortalAdminUsers from "./pages/PortalAdminUsers";
 import PortalAdminSettings from "./pages/PortalAdminSettings";
 import PortalAdminDealiusTools from "./pages/PortalAdminDealiusTools";
 import PortalAdminListingImport from "./pages/PortalAdminListingImport";
-import PortalVoucherForm from "./pages/PortalVoucherForm";
+import PortalVoucherFullForm from "./pages/PortalVoucherFullForm";
 import PortalSignForm from "./pages/PortalSignForm";
 import PortalListingForm from "./pages/PortalListingForm";
 import PortalCompForm from "./pages/PortalCompForm";
@@ -324,7 +324,7 @@ function Router() {
       </Route>
       <Route path="/portal/forms/voucher">
         <PortalRoute>
-          <PortalVoucherForm />
+          <PortalVoucherFullForm />
         </PortalRoute>
       </Route>
       <Route path="/portal/forms/sign">

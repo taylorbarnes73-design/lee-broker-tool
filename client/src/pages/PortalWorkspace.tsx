@@ -51,7 +51,7 @@ const HOME_TOOLS = [
     title: "Commission Vouchers",
     desc: "Split commissions across agents, build the rent schedule, and submit to Dealius for processing.",
     meta: "Start a voucher",
-    href: "/portal/workspace?tab=voucher",
+    href: "/portal/forms/voucher",
   },
   {
     Icon: Icons.Comp,
@@ -179,7 +179,7 @@ export default function PortalWorkspace() {
             <p className="pwh-hero-subtitle">
               Listing entry, sign orders and commission vouchers — consolidated into a single tool, with Deal Assist to fill the forms for you and a portal to track everything you submit.
             </p>
-            <Link href="/portal/workspace?tab=voucher" className="pwh-hero-cta">
+            <Link href="/portal/forms/voucher" className="pwh-hero-cta">
               Open Broker Desk <Icons.Arrow size={16} />
             </Link>
           </section>

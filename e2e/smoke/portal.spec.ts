@@ -21,17 +21,13 @@ test.describe("portal smoke", () => {
     await expect(page.getByTestId("workspace-frame")).toHaveCount(0);
   });
 
-  test("opening a tool card shows that tool in the workspace frame", async ({ page }) => {
+  test("voucher form loads from workspace card", async ({ page }) => {
     await page.goto("/portal/workspace");
-    await page.getByRole("link", { name: /Commission voucher/i }).click();
-    await expect(page).toHaveURL(/tab=voucher/);
-    await expect(page.getByTestId("workspace-frame")).toBeVisible();
-    // The engine must open on the tool the card claims, not its default tab.
-    const tool = page.frameLocator('iframe[title="Broker workflow workspace"]');
-    await expect(tool.locator("#tab-voucher.active, #tab-voucher.panel.active")).toBeVisible({
-      timeout: 15_000,
-    });
-    await expect(page.getByRole("link", { name: /Workspace/i }).first()).toBeVisible();
+    await page.getByRole("link", { name: /Commission Vouchers/i }).click();
+    await expect(page).toHaveURL(/\/portal\/forms\/voucher/);
+    await expect(page.getByRole("heading", { name: "Commission Voucher" })).toBeVisible();
+    // No iframe — it's now a native React form
+    await expect(page.getByTestId("workspace-frame")).toHaveCount(0);
   });
 
   test("broker sees the shared workspace without admin navigation", async ({ page }) => {
@@ -45,11 +41,11 @@ test.describe("portal smoke", () => {
     await expect(page).toHaveURL(/\/portal\/workspace/);
   });
 
-  test("voucher pilot form validates required fields", async ({ page }) => {
+  test("voucher form validates required fields", async ({ page }) => {
     await page.goto("/portal/forms/voucher");
-    await expect(page.getByRole("heading", { name: "Submit a closed deal" })).toBeVisible();
-    await page.getByRole("button", { name: /Continue to commission details/i }).click();
-    await expect(page.getByText("Property address is required")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Commission Voucher" })).toBeVisible();
+    await page.getByRole("button", { name: /Submit voucher to admin/i }).click();
+    await expect(page.getByText(/Property address is required/i)).toBeVisible();
   });
 
   test("sign form validates required fields", async ({ page }) => {

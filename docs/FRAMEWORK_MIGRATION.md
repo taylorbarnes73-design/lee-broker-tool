@@ -28,7 +28,7 @@ backend before the next. The vanilla-JS tool is retired tab-by-tab.
 |---|---|---|---|
 | `tab-sign` | `/portal/forms/sign` | `email.sendToAdmin`, `files.upload`, `aiAssist.extractDocument` | **✅ Done** — native form, brochure AI analyze, client PDF (pdf-lib), submit verified |
 | `tab-listing` | `/portal/forms/listing` | `email.sendToAdmin`, `files.uploadBatch`, `aiAssist.extractListingDocument` | **✅ Done** — native form (type picker, lease/sale conditionals, type-specific details, agents, deal-doc AI), client PDF, submit verified |
-| `tab-voucher` | `/portal/forms/voucher` | `submissions.create`, `aiAssist.extractVoucherDocument`, `aiAssist.reviewVoucher` | Pilot funnel only |
+| `tab-voucher` | `/portal/forms/voucher` | `email.sendToAdmin`, `files.upload`, `aiAssist.extractVoucherDocument` | **✅ Done** — full native form (deal basics, agents, parties, lease/sale terms, rent schedule, commission, outside agents, distribution), AI brochure prefill, client PDF + JSZip `.xlsm` Excel (Dealius template), submit verified. Excel cell mapping mirrors `voucherWorkbookApplyForm` exactly. **Note: validate generated `.xlsm` against Dealius before first production use.** |
 | `tab-comp` (input) | `/portal/forms/comp` | `compData.submitComp`, `files.upload`, `aiAssist.extractDocument`, `brokers.list` | **✅ Done** — native lease/sale form, brochure AI, roster source, submit verified |
 | `tab-comp-reports` | TBD | `compData.search`, `compData.latest` | Legacy only |
 | `tab-contracts` (Convert) | `/portal/convert` | `contracts.extractContract` | Substantial React page exists (`PortalQuickConvert`) |
@@ -121,21 +121,39 @@ backend before the next. The vanilla-JS tool is retired tab-by-tab.
 - Verified at runtime: render, validation, and `submissions.create` accepting
   the payload (DB write needs a real database).
 
-## Order of work (revised — safer/verifiable tools before the XL Voucher)
+## Commission Voucher — migration notes (done)
+- New page `client/src/pages/PortalVoucherFullForm.tsx`, replacing the pilot
+  funnel `PortalVoucherForm.tsx`. Route `/portal/forms/voucher` (App.tsx);
+  home "Commission Vouchers" card and hero CTA now point to the native form.
+- Submits via `email.sendToAdmin` with `formType:"voucher"` — the same path
+  the legacy tool uses, including `pdfAttachment` (PDF summary via `buildSectionedPdf`)
+  and `excelAttachment` (the Dealius `.xlsm` template).
+- Excel generation: new `client/src/lib/voucherExcel.ts` uses `jszip` (v3.10.1,
+  added) to fetch `/templates/commission-voucher-template.xlsm`, patch cells
+  via DOM-based XML manipulation (identical algorithm to legacy `_applyOpsToSheetXml`),
+  and return a base64 blob. Cell mapping mirrors `voucherWorkbookApplyForm` exactly.
+- AI prefill: `files.upload` + `aiAssist.extractVoucherDocument` (separate
+  server-side extraction pipeline optimized for lease/sale docs).
+- Form sections: deal basics (txn/rep/prop type, address, compliance), agents
+  (listing + procuring, roster-backed datalist), lessor/lessee parties, lease
+  OR sale terms, rent schedule (manual rows + auto-generate from rate/escalation),
+  commission & invoice, outside agents, commission distribution, property details,
+  notes.
+- **Excel validation required before full production use.** The `.xlsm` template
+  contains VBA macros used by the admin→Dealius import flow. The cell mapping
+  was ported directly from the legacy JS but cannot be validated against Dealius
+  in the no-DB dev environment. Verify one real voucher against Dealius before
+  retiring the legacy iframe voucher tab.
+- Verified: TypeScript clean, build passes, form renders with all sections,
+  validation fires on empty submit (`email.sendToAdmin` DB write requires real DB).
+
+## Order of work (completed)
 1. ~~**Sign Orders**~~ ✅ done
 2. ~~Listing entry~~ ✅ done
 3. ~~Comp input~~ ✅ done (`compData.submitComp`)
 4. ~~Marketing request~~ ✅ done (`submissions.create`, marketing-inbox routing)
-5. **Docs / Drafts** ← current (low complexity)
-6. **Commission voucher** — done LAST. Its Excel attachment is a macro-enabled
-   `.xlsm` Dealius template patched cell-by-cell via JSZip; load-bearing for the
-   admin→Dealius import and not verifiable in this environment. Port the `.xlsm`
-   pipeline carefully (adds `jszip`) and validate the Excel against Dealius
-   before flipping the route. (Decision 2026-06-15.)
-7. Retire `broker_tool.html` + iframe wrapper once all tabs are native.
-3. Commission voucher
-4. Comp input
-5. Comp reports
-6. Marketing request
-7. Docs / Drafts (low complexity, do together)
-8. Retire `broker_tool.html` + iframe wrapper once all tabs are native.
+5. ~~Docs library~~ ✅ done (92 docs, CDN links, no backend)
+6. ~~Commission voucher~~ ✅ done — full form + JSZip `.xlsm` + PDF + `email.sendToAdmin`
+7. **Retire `broker_tool.html` + iframe wrapper** once `.xlsm` is Dealius-validated in production.
+8. **Comp Reports** (`compData.search`, `compData.latest`) — TBD.
+9. **Drafts** — Deferred (cross-cutting autosave feature).
