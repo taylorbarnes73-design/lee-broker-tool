@@ -105,6 +105,13 @@ test.describe("portal smoke", () => {
     await expect(page.getByText(/Property address is required/i)).toBeVisible();
   });
 
+  test("marketing request form validates required fields", async ({ page }) => {
+    await page.goto("/portal/forms/marketing-request");
+    await expect(page.getByRole("heading", { name: "Marketing request" })).toBeVisible();
+    await page.getByRole("button", { name: /Send to marketing/i }).click();
+    await expect(page.getByText(/Missing required fields/i)).toBeVisible();
+  });
+
   test("submissions list loads for signed-in broker", async ({ page }) => {
     await page.goto("/portal/submissions");
     await expect(page.getByText(/submission/i).first()).toBeVisible({ timeout: 15_000 });

@@ -32,7 +32,7 @@ backend before the next. The vanilla-JS tool is retired tab-by-tab.
 | `tab-comp` (input) | `/portal/forms/comp` | `compData.submitComp`, `files.upload`, `aiAssist.extractDocument`, `brokers.list` | **✅ Done** — native lease/sale form, brochure AI, roster source, submit verified |
 | `tab-comp-reports` | TBD | `compData.search`, `compData.latest` | Legacy only |
 | `tab-contracts` (Convert) | `/portal/convert` | `contracts.extractContract` | Substantial React page exists (`PortalQuickConvert`) |
-| `tab-marketing-request` | TBD | `submissions.create` | Legacy only |
+| `tab-marketing-request` | `/portal/forms/marketing-request` | `submissions.create`, `files.uploadBatch`, `brokers.list`, `POST /api/marketing-request/pdf` | **✅ Done** — native form, roster requester, server AcroForm PDF, submit verified |
 | `tab-admin-request` | `/portal/admin-request` | `submissions.create` | React page exists (`PortalAdminRequest`) |
 | `tab-docs` | TBD | (static/templates) | Legacy only |
 | `tab-drafts` | TBD | (localStorage) | Legacy only |
@@ -101,12 +101,32 @@ backend before the next. The vanilla-JS tool is retired tab-by-tab.
 - Verified at runtime: render, lease/sale toggle, validation, PDF, and
   `compData.submitComp` accepting the payload (DB write needs a real database).
 
+## Marketing request — migration notes (done)
+- New page `client/src/pages/PortalMarketingForm.tsx`, route
+  `/portal/forms/marketing-request` (App.tsx); home "Marketing" card repointed.
+- Submits via `submissions.create` with `type:"marketing-request"` — the server
+  routes the admin notification to the marketing inbox off that literal
+  (`adminNotification.ts`). The legacy client `mailto` is dropped (the
+  server-side notification covers delivery), matching the Sign approach.
+- "Download PDF" reuses the existing server AcroForm endpoint
+  `POST /api/marketing-request/pdf` (fills the official template) — no new
+  backend. Requester name/email are roster-backed (`brokers.list`); optional
+  attachments via `files.uploadBatch`.
+- Pre-existing quirk observed (NOT introduced here, NOT a prod issue): the REST
+  `requireAuth` middleware lacks the `resolveSignedLegacyCookie` fallback that
+  the tRPC `createContext` has, so the PDF endpoint 401s under LOCAL_AUTH/no-DB
+  dev sessions (the legacy tool hits the same endpoint and would behave the
+  same). In production brokers use the platform session, which `requireAuth`
+  honors, so the endpoint works.
+- Verified at runtime: render, validation, and `submissions.create` accepting
+  the payload (DB write needs a real database).
+
 ## Order of work (revised — safer/verifiable tools before the XL Voucher)
 1. ~~**Sign Orders**~~ ✅ done
 2. ~~Listing entry~~ ✅ done
 3. ~~Comp input~~ ✅ done (`compData.submitComp`)
-4. **Marketing request** ← current (`email.sendToAdmin`)
-5. Docs / Drafts (low complexity)
+4. ~~Marketing request~~ ✅ done (`submissions.create`, marketing-inbox routing)
+5. **Docs / Drafts** ← current (low complexity)
 6. **Commission voucher** — done LAST. Its Excel attachment is a macro-enabled
    `.xlsm` Dealius template patched cell-by-cell via JSZip; load-bearing for the
    admin→Dealius import and not verifiable in this environment. Port the `.xlsm`

@@ -72,7 +72,7 @@ const HOME_TOOLS = [
     title: "Marketing",
     desc: "Request a flyer, brochure, social post or campaign — with pre-filled property and agent details.",
     meta: "Submit a request",
-    href: "/portal/workspace?tab=marketing-request",
+    href: "/portal/forms/marketing-request",
   },
 ] as const;
 
