@@ -624,7 +624,7 @@ export default function PortalCompForm() {
           <Button variant="ghost" onClick={onClear}>
             Clear form
           </Button>
-          <LinkButton href="/portal/workspace?tab=comp-reports" variant="ghost">
+          <LinkButton href="/portal/comp-reports" variant="ghost">
             Search comp reports
           </LinkButton>
           {user?.name ? <span style={{ fontSize: 12, color: "var(--ink-500)", marginLeft: "auto" }}>Signed in as {user.name}</span> : null}

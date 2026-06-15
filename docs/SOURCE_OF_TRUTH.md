@@ -1,5 +1,12 @@
 # Broker Tool — Source of Truth
 
+> **Historical (as of 2026-06-15).** The legacy vanilla-JS engine
+> (`client/public/broker_tool.html` + `broker_ux.css` + `features_patch.js`) and
+> its `/workspace-engine` iframe have been **retired** — every tool is now a
+> native React page under `client/src/pages/Portal*`. See
+> `docs/FRAMEWORK_MIGRATION.md` for the canonical per-tool mapping. The sections
+> below describe the pre-migration layout and are kept for history only.
+
 This document settles which files are canonical for each concern of the broker
 tool, so edits happen in exactly one place. If you are about to change broker
 tool behavior, find your concern in the table below and edit only the files

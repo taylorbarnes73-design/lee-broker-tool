@@ -9,7 +9,6 @@ import { trpc } from "@/lib/trpc";
 import {
   QUICK_CONVERT_PREFILL_STORAGE_KEY,
   assessQuickConvertPrefill,
-  buildBrokerToolTabUrl,
   formatQuickConvertPrefillWarnings,
   isListingEntryQuickConvertKind,
   listingVariantForQuickConvertKind,
@@ -197,7 +196,7 @@ export default function PortalQuickConvert() {
       toast.success(
         `Extracted ${assessment.fieldCount} voucher field(s). Review highlighted fields before submitting.`
       );
-      window.location.href = buildBrokerToolTabUrl("voucher");
+      window.location.href = "/portal/forms/voucher";
       return;
     }
 
@@ -232,7 +231,7 @@ export default function PortalQuickConvert() {
       toast.success(
         `Extracted ${assessment.fieldCount} sign field(s). Review highlighted fields before submitting.`
       );
-      window.location.href = buildBrokerToolTabUrl("sign");
+      window.location.href = "/portal/forms/sign";
       return;
     }
 
@@ -268,7 +267,7 @@ export default function PortalQuickConvert() {
       toast.success(
         `Extracted ${assessment.fieldCount} listing field(s). Review highlighted fields, then download the official PDF.`
       );
-      window.location.href = buildBrokerToolTabUrl("listing");
+      window.location.href = "/portal/forms/listing";
     }
   }
 

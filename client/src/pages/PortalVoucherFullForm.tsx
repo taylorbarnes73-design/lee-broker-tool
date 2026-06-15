@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { parseQuickConvertPrefill, QUICK_CONVERT_PREFILL_STORAGE_KEY } from "@shared/quickConvert";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import AdminPortalShell from "@/components/AdminPortalShell";
@@ -276,6 +277,57 @@ export default function PortalVoucherFullForm() {
     setRentRows(rows.length ? rows : [{ ...EMPTY_RENT_ROW }]);
   }
 
+  // Apply AI/Quick-Convert voucher fields (shared by brochure upload and the
+  // Convert → voucher handoff). Keys match the aiAssist voucherFields schema.
+  function applyVoucherFields(f: Record<string, string>) {
+    if (f.address) setAddress(f.address);
+    if (f.city) setCity(f.city);
+    if (f.state) setState(f.state);
+    if (f.zip) setZip(f.zip);
+    if (f.suite) setSuite(f.suite);
+    if (f.transactionType) setTxnType(f.transactionType);
+    if (f.representationType) setRepType(f.representationType);
+    if (f.propertyType) setPropType(f.propertyType);
+    if (f.buildingSf) setBldgSf(f.buildingSf);
+    if (f.dealSf) setDealSf(f.dealSf);
+    if (f.commencementDate) setLStart(f.commencementDate);
+    if (f.expirationDate) setLEnd(f.expirationDate);
+    if (f.occupancyDate) setLOcc(f.occupancyDate);
+    if (f.term) setLTerm(f.term);
+    if (f.rateSfMo) setLRate(f.rateSfMo);
+    if (f.leaseType) setLRateType(f.leaseType);
+    if (f.commissionRate) setLCommRate(f.commissionRate);
+    if (f.annualEscalationPct) setLEscPct(f.annualEscalationPct);
+    if (f.lessorName) setLsCompany(f.lessorName);
+    if (f.lesseeName) setLbCompany(f.lesseeName);
+    if (f.clientName && !f.lessorName && !f.lesseeName) {
+      // Generic client name → place on the represented side.
+      const rep = (f.representationType ?? "").toLowerCase();
+      if (rep.includes("landlord") || rep.includes("seller")) setLsCompany(f.clientName);
+      else setLbCompany(f.clientName);
+    }
+    if (f.listingAgentName) setLaName(f.listingAgentName);
+    if (f.procuringAgentName) setPaName(f.procuringAgentName);
+    if (f.totalConsideration || f.salePrice) setSPrice(f.totalConsideration ?? f.salePrice ?? "");
+    if (f.notes) setNotes(f.notes);
+  }
+
+  // One-shot prefill from Quick Convert / portal funnel (sessionStorage).
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(QUICK_CONVERT_PREFILL_STORAGE_KEY);
+      if (!raw) return;
+      const payload = parseQuickConvertPrefill(raw);
+      sessionStorage.removeItem(QUICK_CONVERT_PREFILL_STORAGE_KEY);
+      if (!payload || payload.tab !== "voucher" || !payload.fields) return;
+      applyVoucherFields(payload.fields as Record<string, string>);
+      toast.success("We carried over your converted document — review and finish below.");
+    } catch {
+      /* ignore malformed prefill */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ── AI document prefill ─────────────────────────────────────────────────
   async function handleAiFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -288,31 +340,7 @@ export default function PortalVoucherFullForm() {
       const uploadResult = await uploadMut.mutateAsync({ filename: file.name, mimeType, base64Data, category: "brochure", reference: "voucher" });
       const extracted = await extractMut.mutateAsync({ fileUrl: uploadResult.url, mimeType });
       if (!extracted?.success || !extracted.fields) return;
-      const f = extracted.fields as Record<string, string>;
-      if (f.address) setAddress(f.address);
-      if (f.city) setCity(f.city);
-      if (f.state) setState(f.state);
-      if (f.zip) setZip(f.zip);
-      if (f.suite) setSuite(f.suite);
-      if (f.transactionType) setTxnType(f.transactionType);
-      if (f.representationType) setRepType(f.representationType);
-      if (f.propertyType) setPropType(f.propertyType);
-      if (f.buildingSf) setBldgSf(f.buildingSf);
-      if (f.dealSf) setDealSf(f.dealSf);
-      if (f.commencementDate) setLStart(f.commencementDate);
-      if (f.expirationDate) setLEnd(f.expirationDate);
-      if (f.occupancyDate) setLOcc(f.occupancyDate);
-      if (f.term) setLTerm(f.term);
-      if (f.rateSfMo) setLRate(f.rateSfMo);
-      if (f.leaseType) setLRateType(f.leaseType);
-      if (f.commissionRate) setLCommRate(f.commissionRate);
-      if (f.annualEscalationPct) setLEscPct(f.annualEscalationPct);
-      if (f.lessorName) setLsCompany(f.lessorName);
-      if (f.lesseeName) setLbCompany(f.lesseeName);
-      if (f.listingAgentName) setLaName(f.listingAgentName);
-      if (f.procuringAgentName) setPaName(f.procuringAgentName);
-      if (f.totalConsideration || f.salePrice) setSPrice(f.totalConsideration ?? f.salePrice ?? "");
-      if (f.notes) setNotes(f.notes);
+      applyVoucherFields(extracted.fields as Record<string, string>);
       toast.success("Document analyzed — review prefilled fields.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "AI analysis failed. Enter fields manually.");

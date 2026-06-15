@@ -55,11 +55,6 @@ export function brokerQueueStatusText(status: string | null | undefined): string
   }
 }
 
-/** Deep link into the shared React workspace. */
-export function brokerToolTabUrl(tab: "voucher" | "listing" | "sign" | "comp"): string {
-  return `/portal/workspace?tab=${tab}`;
-}
-
 /**
  * Short broker-facing guidance for what happens next on a submission.
  */
