@@ -4,7 +4,7 @@
  * Sends an email notification to the configured admin inbox (ADMIN_EMAIL).
  * whenever a new submission is recorded in the admin queue.
  */
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import nodemailer from "nodemailer";
 import { ENV } from "../_core/env";
 import { getSetting } from "../settings/getSetting";
@@ -91,12 +91,17 @@ async function sendAdminNotification(params: SubmissionNotificationParams): Prom
     };
 
     const input = JSON.stringify({ messages: [message] });
-    const escaped = input.replace(/'/g, "'\\''");
 
-    execSync(`mcp-cli tool call outlook_send_messages --server outlook-mail --input '${escaped}'`, {
-      timeout: 15_000,
-      stdio: "pipe",
-    });
+    // Pass args as an array (no shell) so broker/property text can't break out
+    // of the command line — mirrors the email router's execFileSync usage.
+    execFileSync(
+      "mcp-cli",
+      ["tool", "call", "outlook_send_messages", "--server", "outlook-mail", "--input", input],
+      {
+        timeout: 15_000,
+        stdio: "pipe",
+      }
+    );
   } catch (error: unknown) {
     // Fire-and-forget: log the error but don't throw
     console.error(
