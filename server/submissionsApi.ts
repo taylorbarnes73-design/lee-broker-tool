@@ -242,10 +242,29 @@ const createSchema = z
     return value;
   });
 
+// Submission payloads are small structured objects (voucher fields, rent rows,
+// etc.) — a few KB at most. Cap the serialized size so an authenticated caller
+// can't bloat the payload column with an arbitrarily large blob.
+const MAX_SUBMISSION_PAYLOAD_BYTES = 1024 * 1024; // 1 MB serialized
+
 const updateSchema = z.object({
   status: z.string().trim().max(32).optional(),
   reference: z.string().trim().max(512).optional(),
-  payload: z.unknown().optional(),
+  payload: z
+    .unknown()
+    .optional()
+    .refine(
+      value => {
+        if (value === undefined) return true;
+        try {
+          return JSON.stringify(value).length <= MAX_SUBMISSION_PAYLOAD_BYTES;
+        } catch {
+          // Non-serializable (e.g. circular) payloads are rejected.
+          return false;
+        }
+      },
+      { message: "Payload is too large." }
+    ),
 });
 
 const importVoucherExcelBody = z.object({
@@ -561,8 +580,10 @@ submissionsApiRouter.get("/:id/attachments/:index/download", async (req, res) =>
     res.setHeader("Content-Disposition", `attachment; filename=\"${downloadFileName(attachment.filename)}\"`);
     res.status(200).send(bytes);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    res.status(500).json({ success: false, error: message || "Failed to download attachment" });
+    // Log the underlying storage error server-side (it can include bucket
+    // names, keys, and region) but return a generic message to the client.
+    console.error(`[submissions] attachment download failed (id=${id}, index=${index}):`, err);
+    res.status(500).json({ success: false, error: "Failed to download attachment" });
   }
 });
 
