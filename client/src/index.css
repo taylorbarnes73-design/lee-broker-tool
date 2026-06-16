@@ -920,111 +920,6 @@
   font-weight: 700;
 }
 
-.workspace-launcher {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.workspace-launcher-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 11px;
-  min-width: 0;
-  padding: 13px 14px;
-  border: 1px solid var(--ink-200);
-  border-radius: 10px;
-  background: var(--ink-0);
-  color: var(--ink-700);
-  text-align: left;
-  box-shadow: var(--shadow-sm);
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
-}
-
-.workspace-launcher-card:hover {
-  border-color: var(--ink-300);
-  box-shadow: var(--shadow-md);
-}
-
-.workspace-launcher-card.active {
-  border-color: rgba(152, 0, 46, 0.35);
-  background: rgba(152, 0, 46, 0.05);
-  box-shadow: 0 0 0 1px rgba(152, 0, 46, 0.08);
-}
-
-.workspace-launcher-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 auto;
-  border-radius: var(--r-8);
-  background: var(--ink-100);
-  color: var(--ink-700);
-}
-
-.workspace-launcher-card.active .workspace-launcher-icon {
-  background: var(--lee-red);
-  color: white;
-}
-
-.workspace-launcher-card strong,
-.workspace-launcher-card small {
-  display: block;
-}
-
-.workspace-launcher-card strong {
-  color: var(--ink-900);
-  font-size: 13px;
-}
-
-.workspace-launcher-card small {
-  margin-top: 3px;
-  color: var(--ink-500);
-  font-size: 11px;
-  line-height: 1.4;
-}
-
-.workspace-frame-card {
-  min-height: 760px;
-  height: calc(100dvh - 310px);
-  margin-top: 12px;
-  overflow: hidden;
-  border: 1px solid var(--ink-200);
-  border-radius: var(--r-12);
-  background: var(--ink-0);
-  box-shadow: var(--shadow-sm);
-}
-
-.workspace-frame {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: var(--ink-50);
-}
-
-@media (max-width: 720px) {
-  .workspace-launcher {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .workspace-launcher-card {
-    padding: 11px;
-  }
-
-  .workspace-launcher-card small {
-    display: none;
-  }
-
-  .workspace-frame-card {
-    min-height: 720px;
-    height: calc(100dvh - 280px);
-  }
-}
-
 .admin-detail-tabs {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -2354,8 +2249,8 @@
 }
 
 /* ═══ PORTAL WORKSPACE SHELL ═══
-   Thin React wrapper that embeds broker_tool.html at /workspace-engine?embedded=1.
-   Launchpad mode (no ?tab): card grid. Tool mode (?tab=X): full-screen iframe. */
+   Header chrome shared by the native React portal home (see pwh-* below for
+   the branded home body). The legacy broker_tool.html iframe has been retired. */
 
 .portal-workspace-page {
   display: flex;
@@ -2399,25 +2294,6 @@
   text-transform: uppercase;
   color: var(--ink-400);
   white-space: nowrap;
-}
-
-.portal-workspace-back {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-600);
-  text-decoration: none;
-  padding: 5px 10px;
-  border-radius: var(--r-6);
-  transition: background 0.1s, color 0.1s;
-  margin-right: 8px;
-}
-
-.portal-workspace-back:hover {
-  background: var(--ink-100);
-  color: var(--ink-900);
 }
 
 .portal-workspace-header-spacer {
@@ -2468,155 +2344,11 @@
   background: color-mix(in srgb, var(--admin-accent, #98002E) 12%, transparent);
 }
 
-/* ── Tool iframe ── */
-.portal-workspace-frame {
-  flex: 1;
-  border: none;
-  width: 100%;
-  display: block;
-}
-
-/* ── Launchpad ── */
-.portal-workspace-launchpad {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 56px 24px 64px;
-  gap: 28px;
-  background:
-    radial-gradient(
-      900px 320px at 50% -120px,
-      color-mix(in srgb, var(--admin-accent, #98002E) 6%, transparent),
-      transparent
-    );
-}
-
-.portal-workspace-greeting {
-  width: 100%;
-  max-width: 920px;
-  margin: 0;
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  color: var(--ink-900);
-  line-height: 1.2;
-}
-
-.portal-workspace-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 12px;
-  width: 100%;
-  max-width: 920px;
-}
-
-.portal-workspace-tool-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 18px;
-  border-radius: 14px;
-  border: 1px solid var(--ink-200);
-  background: var(--ink-0);
-  text-decoration: none;
-  box-shadow: 0 1px 2px rgba(48, 60, 66, 0.04);
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
-}
-
-.portal-workspace-tool-card:hover {
-  border-color: color-mix(in srgb, var(--admin-accent, #98002E) 40%, transparent);
-  box-shadow: 0 6px 18px rgba(48, 60, 66, 0.09);
-  transform: translateY(-1px);
-}
-
-.portal-workspace-tool-card:focus-visible {
-  outline: 2px solid var(--admin-accent, #98002E);
-  outline-offset: 2px;
-}
-
-.portal-workspace-tool-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--admin-accent, #98002E) 7%, transparent);
-  color: var(--admin-accent, #98002E);
-  transition: background 0.15s;
-}
-
-.portal-workspace-tool-card:hover .portal-workspace-tool-icon {
-  background: color-mix(in srgb, var(--admin-accent, #98002E) 13%, transparent);
-}
-
-.portal-workspace-tool-body {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.portal-workspace-tool-label {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--ink-900);
-  line-height: 1.25;
-}
-
-.portal-workspace-tool-desc {
-  font-size: 12.5px;
-  color: var(--ink-500);
-  line-height: 1.45;
-}
-
-.portal-workspace-utilities {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  max-width: 920px;
-  padding-top: 4px;
-  border-top: 1px solid var(--ink-200);
-}
-
-.portal-workspace-util-link {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink-500);
-  text-decoration: none;
-  padding: 8px 12px;
-  margin-top: 8px;
-  border-radius: var(--r-8);
-  transition: background 0.12s, color 0.12s;
-}
-
-.portal-workspace-util-link:hover {
-  background: var(--ink-100);
-  color: var(--admin-accent, #98002E);
-}
-
 @media (max-width: 600px) {
   .portal-workspace-brand-label,
   .portal-workspace-header-link span,
   .portal-workspace-admin-btn span {
     display: none;
-  }
-
-  .portal-workspace-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .portal-workspace-launchpad {
-    padding: 28px 16px 44px;
-    gap: 20px;
-  }
-
-  .portal-workspace-greeting {
-    font-size: 21px;
   }
 }
 

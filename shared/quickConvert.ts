@@ -202,16 +202,6 @@ export function toolTabForQuickConvertKind(
   return null;
 }
 
-export function buildBrokerToolTabUrl(tab: string, extraParams?: Record<string, string>): string {
-  const params = new URLSearchParams({ tab });
-  if (extraParams) {
-    Object.entries(extraParams).forEach(([key, value]) => {
-      if (value) params.set(key, value);
-    });
-  }
-  return `/portal/workspace?${params.toString()}`;
-}
-
 function str(raw: unknown): string {
   return String(raw ?? "").trim();
 }
