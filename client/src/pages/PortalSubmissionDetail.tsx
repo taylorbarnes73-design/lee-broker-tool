@@ -386,15 +386,18 @@ export default function PortalSubmissionDetail() {
         {error ? (
           <div style={{ color: "var(--err-700)", fontSize: 13 }}>{error}</div>
         ) : !item ? (
-          <div
-            aria-hidden
-            style={{
-              height: 120,
-              borderRadius: 10,
-              background: "var(--ink-100)",
-              border: "1px solid var(--ink-200)",
-            }}
-          />
+          <div role="status">
+            <span className="sr-only">Loading submission detail…</span>
+            <div
+              aria-hidden
+              style={{
+                height: 120,
+                borderRadius: 10,
+                background: "var(--ink-100)",
+                border: "1px solid var(--ink-200)",
+              }}
+            />
+          </div>
         ) : (
           <>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>

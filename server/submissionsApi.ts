@@ -498,16 +498,16 @@ submissionsApiRouter.get("/:id", async (req, res) => {
       reference: row.reference,
       submittedBy: row.submittedBy,
       submittedByEmail: row.submittedByEmail,
-      submittedByOpenId: row.submittedByOpenId,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       source: (row as any).source ?? "tool",
       sourceEmailMessageId: (row as any).sourceEmailMessageId ?? null,
       sourceEmailWebLink: (row as any).sourceEmailWebLink ?? null,
       parsedFields: (row as any).parsedFields ?? null,
-      // Assignment / completion tracking — only surfaced to admins
+      // Internal identifiers / assignment tracking — only surfaced to admins
       ...(isAdmin
         ? {
+            submittedByOpenId: row.submittedByOpenId,
             assignedTo: (row as any).assignedTo ?? null,
             assignedToOpenId: (row as any).assignedToOpenId ?? null,
             assignedAt: (row as any).assignedAt ?? null,

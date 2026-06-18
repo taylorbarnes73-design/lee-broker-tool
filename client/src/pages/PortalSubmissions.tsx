@@ -205,7 +205,7 @@ function AdminSubmissions() {
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ ...INPUT_STYLE, maxWidth: "100%" }}>
           <option value="">All statuses</option>
           <option value="pending">Pending</option>
-          <option value="in_review">In review</option>
+          <option value="in_review">In progress</option>
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
         </select>
@@ -216,6 +216,7 @@ function AdminSubmissions() {
           <option value="sign">Sign request</option>
           <option value="admin-request">Admin request</option>
           <option value="comp">Comp input</option>
+          <option value="marketing-request">Marketing request</option>
           <option value="lease">Lease</option>
           <option value="sale">Sale</option>
         </select>

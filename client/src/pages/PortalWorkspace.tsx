@@ -61,7 +61,7 @@ const HOME_TOOLS = [
     href: "/portal/forms/comp",
   },
   {
-    Icon: Icons.Comp,
+    Icon: Icons.Search,
     title: "Comp Reports",
     desc: "Search the published lease and sale comp dataset by city, market, size and date — with full property and broker detail.",
     meta: "Search comps",
@@ -186,13 +186,13 @@ export default function PortalWorkspace() {
             <p className="pwh-hero-subtitle">
               Listing entry, sign orders and commission vouchers — consolidated into a single tool, with Deal Assist to fill the forms for you and a portal to track everything you submit.
             </p>
-            <Link href="/portal/forms/voucher" className="pwh-hero-cta">
-              Open Broker Desk <Icons.Arrow size={16} />
-            </Link>
+            <a href="#pwh-tools" className="pwh-hero-cta">
+              Browse the toolkit <Icons.Arrow size={16} />
+            </a>
           </section>
 
           {/* Tools */}
-          <section className="pwh-tools">
+          <section className="pwh-tools" id="pwh-tools">
             <div className="pwh-section-inner">
               <div className="lee-eyebrow pwh-eyebrow">The toolkit</div>
               <h2 className="pwh-section-heading">Every tool, one login</h2>
