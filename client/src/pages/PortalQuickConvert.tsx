@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { toast } from "sonner";
 import AdminPortalShell from "@/components/AdminPortalShell";
 import LinkButton from "@/components/ui/LinkButton";
@@ -443,11 +443,8 @@ export default function PortalQuickConvert() {
 
           <p style={{ margin: "20px 0 0", fontSize: 12, color: "var(--ink-500)", lineHeight: 1.5 }}>
             Accepted: PDF, Word (.doc, .docx), up to 25 MB. AI prefill requires a configured Gemini, Anthropic, or OpenAI
-            key on the server. After prefill, review every field in the{" "}
-            <Link href="/portal/workspace" style={{ color: accent, fontWeight: 600 }}>
-              workspace
-            </Link>{" "}
-            and download the official PDF or Excel voucher before submitting.
+            key on the server. After prefill, you'll land on the form with fields highlighted — review every one,
+            then download the official PDF or Excel voucher before submitting.
           </p>
         </Card>
       </div>
