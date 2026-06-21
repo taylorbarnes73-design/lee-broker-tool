@@ -97,7 +97,7 @@ function Button({ variant = 'primary', size = 'md', icon, iconRight, children, s
     md: { h: 38, px: 14, fs: 14, gap: 8 },
     lg: { h: 46, px: 18, fs: 15, gap: 10 },
   };
-  const s = sizes[size];
+  const s = sizes[size] || sizes.md;
   const variants = {
     primary: { bg: 'var(--lee-crimson)', color: '#fff', border: 'var(--lee-crimson)', hover: 'var(--lee-crimson-ink)' },
     secondary: { bg: 'var(--ink-0)', color: 'var(--ink-900)', border: 'var(--ink-200)', hover: 'var(--ink-100)' },
@@ -113,9 +113,10 @@ function Button({ variant = 'primary', size = 'md', icon, iconRight, children, s
       disabled={isDisabled}
       onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
       style={{
-        display: 'inline-flex', alignItems: 'center', gap: s.gap,
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: s.gap,
         height: s.h, padding: `0 ${s.px}px`,
         fontSize: s.fs, fontWeight: 600, letterSpacing: '-0.005em',
+        fontFamily: 'var(--font-sans)',
         background: v.gradient && !isDisabled ? 'var(--ai-gradient)' : (hover && !isDisabled ? v.hover : v.bg),
         color: v.color,
         border: `1px solid ${v.border}`,
@@ -210,7 +211,7 @@ function Input({ prefix, suffix, auto, aiFilled, error, style, inputStyle, ...re
 }
 
 // ── Select ──
-function Select({ value, onChange, options, placeholder, style, ...rest }) {
+function Select({ value, onChange, options = [], placeholder, style, ...rest }) {
   const [focus, setFocus] = React.useState(false);
   return (
     <div style={{
@@ -272,11 +273,11 @@ function Toggle({ on, onClick, size = 'md' }) {
 function Badge({ tone = 'neutral', children, icon, size = 'md', style }) {
   const tones = {
     neutral:  { bg: 'var(--ink-100)', color: 'var(--ink-700)', border: 'var(--ink-200)' },
-    crimson:  { bg: 'var(--lee-crimson-wash)', color: 'var(--lee-crimson-ink)', border: 'rgba(1,105,111,.22)' },
-    slate:    { bg: 'var(--lee-slate-wash)', color: 'var(--lee-slate)', border: 'rgba(87,90,116,.2)' },
-    success:  { bg: 'var(--ok-100)', color: 'var(--ok-600)', border: 'rgba(15,122,63,.2)' },
-    warn:     { bg: 'var(--warn-100)', color: 'var(--warn-600)', border: 'rgba(179,107,0,.2)' },
-    danger:   { bg: 'var(--err-100)', color: 'var(--err-600)', border: 'rgba(180,35,24,.2)' },
+    crimson:  { bg: 'var(--lee-crimson-wash)', color: 'var(--lee-crimson-ink)', border: 'rgba(122,0,36,.22)' },
+    slate:    { bg: 'var(--lee-slate-wash)', color: 'var(--lee-slate)', border: 'rgba(126,128,131,.2)' },
+    success:  { bg: 'var(--ok-100)', color: 'var(--ok-600)', border: 'rgba(107,117,23,.2)' },
+    warn:     { bg: 'var(--warn-100)', color: 'var(--warn-600)', border: 'rgba(134,65,28,.2)' },
+    danger:   { bg: 'var(--err-100)', color: 'var(--err-600)', border: 'rgba(205,20,66,.2)' },
     ai:       { bg: 'var(--ai-100)', color: 'var(--ai-500)', border: 'rgba(110,63,217,.2)' },
     dark:     { bg: 'var(--ink-900)', color: '#fff', border: 'var(--ink-900)' },
   };
