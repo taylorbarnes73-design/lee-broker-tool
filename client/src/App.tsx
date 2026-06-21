@@ -12,9 +12,13 @@ import PortalAdminUsers from "./pages/PortalAdminUsers";
 import PortalAdminSettings from "./pages/PortalAdminSettings";
 import PortalAdminDealiusTools from "./pages/PortalAdminDealiusTools";
 import PortalAdminListingImport from "./pages/PortalAdminListingImport";
-import PortalVoucherForm from "./pages/PortalVoucherForm";
+import PortalVoucherFullForm from "./pages/PortalVoucherFullForm";
 import PortalSignForm from "./pages/PortalSignForm";
 import PortalListingForm from "./pages/PortalListingForm";
+import PortalCompForm from "./pages/PortalCompForm";
+import PortalCompReports from "./pages/PortalCompReports";
+import PortalMarketingForm from "./pages/PortalMarketingForm";
+import PortalDocuments from "./pages/PortalDocuments";
 import PortalQuickConvert from "./pages/PortalQuickConvert";
 import PortalAccount from "./pages/PortalAccount";
 import PortalAdminAuditLog from "./pages/PortalAdminAuditLog";
@@ -321,7 +325,7 @@ function Router() {
       </Route>
       <Route path="/portal/forms/voucher">
         <PortalRoute>
-          <PortalVoucherForm />
+          <PortalVoucherFullForm />
         </PortalRoute>
       </Route>
       <Route path="/portal/forms/sign">
@@ -332,6 +336,26 @@ function Router() {
       <Route path="/portal/forms/listing">
         <PortalRoute>
           <PortalListingForm />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/forms/comp">
+        <PortalRoute>
+          <PortalCompForm />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/comp-reports">
+        <PortalRoute>
+          <PortalCompReports />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/forms/marketing-request">
+        <PortalRoute>
+          <PortalMarketingForm />
+        </PortalRoute>
+      </Route>
+      <Route path="/portal/documents">
+        <PortalRoute>
+          <PortalDocuments />
         </PortalRoute>
       </Route>
       <Route path="/portal/admin-request">

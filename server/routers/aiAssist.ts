@@ -4,6 +4,29 @@ import { extractJsonText } from "../_core/llmJson";
 import { z } from "zod/v4";
 import { getSetting } from "../settings/getSetting";
 import { isStoredFileReference, storageGetBytes } from "../storage";
+import { TRPCError } from "@trpc/server";
+
+/**
+ * Map raw LLM/provider errors to plain-language messages safe to show a broker.
+ * Internal details (API keys, provider names, stack traces) are logged but never
+ * surfaced verbatim in the UI.
+ */
+function friendlyAiError(error: unknown): TRPCError {
+  const raw = error instanceof Error ? error.message : String(error);
+  console.error("[aiAssist]", raw);
+  const lower = raw.toLowerCase();
+  let message = "The AI service hit a problem. Please try again in a moment.";
+  if (lower.includes("no ai backend") || lower.includes("no llm") || lower.includes("api key") || lower.includes("not configured")) {
+    message = "AI assist isn't configured on the server yet. Please contact your admin.";
+  } else if (lower.includes("rate") && lower.includes("limit")) {
+    message = "The AI service is busy right now. Please wait a moment and try again.";
+  } else if (lower.includes("timeout") || lower.includes("timed out") || lower.includes("abort")) {
+    message = "The AI request timed out. Please try again.";
+  } else if (lower.includes("could not") || lower.includes("no readable") || lower.includes("parse")) {
+    message = "The AI couldn't read that input. Try rephrasing or entering the details manually.";
+  }
+  return new TRPCError({ code: "INTERNAL_SERVER_ERROR", message });
+}
 
 // ── Field schemas per tab ──
 
@@ -1106,16 +1129,21 @@ Return the JSON object now:`;
     promptText
   );
 
-  const response = await invokeLLM({
-    messages: [
-      { role: "system", content: systemContent },
-      { role: "user", content: userContent as any[] },
-    ],
-    response_format: {
-      type: "json_schema",
-      json_schema: buildJsonSchema(`${tab}_document_fields`, fieldNames),
-    },
-  });
+  let response;
+  try {
+    response = await invokeLLM({
+      messages: [
+        { role: "system", content: systemContent },
+        { role: "user", content: userContent as any[] },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: buildJsonSchema(`${tab}_document_fields`, fieldNames),
+      },
+    });
+  } catch (error) {
+    throw friendlyAiError(error);
+  }
 
   const raw = response.choices?.[0]?.message?.content;
   const parsed = parseJsonObject(raw);
@@ -1494,16 +1522,21 @@ Return ONLY valid JSON. No markdown fences, no explanation.`;
       promptText,
       extractedPdfText
     );
-    const response = await invokeLLM({
-      messages: [
-        { role: "system", content: params.systemPrompt },
-        { role: "user", content: userContent as any[] },
-      ],
-      response_format: {
-        type: "json_schema",
-        json_schema: outputSchema,
-      },
-    });
+    let response;
+    try {
+      response = await invokeLLM({
+        messages: [
+          { role: "system", content: params.systemPrompt },
+          { role: "user", content: userContent as any[] },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: outputSchema,
+        },
+      });
+    } catch (error) {
+      throw friendlyAiError(error);
+    }
     const content = response.choices?.[0]?.message?.content;
     raw = typeof content === "string" ? content : "";
   }
@@ -1670,19 +1703,24 @@ export const aiAssistRouter = router({
       const tabContext = tabContextMap[tab] ?? "";
       const dealHintLine = dealTypeHint ? `\nDeal type context: ${dealTypeHint}` : "";
 
-      const response = await invokeLLM({
-        messages: [
-          { role: "system", content: await parseSystemPrompt() },
-          {
-            role: "user",
-            content: `${tabContext}${dealHintLine}\n\nExtract fields for the "${tab}" form tab.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nDeal description:\n"${description}"\n\nReturn JSON:`,
+      let response;
+      try {
+        response = await invokeLLM({
+          messages: [
+            { role: "system", content: await parseSystemPrompt() },
+            {
+              role: "user",
+              content: `${tabContext}${dealHintLine}\n\nExtract fields for the "${tab}" form tab.\n\nAvailable fields: ${fieldNames.join(", ")}\n\nDeal description:\n"${description}"\n\nReturn JSON:`,
+            },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: buildJsonSchema(`${tab}_fields`, fieldNames),
           },
-        ],
-        response_format: {
-          type: "json_schema",
-          json_schema: buildJsonSchema(`${tab}_fields`, fieldNames),
-        },
-      });
+        });
+      } catch (error) {
+        throw friendlyAiError(error);
+      }
 
       const raw = response.choices?.[0]?.message?.content;
       const parsed = parseJsonObject(raw);

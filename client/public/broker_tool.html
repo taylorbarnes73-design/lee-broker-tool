@@ -38,8 +38,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-<link rel="stylesheet" href="broker_tool.css?v=20260610.2">
-<link rel="stylesheet" href="broker_ux.css?v=20260612.3">
+<link rel="stylesheet" href="broker_tool.css?v=20260613.3">
+<link rel="stylesheet" href="broker_ux.css?v=20260613.3">
 </head>
 <body>
 
@@ -319,7 +319,7 @@
       <div class="row c2">
         <div class="field"><label>Cross Street(s)</label><input id="l-cross"></div>
         <div class="field is-hidden" id="field-corner"><label>Corner</label>
-          <select id="l-corner"><option value="">N/A</option><option value="NE">NE</option><option value="NW">NW</option><option value="SE">SE</option><option value="SW">SW</option></select>
+          <select id="l-corner"><option value="">Select…</option><option value="NE">NE</option><option value="NW">NW</option><option value="SE">SE</option><option value="SW">SW</option></select>
         </div>
       </div>
 
@@ -2594,44 +2594,6 @@
           <label for="mr-requester-name">Requester Name <span class="muted-label">(Required)</span></label>
           <select id="mr-requester-name" required>
             <option value="">Select a name</option>
-            <option value="Frank Adler">Frank Adler</option>
-            <option value="Sean Ahern">Sean Ahern</option>
-            <option value="Tim Arguello">Tim Arguello</option>
-            <option value="Chris Barnett">Chris Barnett</option>
-            <option value="Brian Barson">Brian Barson</option>
-            <option value="David Bolt">David Bolt</option>
-            <option value="Matt Christensen">Matt Christensen</option>
-            <option value="Ethan Davidson">Ethan Davidson</option>
-            <option value="Nick Dumke">Nick Dumke</option>
-            <option value="Matt Durkin">Matt Durkin</option>
-            <option value="Brian Garbutt">Brian Garbutt</option>
-            <option value="John Gessford">John Gessford</option>
-            <option value="Libby Gessford">Libby Gessford</option>
-            <option value="Pitzer Gills">Pitzer Gills</option>
-            <option value="Ken Gould">Ken Gould</option>
-            <option value="Bob Griffin">Bob Griffin</option>
-            <option value="Jeff Grijalva">Jeff Grijalva</option>
-            <option value="Carter Harrington">Carter Harrington</option>
-            <option value="Judd Hietbrink">Judd Hietbrink</option>
-            <option value="Jeff Hirsch">Jeff Hirsch</option>
-            <option value="Jack Hogan">Jack Hogan</option>
-            <option value="David Kluver">David Kluver</option>
-            <option value="Matt Lawer">Matt Lawer</option>
-            <option value="Mike Long">Mike Long</option>
-            <option value="Stephen Madigan">Stephen Madigan</option>
-            <option value="Gary McArdell">Gary McArdell</option>
-            <option value="Jonathan Mejia">Jonathan Mejia</option>
-            <option value="Nima Razaz">Nima Razaz</option>
-            <option value="Brad Schneider">Brad Schneider</option>
-            <option value="Brendan Smith">Brendan Smith</option>
-            <option value="Hayden Toland">Hayden Toland</option>
-            <option value="Miles Toland">Miles Toland</option>
-            <option value="Rick Turner">Rick Turner</option>
-            <option value="Tim Walker">Tim Walker</option>
-            <option value="Tom West">Tom West</option>
-            <option value="Charlie Winn">Charlie Winn</option>
-            <option value="Maddie Zacher">Maddie Zacher</option>
-            <option value="Shannon Zacher">Shannon Zacher</option>
           </select>
         </div>
         <div class="field">
@@ -4225,10 +4187,12 @@ function switchListingMode(mode) {
 function calcLeaseMonthly() {
   const sf = parseFloat((document.getElementById('l-lease-sf') || {}).value.replace(/[$,]/g,'')) || 0;
   const bldgSF = parseFloat((document.getElementById('l-bldg-sf') || {}).value.replace(/,/g,'')) || 0;
+  const el = document.getElementById('l-lease-mo');
   if (sf && bldgSF) {
     const mo = (sf * bldgSF).toFixed(2);
-    const el = document.getElementById('l-lease-mo');
     if (el) el.value = '$' + parseFloat(mo).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  } else {
+    if (el) el.value = '';
   }
 }
 
@@ -4236,9 +4200,11 @@ function calcLeaseMonthly() {
 function calcSaleSF() {
   const price = parseFloat((document.getElementById('l-sale-price') || {}).value.replace(/[$,]/g,'')) || 0;
   const bldgSF = parseFloat((document.getElementById('l-bldg-sf') || {}).value.replace(/,/g,'')) || 0;
+  const el = document.getElementById('l-sale-sf');
   if (price && bldgSF) {
-    const el = document.getElementById('l-sale-sf');
     if (el) el.value = (price / bldgSF).toFixed(2);
+  } else {
+    if (el) el.value = '';
   }
 }
 
@@ -4266,15 +4232,8 @@ function hideListingReview() {
 
 function submitListingToAdmin(btn) {
   if (btn) { btn.classList.add('loading'); btn.disabled = true; }
-  const openModal = function() {
-    openSendToAdminModal('listing');
-    if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
-  };
-  if (typeof window.openPreflightModal === 'function') {
-    window.openPreflightModal('listing', openModal);
-  } else {
-    openModal();
-  }
+  openSendToAdminModal('listing');
+  if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
 }
 
 let reviewSnapshotContext = null;
@@ -4492,6 +4451,7 @@ function openReviewSnapshotWithSpinner(btn, context) {
       (window.openReviewSnapshot || openReviewSnapshot)(context);
     } catch (err) {
       console.error('Review snapshot error:', err);
+      showToast('Could not open review — please try again.', 'error');
     } finally {
       if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
     }
@@ -4505,6 +4465,7 @@ function showListingReviewWithSpinner(btn) {
       showListingReview();
     } catch (err) {
       console.error('Listing review error:', err);
+      showToast('Could not open review — please try again.', 'error');
     } finally {
       if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
     }
@@ -5106,7 +5067,7 @@ let signUploadData = null;
 function handleSignUpload(input) {
   const file = input.files[0];
   if (!file) return;
-  if (file.size > 10 * 1024 * 1024) { alert('File too large. Max 10MB.'); return; }
+  if (file.size > 100 * 1024 * 1024) { showToast('File too large — max 100 MB.', 'error'); return; }
   signUploadData = file;
   const placeholder = document.getElementById('sign-upload-placeholder');
   const preview = document.getElementById('sign-upload-preview');
@@ -9505,7 +9466,7 @@ async function exportVoucherExcelWithSpinner(btn) {
   showFormOverlay('Preparing your Excel voucher…', { subMsg: 'Your download will start automatically.' });
   try {
     await exportVoucherExcel();
-    if (typeof showToast === 'function') showToast('Excel voucher downloaded');
+    if (typeof showToast === 'function') showToast('Excel voucher ready — check your downloads.');
   } catch (error) {
     const message = error && error.message ? error.message : 'The Excel voucher could not be created.';
     if (typeof showToast === 'function') showToast(message, 'error');
@@ -10237,7 +10198,7 @@ function _leeSplitAddressBlock(row) {
 
 async function exportLeeCompReportPdf(compType, rows) {
   if (!window.jspdf || !window.jspdf.jsPDF) {
-    alert('PDF engine did not load. Please reload the page.');
+    showToast('PDF engine did not load. Please reload the page.', 'error');
     return;
   }
   const { jsPDF } = window.jspdf;
@@ -10548,7 +10509,7 @@ function openEmailModal(context) {
     const compType = document.getElementById('c-comp-type').value;
     const addr = document.getElementById('c-address').value || '[Address]';
     const city = document.getElementById('c-city').value || '';
-    to.value = 'ekat@lee-associates.com';
+    to.value = typeof getBrokerAdminRecipientEmail === 'function' ? getBrokerAdminRecipientEmail() : BROKER_ADMIN_EMAIL;
     cc.value = '';
     if (compType === 'sale') {
       subject.value = 'Sale Comp Input \u2014 ' + addr + (city ? ', ' + city : '');
@@ -10648,7 +10609,7 @@ function copyEmail() {
   // Save submission to localStorage
   const sub = saveSubmission(emailContext);
   navigator.clipboard.writeText(text).then(() => {
-    alert('Email copied to clipboard!\n\nSubmission ' + sub.id + ' saved to Admin Portal.');
+    showToast('Email copied to clipboard — submission ' + sub.id + ' saved to Admin Portal.');
     closeEmailModal();
   });
 }
@@ -10730,79 +10691,71 @@ function initCompFormSelects() {
   fillSel('c-project', PROJECTS);
 }
 
+function refreshCompAgentsFromRoster(roster) {
+  if (!roster || !roster.length) return;
+  var names = roster.filter(function(b) { return /broker/i.test(b.role || ''); }).map(function(b) { return b.name || ''; }).filter(Boolean);
+  if (!names.length) names = roster.map(function(b) { return b.name || ''; }).filter(Boolean);
+
+  function fillSel(id, opts) {
+    var el = document.getElementById(id);
+    if (!el || el.tagName !== 'SELECT') return;
+    var cur = el.value;
+    el.innerHTML = '<option value="">—</option>' + opts.map(function(o) { return '<option>' + o + '</option>'; }).join('');
+    if (cur && Array.from(el.options).some(function(o) { return o.value === cur; })) el.value = cur;
+  }
+  function fillDataList(id, opts) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = opts.map(function(o) { return '<option value="' + o + '"></option>'; }).join('');
+  }
+
+  ['c-source','c-list-agent1','c-proc-agent1','c-list-agent2','c-proc-agent2',
+   'cs-list-agent1','cs-proc-agent1','cs-list-agent2','cs-proc-agent2'].forEach(function(id) { fillSel(id, names); });
+  fillDataList('comp-source-options', names);
+}
+
+let _compSubmitInFlight = false;
 async function submitCompDirect() {
+  if (_compSubmitInFlight) return;
   const addr = document.getElementById('c-address')?.value?.trim();
   if (!addr) {
-    alert('Please enter the property address before submitting.');
+    const badge = document.getElementById('comp-submit-badge');
+    if (badge) { badge.textContent = 'Enter a property address first.'; badge.className = 'comp-submit-badge error'; }
+    showToast('Enter a property address before submitting.', 'error');
+    document.getElementById('c-address')?.focus();
     return;
   }
+  _compSubmitInFlight = true;
   const payload = collectCompReportPayload();
   const badge = document.getElementById('comp-submit-badge');
   showFormOverlay('Submitting comp report…', { subMsg: 'Saving your comp data…' });
+  let saved = false;
   try {
     await ensureSharedBrokerSession();
     const result = await callTrpc('compData.submitComp', payload);
     if (result?.success) {
+      saved = true;
       if (badge) { badge.textContent = 'Saved to Comp Reports ✓'; badge.className = 'comp-submit-badge saved'; }
     }
   } catch (e) {
-    if (badge) { badge.textContent = 'Not saved — sign in required'; badge.className = 'comp-submit-badge error'; }
+    const isAuth = e?.data?.code === 'UNAUTHORIZED' ||
+      e?.message?.includes('10001') ||
+      e?.message?.toLowerCase().includes('please login') ||
+      e?.message?.toLowerCase().includes('unauthorized');
+    const msg = isAuth ? 'Not saved — sign in required' : 'Not saved — please try again';
+    if (badge) { badge.textContent = msg; badge.className = 'comp-submit-badge error'; }
+    showToast(isAuth ? 'Sign in to save your comp.' : 'Could not save comp — please try again.', 'error');
     console.warn('Comp DB save:', e?.message || e);
   } finally {
     hideFormOverlay();
+    _compSubmitInFlight = false;
   }
-  openEmailModal('comp');
+  if (saved) openEmailModal('comp');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // BROKER TOOL AUTH GATE
 // ═══════════════════════════════════════════════════════════════════════════════
-const BROKER_EMAIL_MAP = {
-  'eabrego@lee-associates.com': 'Eva Abrego',
-  'fadler@lee-associates.com': 'Frank Adler',
-  'sahern@lee-associates.com': 'Sean Ahern',
-  'targuello@lee-associates.com': 'Tim Arguello',
-  'tbarnes@lee-associates.com': 'Taylor Barnes',
-  'cbarnett@lee-associates.com': 'Chris Barnett',
-  'bbarson@lee-associates.com': 'Brian Barson',
-  'dbolt@lee-associates.com': 'David Bolt',
-  'mchristensen@lee-associates.com': 'Matt Christensen',
-  'edavidson@lee-associates.com': 'Ethan Davidson',
-  'ndumke@lee-associates.com': 'Nick Dumke',
-  'mdurkin@lee-associates.com': 'Matt Durkin',
-  'bgarbutt@lee-associates.com': 'Brian Garbutt',
-  'jgessford@lee-associates.com': 'John Gessford',
-  'lgessford@lee-associates.com': 'Libby Gessford',
-  'pgills@lee-associates.com': 'Pitzer Gills',
-  'kgould@lee-associates.com': 'Ken Gould',
-  'bgriffin@lee-associates.com': 'Bob Griffin',
-  'jgrijalva@lee-associates.com': 'Jeff Grijalva',
-  'charrington@lee-associates.com': 'Carter Harrington',
-  'jhietbrink@lee-associates.com': 'Judd Hietbrink',
-  'jhirsch@lee-associates.com': 'Jeff Hirsch',
-  'jhogan@lee-associates.com': 'Jack Hogan',
-  'dkluver@lee-associates.com': 'David Kluver',
-  'mlawer@lee-associates.com': 'Matt Lawer',
-  'mlong@lee-associates.com': 'Mike Long',
-  'smadigan@lee-associates.com': 'Steve Madigan',
-  'gmcardell@lee-associates.com': 'Gary McArdell',
-  'jmejia@lee-associates.com': 'Jonathan Mejia',
-  'fperkins@lee-associates.com': 'Frank Perkins',
-  'bschneider@lee-associates.com': 'Brad Schneider',
-  'asherratt@lee-associates.com': 'Alejandro Sherratt',
-  'bsmith@lee-associates.com': 'Brendan Smith',
-  'htoland@lee-associates.com': 'Hayden Toland',
-  'mtoland@lee-associates.com': 'Miles Toland',
-  'rturner@lee-associates.com': 'Rick Turner',
-  'timwalker@lee-associates.com': 'Tim Walker',
-  'twest@lee-associates.com': 'Tom West',
-  'cwinn@lee-associates.com': 'Charlie Winn',
-  'mzacher@lee-associates.com': 'Maddie Zacher',
-  'szacher@lee-associates.com': 'Shannon Zacher',
-  'ekat@lee-associates.com': 'Errissa Kat',
-  'kmorris@lee-associates.com': 'Kelsey Morris',
-};
-
 function normalizeBrokerSessionUser(raw) {
   if (!raw || !raw.email) return null;
   return {
@@ -11147,6 +11100,8 @@ async function loadPublicToolSettings() {
     console.warn('Public settings unavailable, using defaults:', e && e.message ? e.message : e);
     LBT_PUBLIC_SETTINGS = {};
   }
+  // Mirror to window so external scripts (features_patch.js) can read settings.
+  window.LBT_PUBLIC_SETTINGS = LBT_PUBLIC_SETTINGS;
   return LBT_PUBLIC_SETTINGS;
 }
 
@@ -11791,46 +11746,48 @@ function resetAdminRequestForm() {
   }
 }
 
-const MARKETING_REQUESTER_EMAIL_MAP = {
-  'Frank Adler': 'fadler@lee-associates.com',
-  'Sean Ahern': 'sahern@lee-associates.com',
-  'Tim Arguello': 'targuello@lee-associates.com',
-  'Chris Barnett': 'cbarnett@lee-associates.com',
-  'Brian Barson': 'bbarson@lee-associates.com',
-  'David Bolt': 'dbolt@lee-associates.com',
-  'Matt Christensen': 'mchristensen@lee-associates.com',
-  'Ethan Davidson': 'edavidson@lee-associates.com',
-  'Nick Dumke': 'ndumke@lee-associates.com',
-  'Matt Durkin': 'mdurkin@lee-associates.com',
-  'Brian Garbutt': 'bgarbutt@lee-associates.com',
-  'John Gessford': 'jgessford@lee-associates.com',
-  'Libby Gessford': 'lgessford@lee-associates.com',
-  'Pitzer Gills': 'pgills@lee-associates.com',
-  'Ken Gould': 'kgould@lee-associates.com',
-  'Bob Griffin': 'bgriffin@lee-associates.com',
-  'Jeff Grijalva': 'jgrijalva@lee-associates.com',
-  'Carter Harrington': 'charrington@lee-associates.com',
-  'Judd Hietbrink': 'jhietbrink@lee-associates.com',
-  'Jeff Hirsch': 'jhirsch@lee-associates.com',
-  'Jack Hogan': 'jhogan@lee-associates.com',
-  'David Kluver': 'dkluver@lee-associates.com',
-  'Matt Lawer': 'mlawer@lee-associates.com',
-  'Mike Long': 'mlong@lee-associates.com',
-  'Stephen Madigan': 'smadigan@lee-associates.com',
-  'Gary McArdell': 'gmcardell@lee-associates.com',
-  'Jonathan Mejia': 'jmejia@lee-associates.com',
-  'Nima Razaz': 'nrazaz@lee-associates.com',
-  'Brad Schneider': 'bschneider@lee-associates.com',
-  'Brendan Smith': 'bsmith@lee-associates.com',
-  'Hayden Toland': 'htoland@lee-associates.com',
-  'Miles Toland': 'mtoland@lee-associates.com',
-  'Rick Turner': 'rturner@lee-associates.com',
-  'Tim Walker': 'timwalker@lee-associates.com',
-  'Tom West': 'twest@lee-associates.com',
-  'Charlie Winn': 'cwinn@lee-associates.com',
-  'Maddie Zacher': 'mzacher@lee-associates.com',
-  'Shannon Zacher': 'shannonzacher@lee-associates.com',
-};
+// Broker roster cache — populated from the API after auth; used by the
+// Marketing Request requester dropdown and the Comp form agent selects.
+var _lbtRosterCache = null;
+var _lbtRosterLoading = null;
+
+async function getLbtBrokerRoster() {
+  if (_lbtRosterCache) return _lbtRosterCache;
+  if (_lbtRosterLoading) return _lbtRosterLoading;
+  _lbtRosterLoading = callTrpc('brokers.list')
+    .then(function(r) {
+      _lbtRosterCache = Array.isArray(r) ? r : [];
+      _lbtRosterLoading = null;
+      return _lbtRosterCache;
+    })
+    .catch(function() {
+      _lbtRosterLoading = null;
+      return [];
+    });
+  return _lbtRosterLoading;
+}
+
+function getEmailForBrokerName(name) {
+  if (!name || !_lbtRosterCache) return '';
+  var entry = _lbtRosterCache.find(function(b) { return b.name === name; });
+  return entry ? (entry.email || '') : '';
+}
+
+function populateMarketingRequesterDropdown(roster) {
+  var el = document.getElementById('mr-requester-name');
+  if (!el || !roster || !roster.length) return;
+  var current = el.value;
+  var brokers = roster.filter(function(b) { return /broker/i.test(b.role || ''); });
+  if (!brokers.length) brokers = roster;
+  el.innerHTML = '<option value="">Select a name</option>' +
+    brokers.map(function(b) {
+      var n = String(b.name || '').replace(/"/g, '&quot;');
+      return '<option value="' + n + '">' + (b.name || '') + '</option>';
+    }).join('');
+  if (current && Array.from(el.options).some(function(o) { return o.value === current; })) {
+    el.value = current;
+  }
+}
 
 function collectMarketingRequestPayload() {
   const valueOf = id => (document.getElementById(id)?.value || '').trim();
@@ -11868,8 +11825,8 @@ function applyMarketingRequesterEmailFromName() {
   const nameEl = document.getElementById('mr-requester-name');
   const emailEl = document.getElementById('mr-requester-email');
   if (!nameEl || !emailEl) return;
-  const mappedEmail = MARKETING_REQUESTER_EMAIL_MAP[nameEl.value];
-  if (mappedEmail) emailEl.value = mappedEmail;
+  const rosterEmail = getEmailForBrokerName(nameEl.value);
+  if (rosterEmail) emailEl.value = rosterEmail;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -12757,7 +12714,7 @@ function updateSubStatus(id, status, btn) {
 async function adminPushSubmissionToDealius(id) {
   const sub = ADMIN_SUBMISSIONS.find(s => s.id === id);
   if (!sub || !sub.serverSubmissionId) {
-    alert('This submission is missing a server record ID — it cannot be pushed to Dealius.');
+    showToast('Missing a server record ID — cannot push to Dealius.', 'error');
     return;
   }
 
@@ -12789,13 +12746,13 @@ async function adminPushSubmissionToDealius(id) {
 
     const dealId = body && body.data ? body.data.dealID : null;
     if (dealId) {
-      alert('✅ Pushed to Dealius. Deal #' + dealId + ' created.');
+      showToast('Pushed to Dealius — Deal #' + dealId + ' created.');
     } else {
-      alert('✅ Pushed to Dealius successfully.');
+      showToast('Pushed to Dealius successfully.');
     }
   } catch (e) {
     console.warn('Dealius push failed:', e && e.message ? e.message : e);
-    alert('❌ Dealius push failed: ' + (e && e.message ? e.message : 'Unknown error'));
+    showToast('Dealius push failed: ' + (e && e.message ? e.message : 'Unknown error'), 'error');
   } finally {
     setBtnLabel('Review & push to Dealius');
   }
@@ -14347,7 +14304,7 @@ async function dxResolveContact(fullName, email, phone, companyID, H) {
 
 // AI Review — routed through server, no external API key needed
 async function dxRunAIReview() {
-  if (!DX_P) { alert('Load a voucher first.'); return; }
+  if (!DX_P) { showToast('Load a voucher first.', 'error'); return; }
   const panel = document.getElementById('dxAiPanel');
   setHiddenState(panel, false);
   panel.innerHTML = '<div class="ai-panel"><div class="ai-panel-header"><span>Review</span> Review Checks</div><div class="ai-review-status-row"><div class="dx-spin dx-spin-accent"></div> Checking the voucher for date, term, address, and commission issues.</div></div>';
@@ -17827,6 +17784,7 @@ function getCurrentFormState(tab) {
 
 const TRPC_QUERY_PROCEDURES = new Set([
   'auth.me',
+  'brokers.list',
   'submissions.adminList',
   'submissions.mine',
   'compData.latest',
@@ -18100,7 +18058,15 @@ function applySharedBrokerIdentity(user) {
   }
   fillFieldIfEmpty('la-name-1', user.name || '');
   fillFieldIfEmpty('la-email-1', user.email || '');
-  syncMarketingRequesterFromUser(user);
+  // Load the broker roster from the API (requires auth) and populate
+  // the Marketing Request requester dropdown and Comp agent selects.
+  getLbtBrokerRoster().then(function(roster) {
+    populateMarketingRequesterDropdown(roster);
+    syncMarketingRequesterFromUser(user);
+    refreshCompAgentsFromRoster(roster);
+  }).catch(function() {
+    syncMarketingRequesterFromUser(user);
+  });
 }
 
 const DEFAULT_BROKER_TEAM_LABEL = 'Lee & Associates Newport Beach';
@@ -18143,7 +18109,7 @@ function syncMarketingRequesterFromUser(user) {
     if (match) nameEl.value = normalizedName;
   }
   if (!emailEl.value.trim()) {
-    const mappedEmail = MARKETING_REQUESTER_EMAIL_MAP[nameEl.value] || user.email || '';
+    const mappedEmail = getEmailForBrokerName(nameEl.value) || user.email || '';
     if (mappedEmail) emailEl.value = mappedEmail;
   }
   if (teamEl && shouldAutoFillMarketingTeam(teamEl.value, user)) {
@@ -18640,7 +18606,7 @@ function compReportExportPdfWithSpinner(btn) {
   overlay.classList.add('visible');
   const statusEl = document.getElementById('cr-export-status');
   const progressEl = document.getElementById('cr-export-progress');
-  void (async () => {
+  return (async () => {
     try { await compReportExportPdfWithProgress(statusEl, progressEl); } catch(e) { /* handled inside */ } finally {
       if (btn) { setBtnLoading(btn, false); btn.disabled = false; }
       overlay.classList.remove('visible');
@@ -18650,12 +18616,12 @@ function compReportExportPdfWithSpinner(btn) {
 async function compReportExportPdfWithProgress(statusEl, progressEl) {
   const rows = compReportSelectedRows();
   if (!rows.length) {
-    alert((compReportsResultsCache || []).length ? 'Select at least one comp to export.' : 'Run a search first so there is something to export.');
+    showToast((compReportsResultsCache || []).length ? 'Select at least one comp to export.' : 'Run a search first so there is something to export.', 'error');
     return;
   }
   const compType = compReportsTypeCache || 'lease';
   if (typeof exportLeeCompReportPdf !== 'function') {
-    alert('PDF export is not available in this build.');
+    showToast('PDF export is not available in this build.', 'error');
     return;
   }
 
@@ -18684,7 +18650,7 @@ async function compReportExportPdfWithProgress(statusEl, progressEl) {
 function compReportExportCsv() {
   const rows = compReportSelectedRows();
   if (!rows.length) {
-    alert((compReportsResultsCache || []).length ? 'Select at least one comp to export.' : 'Run a search first so there is something to export.');
+    showToast((compReportsResultsCache || []).length ? 'Select at least one comp to export.' : 'Run a search first so there is something to export.', 'error');
     return;
   }
   const compType = compReportsTypeCache || 'lease';
@@ -19805,7 +19771,7 @@ function ciHandleDrop(event) {
   if (file && file.type === 'application/pdf') {
     ciProcessPdf(file);
   } else {
-    alert('Please drop a PDF file.');
+    showToast('Please drop a PDF file.', 'error');
   }
 }
 
@@ -20250,7 +20216,7 @@ async function ciSubmitToAdmin() {
 function ciDownloadDataSheet() {
   const data = ciCollectData();
   if (!data.contractType || data.contractType.includes('Select a contract')) {
-    alert('Please select a contract type and fill in the form before downloading.');
+    showToast('Select a contract type and fill in the form before downloading.', 'error');
     return;
   }
 
@@ -21001,6 +20967,6 @@ function deleteDraft(key) {
   });
 })();
 </script>
-<script src="/features_patch.js?v=20260612.1"></script>
+<script src="/features_patch.js?v=20260613.4"></script>
 </body>
 </html>

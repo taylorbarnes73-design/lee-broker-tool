@@ -1,20 +1,14 @@
 import { useMemo, type CSSProperties } from "react";
 import { Link, useLocation, useSearch } from "wouter";
 import {
-  FileSpreadsheet,
-  FileText,
-  FolderOpen,
   Inbox,
   LogOut,
-  Megaphone,
-  ReceiptText,
   Shield,
-  Signpost,
-  TableProperties,
   User,
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { usePublicBranding } from "@/hooks/usePublicBranding";
+import { Icons } from "@/design/index.jsx";
 
 /**
  * Portal workspace: clean launchpad at /portal/workspace (no ?tab),
@@ -26,16 +20,75 @@ import { usePublicBranding } from "@/hooks/usePublicBranding";
  */
 
 const TOOLS = [
-  { id: "voucher",           label: "Commission voucher",  description: "Calculate and submit a closed deal",     Icon: ReceiptText     },
-  { id: "listing",           label: "Listing entry",       description: "Add a property to office records",       Icon: FileText        },
-  { id: "sign",              label: "Sign request",        description: "Order a Lee & Associates sign",          Icon: Signpost        },
-  { id: "comp",              label: "Comp input",          description: "Record a comparable transaction",        Icon: TableProperties },
-  { id: "comp-reports",      label: "Comp reports",        description: "Search and export comp data",            Icon: FileSpreadsheet },
-  { id: "marketing-request", label: "Marketing request",   description: "Request a flyer, brochure, or campaign", Icon: Megaphone       },
-  { id: "drafts",            label: "My drafts",           description: "Resume work saved in this browser",      Icon: FolderOpen      },
+  { id: "voucher"           },
+  { id: "listing"           },
+  { id: "sign"              },
+  { id: "comp"              },
+  { id: "comp-reports"      },
+  { id: "marketing-request" },
+  { id: "drafts"            },
 ] as const;
 
 type ToolId = (typeof TOOLS)[number]["id"];
+
+const HOME_TOOLS = [
+  {
+    Icon: Icons.Listing,
+    title: "Listings",
+    desc: "Enter industrial, office, retail or land listings with a guided step flow and push them straight to the office record.",
+    meta: "Open listing entry",
+    href: "/portal/forms/listing",
+  },
+  {
+    Icon: Icons.Sign,
+    title: "Sign Orders",
+    desc: "Configure mount type and panel sizes, add a name rider, and send the order to the vendor with an auto PO #.",
+    meta: "Order signage",
+    href: "/portal/forms/sign",
+  },
+  {
+    Icon: Icons.Voucher,
+    title: "Commission Vouchers",
+    desc: "Split commissions across agents, build the rent schedule, and submit to Dealius for processing.",
+    meta: "Start a voucher",
+    href: "/portal/forms/voucher",
+  },
+  {
+    Icon: Icons.Comp,
+    title: "Comparables",
+    desc: "Record a lease or sale comp — property, terms, brokers and pricing — straight into the office comp set.",
+    meta: "Add a comp",
+    href: "/portal/forms/comp",
+  },
+  {
+    Icon: Icons.Search,
+    title: "Comp Reports",
+    desc: "Search the published lease and sale comp dataset by city, market, size and date — with full property and broker detail.",
+    meta: "Search comps",
+    href: "/portal/comp-reports",
+  },
+  {
+    Icon: Icons.Wand,
+    title: "Convert",
+    desc: "Drop a lease, LOI or exclusive and turn it into a voucher, sign order, listing or branded PDF.",
+    meta: "Convert a document",
+    href: "/portal/convert",
+  },
+  {
+    Icon: Icons.Send,
+    title: "Marketing",
+    desc: "Request a flyer, brochure, social post or campaign — with pre-filled property and agent details.",
+    meta: "Submit a request",
+    href: "/portal/forms/marketing-request",
+  },
+  {
+    Icon: Icons.Docs,
+    title: "Documents",
+    desc: "Blank forms, listing agreements, lease and purchase docs, and reference PDFs — all searchable.",
+    meta: "Browse documents",
+    href: "/portal/documents",
+  },
+] as const;
 
 function isValidTab(t: string | null): t is ToolId {
   return TOOLS.some(tool => tool.id === t);
@@ -123,32 +176,111 @@ export default function PortalWorkspace() {
           data-testid="workspace-frame"
         />
       ) : (
-        <main className="portal-workspace-launchpad">
-          <h1 className="portal-workspace-greeting">
-            {greeting}
-            {firstName ? `, ${firstName}` : ""}
-          </h1>
-          <div className="portal-workspace-grid">
-            {TOOLS.map(({ id, label, description, Icon }) => (
-              <Link
-                key={id}
-                href={`/portal/workspace?tab=${id}`}
-                className="portal-workspace-tool-card"
-              >
-                <span className="portal-workspace-tool-icon" aria-hidden>
-                  <Icon size={18} />
-                </span>
-                <span className="portal-workspace-tool-body">
-                  <span className="portal-workspace-tool-label">{label}</span>
-                  <span className="portal-workspace-tool-desc">{description}</span>
-                </span>
-              </Link>
-            ))}
-          </div>
-          <nav className="portal-workspace-utilities" aria-label="Utilities">
-            <Link href="/portal/convert" className="portal-workspace-util-link">Quick Convert</Link>
-          </nav>
-        </main>
+        <div className="pwh-root">
+          {/* Hero */}
+          <section className="pwh-hero">
+            <h1 className="pwh-hero-title">
+              {greeting},{" "}
+              <span className="pwh-hero-name">{firstName ?? "there"}</span>
+            </h1>
+            <p className="pwh-hero-subtitle">
+              Listing entry, sign orders and commission vouchers — consolidated into a single tool, with Deal Assist to fill the forms for you and a portal to track everything you submit.
+            </p>
+            <a href="#pwh-tools" className="pwh-hero-cta">
+              Browse the toolkit <Icons.Arrow size={16} />
+            </a>
+          </section>
+
+          {/* Tools */}
+          <section className="pwh-tools" id="pwh-tools">
+            <div className="pwh-section-inner">
+              <div className="lee-eyebrow pwh-eyebrow">The toolkit</div>
+              <h2 className="pwh-section-heading">Every tool, one login</h2>
+              <div className="pwh-tool-grid">
+                {HOME_TOOLS.map(({ Icon, title, desc, meta, href }) => (
+                  <Link key={title} href={href} className="pwh-tool-card">
+                    <div className="pwh-tool-icon-wrap"><Icon size={22} /></div>
+                    <div className="pwh-tool-title">{title}</div>
+                    <div className="pwh-tool-desc">{desc}</div>
+                    <div className="pwh-tool-meta">{meta} <Icons.Arrow size={13} /></div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* DealAssist */}
+          <section className="pwh-da-section">
+            <div className="pwh-section-inner">
+              <div className="pwh-da-gradient-border">
+                <div className="pwh-da-inner">
+                  <div className="pwh-da-left">
+                    <span className="pwh-da-badge">
+                      <Icons.Sparkles size={12} /> Deal Assist
+                    </span>
+                    <h2 className="pwh-da-title">Skip the typing.</h2>
+                    <p className="pwh-da-body">
+                      The AI assistant reads your documents and fills the forms — so you spend time on deals, not data entry.
+                    </p>
+                  </div>
+                  <div className="pwh-da-checklist">
+                    {[
+                      "Drop a brochure to pre-fill a listing in ~8 seconds",
+                      "Describe a deal in plain English and populate the voucher",
+                      "Pull comparable leases and check commission math",
+                    ].map((p) => (
+                      <div key={p} className="pwh-da-check-item">
+                        <span className="pwh-da-check-icon"><Icons.Check size={16} strokeWidth={2.4} /></span>
+                        {p}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Portal */}
+          <section className="pwh-portal-section">
+            <div className="pwh-section-inner">
+              <div className="lee-eyebrow pwh-eyebrow">Track everything</div>
+              <h2 className="pwh-section-heading">The Broker Portal</h2>
+              <div className={`pwh-portal-grid${isAdmin ? " pwh-portal-grid--two" : ""}`}>
+                <Link href="/portal/submissions" className="pwh-portal-card">
+                  <div className="pwh-portal-card-header">
+                    <div className="pwh-portal-card-icon pwh-portal-card-icon--ink">
+                      <Icons.List size={19} />
+                    </div>
+                    <div className="pwh-portal-card-title">My submissions</div>
+                  </div>
+                  <div className="pwh-portal-card-desc">
+                    See the status and queue position of every voucher, listing and sign order you've sent to the office — with email updates as they move.
+                  </div>
+                </Link>
+                {isAdmin && (
+                  <Link href="/portal/admin" className="pwh-portal-card">
+                    <div className="pwh-portal-card-header">
+                      <div className="pwh-portal-card-icon pwh-portal-card-icon--red">
+                        <Icons.Admin size={19} />
+                      </div>
+                      <div className="pwh-portal-card-title">Admin queue</div>
+                    </div>
+                    <div className="pwh-portal-card-desc">
+                      Office admins claim and process submissions, push approved vouchers to Dealius, and manage settings, users and the audit log.
+                    </div>
+                  </Link>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* Footer */}
+          <footer className="pwh-footer">
+            <img src="/lee-newport-beach-white.png" alt="Lee & Associates Newport Beach" className="pwh-footer-logo" />
+            <div style={{ flex: 1 }} />
+            <span>© 2026 Lee &amp; Associates Newport Beach, Inc. · Internal broker tools</span>
+          </footer>
+        </div>
       )}
     </div>
   );

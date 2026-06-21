@@ -21,16 +21,20 @@ const sectionSchema = z.object({
   fields: z.array(fieldSchema),
 });
 
+// Max base64 length for an attachment. Base64 inflates bytes ~33%, so this
+// caps the decoded payload near the documented 25 MB file limit.
+const MAX_ATTACHMENT_BASE64_LEN = 35 * 1024 * 1024;
+
 const pdfAttachmentSchema = z.object({
   filename: z.string().trim().min(1).max(255),
   mimeType: z.literal("application/pdf").default("application/pdf"),
-  base64Data: z.string().min(1),
+  base64Data: z.string().min(1).max(MAX_ATTACHMENT_BASE64_LEN),
 });
 
 const generatedFileSchema = z.object({
   filename: z.string().trim().min(1).max(255),
   mimeType: z.string().trim().min(1).max(128),
-  base64Data: z.string().min(1),
+  base64Data: z.string().min(1).max(MAX_ATTACHMENT_BASE64_LEN),
 });
 
 const supportingFileSchema = z.object({

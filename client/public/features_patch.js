@@ -271,7 +271,14 @@ window.onSignLocationPhotoChange = function(input) {
   let crCurrentView = 'table';
   let crGeocoder = null;
   let crGoogleLoaded = false;
-  const CR_MAPS_JS_KEY = 'AIzaSyDVpoCmrINWXAb8Imw1z6hIcxU_fG8drho';
+  // Fallback only — prefer the key served from /api/settings/public (ENV-backed,
+  // single source of truth). A Maps JS key is always browser-visible by design;
+  // restrict it by HTTP referrer in the Google Cloud Console.
+  const CR_MAPS_JS_KEY_FALLBACK = 'AIzaSyDVpoCmrINWXAb8Imw1z6hIcxU_fG8drho';
+  function getMapsJsKey() {
+    var fromSettings = window.LBT_PUBLIC_SETTINGS && window.LBT_PUBLIC_SETTINGS.maps_js_key;
+    return (fromSettings && String(fromSettings).trim()) || CR_MAPS_JS_KEY_FALLBACK;
+  }
 
   // Load Google Maps JS API dynamically
   function loadGoogleMapsApi(callback) {
@@ -281,7 +288,7 @@ window.onSignLocationPhotoChange = function(input) {
       return;
     }
     var script = document.createElement('script');
-    script.src = 'https://maps.googleapis.com/maps/api/js?key=' + CR_MAPS_JS_KEY + '&libraries=marker';
+    script.src = 'https://maps.googleapis.com/maps/api/js?key=' + getMapsJsKey() + '&libraries=marker';
     script.async = true;
     script.defer = true;
     script.onload = function() { crGoogleLoaded = true; callback(); };
@@ -345,7 +352,6 @@ window.onSignLocationPhotoChange = function(input) {
 
   // Select/deselect all from map toolbar
   window.crMapSelectAll = function() {
-    var results = crMapAllResults || window.compReportsResultsCache || [];
     window.compReportsDeselected = new Set();
     // Update table checkboxes too
     document.querySelectorAll('#cr-tbody .cr-row-check').forEach(function(cb) { cb.checked = true; });
@@ -375,13 +381,14 @@ window.onSignLocationPhotoChange = function(input) {
       setTimeout(function() { window.compReportsResultsCache = origCache; }, 100);
     }
   };
-  window.crMapExportPdf = function(btn) {
+  window.crMapExportPdf = async function(btn) {
     var origCache = window.compReportsResultsCache;
     if (crMapAllResults) window.compReportsResultsCache = crMapAllResults;
-    // PDF export is async, restore after it completes
-    compReportExportPdfWithSpinner(btn);
-    // Restore after a generous delay (PDF generation can take seconds)
-    setTimeout(function() { window.compReportsResultsCache = origCache; }, 30000);
+    try {
+      await compReportExportPdfWithSpinner(btn);
+    } finally {
+      window.compReportsResultsCache = origCache;
+    }
   };
 
   // Store all map results separately (not limited by page size)
@@ -513,11 +520,25 @@ window.onSignLocationPhotoChange = function(input) {
     // Geocode addresses and add markers
     var bounds = new google.maps.LatLngBounds();
     var geocoded = 0;
+    var geoFailed = 0;        // addresses Google could not place
+    var geoSkipped = 0;       // results with no address to geocode
+    var totalToGeocode = 0;
 
     // Rate-limit geocoding to avoid OVER_QUERY_LIMIT
     var geocodeQueue = [];
     var geocodeActive = 0;
     var MAX_CONCURRENT = 5;
+
+    function maybeReportGeoResult() {
+      if (geocodeActive > 0 || geocodeQueue.length > 0) return;
+      var unmapped = geoFailed + geoSkipped;
+      if (unmapped > 0 && typeof showToast === 'function') {
+        var total = geocoded + unmapped;
+        showToast(unmapped + ' of ' + total + ' ' + (total === 1 ? 'address' : 'addresses') +
+          ' could not be placed on the map.', 'warn');
+      }
+      updateMapToolbar();
+    }
 
     function processGeoQueue() {
       while (geocodeActive < MAX_CONCURRENT && geocodeQueue.length > 0) {
@@ -526,6 +547,7 @@ window.onSignLocationPhotoChange = function(input) {
         doGeocode(job.addr, job.idx, job.result, function() {
           geocodeActive--;
           processGeoQueue();
+          maybeReportGeoResult();
         });
       }
     }
@@ -543,6 +565,9 @@ window.onSignLocationPhotoChange = function(input) {
           // Retry after delay
           setTimeout(function() { doGeocode(fullAddr, idx, result, done); }, 1000);
           return;
+        } else {
+          // ZERO_RESULTS, REQUEST_DENIED, INVALID_REQUEST, etc.
+          geoFailed++;
         }
         done();
       });
@@ -551,13 +576,16 @@ window.onSignLocationPhotoChange = function(input) {
     results.forEach(function(result, idx) {
       var addr = (result.reportCard && result.reportCard.addressLine) || result.address || '';
       var city = (result.reportCard && result.reportCard.cityLine) || result.city || '';
-      if (!addr) return;
+      if (!addr) { geoSkipped++; return; }
       var fullAddr = addr + (city ? ', ' + city : '') + ', CA';
+      totalToGeocode++;
       geocodeQueue.push({ addr: fullAddr, idx: idx, result: result });
     });
 
     processGeoQueue();
     updateMapToolbar();
+    // If nothing was queueable (all skipped), still surface the result.
+    if (totalToGeocode === 0) maybeReportGeoResult();
   }
 
   function addMarkerForResult(lat, lng, idx, result) {
@@ -1243,7 +1271,7 @@ window.aiParseFromPaste = async function() {
       } else if (tab === 'voucher') {
         await reanalyzeVoucherFiles();
       }
-      if (resultEl) resultEl.innerHTML = '<span class="upload-analyze-ok">✅ Done — form fields updated from your documents</span>';
+      if (resultEl) resultEl.innerHTML = '<span class="upload-analyze-ok">Done — form fields updated from your documents</span>';
       if (tab === 'voucher') {
         window.__voucherAnalyzeComplete = true;
         if (typeof window.updateVoucherWorkflow === 'function') window.updateVoucherWorkflow();
@@ -1368,13 +1396,13 @@ window.aiParseFromPaste = async function() {
         '<span class="preflight-warn-icon">⚠️</span>' +
         '<div><strong>Missing required fields:</strong><br>' +
         blockers.map(function(i) { return '&bull; ' + esc(i.label); }).join('<br>') +
-        '<br><small style="opacity:.8">' + (isDownload ? 'You can still download, but the document will have blanks.' : 'You can still send, but admin may ask you to re-submit.') + '</small>' +
+        '<br><small style="opacity:.8">' + (isDownload ? 'You can still download, but the document will have blanks.' : 'Please complete these required fields before sending to admin.') + '</small>' +
         '</div></div>';
     }
     html += '<div class="preflight-items">';
     items.forEach(function(item) {
       var cls = item.ok ? 'preflight-item-ok' : (item.req ? 'preflight-item-error' : 'preflight-item-warn');
-      var icon = item.ok ? '✅' : (item.req ? '❌' : '⚠️');
+      var icon = item.ok ? '✓' : (item.req ? '✕' : '!'); // ✓ / ✕ / ! — color comes from the state class
       var val = item.ok ? esc(item.value) : (item.req ? '<em>Missing — required</em>' : '<em>Not filled in</em>');
       html += '<div class="preflight-item ' + cls + '">' +
         '<span class="preflight-item-icon">' + icon + '</span>' +
@@ -1400,12 +1428,18 @@ window.aiParseFromPaste = async function() {
     if (titleEl) titleEl.textContent = isDownload ? 'Review Before You Download' : 'Check Before You Send';
     if (confirmBtn) {
       var label = confirmBtn.querySelector('.btn-label');
+      // Sends with missing required fields are hard-blocked: incomplete
+      // submissions just get bounced back by admin. Downloads stay soft —
+      // a broker may legitimately want a draft copy. "Go Back and Fix" is
+      // always available, so a blocked send never traps the user.
+      var blockSend = result.hasBlockers && !isDownload;
       if (label) {
         label.textContent = isDownload
           ? (result.hasBlockers ? 'Download Anyway →' : 'Looks Good — Download →')
-          : (result.hasBlockers ? 'Send Anyway →' : 'Looks Good — Send to Admin →');
+          : (result.hasBlockers ? 'Complete Required Fields' : 'Looks Good — Send to Admin →');
       }
-      confirmBtn.disabled = false;
+      confirmBtn.disabled = blockSend;
+      confirmBtn.classList.toggle('is-disabled', blockSend);
     }
     modal.classList.add('open');
   };

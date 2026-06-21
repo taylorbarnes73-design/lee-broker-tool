@@ -14,25 +14,13 @@ type AnyComponent = React.FC<AnyProps>;
 
 declare module "../design/index.jsx" {
   export const Icons: Record<string, AnyComponent>;
-  export const PageHeader: AnyComponent;
-  export const StepProgress: AnyComponent;
-  export const Segmented: AnyComponent;
   export const Button: AnyComponent;
   export const Card: AnyComponent;
   export const Badge: AnyComponent;
   export const Input: AnyComponent;
   export const Select: AnyComponent;
-  export const StepCard: AnyComponent;
   export const Field: AnyComponent;
   export const Toggle: AnyComponent;
-  export const Metric: AnyComponent;
-  export const SummaryRow: AnyComponent;
-  export const FormSection: AnyComponent;
-  export const FormRow: AnyComponent;
-  export const SectionHeader: AnyComponent;
-  export const AppShell: AnyComponent;
-  export const AiPanel: AnyComponent;
-  export const ProfileModal: AnyComponent;
   // catch-all
   const _default: Record<string, AnyComponent>;
   export default _default;

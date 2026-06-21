@@ -9,29 +9,25 @@ test.describe("portal smoke", () => {
   test("broker home shows the workspace tool launchpad", async ({ page }) => {
     await page.goto("/portal/workspace");
     await expect(
-      page.getByRole("link", { name: /Commission voucher/i })
+      page.getByRole("link", { name: /Commission Vouchers/i })
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /Listing entry/i })
+      page.getByRole("link", { name: /Listings/i })
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: /Sign request/i })
+      page.getByRole("link", { name: /Sign Orders/i })
     ).toBeVisible();
-    // Launchpad mode: no iframe until a tool is opened.
+    // Home mode: no iframe until a tool is opened.
     await expect(page.getByTestId("workspace-frame")).toHaveCount(0);
   });
 
-  test("opening a tool card shows that tool in the workspace frame", async ({ page }) => {
+  test("voucher form loads from workspace card", async ({ page }) => {
     await page.goto("/portal/workspace");
-    await page.getByRole("link", { name: /Commission voucher/i }).click();
-    await expect(page).toHaveURL(/tab=voucher/);
-    await expect(page.getByTestId("workspace-frame")).toBeVisible();
-    // The engine must open on the tool the card claims, not its default tab.
-    const tool = page.frameLocator('iframe[title="Broker workflow workspace"]');
-    await expect(tool.locator("#tab-voucher.active, #tab-voucher.panel.active")).toBeVisible({
-      timeout: 15_000,
-    });
-    await expect(page.getByRole("link", { name: /Workspace/i }).first()).toBeVisible();
+    await page.getByRole("link", { name: /Commission Vouchers/i }).click();
+    await expect(page).toHaveURL(/\/portal\/forms\/voucher/);
+    await expect(page.getByRole("heading", { name: "Commission Voucher" })).toBeVisible();
+    // No iframe — it's now a native React form
+    await expect(page.getByTestId("workspace-frame")).toHaveCount(0);
   });
 
   test("broker sees the shared workspace without admin navigation", async ({ page }) => {
@@ -45,25 +41,25 @@ test.describe("portal smoke", () => {
     await expect(page).toHaveURL(/\/portal\/workspace/);
   });
 
-  test("voucher pilot form validates required fields", async ({ page }) => {
+  test("voucher form validates required fields", async ({ page }) => {
     await page.goto("/portal/forms/voucher");
-    await expect(page.getByRole("heading", { name: "Submit a closed deal" })).toBeVisible();
-    await page.getByRole("button", { name: /Continue to commission details/i }).click();
-    await expect(page.getByText("Property address is required")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Commission Voucher" })).toBeVisible();
+    await page.getByRole("button", { name: /Submit voucher to admin/i }).click();
+    await expect(page.getByText(/Property address is required/i)).toBeVisible();
   });
 
-  test("sign pilot form validates required fields", async ({ page }) => {
+  test("sign form validates required fields", async ({ page }) => {
     await page.goto("/portal/forms/sign");
     await expect(page.getByRole("heading", { name: "Order a sign" })).toBeVisible();
-    await page.getByRole("button", { name: /Continue to sign details/i }).click();
-    await expect(page.getByText("Property address is required")).toBeVisible();
+    await page.getByRole("button", { name: /Submit to admin/i }).click();
+    await expect(page.getByText(/Property address is required/i)).toBeVisible();
   });
 
-  test("listing pilot form validates required fields", async ({ page }) => {
+  test("listing form validates required fields", async ({ page }) => {
     await page.goto("/portal/forms/listing");
     await expect(page.getByRole("heading", { name: "Add a listing" })).toBeVisible();
-    await page.getByRole("button", { name: /Continue to listing details/i }).click();
-    await expect(page.getByText("Property address is required")).toBeVisible();
+    await page.getByRole("button", { name: /Submit to admin/i }).click();
+    await expect(page.getByText(/Property address and city are required/i)).toBeVisible();
   });
 
   test("listing pilot address autocomplete fills city and state", async ({ page }) => {
@@ -98,6 +94,39 @@ test.describe("portal smoke", () => {
     await expect(page.getByPlaceholder("92612")).toHaveValue("92612");
   });
 
+  test("comp form validates required fields", async ({ page }) => {
+    await page.goto("/portal/forms/comp");
+    await expect(page.getByRole("heading", { name: "Comp input" })).toBeVisible();
+    await page.getByRole("button", { name: /Save comp/i }).click();
+    await expect(page.getByText(/Property address is required/i)).toBeVisible();
+  });
+
+  test("marketing request form validates required fields", async ({ page }) => {
+    await page.goto("/portal/forms/marketing-request");
+    await expect(page.getByRole("heading", { name: "Marketing request" })).toBeVisible();
+    await page.getByRole("button", { name: /Send to marketing/i }).click();
+    await expect(page.getByText(/Missing required fields/i)).toBeVisible();
+  });
+
+  test("comp reports search page loads and runs a search", async ({ page }) => {
+    await page.goto("/portal/comp-reports");
+    await expect(page.getByRole("heading", { name: "Comp Reports" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Orange County" })).toBeVisible();
+    await page.getByPlaceholder("Address, project, tenant…").fill("Von Karman");
+    await page.getByRole("button", { name: /^Search$/ }).click();
+    // With no published dataset the page must show a graceful empty state, not crash.
+    await expect(page.getByText(/No comps match|result/i).first()).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("documents library loads and filters", async ({ page }) => {
+    await page.goto("/portal/documents");
+    await expect(page.getByRole("heading", { name: "Documents" })).toBeVisible();
+    await expect(page.getByText("Sign Request Form", { exact: false }).first()).toBeVisible();
+    await page.getByPlaceholder("Search documents…").fill("estoppel");
+    await expect(page.getByText(/Standard Estoppel Certificate/i).first()).toBeVisible();
+    await expect(page.getByText("Sign Request Form", { exact: false })).toHaveCount(0);
+  });
+
   test("submissions list loads for signed-in broker", async ({ page }) => {
     await page.goto("/portal/submissions");
     await expect(page.getByText(/submission/i).first()).toBeVisible({ timeout: 15_000 });
@@ -121,7 +150,9 @@ test.describe("admin portal separation", () => {
     await expect(page.getByRole("link", { name: /Commission voucher/i })).toBeVisible();
     const adminEntry = page.getByRole("link", { name: "Admin", exact: true }).first();
     await expect(adminEntry).toBeVisible();
-    await expect(page.getByRole("link", { name: "Settings" })).toHaveCount(0);
+    // Admin nav (Settings/Users) must not appear on the shared home — match the
+    // real nav link by exact name so prose mentioning "settings" doesn't count.
+    await expect(page.getByRole("link", { name: "Settings", exact: true })).toHaveCount(0);
 
     await adminEntry.click();
     await expect(page).toHaveURL(/\/portal\/admin\/submissions/);
