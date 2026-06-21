@@ -575,11 +575,7 @@ export default function PortalVoucherFullForm() {
   );
 
   const YesNoSelect = ({ value, onChange, id }: { value: string; onChange: (v: string) => void; id?: string }) => (
-    <select id={id} value={value} onChange={e => onChange(e.target.value)} style={{ width: "100%", padding: "6px 8px", border: "1px solid var(--ink-300)", borderRadius: 6, fontSize: 13 }}>
-      <option value="">—</option>
-      <option value="yes">Yes</option>
-      <option value="no">No</option>
-    </select>
+    <Select id={id} value={value} onChange={e => onChange(e.target.value)} options={[{ value: "", label: "—" }, { value: "yes", label: "Yes" }, { value: "no", label: "No" }]} />
   );
 
   const sectionCard = (title: string, content: React.ReactNode) => (
@@ -608,7 +604,7 @@ export default function PortalVoucherFullForm() {
       <div style={{ display: "grid", gap: 10 }}>
         <div style={grid2}>
           <Field label="Agent name">
-            <input list="broker-roster" value={nameV} onChange={e => setName(e.target.value)} placeholder="Agent name" style={{ width: "100%", padding: "6px 8px", border: "1px solid var(--ink-300)", borderRadius: 6, fontSize: 13, boxSizing: "border-box" }} />
+            <Input list="broker-roster" value={nameV} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} placeholder="Agent name" />
           </Field>
           <Field label="Company / House">
             <Input value={houseV} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHouse(e.target.value)} placeholder="Lee & Associates Newport Beach" />
@@ -829,13 +825,13 @@ export default function PortalVoucherFullForm() {
                 {rentRows.map((row, i) => (
                   <tr key={i}>
                     <td style={{ padding: "3px 4px" }}>
-                      <input type="number" value={row.monthly ?? ""} onChange={e => { const v = [...rentRows]; v[i] = { ...v[i], monthly: e.target.value === "" ? null : Number(e.target.value) }; setRentRows(v); }} placeholder="0.00" step="0.01" style={{ width: "100%", padding: "4px 6px", border: "1px solid var(--ink-300)", borderRadius: 5, fontSize: 13 }} />
+                      <Input type="number" value={row.monthly ?? ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { const v = [...rentRows]; v[i] = { ...v[i], monthly: e.target.value === "" ? null : Number(e.target.value) }; setRentRows(v); }} placeholder="0.00" step="0.01" />
                     </td>
                     <td style={{ padding: "3px 4px" }}>
-                      <input type="number" value={row.months ?? ""} onChange={e => { const v = [...rentRows]; v[i] = { ...v[i], months: e.target.value === "" ? null : Number(e.target.value) }; setRentRows(v); }} placeholder="12" style={{ width: "80px", padding: "4px 6px", border: "1px solid var(--ink-300)", borderRadius: 5, fontSize: 13 }} />
+                      <Input type="number" value={row.months ?? ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { const v = [...rentRows]; v[i] = { ...v[i], months: e.target.value === "" ? null : Number(e.target.value) }; setRentRows(v); }} placeholder="12" style={{ width: 80 }} />
                     </td>
                     <td style={{ padding: "3px 4px" }}>
-                      <input type="text" value={row.commPct} onChange={e => { const v = [...rentRows]; v[i] = { ...v[i], commPct: e.target.value }; setRentRows(v); }} placeholder="4.0" style={{ width: "70px", padding: "4px 6px", border: "1px solid var(--ink-300)", borderRadius: 5, fontSize: 13 }} />
+                      <Input type="text" value={row.commPct} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { const v = [...rentRows]; v[i] = { ...v[i], commPct: e.target.value }; setRentRows(v); }} placeholder="4.0" style={{ width: 70 }} />
                     </td>
                     <td style={{ padding: "3px 4px" }}>
                       <button type="button" onClick={() => setRentRows(rentRows.filter((_, j) => j !== i))} style={{ color: "var(--ink-400)", background: "none", border: "none", cursor: "pointer", fontSize: 16 }} title="Remove row">×</button>
@@ -922,13 +918,11 @@ export default function PortalVoucherFullForm() {
                     {outsideRows.map((row, i) => (
                       <tr key={i}>
                         <td style={{ padding: "3px 4px" }}>
-                          <select value={row.side} onChange={e => { const v = [...outsideRows]; v[i] = { ...v[i], side: e.target.value }; setOutsideRows(v); }} style={{ padding: "4px 6px", border: "1px solid var(--ink-300)", borderRadius: 5, fontSize: 13 }}>
-                            {OUTSIDE_SIDES.map(s => <option key={s} value={s}>{s}</option>)}
-                          </select>
+                          <Select value={row.side} onChange={e => { const v = [...outsideRows]; v[i] = { ...v[i], side: e.target.value }; setOutsideRows(v); }} options={OUTSIDE_SIDES} />
                         </td>
-                        <td style={{ padding: "3px 4px" }}><input value={row.name} onChange={e => { const v = [...outsideRows]; v[i] = { ...v[i], name: e.target.value }; setOutsideRows(v); }} placeholder="Agent name" style={{ width: "100%", padding: "4px 6px", border: "1px solid var(--ink-300)", borderRadius: 5, fontSize: 13 }} /></td>
-                        <td style={{ padding: "3px 4px" }}><input value={row.address} onChange={e => { const v = [...outsideRows]; v[i] = { ...v[i], address: e.target.value }; setOutsideRows(v); }} placeholder="Address (optional)" style={{ width: "100%", padding: "4px 6px", border: "1px solid var(--ink-300)", borderRadius: 5, fontSize: 13 }} /></td>
-                        <td style={{ padding: "3px 4px" }}><input value={row.amount} onChange={e => { const v = [...outsideRows]; v[i] = { ...v[i], amount: e.target.value }; setOutsideRows(v); }} placeholder="0.00" style={{ width: "90px", padding: "4px 6px", border: "1px solid var(--ink-300)", borderRadius: 5, fontSize: 13 }} /></td>
+                        <td style={{ padding: "3px 4px" }}><Input value={row.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { const v = [...outsideRows]; v[i] = { ...v[i], name: e.target.value }; setOutsideRows(v); }} placeholder="Agent name" /></td>
+                        <td style={{ padding: "3px 4px" }}><Input value={row.address} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { const v = [...outsideRows]; v[i] = { ...v[i], address: e.target.value }; setOutsideRows(v); }} placeholder="Address (optional)" /></td>
+                        <td style={{ padding: "3px 4px" }}><Input value={row.amount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { const v = [...outsideRows]; v[i] = { ...v[i], amount: e.target.value }; setOutsideRows(v); }} placeholder="0.00" style={{ width: 90 }} /></td>
                         <td style={{ padding: "3px 4px" }}><button type="button" onClick={() => setOutsideRows(outsideRows.filter((_, j) => j !== i))} style={{ color: "var(--ink-400)", background: "none", border: "none", cursor: "pointer" }}>×</button></td>
                       </tr>
                     ))}
@@ -955,13 +949,11 @@ export default function PortalVoucherFullForm() {
               <tbody>
                 {distRows.map((row, i) => (
                   <tr key={i}>
-                    <td style={{ padding: "3px 4px" }}><input list="broker-roster" value={row.name} onChange={e => { const v = [...distRows]; v[i] = { ...v[i], name: e.target.value }; setDistRows(v); }} placeholder="Agent name" style={{ width: "100%", padding: "4px 6px", border: "1px solid var(--ink-300)", borderRadius: 5, fontSize: 13 }} /></td>
+                    <td style={{ padding: "3px 4px" }}><Input list="broker-roster" value={row.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { const v = [...distRows]; v[i] = { ...v[i], name: e.target.value }; setDistRows(v); }} placeholder="Agent name" /></td>
                     <td style={{ padding: "3px 4px" }}>
-                      <select value={row.side} onChange={e => { const v = [...distRows]; v[i] = { ...v[i], side: e.target.value }; setDistRows(v); }} style={{ padding: "4px 6px", border: "1px solid var(--ink-300)", borderRadius: 5, fontSize: 13 }}>
-                        {DIST_SIDES.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
+                      <Select value={row.side} onChange={e => { const v = [...distRows]; v[i] = { ...v[i], side: e.target.value }; setDistRows(v); }} options={DIST_SIDES} />
                     </td>
-                    <td style={{ padding: "3px 4px" }}><input value={row.pct} onChange={e => { const v = [...distRows]; v[i] = { ...v[i], pct: e.target.value }; setDistRows(v); }} placeholder="50" style={{ width: "70px", padding: "4px 6px", border: "1px solid var(--ink-300)", borderRadius: 5, fontSize: 13 }} /></td>
+                    <td style={{ padding: "3px 4px" }}><Input value={row.pct} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { const v = [...distRows]; v[i] = { ...v[i], pct: e.target.value }; setDistRows(v); }} placeholder="50" style={{ width: 70 }} /></td>
                     <td style={{ padding: "3px 4px" }}><button type="button" onClick={() => setDistRows(distRows.filter((_, j) => j !== i))} style={{ color: "var(--ink-400)", background: "none", border: "none", cursor: "pointer" }}>×</button></td>
                   </tr>
                 ))}

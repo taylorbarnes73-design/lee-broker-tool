@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRoute } from "wouter";
-import { Button, Card } from "../design/index.jsx";
+import { Button, Card, Select } from "../design/index.jsx";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -386,15 +386,18 @@ export default function PortalSubmissionDetail() {
         {error ? (
           <div style={{ color: "var(--err-700)", fontSize: 13 }}>{error}</div>
         ) : !item ? (
-          <div
-            aria-hidden
-            style={{
-              height: 120,
-              borderRadius: 10,
-              background: "var(--ink-100)",
-              border: "1px solid var(--ink-200)",
-            }}
-          />
+          <div role="status">
+            <span className="sr-only">Loading submission detail…</span>
+            <div
+              aria-hidden
+              style={{
+                height: 120,
+                borderRadius: 10,
+                background: "var(--ink-100)",
+                border: "1px solid var(--ink-200)",
+              }}
+            />
+          </div>
         ) : (
           <>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
@@ -698,25 +701,13 @@ export default function PortalSubmissionDetail() {
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-                    <label style={{ fontSize: 12, color: "var(--ink-600)" }}>
+                    <label style={{ fontSize: 12, color: "var(--ink-600)", display: "flex", alignItems: "center", gap: 8 }}>
                       Document type
-                      <select
+                      <Select
                         value={contractType}
                         onChange={e => setContractType(e.target.value)}
-                        style={{
-                          marginLeft: 8,
-                          padding: "8px 10px",
-                          borderRadius: 10,
-                          border: "1px solid var(--ink-200)",
-                          fontSize: 13,
-                          background: "white",
-                        }}
-                      >
-                        <option>Lease Agreement</option>
-                        <option>Purchase &amp; Sale Agreement</option>
-                        <option>AIR CRE Contract</option>
-                        <option>Commission Agreement</option>
-                      </select>
+                        options={["Lease Agreement", "Purchase & Sale Agreement", "AIR CRE Contract", "Commission Agreement"]}
+                      />
                     </label>
                     <input
                       ref={fileInputRef}

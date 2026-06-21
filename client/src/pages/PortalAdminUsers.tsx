@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import AdminPortalShell from "@/components/AdminPortalShell";
-import { Button, Card, Icons, Badge, Field, Input } from "../design/index.jsx";
+import { Button, Card, Icons, Badge, Field, Input, Select } from "../design/index.jsx";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +18,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 
@@ -81,26 +81,6 @@ function fullTimestamp(iso: string | null): string {
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? "" : d.toLocaleString();
 }
-
-const inputBar: CSSProperties = {
-  width: 360,
-  maxWidth: "100%",
-  padding: "10px 12px",
-  borderRadius: 10,
-  border: "1px solid var(--ink-200)",
-  background: "white",
-  fontSize: 13,
-};
-
-const selectBar: CSSProperties = {
-  padding: "10px 12px",
-  borderRadius: 10,
-  border: "1px solid var(--ink-200)",
-  background: "white",
-  fontSize: 13,
-  minWidth: 160,
-  maxWidth: "100%",
-};
 
 async function adminFetch<T>(
   path: string,
@@ -295,29 +275,47 @@ export default function PortalAdminUsers() {
       <div style={{ marginTop: 14 }}>
         <Card padding="lg">
           <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
-            <input
+            <Input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search by name, username, or email"
-              style={inputBar}
+              style={{ width: 360, maxWidth: "100%" }}
               aria-label="Search users"
             />
-            <select value={roleFilter} onChange={e => setRoleFilter(e.target.value as "" | PlatformRole)} style={selectBar} aria-label="Filter by role">
-              <option value="">All Roles</option>
-              <option value="admin">Admin</option>
-              <option value="broker">Broker</option>
-              <option value="readonly">Read-Only</option>
-            </select>
-            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as "true" | "false" | "")} style={selectBar} aria-label="Filter by status">
-              <option value="true">Active</option>
-              <option value="false">Deactivated</option>
-              <option value="">All</option>
-            </select>
-            <select value={sort} onChange={e => setSort(e.target.value as typeof sort)} style={selectBar} aria-label="Sort users">
-              <option value="name_asc">Name A–Z</option>
-              <option value="recent">Recently Added</option>
-              <option value="last_login">Last Login</option>
-            </select>
+            <Select
+              value={roleFilter}
+              onChange={e => setRoleFilter(e.target.value as "" | PlatformRole)}
+              style={{ minWidth: 160 }}
+              aria-label="Filter by role"
+              options={[
+                { value: "", label: "All Roles" },
+                { value: "admin", label: "Admin" },
+                { value: "broker", label: "Broker" },
+                { value: "readonly", label: "Read-Only" },
+              ]}
+            />
+            <Select
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value as "true" | "false" | "")}
+              style={{ minWidth: 160 }}
+              aria-label="Filter by status"
+              options={[
+                { value: "true", label: "Active" },
+                { value: "false", label: "Deactivated" },
+                { value: "", label: "All" },
+              ]}
+            />
+            <Select
+              value={sort}
+              onChange={e => setSort(e.target.value as typeof sort)}
+              style={{ minWidth: 160 }}
+              aria-label="Sort users"
+              options={[
+                { value: "name_asc", label: "Name A–Z" },
+                { value: "recent", label: "Recently Added" },
+                { value: "last_login", label: "Last Login" },
+              ]}
+            />
             <div style={{ fontSize: 12, color: "var(--ink-500)", marginLeft: "auto" }}>{rangeLabel}</div>
           </div>
 

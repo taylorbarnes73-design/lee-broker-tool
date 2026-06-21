@@ -4,7 +4,7 @@ import { Link } from "wouter";
 import AdminPortalShell from "@/components/AdminPortalShell";
 import LinkButton from "@/components/ui/LinkButton";
 import StatusBadge from "@/components/ui/StatusBadge";
-import { Button, Card } from "../design/index.jsx";
+import { Button, Card, Input, Select } from "../design/index.jsx";
 import {
   brokerAdminStatusTone,
   formatBrokerAdminStatus,
@@ -12,16 +12,6 @@ import {
   formatSubmissionStatus,
   submissionStatusTone,
 } from "@/lib/format";
-
-/* ── shared input style ───────────────────────────────────────────── */
-const INPUT_STYLE = {
-  padding: "10px 12px",
-  borderRadius: 10,
-  border: "1px solid var(--ink-200)",
-  background: "white",
-  fontSize: 13,
-  color: "var(--ink-900)",
-} as const;
 
 const ASSIGNEE_CHIP_STYLE = {
   marginLeft: 8,
@@ -201,24 +191,35 @@ function AdminSubmissions() {
   return (
     <>
       <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
-        <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Filter by name, email, or reference…" style={{ ...INPUT_STYLE, width: 320, maxWidth: "100%" }} />
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ ...INPUT_STYLE, maxWidth: "100%" }}>
-          <option value="">All statuses</option>
-          <option value="pending">Pending</option>
-          <option value="in_review">In review</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
-        <select value={formTypeFilter} onChange={e => setFormTypeFilter(e.target.value)} style={{ ...INPUT_STYLE, maxWidth: "100%" }}>
-          <option value="">All types</option>
-          <option value="voucher">Commission voucher</option>
-          <option value="listing">Listing</option>
-          <option value="sign">Sign request</option>
-          <option value="admin-request">Admin request</option>
-          <option value="comp">Comp input</option>
-          <option value="lease">Lease</option>
-          <option value="sale">Sale</option>
-        </select>
+        <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Filter by name, email, or reference…" style={{ width: 320, maxWidth: "100%" }} />
+        <Select
+          value={statusFilter}
+          onChange={e => setStatusFilter(e.target.value)}
+          style={{ maxWidth: "100%" }}
+          options={[
+            { value: "", label: "All statuses" },
+            { value: "pending", label: "Pending" },
+            { value: "in_review", label: "In progress" },
+            { value: "approved", label: "Approved" },
+            { value: "rejected", label: "Rejected" },
+          ]}
+        />
+        <Select
+          value={formTypeFilter}
+          onChange={e => setFormTypeFilter(e.target.value)}
+          style={{ maxWidth: "100%" }}
+          options={[
+            { value: "", label: "All types" },
+            { value: "voucher", label: "Commission voucher" },
+            { value: "listing", label: "Listing" },
+            { value: "sign", label: "Sign request" },
+            { value: "admin-request", label: "Admin request" },
+            { value: "comp", label: "Comp input" },
+            { value: "marketing-request", label: "Marketing request" },
+            { value: "lease", label: "Lease" },
+            { value: "sale", label: "Sale" },
+          ]}
+        />
         <Button variant={sortByQueue ? "primary" : "secondary"} onClick={() => setSortByQueue(v => !v)}>Sort by queue</Button>
         <div style={{ fontSize: 12, color: "var(--ink-500)", marginLeft: "auto" }}>Showing {visible.length} of {items.length}</div>
       </div>
@@ -316,22 +317,32 @@ function AdminInbox() {
         </div>
       )}
       <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14, flexWrap: "wrap" }}>
-        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search title, from, reference…" style={{ ...INPUT_STYLE, width: 320, maxWidth: "100%" }} />
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ ...INPUT_STYLE, maxWidth: "100%" }}>
-          <option value="">All statuses</option>
-          <option value="new">New</option>
-          <option value="triaged">Triaged</option>
-          <option value="in_progress">In progress</option>
-          <option value="waiting_on_broker">Waiting on broker</option>
-          <option value="waiting_on_vendor">Waiting on vendor</option>
-          <option value="done">Done</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-        <select value={ownerFilter} onChange={e => setOwnerFilter(e.target.value)} style={{ ...INPUT_STYLE, maxWidth: "100%" }}>
-          <option value="">All owners</option>
-          {ownerOptions.map(o => <option key={o} value={o}>{o}</option>)}
-          <option value="Unassigned">Unassigned</option>
-        </select>
+        <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Search title, from, reference…" style={{ width: 320, maxWidth: "100%" }} />
+        <Select
+          value={statusFilter}
+          onChange={e => setStatusFilter(e.target.value)}
+          style={{ maxWidth: "100%" }}
+          options={[
+            { value: "", label: "All statuses" },
+            { value: "new", label: "New" },
+            { value: "triaged", label: "Triaged" },
+            { value: "in_progress", label: "In progress" },
+            { value: "waiting_on_broker", label: "Waiting on broker" },
+            { value: "waiting_on_vendor", label: "Waiting on vendor" },
+            { value: "done", label: "Done" },
+            { value: "cancelled", label: "Cancelled" },
+          ]}
+        />
+        <Select
+          value={ownerFilter}
+          onChange={e => setOwnerFilter(e.target.value)}
+          style={{ maxWidth: "100%" }}
+          options={[
+            { value: "", label: "All owners" },
+            ...ownerOptions.map(o => ({ value: o, label: o })),
+            { value: "Unassigned", label: "Unassigned" },
+          ]}
+        />
         <div style={{ fontSize: 12, color: "var(--ink-500)", marginLeft: "auto" }}>Showing {visible.length} of {items.length}</div>
       </div>
       {loading ? <Skeleton /> : error ? (

@@ -995,7 +995,7 @@ export default function PortalAdminSettings() {
                       <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 4 }}>24-hour clock in brokerage local time (server).</div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <input
+                      <Input
                         type="time"
                         disabled={!Boolean(n.admin_digest_enabled)}
                         value={String(n.admin_digest_time ?? "08:00").slice(0, 5)}
@@ -1009,13 +1009,7 @@ export default function PortalAdminSettings() {
                         onBlur={() => {
                           if (n.admin_digest_enabled) void patchKey("notifications.admin_digest_time", String(n.admin_digest_time ?? "08:00"));
                         }}
-                        style={{
-                          padding: "10px 12px",
-                          borderRadius: 8,
-                          border: "1px solid var(--ink-200)",
-                          fontSize: 14,
-                          opacity: n.admin_digest_enabled ? 1 : 0.55,
-                        }}
+                        style={{ opacity: n.admin_digest_enabled ? 1 : 0.55, width: 160 }}
                       />
                       <SaveHint k="notifications.admin_digest_time" />
                     </div>
