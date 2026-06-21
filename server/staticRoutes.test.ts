@@ -7,9 +7,8 @@ import { serveStatic } from "./_core/vite";
 
 const distPublic = resolve(process.cwd(), "dist/public");
 const indexPath = resolve(distPublic, "index.html");
-const brokerToolPath = resolve(distPublic, "broker_tool.html");
 
-const previousFiles = new Map<string, Buffer | null>();
+let previousIndex: Buffer | null = null;
 
 function buildApp() {
   const app = express();
@@ -19,21 +18,16 @@ function buildApp() {
 
 describe("production static routes", () => {
   beforeAll(() => {
-    for (const filePath of [indexPath, brokerToolPath]) {
-      previousFiles.set(filePath, existsSync(filePath) ? readFileSync(filePath) : null);
-    }
+    previousIndex = existsSync(indexPath) ? readFileSync(indexPath) : null;
     mkdirSync(distPublic, { recursive: true });
     writeFileSync(indexPath, "<!doctype html><div>portal shell</div>");
-    writeFileSync(brokerToolPath, "<!doctype html><div>broker tool shell</div>");
   });
 
   afterAll(() => {
-    for (const [filePath, previous] of previousFiles.entries()) {
-      if (previous) {
-        writeFileSync(filePath, previous);
-      } else {
-        rmSync(filePath, { force: true });
-      }
+    if (previousIndex) {
+      writeFileSync(indexPath, previousIndex);
+    } else {
+      rmSync(indexPath, { force: true });
     }
   });
 
@@ -44,29 +38,25 @@ describe("production static routes", () => {
 
       expect(res.status).toBe(200);
       expect(res.text).toContain("portal shell");
-      expect(res.text).not.toContain("broker tool shell");
     }
   );
 
-  it("serves the internal workflow engine only at its implementation route", async () => {
-    const res = await request(buildApp()).get("/workspace-engine");
+  // The legacy broker_tool.html engine has been retired; its old URLs now
+  // redirect to the React workspace home rather than serving a second shell.
+  it.each(["/tool?tab=voucher", "/workspace-engine?tab=voucher", "/broker_tool.html?tab=sign"])(
+    "redirects legacy workspace URL %s into the React workspace",
+    async path => {
+      const res = await request(buildApp()).get(path);
 
-    expect(res.status).toBe(200);
-    expect(res.text).toContain("broker tool shell");
-  });
-
-  it("redirects legacy workspace URLs into the React workspace", async () => {
-    const res = await request(buildApp()).get("/tool?tab=voucher");
-
-    expect(res.status).toBe(302);
-    expect(res.headers.location).toBe("/portal/workspace?tab=voucher");
-  });
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toMatch(/^\/portal\/workspace/);
+    }
+  );
 
   it("uses the React shell for unknown routes", async () => {
     const res = await request(buildApp()).get("/listing");
 
     expect(res.status).toBe(200);
     expect(res.text).toContain("portal shell");
-    expect(res.text).not.toContain("broker tool shell");
   });
 });

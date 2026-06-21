@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   assessQuickConvertPrefill,
-  buildBrokerToolTabUrl,
   formatQuickConvertPrefillWarnings,
   isQuickConvertKind,
   mapContractExtractionToVoucherFields,
@@ -225,12 +224,11 @@ describe("quickConvert shared", () => {
     expect(assessment.warnings.some(w => w.includes("expiration"))).toBe(true);
   });
 
-  it("resolves workflow tabs and broker tool URLs", () => {
+  it("resolves workflow tabs for each quick-convert kind", () => {
     expect(toolTabForQuickConvertKind("lease_to_voucher")).toBe("voucher");
     expect(toolTabForQuickConvertKind("exclusive_to_sign")).toBe("sign");
     expect(toolTabForQuickConvertKind("exclusive_to_listing_land")).toBe("listing");
     expect(toolTabForQuickConvertKind("to_pdf")).toBeNull();
-    expect(buildBrokerToolTabUrl("voucher")).toBe("/portal/workspace?tab=voucher");
     expect(isQuickConvertKind("letterhead")).toBe(true);
     expect(isQuickConvertKind("nope")).toBe(false);
   });

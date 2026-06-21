@@ -176,5 +176,25 @@ backend before the next. The vanilla-JS tool is retired tab-by-tab.
 5. ~~Docs library~~ ✅ done (92 docs, CDN links, no backend)
 6. ~~Commission voucher~~ ✅ done — full form + JSZip `.xlsm` + PDF + `email.sendToAdmin`
 7. ~~Comp Reports~~ ✅ done (`compData.search` / `compData.latest`)
-8. **Retire `broker_tool.html` + iframe wrapper** once `.xlsm` is Dealius-validated in production.
+8. ~~Retire `broker_tool.html` + iframe wrapper~~ ✅ done on branch
+   `claude/retire-iframe-oxmi02` (DRAFT PR, **do not merge** until the voucher
+   `.xlsm` is validated against a live Dealius import — there is no iframe
+   fallback once this merges).
 9. **Drafts** — Deferred (cross-cutting autosave feature).
+
+## Retire legacy iframe — notes (done, gated)
+- Deletes `client/public/broker_tool.html` (+ `broker_tool.css`, `broker_ux.css`,
+  `features_patch.js`) and the root `features_patch.js`; removes the unused pilot
+  `PortalVoucherForm.tsx` and the dead `brokerToolTabUrl` helper.
+- `PortalWorkspace.tsx` is now a pure home page (no `?tab=`, no iframe). The
+  server (`vite.ts`) stops serving `/workspace-engine`; `/tool`, `/broker_tool.html`,
+  and `/workspace-engine` now 302 → `/portal/workspace`.
+- Convert (`PortalQuickConvert`) redirects now point at native form routes
+  (`/portal/forms/{voucher,sign,listing}`) instead of the iframe. The native
+  voucher form gained the Quick-Convert sessionStorage prefill reader the pilot
+  had (verified end-to-end: address + lessee company carried over, key cleared).
+- Tests: `brokerTool.test.ts` (legacy-HTML wiring) removed; `staticRoutes.test.ts`
+  updated for the redirect behavior; new `voucherTemplate.test.ts` preserves the
+  `.xlsm`-ships + percent→fraction guarantees. Full suite (368) green.
+- **Gate:** keep this branch unmerged until Dealius confirms a real generated
+  `.xlsm` imports cleanly. Merging removes the only fallback.

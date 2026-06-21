@@ -9,19 +9,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const CLIENT_INDEX_TEMPLATE = fileURLToPath(new URL("../../client/index.html", import.meta.url));
-const BROKER_TOOL_TEMPLATE = fileURLToPath(new URL("../../client/public/broker_tool.html", import.meta.url));
 const DEV_DIST_PUBLIC_ROOT = fileURLToPath(new URL("../../dist/public/", import.meta.url));
 const PROD_PUBLIC_ROOT = path.resolve(process.cwd(), "dist/public");
 
-const HTML_ENTRY_TEMPLATES: Record<string, string> = {
-  "/": CLIENT_INDEX_TEMPLATE,
-  "/workspace-engine": BROKER_TOOL_TEMPLATE,
-};
-
-const resolveHtmlTemplate = (requestUrl: string) => {
-  const pathname = new URL(requestUrl, "http://localhost").pathname;
-  return HTML_ENTRY_TEMPLATES[pathname] ?? CLIENT_INDEX_TEMPLATE;
-};
+// Every workspace tool is now a native React route; the legacy broker_tool.html
+// engine has been retired, so all HTML entry points resolve to the SPA shell.
+const resolveHtmlTemplate = (_requestUrl: string) => CLIENT_INDEX_TEMPLATE;
 
 export async function setupVite(app: Express, server: Server) {
   const { createServer: createViteServer } = await import("vite");
@@ -72,27 +65,13 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.get(["/tool", "/broker_tool.html"], (req, res) => {
+  // Keep old bookmarks working: legacy tool/engine URLs now land on the React home.
+  app.get(["/tool", "/broker_tool.html", "/workspace-engine"], (req, res) => {
     const query = req.originalUrl.includes("?") ? req.originalUrl.slice(req.originalUrl.indexOf("?")) : "";
     res.redirect(302, `/portal/workspace${query}`);
   });
 
-  // Internal workflow engine. The user-facing route is /portal/workspace.
-  app.get("/workspace-engine", (_req, res) => {
-    // Avoid CDN/browser caching hiding updates to the tool UI.
-    res.setHeader("Cache-Control", "no-store");
-    res.sendFile("broker_tool.html", { root: distPath });
-  });
-
-  app.use(
-    express.static(distPath, {
-      setHeaders(res, filePath) {
-        if (filePath.endsWith("broker_tool.html")) {
-          res.setHeader("Cache-Control", "no-store");
-        }
-      },
-    })
-  );
+  app.use(express.static(distPath));
 
   // React portal routes fall through to the SPA shell.
   app.get(
