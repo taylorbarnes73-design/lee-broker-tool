@@ -49,6 +49,7 @@ function parseBrandColors(guidelinesPath) {
   const palette = {
     primary: [],
     secondary: [],
+    accent: [],
     neutral: [],
     semantic: [],
     all: [],
@@ -58,6 +59,7 @@ function parseBrandColors(guidelinesPath) {
   const sections = [
     { name: "primary", regex: /### Primary[\s\S]*?(?=###|##|$)/i },
     { name: "secondary", regex: /### Secondary[\s\S]*?(?=###|##|$)/i },
+    { name: "accent", regex: /### Accent[\s\S]*?(?=###|##|$)/i },
     { name: "neutral", regex: /### Neutral[\s\S]*?(?=###|##|$)/i },
     { name: "semantic", regex: /### Semantic[\s\S]*?(?=###|##|$)/i },
   ];
