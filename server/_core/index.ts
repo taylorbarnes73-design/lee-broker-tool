@@ -152,6 +152,16 @@ async function startServer() {
   app.use(express.json({ limit: "250mb" }));
   app.use(express.urlencoded({ limit: "250mb", extended: true }));
 
+  // Baseline security headers (clickjacking / MIME-sniffing / referrer leakage).
+  // No CSP here: the SPA loads Google Fonts and Vite-hashed bundles that would
+  // need careful allow-listing, and is out of scope for this pass.
+  app.use((_req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "SAMEORIGIN");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    next();
+  });
+
   // Keep old bookmarks working while the React workspace owns the product URL.
   app.get(["/tool", "/broker_tool.html"], (req, res) => {
     const query = req.originalUrl.includes("?") ? req.originalUrl.slice(req.originalUrl.indexOf("?")) : "";

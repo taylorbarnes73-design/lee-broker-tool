@@ -48,15 +48,17 @@ export async function createSubmissionRecord(params: {
 
   const submissionId = (result as { insertId?: number }).insertId ?? null;
   if (submissionId) {
-    void maybeNotifySubmissionReceived(submissionId);
-    void logSubmissionCreated(params.req, {
+    maybeNotifySubmissionReceived(submissionId).catch(err =>
+      console.error(`[submissionCreate] Notify-received failed for submission ${submissionId}:`, err)
+    );
+    logSubmissionCreated(params.req, {
       platformUserId: params.actor.platformUserId ?? null,
       actorName: params.actor.name,
       actorOpenId: params.actor.openId,
       submissionId,
       formType: params.input.formType,
       status,
-    });
+    }).catch(err => console.error(`[submissionCreate] Audit log failed for submission ${submissionId}:`, err));
   }
 
   return { submissionId, status };
