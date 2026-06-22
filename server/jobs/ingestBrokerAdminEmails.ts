@@ -96,22 +96,32 @@ export async function runIngestOnce(options: RunIngestOptions = {}): Promise<Ing
   const since = options.since ?? (await loadLastPoll(db));
   let messages: GraphMessage[] = [];
   try {
-    messages = await listSharedMailboxMessages(cfg, { mailbox, since, top: 50, maxResults: 200 });
+    // Oldest-first: a burst beyond maxResults must not skip over older messages
+    // in favor of newer ones, since the watermark below only ever advances forward.
+    messages = await listSharedMailboxMessages(cfg, { mailbox, since, top: 50, maxResults: 200, order: "asc" });
   } catch (err) {
     summary.errors += 1;
     summary.errorMessages.push(err instanceof Error ? err.message : String(err));
     return summary;
   }
 
-  let maxReceived: Date | null = null;
+  // Advance the watermark only through a confirmed-successful prefix of the
+  // (oldest-first) batch. Once a message fails, stop advancing so the failed
+  // message and everything after it gets retried on the next poll; already
+  // successful messages before it are safely re-skipped via the dedup checks.
+  let lastGoodReceived: Date | null = null;
+  let sawFailure = false;
   for (const message of messages) {
     try {
       const result = await ingestOneMessage(db, message, mailbox, source);
       if (result === "imported") summary.imported += 1;
       else if (result === "skipped_duplicate" || result === "skipped_no_match") summary.skipped += 1;
-      const r = message.receivedDateTime ? new Date(message.receivedDateTime) : null;
-      if (r && (!maxReceived || r > maxReceived)) maxReceived = r;
+      if (!sawFailure) {
+        const r = message.receivedDateTime ? new Date(message.receivedDateTime) : null;
+        if (r && (!lastGoodReceived || r > lastGoodReceived)) lastGoodReceived = r;
+      }
     } catch (err) {
+      sawFailure = true;
       summary.errors += 1;
       const msg = err instanceof Error ? err.message : String(err);
       summary.errorMessages.push(`[${message.id}] ${msg}`);
@@ -135,9 +145,9 @@ export async function runIngestOnce(options: RunIngestOptions = {}): Promise<Ing
     }
   }
 
-  if (maxReceived) {
-    await saveLastPoll(db, maxReceived.toISOString());
-    summary.lastPoll = maxReceived.toISOString();
+  if (lastGoodReceived) {
+    await saveLastPoll(db, lastGoodReceived.toISOString());
+    summary.lastPoll = lastGoodReceived.toISOString();
   } else {
     const existing = await loadLastPoll(db);
     summary.lastPoll = existing.toISOString();
