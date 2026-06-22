@@ -19,7 +19,7 @@ import { handleChangePlatformPassword } from "./auth/changePlatformPassword";
 import { resolvePlatformUserFromRequest, findAppUserByUsernameOrEmail } from "./auth/platformSession";
 import { parseLeeLoginIdentifier } from "@shared/leeLogin";
 import { linkPlatformSessionAfterLegacyLogin } from "./auth/linkPlatformSessionAfterLegacyLogin";
-import { isAdminByPolicy } from "./auth/isAdminByPolicy";
+import { getTrustedAdminPolicyName, isAdminByPolicy } from "./auth/isAdminByPolicy";
 import { getRequestIp } from "./auth/requestIp";
 import { isLoginRateLimited, recordLoginFailure } from "./auth/loginRateLimiter";
 import { requireAuth } from "./middleware/requireAuth";
@@ -129,7 +129,10 @@ authApiRouter.post("/login", async (req, res) => {
   // Apply policy-based admin override regardless of whether the user was found in
   // app_users. This lets LOCAL_ADMIN_EMAILS / LOCAL_ADMIN_NAMES / broker-directory
   // admin flags grant admin access even if app_users.role was set incorrectly.
-  if (role !== "admin" && isAdminByPolicy(email, name, appUserRecord?.username)) {
+  if (
+    role !== "admin" &&
+    isAdminByPolicy(email, getTrustedAdminPolicyName(email, appUserRecord?.fullName), appUserRecord?.username)
+  ) {
     role = "admin";
   }
 
@@ -278,7 +281,8 @@ authApiRouter.get("/me", async (req, res) => {
       return;
     }
     const resolvedRole: "admin" | "user" =
-      user.role === "admin" || isAdminByPolicy(user.email, user.name, appUserRecord?.username)
+      user.role === "admin" ||
+      isAdminByPolicy(user.email, getTrustedAdminPolicyName(user.email, appUserRecord?.fullName), appUserRecord?.username)
         ? "admin"
         : "user";
     res.json({

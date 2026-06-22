@@ -9,7 +9,7 @@ import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
 import { findAppUserByUsernameOrEmail } from "../auth/platformSession";
-import { isAdminByPolicy } from "../auth/isAdminByPolicy";
+import { getTrustedAdminPolicyName, isAdminByPolicy } from "../auth/isAdminByPolicy";
 import type {
   ExchangeTokenRequest,
   ExchangeTokenResponse,
@@ -300,6 +300,16 @@ class SDKServer {
       if (appUser && !appUser.isActive) {
         throw ForbiddenError("User account is inactive");
       }
+      // Admin-policy checks must use a name we control (stored app-user name
+      // or broker-directory entry), never the session's client-supplied name
+      // — otherwise anyone can self-promote by logging in with an admin name.
+      const role: "admin" | "user" = isAdminByPolicy(
+        email,
+        getTrustedAdminPolicyName(email, appUser?.fullName),
+        appUser?.username
+      )
+        ? "admin"
+        : "user";
 
       if (!user) {
         await db.upsertUser({
@@ -308,7 +318,7 @@ class SDKServer {
           email: email ?? null,
           loginMethod: "local",
           lastSignedIn: signedInAt,
-          role: isAdminByPolicy(email, session.name) ? "admin" : "user",
+          role,
         });
         user = await db.getUserByOpenId(sessionUserId);
       }
@@ -324,7 +334,7 @@ class SDKServer {
         email: email ?? user.email,
         loginMethod: "local",
         lastSignedIn: signedInAt,
-        role: isAdminByPolicy(email, resolvedName) ? "admin" : "user",
+        role,
       });
 
       return {
@@ -333,7 +343,7 @@ class SDKServer {
         email: email ?? user.email,
         loginMethod: "local",
         lastSignedIn: signedInAt,
-        role: isAdminByPolicy(email, resolvedName) ? "admin" : "user",
+        role,
       };
     }
 

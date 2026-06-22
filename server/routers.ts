@@ -25,7 +25,7 @@ import { localAuth, sdk } from "./_core/sdk";
 import { ENV } from "./_core/env";
 import { handlePlatformLogout } from "./auth/passwordPlatformAuth";
 import { linkPlatformSessionAfterLegacyLogin } from "./auth/linkPlatformSessionAfterLegacyLogin";
-import { isAdminByPolicy } from "./auth/isAdminByPolicy";
+import { getTrustedAdminPolicyName, isAdminByPolicy } from "./auth/isAdminByPolicy";
 import { getRequestIp } from "./auth/requestIp";
 import { isLoginRateLimited, recordLoginFailure } from "./auth/loginRateLimiter";
 
@@ -196,7 +196,13 @@ export const appRouter = router({
         }
         const resolvedName = brokerEntry?.name || enteredName;
         const openId = localAuth.toLocalOpenId(email);
-        const role = isAdminByPolicy(email, resolvedName) ? "admin" : "user";
+        const role = isAdminByPolicy(
+          email,
+          getTrustedAdminPolicyName(email, appUserRecord?.fullName),
+          appUserRecord?.username
+        )
+          ? "admin"
+          : "user";
 
         if (ENV.isProduction && !String(ENV.cookieSecret ?? "").trim()) {
           console.error("[auth.login] JWT_SECRET is not set; cannot sign session cookies.");

@@ -3,7 +3,7 @@ import { resolvePlatformUserFromRequest, findAppUserByUsernameOrEmail } from "..
 import type { PlatformAuthUser, PlatformRole } from "../auth/platformAuthTypes";
 import { sdk } from "../_core/sdk";
 import { getDb } from "../db";
-import { isAdminByPolicy } from "../auth/isAdminByPolicy";
+import { getTrustedAdminPolicyName, isAdminByPolicy } from "../auth/isAdminByPolicy";
 
 export const requireAuth: RequestHandler = async (req, res, next) => {
   // 1. Try platform session (lbt_session cookie)
@@ -34,7 +34,8 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
       return;
     }
     const grantedRole: PlatformRole =
-      legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name, appUser?.username)
+      legacyUser.role === "admin" ||
+      isAdminByPolicy(legacyUser.email, getTrustedAdminPolicyName(legacyUser.email, appUser?.fullName), appUser?.username)
         ? "admin"
         : "broker";
     req.user = {
