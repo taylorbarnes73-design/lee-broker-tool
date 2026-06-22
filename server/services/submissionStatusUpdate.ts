@@ -79,12 +79,14 @@ export async function applySubmissionStatusChange(params: {
 
   const statusChanged = params.nextStatus !== params.previousStatus;
   if (statusChanged) {
-    void maybeNotifySubmissionStatusChange({
+    maybeNotifySubmissionStatusChange({
       submissionId: params.submissionId,
       previousStatus: params.previousStatus,
       nextStatus: params.nextStatus,
-    });
-    void logSubmissionStatusChange(params.req, {
+    }).catch(err =>
+      console.error(`[submissionStatusUpdate] Notify-status-change failed for submission ${params.submissionId}:`, err)
+    );
+    logSubmissionStatusChange(params.req, {
       platformUserId: params.actor.platformUserId ?? null,
       actorName: params.actor.name,
       actorOpenId: params.actor.openId,
@@ -93,7 +95,9 @@ export async function applySubmissionStatusChange(params: {
       toStatus: params.nextStatus,
       assignedTo: (assignmentPatch.assignedTo as string | undefined) ?? null,
       completedBy: (assignmentPatch.completedBy as string | undefined) ?? null,
-    });
+    }).catch(err =>
+      console.error(`[submissionStatusUpdate] Audit log failed for submission ${params.submissionId}:`, err)
+    );
   }
 
   return {

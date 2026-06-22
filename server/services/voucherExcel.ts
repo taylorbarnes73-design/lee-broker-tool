@@ -191,6 +191,23 @@ function firstPositiveNumber(values: Array<number | null | undefined>): number |
   return null;
 }
 
+// Voucher templates are at most ~100 rows / ~20 columns; a compressed .xlsx/.xlsm
+// can still unzip into a far larger grid (zip-bomb style), so cap dimensions before
+// materializing the full row matrix with sheet_to_json.
+const MAX_VOUCHER_SHEET_ROWS = 5_000;
+const MAX_VOUCHER_SHEET_COLS = 500;
+
+function assertWorksheetWithinLimits(ws: WorkSheet): void {
+  const ref = ws["!ref"];
+  if (!ref) return;
+  const range = XLSX.utils.decode_range(ref);
+  const rowCount = range.e.r - range.s.r + 1;
+  const colCount = range.e.c - range.s.c + 1;
+  if (rowCount > MAX_VOUCHER_SHEET_ROWS || colCount > MAX_VOUCHER_SHEET_COLS) {
+    throw new Error("Workbook sheet is too large to be a valid voucher template.");
+  }
+}
+
 /** Parse first worksheet as row matrix (same as legacy `sheet_to_json(..., { header: 1 })`). */
 export function readVoucherRowsFromExcelBuffer(buffer: Buffer): unknown[][] {
   const wb = XLSX.read(buffer, { type: "buffer", cellDates: true });
@@ -198,6 +215,7 @@ export function readVoucherRowsFromExcelBuffer(buffer: Buffer): unknown[][] {
   if (!name) throw new Error("Workbook has no sheets.");
   const ws = wb.Sheets[name];
   if (!ws) throw new Error("Workbook first sheet is missing.");
+  assertWorksheetWithinLimits(ws);
   return XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: false }) as unknown[][];
 }
 
@@ -207,6 +225,7 @@ function readFirstSheetRowsAndWorksheet(buffer: Buffer): { rows: unknown[][]; ws
   if (!name) throw new Error("Workbook has no sheets.");
   const ws = wb.Sheets[name];
   if (!ws) throw new Error("Workbook first sheet is missing.");
+  assertWorksheetWithinLimits(ws);
   const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: false }) as unknown[][];
   return { rows, ws };
 }

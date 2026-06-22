@@ -35,6 +35,11 @@ export async function setupVite(app: Express, server: Server) {
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 
+    if (url.startsWith("/api/")) {
+      res.status(404).json({ success: false, error: "Not found" });
+      return;
+    }
+
     try {
       // always reload the html file from disk in case it changes
       let template = await fs.promises.readFile(
@@ -81,6 +86,11 @@ export function serveStatic(app: Express) {
       res.sendFile("index.html", { root: distPath });
     }
   );
+
+  // Unmatched API routes get a real 404 instead of the SPA shell.
+  app.use("/api", (_req, res) => {
+    res.status(404).json({ success: false, error: "Not found" });
+  });
 
   // Unknown routes use the React shell rather than exposing a second workspace.
   app.use("*", (_req, res) => {
