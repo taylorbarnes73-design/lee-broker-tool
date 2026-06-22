@@ -264,7 +264,7 @@ export const submissions = mysqlTable("submissions", {
     table.createdAt,
     table.id
   ),
-  sourceEmailMessageIdIdx: index("submissions_source_email_message_id_idx").on(
+  sourceEmailMessageIdUnique: uniqueIndex("submissions_source_email_message_id_unique").on(
     table.sourceEmailMessageId
   ),
 }));

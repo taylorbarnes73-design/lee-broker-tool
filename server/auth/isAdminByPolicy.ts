@@ -44,3 +44,22 @@ export function isAdminByPolicy(
 
   return false;
 }
+
+/**
+ * Resolves the display name to use for LOCAL_ADMIN_NAMES policy checks.
+ * Only stored app-user names or broker-directory entries are trusted here —
+ * never a client-supplied login field or a name embedded in a session
+ * token, both of which a user can set to any value they like.
+ */
+export function getTrustedAdminPolicyName(
+  email: string | null | undefined,
+  storedName: string | null | undefined
+): string | undefined {
+  const normalizedStoredName = (storedName ?? "").trim();
+  if (normalizedStoredName) return normalizedStoredName;
+
+  const emailLower = (email ?? "").trim().toLowerCase();
+  if (!emailLower) return undefined;
+
+  return findBrokerDirectoryEntry(emailLower)?.name;
+}

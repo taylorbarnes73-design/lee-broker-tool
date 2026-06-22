@@ -5,7 +5,7 @@ import type { User } from "../../drizzle/schema";
 import { findAppUserByUsernameOrEmail, resolvePlatformUserFromRequest } from "../auth/platformSession";
 import { getDb, getUserByOpenId, upsertUser } from "../db";
 import { sdk, localAuth } from "./sdk";
-import { isAdminByPolicy } from "../auth/isAdminByPolicy";
+import { getTrustedAdminPolicyName, isAdminByPolicy } from "../auth/isAdminByPolicy";
 
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
@@ -43,7 +43,8 @@ async function resolveSignedLegacyCookie(
     email: email ?? null,
     loginMethod: "local",
     role:
-      appUser?.role === "admin" || isAdminByPolicy(email, name, appUser?.username)
+      appUser?.role === "admin" ||
+      isAdminByPolicy(email, getTrustedAdminPolicyName(email, appUser?.fullName), appUser?.username)
         ? "admin"
         : "user",
     createdAt: now,
@@ -104,7 +105,8 @@ export async function createContext(
       user = {
         ...legacyUser,
         role:
-          legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name, appUser?.username)
+          legacyUser.role === "admin" ||
+          isAdminByPolicy(legacyUser.email, getTrustedAdminPolicyName(legacyUser.email, appUser?.fullName), appUser?.username)
             ? "admin"
             : "user",
       };

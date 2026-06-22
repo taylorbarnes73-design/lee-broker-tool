@@ -7,9 +7,10 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { storagePut, storageGet, storagePublicUrl } from "./storage";
 import { getDb, getUserByOpenId, upsertUser } from "./db";
+import { assertCanReadStoredFile, filterReadableUploads } from "./fileAccess";
 import { findAppUserByUsernameOrEmail } from "./auth/platformSession";
 import { uploads } from "../drizzle/schema";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, type SQL } from "drizzle-orm";
 import { z } from "zod/v4";
 import { nanoid } from "nanoid";
 import { aiAssistRouter } from "./routers/aiAssist";
@@ -24,7 +25,7 @@ import { localAuth, sdk } from "./_core/sdk";
 import { ENV } from "./_core/env";
 import { handlePlatformLogout } from "./auth/passwordPlatformAuth";
 import { linkPlatformSessionAfterLegacyLogin } from "./auth/linkPlatformSessionAfterLegacyLogin";
-import { isAdminByPolicy } from "./auth/isAdminByPolicy";
+import { getTrustedAdminPolicyName, isAdminByPolicy } from "./auth/isAdminByPolicy";
 import { getRequestIp } from "./auth/requestIp";
 import { isLoginRateLimited, recordLoginFailure } from "./auth/loginRateLimiter";
 
@@ -195,7 +196,13 @@ export const appRouter = router({
         }
         const resolvedName = brokerEntry?.name || enteredName;
         const openId = localAuth.toLocalOpenId(email);
-        const role = isAdminByPolicy(email, resolvedName) ? "admin" : "user";
+        const role = isAdminByPolicy(
+          email,
+          getTrustedAdminPolicyName(email, appUserRecord?.fullName),
+          appUserRecord?.username
+        )
+          ? "admin"
+          : "user";
 
         if (ENV.isProduction && !String(ENV.cookieSecret ?? "").trim()) {
           console.error("[auth.login] JWT_SECRET is not set; cannot sign session cookies.");
@@ -486,7 +493,12 @@ export const appRouter = router({
      */
     getUrl: protectedProcedure
       .input(z.object({ fileKey: z.string() }))
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
+        try {
+          await assertCanReadStoredFile(ctx.user, input.fileKey);
+        } catch {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Forbidden" });
+        }
         const { url } = await storageGet(input.fileKey);
         return { url };
       }),
@@ -502,22 +514,26 @@ export const appRouter = router({
           limit: z.number().default(50),
         })
       )
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) return [];
 
-        const rows = await db
-          .select()
-          .from(uploads)
-          .orderBy(desc(uploads.createdAt))
-          .limit(input.limit);
+        const whereClauses: SQL[] = [];
+        if (ctx.user.role !== "admin") {
+          whereClauses.push(eq(uploads.uploaderOpenId, ctx.user.openId));
+        }
+        if (input.category) {
+          whereClauses.push(eq(uploads.category, input.category));
+        }
+        if (input.reference) {
+          whereClauses.push(eq(uploads.reference, input.reference));
+        }
 
-        // Filter in JS if needed (simple approach)
-        return rows.filter(r => {
-          if (input.category && r.category !== input.category) return false;
-          if (input.reference && r.reference !== input.reference) return false;
-          return true;
-        });
+        const baseQuery = db.select().from(uploads);
+        const filteredQuery = whereClauses.length > 0 ? baseQuery.where(and(...whereClauses)) : baseQuery;
+        const rows = await filteredQuery.orderBy(desc(uploads.createdAt)).limit(input.limit);
+
+        return filterReadableUploads(ctx.user, rows);
       }),
   }),
 });

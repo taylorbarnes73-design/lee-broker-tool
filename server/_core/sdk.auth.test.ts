@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Request } from "express";
 import { COOKIE_NAME } from "@shared/const";
 import { sdk } from "./sdk";
+import { ENV } from "./env";
 import * as db from "../db";
 import * as platformSession from "../auth/platformSession";
 
@@ -63,5 +64,48 @@ describe("legacy local session auth", () => {
 
     await expect(sdk.authenticateRequest(req)).rejects.toThrow("User account is inactive");
     expect(db.upsertUser).not.toHaveBeenCalled();
+  });
+
+  describe("admin-policy name escalation", () => {
+    const originalAdminNames = ENV.localAdminNames;
+
+    beforeEach(() => {
+      ENV.localAdminNames = ["trusted admin"];
+    });
+
+    afterEach(() => {
+      ENV.localAdminNames = originalAdminNames;
+    });
+
+    it("does not grant admin from the session's client-supplied name, even when the stored full name is blank", async () => {
+      vi.mocked(platformSession.findAppUserByUsernameOrEmail).mockResolvedValue({
+        id: "broker-user-id",
+        email: legacyUser.email,
+        username: "inactive",
+        fullName: "",
+        role: "broker",
+        office: null,
+        phone: null,
+        passwordHash: null,
+        forcePasswordChangeNextLogin: false,
+        isActive: true,
+        lastLoginAt: null,
+        createdAt: new Date(),
+        createdBy: null,
+        updatedAt: new Date(),
+        deactivatedAt: null,
+      });
+
+      const token = await sdk.createSessionToken(legacyUser.openId, {
+        name: "Trusted Admin",
+        email: legacyUser.email,
+      });
+      const req = {
+        headers: { cookie: `${COOKIE_NAME}=${token}` },
+      } as Request;
+
+      const result = await sdk.authenticateRequest(req);
+      expect(result.role).toBe("user");
+    });
   });
 });

@@ -156,6 +156,8 @@ export type ListMessagesOptions = {
   top?: number;
   /** Hard cap across pagination. Defaults to 200. */
   maxResults?: number;
+  /** Sort order for receivedDateTime. Defaults to "desc" (newest first). */
+  order?: "asc" | "desc";
 };
 
 export async function listSharedMailboxMessages(
@@ -174,7 +176,7 @@ export async function listSharedMailboxMessages(
   const params = new URLSearchParams();
   if (sinceIso) params.set("$filter", `receivedDateTime ge ${sinceIso}`);
   params.set("$top", String(top));
-  params.set("$orderby", "receivedDateTime desc");
+  params.set("$orderby", `receivedDateTime ${opts.order ?? "desc"}`);
   params.set("$select", MESSAGE_SELECT);
   let url = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(opts.mailbox)}/messages?${params.toString()}`;
 

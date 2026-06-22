@@ -4,7 +4,7 @@ if (!globalThis.crypto) {
   globalThis.crypto = webcrypto as any;
 }
 import express from "express";
-import type { RequestHandler } from "express";
+import type { Request, RequestHandler, Response } from "express";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -35,7 +35,8 @@ import { dealiusApiAdminRouter } from "../dealiusApiAdmin";
 import { marketingRequestApiRouter } from "../marketingRequestApi";
 import { resolveCommissionVoucherTemplatePath } from "../lib/bundledAssets";
 import { startBrokerAdminIngestScheduler } from "../jobs/ingestBrokerAdminEmails";
-import { storageGetBytes } from "../storage";
+import { storageGetBytes, storageKeyFromReference } from "../storage";
+import { canReadStoredFile, type StoredFileAccessUser } from "../fileAccess";
 import { getDb } from "../db";
 import { uploads } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
@@ -65,6 +66,50 @@ const requireFileContentRateLimit: RequestHandler = (req, res, next) => {
   fileContentRateLimit.set(identity, current);
   next();
 };
+
+async function serveStoredFile(req: Request, res: Response, rawKey: string) {
+  let key: string;
+  try {
+    key = storageKeyFromReference(rawKey);
+  } catch {
+    res.status(400).json({ success: false, error: "Invalid file key" });
+    return;
+  }
+
+  try {
+    const canRead = await canReadStoredFile(req.user as StoredFileAccessUser | undefined, key);
+    if (!canRead) {
+      res.status(403).json({ success: false, error: "Forbidden" });
+      return;
+    }
+
+    const { bytes } = await storageGetBytes(key);
+    let filename = key.split("/").pop() || "file";
+    let mimeType = "application/octet-stream";
+
+    const db = await getDb();
+    if (db) {
+      const rows = await db
+        .select({ filename: uploads.filename, mimeType: uploads.mimeType })
+        .from(uploads)
+        .where(eq(uploads.fileKey, key))
+        .limit(1);
+      const row = rows[0];
+      if (row?.filename) filename = row.filename;
+      if (row?.mimeType) mimeType = row.mimeType;
+    }
+
+    res.setHeader("Content-Type", mimeType);
+    res.setHeader("Content-Length", String(bytes.length));
+    res.setHeader("Cache-Control", "private, max-age=300");
+    const safeFilename = filename.replace(/[\r\n\x00-\x1F\x7F"]/g, "").trim() || "file";
+    res.setHeader("Content-Disposition", `inline; filename="${safeFilename}"`);
+    res.send(bytes);
+  } catch (error) {
+    console.error("[files.content] Could not serve uploaded file:", error);
+    res.status(404).json({ success: false, error: "File not found" });
+  }
+}
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -126,33 +171,7 @@ async function startServer() {
       return;
     }
 
-    try {
-      const { bytes } = await storageGetBytes(key);
-      let filename = key.split("/").pop() || "file";
-      let mimeType = "application/octet-stream";
-
-      const db = await getDb();
-      if (db) {
-        const rows = await db
-          .select({ filename: uploads.filename, mimeType: uploads.mimeType })
-          .from(uploads)
-          .where(eq(uploads.fileKey, key))
-          .limit(1);
-        const row = rows[0];
-        if (row?.filename) filename = row.filename;
-        if (row?.mimeType) mimeType = row.mimeType;
-      }
-
-      res.setHeader("Content-Type", mimeType);
-      res.setHeader("Content-Length", String(bytes.length));
-      res.setHeader("Cache-Control", "private, max-age=300");
-      const safeFilename = filename.replace(/[\r\n\x00-\x1F\x7F"]/g, "").trim() || "file";
-      res.setHeader("Content-Disposition", `inline; filename="${safeFilename}"`);
-      res.send(bytes);
-    } catch (error) {
-      console.error("[files.content] Could not serve uploaded file:", error);
-      res.status(404).json({ success: false, error: "File not found" });
-    }
+    await serveStoredFile(req, res, key);
   });
 
   // Commission voucher Excel template — must be registered before SPA/Vite fallthrough
@@ -207,18 +226,9 @@ async function startServer() {
   );
   // Serve locally-stored uploads when AWS S3 is not configured (dev / no-S3 mode).
   // The directory is created on first upload; this is a no-op when S3 is in use.
-  app.use(
-    "/local-uploads",
-    (req, _res, next) => {
-      // Block path-traversal attempts before they reach the static handler
-      if (req.path.includes("..")) {
-        next(new Error("Invalid path"));
-        return;
-      }
-      next();
-    },
-    express.static(path.join(process.cwd(), "local-uploads"), { fallthrough: false })
-  );
+  app.use("/local-uploads", requireAuth, requireFileContentRateLimit, async (req, res) => {
+    await serveStoredFile(req, res, `/local-uploads/${req.path.replace(/^\/+/, "")}`);
+  });
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);

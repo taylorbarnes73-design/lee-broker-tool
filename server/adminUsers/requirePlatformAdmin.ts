@@ -3,7 +3,7 @@ import { resolvePlatformUserFromRequest, findAppUserByUsernameOrEmail } from "..
 import { sendAdminError } from "./adminErrors";
 import { sdk } from "../_core/sdk";
 import { getDb } from "../db";
-import { isAdminByPolicy } from "../auth/isAdminByPolicy";
+import { getTrustedAdminPolicyName, isAdminByPolicy } from "../auth/isAdminByPolicy";
 import type { PlatformAuthUser } from "../auth/platformAuthTypes";
 
 /** Admin REST API: 401/403 use `{ error: { code, message } }` shape. */
@@ -38,7 +38,10 @@ export const requirePlatformAdmin: RequestHandler = async (req, res, next) => {
       sendAdminError(res, 401, "UNAUTHORIZED", "Authentication required.");
       return;
     }
-    if (legacyUser.role === "admin" || isAdminByPolicy(legacyUser.email, legacyUser.name, appUser?.username)) {
+    if (
+      legacyUser.role === "admin" ||
+      isAdminByPolicy(legacyUser.email, getTrustedAdminPolicyName(legacyUser.email, appUser?.fullName), appUser?.username)
+    ) {
       req.user = {
         id: appUser?.id ?? String(legacyUser.id),
         email,

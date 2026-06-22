@@ -3,10 +3,20 @@ import express from "express";
 import request from "supertest";
 import { submissionsApiRouter } from "./submissionsApi";
 
-const { getDbMock, storageGetBytesMock } = vi.hoisted(() => ({
-  getDbMock: vi.fn(),
-  storageGetBytesMock: vi.fn(),
-}));
+const { assertCanReadStoredFileMock, getDbMock, storageGetBytesMock, MockStoredFileAccessDeniedError } = vi.hoisted(() => {
+  class MockStoredFileAccessDeniedError extends Error {
+    constructor() {
+      super("Forbidden");
+      this.name = "StoredFileAccessDeniedError";
+    }
+  }
+  return {
+    assertCanReadStoredFileMock: vi.fn(),
+    getDbMock: vi.fn(),
+    storageGetBytesMock: vi.fn(),
+    MockStoredFileAccessDeniedError,
+  };
+});
 
 vi.mock("./auth/platformSession", () => ({
   resolvePlatformUserFromRequest: vi.fn(),
@@ -30,6 +40,11 @@ vi.mock("./db", () => ({
 vi.mock("./storage", () => ({
   storagePut: vi.fn(),
   storageGetBytes: storageGetBytesMock,
+}));
+
+vi.mock("./fileAccess", () => ({
+  assertCanReadStoredFile: assertCanReadStoredFileMock,
+  StoredFileAccessDeniedError: MockStoredFileAccessDeniedError,
 }));
 
 vi.mock("../drizzle/schema", () => ({
@@ -128,6 +143,7 @@ describe("submissions attachments", () => {
       lastSignedIn: new Date(),
     } as any);
     getDbMock.mockResolvedValue(makeDb(submissionRow));
+    assertCanReadStoredFileMock.mockResolvedValue(undefined);
     storageGetBytesMock.mockResolvedValue({
       key: "broker-docs/submissions/voucher/generated.xlsm",
       bytes: Buffer.from("excel-bytes"),
@@ -175,5 +191,31 @@ describe("submissions attachments", () => {
     expect(res.header["content-disposition"]).toContain('attachment; filename="Filled_Voucher.xlsm"');
     expect(Buffer.isBuffer(res.body)).toBe(true);
     expect(Buffer.from(res.body).toString()).toBe("excel-bytes");
+  });
+
+  it("denies forged submission attachment keys before reading storage", async () => {
+    const forgedRow = {
+      ...submissionRow,
+      payload: JSON.stringify({
+        supportingFiles: [
+          {
+            fileKey: "broker-admin/request-1/confidential.pdf",
+            filename: "Confidential.pdf",
+            mimeType: "application/pdf",
+          },
+        ],
+      }),
+    };
+    getDbMock.mockResolvedValue(makeDb(forgedRow));
+    assertCanReadStoredFileMock.mockRejectedValueOnce(new MockStoredFileAccessDeniedError());
+
+    const res = await request(buildApp()).get("/api/submissions/42/attachments/1/download");
+
+    expect(res.status).toBe(403);
+    expect(assertCanReadStoredFileMock).toHaveBeenCalledWith(
+      expect.objectContaining({ openId: "local:broker@example.test" }),
+      "broker-admin/request-1/confidential.pdf"
+    );
+    expect(storageGetBytesMock).not.toHaveBeenCalled();
   });
 });

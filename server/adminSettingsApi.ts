@@ -19,6 +19,7 @@ import {
   verifyDealiusCredentials,
 } from "./settings/settingsStore";
 import { normalizeStoredFileUrl } from "./storage";
+import { startBrokerAdminIngestScheduler } from "./jobs/ingestBrokerAdminEmails";
 
 const categorySchema = z.enum(["branding", "workflow", "notifications", "integrations", "security"]);
 
@@ -193,6 +194,10 @@ adminSettingsRouter.patch(
       out.branding.logo_url = normalizeOptionalUrl(out.branding.logo_url);
       out.branding.letterhead_template_url = normalizeOptionalUrl(out.branding.letterhead_template_url);
     }
+    // Newly-saved Graph credentials should start polling immediately, without a process restart.
+    startBrokerAdminIngestScheduler().catch(err =>
+      console.error("[brokerAdminIngest] scheduler init failed:", err)
+    );
     res.json(out);
   })
 );

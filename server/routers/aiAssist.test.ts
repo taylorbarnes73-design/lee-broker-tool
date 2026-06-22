@@ -34,6 +34,10 @@ vi.mock("../storage", () => ({
   ),
 }));
 
+vi.mock("../fileAccess", () => ({
+  assertCanReadStoredFile: vi.fn(),
+}));
+
 // Mock PDF parsing so brochure tests don't need real PDFs.
 // The production code uses the default export as a callable: (mod.default ?? mod)(buffer)
 const mockPdfParse = vi.fn().mockResolvedValue({
