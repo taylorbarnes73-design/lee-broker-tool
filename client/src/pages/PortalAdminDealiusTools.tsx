@@ -295,9 +295,10 @@ function syncListingTransactionFields(entry: DealiusEntry): DealiusEntry {
 }
 
 function stripPushMetadata(entry: DealiusEntry): Record<string, unknown> {
-  const { listingFormImport, excelImport, ...rest } = entry as DealiusEntry & {
+  const { listingFormImport, excelImport, outsideBrokers, ...rest } = entry as DealiusEntry & {
     listingFormImport?: unknown;
     excelImport?: unknown;
+    outsideBrokers?: unknown;
   };
   return rest as Record<string, unknown>;
 }
@@ -401,6 +402,20 @@ export default function PortalAdminDealiusTools() {
   const dealID = pushResult?.dealID;
   const listingID = pushResult?.listingID;
   const partyLabels = useMemo(() => partyLabelsFromRepType(entry.repTypeID), [entry.repTypeID]);
+
+  const outsideBrokers = useMemo(() => {
+    const raw = (entry as any).outsideBrokers;
+    if (!Array.isArray(raw)) return [];
+    return raw.filter((row: any) => str(row?.name)).map((row: any) => ({ name: str(row.name), amt: num(row.amt) }));
+  }, [entry]);
+
+  const pendingOutsideBrokers = outsideBrokers.filter(
+    ob => !entry.brokers.some(b => b.name.trim().toLowerCase() === ob.name.trim().toLowerCase())
+  );
+
+  function addOutsideBrokerToList(name: string) {
+    patchEntry({ brokers: [...entry.brokers, { name, side: "Referral", pct: "", lead: false }] });
+  }
   const modeCopy =
     entry.entryMode === "listing"
       ? "Create a listing-side Dealius record with pricing, parties, timeline fields, and broker assignments."
@@ -513,7 +528,11 @@ export default function PortalAdminDealiusTools() {
         setDocTargetType("deal");
         setDocTargetId(String(body.data.dealID));
       }
-      toast.success(entry.entryMode === "listing" ? "Listing pushed to Dealius." : "Deal pushed to Dealius.");
+      const pushedId = body?.data?.dealID ?? body?.data?.listingID;
+      toast.success(entry.entryMode === "listing" ? "Listing pushed to Dealius" : "Deal pushed to Dealius", {
+        description: pushedId ? `${entry.entryMode === "listing" ? "Listing" : "Deal"} ${pushedId} is now live in Dealius.` : undefined,
+        duration: 8000,
+      });
     } catch (error: any) {
       const message = error?.message ?? "Push failed";
       setPushError(message);
@@ -1079,6 +1098,25 @@ export default function PortalAdminDealiusTools() {
           <p className="dealius-hint">
             Lead broker and commission splits are submitted with the deal when names match your Dealius directory.
           </p>
+          {pendingOutsideBrokers.length > 0 && (
+            <div className="dealius-status-banner warn" style={{ marginTop: 10 }}>
+              <div>
+                <strong>Outside broker payout on this voucher.</strong> Dealius only tracks brokers you add to the list
+                above — add the outside broker manually with their split, or this payout will not be reflected on the deal.
+                <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+                  {pendingOutsideBrokers.map(ob => (
+                    <li key={ob.name} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      {ob.name}
+                      {ob.amt != null ? ` — $${ob.amt.toLocaleString()}` : ""}
+                      <Button type="button" variant="secondary" size="sm" onClick={() => addOutsideBrokerToList(ob.name)}>
+                        Add to broker list
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="dealius-sticky-action-bar">
@@ -1097,6 +1135,26 @@ export default function PortalAdminDealiusTools() {
               <div role="status" className="dealius-status-banner mock" style={{ marginTop: 10 }}>
                 <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
                 <div>This push was simulated — no data was sent to Dealius because credentials are missing.</div>
+              </div>
+            )}
+            {!pushError && pushResult && !pushResult?.mockMode && (
+              <div role="status" className="dealius-status-banner success" style={{ marginTop: 10 }}>
+                <div>
+                  <strong>✓ {entry.entryMode === "listing" ? "Listing" : "Deal"} pushed to Dealius.</strong>{" "}
+                  {dealID ? `Deal ${dealID}` : listingID ? `Listing ${listingID}` : ""} updated just now.
+                </div>
+              </div>
+            )}
+            {Array.isArray(pushResult?.warnings) && pushResult.warnings.length > 0 && (
+              <div role="alert" className="dealius-status-banner warn" style={{ marginTop: 10 }}>
+                <div>
+                  <strong>Review needed:</strong>
+                  <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>
+                    {pushResult.warnings.map((w: string, i: number) => (
+                      <li key={i}>{w}</li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             )}
           </div>

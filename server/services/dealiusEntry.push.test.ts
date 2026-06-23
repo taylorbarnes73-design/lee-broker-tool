@@ -364,6 +364,12 @@ describe("pushDealEntryToDealius — end-to-end happy path", () => {
         oppositeContactEmail: "lessee@example.com",
         rentRows: [{ months: 12, monthly: 12500, free: false }],
         brokers: [{ name: "Tim Arguello", pct: 0.5, lead: true }],
+        askingRate: 1.95,
+        totalNNN: 0.45,
+        propTaxes: 0.18,
+        insurance: 0.03,
+        cams: 0.24,
+        tiPerSF: 5,
       },
     });
 
@@ -391,6 +397,18 @@ describe("pushDealEntryToDealius — end-to-end happy path", () => {
 
     const rentPayload = currentClient.calls.find(c => c.method === "POST" && c.path === "/deals/rents")?.data as any;
     expect(rentPayload.RentPerSfType).toBe(1);
+
+    // Lee & Associates quotes rate fields as $/SF/Mo, never per year — Dealius's
+    // rentpersftypes lookup must tag them 1 (month), not 2 (year).
+    const financialPayload = currentClient.calls.find(c => c.method === "PUT" && c.path === "/deals")?.data as any;
+    expect(financialPayload).toMatchObject({
+      LeaseAskingRatePerSfType: 1,
+      LeaseNNNPerSFType: 1,
+      LeaseTaxesType: 1,
+      LeaseInsuranceType: 1,
+      LeaseCamsPerSfType: 1,
+      LeaseTiAllowancePerSfType: 1,
+    });
   });
 });
 
