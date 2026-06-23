@@ -1425,6 +1425,18 @@
   color: var(--err-700);
 }
 
+.dealius-status-banner.success {
+  background: var(--ok-100);
+  border: 1px solid var(--ok-200);
+  color: var(--ok-700);
+}
+
+.dealius-status-banner.warn {
+  background: var(--warn-100);
+  border: 1px solid var(--warn-500);
+  color: var(--warn-700);
+}
+
 .dealius-status-pill {
   display: inline-flex;
   align-items: center;
