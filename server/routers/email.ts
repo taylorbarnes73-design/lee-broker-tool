@@ -70,16 +70,33 @@ type ArchivedSubmissionFile = {
   category: string;
 };
 
+type DeliveryMethod = "smtp" | "outlook-mcp" | "outlook-mcp-link" | "mail-client" | "queue-only" | "pending";
+
 type DeliveryResult = {
   success: boolean;
   error?: string;
-  deliveryMethod?: "smtp" | "outlook-mcp" | "outlook-mcp-link" | "mail-client";
+  deliveryMethod?: DeliveryMethod;
   attachmentIncluded?: boolean;
 };
 
 type RecordedSubmission = {
   id: number | null;
   status: string;
+};
+
+type RecordSubmissionRequestParams = {
+  formType: FormType;
+  brokerName: string;
+  propertyAddress: string;
+  sections: Array<{ title: string; fields: Array<{ label: string; value: string }> }>;
+  senderEmail?: string;
+  archivedPdf?: ArchivedSubmissionFile;
+  excelFile?: ArchivedSubmissionFile;
+  supportingFiles?: Array<z.infer<typeof supportingFileSchema>>;
+  uploaderOpenId?: string | null;
+  deliveryMethod?: DeliveryMethod;
+  deliveryError?: string;
+  formData?: Record<string, unknown>;
 };
 
 function formLabelFor(formType: FormType): string {
@@ -340,20 +357,40 @@ async function archiveGeneratedFile(params: {
   };
 }
 
-async function recordSubmissionRequest(params: {
-  formType: FormType;
-  brokerName: string;
-  propertyAddress: string;
-  sections: Array<{ title: string; fields: Array<{ label: string; value: string }> }>;
-  senderEmail?: string;
-  archivedPdf?: ArchivedSubmissionFile;
-  excelFile?: ArchivedSubmissionFile;
-  supportingFiles?: Array<z.infer<typeof supportingFileSchema>>;
-  uploaderOpenId?: string | null;
-  deliveryMethod?: string;
-  deliveryError?: string;
-  formData?: Record<string, unknown>;
-}): Promise<RecordedSubmission> {
+function serializeSubmissionPayload(params: RecordSubmissionRequestParams): string {
+  return JSON.stringify({
+    brokerName: params.brokerName,
+    senderEmail: params.senderEmail ?? "",
+    propertyAddress: params.propertyAddress,
+    sections: params.sections,
+    formData: params.formData ?? null,
+    archivedFile: params.archivedPdf
+      ? {
+          fileKey: params.archivedPdf.fileKey,
+          url: params.archivedPdf.url,
+          filename: params.archivedPdf.filename,
+          fileSize: params.archivedPdf.fileSize,
+          mimeType: params.archivedPdf.mimeType,
+          category: params.archivedPdf.category,
+        }
+      : null,
+    excelFile: params.excelFile
+      ? {
+          fileKey: params.excelFile.fileKey,
+          url: params.excelFile.url,
+          filename: params.excelFile.filename,
+          fileSize: params.excelFile.fileSize,
+          mimeType: params.excelFile.mimeType,
+          category: params.excelFile.category,
+        }
+      : null,
+    supportingFiles: params.supportingFiles ?? [],
+    deliveryMethod: params.deliveryMethod ?? "",
+    deliveryError: params.deliveryError ?? "",
+  });
+}
+
+async function recordSubmissionRequest(params: RecordSubmissionRequestParams): Promise<RecordedSubmission> {
   const db = await getDb();
   if (!db) {
     throw new Error("Database unavailable. The request could not be recorded for the admin portal.");
@@ -369,36 +406,7 @@ async function recordSubmissionRequest(params: {
     submittedByEmail: params.senderEmail ?? null,
     pdfFileKey: params.archivedPdf?.fileKey ?? null,
     pdfUrl: params.archivedPdf?.url ?? null,
-    payload: JSON.stringify({
-      brokerName: params.brokerName,
-      senderEmail: params.senderEmail ?? "",
-      propertyAddress: params.propertyAddress,
-      sections: params.sections,
-      formData: params.formData ?? null,
-      archivedFile: params.archivedPdf
-        ? {
-            fileKey: params.archivedPdf.fileKey,
-            url: params.archivedPdf.url,
-            filename: params.archivedPdf.filename,
-            fileSize: params.archivedPdf.fileSize,
-            mimeType: params.archivedPdf.mimeType,
-            category: params.archivedPdf.category,
-          }
-        : null,
-      excelFile: params.excelFile
-        ? {
-            fileKey: params.excelFile.fileKey,
-            url: params.excelFile.url,
-            filename: params.excelFile.filename,
-            fileSize: params.excelFile.fileSize,
-            mimeType: params.excelFile.mimeType,
-            category: params.excelFile.category,
-          }
-        : null,
-      supportingFiles: params.supportingFiles ?? [],
-      deliveryMethod: params.deliveryMethod ?? "",
-      deliveryError: params.deliveryError ?? "",
-    }),
+    payload: serializeSubmissionPayload(params),
   });
 
   const submissionId = (result as { insertId?: number }).insertId ?? null;
@@ -416,6 +424,28 @@ async function recordSubmissionRequest(params: {
     id: submissionId,
     status,
   };
+}
+
+async function updateRecordedSubmissionDelivery(params: {
+  recordedSubmission: RecordedSubmission | null;
+  submissionParams: RecordSubmissionRequestParams;
+  delivery: DeliveryResult;
+}): Promise<void> {
+  if (!params.recordedSubmission?.id) return;
+
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(submissions)
+    .set({
+      payload: serializeSubmissionPayload({
+        ...params.submissionParams,
+        deliveryMethod: params.delivery.deliveryMethod,
+        deliveryError: params.delivery.error,
+      }),
+    })
+    .where(eq(submissions.id, params.recordedSubmission.id));
 }
 
 export const emailRouter = router({
@@ -506,74 +536,99 @@ export const emailRouter = router({
       // so the admin does not receive a duplicate email.
       // For listing/voucher, we try email delivery but always queue the submission
       // regardless of whether email succeeds — the admin portal is the source of truth.
-      const delivery =
-        deliveryMode === "mail-client"
-          ? {
-              success: true,
-              deliveryMethod: "mail-client" as const,
-              attachmentIncluded: false,
-              error: undefined as string | undefined,
-            }
-          : formType === "sign"
-          ? {
-              success: true,
-              deliveryMethod: "queue-only" as const,
-              // Queue-only: no email is sent, so no attachment is included in delivery.
-              attachmentIncluded: false,
-              error: undefined as string | undefined,
-            }
-          : await deliverSubmissionEmail({
-              to: [adminEmail],
-              cc: senderEmail ? [senderEmail] : [],
-              subject,
-              content,
-              attachments: generatedAttachments,
-            });
-
       let recordedSubmission: RecordedSubmission | null = null;
-      try {
-        recordedSubmission = await recordSubmissionRequest({
-          formType,
-          brokerName,
-          propertyAddress,
-          sections,
-          senderEmail,
-          archivedPdf,
-          excelFile: archivedExcel,
-          supportingFiles,
-          uploaderOpenId: ctx.user?.openId ?? null,
-          deliveryMethod: delivery.deliveryMethod,
-          deliveryError: delivery.error,
-          formData,
+      let delivery: DeliveryResult;
+      const submissionParams: RecordSubmissionRequestParams = {
+        formType,
+        brokerName,
+        propertyAddress,
+        sections,
+        senderEmail,
+        archivedPdf,
+        excelFile: archivedExcel,
+        supportingFiles,
+        uploaderOpenId: ctx.user?.openId ?? null,
+        formData,
+      };
+      const buildRecordFailure = (error: unknown, failedDelivery?: DeliveryResult) => ({
+        // If we can't record the submission at all, that IS a real failure.
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        deliveryMethod: failedDelivery?.deliveryMethod,
+        attachmentIncluded: failedDelivery?.attachmentIncluded,
+        archivedFile: archivedPdf
+          ? {
+              fileKey: archivedPdf.fileKey,
+              url: archivedPdf.url,
+              filename: archivedPdf.filename,
+              fileSize: archivedPdf.fileSize,
+              mimeType: archivedPdf.mimeType,
+              category: archivedPdf.category,
+            }
+          : null,
+        excelFile: archivedExcel
+          ? {
+              fileKey: archivedExcel.fileKey,
+              url: archivedExcel.url,
+              filename: archivedExcel.filename,
+              fileSize: archivedExcel.fileSize,
+              mimeType: archivedExcel.mimeType,
+              category: archivedExcel.category,
+            }
+          : null,
+      });
+
+      if (deliveryMode === "server" && formType !== "sign") {
+        try {
+          recordedSubmission = await recordSubmissionRequest({
+            ...submissionParams,
+            deliveryMethod: "pending",
+          });
+        } catch (error: unknown) {
+          return buildRecordFailure(error);
+        }
+
+        delivery = await deliverSubmissionEmail({
+          to: [adminEmail],
+          cc: senderEmail ? [senderEmail] : [],
+          subject,
+          content,
+          attachments: generatedAttachments,
         });
-      } catch (error: unknown) {
-        return {
-          // If we can't record the submission at all, that IS a real failure.
-          success: false,
-          error: error instanceof Error ? error.message : String(error),
-          deliveryMethod: delivery.deliveryMethod,
-          attachmentIncluded: delivery.attachmentIncluded,
-          archivedFile: archivedPdf
+
+        try {
+          await updateRecordedSubmissionDelivery({
+            recordedSubmission,
+            submissionParams,
+            delivery,
+          });
+        } catch {
+          // The queue row already exists; don't turn best-effort delivery metadata into a failed submission.
+        }
+      } else {
+        delivery =
+          deliveryMode === "mail-client"
             ? {
-                fileKey: archivedPdf.fileKey,
-                url: archivedPdf.url,
-                filename: archivedPdf.filename,
-                fileSize: archivedPdf.fileSize,
-                mimeType: archivedPdf.mimeType,
-                category: archivedPdf.category,
+                success: true,
+                deliveryMethod: "mail-client",
+                attachmentIncluded: false,
               }
-            : null,
-          excelFile: archivedExcel
-            ? {
-                fileKey: archivedExcel.fileKey,
-                url: archivedExcel.url,
-                filename: archivedExcel.filename,
-                fileSize: archivedExcel.fileSize,
-                mimeType: archivedExcel.mimeType,
-                category: archivedExcel.category,
-              }
-            : null,
-        };
+            : {
+                success: true,
+                deliveryMethod: "queue-only",
+                // Queue-only: no email is sent, so no attachment is included in delivery.
+                attachmentIncluded: false,
+              };
+
+        try {
+          recordedSubmission = await recordSubmissionRequest({
+            ...submissionParams,
+            deliveryMethod: delivery.deliveryMethod,
+            deliveryError: delivery.error,
+          });
+        } catch (error: unknown) {
+          return buildRecordFailure(error, delivery);
+        }
       }
 
       // The submission is in the queue. Email delivery is best-effort — a failed email
