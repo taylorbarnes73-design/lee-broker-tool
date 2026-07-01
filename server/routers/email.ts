@@ -515,31 +515,10 @@ export const emailRouter = router({
       // The admin later sends to Cimarron after approval + PO assignment.
       // When the broker's email client handles delivery, skip server-side SMTP/MCP
       // so the admin does not receive a duplicate email.
-      // For listing/voucher, we try email delivery but always queue the submission
-      // regardless of whether email succeeds — the admin portal is the source of truth.
-      const delivery =
-        deliveryMode === "mail-client"
-          ? {
-              success: true,
-              deliveryMethod: "mail-client" as const,
-              attachmentIncluded: false,
-              error: undefined as string | undefined,
-            }
-          : formType === "sign"
-          ? {
-              success: true,
-              deliveryMethod: "queue-only" as const,
-              // Queue-only: no email is sent, so no attachment is included in delivery.
-              attachmentIncluded: false,
-              error: undefined as string | undefined,
-            }
-          : await deliverSubmissionEmail({
-              to: [adminEmail],
-              cc: senderEmail ? [senderEmail] : [],
-              subject,
-              content,
-              attachments: generatedAttachments,
-            });
+      // For listing/voucher, record the queue row before outbound delivery so
+      // an email can never outlive the portal source-of-truth row.
+      const queuedDeliveryMethod =
+        deliveryMode === "mail-client" ? "mail-client" : formType === "sign" ? "queue-only" : undefined;
 
       let recordedSubmission: RecordedSubmission | null = null;
       try {
@@ -553,8 +532,7 @@ export const emailRouter = router({
           excelFile: archivedExcel,
           supportingFiles,
           uploaderOpenId: ctx.user?.openId ?? null,
-          deliveryMethod: delivery.deliveryMethod,
-          deliveryError: delivery.error,
+          deliveryMethod: queuedDeliveryMethod,
           formData,
         });
       } catch (error: unknown) {
@@ -562,8 +540,8 @@ export const emailRouter = router({
           // If we can't record the submission at all, that IS a real failure.
           success: false,
           error: error instanceof Error ? error.message : String(error),
-          deliveryMethod: delivery.deliveryMethod,
-          attachmentIncluded: delivery.attachmentIncluded,
+          deliveryMethod: queuedDeliveryMethod,
+          attachmentIncluded: false,
           archivedFile: archivedPdf
             ? {
                 fileKey: archivedPdf.fileKey,
@@ -586,6 +564,30 @@ export const emailRouter = router({
             : null,
         };
       }
+
+      const delivery =
+        deliveryMode === "mail-client"
+          ? {
+              success: true,
+              deliveryMethod: "mail-client" as const,
+              attachmentIncluded: false,
+              error: undefined as string | undefined,
+            }
+          : formType === "sign"
+            ? {
+                success: true,
+                deliveryMethod: "queue-only" as const,
+                // Queue-only: no email is sent, so no attachment is included in delivery.
+                attachmentIncluded: false,
+                error: undefined as string | undefined,
+              }
+            : await deliverSubmissionEmail({
+                to: [adminEmail],
+                cc: senderEmail ? [senderEmail] : [],
+                subject,
+                content,
+                attachments: generatedAttachments,
+              });
 
       // The submission is in the queue. Email delivery is best-effort — a failed email
       // does not mean the submission failed. Surface email status separately so the

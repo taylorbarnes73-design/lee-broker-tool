@@ -167,6 +167,24 @@ describe("email.sendToAdmin", () => {
     expect(result.status).toBe("pending");
   });
 
+  it("does not send server-side email when the admin queue insert fails", async () => {
+    dbInsertValuesMock.mockRejectedValueOnce(new Error("queue insert failed"));
+    const caller = makeCaller();
+
+    const result = await caller.sendToAdmin({
+      formType: "listing",
+      brokerName: "Test Broker",
+      propertyAddress: "123 Main St, Test City",
+      sections: sampleSections,
+      senderEmail: "testuser@example.test",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("queue insert failed");
+    expect(execFileSyncMock).not.toHaveBeenCalled();
+    expect(sendMailMock).not.toHaveBeenCalled();
+  });
+
   it("includes CC when senderEmail is provided", async () => {
     const caller = makeCaller();
     await caller.sendToAdmin({
