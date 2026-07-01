@@ -24,6 +24,14 @@ vi.mock("../services/adminNotification", () => ({
 }));
 
 vi.mock("../storage", () => ({
+  isStoredFileReference: vi.fn((value: string) => {
+    const trimmed = value.trim();
+    return (
+      trimmed.startsWith("/local-uploads/") ||
+      trimmed.startsWith("/api/files/content") ||
+      /^(broker-docs|broker-admin|broker-docusign)\//.test(trimmed)
+    );
+  }),
   storagePut: storagePutMock,
 }));
 
@@ -207,6 +215,34 @@ describe("email.sendToAdmin", () => {
     expect(callArg).toContain("Supporting Documents");
     expect(callArg).toContain("Agency Disclosure");
     expect(callArg).toContain("agreement.pdf");
+
+    const insertArg = getSubmissionInsertArg();
+    const payload = JSON.parse(String(insertArg.payload));
+    expect(payload.supportingFiles).toEqual(supportingFiles);
+  });
+
+  it("accepts local stored-file references for supporting upload metadata", async () => {
+    const caller = makeCaller();
+    const supportingFiles = [
+      {
+        filename: "Exclusive Listing Agreement.pdf",
+        url: "/local-uploads/broker-docs/listing_deal_documents/agreement.pdf",
+        fileKey: "broker-docs/listing_deal_documents/agreement.pdf",
+        category: "listing_deal_documents",
+        label: "Deal Document",
+      },
+    ];
+
+    const result = await caller.sendToAdmin({
+      formType: "listing",
+      brokerName: "Test Broker",
+      propertyAddress: "456 Commerce Dr",
+      sections: sampleSections,
+      senderEmail: "testuser@example.test",
+      supportingFiles,
+    });
+
+    expect(result.success).toBe(true);
 
     const insertArg = getSubmissionInsertArg();
     const payload = JSON.parse(String(insertArg.payload));

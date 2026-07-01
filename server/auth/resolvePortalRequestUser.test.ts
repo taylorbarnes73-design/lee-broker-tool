@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Request } from "express";
+import { ForbiddenError } from "@shared/_core/errors";
 import { ENV } from "../_core/env";
 import { resolvePortalRequestUser } from "./resolvePortalRequestUser";
 
@@ -90,5 +91,15 @@ describe("resolvePortalRequestUser admin-policy name escalation", () => {
     const result = await resolvePortalRequestUser(fakeReq);
 
     expect(result?.role).toBe("user");
+  });
+
+  it("does not fall back to a raw JWT after inactive legacy user rejection", async () => {
+    vi.mocked(sdk.authenticateRequest).mockRejectedValue(ForbiddenError("User account is inactive"));
+    fakeReq.headers = { cookie: "app_session_id=fake.jwt.token" };
+
+    const result = await resolvePortalRequestUser(fakeReq);
+
+    expect(result).toBeNull();
+    expect(sdk.verifySession).not.toHaveBeenCalled();
   });
 });

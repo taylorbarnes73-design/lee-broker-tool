@@ -6,7 +6,7 @@ import { submissions, uploads } from "../../drizzle/schema";
 import { ENV } from "../_core/env";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { storageGetBytes, storagePut } from "../storage";
+import { isStoredFileReference, storageGetBytes, storagePut } from "../storage";
 import { eq } from "drizzle-orm";
 import { getSetting } from "../settings/getSetting";
 import { notifyAdminOfSubmission } from "../services/adminNotification";
@@ -37,9 +37,20 @@ const generatedFileSchema = z.object({
   base64Data: z.string().min(1).max(MAX_ATTACHMENT_BASE64_LEN),
 });
 
+function isSupportingFileReference(value: string): boolean {
+  return /^https?:\/\//i.test(value) || isStoredFileReference(value);
+}
+
 const supportingFileSchema = z.object({
   filename: z.string().trim().min(1).max(255),
-  url: z.string().trim().url(),
+  url: z
+    .string()
+    .trim()
+    .min(1)
+    .max(2048)
+    .refine(isSupportingFileReference, {
+      message: "url must be an http(s) URL, local upload path, file proxy URL, or stored file key",
+    }),
   fileKey: z.string().trim().min(1).max(512),
   category: z.string().trim().max(128).optional(),
   label: z.string().trim().max(255).optional(),
