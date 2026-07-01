@@ -423,7 +423,7 @@ export const submissionsRouter = router({
         db,
         input: {
           formType: input.type,
-          status: input.status?.trim() || "pending",
+          status: "pending",
           payload: input,
           reference,
           submittedBy: brokerName,

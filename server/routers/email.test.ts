@@ -24,6 +24,14 @@ vi.mock("../services/adminNotification", () => ({
 }));
 
 vi.mock("../storage", () => ({
+  isStoredFileReference: vi.fn((value: string) => {
+    const trimmed = value.trim();
+    return (
+      trimmed.startsWith("/local-uploads/") ||
+      trimmed.startsWith("/api/files/content") ||
+      /^(broker-docs|broker-admin|broker-docusign)\//.test(trimmed)
+    );
+  }),
   storagePut: storagePutMock,
 }));
 
@@ -159,6 +167,24 @@ describe("email.sendToAdmin", () => {
     expect(result.status).toBe("pending");
   });
 
+  it("does not send server-side email when the admin queue insert fails", async () => {
+    dbInsertValuesMock.mockRejectedValueOnce(new Error("queue insert failed"));
+    const caller = makeCaller();
+
+    const result = await caller.sendToAdmin({
+      formType: "listing",
+      brokerName: "Test Broker",
+      propertyAddress: "123 Main St, Test City",
+      sections: sampleSections,
+      senderEmail: "testuser@example.test",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("queue insert failed");
+    expect(execFileSyncMock).not.toHaveBeenCalled();
+    expect(sendMailMock).not.toHaveBeenCalled();
+  });
+
   it("includes CC when senderEmail is provided", async () => {
     const caller = makeCaller();
     await caller.sendToAdmin({
@@ -207,6 +233,34 @@ describe("email.sendToAdmin", () => {
     expect(callArg).toContain("Supporting Documents");
     expect(callArg).toContain("Agency Disclosure");
     expect(callArg).toContain("agreement.pdf");
+
+    const insertArg = getSubmissionInsertArg();
+    const payload = JSON.parse(String(insertArg.payload));
+    expect(payload.supportingFiles).toEqual(supportingFiles);
+  });
+
+  it("accepts local stored-file references for supporting upload metadata", async () => {
+    const caller = makeCaller();
+    const supportingFiles = [
+      {
+        filename: "Exclusive Listing Agreement.pdf",
+        url: "/local-uploads/broker-docs/listing_deal_documents/agreement.pdf",
+        fileKey: "broker-docs/listing_deal_documents/agreement.pdf",
+        category: "listing_deal_documents",
+        label: "Deal Document",
+      },
+    ];
+
+    const result = await caller.sendToAdmin({
+      formType: "listing",
+      brokerName: "Test Broker",
+      propertyAddress: "456 Commerce Dr",
+      sections: sampleSections,
+      senderEmail: "testuser@example.test",
+      supportingFiles,
+    });
+
+    expect(result.success).toBe(true);
 
     const insertArg = getSubmissionInsertArg();
     const payload = JSON.parse(String(insertArg.payload));

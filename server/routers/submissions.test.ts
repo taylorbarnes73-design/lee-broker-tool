@@ -121,6 +121,24 @@ describe("submissionsRouter", () => {
     expect(createSubmissionRecordMock).toHaveBeenCalledOnce();
   });
 
+  it("create ignores client-supplied status and always queues broker submissions as pending", async () => {
+    const caller = submissionsRouter.createCaller(testCtx({ role: "user" }));
+
+    await caller.create({
+      type: "marketing-request",
+      status: "approved",
+      address: "123 Main St",
+    });
+
+    expect(createSubmissionRecordMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: expect.objectContaining({
+          status: "pending",
+        }),
+      })
+    );
+  });
+
   it("create returns error when database is unavailable", async () => {
     getDbMock.mockResolvedValue(null);
     const caller = submissionsRouter.createCaller(testCtx());

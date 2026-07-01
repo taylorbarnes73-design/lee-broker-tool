@@ -8,6 +8,11 @@ import AddressAutocompleteInput from "@/components/AddressAutocompleteInput";
 import { trpc } from "@/lib/trpc";
 import { buildSectionedPdf, type PdfSection } from "@/lib/formPdf";
 import {
+  fileProxyUrlFromKey,
+  listingSupportingFilesFromDocs,
+  type ListingDealDocument,
+} from "@/lib/listingSupportingFiles";
+import {
   normalizeListingExtractFields,
   normalizeListingPropertyType,
   parseQuickConvertPrefill,
@@ -253,7 +258,7 @@ export default function PortalListingForm() {
   const [revealLease, setRevealLease] = useState(false);
   const [revealSale, setRevealSale] = useState(false);
   const [expiryAuto, setExpiryAuto] = useState(true);
-  const [docs, setDocs] = useState<Array<{ filename: string; url: string; fileKey: string }>>([]);
+  const [docs, setDocs] = useState<ListingDealDocument[]>([]);
   const [error, setError] = useState<string | null>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
 
@@ -368,7 +373,7 @@ export default function PortalListingForm() {
       const uploaded = ok
         .map((r: { filename?: string; url?: string; fileKey?: string }) => ({
           filename: r.filename ?? "Document",
-          url: r.url ?? "",
+          url: r.fileKey ? fileProxyUrlFromKey(r.fileKey) : (r.url ?? ""),
           fileKey: r.fileKey ?? "",
         }))
         .filter((r: { url: string }) => r.url);
@@ -518,10 +523,7 @@ export default function PortalListingForm() {
     const propertyAddress = [vals["l-address"].trim(), vals["l-city"].trim()].filter(Boolean).join(", ");
     const sections = buildSections();
     const senderEmail = user?.email && /.+@.+\..+/.test(user.email) ? user.email : undefined;
-    // supportingFiles need absolute URLs (zod .url()); local/relative dev URLs are skipped.
-    const supportingFiles = docs
-      .filter(d => /^https?:\/\//i.test(d.url) && d.fileKey)
-      .map(d => ({ filename: d.filename, url: d.url, fileKey: d.fileKey, category: "listing_deal_documents", label: "Deal Document" }));
+    const supportingFiles = listingSupportingFilesFromDocs(docs);
     try {
       const pdf = await buildSectionedPdf(pdfInput(propertyAddress));
       const result = await sendMut.mutateAsync({
