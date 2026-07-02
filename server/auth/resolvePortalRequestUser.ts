@@ -12,6 +12,10 @@ function emailFromLegacyOpenId(openId: string): string | null {
   return openId.startsWith(prefix) ? openId.slice(prefix.length) : null;
 }
 
+function isInactiveAccountError(error: unknown): boolean {
+  return error instanceof Error && error.message === "User account is inactive";
+}
+
 export type PortalRequestUser = {
   openId: string;
   role: "admin" | "user";
@@ -58,7 +62,11 @@ export async function resolvePortalRequestUser(req: Request): Promise<PortalRequ
       email: legacyUser.email ?? null,
       name: legacyUser.name ?? null,
     };
-  } catch {
+  } catch (error) {
+    if (isInactiveAccountError(error)) {
+      return null;
+    }
+
     // MySQL may be down in local dev; still honor a valid legacy JWT for REST APIs.
     const raw = req.headers.cookie;
     if (!raw) return null;

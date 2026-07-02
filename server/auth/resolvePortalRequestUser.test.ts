@@ -33,6 +33,7 @@ describe("resolvePortalRequestUser admin-policy name escalation", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    fakeReq.headers = {};
     vi.mocked(resolvePlatformUserFromRequest).mockResolvedValue(null);
     ENV.localAdminNames = ["trusted admin"];
   });
@@ -90,5 +91,21 @@ describe("resolvePortalRequestUser admin-policy name escalation", () => {
     const result = await resolvePortalRequestUser(fakeReq);
 
     expect(result?.role).toBe("user");
+  });
+
+  it("does not fall back to a raw legacy JWT when the stored user is inactive", async () => {
+    vi.mocked(sdk.authenticateRequest).mockRejectedValue(new Error("User account is inactive"));
+    fakeReq.headers = { cookie: "app_session_id=fake.jwt.token" };
+    vi.mocked(sdk.verifySession).mockResolvedValue({
+      openId: "local:inactive@lee-associates.com",
+      appId: "lee-broker-tool",
+      name: "Inactive Broker",
+      email: "inactive@lee-associates.com",
+    } as never);
+
+    const result = await resolvePortalRequestUser(fakeReq);
+
+    expect(result).toBeNull();
+    expect(sdk.verifySession).not.toHaveBeenCalled();
   });
 });

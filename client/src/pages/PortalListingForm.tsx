@@ -7,6 +7,7 @@ import LinkButton from "@/components/ui/LinkButton";
 import AddressAutocompleteInput from "@/components/AddressAutocompleteInput";
 import { trpc } from "@/lib/trpc";
 import { buildSectionedPdf, type PdfSection } from "@/lib/formPdf";
+import { isListingSupportingFileUrl } from "@/lib/listingSupportingFiles";
 import {
   normalizeListingExtractFields,
   normalizeListingPropertyType,
@@ -31,6 +32,7 @@ type Vals = Record<string, string>;
 type Groups = Record<string, string[]>;
 type Agent = { name: string; phone: string; email: string; shared: string };
 type Opt = { value: string; label: string };
+type ListingDocument = { filename: string; url: string; fileKey: string };
 
 const PROPERTY_TYPES: Opt[] = [
   { value: "office", label: "Office" },
@@ -253,7 +255,7 @@ export default function PortalListingForm() {
   const [revealLease, setRevealLease] = useState(false);
   const [revealSale, setRevealSale] = useState(false);
   const [expiryAuto, setExpiryAuto] = useState(true);
-  const [docs, setDocs] = useState<Array<{ filename: string; url: string; fileKey: string }>>([]);
+  const [docs, setDocs] = useState<ListingDocument[]>([]);
   const [error, setError] = useState<string | null>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
 
@@ -518,9 +520,8 @@ export default function PortalListingForm() {
     const propertyAddress = [vals["l-address"].trim(), vals["l-city"].trim()].filter(Boolean).join(", ");
     const sections = buildSections();
     const senderEmail = user?.email && /.+@.+\..+/.test(user.email) ? user.email : undefined;
-    // supportingFiles need absolute URLs (zod .url()); local/relative dev URLs are skipped.
     const supportingFiles = docs
-      .filter(d => /^https?:\/\//i.test(d.url) && d.fileKey)
+      .filter(d => isListingSupportingFileUrl(d.url) && d.fileKey)
       .map(d => ({ filename: d.filename, url: d.url, fileKey: d.fileKey, category: "listing_deal_documents", label: "Deal Document" }));
     try {
       const pdf = await buildSectionedPdf(pdfInput(propertyAddress));

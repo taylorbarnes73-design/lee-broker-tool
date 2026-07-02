@@ -37,9 +37,27 @@ const generatedFileSchema = z.object({
   base64Data: z.string().min(1).max(MAX_ATTACHMENT_BASE64_LEN),
 });
 
+const supportingFileUrlSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(2048)
+  .refine(value => {
+    if (/^https?:\/\//i.test(value)) {
+      try {
+        new URL(value);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    return value.startsWith("/api/files/content?key=") || value.startsWith("/local-uploads/");
+  }, "Supporting file URL must be an absolute HTTP(S) URL or an app file URL.");
+
 const supportingFileSchema = z.object({
   filename: z.string().trim().min(1).max(255),
-  url: z.string().trim().url(),
+  url: supportingFileUrlSchema,
   fileKey: z.string().trim().min(1).max(512),
   category: z.string().trim().max(128).optional(),
   label: z.string().trim().max(255).optional(),
@@ -418,6 +436,47 @@ async function recordSubmissionRequest(params: {
   };
 }
 
+async function updateRecordedSubmissionDelivery(params: {
+  submissionId: number | null;
+  deliveryMethod?: string;
+  deliveryError?: string;
+}): Promise<void> {
+  if (!params.submissionId) return;
+
+  try {
+    const db = await getDb();
+    if (!db) return;
+
+    const [row] = await db
+      .select({ payload: submissions.payload })
+      .from(submissions)
+      .where(eq(submissions.id, params.submissionId))
+      .limit(1);
+
+    if (!row) return;
+
+    let payload: Record<string, unknown> = {};
+    try {
+      payload = row.payload ? JSON.parse(row.payload) : {};
+    } catch {
+      payload = {};
+    }
+
+    await db
+      .update(submissions)
+      .set({
+        payload: JSON.stringify({
+          ...payload,
+          deliveryMethod: params.deliveryMethod ?? "",
+          deliveryError: params.deliveryError ?? "",
+        }),
+      })
+      .where(eq(submissions.id, params.submissionId));
+  } catch (error) {
+    console.error("[email.sendToAdmin] Failed to update submission delivery metadata:", error);
+  }
+}
+
 export const emailRouter = router({
   sendToAdmin: protectedProcedure
     .input(sendToAdminInput)
@@ -504,9 +563,7 @@ export const emailRouter = router({
       // The admin later sends to Cimarron after approval + PO assignment.
       // When the broker's email client handles delivery, skip server-side SMTP/MCP
       // so the admin does not receive a duplicate email.
-      // For listing/voucher, we try email delivery but always queue the submission
-      // regardless of whether email succeeds — the admin portal is the source of truth.
-      const delivery =
+      const queueOnlyDelivery =
         deliveryMode === "mail-client"
           ? {
               success: true,
@@ -522,13 +579,7 @@ export const emailRouter = router({
               attachmentIncluded: false,
               error: undefined as string | undefined,
             }
-          : await deliverSubmissionEmail({
-              to: [adminEmail],
-              cc: senderEmail ? [senderEmail] : [],
-              subject,
-              content,
-              attachments: generatedAttachments,
-            });
+          : null;
 
       let recordedSubmission: RecordedSubmission | null = null;
       try {
@@ -542,8 +593,8 @@ export const emailRouter = router({
           excelFile: archivedExcel,
           supportingFiles,
           uploaderOpenId: ctx.user?.openId ?? null,
-          deliveryMethod: delivery.deliveryMethod,
-          deliveryError: delivery.error,
+          deliveryMethod: queueOnlyDelivery?.deliveryMethod,
+          deliveryError: queueOnlyDelivery?.error,
           formData,
         });
       } catch (error: unknown) {
@@ -551,8 +602,6 @@ export const emailRouter = router({
           // If we can't record the submission at all, that IS a real failure.
           success: false,
           error: error instanceof Error ? error.message : String(error),
-          deliveryMethod: delivery.deliveryMethod,
-          attachmentIncluded: delivery.attachmentIncluded,
           archivedFile: archivedPdf
             ? {
                 fileKey: archivedPdf.fileKey,
@@ -574,6 +623,26 @@ export const emailRouter = router({
               }
             : null,
         };
+      }
+
+      // For listing/voucher/admin-request, queue first, then try email delivery.
+      // The admin portal row is the durable source of truth; email is best-effort.
+      const delivery =
+        queueOnlyDelivery ??
+        (await deliverSubmissionEmail({
+          to: [adminEmail],
+          cc: senderEmail ? [senderEmail] : [],
+          subject,
+          content,
+          attachments: generatedAttachments,
+        }));
+
+      if (!queueOnlyDelivery) {
+        await updateRecordedSubmissionDelivery({
+          submissionId: recordedSubmission.id,
+          deliveryMethod: delivery.deliveryMethod,
+          deliveryError: delivery.error,
+        });
       }
 
       // The submission is in the queue. Email delivery is best-effort — a failed email

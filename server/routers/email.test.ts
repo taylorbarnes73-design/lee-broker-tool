@@ -213,6 +213,56 @@ describe("email.sendToAdmin", () => {
     expect(payload.supportingFiles).toEqual(supportingFiles);
   });
 
+  it("accepts local proxy supporting document links", async () => {
+    const caller = makeCaller();
+    const supportingFiles = [
+      {
+        filename: "Exclusive Listing Agreement.pdf",
+        url: "/api/files/content?key=broker-docs%2Flisting_agreement%2Fagreement.pdf",
+        fileKey: "broker-docs/listing_agreement/agreement.pdf",
+        category: "listing_agreement",
+        label: "Exclusive Listing Agreement",
+      },
+    ];
+
+    const result = await caller.sendToAdmin({
+      formType: "listing",
+      brokerName: "Test Broker",
+      propertyAddress: "456 Commerce Dr",
+      sections: sampleSections,
+      senderEmail: "testuser@example.test",
+      supportingFiles,
+    });
+
+    expect(result.success).toBe(true);
+
+    const callArg = getMcpCallText();
+    expect(callArg).toContain("Supporting Documents");
+    expect(callArg).toContain("/api/files/content?key=");
+
+    const insertArg = getSubmissionInsertArg();
+    const payload = JSON.parse(String(insertArg.payload));
+    expect(payload.supportingFiles).toEqual(supportingFiles);
+  });
+
+  it("does not send server-side listing email when queue insert fails", async () => {
+    dbInsertValuesMock.mockRejectedValueOnce(new Error("insert failed"));
+    const caller = makeCaller();
+
+    const result = await caller.sendToAdmin({
+      formType: "listing",
+      brokerName: "Test Broker",
+      propertyAddress: "123 Main St, Test City",
+      sections: sampleSections,
+      senderEmail: "testuser@example.test",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("insert failed");
+    expect(execFileSyncMock).not.toHaveBeenCalled();
+    expect(sendMailMock).not.toHaveBeenCalled();
+  });
+
   it("archives the generated PDF and voucher workbook and includes both as attachments for Outlook", async () => {
     const caller = makeCaller();
     storagePutMock
