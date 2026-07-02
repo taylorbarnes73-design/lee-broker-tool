@@ -2,7 +2,10 @@ import type { Request } from "express";
 import { parse as parseCookieHeader } from "cookie";
 import { COOKIE_NAME } from "@shared/const";
 import type { PlatformRole } from "./platformAuthTypes";
-import { findAppUserByUsernameOrEmail, resolvePlatformUserFromRequest } from "./platformSession";
+import {
+  findAppUserByUsernameOrEmail,
+  resolvePlatformUserFromRequest,
+} from "./platformSession";
 import { localAuth, sdk } from "../_core/sdk";
 import { getDb } from "../db";
 import { getTrustedAdminPolicyName, isAdminByPolicy } from "./isAdminByPolicy";
@@ -10,6 +13,10 @@ import { getTrustedAdminPolicyName, isAdminByPolicy } from "./isAdminByPolicy";
 function emailFromLegacyOpenId(openId: string): string | null {
   const prefix = "local:";
   return openId.startsWith(prefix) ? openId.slice(prefix.length) : null;
+}
+
+function isInactiveAccountError(error: unknown): boolean {
+  return error instanceof Error && error.message === "User account is inactive";
 }
 
 export type PortalRequestUser = {
@@ -25,11 +32,18 @@ export type PortalRequestUser = {
  * Resolves either the newer platform session or the legacy broker session into
  * the small user shape used by the submissions REST API.
  */
-export async function resolvePortalRequestUser(req: Request): Promise<PortalRequestUser | null> {
+export async function resolvePortalRequestUser(
+  req: Request
+): Promise<PortalRequestUser | null> {
   const platformUser = await resolvePlatformUserFromRequest(req);
   if (platformUser) {
     const isAdmin =
-      platformUser.role === "admin" || isAdminByPolicy(platformUser.email, platformUser.fullName, platformUser.username);
+      platformUser.role === "admin" ||
+      isAdminByPolicy(
+        platformUser.email,
+        platformUser.fullName,
+        platformUser.username
+      );
     return {
       openId: localAuth.toLocalOpenId(platformUser.email),
       role: isAdmin ? "admin" : "user",
@@ -42,23 +56,39 @@ export async function resolvePortalRequestUser(req: Request): Promise<PortalRequ
 
   try {
     const legacyUser = await sdk.authenticateRequest(req);
-    let appUser: Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>> | undefined;
+    let appUser:
+      | Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>>
+      | undefined;
     try {
       const db = await getDb();
-      appUser = db && legacyUser.email ? await findAppUserByUsernameOrEmail(db, legacyUser.email) : undefined;
+      appUser =
+        db && legacyUser.email
+          ? await findAppUserByUsernameOrEmail(db, legacyUser.email)
+          : undefined;
     } catch (error) {
-      console.error("[resolvePortalRequestUser] Could not resolve app user for legacy session:", error);
+      console.error(
+        "[resolvePortalRequestUser] Could not resolve app user for legacy session:",
+        error
+      );
     }
     const isAdmin =
       legacyUser.role === "admin" ||
-      isAdminByPolicy(legacyUser.email, getTrustedAdminPolicyName(legacyUser.email, appUser?.fullName), appUser?.username);
+      isAdminByPolicy(
+        legacyUser.email,
+        getTrustedAdminPolicyName(legacyUser.email, appUser?.fullName),
+        appUser?.username
+      );
     return {
       openId: legacyUser.openId,
       role: isAdmin ? "admin" : "user",
       email: legacyUser.email ?? null,
       name: legacyUser.name ?? null,
     };
-  } catch {
+  } catch (error) {
+    if (isInactiveAccountError(error)) {
+      return null;
+    }
+
     // MySQL may be down in local dev; still honor a valid legacy JWT for REST APIs.
     const raw = req.headers.cookie;
     if (!raw) return null;
@@ -71,7 +101,10 @@ export async function resolvePortalRequestUser(req: Request): Promise<PortalRequ
     const name = session.name || email || "Broker";
     // No DB available here, so there's no stored app-user name to trust —
     // fall back to the broker directory only, never the session's own name.
-    const isAdmin = isAdminByPolicy(email, getTrustedAdminPolicyName(email, undefined));
+    const isAdmin = isAdminByPolicy(
+      email,
+      getTrustedAdminPolicyName(email, undefined)
+    );
 
     return {
       openId: session.openId,

@@ -37,9 +37,30 @@ const generatedFileSchema = z.object({
   base64Data: z.string().min(1).max(MAX_ATTACHMENT_BASE64_LEN),
 });
 
+const supportingFileUrlSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(2048)
+  .refine(value => {
+    if (/^https?:\/\//i.test(value)) {
+      try {
+        new URL(value);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    return (
+      value.startsWith("/api/files/content?key=") ||
+      value.startsWith("/local-uploads/")
+    );
+  }, "Supporting file URL must be an absolute HTTP(S) URL or an app file URL.");
+
 const supportingFileSchema = z.object({
   filename: z.string().trim().min(1).max(255),
-  url: z.string().trim().url(),
+  url: supportingFileUrlSchema,
   fileKey: z.string().trim().min(1).max(512),
   category: z.string().trim().max(128).optional(),
   label: z.string().trim().max(255).optional(),
@@ -92,10 +113,14 @@ function formLabelFor(formType: FormType): string {
         : "Commission Voucher";
 }
 
-function sanitizeFileName(filename: string, fallbackExtension?: string): string {
+function sanitizeFileName(
+  filename: string,
+  fallbackExtension?: string
+): string {
   const safe = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
   if (safe.includes(".")) return safe;
-  if (fallbackExtension) return `${safe}.${fallbackExtension.replace(/^\./, "")}`;
+  if (fallbackExtension)
+    return `${safe}.${fallbackExtension.replace(/^\./, "")}`;
   return safe;
 }
 
@@ -103,7 +128,10 @@ async function buildEmailBody(params: {
   formType: FormType;
   brokerName: string;
   propertyAddress: string;
-  sections: Array<{ title: string; fields: Array<{ label: string; value: string }> }>;
+  sections: Array<{
+    title: string;
+    fields: Array<{ label: string; value: string }>;
+  }>;
   archivedPdfUrl?: string;
   archivedPdfName?: string;
   excelAttachmentUrl?: string;
@@ -149,8 +177,12 @@ async function buildEmailBody(params: {
     `Submitted: ${now}`,
     brokerName ? `Broker: ${brokerName}` : "",
     propertyAddress ? `Property: ${propertyAddress}` : "",
-    archivedPdfUrl ? `Archived PDF: ${archivedPdfName || "submission.pdf"} - ${archivedPdfUrl}` : "",
-    excelAttachmentUrl ? `Generated Excel Voucher: ${excelAttachmentName || "voucher.xlsm"} - ${excelAttachmentUrl}` : "",
+    archivedPdfUrl
+      ? `Archived PDF: ${archivedPdfName || "submission.pdf"} - ${archivedPdfUrl}`
+      : "",
+    excelAttachmentUrl
+      ? `Generated Excel Voucher: ${excelAttachmentName || "voucher.xlsm"} - ${excelAttachmentUrl}`
+      : "",
     supportingFileLines ? `Supporting Documents:\n${supportingFileLines}` : "",
     "",
     "=".repeat(60),
@@ -182,7 +214,9 @@ async function sendViaSmtp(params: {
       port: ENV.smtpPort,
       secure: ENV.smtpSecure,
       requireTLS: !ENV.smtpSecure, // enforce STARTTLS on port 587 when not using implicit TLS
-      auth: ENV.smtpUser ? { user: ENV.smtpUser, pass: ENV.smtpPass } : undefined,
+      auth: ENV.smtpUser
+        ? { user: ENV.smtpUser, pass: ENV.smtpPass }
+        : undefined,
     });
 
     await transporter.sendMail({
@@ -243,14 +277,27 @@ function sendViaOutlookMcp(params: {
     const input = JSON.stringify({ messages: [message] });
     execFileSync(
       "mcp-cli",
-      ["tool", "call", "outlook_send_messages", "--server", "outlook-mail", "--input", input],
+      [
+        "tool",
+        "call",
+        "outlook_send_messages",
+        "--server",
+        "outlook-mail",
+        "--input",
+        input,
+      ],
       { timeout: 30_000, stdio: "pipe" }
     );
 
     return {
       success: true,
-      deliveryMethod: params.includeAttachment && params.attachments?.length ? "outlook-mcp" : "outlook-mcp-link",
-      attachmentIncluded: Boolean(params.includeAttachment && params.attachments?.length),
+      deliveryMethod:
+        params.includeAttachment && params.attachments?.length
+          ? "outlook-mcp"
+          : "outlook-mcp-link",
+      attachmentIncluded: Boolean(
+        params.includeAttachment && params.attachments?.length
+      ),
     };
   } catch (error: unknown) {
     return {
@@ -308,7 +355,9 @@ async function archiveGeneratedFile(params: {
   const buffer = Buffer.from(params.attachment.base64Data, "base64");
 
   if (!buffer.length) {
-    throw new Error(`Generated ${params.category.replace(/_/g, " ")} is empty.`);
+    throw new Error(
+      `Generated ${params.category.replace(/_/g, " ")} is empty.`
+    );
   }
 
   const fileKey = `broker-docs/submissions/${params.formType}/${new Date().toISOString().slice(0, 10)}/${nanoid(10)}-${safeFilename}`;
@@ -344,7 +393,10 @@ async function recordSubmissionRequest(params: {
   formType: FormType;
   brokerName: string;
   propertyAddress: string;
-  sections: Array<{ title: string; fields: Array<{ label: string; value: string }> }>;
+  sections: Array<{
+    title: string;
+    fields: Array<{ label: string; value: string }>;
+  }>;
   senderEmail?: string;
   archivedPdf?: ArchivedSubmissionFile;
   excelFile?: ArchivedSubmissionFile;
@@ -356,7 +408,9 @@ async function recordSubmissionRequest(params: {
 }): Promise<RecordedSubmission> {
   const db = await getDb();
   if (!db) {
-    throw new Error("Database unavailable. The request could not be recorded for the admin portal.");
+    throw new Error(
+      "Database unavailable. The request could not be recorded for the admin portal."
+    );
   }
 
   const status = "pending";
@@ -418,6 +472,50 @@ async function recordSubmissionRequest(params: {
   };
 }
 
+async function updateRecordedSubmissionDelivery(params: {
+  submissionId: number | null;
+  deliveryMethod?: string;
+  deliveryError?: string;
+}): Promise<void> {
+  if (!params.submissionId) return;
+
+  try {
+    const db = await getDb();
+    if (!db) return;
+
+    const [row] = await db
+      .select({ payload: submissions.payload })
+      .from(submissions)
+      .where(eq(submissions.id, params.submissionId))
+      .limit(1);
+
+    if (!row) return;
+
+    let payload: Record<string, unknown> = {};
+    try {
+      payload = row.payload ? JSON.parse(row.payload) : {};
+    } catch {
+      payload = {};
+    }
+
+    await db
+      .update(submissions)
+      .set({
+        payload: JSON.stringify({
+          ...payload,
+          deliveryMethod: params.deliveryMethod ?? "",
+          deliveryError: params.deliveryError ?? "",
+        }),
+      })
+      .where(eq(submissions.id, params.submissionId));
+  } catch (error) {
+    console.error(
+      "[email.sendToAdmin] Failed to update submission delivery metadata:",
+      error
+    );
+  }
+}
+
 export const emailRouter = router({
   sendToAdmin: protectedProcedure
     .input(sendToAdminInput)
@@ -439,7 +537,8 @@ export const emailRouter = router({
       if (deliveryMode === "server" && !adminEmail) {
         return {
           success: false,
-          error: "Admin email not configured. Please set ADMIN_EMAIL in environment variables.",
+          error:
+            "Admin email not configured. Please set ADMIN_EMAIL in environment variables.",
         };
       }
 
@@ -483,7 +582,9 @@ export const emailRouter = router({
         }
       }
 
-      const generatedAttachments = [archivedPdf, archivedExcel].filter(Boolean) as ArchivedSubmissionFile[];
+      const generatedAttachments = [archivedPdf, archivedExcel].filter(
+        Boolean
+      ) as ArchivedSubmissionFile[];
 
       const addressPart = propertyAddress ? ` - ${propertyAddress}` : "";
       const companyName = String(await getSetting("branding.company_name"));
@@ -504,9 +605,7 @@ export const emailRouter = router({
       // The admin later sends to Cimarron after approval + PO assignment.
       // When the broker's email client handles delivery, skip server-side SMTP/MCP
       // so the admin does not receive a duplicate email.
-      // For listing/voucher, we try email delivery but always queue the submission
-      // regardless of whether email succeeds — the admin portal is the source of truth.
-      const delivery =
+      const queueOnlyDelivery =
         deliveryMode === "mail-client"
           ? {
               success: true,
@@ -515,20 +614,14 @@ export const emailRouter = router({
               error: undefined as string | undefined,
             }
           : formType === "sign"
-          ? {
-              success: true,
-              deliveryMethod: "queue-only" as const,
-              // Queue-only: no email is sent, so no attachment is included in delivery.
-              attachmentIncluded: false,
-              error: undefined as string | undefined,
-            }
-          : await deliverSubmissionEmail({
-              to: [adminEmail],
-              cc: senderEmail ? [senderEmail] : [],
-              subject,
-              content,
-              attachments: generatedAttachments,
-            });
+            ? {
+                success: true,
+                deliveryMethod: "queue-only" as const,
+                // Queue-only: no email is sent, so no attachment is included in delivery.
+                attachmentIncluded: false,
+                error: undefined as string | undefined,
+              }
+            : null;
 
       let recordedSubmission: RecordedSubmission | null = null;
       try {
@@ -542,8 +635,8 @@ export const emailRouter = router({
           excelFile: archivedExcel,
           supportingFiles,
           uploaderOpenId: ctx.user?.openId ?? null,
-          deliveryMethod: delivery.deliveryMethod,
-          deliveryError: delivery.error,
+          deliveryMethod: queueOnlyDelivery?.deliveryMethod,
+          deliveryError: queueOnlyDelivery?.error,
           formData,
         });
       } catch (error: unknown) {
@@ -551,8 +644,6 @@ export const emailRouter = router({
           // If we can't record the submission at all, that IS a real failure.
           success: false,
           error: error instanceof Error ? error.message : String(error),
-          deliveryMethod: delivery.deliveryMethod,
-          attachmentIncluded: delivery.attachmentIncluded,
           archivedFile: archivedPdf
             ? {
                 fileKey: archivedPdf.fileKey,
@@ -574,6 +665,26 @@ export const emailRouter = router({
               }
             : null,
         };
+      }
+
+      // For listing/voucher/admin-request, queue first, then try email delivery.
+      // The admin portal row is the durable source of truth; email is best-effort.
+      const delivery =
+        queueOnlyDelivery ??
+        (await deliverSubmissionEmail({
+          to: [adminEmail],
+          cc: senderEmail ? [senderEmail] : [],
+          subject,
+          content,
+          attachments: generatedAttachments,
+        }));
+
+      if (!queueOnlyDelivery) {
+        await updateRecordedSubmissionDelivery({
+          submissionId: recordedSubmission.id,
+          deliveryMethod: delivery.deliveryMethod,
+          deliveryError: delivery.error,
+        });
       }
 
       // The submission is in the queue. Email delivery is best-effort — a failed email
@@ -625,12 +736,14 @@ export const emailRouter = router({
       if (!ENV.cimarronEmail) {
         return {
           success: false as const,
-          error: "Cimarron email not configured. Please set CIMARRON_EMAIL in environment variables.",
+          error:
+            "Cimarron email not configured. Please set CIMARRON_EMAIL in environment variables.",
         };
       }
 
       const db = await getDb();
-      if (!db) return { success: false as const, error: "Database unavailable." };
+      if (!db)
+        return { success: false as const, error: "Database unavailable." };
 
       const [row] = await db
         .select()
@@ -638,11 +751,24 @@ export const emailRouter = router({
         .where(eq(submissions.id, input.submissionId))
         .limit(1);
 
-      if (!row) return { success: false as const, error: "Submission not found." };
+      if (!row)
+        return { success: false as const, error: "Submission not found." };
 
-      const payload = row.payload ? (() => { try { return JSON.parse(row.payload); } catch { return {}; } })() : {};
-      const brokerEmail = String(row.submittedByEmail ?? payload?.senderEmail ?? "").trim();
-      const reference = String(row.reference ?? payload?.propertyAddress ?? "").trim();
+      const payload = row.payload
+        ? (() => {
+            try {
+              return JSON.parse(row.payload);
+            } catch {
+              return {};
+            }
+          })()
+        : {};
+      const brokerEmail = String(
+        row.submittedByEmail ?? payload?.senderEmail ?? ""
+      ).trim();
+      const reference = String(
+        row.reference ?? payload?.propertyAddress ?? ""
+      ).trim();
 
       const archivedPdf: ArchivedSubmissionFile = {
         filename: input.pdfAttachment.filename,

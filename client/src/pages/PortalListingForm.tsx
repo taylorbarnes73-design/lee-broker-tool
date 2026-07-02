@@ -7,13 +7,22 @@ import LinkButton from "@/components/ui/LinkButton";
 import AddressAutocompleteInput from "@/components/AddressAutocompleteInput";
 import { trpc } from "@/lib/trpc";
 import { buildSectionedPdf, type PdfSection } from "@/lib/formPdf";
+import { isListingSupportingFileUrl } from "@/lib/listingSupportingFiles";
 import {
   normalizeListingExtractFields,
   normalizeListingPropertyType,
   parseQuickConvertPrefill,
   QUICK_CONVERT_PREFILL_STORAGE_KEY,
 } from "@shared/quickConvert";
-import { Button, Card, Field, Input, Select, Toggle, Icons } from "../design/index.jsx";
+import {
+  Button,
+  Card,
+  Field,
+  Input,
+  Select,
+  Toggle,
+  Icons,
+} from "../design/index.jsx";
 
 /**
  * Native React Listing Entry form — second tool migrated off the legacy iframe
@@ -31,6 +40,7 @@ type Vals = Record<string, string>;
 type Groups = Record<string, string[]>;
 type Agent = { name: string; phone: string; email: string; shared: string };
 type Opt = { value: string; label: string };
+type ListingDocument = { filename: string; url: string; fileKey: string };
 
 const PROPERTY_TYPES: Opt[] = [
   { value: "office", label: "Office" },
@@ -76,13 +86,28 @@ const RELEASE_OPTIONS: Opt[] = [
 const NOTIFY_OPTIONS: Opt[] = [
   { value: "admin-immediate", label: "Admin releases to MLS immediately" },
   { value: "admin-date", label: "Notify the MLS on this date" },
-  { value: "agent-notified", label: "Agent will notify / has already notified the MLS" },
+  {
+    value: "agent-notified",
+    label: "Agent will notify / has already notified the MLS",
+  },
 ];
 
-const strOpts = (...v: string[]): Opt[] => [{ value: "", label: "—" }, ...v.map(x => ({ value: x, label: x }))];
-const YN_OPTS: Opt[] = [{ value: "", label: "—" }, { value: "yes", label: "Yes" }, { value: "no", label: "No" }];
+const strOpts = (...v: string[]): Opt[] => [
+  { value: "", label: "—" },
+  ...v.map(x => ({ value: x, label: x })),
+];
+const YN_OPTS: Opt[] = [
+  { value: "", label: "—" },
+  { value: "yes", label: "Yes" },
+  { value: "no", label: "No" },
+];
 
-type DField = { id: string; label: string; type?: "text" | "select"; options?: Opt[] };
+type DField = {
+  id: string;
+  label: string;
+  type?: "text" | "select";
+  options?: Opt[];
+};
 
 const DETAIL_FIELDS: Record<string, DField[]> = {
   industrial: [
@@ -103,7 +128,12 @@ const DETAIL_FIELDS: Record<string, DField[]> = {
     { id: "l-off-usf", label: "Usable SF" },
     { id: "l-off-floor", label: "Floor" },
     { id: "l-off-parking", label: "Parking" },
-    { id: "l-off-class", label: "Class", type: "select", options: strOpts("A", "B", "C") },
+    {
+      id: "l-off-class",
+      label: "Class",
+      type: "select",
+      options: strOpts("A", "B", "C"),
+    },
     { id: "l-off-zoning", label: "Zoning" },
     { id: "l-off-hvac", label: "HVAC" },
   ],
@@ -114,32 +144,95 @@ const DETAIL_FIELDS: Record<string, DField[]> = {
     { id: "l-ret-traffic", label: "Traffic Count" },
     { id: "l-ret-zoning", label: "Zoning" },
     { id: "l-ret-anchor", label: "Anchor Tenant" },
-    { id: "l-ret-center-type", label: "Center Type", type: "select", options: strOpts("Strip", "Power Center", "Regional Mall", "Neighborhood", "Freestanding") },
+    {
+      id: "l-ret-center-type",
+      label: "Center Type",
+      type: "select",
+      options: strOpts(
+        "Strip",
+        "Power Center",
+        "Regional Mall",
+        "Neighborhood",
+        "Freestanding"
+      ),
+    },
   ],
   land: [
     { id: "l-land-zoning", label: "Zoning" },
     { id: "l-land-utilities", label: "Utilities" },
-    { id: "l-land-topo", label: "Topography", type: "select", options: strOpts("Flat", "Sloped", "Irregular") },
+    {
+      id: "l-land-topo",
+      label: "Topography",
+      type: "select",
+      options: strOpts("Flat", "Sloped", "Irregular"),
+    },
     { id: "l-land-entitle", label: "Entitlements" },
     { id: "l-land-apn", label: "APN" },
-    { id: "l-land-flood", label: "Flood Zone", type: "select", options: strOpts("Zone A", "Zone X", "Zone AE") },
+    {
+      id: "l-land-flood",
+      label: "Flood Zone",
+      type: "select",
+      options: strOpts("Zone A", "Zone X", "Zone AE"),
+    },
   ],
 };
-const DETAIL_GROUPS: Record<string, { id: string; label: string; options: Opt[] }[]> = {
+const DETAIL_GROUPS: Record<
+  string,
+  { id: string; label: string; options: Opt[] }[]
+> = {
   industrial: [
-    { id: "l-bldg-type", label: "Building Type", options: [{ value: "freestanding", label: "Freestanding" }, { value: "pol", label: "POL" }, { value: "multi", label: "Multi" }, { value: "condo", label: "Condo" }] },
-    { id: "l-use", label: "Use", options: [{ value: "mfg", label: "Manufacturing" }, { value: "whse", label: "Warehouse/Distribution" }, { value: "rd", label: "R&D" }] },
+    {
+      id: "l-bldg-type",
+      label: "Building Type",
+      options: [
+        { value: "freestanding", label: "Freestanding" },
+        { value: "pol", label: "POL" },
+        { value: "multi", label: "Multi" },
+        { value: "condo", label: "Condo" },
+      ],
+    },
+    {
+      id: "l-use",
+      label: "Use",
+      options: [
+        { value: "mfg", label: "Manufacturing" },
+        { value: "whse", label: "Warehouse/Distribution" },
+        { value: "rd", label: "R&D" },
+      ],
+    },
   ],
   office: [
-    { id: "l-off-type", label: "Office Type", options: [{ value: "single_tenant", label: "Single Tenant" }, { value: "multi_tenant", label: "Multi-Tenant" }, { value: "medical", label: "Medical" }, { value: "creative", label: "Creative/Flex" }] },
+    {
+      id: "l-off-type",
+      label: "Office Type",
+      options: [
+        { value: "single_tenant", label: "Single Tenant" },
+        { value: "multi_tenant", label: "Multi-Tenant" },
+        { value: "medical", label: "Medical" },
+        { value: "creative", label: "Creative/Flex" },
+      ],
+    },
   ],
   retail: [
-    { id: "l-ret-use", label: "Use", options: [{ value: "restaurant", label: "Restaurant" }, { value: "service", label: "Service" }, { value: "medical", label: "Medical/Dental" }, { value: "general", label: "General Retail" }] },
+    {
+      id: "l-ret-use",
+      label: "Use",
+      options: [
+        { value: "restaurant", label: "Restaurant" },
+        { value: "service", label: "Service" },
+        { value: "medical", label: "Medical/Dental" },
+        { value: "general", label: "General Retail" },
+      ],
+    },
   ],
   land: [],
 };
 const detailKey = (t: string) =>
-  t === "medical" || t === "multifamily" ? "office" : ["industrial", "office", "retail", "land"].includes(t) ? t : "industrial";
+  t === "medical" || t === "multifamily"
+    ? "office"
+    : ["industrial", "office", "retail", "land"].includes(t)
+      ? t
+      : "industrial";
 
 const DEAL_DOC_ACCEPT = ".pdf,.jpg,.jpeg,.png,.webp";
 
@@ -170,13 +263,19 @@ function num(v: string): number {
   return isNaN(n) ? 0 : n;
 }
 function formatUSD(n: number): string {
-  return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
+  return n.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  });
 }
 function humanError(e: unknown): string {
   if (e instanceof Error && e.message) return e.message;
   return "Something went wrong. Please try again.";
 }
-function extractMime(file: File): "application/pdf" | "image/jpeg" | "image/png" | "image/webp" {
+function extractMime(
+  file: File
+): "application/pdf" | "image/jpeg" | "image/png" | "image/webp" {
   const t = (file.type || "").toLowerCase();
   if (t === "image/jpeg" || t === "image/jpg") return "image/jpeg";
   if (t === "image/png") return "image/png";
@@ -248,12 +347,14 @@ export default function PortalListingForm() {
   const [, setLocation] = useLocation();
   const [vals, setVals] = useState<Vals>(initialVals);
   const [groups, setGroups] = useState<Groups>({});
-  const [agents, setAgents] = useState<Agent[]>([{ name: "", phone: "", email: "", shared: "" }]);
+  const [agents, setAgents] = useState<Agent[]>([
+    { name: "", phone: "", email: "", shared: "" },
+  ]);
   const [release, setRelease] = useState("hold");
   const [revealLease, setRevealLease] = useState(false);
   const [revealSale, setRevealSale] = useState(false);
   const [expiryAuto, setExpiryAuto] = useState(true);
-  const [docs, setDocs] = useState<Array<{ filename: string; url: string; fileKey: string }>>([]);
+  const [docs, setDocs] = useState<ListingDocument[]>([]);
   const [error, setError] = useState<string | null>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
 
@@ -269,13 +370,21 @@ export default function PortalListingForm() {
   const dk = detailKey(propType);
 
   const bldgSf = num(vals["l-bldg-sf"]);
-  const monthly = isLease && num(vals["l-lease-sf"]) && bldgSf ? formatUSD(num(vals["l-lease-sf"]) * bldgSf) : "";
-  const saleSf = !isLease && num(vals["l-sale-price"]) && bldgSf ? formatUSD(num(vals["l-sale-price"]) / bldgSf) : "";
+  const monthly =
+    isLease && num(vals["l-lease-sf"]) && bldgSf
+      ? formatUSD(num(vals["l-lease-sf"]) * bldgSf)
+      : "";
+  const saleSf =
+    !isLease && num(vals["l-sale-price"]) && bldgSf
+      ? formatUSD(num(vals["l-sale-price"]) / bldgSf)
+      : "";
 
   useEffect(() => {
     const name = user?.name?.trim();
     if (!name) return;
-    setAgents(prev => (prev[0]?.name ? prev : [{ ...prev[0], name }, ...prev.slice(1)]));
+    setAgents(prev =>
+      prev[0]?.name ? prev : [{ ...prev[0], name }, ...prev.slice(1)]
+    );
   }, [user?.name]);
 
   // One-shot prefill from Quick Convert / portal funnel.
@@ -287,7 +396,9 @@ export default function PortalListingForm() {
       sessionStorage.removeItem(QUICK_CONVERT_PREFILL_STORAGE_KEY);
       if (!payload || payload.tab !== "listing" || !payload.fields) return;
       applyExtracted(payload.fields as Record<string, unknown>);
-      toast.success("We carried over your earlier details — review and finish below.");
+      toast.success(
+        "We carried over your earlier details — review and finish below."
+      );
     } catch {
       /* ignore malformed prefill */
     }
@@ -311,20 +422,33 @@ export default function PortalListingForm() {
   function toggleGroup(id: string, value: string) {
     setGroups(prev => {
       const cur = prev[id] || [];
-      return { ...prev, [id]: cur.includes(value) ? cur.filter(v => v !== value) : [...cur, value] };
+      return {
+        ...prev,
+        [id]: cur.includes(value)
+          ? cur.filter(v => v !== value)
+          : [...cur, value],
+      };
     });
   }
 
   function applyExtracted(raw: Record<string, unknown>) {
-    const norm = normalizeListingExtractFields(raw as Record<string, string>) as Record<string, string>;
+    const norm = normalizeListingExtractFields(
+      raw as Record<string, string>
+    ) as Record<string, string>;
     const f = { ...(raw as Record<string, string>), ...norm };
     setVals(prev => {
       const next = { ...prev };
       const set = (id: string, v?: string) => {
         if (v != null && String(v).trim()) next[id] = String(v);
       };
-      if (f.propertyType) next["l-prop-type"] = normalizeListingPropertyType(String(f.propertyType));
-      if (f.transactionType) next["l-txn-type"] = /sale/i.test(String(f.transactionType)) ? "sale" : "lease";
+      if (f.propertyType)
+        next["l-prop-type"] = normalizeListingPropertyType(
+          String(f.propertyType)
+        );
+      if (f.transactionType)
+        next["l-txn-type"] = /sale/i.test(String(f.transactionType))
+          ? "sale"
+          : "lease";
       set("l-address", f.address);
       set("l-city", f.city);
       set("l-state", f.state);
@@ -347,7 +471,11 @@ export default function PortalListingForm() {
     });
     if (f.listingAgentName && String(f.listingAgentName).trim()) {
       const agentName = String(f.listingAgentName);
-      setAgents(prev => (prev[0]?.name ? prev : [{ ...prev[0], name: agentName }, ...prev.slice(1)]));
+      setAgents(prev =>
+        prev[0]?.name
+          ? prev
+          : [{ ...prev[0], name: agentName }, ...prev.slice(1)]
+      );
     }
   }
 
@@ -363,8 +491,13 @@ export default function PortalListingForm() {
           reference: vals["l-address"] || "listing",
         }))
       );
-      const result = await uploadBatch.mutateAsync({ files: payload, uploaderName: user?.name ?? undefined });
-      const ok = (result?.results ?? result ?? []).filter((r: { success?: boolean }) => r && r.success !== false);
+      const result = await uploadBatch.mutateAsync({
+        files: payload,
+        uploaderName: user?.name ?? undefined,
+      });
+      const ok = (result?.results ?? result ?? []).filter(
+        (r: { success?: boolean }) => r && r.success !== false
+      );
       const uploaded = ok
         .map((r: { filename?: string; url?: string; fileKey?: string }) => ({
           filename: r.filename ?? "Document",
@@ -377,7 +510,10 @@ export default function PortalListingForm() {
       // AI-extract from the first uploaded document and prefill.
       const first = uploaded[0];
       if (first?.url) {
-        const ex = await extractDoc.mutateAsync({ fileUrl: first.url, mimeType: "application/pdf" });
+        const ex = await extractDoc.mutateAsync({
+          fileUrl: first.url,
+          mimeType: "application/pdf",
+        });
         if (ex?.success && ex.fields && Object.keys(ex.fields).length) {
           applyExtracted(ex.fields as Record<string, unknown>);
           toast.success("Document analyzed — we filled in what we could find.");
@@ -397,7 +533,10 @@ export default function PortalListingForm() {
         title: "Listing Details",
         fields: [
           { label: "Date Entered", value: v("l-date-entered") },
-          { label: "Property Type", value: PROPERTY_TYPE_LABELS[propType] ?? propType },
+          {
+            label: "Property Type",
+            value: PROPERTY_TYPE_LABELS[propType] ?? propType,
+          },
           { label: "Transaction", value: isLease ? "Lease" : "Sale" },
           { label: "Address", value: v("l-address") },
           { label: "Project / Property Name", value: v("l-project-name") },
@@ -416,15 +555,27 @@ export default function PortalListingForm() {
               { label: "Rate $/SF/Mo", value: v("l-lease-sf") },
               { label: "Monthly Rent", value: monthly },
               { label: "Lease Type", value: v("l-lease-type") },
-              { label: "Term", value: v("l-lease-term-type") === "custom" ? v("l-lease-term") : v("l-lease-term-type") },
-              { label: "Reveal Prices to MLS", value: revealLease ? "Yes" : "No" },
+              {
+                label: "Term",
+                value:
+                  v("l-lease-term-type") === "custom"
+                    ? v("l-lease-term")
+                    : v("l-lease-term-type"),
+              },
+              {
+                label: "Reveal Prices to MLS",
+                value: revealLease ? "Yes" : "No",
+              },
             ]
           : [
               { label: "Asking Price", value: v("l-sale-price") },
               { label: "Sale $/SF", value: saleSf },
               { label: "Sale Terms", value: v("l-sale-terms") },
               { label: "CAP Rate", value: v("l-cap-rate") },
-              { label: "Reveal Prices to MLS", value: revealSale ? "Yes" : "No" },
+              {
+                label: "Reveal Prices to MLS",
+                value: revealSale ? "Yes" : "No",
+              },
             ],
       },
       {
@@ -448,17 +599,28 @@ export default function PortalListingForm() {
       value: d.type === "select" ? optLabel(d.options, v(d.id)) : v(d.id),
     }));
     DETAIL_GROUPS[dk].forEach(g => {
-      const picked = (groups[g.id] || []).map(val => g.options.find(o => o.value === val)?.label || val);
+      const picked = (groups[g.id] || []).map(
+        val => g.options.find(o => o.value === val)?.label || val
+      );
       detailFields.push({ label: g.label, value: picked.join(", ") });
     });
-    sections.push({ title: `${PROPERTY_TYPE_LABELS[propType] ?? "Property"} Details`, fields: detailFields });
+    sections.push({
+      title: `${PROPERTY_TYPE_LABELS[propType] ?? "Property"} Details`,
+      fields: detailFields,
+    });
 
     sections.push({
       title: "Release Instructions",
       fields: [
         { label: "Listing Release", value: optLabel(RELEASE_OPTIONS, release) },
-        { label: "Release Date", value: release === "date" ? v("l-release-date") : "" },
-        { label: "Notify the MLS", value: optLabel(NOTIFY_OPTIONS, v("l-agent-notify")) },
+        {
+          label: "Release Date",
+          value: release === "date" ? v("l-release-date") : "",
+        },
+        {
+          label: "Notify the MLS",
+          value: optLabel(NOTIFY_OPTIONS, v("l-agent-notify")),
+        },
       ],
     });
 
@@ -468,18 +630,33 @@ export default function PortalListingForm() {
         .filter(a => a.name.trim() || a.email.trim())
         .map((a, i) => ({
           label: `Agent ${i + 1}`,
-          value: [a.name, a.phone, a.email, a.shared ? `${a.shared}% shared` : ""].filter(Boolean).join(" · "),
+          value: [
+            a.name,
+            a.phone,
+            a.email,
+            a.shared ? `${a.shared}% shared` : "",
+          ]
+            .filter(Boolean)
+            .join(" · "),
         })),
     });
 
     if (docs.length) {
       sections.push({
         title: "Deal Documents",
-        fields: docs.map((d, i) => ({ label: `Document ${i + 1}`, value: d.filename })),
+        fields: docs.map((d, i) => ({
+          label: `Document ${i + 1}`,
+          value: d.filename,
+        })),
       });
     }
 
-    sections.push({ title: "Comments", fields: [{ label: "Comments / Special Instructions", value: v("l-comments") }] });
+    sections.push({
+      title: "Comments",
+      fields: [
+        { label: "Comments / Special Instructions", value: v("l-comments") },
+      ],
+    });
     return sections;
   }
 
@@ -491,7 +668,9 @@ export default function PortalListingForm() {
         ? {
             title: "Listing Agents",
             columns: ["Name", "Phone", "Email", "Shared %"],
-            rows: agents.filter(a => a.name.trim() || a.email.trim()).map(a => [a.name, a.phone, a.email, a.shared]),
+            rows: agents
+              .filter(a => a.name.trim() || a.email.trim())
+              .map(a => [a.name, a.phone, a.email, a.shared]),
           }
         : undefined,
       propertyAddress,
@@ -500,7 +679,9 @@ export default function PortalListingForm() {
   }
 
   async function onDownloadPdf() {
-    const propertyAddress = [vals["l-address"].trim(), vals["l-city"].trim()].filter(Boolean).join(", ");
+    const propertyAddress = [vals["l-address"].trim(), vals["l-city"].trim()]
+      .filter(Boolean)
+      .join(", ");
     try {
       const pdf = await buildSectionedPdf(pdfInput(propertyAddress));
       downloadBlob(pdf.blob, pdf.filename);
@@ -515,13 +696,21 @@ export default function PortalListingForm() {
       setError("Property address and city are required before sending.");
       return;
     }
-    const propertyAddress = [vals["l-address"].trim(), vals["l-city"].trim()].filter(Boolean).join(", ");
+    const propertyAddress = [vals["l-address"].trim(), vals["l-city"].trim()]
+      .filter(Boolean)
+      .join(", ");
     const sections = buildSections();
-    const senderEmail = user?.email && /.+@.+\..+/.test(user.email) ? user.email : undefined;
-    // supportingFiles need absolute URLs (zod .url()); local/relative dev URLs are skipped.
+    const senderEmail =
+      user?.email && /.+@.+\..+/.test(user.email) ? user.email : undefined;
     const supportingFiles = docs
-      .filter(d => /^https?:\/\//i.test(d.url) && d.fileKey)
-      .map(d => ({ filename: d.filename, url: d.url, fileKey: d.fileKey, category: "listing_deal_documents", label: "Deal Document" }));
+      .filter(d => isListingSupportingFileUrl(d.url) && d.fileKey)
+      .map(d => ({
+        filename: d.filename,
+        url: d.url,
+        fileKey: d.fileKey,
+        category: "listing_deal_documents",
+        label: "Deal Document",
+      }));
     try {
       const pdf = await buildSectionedPdf(pdfInput(propertyAddress));
       const result = await sendMut.mutateAsync({
@@ -530,7 +719,11 @@ export default function PortalListingForm() {
         propertyAddress,
         sections,
         senderEmail,
-        pdfAttachment: { filename: pdf.filename, mimeType: pdf.mimeType, base64Data: pdf.base64Data },
+        pdfAttachment: {
+          filename: pdf.filename,
+          mimeType: pdf.mimeType,
+          base64Data: pdf.base64Data,
+        },
         supportingFiles,
         formData: undefined,
       });
@@ -549,7 +742,9 @@ export default function PortalListingForm() {
     if (!window.confirm("Clear the listing form?")) return;
     setVals(initialVals());
     setGroups({});
-    setAgents([{ name: user?.name?.trim() || "", phone: "", email: "", shared: "" }]);
+    setAgents([
+      { name: user?.name?.trim() || "", phone: "", email: "", shared: "" },
+    ]);
     setRelease("hold");
     setRevealLease(false);
     setRevealSale(false);
@@ -594,11 +789,19 @@ export default function PortalListingForm() {
               <Icons.Sparkles size={18} />
             </span>
             <div style={{ flex: 1, minWidth: 220 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-900)" }}>
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "var(--ink-900)",
+                }}
+              >
                 Got the signed exclusive or listing agreement?
               </div>
               <div style={{ fontSize: 12, color: "var(--ink-500)" }}>
-                {docs.length ? `${docs.length} document(s) attached` : "Upload it and we'll read it and prefill the form."}
+                {docs.length
+                  ? `${docs.length} document(s) attached`
+                  : "Upload it and we'll read it and prefill the form."}
               </div>
             </div>
             <input
@@ -609,14 +812,28 @@ export default function PortalListingForm() {
               style={{ display: "none" }}
               onChange={e => onDocsSelected(e.target.files)}
             />
-            <Button variant="ai" loading={analyzing} onClick={() => docInputRef.current?.click()} icon={<Icons.Upload size={15} />}>
+            <Button
+              variant="ai"
+              loading={analyzing}
+              onClick={() => docInputRef.current?.click()}
+              icon={<Icons.Upload size={15} />}
+            >
               {analyzing ? "Analyzing…" : "Upload & analyze"}
             </Button>
           </div>
           {docs.length > 0 && (
             <div style={{ marginTop: 10, display: "grid", gap: 4 }}>
               {docs.map((d, i) => (
-                <div key={i} style={{ fontSize: 12.5, color: "var(--ink-600)", display: "flex", alignItems: "center", gap: 6 }}>
+                <div
+                  key={i}
+                  style={{
+                    fontSize: 12.5,
+                    color: "var(--ink-600)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
                   <Icons.Docs size={13} /> {d.filename}
                 </div>
               ))}
@@ -644,7 +861,9 @@ export default function PortalListingForm() {
                       fontSize: 13,
                       fontWeight: 600,
                       border: `1px solid ${selected ? "var(--lee-red)" : "var(--ink-200)"}`,
-                      background: selected ? "var(--lee-red-wash)" : "var(--ink-0)",
+                      background: selected
+                        ? "var(--lee-red-wash)"
+                        : "var(--ink-0)",
                       color: selected ? "var(--lee-red)" : "var(--ink-700)",
                       transition: "border-color .12s, background .12s",
                     }}
@@ -656,15 +875,45 @@ export default function PortalListingForm() {
             </div>
           </Field>
 
-          <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", marginTop: 16 }}>
+          <div
+            style={{
+              display: "grid",
+              gap: 14,
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+              marginTop: 16,
+            }}
+          >
             <Field label="Transaction type" required>
-              <Select value={vals["l-txn-type"]} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setVal("l-txn-type", e.target.value)} options={TXN_OPTIONS} />
+              <Select
+                value={vals["l-txn-type"]}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  setVal("l-txn-type", e.target.value)
+                }
+                options={TXN_OPTIONS}
+              />
             </Field>
             <Field label="Date entered" required>
-              <Input type="date" value={vals["l-date-entered"]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onDateEntered(e.target.value)} />
+              <Input
+                type="date"
+                value={vals["l-date-entered"]}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  onDateEntered(e.target.value)
+                }
+              />
             </Field>
-            <Field label="Listing expiration" help={expiryAuto ? "Auto: 12 months from date entered" : undefined}>
-              <Input type="date" value={vals["l-listing-expiration"]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onExpiration(e.target.value)} />
+            <Field
+              label="Listing expiration"
+              help={
+                expiryAuto ? "Auto: 12 months from date entered" : undefined
+              }
+            >
+              <Input
+                type="date"
+                value={vals["l-listing-expiration"]}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  onExpiration(e.target.value)
+                }
+              />
             </Field>
           </div>
 
@@ -687,27 +936,70 @@ export default function PortalListingForm() {
           {showProjectName && (
             <div style={{ marginTop: 14 }}>
               <Field label="Project / property name" optional>
-                <Input value={vals["l-project-name"]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVal("l-project-name", e.target.value)} placeholder="Plaza Tower" />
+                <Input
+                  value={vals["l-project-name"]}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setVal("l-project-name", e.target.value)
+                  }
+                  placeholder="Plaza Tower"
+                />
               </Field>
             </div>
           )}
 
-          <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", marginTop: 14 }}>
+          <div
+            style={{
+              display: "grid",
+              gap: 14,
+              gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+              marginTop: 14,
+            }}
+          >
             <Field label="City" required>
-              <Input value={vals["l-city"]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVal("l-city", e.target.value)} placeholder="Irvine" />
+              <Input
+                value={vals["l-city"]}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setVal("l-city", e.target.value)
+                }
+                placeholder="Irvine"
+              />
             </Field>
             <Field label="State" required>
-              <Input value={vals["l-state"]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVal("l-state", e.target.value)} placeholder="CA" />
+              <Input
+                value={vals["l-state"]}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setVal("l-state", e.target.value)
+                }
+                placeholder="CA"
+              />
             </Field>
             <Field label="Zip" required>
-              <Input value={vals["l-zip"]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVal("l-zip", e.target.value)} placeholder="92612" />
+              <Input
+                value={vals["l-zip"]}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setVal("l-zip", e.target.value)
+                }
+                placeholder="92612"
+              />
             </Field>
             <Field label="Cross street(s)" optional>
-              <Input value={vals["l-cross"]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVal("l-cross", e.target.value)} placeholder="At Jamboree" />
+              <Input
+                value={vals["l-cross"]}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setVal("l-cross", e.target.value)
+                }
+                placeholder="At Jamboree"
+              />
             </Field>
             {showCorner && (
               <Field label="Corner" optional>
-                <Select value={vals["l-corner"]} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setVal("l-corner", e.target.value)} options={CORNER_OPTIONS} />
+                <Select
+                  value={vals["l-corner"]}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    setVal("l-corner", e.target.value)
+                  }
+                  options={CORNER_OPTIONS}
+                />
               </Field>
             )}
           </div>
@@ -715,72 +1007,235 @@ export default function PortalListingForm() {
 
         {/* Size + pricing */}
         <Card padding="lg">
-          <SectionTitle>{isLease ? "Size & lease pricing" : "Size & sale pricing"}</SectionTitle>
+          <SectionTitle>
+            {isLease ? "Size & lease pricing" : "Size & sale pricing"}
+          </SectionTitle>
 
           {isLand ? (
-            <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
-              <Field label="Gross acres"><Input value={vals["l-acres-gross"]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVal("l-acres-gross", e.target.value)} inputMode="decimal" /></Field>
-              <Field label="Net acres" optional><Input value={vals["l-acres-net"]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVal("l-acres-net", e.target.value)} inputMode="decimal" /></Field>
+            <div
+              style={{
+                display: "grid",
+                gap: 14,
+                gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+              }}
+            >
+              <Field label="Gross acres">
+                <Input
+                  value={vals["l-acres-gross"]}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setVal("l-acres-gross", e.target.value)
+                  }
+                  inputMode="decimal"
+                />
+              </Field>
+              <Field label="Net acres" optional>
+                <Input
+                  value={vals["l-acres-net"]}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setVal("l-acres-net", e.target.value)
+                  }
+                  inputMode="decimal"
+                />
+              </Field>
             </div>
           ) : (
-            <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
-              <Field label="Building / GLA SF"><Input value={vals["l-bldg-sf"]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVal("l-bldg-sf", e.target.value)} placeholder="52,000" inputMode="numeric" /></Field>
-              <Field label="Year built" optional><Input value={vals["l-year-built"]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVal("l-year-built", e.target.value)} /></Field>
-              <Field label="Parking ratio" optional><Input value={vals["l-parking-ratio"]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVal("l-parking-ratio", e.target.value)} /></Field>
+            <div
+              style={{
+                display: "grid",
+                gap: 14,
+                gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+              }}
+            >
+              <Field label="Building / GLA SF">
+                <Input
+                  value={vals["l-bldg-sf"]}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setVal("l-bldg-sf", e.target.value)
+                  }
+                  placeholder="52,000"
+                  inputMode="numeric"
+                />
+              </Field>
+              <Field label="Year built" optional>
+                <Input
+                  value={vals["l-year-built"]}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setVal("l-year-built", e.target.value)
+                  }
+                />
+              </Field>
+              <Field label="Parking ratio" optional>
+                <Input
+                  value={vals["l-parking-ratio"]}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setVal("l-parking-ratio", e.target.value)
+                  }
+                />
+              </Field>
             </div>
           )}
 
-          <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", marginTop: 14 }}>
+          <div
+            style={{
+              display: "grid",
+              gap: 14,
+              gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+              marginTop: 14,
+            }}
+          >
             {isLease ? (
               <>
-                <Field label="Rate $/SF/Mo"><Input value={vals["l-lease-sf"]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVal("l-lease-sf", e.target.value)} placeholder="1.15" inputMode="decimal" /></Field>
-                <Field label="Monthly rent"><Input value={monthly} auto readOnly placeholder="—" /></Field>
-                <Field label="Lease type" required><Select value={vals["l-lease-type"]} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setVal("l-lease-type", e.target.value)} options={LEASE_TYPE_OPTIONS} /></Field>
-                <Field label="Term"><Select value={vals["l-lease-term-type"]} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setVal("l-lease-term-type", e.target.value)} options={LEASE_TERM_OPTIONS} /></Field>
+                <Field label="Rate $/SF/Mo">
+                  <Input
+                    value={vals["l-lease-sf"]}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setVal("l-lease-sf", e.target.value)
+                    }
+                    placeholder="1.15"
+                    inputMode="decimal"
+                  />
+                </Field>
+                <Field label="Monthly rent">
+                  <Input value={monthly} auto readOnly placeholder="—" />
+                </Field>
+                <Field label="Lease type" required>
+                  <Select
+                    value={vals["l-lease-type"]}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      setVal("l-lease-type", e.target.value)
+                    }
+                    options={LEASE_TYPE_OPTIONS}
+                  />
+                </Field>
+                <Field label="Term">
+                  <Select
+                    value={vals["l-lease-term-type"]}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      setVal("l-lease-term-type", e.target.value)
+                    }
+                    options={LEASE_TERM_OPTIONS}
+                  />
+                </Field>
                 {vals["l-lease-term-type"] === "custom" && (
-                  <Field label="Term (months)"><Input value={vals["l-lease-term"]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVal("l-lease-term", e.target.value)} inputMode="numeric" /></Field>
+                  <Field label="Term (months)">
+                    <Input
+                      value={vals["l-lease-term"]}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setVal("l-lease-term", e.target.value)
+                      }
+                      inputMode="numeric"
+                    />
+                  </Field>
                 )}
               </>
             ) : (
               <>
-                <Field label="Asking price"><Input value={vals["l-sale-price"]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVal("l-sale-price", e.target.value)} placeholder="8,200,000" inputMode="decimal" prefix="$" /></Field>
-                <Field label="Sale $/SF"><Input value={saleSf} auto readOnly placeholder="—" /></Field>
-                <Field label="Sale terms" optional><Input value={vals["l-sale-terms"]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVal("l-sale-terms", e.target.value)} /></Field>
+                <Field label="Asking price">
+                  <Input
+                    value={vals["l-sale-price"]}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setVal("l-sale-price", e.target.value)
+                    }
+                    placeholder="8,200,000"
+                    inputMode="decimal"
+                    prefix="$"
+                  />
+                </Field>
+                <Field label="Sale $/SF">
+                  <Input value={saleSf} auto readOnly placeholder="—" />
+                </Field>
+                <Field label="Sale terms" optional>
+                  <Input
+                    value={vals["l-sale-terms"]}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setVal("l-sale-terms", e.target.value)
+                    }
+                  />
+                </Field>
                 {showCapRate && (
-                  <Field label="CAP rate" optional><Input value={vals["l-cap-rate"]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVal("l-cap-rate", e.target.value)} suffix="%" /></Field>
+                  <Field label="CAP rate" optional>
+                    <Input
+                      value={vals["l-cap-rate"]}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setVal("l-cap-rate", e.target.value)
+                      }
+                      suffix="%"
+                    />
+                  </Field>
                 )}
               </>
             )}
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              marginTop: 16,
+            }}
+          >
             <Toggle
               on={isLease ? revealLease : revealSale}
-              onClick={() => (isLease ? setRevealLease(v => !v) : setRevealSale(v => !v))}
+              onClick={() =>
+                isLease ? setRevealLease(v => !v) : setRevealSale(v => !v)
+              }
             />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-800)" }}>
-              {(isLease ? revealLease : revealSale) ? "Prices visible on MLS" : "Prices hidden from MLS"}
+            <span
+              style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-800)" }}
+            >
+              {(isLease ? revealLease : revealSale)
+                ? "Prices visible on MLS"
+                : "Prices hidden from MLS"}
             </span>
           </div>
         </Card>
 
         {/* Property details (type-specific) */}
         <Card padding="lg">
-          <SectionTitle>{PROPERTY_TYPE_LABELS[propType] ?? "Property"} details</SectionTitle>
-          <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))" }}>
+          <SectionTitle>
+            {PROPERTY_TYPE_LABELS[propType] ?? "Property"} details
+          </SectionTitle>
+          <div
+            style={{
+              display: "grid",
+              gap: 14,
+              gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+            }}
+          >
             {DETAIL_FIELDS[dk].map(d => (
               <Field key={d.id} label={d.label} optional>
                 {d.type === "select" ? (
-                  <Select value={vals[d.id] || ""} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setVal(d.id, e.target.value)} options={d.options || []} />
+                  <Select
+                    value={vals[d.id] || ""}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      setVal(d.id, e.target.value)
+                    }
+                    options={d.options || []}
+                  />
                 ) : (
-                  <Input value={vals[d.id] || ""} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVal(d.id, e.target.value)} />
+                  <Input
+                    value={vals[d.id] || ""}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setVal(d.id, e.target.value)
+                    }
+                  />
                 )}
               </Field>
             ))}
           </div>
           {DETAIL_GROUPS[dk].map(g => (
             <div key={g.id} style={{ marginTop: 16 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-700)", marginBottom: 8 }}>{g.label}</div>
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "var(--ink-700)",
+                  marginBottom: 8,
+                }}
+              >
+                {g.label}
+              </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {g.options.map(o => {
                   const on = (groups[g.id] || []).includes(o.value);
@@ -814,16 +1269,79 @@ export default function PortalListingForm() {
           <SectionTitle>Listing agents</SectionTitle>
           <div style={{ display: "grid", gap: 10 }}>
             {agents.map((a, i) => (
-              <div key={i} style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1.4fr 90px 40px", gap: 8, alignItems: "center" }}>
-                <Input value={a.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAgents(prev => prev.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} placeholder="Agent name" />
-                <Input value={a.phone} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAgents(prev => prev.map((x, j) => (j === i ? { ...x, phone: e.target.value } : x)))} placeholder="949-000-0000" />
-                <Input value={a.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAgents(prev => prev.map((x, j) => (j === i ? { ...x, email: e.target.value } : x)))} placeholder="email@lee-associates.com" />
-                <Input value={a.shared} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAgents(prev => prev.map((x, j) => (j === i ? { ...x, shared: e.target.value } : x)))} placeholder="50" suffix="%" />
+              <div
+                key={i}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1.4fr 1fr 1.4fr 90px 40px",
+                  gap: 8,
+                  alignItems: "center",
+                }}
+              >
+                <Input
+                  value={a.name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setAgents(prev =>
+                      prev.map((x, j) =>
+                        j === i ? { ...x, name: e.target.value } : x
+                      )
+                    )
+                  }
+                  placeholder="Agent name"
+                />
+                <Input
+                  value={a.phone}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setAgents(prev =>
+                      prev.map((x, j) =>
+                        j === i ? { ...x, phone: e.target.value } : x
+                      )
+                    )
+                  }
+                  placeholder="949-000-0000"
+                />
+                <Input
+                  value={a.email}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setAgents(prev =>
+                      prev.map((x, j) =>
+                        j === i ? { ...x, email: e.target.value } : x
+                      )
+                    )
+                  }
+                  placeholder="email@lee-associates.com"
+                />
+                <Input
+                  value={a.shared}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setAgents(prev =>
+                      prev.map((x, j) =>
+                        j === i ? { ...x, shared: e.target.value } : x
+                      )
+                    )
+                  }
+                  placeholder="50"
+                  suffix="%"
+                />
                 <button
                   type="button"
                   aria-label="Remove agent"
-                  onClick={() => setAgents(prev => (prev.length > 1 ? prev.filter((_, j) => j !== i) : prev))}
-                  style={{ width: 34, height: 40, border: "1px solid var(--ink-200)", background: "var(--ink-0)", color: "var(--err-600)", borderRadius: 8, cursor: "pointer", fontSize: 18, lineHeight: 1 }}
+                  onClick={() =>
+                    setAgents(prev =>
+                      prev.length > 1 ? prev.filter((_, j) => j !== i) : prev
+                    )
+                  }
+                  style={{
+                    width: 34,
+                    height: 40,
+                    border: "1px solid var(--ink-200)",
+                    background: "var(--ink-0)",
+                    color: "var(--err-600)",
+                    borderRadius: 8,
+                    cursor: "pointer",
+                    fontSize: 18,
+                    lineHeight: 1,
+                  }}
                 >
                   ×
                 </button>
@@ -831,7 +1349,17 @@ export default function PortalListingForm() {
             ))}
           </div>
           <div style={{ marginTop: 10 }}>
-            <Button variant="secondary" size="sm" icon={<Icons.Plus size={14} />} onClick={() => setAgents(prev => [...prev, { name: "", phone: "", email: "", shared: "" }])}>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Icons.Plus size={14} />}
+              onClick={() =>
+                setAgents(prev => [
+                  ...prev,
+                  { name: "", phone: "", email: "", shared: "" },
+                ])
+              }
+            >
               Add agent
             </Button>
           </div>
@@ -842,47 +1370,118 @@ export default function PortalListingForm() {
           <SectionTitle>Release instructions</SectionTitle>
           <div style={{ display: "grid", gap: 10 }}>
             {RELEASE_OPTIONS.map(o => (
-              <label key={o.value} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--ink-800)", cursor: "pointer" }}>
-                <input type="radio" name="l-release" checked={release === o.value} onChange={() => setRelease(o.value)} />
+              <label
+                key={o.value}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  fontSize: 13,
+                  color: "var(--ink-800)",
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="radio"
+                  name="l-release"
+                  checked={release === o.value}
+                  onChange={() => setRelease(o.value)}
+                />
                 {o.label}
               </label>
             ))}
           </div>
-          <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", marginTop: 14 }}>
+          <div
+            style={{
+              display: "grid",
+              gap: 14,
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              marginTop: 14,
+            }}
+          >
             {release === "date" && (
               <Field label="MLS & website release date">
-                <Input type="date" value={vals["l-release-date"]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVal("l-release-date", e.target.value)} />
+                <Input
+                  type="date"
+                  value={vals["l-release-date"]}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setVal("l-release-date", e.target.value)
+                  }
+                />
               </Field>
             )}
             <Field label="Notify the MLS?">
-              <Select value={vals["l-agent-notify"]} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setVal("l-agent-notify", e.target.value)} options={NOTIFY_OPTIONS} />
+              <Select
+                value={vals["l-agent-notify"]}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  setVal("l-agent-notify", e.target.value)
+                }
+                options={NOTIFY_OPTIONS}
+              />
             </Field>
           </div>
           <div style={{ marginTop: 14 }}>
             <Field label="Comments / special instructions" optional>
-              <textarea value={vals["l-comments"]} onChange={e => setVal("l-comments", e.target.value)} placeholder="Suite mix, cross streets, or other notes for admin" style={textareaStyle} />
+              <textarea
+                value={vals["l-comments"]}
+                onChange={e => setVal("l-comments", e.target.value)}
+                placeholder="Suite mix, cross streets, or other notes for admin"
+                style={textareaStyle}
+              />
             </Field>
           </div>
         </Card>
 
         {error ? (
-          <div role="alert" style={{ color: "var(--err-700)", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
+          <div
+            role="alert"
+            style={{
+              color: "var(--err-700)",
+              fontSize: 13,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
             <Icons.Warn size={14} /> {error}
           </div>
         ) : null}
 
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-          <Button onClick={onSubmit} loading={submitting} iconRight={<Icons.Arrow size={16} />}>
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            flexWrap: "wrap",
+            alignItems: "center",
+          }}
+        >
+          <Button
+            onClick={onSubmit}
+            loading={submitting}
+            iconRight={<Icons.Arrow size={16} />}
+          >
             {submitting ? "Submitting…" : "Submit to admin"}
           </Button>
-          <Button variant="secondary" onClick={onDownloadPdf} icon={<Icons.Download size={15} />}>
+          <Button
+            variant="secondary"
+            onClick={onDownloadPdf}
+            icon={<Icons.Download size={15} />}
+          >
             Download PDF
           </Button>
           <Button variant="ghost" onClick={onClear}>
             Clear form
           </Button>
           {user?.name ? (
-            <span style={{ fontSize: 12, color: "var(--ink-500)", marginLeft: "auto" }}>Signed in as {user.name}</span>
+            <span
+              style={{
+                fontSize: 12,
+                color: "var(--ink-500)",
+                marginLeft: "auto",
+              }}
+            >
+              Signed in as {user.name}
+            </span>
           ) : null}
         </div>
       </div>
