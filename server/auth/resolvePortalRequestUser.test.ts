@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Request } from "express";
+import { ForbiddenError } from "@shared/_core/errors";
 import { ENV } from "../_core/env";
 import { resolvePortalRequestUser } from "./resolvePortalRequestUser";
 
@@ -33,6 +34,7 @@ describe("resolvePortalRequestUser admin-policy name escalation", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    fakeReq.headers = {};
     vi.mocked(resolvePlatformUserFromRequest).mockResolvedValue(null);
     ENV.localAdminNames = ["trusted admin"];
   });
@@ -90,5 +92,19 @@ describe("resolvePortalRequestUser admin-policy name escalation", () => {
     const result = await resolvePortalRequestUser(fakeReq);
 
     expect(result?.role).toBe("user");
+  });
+
+  it("does not fall back to raw JWT verification after an inactive-account denial", async () => {
+    vi.mocked(sdk.authenticateRequest).mockRejectedValue(ForbiddenError("User account is inactive"));
+    fakeReq.headers = { cookie: "app_session_id=fake.jwt.token" };
+    vi.mocked(sdk.verifySession).mockResolvedValue({
+      openId: "local:inactive@lee-associates.com",
+      appId: "lee-broker-tool",
+      name: "Inactive Broker",
+      email: "inactive@lee-associates.com",
+    } as never);
+
+    await expect(resolvePortalRequestUser(fakeReq)).resolves.toBeNull();
+    expect(sdk.verifySession).not.toHaveBeenCalled();
   });
 });
