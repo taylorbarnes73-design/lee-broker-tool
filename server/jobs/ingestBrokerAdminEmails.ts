@@ -158,6 +158,10 @@ export async function runIngestOnce(options: RunIngestOptions = {}): Promise<Ing
 
 type IngestOutcome = "imported" | "skipped_duplicate" | "skipped_no_match";
 
+function isTerminalIngestLog(row: { ingestStatus?: string | null }): boolean {
+  return row.ingestStatus !== "error";
+}
+
 async function ingestOneMessage(
   db: AppDb,
   message: GraphMessage,
@@ -165,23 +169,23 @@ async function ingestOneMessage(
   source: "email_ingest" | "email_ingest_backfill"
 ): Promise<IngestOutcome> {
   const existing = await db
-    .select({ id: emailIngestLog.id })
+    .select({ id: emailIngestLog.id, ingestStatus: emailIngestLog.ingestStatus })
     .from(emailIngestLog)
     .where(eq(emailIngestLog.messageId, message.id))
     .limit(1);
-  if (existing.length > 0) {
+  if (existing.some(isTerminalIngestLog)) {
     return "skipped_duplicate";
   }
   if (message.internetMessageId) {
     const existingByIm = await db
-      .select({ id: emailIngestLog.id })
+      .select({ id: emailIngestLog.id, ingestStatus: emailIngestLog.ingestStatus })
       .from(emailIngestLog)
       .where(eq(emailIngestLog.internetMessageId, message.internetMessageId))
       .limit(1);
-    if (existingByIm.length > 0) {
+    if (existingByIm.some(isTerminalIngestLog)) {
       await db.insert(emailIngestLog).values({
         messageId: message.id,
-        internetMessageId: message.internetMessageId,
+        internetMessageId: null,
         threadId: message.conversationId ?? null,
         receivedAt: message.receivedDateTime ? new Date(message.receivedDateTime) : null,
         fromEmail: message.from?.emailAddress?.address?.toLowerCase() ?? null,
@@ -191,6 +195,18 @@ async function ingestOneMessage(
         submissionId: null,
         ingestStatus: "skipped_duplicate",
         errorMessage: null,
+      }).onDuplicateKeyUpdate({
+        set: {
+          threadId: message.conversationId ?? null,
+          receivedAt: message.receivedDateTime ? new Date(message.receivedDateTime) : null,
+          fromEmail: message.from?.emailAddress?.address?.toLowerCase() ?? null,
+          toEmails: emailsFrom(message.toRecipients) as any,
+          ccEmails: emailsFrom(message.ccRecipients) as any,
+          subject: message.subject?.slice(0, 1023) ?? null,
+          submissionId: null,
+          ingestStatus: "skipped_duplicate",
+          errorMessage: null,
+        },
       });
       return "skipped_duplicate";
     }
@@ -257,6 +273,20 @@ async function ingestOneMessage(
     submissionId,
     ingestStatus: "imported",
     errorMessage: null,
+  }).onDuplicateKeyUpdate({
+    set: {
+      messageId: message.id,
+      internetMessageId: message.internetMessageId ?? null,
+      threadId: message.conversationId ?? null,
+      receivedAt: message.receivedDateTime ? new Date(message.receivedDateTime) : null,
+      fromEmail: fromEmail.toLowerCase() || null,
+      toEmails: toEmails as any,
+      ccEmails: ccEmails as any,
+      subject: message.subject?.slice(0, 1023) ?? null,
+      submissionId,
+      ingestStatus: "imported",
+      errorMessage: null,
+    },
   });
 
   return "imported";

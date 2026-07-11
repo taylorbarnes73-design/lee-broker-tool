@@ -11,7 +11,7 @@ import { timingSafeEqual } from "node:crypto";
 import { getDb } from "./db";
 import { brokerAdminRequests, uploads, submissions } from "../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
-import { storagePut, storageGet } from "./storage";
+import { storagePut, storageGet, storageKeyFromReference } from "./storage";
 import { nanoid } from "nanoid";
 import { DealiusClient } from "./services/dealiusClient";
 import { authenticateConfiguredDealius } from "./services/dealiusAuth";
@@ -32,6 +32,10 @@ function err(res: Response, status: number, message: string) {
 function serverError(res: Response, e: unknown) {
   console.error(`[restApi] ${res.req?.method ?? ""} ${res.req?.originalUrl ?? ""} failed:`, e);
   err(res, 500, "Internal server error");
+}
+
+function isPrivateConnectorFileKey(key: string): boolean {
+  return key.startsWith("broker-admin/") || key.startsWith("broker-docusign/");
 }
 
 function getConnectorApiKey(): string {
@@ -319,9 +323,11 @@ restApiRouter.get("/files/url", async (req: Request, res: Response) => {
   try {
     const key = req.query.key as string;
     if (!key) return err(res, 400, "key query parameter is required");
+    const storageKey = storageKeyFromReference(key);
+    if (isPrivateConnectorFileKey(storageKey)) return err(res, 403, "Forbidden");
 
-    const { url } = await storageGet(key);
-    ok(res, { fileKey: key, url });
+    const { url } = await storageGet(storageKey);
+    ok(res, { fileKey: storageKey, url });
   } catch (e: unknown) {
     serverError(res, e);
   }

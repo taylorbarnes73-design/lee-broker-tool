@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { emailIngestLog, kvState } from "../../drizzle/schema";
+import { emailIngestLog, kvState, submissions } from "../../drizzle/schema";
 import { runIngestOnce } from "./ingestBrokerAdminEmails";
 import type { GraphMessage } from "../lib/msGraph";
 
@@ -102,6 +102,52 @@ describe("runIngestOnce", () => {
     expect(summary.imported).toBe(2);
     // Watermark must hold at the last good message before the failure, not the
     // newest message in the batch, so msg2 (and anything after it) gets retried.
+    expect(summary.lastPoll).toBe("2026-01-01T00:00:00.000Z");
+  });
+
+  it("retries a message whose previous ingest attempt only logged an error", async () => {
+    const message = buildMessage("msg-error", "2026-01-01T00:00:00.000Z");
+    vi.mocked(listSharedMailboxMessages).mockResolvedValue([message]);
+    let importedLogWasUpserted = false;
+    const fakeDb = {
+      select: (_cols?: unknown) => ({
+        from: (table: unknown) => ({
+          where: (_cond: unknown) => ({
+            limit: (_n: number) => {
+              if (table === kvState) return Promise.resolve([]);
+              if (table === emailIngestLog) {
+                return Promise.resolve([{ id: 99, ingestStatus: "error" }]);
+              }
+              return Promise.resolve([]);
+            },
+          }),
+        }),
+      }),
+      insert: (table: unknown) => ({
+        values: (row: { ingestStatus?: string }) => {
+          if (table === submissions) return Promise.resolve([{ insertId: 123 }]);
+          if (table === emailIngestLog && row.ingestStatus === "imported") {
+            const duplicateLogInsert: any = {
+              then: (_resolve: unknown, reject: (error: Error) => unknown) => reject(new Error("duplicate message_id")),
+            };
+            duplicateLogInsert.onDuplicateKeyUpdate = () => {
+              importedLogWasUpserted = true;
+              return Promise.resolve(undefined);
+            };
+            return duplicateLogInsert;
+          }
+          const promise: any = Promise.resolve([{ insertId: 1 }]);
+          promise.onDuplicateKeyUpdate = () => Promise.resolve(undefined);
+          return promise;
+        },
+      }),
+    };
+    vi.mocked(getDb).mockResolvedValue(fakeDb as never);
+
+    const summary = await runIngestOnce({ since: new Date("2025-12-31T00:00:00.000Z") });
+
+    expect(summary).toMatchObject({ imported: 1, skipped: 0, errors: 0 });
+    expect(importedLogWasUpserted).toBe(true);
     expect(summary.lastPoll).toBe("2026-01-01T00:00:00.000Z");
   });
 });
