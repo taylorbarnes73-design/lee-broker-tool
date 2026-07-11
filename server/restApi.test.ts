@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import express from "express";
 import request from "supertest";
 import { restApiRouter } from "./restApi";
+import { storageGet } from "./storage";
 
 const TEST_API_KEY = "test-connector-key";
 
@@ -27,6 +28,7 @@ vi.mock("./db", () => ({
 vi.mock("./storage", () => ({
   storagePut: vi.fn().mockResolvedValue({ url: "https://cdn.example.com/test.pdf", key: "test-key" }),
   storageGet: vi.fn().mockResolvedValue({ url: "https://cdn.example.com/test.pdf?signed=1", key: "test-key" }),
+  storageKeyFromReference: vi.fn((key: string) => key.replace(/^\/local-uploads\//, "").replace(/^\/+/, "")),
 }));
 
 vi.mock("../drizzle/schema", () => ({
@@ -222,6 +224,24 @@ describe("REST API — /api/v1", () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data.url).toBeDefined();
+    });
+
+    it("does not return signed URLs for private BrokerAdmin files", async () => {
+      const res = await withApiKey(request(app).get("/api/v1/files/url?key=broker-admin%2F42%2Fconfidential.pdf"));
+
+      expect(res.status).toBe(403);
+      expect(res.body).toMatchObject({ success: false, error: "Forbidden" });
+      expect(storageGet).not.toHaveBeenCalled();
+    });
+
+    it("does not return signed URLs for private DocuSign files", async () => {
+      const res = await withApiKey(
+        request(app).get("/api/v1/files/url?key=broker-docusign%2Fexecuted%2Flease.pdf")
+      );
+
+      expect(res.status).toBe(403);
+      expect(res.body).toMatchObject({ success: false, error: "Forbidden" });
+      expect(storageGet).not.toHaveBeenCalled();
     });
   });
 });
