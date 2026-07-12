@@ -11,12 +11,14 @@ import { timingSafeEqual } from "node:crypto";
 import { getDb } from "./db";
 import { brokerAdminRequests, uploads, submissions } from "../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
-import { storagePut, storageGet } from "./storage";
+import { storagePut, storageGet, storageKeyFromReference } from "./storage";
 import { nanoid } from "nanoid";
 import { DealiusClient } from "./services/dealiusClient";
 import { authenticateConfiguredDealius } from "./services/dealiusAuth";
 
 export const restApiRouter = Router();
+
+const CONNECTOR_BLOCKED_FILE_PREFIXES = ["broker-admin/", "broker-docusign/"] as const;
 
 // ── Utility ──
 
@@ -50,6 +52,15 @@ function hasValidApiKey(req: Request): boolean {
   if (expected.length !== provided.length) return false;
 
   return timingSafeEqual(expected, provided);
+}
+
+function isConnectorReadableFileReference(fileReference: string | null | undefined): boolean {
+  try {
+    const key = storageKeyFromReference(String(fileReference ?? ""));
+    return !CONNECTOR_BLOCKED_FILE_PREFIXES.some(prefix => key.startsWith(prefix));
+  } catch {
+    return false;
+  }
 }
 
 restApiRouter.use((req: Request, res: Response, next) => {
@@ -291,6 +302,7 @@ restApiRouter.get("/files", async (req: Request, res: Response) => {
       .orderBy(desc(uploads.createdAt))
       .limit(limit);
 
+    rows = rows.filter(r => isConnectorReadableFileReference(r.fileKey));
     if (category) rows = rows.filter(r => r.category === category);
     if (reference) rows = rows.filter(r => r.reference === reference);
 
@@ -317,9 +329,13 @@ restApiRouter.get("/files", async (req: Request, res: Response) => {
  */
 restApiRouter.get("/files/url", async (req: Request, res: Response) => {
   try {
-    const key = req.query.key as string;
-    if (!key) return err(res, 400, "key query parameter is required");
+    const keyParam = req.query.key as string;
+    if (!keyParam) return err(res, 400, "key query parameter is required");
 
+    const key = storageKeyFromReference(keyParam);
+    if (!isConnectorReadableFileReference(key)) {
+      return err(res, 403, "File is not available through the connector API");
+    }
     const { url } = await storageGet(key);
     ok(res, { fileKey: key, url });
   } catch (e: unknown) {

@@ -158,6 +158,10 @@ export async function runIngestOnce(options: RunIngestOptions = {}): Promise<Ing
 
 type IngestOutcome = "imported" | "skipped_duplicate" | "skipped_no_match";
 
+function isTerminalIngestStatus(status: string | null | undefined): boolean {
+  return status !== "error";
+}
+
 async function ingestOneMessage(
   db: AppDb,
   message: GraphMessage,
@@ -165,20 +169,20 @@ async function ingestOneMessage(
   source: "email_ingest" | "email_ingest_backfill"
 ): Promise<IngestOutcome> {
   const existing = await db
-    .select({ id: emailIngestLog.id })
+    .select({ id: emailIngestLog.id, ingestStatus: emailIngestLog.ingestStatus })
     .from(emailIngestLog)
     .where(eq(emailIngestLog.messageId, message.id))
     .limit(1);
-  if (existing.length > 0) {
+  if (existing.some(row => isTerminalIngestStatus(row.ingestStatus))) {
     return "skipped_duplicate";
   }
   if (message.internetMessageId) {
     const existingByIm = await db
-      .select({ id: emailIngestLog.id })
+      .select({ id: emailIngestLog.id, ingestStatus: emailIngestLog.ingestStatus })
       .from(emailIngestLog)
       .where(eq(emailIngestLog.internetMessageId, message.internetMessageId))
       .limit(1);
-    if (existingByIm.length > 0) {
+    if (existingByIm.some(row => isTerminalIngestStatus(row.ingestStatus))) {
       await db.insert(emailIngestLog).values({
         messageId: message.id,
         internetMessageId: message.internetMessageId,
@@ -245,7 +249,7 @@ async function ingestOneMessage(
   });
   const submissionId = (insertResult as any).insertId ?? null;
 
-  await db.insert(emailIngestLog).values({
+  const importedLogRow = {
     messageId: message.id,
     internetMessageId: message.internetMessageId ?? null,
     threadId: message.conversationId ?? null,
@@ -257,6 +261,10 @@ async function ingestOneMessage(
     submissionId,
     ingestStatus: "imported",
     errorMessage: null,
+  };
+
+  await db.insert(emailIngestLog).values(importedLogRow).onDuplicateKeyUpdate({
+    set: importedLogRow,
   });
 
   return "imported";

@@ -73,7 +73,7 @@ type ArchivedSubmissionFile = {
 type DeliveryResult = {
   success: boolean;
   error?: string;
-  deliveryMethod?: "smtp" | "outlook-mcp" | "outlook-mcp-link" | "mail-client";
+  deliveryMethod?: "smtp" | "outlook-mcp" | "outlook-mcp-link" | "mail-client" | "queue-only" | "queued";
   attachmentIncluded?: boolean;
 };
 
@@ -506,7 +506,7 @@ export const emailRouter = router({
       // so the admin does not receive a duplicate email.
       // For listing/voucher, we try email delivery but always queue the submission
       // regardless of whether email succeeds — the admin portal is the source of truth.
-      const delivery =
+      const queuedDelivery =
         deliveryMode === "mail-client"
           ? {
               success: true,
@@ -522,13 +522,12 @@ export const emailRouter = router({
               attachmentIncluded: false,
               error: undefined as string | undefined,
             }
-          : await deliverSubmissionEmail({
-              to: [adminEmail],
-              cc: senderEmail ? [senderEmail] : [],
-              subject,
-              content,
-              attachments: generatedAttachments,
-            });
+          : {
+              success: true,
+              deliveryMethod: "queued" as const,
+              attachmentIncluded: false,
+              error: undefined as string | undefined,
+            };
 
       let recordedSubmission: RecordedSubmission | null = null;
       try {
@@ -542,8 +541,8 @@ export const emailRouter = router({
           excelFile: archivedExcel,
           supportingFiles,
           uploaderOpenId: ctx.user?.openId ?? null,
-          deliveryMethod: delivery.deliveryMethod,
-          deliveryError: delivery.error,
+          deliveryMethod: queuedDelivery.deliveryMethod,
+          deliveryError: queuedDelivery.error,
           formData,
         });
       } catch (error: unknown) {
@@ -551,8 +550,8 @@ export const emailRouter = router({
           // If we can't record the submission at all, that IS a real failure.
           success: false,
           error: error instanceof Error ? error.message : String(error),
-          deliveryMethod: delivery.deliveryMethod,
-          attachmentIncluded: delivery.attachmentIncluded,
+          deliveryMethod: queuedDelivery.deliveryMethod,
+          attachmentIncluded: queuedDelivery.attachmentIncluded,
           archivedFile: archivedPdf
             ? {
                 fileKey: archivedPdf.fileKey,
@@ -575,6 +574,17 @@ export const emailRouter = router({
             : null,
         };
       }
+
+      const delivery =
+        deliveryMode === "mail-client" || formType === "sign"
+          ? queuedDelivery
+          : await deliverSubmissionEmail({
+              to: [adminEmail],
+              cc: senderEmail ? [senderEmail] : [],
+              subject,
+              content,
+              attachments: generatedAttachments,
+            });
 
       // The submission is in the queue. Email delivery is best-effort — a failed email
       // does not mean the submission failed. Surface email status separately so the
