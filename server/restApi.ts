@@ -11,12 +11,17 @@ import { timingSafeEqual } from "node:crypto";
 import { getDb } from "./db";
 import { brokerAdminRequests, uploads, submissions } from "../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
-import { storagePut, storageGet } from "./storage";
+import { storagePut, storageGet, storageKeyFromReference } from "./storage";
 import { nanoid } from "nanoid";
 import { DealiusClient } from "./services/dealiusClient";
 import { authenticateConfiguredDealius } from "./services/dealiusAuth";
 
 export const restApiRouter = Router();
+
+const CONNECTOR_BLOCKED_FILE_PREFIXES = [
+  "broker-admin/",
+  "broker-docusign/",
+] as const;
 
 // ── Utility ──
 
@@ -30,7 +35,10 @@ function err(res: Response, status: number, message: string) {
 
 /** Logs the real error server-side and returns a generic message so internals never leak to the client. */
 function serverError(res: Response, e: unknown) {
-  console.error(`[restApi] ${res.req?.method ?? ""} ${res.req?.originalUrl ?? ""} failed:`, e);
+  console.error(
+    `[restApi] ${res.req?.method ?? ""} ${res.req?.originalUrl ?? ""} failed:`,
+    e
+  );
   err(res, 500, "Internal server error");
 }
 
@@ -50,6 +58,19 @@ function hasValidApiKey(req: Request): boolean {
   if (expected.length !== provided.length) return false;
 
   return timingSafeEqual(expected, provided);
+}
+
+function isConnectorReadableFileReference(
+  fileReference: string | null | undefined
+): boolean {
+  try {
+    const key = storageKeyFromReference(String(fileReference ?? ""));
+    return !CONNECTOR_BLOCKED_FILE_PREFIXES.some(prefix =>
+      key.startsWith(prefix)
+    );
+  } catch {
+    return false;
+  }
 }
 
 restApiRouter.use((req: Request, res: Response, next) => {
@@ -85,9 +106,11 @@ restApiRouter.use((req: Request, res: Response, next) => {
 restApiRouter.post("/submit/listing", async (req: Request, res: Response) => {
   try {
     const body = req.body;
-    if (!body.propertyAddress) return err(res, 400, "propertyAddress is required");
+    if (!body.propertyAddress)
+      return err(res, 400, "propertyAddress is required");
     if (!body.propertyType) return err(res, 400, "propertyType is required");
-    if (!body.transactionType) return err(res, 400, "transactionType is required");
+    if (!body.transactionType)
+      return err(res, 400, "transactionType is required");
 
     const db = await getDb();
     if (!db) return err(res, 503, "Database unavailable");
@@ -117,8 +140,10 @@ restApiRouter.post("/submit/listing", async (req: Request, res: Response) => {
 restApiRouter.post("/submit/voucher", async (req: Request, res: Response) => {
   try {
     const body = req.body;
-    if (!body.propertyAddress) return err(res, 400, "propertyAddress is required");
-    if (!body.representationType) return err(res, 400, "representationType is required");
+    if (!body.propertyAddress)
+      return err(res, 400, "propertyAddress is required");
+    if (!body.representationType)
+      return err(res, 400, "representationType is required");
 
     const db = await getDb();
     if (!db) return err(res, 503, "Database unavailable");
@@ -146,34 +171,40 @@ restApiRouter.post("/submit/voucher", async (req: Request, res: Response) => {
 /**
  * Submit a sign order request.
  */
-restApiRouter.post("/submit/sign-request", async (req: Request, res: Response) => {
-  try {
-    const body = req.body;
-    if (!body.propertyAddress) return err(res, 400, "propertyAddress is required");
+restApiRouter.post(
+  "/submit/sign-request",
+  async (req: Request, res: Response) => {
+    try {
+      const body = req.body;
+      if (!body.propertyAddress)
+        return err(res, 400, "propertyAddress is required");
 
-    const db = await getDb();
-    if (!db) return err(res, 503, "Database unavailable");
+      const db = await getDb();
+      if (!db) return err(res, 503, "Database unavailable");
 
-    const poNumber = body.poNumber ?? `PO-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${nanoid(3).toUpperCase()}`;
+      const poNumber =
+        body.poNumber ??
+        `PO-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${nanoid(3).toUpperCase()}`;
 
-    const [result] = await db.insert(submissions).values({
-      formType: "sign-request",
-      payload: JSON.stringify({ ...body, poNumber }),
-      submittedBy: body.requestedBy ?? null,
-      reference: body.propertyAddress ?? null,
-    });
+      const [result] = await db.insert(submissions).values({
+        formType: "sign-request",
+        payload: JSON.stringify({ ...body, poNumber }),
+        submittedBy: body.requestedBy ?? null,
+        reference: body.propertyAddress ?? null,
+      });
 
-    ok(res, {
-      submissionId: (result as any).insertId,
-      formType: "sign-request",
-      poNumber,
-      propertyAddress: body.propertyAddress,
-      submittedAt: new Date().toISOString(),
-    });
-  } catch (e: unknown) {
-    serverError(res, e);
+      ok(res, {
+        submissionId: (result as any).insertId,
+        formType: "sign-request",
+        poNumber,
+        propertyAddress: body.propertyAddress,
+        submittedAt: new Date().toISOString(),
+      });
+    } catch (e: unknown) {
+      serverError(res, e);
+    }
   }
-});
+);
 
 // ── POST /api/v1/submit/comp ──
 /**
@@ -230,13 +261,16 @@ restApiRouter.get("/submissions", async (req: Request, res: Response) => {
       rows = rows.filter(r => r.formType === formType);
     }
 
-    ok(res, rows.map(r => ({
-      submissionId: r.id,
-      formType: r.formType,
-      reference: r.reference,
-      submittedBy: r.submittedBy,
-      submittedAt: r.createdAt,
-    })));
+    ok(
+      res,
+      rows.map(r => ({
+        submissionId: r.id,
+        formType: r.formType,
+        reference: r.reference,
+        submittedBy: r.submittedBy,
+        submittedAt: r.createdAt,
+      }))
+    );
   } catch (e: unknown) {
     serverError(res, e);
   }
@@ -254,7 +288,11 @@ restApiRouter.get("/submissions/:id", async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return err(res, 400, "Invalid submission ID");
 
-    const rows = await db.select().from(submissions).where(eq(submissions.id, id)).limit(1);
+    const rows = await db
+      .select()
+      .from(submissions)
+      .where(eq(submissions.id, id))
+      .limit(1);
     if (!rows.length) return err(res, 404, "Submission not found");
 
     const row = rows[0];
@@ -291,20 +329,24 @@ restApiRouter.get("/files", async (req: Request, res: Response) => {
       .orderBy(desc(uploads.createdAt))
       .limit(limit);
 
+    rows = rows.filter(r => isConnectorReadableFileReference(r.fileKey));
     if (category) rows = rows.filter(r => r.category === category);
     if (reference) rows = rows.filter(r => r.reference === reference);
 
-    ok(res, rows.map(r => ({
-      fileKey: r.fileKey,
-      filename: r.filename,
-      url: r.url,
-      mimeType: r.mimeType,
-      fileSize: r.fileSize,
-      category: r.category,
-      reference: r.reference,
-      uploaderName: r.uploaderName,
-      uploadedAt: r.createdAt,
-    })));
+    ok(
+      res,
+      rows.map(r => ({
+        fileKey: r.fileKey,
+        filename: r.filename,
+        url: r.url,
+        mimeType: r.mimeType,
+        fileSize: r.fileSize,
+        category: r.category,
+        reference: r.reference,
+        uploaderName: r.uploaderName,
+        uploadedAt: r.createdAt,
+      }))
+    );
   } catch (e: unknown) {
     serverError(res, e);
   }
@@ -317,9 +359,13 @@ restApiRouter.get("/files", async (req: Request, res: Response) => {
  */
 restApiRouter.get("/files/url", async (req: Request, res: Response) => {
   try {
-    const key = req.query.key as string;
-    if (!key) return err(res, 400, "key query parameter is required");
+    const keyParam = req.query.key as string;
+    if (!keyParam) return err(res, 400, "key query parameter is required");
 
+    const key = storageKeyFromReference(keyParam);
+    if (!isConnectorReadableFileReference(key)) {
+      return err(res, 403, "File is not available through the connector API");
+    }
     const { url } = await storageGet(key);
     ok(res, { fileKey: key, url });
   } catch (e: unknown) {
@@ -396,12 +442,16 @@ restApiRouter.post("/inbox/email", async (req: Request, res: Response) => {
     });
     const requestId = (result as any).insertId as number;
 
-    const attachments: any[] = Array.isArray(body.attachments) ? body.attachments : [];
+    const attachments: any[] = Array.isArray(body.attachments)
+      ? body.attachments
+      : [];
     const saved: Array<{ filename: string; fileKey: string; url: string }> = [];
 
     for (const a of attachments) {
       const filename = String(a?.filename ?? "").trim();
-      const mimeType = String(a?.mimeType ?? "application/octet-stream").trim() || "application/octet-stream";
+      const mimeType =
+        String(a?.mimeType ?? "application/octet-stream").trim() ||
+        "application/octet-stream";
       const base64Data = String(a?.base64Data ?? "").trim();
       if (!filename || !base64Data) continue;
 
@@ -459,80 +509,97 @@ restApiRouter.post("/inbox/email", async (req: Request, res: Response) => {
  *   documentType?: string           // optional Dealius DocumentType
  * }
  */
-restApiRouter.post("/docusign/completed", async (req: Request, res: Response) => {
-  try {
-    const body = req.body ?? {};
-    const filename = String(body.filename ?? "").trim();
-    const base64Pdf = String(body.base64Pdf ?? "").trim();
-    if (!filename) return err(res, 400, "filename is required");
-    if (!base64Pdf) return err(res, 400, "base64Pdf is required");
+restApiRouter.post(
+  "/docusign/completed",
+  async (req: Request, res: Response) => {
+    try {
+      const body = req.body ?? {};
+      const filename = String(body.filename ?? "").trim();
+      const base64Pdf = String(body.base64Pdf ?? "").trim();
+      if (!filename) return err(res, 400, "filename is required");
+      if (!base64Pdf) return err(res, 400, "base64Pdf is required");
 
-    const db = await getDb();
-    if (!db) return err(res, 503, "Database unavailable");
+      const db = await getDb();
+      if (!db) return err(res, 503, "Database unavailable");
 
-    const requestId = Number(body.requestId ?? body.submissionId ?? 0) || null;
-    const envelopeId = String(body.docusignEnvelopeId ?? "").trim() || null;
+      const requestId =
+        Number(body.requestId ?? body.submissionId ?? 0) || null;
+      const envelopeId = String(body.docusignEnvelopeId ?? "").trim() || null;
 
-    const buffer = Buffer.from(base64Pdf, "base64");
-    const mimeType = String(body.mimeType ?? "application/pdf").trim() || "application/pdf";
+      const buffer = Buffer.from(base64Pdf, "base64");
+      const mimeType =
+        String(body.mimeType ?? "application/pdf").trim() || "application/pdf";
 
-    // Store executed PDF in tool storage first (system of record)
-    const key = `broker-docusign/executed/${nanoid(10)}-${filename.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-    const { url } = await storagePut(key, buffer, mimeType);
+      // Store executed PDF in tool storage first (system of record)
+      const key = `broker-docusign/executed/${nanoid(10)}-${filename.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      const { url } = await storagePut(key, buffer, mimeType);
 
-    await db.insert(uploads).values({
-      fileKey: key,
-      url,
-      filename,
-      mimeType,
-      fileSize: buffer.length,
-      category: "docusign-executed",
-      reference: requestId ? `brokerAdminRequest:${requestId}` : envelopeId ? `envelope:${envelopeId}` : null,
-      uploaderName: "DocuSign",
-      uploaderOpenId: null,
-    });
-
-    // Attach to Dealius (deal + listing) when IDs are present
-    const dealiusDealId = body.dealiusDealId != null ? String(body.dealiusDealId).trim() : "";
-    const dealiusListingId = body.dealiusListingId != null ? String(body.dealiusListingId).trim() : "";
-
-    const client = new DealiusClient();
-    const token = await authenticateConfiguredDealius(client);
-
-    const documentType = body.documentType != null ? String(body.documentType).trim() : null;
-    const results: any = { stored: { fileKey: key, url }, attached: {} as any };
-
-    if (dealiusDealId) {
-      const r = await client.uploadDocument({
-        token,
-        entityType: "deal",
-        entityId: dealiusDealId,
+      await db.insert(uploads).values({
+        fileKey: key,
+        url,
         filename,
         mimeType,
-        buffer,
-        documentType,
+        fileSize: buffer.length,
+        category: "docusign-executed",
+        reference: requestId
+          ? `brokerAdminRequest:${requestId}`
+          : envelopeId
+            ? `envelope:${envelopeId}`
+            : null,
+        uploaderName: "DocuSign",
+        uploaderOpenId: null,
       });
-      results.attached.deal = r;
-      if (r.status < 200 || r.status >= 300) {
-        // Keep going; listing attach might still succeed.
+
+      // Attach to Dealius (deal + listing) when IDs are present
+      const dealiusDealId =
+        body.dealiusDealId != null ? String(body.dealiusDealId).trim() : "";
+      const dealiusListingId =
+        body.dealiusListingId != null
+          ? String(body.dealiusListingId).trim()
+          : "";
+
+      const client = new DealiusClient();
+      const token = await authenticateConfiguredDealius(client);
+
+      const documentType =
+        body.documentType != null ? String(body.documentType).trim() : null;
+      const results: any = {
+        stored: { fileKey: key, url },
+        attached: {} as any,
+      };
+
+      if (dealiusDealId) {
+        const r = await client.uploadDocument({
+          token,
+          entityType: "deal",
+          entityId: dealiusDealId,
+          filename,
+          mimeType,
+          buffer,
+          documentType,
+        });
+        results.attached.deal = r;
+        if (r.status < 200 || r.status >= 300) {
+          // Keep going; listing attach might still succeed.
+        }
       }
-    }
 
-    if (dealiusListingId) {
-      const r = await client.uploadDocument({
-        token,
-        entityType: "listing",
-        entityId: dealiusListingId,
-        filename,
-        mimeType,
-        buffer,
-        documentType,
-      });
-      results.attached.listing = r;
-    }
+      if (dealiusListingId) {
+        const r = await client.uploadDocument({
+          token,
+          entityType: "listing",
+          entityId: dealiusListingId,
+          filename,
+          mimeType,
+          buffer,
+          documentType,
+        });
+        results.attached.listing = r;
+      }
 
-    ok(res, results);
-  } catch (e: unknown) {
-    serverError(res, e);
+      ok(res, results);
+    } catch (e: unknown) {
+      serverError(res, e);
+    }
   }
-});
+);

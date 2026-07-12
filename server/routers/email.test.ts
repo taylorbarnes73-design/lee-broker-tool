@@ -1,19 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const {
-  execFileSyncMock,
-  storagePutMock,
-  dbInsertValuesMock,
-  sendMailMock,
-} = vi.hoisted(() => ({
-  execFileSyncMock: vi.fn(),
-  storagePutMock: vi.fn().mockResolvedValue({
-    key: "broker-docs/submissions/listing/test-file.pdf",
-    url: "https://cdn.example.com/broker-docs/submissions/listing/test-file.pdf",
-  }),
-  dbInsertValuesMock: vi.fn().mockResolvedValue([{ insertId: 101 }]),
-  sendMailMock: vi.fn().mockResolvedValue({ messageId: "smtp-1" }),
-}));
+const { execFileSyncMock, storagePutMock, dbInsertValuesMock, sendMailMock } =
+  vi.hoisted(() => ({
+    execFileSyncMock: vi.fn(),
+    storagePutMock: vi.fn().mockResolvedValue({
+      key: "broker-docs/submissions/listing/test-file.pdf",
+      url: "https://cdn.example.com/broker-docs/submissions/listing/test-file.pdf",
+    }),
+    dbInsertValuesMock: vi.fn().mockResolvedValue([{ insertId: 101 }]),
+    sendMailMock: vi.fn().mockResolvedValue({ messageId: "smtp-1" }),
+  }));
 
 vi.mock("child_process", () => ({
   execFileSync: execFileSyncMock,
@@ -157,6 +153,24 @@ describe("email.sendToAdmin", () => {
     expect(callArg).toContain("_NewportBeach-BrokerAdmin@lee-associates.com");
     expect(result.submissionId).toBe(101);
     expect(result.status).toBe("pending");
+  });
+
+  it("does not send server-side email when queue recording fails", async () => {
+    dbInsertValuesMock.mockRejectedValueOnce(new Error("queue unavailable"));
+    const caller = makeCaller();
+
+    const result = await caller.sendToAdmin({
+      formType: "listing",
+      brokerName: "Test Broker",
+      propertyAddress: "123 Main St, Test City",
+      sections: sampleSections,
+      senderEmail: "testuser@example.test",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("queue unavailable");
+    expect(execFileSyncMock).not.toHaveBeenCalled();
+    expect(sendMailMock).not.toHaveBeenCalled();
   });
 
   it("includes CC when senderEmail is provided", async () => {

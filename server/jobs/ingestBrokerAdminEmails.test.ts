@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { emailIngestLog, kvState } from "../../drizzle/schema";
+import { emailIngestLog, kvState, submissions } from "../../drizzle/schema";
 import { runIngestOnce } from "./ingestBrokerAdminEmails";
 import type { GraphMessage } from "../lib/msGraph";
 
@@ -14,14 +14,20 @@ vi.mock("../lib/msGraph", () => ({
 }));
 
 import { getDb } from "../db";
-import { loadGraphConfig, loadMailboxAddress, listSharedMailboxMessages } from "../lib/msGraph";
+import {
+  loadGraphConfig,
+  loadMailboxAddress,
+  listSharedMailboxMessages,
+} from "../lib/msGraph";
 
 function buildMessage(id: string, receivedDateTime: string): GraphMessage {
   return {
     id,
     internetMessageId: null,
     subject: `Subject ${id}`,
-    from: { emailAddress: { address: `sender-${id}@example.com`, name: "Sender" } },
+    from: {
+      emailAddress: { address: `sender-${id}@example.com`, name: "Sender" },
+    },
     toRecipients: [],
     ccRecipients: [],
     receivedDateTime,
@@ -63,6 +69,43 @@ function buildFakeDb(dedupBehavior: (callIndex: number) => "ok" | "fail") {
   };
 }
 
+function buildFakeDbWithPriorErrorLog() {
+  let emailLogSelectCalls = 0;
+  const insertedRows: Array<{ table: unknown; row: Record<string, unknown> }> =
+    [];
+  return {
+    insertedRows,
+    select: (_cols?: unknown) => ({
+      from: (table: unknown) => ({
+        where: (_cond: unknown) => ({
+          limit: (_n: number) => {
+            if (table === kvState) return Promise.resolve([]);
+            if (table === emailIngestLog) {
+              emailLogSelectCalls += 1;
+              return Promise.resolve(
+                emailLogSelectCalls === 1
+                  ? [{ id: 1, ingestStatus: "error" }]
+                  : []
+              );
+            }
+            return Promise.resolve([]);
+          },
+        }),
+      }),
+    }),
+    insert: (table: unknown) => ({
+      values: (row: Record<string, unknown>) => {
+        insertedRows.push({ table, row });
+        const promise: any = Promise.resolve(
+          table === submissions ? [{ insertId: 77 }] : [{ insertId: 1 }]
+        );
+        promise.onDuplicateKeyUpdate = () => Promise.resolve(undefined);
+        return promise;
+      },
+    }),
+  };
+}
+
 describe("runIngestOnce", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -71,7 +114,9 @@ describe("runIngestOnce", () => {
       clientId: "client",
       clientSecret: "secret",
     });
-    vi.mocked(loadMailboxAddress).mockResolvedValue("mailbox@lee-associates.com");
+    vi.mocked(loadMailboxAddress).mockResolvedValue(
+      "mailbox@lee-associates.com"
+    );
   });
 
   it("requests the mailbox oldest-first so a large backlog can't skip over older messages", async () => {
@@ -94,14 +139,43 @@ describe("runIngestOnce", () => {
     ];
     vi.mocked(listSharedMailboxMessages).mockResolvedValue(messages);
     // Second message's dedup lookup fails, simulating a transient per-message error.
-    vi.mocked(getDb).mockResolvedValue(buildFakeDb(callIndex => (callIndex === 2 ? "fail" : "ok")) as never);
+    vi.mocked(getDb).mockResolvedValue(
+      buildFakeDb(callIndex => (callIndex === 2 ? "fail" : "ok")) as never
+    );
 
-    const summary = await runIngestOnce({ since: new Date("2025-12-31T00:00:00.000Z") });
+    const summary = await runIngestOnce({
+      since: new Date("2025-12-31T00:00:00.000Z"),
+    });
 
     expect(summary.errors).toBe(1);
     expect(summary.imported).toBe(2);
     // Watermark must hold at the last good message before the failure, not the
     // newest message in the batch, so msg2 (and anything after it) gets retried.
     expect(summary.lastPoll).toBe("2026-01-01T00:00:00.000Z");
+  });
+
+  it("retries messages that only have prior error ingest logs", async () => {
+    const message = buildMessage("msg-error", "2026-01-04T00:00:00.000Z");
+    vi.mocked(listSharedMailboxMessages).mockResolvedValue([message]);
+    const db = buildFakeDbWithPriorErrorLog();
+    vi.mocked(getDb).mockResolvedValue(db as never);
+
+    const summary = await runIngestOnce({
+      since: new Date("2026-01-01T00:00:00.000Z"),
+    });
+
+    expect(summary.errors).toBe(0);
+    expect(summary.imported).toBe(1);
+    expect(summary.skipped).toBe(0);
+    expect(summary.lastPoll).toBe("2026-01-04T00:00:00.000Z");
+    expect(db.insertedRows.some(({ table }) => table === submissions)).toBe(
+      true
+    );
+    expect(
+      db.insertedRows.some(
+        ({ table, row }) =>
+          table === emailIngestLog && row.ingestStatus === "imported"
+      )
+    ).toBe(true);
   });
 });

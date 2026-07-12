@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Request } from "express";
+import { ForbiddenError } from "@shared/_core/errors";
 import { ENV } from "../_core/env";
 import { resolvePortalRequestUser } from "./resolvePortalRequestUser";
 
@@ -22,7 +23,10 @@ vi.mock("../db", () => ({
   getDb: vi.fn(),
 }));
 
-import { resolvePlatformUserFromRequest, findAppUserByUsernameOrEmail } from "./platformSession";
+import {
+  resolvePlatformUserFromRequest,
+  findAppUserByUsernameOrEmail,
+} from "./platformSession";
 import { sdk } from "../_core/sdk";
 import { getDb } from "../db";
 
@@ -79,7 +83,9 @@ describe("resolvePortalRequestUser admin-policy name escalation", () => {
 
   it("does not grant admin from the no-DB fallback session name", async () => {
     vi.mocked(sdk.authenticateRequest).mockRejectedValue(new Error("db down"));
-    fakeReq.headers = { cookie: "lbt_session=should-not-match; app_session_id=fake.jwt.token" };
+    fakeReq.headers = {
+      cookie: "lbt_session=should-not-match; app_session_id=fake.jwt.token",
+    };
     vi.mocked(sdk.verifySession).mockResolvedValue({
       openId: "local:broker@lee-associates.com",
       appId: "lee-broker-tool",
@@ -90,5 +96,22 @@ describe("resolvePortalRequestUser admin-policy name escalation", () => {
     const result = await resolvePortalRequestUser(fakeReq);
 
     expect(result?.role).toBe("user");
+  });
+
+  it("rejects inactive legacy users instead of falling back to raw JWT verification", async () => {
+    vi.mocked(sdk.authenticateRequest).mockRejectedValue(
+      ForbiddenError("User account is inactive")
+    );
+    fakeReq.headers = { cookie: "app_session_id=fake.jwt.token" };
+    vi.mocked(sdk.verifySession).mockResolvedValue({
+      openId: "local:inactive@lee-associates.com",
+      appId: "lee-broker-tool",
+      email: "inactive@lee-associates.com",
+    } as never);
+
+    const result = await resolvePortalRequestUser(fakeReq);
+
+    expect(result).toBeNull();
+    expect(sdk.verifySession).not.toHaveBeenCalled();
   });
 });
