@@ -52,11 +52,7 @@ function emailsFrom(list: GraphMessage["toRecipients"]): string[] {
 }
 
 async function loadLastPoll(db: AppDb): Promise<Date> {
-  const rows = await db
-    .select()
-    .from(kvState)
-    .where(eq(kvState.key, LAST_POLL_KEY))
-    .limit(1);
+  const rows = await db.select().from(kvState).where(eq(kvState.key, LAST_POLL_KEY)).limit(1);
   const raw = rows[0]?.value as { iso?: string } | null;
   if (raw && typeof raw === "object" && typeof raw.iso === "string") {
     const d = new Date(raw.iso);
@@ -68,14 +64,8 @@ async function loadLastPoll(db: AppDb): Promise<Date> {
 async function saveLastPoll(db: AppDb, iso: string): Promise<void> {
   await db
     .insert(kvState)
-    .values({
-      key: LAST_POLL_KEY,
-      value: { iso } as any,
-      updatedAt: new Date(),
-    })
-    .onDuplicateKeyUpdate({
-      set: { value: { iso } as any, updatedAt: new Date() },
-    });
+    .values({ key: LAST_POLL_KEY, value: { iso } as any, updatedAt: new Date() })
+    .onDuplicateKeyUpdate({ set: { value: { iso } as any, updatedAt: new Date() } });
 }
 
 export type RunIngestOptions = {
@@ -84,16 +74,8 @@ export type RunIngestOptions = {
   sourceLabel?: "email_ingest" | "email_ingest_backfill";
 };
 
-export async function runIngestOnce(
-  options: RunIngestOptions = {}
-): Promise<IngestSummary> {
-  const summary: IngestSummary = {
-    imported: 0,
-    skipped: 0,
-    errors: 0,
-    lastPoll: null,
-    errorMessages: [],
-  };
+export async function runIngestOnce(options: RunIngestOptions = {}): Promise<IngestSummary> {
+  const summary: IngestSummary = { imported: 0, skipped: 0, errors: 0, lastPoll: null, errorMessages: [] };
 
   const db = await getDb();
   if (!db) {
@@ -105,9 +87,7 @@ export async function runIngestOnce(
   const cfg = await loadGraphConfig();
   if (!cfg) {
     summary.errors = 1;
-    summary.errorMessages.push(
-      "Graph credentials are not configured. Set Tenant ID, Client ID, and Client Secret in Settings."
-    );
+    summary.errorMessages.push("Graph credentials are not configured. Set Tenant ID, Client ID, and Client Secret in Settings.");
     return summary;
   }
   const mailbox = options.mailbox ?? (await loadMailboxAddress());
@@ -118,18 +98,10 @@ export async function runIngestOnce(
   try {
     // Oldest-first: a burst beyond maxResults must not skip over older messages
     // in favor of newer ones, since the watermark below only ever advances forward.
-    messages = await listSharedMailboxMessages(cfg, {
-      mailbox,
-      since,
-      top: 50,
-      maxResults: 200,
-      order: "asc",
-    });
+    messages = await listSharedMailboxMessages(cfg, { mailbox, since, top: 50, maxResults: 200, order: "asc" });
   } catch (err) {
     summary.errors += 1;
-    summary.errorMessages.push(
-      err instanceof Error ? err.message : String(err)
-    );
+    summary.errorMessages.push(err instanceof Error ? err.message : String(err));
     return summary;
   }
 
@@ -143,14 +115,10 @@ export async function runIngestOnce(
     try {
       const result = await ingestOneMessage(db, message, mailbox, source);
       if (result === "imported") summary.imported += 1;
-      else if (result === "skipped_duplicate" || result === "skipped_no_match")
-        summary.skipped += 1;
+      else if (result === "skipped_duplicate" || result === "skipped_no_match") summary.skipped += 1;
       if (!sawFailure) {
-        const r = message.receivedDateTime
-          ? new Date(message.receivedDateTime)
-          : null;
-        if (r && (!lastGoodReceived || r > lastGoodReceived))
-          lastGoodReceived = r;
+        const r = message.receivedDateTime ? new Date(message.receivedDateTime) : null;
+        if (r && (!lastGoodReceived || r > lastGoodReceived)) lastGoodReceived = r;
       }
     } catch (err) {
       sawFailure = true;
@@ -162,9 +130,7 @@ export async function runIngestOnce(
           messageId: message.id,
           internetMessageId: message.internetMessageId ?? null,
           threadId: message.conversationId ?? null,
-          receivedAt: message.receivedDateTime
-            ? new Date(message.receivedDateTime)
-            : null,
+          receivedAt: message.receivedDateTime ? new Date(message.receivedDateTime) : null,
           fromEmail: message.from?.emailAddress?.address?.toLowerCase() ?? null,
           toEmails: emailsFrom(message.toRecipients) as any,
           ccEmails: emailsFrom(message.ccRecipients) as any,
@@ -203,10 +169,7 @@ async function ingestOneMessage(
   source: "email_ingest" | "email_ingest_backfill"
 ): Promise<IngestOutcome> {
   const existing = await db
-    .select({
-      id: emailIngestLog.id,
-      ingestStatus: emailIngestLog.ingestStatus,
-    })
+    .select({ id: emailIngestLog.id, ingestStatus: emailIngestLog.ingestStatus })
     .from(emailIngestLog)
     .where(eq(emailIngestLog.messageId, message.id))
     .limit(1);
@@ -215,10 +178,7 @@ async function ingestOneMessage(
   }
   if (message.internetMessageId) {
     const existingByIm = await db
-      .select({
-        id: emailIngestLog.id,
-        ingestStatus: emailIngestLog.ingestStatus,
-      })
+      .select({ id: emailIngestLog.id, ingestStatus: emailIngestLog.ingestStatus })
       .from(emailIngestLog)
       .where(eq(emailIngestLog.internetMessageId, message.internetMessageId))
       .limit(1);
@@ -227,9 +187,7 @@ async function ingestOneMessage(
         messageId: message.id,
         internetMessageId: message.internetMessageId,
         threadId: message.conversationId ?? null,
-        receivedAt: message.receivedDateTime
-          ? new Date(message.receivedDateTime)
-          : null,
+        receivedAt: message.receivedDateTime ? new Date(message.receivedDateTime) : null,
         fromEmail: message.from?.emailAddress?.address?.toLowerCase() ?? null,
         toEmails: emailsFrom(message.toRecipients) as any,
         ccEmails: emailsFrom(message.ccRecipients) as any,
@@ -295,9 +253,7 @@ async function ingestOneMessage(
     messageId: message.id,
     internetMessageId: message.internetMessageId ?? null,
     threadId: message.conversationId ?? null,
-    receivedAt: message.receivedDateTime
-      ? new Date(message.receivedDateTime)
-      : null,
+    receivedAt: message.receivedDateTime ? new Date(message.receivedDateTime) : null,
     fromEmail: fromEmail.toLowerCase() || null,
     toEmails: toEmails as any,
     ccEmails: ccEmails as any,
@@ -320,19 +276,8 @@ export async function getIngestStatus(): Promise<{
   mailbox: string;
   lastPoll: string | null;
   counts: { imported24h: number; duplicates24h: number; errors24h: number };
-  recentErrors: Array<{
-    id: number;
-    createdAt: string;
-    subject: string | null;
-    error: string | null;
-  }>;
-  recent: Array<{
-    id: number;
-    createdAt: string;
-    subject: string | null;
-    ingestStatus: string;
-    submissionId: number | null;
-  }>;
+  recentErrors: Array<{ id: number; createdAt: string; subject: string | null; error: string | null }>;
+  recent: Array<{ id: number; createdAt: string; subject: string | null; ingestStatus: string; submissionId: number | null }>;
 }> {
   const db = await getDb();
   const enabled = await loadIngestEnabled();
@@ -349,11 +294,7 @@ export async function getIngestStatus(): Promise<{
   };
   if (!db) return blank;
 
-  const lastPollRow = await db
-    .select()
-    .from(kvState)
-    .where(eq(kvState.key, LAST_POLL_KEY))
-    .limit(1);
+  const lastPollRow = await db.select().from(kvState).where(eq(kvState.key, LAST_POLL_KEY)).limit(1);
   const lastPollIso =
     (lastPollRow[0]?.value as { iso?: string } | null)?.iso ?? null;
 
@@ -402,19 +343,13 @@ export async function getIngestStatus(): Promise<{
     },
     recentErrors: recentErrors.map(r => ({
       id: r.id,
-      createdAt:
-        r.createdAt instanceof Date
-          ? r.createdAt.toISOString()
-          : String(r.createdAt),
+      createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
       subject: r.subject ?? null,
       error: r.error ?? null,
     })),
     recent: recent.map(r => ({
       id: r.id,
-      createdAt:
-        r.createdAt instanceof Date
-          ? r.createdAt.toISOString()
-          : String(r.createdAt),
+      createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
       subject: r.subject ?? null,
       ingestStatus: r.ingestStatus,
       submissionId: r.submissionId ?? null,

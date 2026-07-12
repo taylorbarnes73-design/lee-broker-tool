@@ -23,10 +23,7 @@ vi.mock("../db", () => ({
   getDb: vi.fn(),
 }));
 
-import {
-  resolvePlatformUserFromRequest,
-  findAppUserByUsernameOrEmail,
-} from "./platformSession";
+import { resolvePlatformUserFromRequest, findAppUserByUsernameOrEmail } from "./platformSession";
 import { sdk } from "../_core/sdk";
 import { getDb } from "../db";
 
@@ -83,9 +80,7 @@ describe("resolvePortalRequestUser admin-policy name escalation", () => {
 
   it("does not grant admin from the no-DB fallback session name", async () => {
     vi.mocked(sdk.authenticateRequest).mockRejectedValue(new Error("db down"));
-    fakeReq.headers = {
-      cookie: "lbt_session=should-not-match; app_session_id=fake.jwt.token",
-    };
+    fakeReq.headers = { cookie: "lbt_session=should-not-match; app_session_id=fake.jwt.token" };
     vi.mocked(sdk.verifySession).mockResolvedValue({
       openId: "local:broker@lee-associates.com",
       appId: "lee-broker-tool",
@@ -99,9 +94,7 @@ describe("resolvePortalRequestUser admin-policy name escalation", () => {
   });
 
   it("rejects inactive legacy users instead of falling back to raw JWT verification", async () => {
-    vi.mocked(sdk.authenticateRequest).mockRejectedValue(
-      ForbiddenError("User account is inactive")
-    );
+    vi.mocked(sdk.authenticateRequest).mockRejectedValue(ForbiddenError("User account is inactive"));
     fakeReq.headers = { cookie: "app_session_id=fake.jwt.token" };
     vi.mocked(sdk.verifySession).mockResolvedValue({
       openId: "local:inactive@lee-associates.com",

@@ -1,15 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { execFileSyncMock, storagePutMock, dbInsertValuesMock, sendMailMock } =
-  vi.hoisted(() => ({
-    execFileSyncMock: vi.fn(),
-    storagePutMock: vi.fn().mockResolvedValue({
-      key: "broker-docs/submissions/listing/test-file.pdf",
-      url: "https://cdn.example.com/broker-docs/submissions/listing/test-file.pdf",
-    }),
-    dbInsertValuesMock: vi.fn().mockResolvedValue([{ insertId: 101 }]),
-    sendMailMock: vi.fn().mockResolvedValue({ messageId: "smtp-1" }),
-  }));
+const {
+  execFileSyncMock,
+  storagePutMock,
+  dbInsertValuesMock,
+  sendMailMock,
+} = vi.hoisted(() => ({
+  execFileSyncMock: vi.fn(),
+  storagePutMock: vi.fn().mockResolvedValue({
+    key: "broker-docs/submissions/listing/test-file.pdf",
+    url: "https://cdn.example.com/broker-docs/submissions/listing/test-file.pdf",
+  }),
+  dbInsertValuesMock: vi.fn().mockResolvedValue([{ insertId: 101 }]),
+  sendMailMock: vi.fn().mockResolvedValue({ messageId: "smtp-1" }),
+}));
 
 vi.mock("child_process", () => ({
   execFileSync: execFileSyncMock,

@@ -3,10 +3,7 @@ import { parse as parseCookieHeader } from "cookie";
 import { COOKIE_NAME } from "@shared/const";
 import { HttpError } from "@shared/_core/errors";
 import type { PlatformRole } from "./platformAuthTypes";
-import {
-  findAppUserByUsernameOrEmail,
-  resolvePlatformUserFromRequest,
-} from "./platformSession";
+import { findAppUserByUsernameOrEmail, resolvePlatformUserFromRequest } from "./platformSession";
 import { localAuth, sdk } from "../_core/sdk";
 import { getDb } from "../db";
 import { getTrustedAdminPolicyName, isAdminByPolicy } from "./isAdminByPolicy";
@@ -29,18 +26,11 @@ export type PortalRequestUser = {
  * Resolves either the newer platform session or the legacy broker session into
  * the small user shape used by the submissions REST API.
  */
-export async function resolvePortalRequestUser(
-  req: Request
-): Promise<PortalRequestUser | null> {
+export async function resolvePortalRequestUser(req: Request): Promise<PortalRequestUser | null> {
   const platformUser = await resolvePlatformUserFromRequest(req);
   if (platformUser) {
     const isAdmin =
-      platformUser.role === "admin" ||
-      isAdminByPolicy(
-        platformUser.email,
-        platformUser.fullName,
-        platformUser.username
-      );
+      platformUser.role === "admin" || isAdminByPolicy(platformUser.email, platformUser.fullName, platformUser.username);
     return {
       openId: localAuth.toLocalOpenId(platformUser.email),
       role: isAdmin ? "admin" : "user",
@@ -53,28 +43,16 @@ export async function resolvePortalRequestUser(
 
   try {
     const legacyUser = await sdk.authenticateRequest(req);
-    let appUser:
-      | Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>>
-      | undefined;
+    let appUser: Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>> | undefined;
     try {
       const db = await getDb();
-      appUser =
-        db && legacyUser.email
-          ? await findAppUserByUsernameOrEmail(db, legacyUser.email)
-          : undefined;
+      appUser = db && legacyUser.email ? await findAppUserByUsernameOrEmail(db, legacyUser.email) : undefined;
     } catch (error) {
-      console.error(
-        "[resolvePortalRequestUser] Could not resolve app user for legacy session:",
-        error
-      );
+      console.error("[resolvePortalRequestUser] Could not resolve app user for legacy session:", error);
     }
     const isAdmin =
       legacyUser.role === "admin" ||
-      isAdminByPolicy(
-        legacyUser.email,
-        getTrustedAdminPolicyName(legacyUser.email, appUser?.fullName),
-        appUser?.username
-      );
+      isAdminByPolicy(legacyUser.email, getTrustedAdminPolicyName(legacyUser.email, appUser?.fullName), appUser?.username);
     return {
       openId: legacyUser.openId,
       role: isAdmin ? "admin" : "user",
@@ -82,11 +60,7 @@ export async function resolvePortalRequestUser(
       name: legacyUser.name ?? null,
     };
   } catch (error) {
-    if (
-      error instanceof HttpError &&
-      error.statusCode === 403 &&
-      error.message === "User account is inactive"
-    ) {
+    if (error instanceof HttpError && error.statusCode === 403 && error.message === "User account is inactive") {
       return null;
     }
 
@@ -102,10 +76,7 @@ export async function resolvePortalRequestUser(
     const name = session.name || email || "Broker";
     // No DB available here, so there's no stored app-user name to trust —
     // fall back to the broker directory only, never the session's own name.
-    const isAdmin = isAdminByPolicy(
-      email,
-      getTrustedAdminPolicyName(email, undefined)
-    );
+    const isAdmin = isAdminByPolicy(email, getTrustedAdminPolicyName(email, undefined));
 
     return {
       openId: session.openId,
