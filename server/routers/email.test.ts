@@ -4,6 +4,8 @@ const {
   execFileSyncMock,
   storagePutMock,
   dbInsertValuesMock,
+  dbUpdateSetMock,
+  dbUpdateWhereMock,
   sendMailMock,
 } = vi.hoisted(() => ({
   execFileSyncMock: vi.fn(),
@@ -12,6 +14,10 @@ const {
     url: "https://cdn.example.com/broker-docs/submissions/listing/test-file.pdf",
   }),
   dbInsertValuesMock: vi.fn().mockResolvedValue([{ insertId: 101 }]),
+  dbUpdateSetMock: vi.fn().mockReturnValue({
+    where: vi.fn().mockResolvedValue(undefined),
+  }),
+  dbUpdateWhereMock: vi.fn().mockResolvedValue(undefined),
   sendMailMock: vi.fn().mockResolvedValue({ messageId: "smtp-1" }),
 }));
 
@@ -35,6 +41,10 @@ function makeDbMock() {
   return {
     insert: vi.fn().mockReturnValue({
       values: dbInsertValuesMock,
+    }),
+    update: vi.fn().mockReturnValue({
+      set: dbUpdateSetMock,
+      where: dbUpdateWhereMock,
     }),
     select,
   };
@@ -135,6 +145,8 @@ describe("email.sendToAdmin", () => {
       url: "https://cdn.example.com/broker-docs/submissions/listing/test-file.pdf",
     });
     dbInsertValuesMock.mockResolvedValue([{ insertId: 101 }]);
+    dbUpdateSetMock.mockReturnValue({ where: dbUpdateWhereMock });
+    dbUpdateWhereMock.mockResolvedValue(undefined);
     sendMailMock.mockResolvedValue({ messageId: "smtp-1" });
   });
 
@@ -311,6 +323,24 @@ describe("email.sendToAdmin", () => {
     expect(result.attachmentIncluded).toBe(false);
     expect(result.deliveryMethod).toBe("queue-only");
     expect(execFileSyncMock).not.toHaveBeenCalled();
+  });
+
+  it("does not send server-side listing email when recording the admin queue row fails", async () => {
+    dbInsertValuesMock.mockRejectedValueOnce(new Error("queue insert failed"));
+    const caller = makeCaller();
+
+    const result = await caller.sendToAdmin({
+      formType: "listing",
+      brokerName: "Test Broker",
+      propertyAddress: "123 Main St, Test City",
+      sections: sampleSections,
+      senderEmail: "testuser@example.test",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("queue insert failed");
+    expect(execFileSyncMock).not.toHaveBeenCalled();
+    expect(sendMailMock).not.toHaveBeenCalled();
   });
 
   it("archives and queues a mail-client submission without sending a duplicate email", async () => {

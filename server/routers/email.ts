@@ -73,13 +73,14 @@ type ArchivedSubmissionFile = {
 type DeliveryResult = {
   success: boolean;
   error?: string;
-  deliveryMethod?: "smtp" | "outlook-mcp" | "outlook-mcp-link" | "mail-client";
+  deliveryMethod?: "smtp" | "outlook-mcp" | "outlook-mcp-link" | "mail-client" | "queue-only";
   attachmentIncluded?: boolean;
 };
 
 type RecordedSubmission = {
   id: number | null;
   status: string;
+  payload: Record<string, unknown>;
 };
 
 function formLabelFor(formType: FormType): string {
@@ -360,6 +361,37 @@ async function recordSubmissionRequest(params: {
   }
 
   const status = "pending";
+  const payload = {
+    brokerName: params.brokerName,
+    senderEmail: params.senderEmail ?? "",
+    propertyAddress: params.propertyAddress,
+    sections: params.sections,
+    formData: params.formData ?? null,
+    archivedFile: params.archivedPdf
+      ? {
+          fileKey: params.archivedPdf.fileKey,
+          url: params.archivedPdf.url,
+          filename: params.archivedPdf.filename,
+          fileSize: params.archivedPdf.fileSize,
+          mimeType: params.archivedPdf.mimeType,
+          category: params.archivedPdf.category,
+        }
+      : null,
+    excelFile: params.excelFile
+      ? {
+          fileKey: params.excelFile.fileKey,
+          url: params.excelFile.url,
+          filename: params.excelFile.filename,
+          fileSize: params.excelFile.fileSize,
+          mimeType: params.excelFile.mimeType,
+          category: params.excelFile.category,
+        }
+      : null,
+    supportingFiles: params.supportingFiles ?? [],
+    deliveryMethod: params.deliveryMethod ?? "",
+    deliveryError: params.deliveryError ?? "",
+  };
+
   const [result] = await db.insert(submissions).values({
     formType: params.formType,
     status,
@@ -369,36 +401,7 @@ async function recordSubmissionRequest(params: {
     submittedByEmail: params.senderEmail ?? null,
     pdfFileKey: params.archivedPdf?.fileKey ?? null,
     pdfUrl: params.archivedPdf?.url ?? null,
-    payload: JSON.stringify({
-      brokerName: params.brokerName,
-      senderEmail: params.senderEmail ?? "",
-      propertyAddress: params.propertyAddress,
-      sections: params.sections,
-      formData: params.formData ?? null,
-      archivedFile: params.archivedPdf
-        ? {
-            fileKey: params.archivedPdf.fileKey,
-            url: params.archivedPdf.url,
-            filename: params.archivedPdf.filename,
-            fileSize: params.archivedPdf.fileSize,
-            mimeType: params.archivedPdf.mimeType,
-            category: params.archivedPdf.category,
-          }
-        : null,
-      excelFile: params.excelFile
-        ? {
-            fileKey: params.excelFile.fileKey,
-            url: params.excelFile.url,
-            filename: params.excelFile.filename,
-            fileSize: params.excelFile.fileSize,
-            mimeType: params.excelFile.mimeType,
-            category: params.excelFile.category,
-          }
-        : null,
-      supportingFiles: params.supportingFiles ?? [],
-      deliveryMethod: params.deliveryMethod ?? "",
-      deliveryError: params.deliveryError ?? "",
-    }),
+    payload: JSON.stringify(payload),
   });
 
   const submissionId = (result as { insertId?: number }).insertId ?? null;
@@ -415,7 +418,31 @@ async function recordSubmissionRequest(params: {
   return {
     id: submissionId,
     status,
+    payload,
   };
+}
+
+async function updateSubmissionDeliveryMetadata(
+  submission: RecordedSubmission,
+  delivery: DeliveryResult
+): Promise<void> {
+  if (submission.id == null) return;
+  const db = await getDb();
+  if (!db) return;
+
+  const nextPayload = {
+    ...submission.payload,
+    deliveryMethod: delivery.deliveryMethod ?? "",
+    deliveryError: delivery.error ?? "",
+  };
+
+  await db
+    .update(submissions)
+    .set({
+      payload: JSON.stringify(nextPayload),
+      updatedAt: new Date(),
+    })
+    .where(eq(submissions.id, submission.id));
 }
 
 export const emailRouter = router({
@@ -506,29 +533,27 @@ export const emailRouter = router({
       // so the admin does not receive a duplicate email.
       // For listing/voucher, we try email delivery but always queue the submission
       // regardless of whether email succeeds — the admin portal is the source of truth.
-      const delivery =
+      let delivery: DeliveryResult =
         deliveryMode === "mail-client"
           ? {
               success: true,
-              deliveryMethod: "mail-client" as const,
+              deliveryMethod: "mail-client",
               attachmentIncluded: false,
-              error: undefined as string | undefined,
+              error: undefined,
             }
           : formType === "sign"
-          ? {
-              success: true,
-              deliveryMethod: "queue-only" as const,
-              // Queue-only: no email is sent, so no attachment is included in delivery.
-              attachmentIncluded: false,
-              error: undefined as string | undefined,
-            }
-          : await deliverSubmissionEmail({
-              to: [adminEmail],
-              cc: senderEmail ? [senderEmail] : [],
-              subject,
-              content,
-              attachments: generatedAttachments,
-            });
+            ? {
+                success: true,
+                deliveryMethod: "queue-only",
+                // Queue-only: no email is sent, so no attachment is included in delivery.
+                attachmentIncluded: false,
+                error: undefined,
+              }
+            : {
+                success: false,
+                attachmentIncluded: false,
+                error: undefined,
+              };
 
       let recordedSubmission: RecordedSubmission | null = null;
       try {
@@ -574,6 +599,21 @@ export const emailRouter = router({
               }
             : null,
         };
+      }
+
+      if (deliveryMode !== "mail-client" && formType !== "sign") {
+        delivery = await deliverSubmissionEmail({
+          to: [adminEmail],
+          cc: senderEmail ? [senderEmail] : [],
+          subject,
+          content,
+          attachments: generatedAttachments,
+        });
+        try {
+          await updateSubmissionDeliveryMetadata(recordedSubmission, delivery);
+        } catch (error: unknown) {
+          console.error("[email.sendToAdmin] Could not update submission delivery metadata:", error);
+        }
       }
 
       // The submission is in the queue. Email delivery is best-effort — a failed email
