@@ -989,7 +989,8 @@ submissionsApiRouter.post("/:id/import-voucher-excel", async (req, res) => {
     >;
     patch.excelImport = { ...prevImport, filename: parsedBody.data.filename };
 
-    const nextPayload = { ...payload, ...patch };
+    const definedPatch = Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined));
+    const nextPayload = { ...payload, ...definedPatch };
 
     await db
       .update(submissions)
