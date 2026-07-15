@@ -1,7 +1,9 @@
-import { createElement } from "react";
+import * as React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import DealiusSubmissionWorkspace from "./DealiusSubmissionWorkspace";
+
+Object.assign(globalThis, { React });
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
@@ -21,7 +23,7 @@ vi.mock("@/lib/trpc", () => ({
 describe("DealiusSubmissionWorkspace native voucher mapping", () => {
   it("prefills tenant representation and tenant-side client data from formData", () => {
     const html = renderToStaticMarkup(
-      createElement(DealiusSubmissionWorkspace, {
+      React.createElement(DealiusSubmissionWorkspace, {
         submission: {
           id: 101,
           formType: "voucher",
