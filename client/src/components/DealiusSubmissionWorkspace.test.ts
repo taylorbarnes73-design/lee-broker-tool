@@ -1,3 +1,4 @@
+import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import DealiusSubmissionWorkspace from "./DealiusSubmissionWorkspace";
@@ -20,8 +21,8 @@ vi.mock("@/lib/trpc", () => ({
 describe("DealiusSubmissionWorkspace native voucher mapping", () => {
   it("prefills tenant representation and tenant-side client data from formData", () => {
     const html = renderToStaticMarkup(
-      <DealiusSubmissionWorkspace
-        submission={{
+      createElement(DealiusSubmissionWorkspace, {
+        submission: {
           id: 101,
           formType: "voucher",
           status: "pending",
@@ -44,9 +45,9 @@ describe("DealiusSubmissionWorkspace native voucher mapping", () => {
               rentRows: [{ months: 12, monthly: 7500, free: false }],
             },
           },
-        }}
-        onRefresh={async () => undefined}
-      />
+        },
+        onRefresh: async () => undefined,
+      })
     );
 
     expect(html).toMatch(/<option[^>]*value="3"[^>]*selected[^>]*>Tenant Rep<\/option>/);
