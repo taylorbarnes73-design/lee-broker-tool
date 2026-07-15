@@ -53,7 +53,7 @@ describe("DealiusSubmissionWorkspace native voucher mapping", () => {
     );
 
     expect(html).toMatch(/<option[^>]*value="3"[^>]*selected[^>]*>Tenant Rep<\/option>/);
-    expect(html).toMatch(/Client company[\s\S]*value="Acme Tenant LLC"/);
-    expect(html).toMatch(/Opposite company[\s\S]*value="Big Landlord LLC"/);
+    expect(html).toMatch(/Tenant company[\s\S]*value="Acme Tenant LLC"/);
+    expect(html).toMatch(/Landlord company[\s\S]*value="Big Landlord LLC"/);
   });
 });

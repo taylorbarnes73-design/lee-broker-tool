@@ -377,7 +377,15 @@ function normalizeDealEntry(entry: Record<string, unknown>) {
   const isLease = !isSale && isLeaseLike(entry);
   const propertyType = normalizePropertyType(entry.propertyType || entry.propType || entry.subType || entry.occType);
   const sqft =
-    positiveInt(entry.sqft || entry.dealSF || entry.lDealSF || entry.leasedSqFt || entry.squareFeet || entry.sizeSF) ?? 1;
+    positiveInt(
+      entry.sqft ||
+        entry.dealSF ||
+        entry.dealSf ||
+        entry.lDealSF ||
+        entry.leasedSqFt ||
+        entry.squareFeet ||
+        entry.sizeSF
+    ) ?? 1;
   const totalBldgSF = positiveInt(entry.totalBldgSF || entry.bldgSF || entry.buildingSF || entry.buildingSizeSf);
   const suite = str(entry.suite || entry.unit);
   const propertyName = propertyNameFromAddressSuite(address, suite);

@@ -363,7 +363,7 @@ function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
     inferTransactionType(p.transactionType || p.txnType || fieldFromSections(payload, ["Transaction Type"]));
   const listingTransaction = str(p.listingTransaction || p.transactionType || p.txnType).toLowerCase();
   const sqft =
-    compactNumber(p.sqft || p.dealSF || p.lDealSF || p.sizeSF) ||
+    compactNumber(p.sqft || p.dealSF || p.dealSf || p.lDealSF || p.sizeSF) ||
     compactNumber(fieldFromSections(payload, ["Building SF", "Suite SF", "Deal SF", "Space SF"]));
   const bldgSF =
     compactNumber(p.totalBldgSF || p.bldgSF || p.buildingSF) ||
