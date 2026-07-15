@@ -536,7 +536,24 @@ export default function PortalVoucherFullForm() {
         formData: {
           txnType, repType, propType, address, suite, city, state, zip: zip,
           dealSf, laName, paName: sameAgent ? laName : paName,
-          lsCompany, lbCompany, lStart, lEnd, lTerm, lRate, lRateType, sPrice, sCommPct,
+          lsCompany, lbCompany, lsContact, lbContact, lsEmail, lbEmail, lsPhone, lbPhone,
+          lStart, lEnd, lOcc, lTerm, lRate, lRateType, lAskingRate, lCommRate,
+          propTaxes: lTaxes,
+          insurance: lInsurance,
+          opex: lMisc,
+          totalNNN: nnnTotal,
+          tiPerSF: lTiSf,
+          escalation: lEscalations,
+          sPrice, sCommPct,
+          rentRows: rentRows.filter(row => row.months != null || row.monthly != null),
+          brokers: distRows
+            .filter(row => row.name.trim())
+            .map((row, index) => ({
+              name: row.name,
+              side: row.side,
+              pct: row.pct,
+              lead: index === 0,
+            })),
         },
       });
 

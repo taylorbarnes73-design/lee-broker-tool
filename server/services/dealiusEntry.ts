@@ -39,6 +39,11 @@ function str(raw: unknown): string {
   return String(raw ?? "").trim();
 }
 
+function recordFrom(raw: unknown): Record<string, unknown> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  return Object.fromEntries(Object.entries(raw));
+}
+
 function num(raw: unknown): number | null {
   if (raw === null || raw === undefined || raw === "") return null;
   if (typeof raw === "number" && Number.isFinite(raw)) return raw;
@@ -376,8 +381,6 @@ function normalizeDealEntry(entry: Record<string, unknown>) {
   const totalBldgSF = positiveInt(entry.totalBldgSF || entry.bldgSF || entry.buildingSF || entry.buildingSizeSf);
   const suite = str(entry.suite || entry.unit);
   const propertyName = propertyNameFromAddressSuite(address, suite);
-  const clientCo = str(entry.clientCo || entry.lessorName || entry.sellerName || entry.lsCompany);
-  const clientContactName = str(entry.clientContactName || entry.clientContact || entry.lsContact);
   const brokersRaw = asBrokers(entry.brokers || entry.internalBrokers || entry.commissionBrokers);
   const fallbackBrokers = uniqNames([
     entry.listingAgentName,
@@ -392,8 +395,42 @@ function normalizeDealEntry(entry: Record<string, unknown>) {
   const representedBothSides =
     boolish(entry.representedBothSides || entry.bothSides || entry.brokerRepresentedBothSides) ||
     (brokerSides.some(side => side.includes("listing")) && brokerSides.some(side => side.includes("procur")));
-  const repTypeID = isLease && representedBothSides ? 4 : (positiveInt(entry.repTypeID || entry.repType) ?? repTypeIdFrom(entry.representationType));
+  const repTypeID =
+    isLease && representedBothSides
+      ? 4
+      : (positiveInt(entry.repTypeID || entry.repType) ?? repTypeIdFrom(entry.representationType || entry.repType));
   const isReferral = repTypeID === 5;
+  const clientIsProcuringSide = repTypeID === 1 || repTypeID === 3;
+  const listingSideCo = str(entry.lessorName || entry.sellerName || entry.lsCompany);
+  const procuringSideCo = str(entry.lesseeName || entry.buyerName || entry.lbCompany);
+  const listingSideContactName = str(entry.lsContact);
+  const procuringSideContactName = str(entry.lbContact);
+  const listingSideContactEmail = str(entry.lsEmail);
+  const procuringSideContactEmail = str(entry.lbEmail);
+  const listingSideContactPhone = str(entry.lsPhone);
+  const procuringSideContactPhone = str(entry.lbPhone);
+  const clientCo =
+    str(entry.clientCo) || (clientIsProcuringSide ? procuringSideCo : listingSideCo);
+  const oppositeCo =
+    str(entry.oppositeCo) || (clientIsProcuringSide ? listingSideCo : procuringSideCo);
+  const clientContactName =
+    str(entry.clientContactName || entry.clientContact) ||
+    (clientIsProcuringSide ? procuringSideContactName : listingSideContactName);
+  const oppositeContactName =
+    str(entry.oppositeContactName || entry.oppositeContact) ||
+    (clientIsProcuringSide ? listingSideContactName : procuringSideContactName);
+  const clientContactEmail =
+    str(entry.clientContactEmail || entry.clientEmail) ||
+    (clientIsProcuringSide ? procuringSideContactEmail : listingSideContactEmail);
+  const oppositeContactEmail =
+    str(entry.oppositeContactEmail || entry.oppositeEmail) ||
+    (clientIsProcuringSide ? listingSideContactEmail : procuringSideContactEmail);
+  const clientContactPhone =
+    str(entry.clientContactPhone || entry.clientPhone) ||
+    (clientIsProcuringSide ? procuringSideContactPhone : listingSideContactPhone);
+  const oppositeContactPhone =
+    str(entry.oppositeContactPhone || entry.oppositePhone) ||
+    (clientIsProcuringSide ? listingSideContactPhone : procuringSideContactPhone);
 
   let dealName = `${dealNamePrefixFromTransaction(entry, isSale)}: ${propertyName || "New Deal"}`;
   if (isReferral) {
@@ -435,14 +472,14 @@ function normalizeDealEntry(entry: Record<string, unknown>) {
     numFloors: positiveInt(entry.numFloors || entry.floors),
     parkRatio: str(entry.parkRatio),
     rail: str(entry.rail),
-    clientCo: str(entry.clientCo || entry.lessorName || entry.sellerName || entry.lsCompany),
-    oppositeCo: str(entry.oppositeCo || entry.lesseeName || entry.buyerName || entry.lbCompany),
-    clientContactName: str(entry.clientContactName || entry.clientContact || entry.lsContact),
-    clientContactEmail: str(entry.clientContactEmail || entry.clientEmail || entry.lsEmail),
-    clientContactPhone: str(entry.clientContactPhone || entry.clientPhone || entry.lsPhone),
-    oppositeContactName: str(entry.oppositeContactName || entry.oppositeContact || entry.lbContact),
-    oppositeContactEmail: str(entry.oppositeContactEmail || entry.oppositeEmail || entry.lbEmail),
-    oppositeContactPhone: str(entry.oppositeContactPhone || entry.oppositePhone || entry.lbPhone),
+    clientCo,
+    oppositeCo,
+    clientContactName,
+    clientContactEmail,
+    clientContactPhone,
+    oppositeContactName,
+    oppositeContactEmail,
+    oppositeContactPhone,
     startDate: entry.startDate || entry.lStart || entry.leaseStart,
     endDate: entry.endDate || entry.lEnd || entry.leaseEnd,
     occupancyDate: entry.occupancyDate || entry.lOcc,
@@ -516,8 +553,9 @@ function normalizeListingEntry(entry: Record<string, unknown>) {
 
 export function buildDealEntryFromSubmissionPayload(payload: Record<string, unknown>): Record<string, unknown> {
   const p = payload && typeof payload === "object" ? payload : {};
-  const nested = p.voucherData && typeof p.voucherData === "object" ? (p.voucherData as Record<string, unknown>) : {};
-  return { ...p, ...nested };
+  const formData = recordFrom(p.formData);
+  const voucherData = recordFrom(p.voucherData);
+  return { ...p, ...formData, ...voucherData };
 }
 
 export function validateDealEntryForDealiusPush(entry: Record<string, unknown>): { ok: true } | { ok: false; errors: string[] } {

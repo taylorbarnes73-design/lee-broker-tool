@@ -185,6 +185,21 @@ function representationLabelFromId(raw: unknown): string {
   return (map[str(raw)] ?? str(raw)) || "Missing";
 }
 
+function representationIdFromValue(raw: unknown, transactionType: string): string {
+  const value = str(raw).toLowerCase();
+  if (value === "1" || value.includes("buyer")) return "1";
+  if (value === "2" || value.includes("seller")) return "2";
+  if (value === "3" || value.includes("tenant")) return "3";
+  if (value === "4" || value.includes("landlord")) return "4";
+  if (value === "5" || value.includes("referr") || value.includes("other")) return "5";
+  return transactionType === "Sale" ? "2" : "4";
+}
+
+function recordFrom(raw: unknown): Record<string, unknown> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  return Object.fromEntries(Object.entries(raw));
+}
+
 type PartyLabels = {
   clientParty: string;
   oppositeParty: string;
@@ -330,8 +345,9 @@ function asBrokerRows(raw: unknown, fallbacks: unknown[]): BrokerRow[] {
 
 function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
   const payload = submission.payload ?? {};
-  const voucherData = payload.voucherData && typeof payload.voucherData === "object" ? payload.voucherData : {};
-  const p = { ...payload, ...voucherData };
+  const formData = recordFrom(payload.formData);
+  const voucherData = recordFrom(payload.voucherData);
+  const p = { ...payload, ...formData, ...voucherData };
   const formType = submission.formType.toLowerCase();
   const isListing = formType === "listing";
 
@@ -353,13 +369,40 @@ function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
     compactNumber(p.totalBldgSF || p.bldgSF || p.buildingSF) ||
     compactNumber(fieldFromSections(payload, ["Building SF"]));
   const leaseRate = p.lRate || p.leaseRate || fieldFromSections(payload, ["Rate ($/SF/Mo)", "Base Rent ($/SF/Mo)"]);
-  const repTypeID = str(p.repTypeID || p.repType) || (transactionType === "Sale" ? "2" : "4");
+  const repTypeID = representationIdFromValue(p.repTypeID || p.repType || p.representationType, transactionType);
   const voucherFee =
     feePercentFrom(p.feePercent || p.internalFeePercent || p.commissionRate || p.lCommRate || p.sCommPct || p.saleCommPct) ||
-    feePercentFrom(fieldFromSections(payload, ["Total Commission %", "Commission (%)"]));
+    feePercentFrom(fieldFromSections(payload, ["Total Commission %", "Commission (%)", "Commission Rate", "Sale Commission %"]));
   const fee = String(repTypeID) === "5" ? voucherFee || "100" : voucherFee;
-  const clientCo = str(p.clientCo || p.lessorName || p.sellerName || p.lsCompany) || fieldFromSections(payload, ["Lessor / Seller", "Seller / Client Co."]);
-  const clientContactName = str(p.clientContactName || p.clientContact || p.lsContact);
+  const clientIsProcuringSide = repTypeID === "1" || repTypeID === "3";
+  const listingSideCo = str(p.lessorName || p.sellerName || p.lsCompany);
+  const procuringSideCo = str(p.lesseeName || p.buyerName || p.lbCompany);
+  const clientCo =
+    str(p.clientCo) ||
+    (clientIsProcuringSide ? procuringSideCo : listingSideCo) ||
+    fieldFromSections(payload, ["Lessor / Seller", "Seller / Client Co."]);
+  const oppositeCo =
+    str(p.oppositeCo) ||
+    (clientIsProcuringSide ? listingSideCo : procuringSideCo) ||
+    fieldFromSections(payload, ["Lessee / Buyer", "Buyer / Opposite Co."]);
+  const clientContactName =
+    str(p.clientContactName || p.clientContact) ||
+    str(clientIsProcuringSide ? p.lbContact : p.lsContact);
+  const oppositeContactName =
+    str(p.oppositeContactName || p.oppositeContact) ||
+    str(clientIsProcuringSide ? p.lsContact : p.lbContact);
+  const clientContactEmail =
+    str(p.clientContactEmail || p.clientEmail) ||
+    str(clientIsProcuringSide ? p.lbEmail : p.lsEmail);
+  const oppositeContactEmail =
+    str(p.oppositeContactEmail || p.oppositeEmail) ||
+    str(clientIsProcuringSide ? p.lsEmail : p.lbEmail);
+  const clientContactPhone =
+    str(p.clientContactPhone || p.clientPhone) ||
+    str(clientIsProcuringSide ? p.lbPhone : p.lsPhone);
+  const oppositeContactPhone =
+    str(p.oppositeContactPhone || p.oppositePhone) ||
+    str(clientIsProcuringSide ? p.lsPhone : p.lbPhone);
 
   const brokers = asBrokerRows(p.brokers || p.agents, [
     p.listingAgentName,
@@ -391,14 +434,14 @@ function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
     glDoors: compactNumber(p.glDoors || p.gl),
     numParkingSpaces: compactNumber(p.numParkingSpaces || p.parkingSpaces),
     clientCo,
-    oppositeCo: str(p.oppositeCo || p.lesseeName || p.buyerName || p.lbCompany) || fieldFromSections(payload, ["Lessee / Buyer", "Buyer / Opposite Co."]),
+    oppositeCo,
     ownerCompany: str(p.ownerCompany || p.owner || p.clientCo) || fieldFromSections(payload, ["Owner Name", "Owner / Sublessor Company"]),
     clientContactName,
-    clientContactEmail: str(p.clientContactEmail || p.clientEmail || p.lsEmail),
-    clientContactPhone: str(p.clientContactPhone || p.clientPhone || p.lsPhone),
-    oppositeContactName: str(p.oppositeContactName || p.oppositeContact || p.lbContact),
-    oppositeContactEmail: str(p.oppositeContactEmail || p.oppositeEmail || p.lbEmail),
-    oppositeContactPhone: str(p.oppositeContactPhone || p.oppositePhone || p.lbPhone),
+    clientContactEmail,
+    clientContactPhone,
+    oppositeContactName,
+    oppositeContactEmail,
+    oppositeContactPhone,
     startDate: str(p.startDate || p.lStart || p.leaseStart || fieldFromSections(payload, ["Commencement Date"])).slice(0, 10),
     endDate: str(p.endDate || p.lEnd || p.leaseEnd || fieldFromSections(payload, ["Expiration Date"])).slice(0, 10),
     occupancyDate: str(p.occupancyDate || p.lOcc).slice(0, 10),
