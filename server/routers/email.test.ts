@@ -4,6 +4,8 @@ const {
   execFileSyncMock,
   storagePutMock,
   dbInsertValuesMock,
+  dbUpdateSetMock,
+  dbUpdateWhereMock,
   sendMailMock,
 } = vi.hoisted(() => ({
   execFileSyncMock: vi.fn(),
@@ -12,6 +14,8 @@ const {
     url: "https://cdn.example.com/broker-docs/submissions/listing/test-file.pdf",
   }),
   dbInsertValuesMock: vi.fn().mockResolvedValue([{ insertId: 101 }]),
+  dbUpdateSetMock: vi.fn(),
+  dbUpdateWhereMock: vi.fn().mockResolvedValue([{ affectedRows: 1 }]),
   sendMailMock: vi.fn().mockResolvedValue({ messageId: "smtp-1" }),
 }));
 
@@ -37,6 +41,7 @@ function makeDbMock() {
       values: dbInsertValuesMock,
     }),
     select,
+    update: vi.fn().mockReturnValue({ set: dbUpdateSetMock }),
   };
 }
 
@@ -135,6 +140,8 @@ describe("email.sendToAdmin", () => {
       url: "https://cdn.example.com/broker-docs/submissions/listing/test-file.pdf",
     });
     dbInsertValuesMock.mockResolvedValue([{ insertId: 101 }]);
+    dbUpdateSetMock.mockReturnValue({ where: dbUpdateWhereMock });
+    dbUpdateWhereMock.mockResolvedValue([{ affectedRows: 1 }]);
     sendMailMock.mockResolvedValue({ messageId: "smtp-1" });
   });
 
@@ -157,6 +164,56 @@ describe("email.sendToAdmin", () => {
     expect(callArg).toContain("_NewportBeach-BrokerAdmin@lee-associates.com");
     expect(result.submissionId).toBe(101);
     expect(result.status).toBe("pending");
+  });
+
+  it("does not send an email when the submission cannot be recorded", async () => {
+    dbInsertValuesMock.mockRejectedValueOnce(new Error("database unavailable"));
+
+    const caller = makeCaller();
+    const result = await caller.sendToAdmin({
+      formType: "listing",
+      brokerName: "Test Broker",
+      propertyAddress: "123 Main St, Test City",
+      sections: sampleSections,
+      senderEmail: "testuser@example.test",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("database unavailable");
+    expect(execFileSyncMock).not.toHaveBeenCalled();
+    expect(sendMailMock).not.toHaveBeenCalled();
+  });
+
+  it("updates delivery fields without rewriting the inserted payload snapshot", async () => {
+    const caller = makeCaller();
+    await caller.sendToAdmin({
+      formType: "listing",
+      brokerName: "Test Broker",
+      propertyAddress: "123 Main St, Test City",
+      sections: sampleSections,
+      senderEmail: "testuser@example.test",
+    });
+
+    const updateArg = dbUpdateSetMock.mock.calls[0]?.[0] as { payload?: unknown };
+    expect(updateArg).toBeDefined();
+    expect(typeof updateArg.payload).not.toBe("string");
+  });
+
+  it("keeps a queued submission successful when delivery metadata cannot be updated", async () => {
+    dbUpdateWhereMock.mockRejectedValueOnce(new Error("update failed"));
+
+    const caller = makeCaller();
+    const result = await caller.sendToAdmin({
+      formType: "listing",
+      brokerName: "Test Broker",
+      propertyAddress: "123 Main St, Test City",
+      sections: sampleSections,
+      senderEmail: "testuser@example.test",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.emailDelivered).toBe(true);
+    expect(execFileSyncMock).toHaveBeenCalledOnce();
   });
 
   it("includes CC when senderEmail is provided", async () => {
