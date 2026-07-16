@@ -73,7 +73,7 @@ type ArchivedSubmissionFile = {
 type DeliveryResult = {
   success: boolean;
   error?: string;
-  deliveryMethod?: "smtp" | "outlook-mcp" | "outlook-mcp-link" | "mail-client";
+  deliveryMethod?: "smtp" | "outlook-mcp" | "outlook-mcp-link" | "mail-client" | "queue-only";
   attachmentIncluded?: boolean;
 };
 
