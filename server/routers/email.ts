@@ -7,7 +7,7 @@ import { ENV } from "../_core/env";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { storageGetBytes, storagePut } from "../storage";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { getSetting } from "../settings/getSetting";
 import { notifyAdminOfSubmission } from "../services/adminNotification";
 
@@ -80,7 +80,6 @@ type DeliveryResult = {
 type RecordedSubmission = {
   id: number | null;
   status: string;
-  payload: Record<string, unknown>;
 };
 
 function formLabelFor(formType: FormType): string {
@@ -417,7 +416,6 @@ async function recordSubmissionRequest(params: {
   return {
     id: submissionId,
     status,
-    payload,
   };
 }
 
@@ -433,11 +431,13 @@ async function updateSubmissionDelivery(
   await db
     .update(submissions)
     .set({
-      payload: JSON.stringify({
-        ...recordedSubmission.payload,
-        deliveryMethod: delivery.deliveryMethod ?? "",
-        deliveryError: delivery.error ?? "",
-      }),
+      payload: sql<string>`JSON_SET(
+        COALESCE(${submissions.payload}, JSON_OBJECT()),
+        '$.deliveryMethod',
+        ${delivery.deliveryMethod ?? ""},
+        '$.deliveryError',
+        ${delivery.error ?? ""}
+      )`,
       updatedAt: new Date(),
     })
     .where(eq(submissions.id, recordedSubmission.id));
