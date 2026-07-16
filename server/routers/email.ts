@@ -80,6 +80,7 @@ type DeliveryResult = {
 type RecordedSubmission = {
   id: number | null;
   status: string;
+  payload: Record<string, unknown>;
 };
 
 function formLabelFor(formType: FormType): string {
@@ -360,6 +361,36 @@ async function recordSubmissionRequest(params: {
   }
 
   const status = "pending";
+  const payload = {
+    brokerName: params.brokerName,
+    senderEmail: params.senderEmail ?? "",
+    propertyAddress: params.propertyAddress,
+    sections: params.sections,
+    formData: params.formData ?? null,
+    archivedFile: params.archivedPdf
+      ? {
+          fileKey: params.archivedPdf.fileKey,
+          url: params.archivedPdf.url,
+          filename: params.archivedPdf.filename,
+          fileSize: params.archivedPdf.fileSize,
+          mimeType: params.archivedPdf.mimeType,
+          category: params.archivedPdf.category,
+        }
+      : null,
+    excelFile: params.excelFile
+      ? {
+          fileKey: params.excelFile.fileKey,
+          url: params.excelFile.url,
+          filename: params.excelFile.filename,
+          fileSize: params.excelFile.fileSize,
+          mimeType: params.excelFile.mimeType,
+          category: params.excelFile.category,
+        }
+      : null,
+    supportingFiles: params.supportingFiles ?? [],
+    deliveryMethod: params.deliveryMethod ?? "",
+    deliveryError: params.deliveryError ?? "",
+  };
   const [result] = await db.insert(submissions).values({
     formType: params.formType,
     status,
@@ -369,36 +400,7 @@ async function recordSubmissionRequest(params: {
     submittedByEmail: params.senderEmail ?? null,
     pdfFileKey: params.archivedPdf?.fileKey ?? null,
     pdfUrl: params.archivedPdf?.url ?? null,
-    payload: JSON.stringify({
-      brokerName: params.brokerName,
-      senderEmail: params.senderEmail ?? "",
-      propertyAddress: params.propertyAddress,
-      sections: params.sections,
-      formData: params.formData ?? null,
-      archivedFile: params.archivedPdf
-        ? {
-            fileKey: params.archivedPdf.fileKey,
-            url: params.archivedPdf.url,
-            filename: params.archivedPdf.filename,
-            fileSize: params.archivedPdf.fileSize,
-            mimeType: params.archivedPdf.mimeType,
-            category: params.archivedPdf.category,
-          }
-        : null,
-      excelFile: params.excelFile
-        ? {
-            fileKey: params.excelFile.fileKey,
-            url: params.excelFile.url,
-            filename: params.excelFile.filename,
-            fileSize: params.excelFile.fileSize,
-            mimeType: params.excelFile.mimeType,
-            category: params.excelFile.category,
-          }
-        : null,
-      supportingFiles: params.supportingFiles ?? [],
-      deliveryMethod: params.deliveryMethod ?? "",
-      deliveryError: params.deliveryError ?? "",
-    }),
+    payload: JSON.stringify(payload),
   });
 
   const submissionId = (result as { insertId?: number }).insertId ?? null;
@@ -415,7 +417,30 @@ async function recordSubmissionRequest(params: {
   return {
     id: submissionId,
     status,
+    payload,
   };
+}
+
+async function updateSubmissionDelivery(
+  recordedSubmission: RecordedSubmission,
+  delivery: DeliveryResult
+): Promise<void> {
+  if (recordedSubmission.id === null) return;
+
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(submissions)
+    .set({
+      payload: JSON.stringify({
+        ...recordedSubmission.payload,
+        deliveryMethod: delivery.deliveryMethod ?? "",
+        deliveryError: delivery.error ?? "",
+      }),
+      updatedAt: new Date(),
+    })
+    .where(eq(submissions.id, recordedSubmission.id));
 }
 
 export const emailRouter = router({
@@ -500,37 +525,7 @@ export const emailRouter = router({
         supportingFiles,
       });
 
-      // For sign requests, we record/queue the submission for the admin portal.
-      // The admin later sends to Cimarron after approval + PO assignment.
-      // When the broker's email client handles delivery, skip server-side SMTP/MCP
-      // so the admin does not receive a duplicate email.
-      // For listing/voucher, we try email delivery but always queue the submission
-      // regardless of whether email succeeds — the admin portal is the source of truth.
-      const delivery =
-        deliveryMode === "mail-client"
-          ? {
-              success: true,
-              deliveryMethod: "mail-client" as const,
-              attachmentIncluded: false,
-              error: undefined as string | undefined,
-            }
-          : formType === "sign"
-          ? {
-              success: true,
-              deliveryMethod: "queue-only" as const,
-              // Queue-only: no email is sent, so no attachment is included in delivery.
-              attachmentIncluded: false,
-              error: undefined as string | undefined,
-            }
-          : await deliverSubmissionEmail({
-              to: [adminEmail],
-              cc: senderEmail ? [senderEmail] : [],
-              subject,
-              content,
-              attachments: generatedAttachments,
-            });
-
-      let recordedSubmission: RecordedSubmission | null = null;
+      let recordedSubmission: RecordedSubmission;
       try {
         recordedSubmission = await recordSubmissionRequest({
           formType,
@@ -542,8 +537,6 @@ export const emailRouter = router({
           excelFile: archivedExcel,
           supportingFiles,
           uploaderOpenId: ctx.user?.openId ?? null,
-          deliveryMethod: delivery.deliveryMethod,
-          deliveryError: delivery.error,
           formData,
         });
       } catch (error: unknown) {
@@ -551,8 +544,8 @@ export const emailRouter = router({
           // If we can't record the submission at all, that IS a real failure.
           success: false,
           error: error instanceof Error ? error.message : String(error),
-          deliveryMethod: delivery.deliveryMethod,
-          attachmentIncluded: delivery.attachmentIncluded,
+          deliveryMethod: undefined,
+          attachmentIncluded: false,
           archivedFile: archivedPdf
             ? {
                 fileKey: archivedPdf.fileKey,
@@ -574,6 +567,38 @@ export const emailRouter = router({
               }
             : null,
         };
+      }
+
+      // The portal queue is the source of truth. Record it before any outbound
+      // email so a transient database failure cannot orphan a delivered request.
+      const delivery =
+        deliveryMode === "mail-client"
+          ? {
+              success: true,
+              deliveryMethod: "mail-client" as const,
+              attachmentIncluded: false,
+              error: undefined as string | undefined,
+            }
+          : formType === "sign"
+            ? {
+                success: true,
+                deliveryMethod: "queue-only" as const,
+                // Queue-only: no email is sent, so no attachment is included in delivery.
+                attachmentIncluded: false,
+                error: undefined as string | undefined,
+              }
+            : await deliverSubmissionEmail({
+                to: [adminEmail],
+                cc: senderEmail ? [senderEmail] : [],
+                subject,
+                content,
+                attachments: generatedAttachments,
+              });
+
+      try {
+        await updateSubmissionDelivery(recordedSubmission, delivery);
+      } catch (error: unknown) {
+        console.error("[email.sendToAdmin] Could not persist delivery metadata:", error);
       }
 
       // The submission is in the queue. Email delivery is best-effort — a failed email

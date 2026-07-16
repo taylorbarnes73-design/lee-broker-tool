@@ -32,11 +32,14 @@ function makeDbMock() {
   const where = vi.fn().mockReturnValue({ limit });
   const from = vi.fn().mockReturnValue({ where });
   const select = vi.fn().mockReturnValue({ from });
+  const updateWhere = vi.fn().mockResolvedValue([{ affectedRows: 1 }]);
+  const set = vi.fn().mockReturnValue({ where: updateWhere });
   return {
     insert: vi.fn().mockReturnValue({
       values: dbInsertValuesMock,
     }),
     select,
+    update: vi.fn().mockReturnValue({ set }),
   };
 }
 
