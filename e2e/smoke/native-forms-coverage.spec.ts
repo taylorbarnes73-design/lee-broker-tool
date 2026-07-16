@@ -116,4 +116,35 @@ test.describe("native forms restored coverage", () => {
     await expect(distTable.locator("tbody tr")).toHaveCount(1);
     await expect(firstRow.getByPlaceholder("Agent name")).toHaveValue("Jane Smith");
   });
+
+  test("voucher submission stays on the form when the server rejects it", async ({ page }) => {
+    await page.route("**/api/trpc/email.sendToAdmin**", async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([
+          {
+            result: {
+              data: {
+                json: {
+                  success: false,
+                  error: "Database unavailable. The request could not be recorded for the admin portal.",
+                },
+              },
+            },
+          },
+        ]),
+      });
+    });
+
+    await page.goto("/portal/forms/voucher");
+    await page.getByPlaceholder("123 Industrial Dr").fill("123 Smoke Test Dr");
+    await page.getByPlaceholder("Irvine").fill("Irvine");
+    await page.getByPlaceholder("Agent name").first().fill("Smoke Test Broker");
+    await page.getByRole("button", { name: "Submit voucher to admin" }).click();
+
+    await expect(page.getByRole("alert")).toContainText("Database unavailable");
+    await expect(page.getByRole("heading", { name: "Commission Voucher" })).toBeVisible();
+    await expect(page.getByText("Voucher submitted", { exact: true })).not.toBeVisible();
+  });
 });
