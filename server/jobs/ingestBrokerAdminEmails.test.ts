@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { emailIngestLog, kvState } from "../../drizzle/schema";
+import { emailIngestLog, kvState, submissions } from "../../drizzle/schema";
 import { runIngestOnce } from "./ingestBrokerAdminEmails";
 import type { GraphMessage } from "../lib/msGraph";
 
@@ -146,5 +146,52 @@ describe("runIngestOnce", () => {
     expect(summary.skipped).toBe(1);
     expect(summary.lastPoll).toBe("2026-01-01T00:00:00.000Z");
     expect(emailLogInsertCount).toBe(0);
+  });
+
+  it("retries a message whose prior ingest log records an error", async () => {
+    const message = buildMessage("retry-message", "2026-01-01T00:00:00.000Z");
+    let submissionInsertCount = 0;
+    let importedLogUpsertCount = 0;
+    const fakeDb = {
+      select: () => ({
+        from: (table: unknown) => ({
+          where: () => ({
+            limit: () =>
+              Promise.resolve(
+                table === emailIngestLog ? [{ id: 1, ingestStatus: "error" }] : []
+              ),
+          }),
+        }),
+      }),
+      insert: (table: unknown) => ({
+        values: () => {
+          if (table === submissions) {
+            submissionInsertCount += 1;
+            return Promise.resolve([{ insertId: 42 }]);
+          }
+          if (table === emailIngestLog) {
+            return Object.assign(Promise.resolve(undefined), {
+              onDuplicateKeyUpdate: () => {
+                importedLogUpsertCount += 1;
+                return Promise.resolve(undefined);
+              },
+            });
+          }
+          return Object.assign(Promise.resolve(undefined), {
+            onDuplicateKeyUpdate: () => Promise.resolve(undefined),
+          });
+        },
+      }),
+    };
+    vi.mocked(getDb).mockResolvedValue(fakeDb as never);
+    vi.mocked(listSharedMailboxMessages).mockResolvedValue([message]);
+
+    const summary = await runIngestOnce({ since: new Date("2025-12-31T00:00:00.000Z") });
+
+    expect(summary.errors).toBe(0);
+    expect(summary.imported).toBe(1);
+    expect(summary.lastPoll).toBe("2026-01-01T00:00:00.000Z");
+    expect(submissionInsertCount).toBe(1);
+    expect(importedLogUpsertCount).toBe(1);
   });
 });

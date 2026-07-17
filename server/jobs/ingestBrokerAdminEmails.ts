@@ -165,20 +165,20 @@ async function ingestOneMessage(
   source: "email_ingest" | "email_ingest_backfill"
 ): Promise<IngestOutcome> {
   const existing = await db
-    .select({ id: emailIngestLog.id })
+    .select({ id: emailIngestLog.id, ingestStatus: emailIngestLog.ingestStatus })
     .from(emailIngestLog)
     .where(eq(emailIngestLog.messageId, message.id))
     .limit(1);
-  if (existing.length > 0) {
+  if (existing.length > 0 && existing[0]?.ingestStatus !== "error") {
     return "skipped_duplicate";
   }
   if (message.internetMessageId) {
     const existingByIm = await db
-      .select({ id: emailIngestLog.id })
+      .select({ id: emailIngestLog.id, ingestStatus: emailIngestLog.ingestStatus })
       .from(emailIngestLog)
       .where(eq(emailIngestLog.internetMessageId, message.internetMessageId))
       .limit(1);
-    if (existingByIm.length > 0) {
+    if (existingByIm.length > 0 && existingByIm[0]?.ingestStatus !== "error") {
       return "skipped_duplicate";
     }
   }
@@ -244,6 +244,18 @@ async function ingestOneMessage(
     submissionId,
     ingestStatus: "imported",
     errorMessage: null,
+  }).onDuplicateKeyUpdate({
+    set: {
+      threadId: message.conversationId ?? null,
+      receivedAt: message.receivedDateTime ? new Date(message.receivedDateTime) : null,
+      fromEmail: fromEmail.toLowerCase() || null,
+      toEmails: toEmails as any,
+      ccEmails: ccEmails as any,
+      subject: message.subject?.slice(0, 1023) ?? null,
+      submissionId,
+      ingestStatus: "imported",
+      errorMessage: null,
+    },
   });
 
   return "imported";
