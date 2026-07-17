@@ -179,19 +179,6 @@ async function ingestOneMessage(
       .where(eq(emailIngestLog.internetMessageId, message.internetMessageId))
       .limit(1);
     if (existingByIm.length > 0) {
-      await db.insert(emailIngestLog).values({
-        messageId: message.id,
-        internetMessageId: message.internetMessageId,
-        threadId: message.conversationId ?? null,
-        receivedAt: message.receivedDateTime ? new Date(message.receivedDateTime) : null,
-        fromEmail: message.from?.emailAddress?.address?.toLowerCase() ?? null,
-        toEmails: emailsFrom(message.toRecipients) as any,
-        ccEmails: emailsFrom(message.ccRecipients) as any,
-        subject: message.subject?.slice(0, 1023) ?? null,
-        submissionId: null,
-        ingestStatus: "skipped_duplicate",
-        errorMessage: null,
-      });
       return "skipped_duplicate";
     }
   }

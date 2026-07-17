@@ -104,4 +104,47 @@ describe("runIngestOnce", () => {
     // newest message in the batch, so msg2 (and anything after it) gets retried.
     expect(summary.lastPoll).toBe("2026-01-01T00:00:00.000Z");
   });
+
+  it("advances past a Graph message whose internet message ID was already ingested", async () => {
+    const message = buildMessage("new-graph-id", "2026-01-01T00:00:00.000Z");
+    message.internetMessageId = "<stable-message-id@example.com>";
+    let emailLogLookupCount = 0;
+    let emailLogInsertCount = 0;
+    const fakeDb = {
+      select: () => ({
+        from: (table: unknown) => ({
+          where: () => ({
+            limit: () => {
+              if (table === kvState) return Promise.resolve([]);
+              if (table === emailIngestLog) {
+                emailLogLookupCount += 1;
+                return Promise.resolve(emailLogLookupCount === 2 ? [{ id: 1 }] : []);
+              }
+              return Promise.resolve([]);
+            },
+          }),
+        }),
+      }),
+      insert: (table: unknown) => ({
+        values: () => {
+          if (table === emailIngestLog) {
+            emailLogInsertCount += 1;
+            return Promise.reject(new Error("Duplicate entry for internet_message_id"));
+          }
+          return Object.assign(Promise.resolve([{ insertId: 1 }]), {
+            onDuplicateKeyUpdate: () => Promise.resolve(undefined),
+          });
+        },
+      }),
+    };
+    vi.mocked(getDb).mockResolvedValue(fakeDb as never);
+    vi.mocked(listSharedMailboxMessages).mockResolvedValue([message]);
+
+    const summary = await runIngestOnce({ since: new Date("2025-12-31T00:00:00.000Z") });
+
+    expect(summary.errors).toBe(0);
+    expect(summary.skipped).toBe(1);
+    expect(summary.lastPoll).toBe("2026-01-01T00:00:00.000Z");
+    expect(emailLogInsertCount).toBe(0);
+  });
 });
