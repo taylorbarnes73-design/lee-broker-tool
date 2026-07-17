@@ -109,3 +109,45 @@ describe("legacy local session auth", () => {
     });
   });
 });
+
+describe("OAuth session auth", () => {
+  const originalAdminNames = ENV.localAdminNames;
+  const oauthUser = {
+    ...legacyUser,
+    openId: "oauth:broker-user-id",
+    name: "Trusted Admin",
+    email: "broker@lee-associates.com",
+    loginMethod: "oauth",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    ENV.localAdminNames = ["trusted admin"];
+    vi.mocked(db.getUserByOpenId).mockResolvedValue(oauthUser);
+    vi.mocked(platformSession.findAppUserByUsernameOrEmail).mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    ENV.localAdminNames = originalAdminNames;
+  });
+
+  it("does not grant admin from the OAuth profile display name", async () => {
+    const token = await sdk.createSessionToken(oauthUser.openId, {
+      name: oauthUser.name,
+      email: oauthUser.email,
+    });
+    const req = {
+      headers: { cookie: `${COOKIE_NAME}=${token}` },
+    } as Request;
+
+    const result = await sdk.authenticateRequest(req);
+
+    expect(result.role).toBe("user");
+    expect(db.upsertUser).toHaveBeenCalledWith(
+      expect.objectContaining({
+        openId: oauthUser.openId,
+        role: "user",
+      })
+    );
+  });
+});
