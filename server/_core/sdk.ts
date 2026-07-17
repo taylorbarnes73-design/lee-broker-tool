@@ -369,15 +369,33 @@ class SDKServer {
       throw ForbiddenError("User not found");
     }
 
+    let appUser: Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>> | undefined;
+    try {
+      const appDb = await db.getDb();
+      appUser =
+        appDb && user.email
+          ? await findAppUserByUsernameOrEmail(appDb, user.email)
+          : undefined;
+    } catch (error) {
+      console.error("[Auth] Could not resolve app user for OAuth session:", error);
+    }
+    const role: "admin" | "user" = isAdminByPolicy(
+      user.email,
+      getTrustedAdminPolicyName(user.email, appUser?.fullName),
+      appUser?.username
+    )
+      ? "admin"
+      : "user";
+
     await db.upsertUser({
       openId: user.openId,
       lastSignedIn: signedInAt,
-      role: isAdminByPolicy(user.email, user.name) ? "admin" : "user",
+      role,
     });
 
     return {
       ...user,
-      role: isAdminByPolicy(user.email, user.name) ? "admin" : "user",
+      role,
     };
   }
 }
