@@ -164,13 +164,15 @@ async function ingestOneMessage(
   _mailbox: string,
   source: "email_ingest" | "email_ingest_backfill"
 ): Promise<IngestOutcome> {
+  const priorErrorLogIds = new Set<number>();
   const existing = await db
     .select({ id: emailIngestLog.id, ingestStatus: emailIngestLog.ingestStatus })
     .from(emailIngestLog)
     .where(eq(emailIngestLog.messageId, message.id))
     .limit(1);
-  if (existing.length > 0 && existing[0]?.ingestStatus !== "error") {
-    return "skipped_duplicate";
+  if (existing.length > 0) {
+    if (existing[0]?.ingestStatus !== "error") return "skipped_duplicate";
+    priorErrorLogIds.add(existing[0].id);
   }
   if (message.internetMessageId) {
     const existingByIm = await db
@@ -178,8 +180,9 @@ async function ingestOneMessage(
       .from(emailIngestLog)
       .where(eq(emailIngestLog.internetMessageId, message.internetMessageId))
       .limit(1);
-    if (existingByIm.length > 0 && existingByIm[0]?.ingestStatus !== "error") {
-      return "skipped_duplicate";
+    if (existingByIm.length > 0) {
+      if (existingByIm[0]?.ingestStatus !== "error") return "skipped_duplicate";
+      priorErrorLogIds.add(existingByIm[0].id);
     }
   }
 
@@ -217,48 +220,67 @@ async function ingestOneMessage(
     },
   };
 
-  const [insertResult] = await db.insert(submissions).values({
-    formType: parsed.formType,
-    status: "pending",
-    payload: JSON.stringify(payload),
-    reference: reference ? reference.slice(0, 511) : null,
-    submittedBy: fromName || fromEmail || null,
-    submittedByOpenId: null,
-    submittedByEmail: fromEmail || null,
-    source,
-    sourceEmailMessageId: message.id,
-    sourceEmailWebLink: message.webLink ?? null,
-    parsedFields: parsed.parsedFields as any,
-  });
-  const submissionId = (insertResult as any).insertId ?? null;
-
-  await db.insert(emailIngestLog).values({
+  const receivedAt = message.receivedDateTime ? new Date(message.receivedDateTime) : null;
+  const logMetadata = {
     messageId: message.id,
     internetMessageId: message.internetMessageId ?? null,
     threadId: message.conversationId ?? null,
-    receivedAt: message.receivedDateTime ? new Date(message.receivedDateTime) : null,
+    receivedAt,
     fromEmail: fromEmail.toLowerCase() || null,
     toEmails: toEmails as any,
     ccEmails: ccEmails as any,
     subject: message.subject?.slice(0, 1023) ?? null,
-    submissionId,
-    ingestStatus: "imported",
-    errorMessage: null,
-  }).onDuplicateKeyUpdate({
-    set: {
-      threadId: message.conversationId ?? null,
-      receivedAt: message.receivedDateTime ? new Date(message.receivedDateTime) : null,
-      fromEmail: fromEmail.toLowerCase() || null,
-      toEmails: toEmails as any,
-      ccEmails: ccEmails as any,
-      subject: message.subject?.slice(0, 1023) ?? null,
-      submissionId,
-      ingestStatus: "imported",
-      errorMessage: null,
-    },
-  });
+  };
 
-  return "imported";
+  return db.transaction(async tx => {
+    for (const errorLogId of priorErrorLogIds) {
+      await tx.delete(emailIngestLog).where(eq(emailIngestLog.id, errorLogId));
+    }
+
+    await tx.insert(emailIngestLog).values({
+      ...logMetadata,
+      submissionId: null,
+      ingestStatus: "processing",
+      errorMessage: null,
+    });
+
+    const existingSubmission = await tx
+      .select({ id: submissions.id })
+      .from(submissions)
+      .where(eq(submissions.sourceEmailMessageId, message.id))
+      .limit(1);
+
+    let submissionId = existingSubmission[0]?.id ?? null;
+    let outcome: IngestOutcome = "skipped_duplicate";
+    if (submissionId === null) {
+      const [insertResult] = await tx.insert(submissions).values({
+        formType: parsed.formType,
+        status: "pending",
+        payload: JSON.stringify(payload),
+        reference: reference ? reference.slice(0, 511) : null,
+        submittedBy: fromName || fromEmail || null,
+        submittedByOpenId: null,
+        submittedByEmail: fromEmail || null,
+        source,
+        sourceEmailMessageId: message.id,
+        sourceEmailWebLink: message.webLink ?? null,
+        parsedFields: parsed.parsedFields as any,
+      });
+      submissionId = (insertResult as any).insertId ?? null;
+      outcome = "imported";
+    }
+
+    await tx
+      .update(emailIngestLog)
+      .set({
+        submissionId,
+        ingestStatus: "imported",
+        errorMessage: null,
+      })
+      .where(eq(emailIngestLog.messageId, message.id));
+
+    return outcome;
+  });
 }
 
 export async function getIngestStatus(): Promise<{

@@ -32,7 +32,7 @@ function buildMessage(id: string, receivedDateTime: string): GraphMessage {
 
 function buildFakeDb(dedupBehavior: (callIndex: number) => "ok" | "fail") {
   let dedupCallIndex = 0;
-  return {
+  const fakeDb = {
     select: (_cols?: unknown) => ({
       from: (table: unknown) => ({
         where: (_cond: unknown) => ({
@@ -60,7 +60,19 @@ function buildFakeDb(dedupBehavior: (callIndex: number) => "ok" | "fail") {
       };
       return builder;
     },
+    delete: (_table: unknown) => ({
+      where: (_cond: unknown) => Promise.resolve(undefined),
+    }),
+    update: (_table: unknown) => ({
+      set: (_row: unknown) => ({
+        where: (_cond: unknown) => Promise.resolve(undefined),
+      }),
+    }),
   };
+  return Object.assign(fakeDb, {
+    transaction: async (callback: (tx: typeof fakeDb) => Promise<unknown>) =>
+      callback(fakeDb),
+  });
 }
 
 describe("runIngestOnce", () => {
@@ -151,7 +163,7 @@ describe("runIngestOnce", () => {
   it("retries a message whose prior ingest log records an error", async () => {
     const message = buildMessage("retry-message", "2026-01-01T00:00:00.000Z");
     let submissionInsertCount = 0;
-    let importedLogUpsertCount = 0;
+    let importedLogUpdateCount = 0;
     const fakeDb = {
       select: () => ({
         from: (table: unknown) => ({
@@ -170,20 +182,30 @@ describe("runIngestOnce", () => {
             return Promise.resolve([{ insertId: 42 }]);
           }
           if (table === emailIngestLog) {
-            return Object.assign(Promise.resolve(undefined), {
-              onDuplicateKeyUpdate: () => {
-                importedLogUpsertCount += 1;
-                return Promise.resolve(undefined);
-              },
-            });
+            return Promise.resolve(undefined);
           }
           return Object.assign(Promise.resolve(undefined), {
             onDuplicateKeyUpdate: () => Promise.resolve(undefined),
           });
         },
       }),
+      delete: () => ({
+        where: () => Promise.resolve(undefined),
+      }),
+      update: () => ({
+        set: () => ({
+          where: () => {
+            importedLogUpdateCount += 1;
+            return Promise.resolve(undefined);
+          },
+        }),
+      }),
     };
-    vi.mocked(getDb).mockResolvedValue(fakeDb as never);
+    const transaction = vi.fn(
+      async (callback: (tx: typeof fakeDb) => Promise<unknown>) => callback(fakeDb)
+    );
+    const transactionalDb = Object.assign(fakeDb, { transaction });
+    vi.mocked(getDb).mockResolvedValue(transactionalDb as never);
     vi.mocked(listSharedMailboxMessages).mockResolvedValue([message]);
 
     const summary = await runIngestOnce({ since: new Date("2025-12-31T00:00:00.000Z") });
@@ -192,6 +214,7 @@ describe("runIngestOnce", () => {
     expect(summary.imported).toBe(1);
     expect(summary.lastPoll).toBe("2026-01-01T00:00:00.000Z");
     expect(submissionInsertCount).toBe(1);
-    expect(importedLogUpsertCount).toBe(1);
+    expect(importedLogUpdateCount).toBe(1);
+    expect(transaction).toHaveBeenCalledOnce();
   });
 });
