@@ -107,5 +107,44 @@ describe("legacy local session auth", () => {
       const result = await sdk.authenticateRequest(req);
       expect(result.role).toBe("user");
     });
+
+    it("does not grant admin from a mutable OAuth display name", async () => {
+      const oauthUser = {
+        ...legacyUser,
+        openId: "oauth-user-123",
+        email: "broker@lee-associates.com",
+        name: "Trusted Admin",
+        loginMethod: "oauth",
+      };
+      vi.mocked(db.getUserByOpenId).mockResolvedValue(oauthUser as never);
+      vi.mocked(platformSession.findAppUserByUsernameOrEmail).mockResolvedValue({
+        id: "broker-user-id",
+        email: "broker@lee-associates.com",
+        username: "broker",
+        fullName: "Regular Broker",
+        role: "broker",
+        office: null,
+        phone: null,
+        passwordHash: null,
+        forcePasswordChangeNextLogin: false,
+        isActive: true,
+        lastLoginAt: null,
+        createdAt: new Date(),
+        createdBy: null,
+        updatedAt: new Date(),
+        deactivatedAt: null,
+      });
+
+      const token = await sdk.createSessionToken(oauthUser.openId, {
+        name: "Trusted Admin",
+        email: oauthUser.email,
+      });
+      const req = {
+        headers: { cookie: `${COOKIE_NAME}=${token}` },
+      } as Request;
+
+      const result = await sdk.authenticateRequest(req);
+      expect(result.role).toBe("user");
+    });
   });
 });
