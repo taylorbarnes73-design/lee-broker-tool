@@ -516,7 +516,7 @@ export default function PortalVoucherFullForm() {
       toast.dismiss();
       toast.loading("Submitting to admin…");
 
-      await sendMut.mutateAsync({
+      const result = await sendMut.mutateAsync({
         formType: "voucher",
         brokerName,
         propertyAddress,
@@ -539,6 +539,10 @@ export default function PortalVoucherFullForm() {
           lsCompany, lbCompany, lStart, lEnd, lTerm, lRate, lRateType, sPrice, sCommPct,
         },
       });
+
+      if (!result.success) {
+        throw new Error(result.error || "The voucher could not be submitted to the admin queue.");
+      }
 
       toast.dismiss();
       toast.success("Commission voucher submitted to admin queue.");
