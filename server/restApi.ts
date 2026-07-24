@@ -11,7 +11,7 @@ import { timingSafeEqual } from "node:crypto";
 import { getDb } from "./db";
 import { brokerAdminRequests, uploads, submissions } from "../drizzle/schema";
 import { desc, eq } from "drizzle-orm";
-import { storagePut, storageGet } from "./storage";
+import { storagePut, storageGet, storageKeyFromReference } from "./storage";
 import { nanoid } from "nanoid";
 import { DealiusClient } from "./services/dealiusClient";
 import { authenticateConfiguredDealius } from "./services/dealiusAuth";
@@ -294,6 +294,12 @@ restApiRouter.get("/files", async (req: Request, res: Response) => {
     if (category) rows = rows.filter(r => r.category === category);
     if (reference) rows = rows.filter(r => r.reference === reference);
 
+    // Connector clients must never enumerate private admin/DocuSign keys.
+    rows = rows.filter(r => {
+      const key = storageKeyFromReference(r.fileKey || r.url || "");
+      return !key.startsWith("broker-admin/") && !key.startsWith("broker-docusign/");
+    });
+
     ok(res, rows.map(r => ({
       fileKey: r.fileKey,
       filename: r.filename,
@@ -317,8 +323,13 @@ restApiRouter.get("/files", async (req: Request, res: Response) => {
  */
 restApiRouter.get("/files/url", async (req: Request, res: Response) => {
   try {
-    const key = req.query.key as string;
-    if (!key) return err(res, 400, "key query parameter is required");
+    const keyParam = req.query.key as string;
+    if (!keyParam) return err(res, 400, "key query parameter is required");
+
+    const key = storageKeyFromReference(keyParam);
+    if (key.startsWith("broker-admin/") || key.startsWith("broker-docusign/")) {
+      return err(res, 403, "Access denied for private file key");
+    }
 
     const { url } = await storageGet(key);
     ok(res, { fileKey: key, url });

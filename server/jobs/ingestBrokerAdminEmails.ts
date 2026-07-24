@@ -126,19 +126,34 @@ export async function runIngestOnce(options: RunIngestOptions = {}): Promise<Ing
       const msg = err instanceof Error ? err.message : String(err);
       summary.errorMessages.push(`[${message.id}] ${msg}`);
       try {
-        await db.insert(emailIngestLog).values({
-          messageId: message.id,
-          internetMessageId: message.internetMessageId ?? null,
-          threadId: message.conversationId ?? null,
-          receivedAt: message.receivedDateTime ? new Date(message.receivedDateTime) : null,
-          fromEmail: message.from?.emailAddress?.address?.toLowerCase() ?? null,
-          toEmails: emailsFrom(message.toRecipients) as any,
-          ccEmails: emailsFrom(message.ccRecipients) as any,
-          subject: message.subject?.slice(0, 1023) ?? null,
-          submissionId: null,
-          ingestStatus: "error",
-          errorMessage: msg.slice(0, 4000),
-        });
+        await db
+          .insert(emailIngestLog)
+          .values({
+            messageId: message.id,
+            internetMessageId: message.internetMessageId ?? null,
+            threadId: message.conversationId ?? null,
+            receivedAt: message.receivedDateTime ? new Date(message.receivedDateTime) : null,
+            fromEmail: message.from?.emailAddress?.address?.toLowerCase() ?? null,
+            toEmails: emailsFrom(message.toRecipients) as any,
+            ccEmails: emailsFrom(message.ccRecipients) as any,
+            subject: message.subject?.slice(0, 1023) ?? null,
+            submissionId: null,
+            ingestStatus: "error",
+            errorMessage: msg.slice(0, 4000),
+          })
+          .onDuplicateKeyUpdate({
+            set: {
+              internetMessageId: message.internetMessageId ?? null,
+              threadId: message.conversationId ?? null,
+              receivedAt: message.receivedDateTime ? new Date(message.receivedDateTime) : null,
+              fromEmail: message.from?.emailAddress?.address?.toLowerCase() ?? null,
+              toEmails: emailsFrom(message.toRecipients) as any,
+              ccEmails: emailsFrom(message.ccRecipients) as any,
+              subject: message.subject?.slice(0, 1023) ?? null,
+              ingestStatus: "error",
+              errorMessage: msg.slice(0, 4000),
+            },
+          });
       } catch {
         // best-effort logging only
       }
@@ -158,43 +173,59 @@ export async function runIngestOnce(options: RunIngestOptions = {}): Promise<Ing
 
 type IngestOutcome = "imported" | "skipped_duplicate" | "skipped_no_match";
 
+function isTerminalIngestStatus(status: string | null | undefined): boolean {
+  // Prior transient failures must be retryable. Only successful imports and
+  // deliberate skips are terminal duplicates.
+  return status !== "error";
+}
+
 async function ingestOneMessage(
   db: AppDb,
   message: GraphMessage,
   _mailbox: string,
   source: "email_ingest" | "email_ingest_backfill"
 ): Promise<IngestOutcome> {
-  const existing = await db
-    .select({ id: emailIngestLog.id })
+  const existingByMessageId = await db
+    .select({
+      id: emailIngestLog.id,
+      ingestStatus: emailIngestLog.ingestStatus,
+      submissionId: emailIngestLog.submissionId,
+    })
     .from(emailIngestLog)
     .where(eq(emailIngestLog.messageId, message.id))
     .limit(1);
-  if (existing.length > 0) {
+
+  if (existingByMessageId.length > 0 && isTerminalIngestStatus(existingByMessageId[0].ingestStatus)) {
     return "skipped_duplicate";
   }
+
   if (message.internetMessageId) {
     const existingByIm = await db
-      .select({ id: emailIngestLog.id })
+      .select({
+        id: emailIngestLog.id,
+        messageId: emailIngestLog.messageId,
+        ingestStatus: emailIngestLog.ingestStatus,
+        submissionId: emailIngestLog.submissionId,
+      })
       .from(emailIngestLog)
       .where(eq(emailIngestLog.internetMessageId, message.internetMessageId))
       .limit(1);
-    if (existingByIm.length > 0) {
-      await db.insert(emailIngestLog).values({
-        messageId: message.id,
-        internetMessageId: message.internetMessageId,
-        threadId: message.conversationId ?? null,
-        receivedAt: message.receivedDateTime ? new Date(message.receivedDateTime) : null,
-        fromEmail: message.from?.emailAddress?.address?.toLowerCase() ?? null,
-        toEmails: emailsFrom(message.toRecipients) as any,
-        ccEmails: emailsFrom(message.ccRecipients) as any,
-        subject: message.subject?.slice(0, 1023) ?? null,
-        submissionId: null,
-        ingestStatus: "skipped_duplicate",
-        errorMessage: null,
-      });
+
+    if (existingByIm.length > 0 && isTerminalIngestStatus(existingByIm[0].ingestStatus)) {
+      // Same RFC Message-ID already processed under a (possibly different) Graph
+      // object id. Do NOT insert another row — internet_message_id is unique and
+      // a conflicting insert would error every poll and pin the watermark.
       return "skipped_duplicate";
     }
   }
+
+  // Heal: if a prior attempt already created the submission, reuse it instead of
+  // inserting a duplicate when we retry an error log row.
+  const priorSubmission = await db
+    .select({ id: submissions.id })
+    .from(submissions)
+    .where(eq(submissions.sourceEmailMessageId, message.id))
+    .limit(1);
 
   const bodyText = plainTextFromBody(message);
   const fromEmail = message.from?.emailAddress?.address ?? "";
@@ -202,50 +233,54 @@ async function ingestOneMessage(
   const toEmails = emailsFrom(message.toRecipients);
   const ccEmails = emailsFrom(message.ccRecipients);
 
-  const parsed = parseEmailSubmission({
-    subject: message.subject ?? "",
-    body: bodyText,
-    from: fromEmail,
-    toEmails,
-    ccEmails,
-  });
+  let submissionId: number | null = priorSubmission[0]?.id ?? null;
 
-  const reference = parsed.propertyAddress ?? message.subject?.trim() ?? null;
-  const payload = {
-    body: bodyText,
-    summary: parsed.summary,
-    parsedFields: parsed.parsedFields,
-    source: {
-      kind: source,
-      messageId: message.id,
-      internetMessageId: message.internetMessageId ?? null,
-      threadId: message.conversationId ?? null,
-      receivedAt: message.receivedDateTime ?? null,
-      webLink: message.webLink ?? null,
+  if (!submissionId) {
+    const parsed = parseEmailSubmission({
+      subject: message.subject ?? "",
+      body: bodyText,
       from: fromEmail,
-      fromName,
-      to: toEmails,
-      cc: ccEmails,
-      hasAttachments: Boolean(message.hasAttachments),
-    },
-  };
+      toEmails,
+      ccEmails,
+    });
 
-  const [insertResult] = await db.insert(submissions).values({
-    formType: parsed.formType,
-    status: "pending",
-    payload: JSON.stringify(payload),
-    reference: reference ? reference.slice(0, 511) : null,
-    submittedBy: fromName || fromEmail || null,
-    submittedByOpenId: null,
-    submittedByEmail: fromEmail || null,
-    source,
-    sourceEmailMessageId: message.id,
-    sourceEmailWebLink: message.webLink ?? null,
-    parsedFields: parsed.parsedFields as any,
-  });
-  const submissionId = (insertResult as any).insertId ?? null;
+    const reference = parsed.propertyAddress ?? message.subject?.trim() ?? null;
+    const payload = {
+      body: bodyText,
+      summary: parsed.summary,
+      parsedFields: parsed.parsedFields,
+      source: {
+        kind: source,
+        messageId: message.id,
+        internetMessageId: message.internetMessageId ?? null,
+        threadId: message.conversationId ?? null,
+        receivedAt: message.receivedDateTime ?? null,
+        webLink: message.webLink ?? null,
+        from: fromEmail,
+        fromName,
+        to: toEmails,
+        cc: ccEmails,
+        hasAttachments: Boolean(message.hasAttachments),
+      },
+    };
 
-  await db.insert(emailIngestLog).values({
+    const [insertResult] = await db.insert(submissions).values({
+      formType: parsed.formType,
+      status: "pending",
+      payload: JSON.stringify(payload),
+      reference: reference ? reference.slice(0, 511) : null,
+      submittedBy: fromName || fromEmail || null,
+      submittedByOpenId: null,
+      submittedByEmail: fromEmail || null,
+      source,
+      sourceEmailMessageId: message.id,
+      sourceEmailWebLink: message.webLink ?? null,
+      parsedFields: parsed.parsedFields as any,
+    });
+    submissionId = (insertResult as any).insertId ?? null;
+  }
+
+  const logValues = {
     messageId: message.id,
     internetMessageId: message.internetMessageId ?? null,
     threadId: message.conversationId ?? null,
@@ -255,9 +290,39 @@ async function ingestOneMessage(
     ccEmails: ccEmails as any,
     subject: message.subject?.slice(0, 1023) ?? null,
     submissionId,
-    ingestStatus: "imported",
+    ingestStatus: "imported" as const,
     errorMessage: null,
-  });
+  };
+
+  if (existingByMessageId.length > 0) {
+    // Replace a prior error claim for this Graph message id.
+    await db
+      .update(emailIngestLog)
+      .set(logValues)
+      .where(eq(emailIngestLog.id, existingByMessageId[0].id));
+  } else if (message.internetMessageId) {
+    // A prior error row may exist under the same RFC Message-ID with a different
+    // Graph object id. Upsert by unique internet_message_id so we don't conflict.
+    await db
+      .insert(emailIngestLog)
+      .values(logValues)
+      .onDuplicateKeyUpdate({
+        set: {
+          messageId: logValues.messageId,
+          threadId: logValues.threadId,
+          receivedAt: logValues.receivedAt,
+          fromEmail: logValues.fromEmail,
+          toEmails: logValues.toEmails,
+          ccEmails: logValues.ccEmails,
+          subject: logValues.subject,
+          submissionId: logValues.submissionId,
+          ingestStatus: logValues.ingestStatus,
+          errorMessage: logValues.errorMessage,
+        },
+      });
+  } else {
+    await db.insert(emailIngestLog).values(logValues);
+  }
 
   return "imported";
 }
