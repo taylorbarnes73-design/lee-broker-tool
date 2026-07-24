@@ -205,4 +205,34 @@ describe("parseLeeVoucherGrid", () => {
     const p = parseLeeVoucherGrid(rows);
     expect(p.dealName).toBe("Leased: 20201 SW Birch Street, #240");
   });
+
+  it("omits blank optional fields from the payload patch so merges cannot erase existing values", () => {
+    const rows = emptyGrid(130, 20);
+    rows[3][3] = "Lease";
+    rows[8][1] = "100 Industrial Way";
+    rows[8][10] = "Irvine";
+    rows[8][13] = "92618";
+    // Leave suite / contacts / fee blank on purpose.
+    rows[52][0] = 5000;
+    rows[52][3] = 12;
+
+    const patch = submissionPayloadPatchFromParsedVoucher(parseLeeVoucherGrid(rows));
+    expect(Object.prototype.hasOwnProperty.call(patch, "suite")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(patch, "commissionRate")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(patch, "feePercent")).toBe(false);
+    expect(Object.values(patch).every(v => v !== undefined)).toBe(true);
+
+    const existing = {
+      suite: "200",
+      commissionRate: "5",
+      feePercent: 5,
+      address: "old address",
+    };
+    const merged = { ...existing, ...patch };
+    expect(merged.suite).toBe("200");
+    expect(merged.commissionRate).toBe("5");
+    expect(merged.feePercent).toBe(5);
+    expect(merged.address).toBe("100 Industrial Way");
+    expect(JSON.parse(JSON.stringify(merged)).suite).toBe("200");
+  });
 });
