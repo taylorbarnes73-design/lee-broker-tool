@@ -518,9 +518,15 @@ export default function PortalListingForm() {
     const propertyAddress = [vals["l-address"].trim(), vals["l-city"].trim()].filter(Boolean).join(", ");
     const sections = buildSections();
     const senderEmail = user?.email && /.+@.+\..+/.test(user.email) ? user.email : undefined;
-    // supportingFiles need absolute URLs (zod .url()); local/relative dev URLs are skipped.
+    // Accept absolute https URLs and app-stored file proxy paths (local/dev).
     const supportingFiles = docs
-      .filter(d => /^https?:\/\//i.test(d.url) && d.fileKey)
+      .filter(
+        d =>
+          d.fileKey &&
+          (/^https?:\/\//i.test(d.url) ||
+            d.url.startsWith("/api/files/content?") ||
+            d.url.startsWith("/local-uploads/"))
+      )
       .map(d => ({ filename: d.filename, url: d.url, fileKey: d.fileKey, category: "listing_deal_documents", label: "Deal Document" }));
     try {
       const pdf = await buildSectionedPdf(pdfInput(propertyAddress));
