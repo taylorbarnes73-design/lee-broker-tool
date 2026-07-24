@@ -223,5 +223,18 @@ describe("REST API — /api/v1", () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data.url).toBeDefined();
     });
+
+    it("denies private broker-admin and broker-docusign keys", async () => {
+      const adminRes = await withApiKey(
+        request(app).get("/api/v1/files/url?key=broker-admin%2Frequest-1%2Fsecret.pdf")
+      );
+      expect(adminRes.status).toBe(403);
+      expect(adminRes.body.error).toMatch(/Access denied/i);
+
+      const docusignRes = await withApiKey(
+        request(app).get("/api/v1/files/url?key=broker-docusign%2Fexecuted%2Fdoc.pdf")
+      );
+      expect(docusignRes.status).toBe(403);
+    });
   });
 });
