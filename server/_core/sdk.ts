@@ -369,15 +369,36 @@ class SDKServer {
       throw ForbiddenError("User not found");
     }
 
+    // OAuth display names are mutable identity claims — never trust them for
+    // LOCAL_ADMIN_NAMES. Prefer the stored app_users.fullName / broker directory.
+    let oauthAppUser: Awaited<ReturnType<typeof findAppUserByUsernameOrEmail>> | undefined;
+    try {
+      const appDb = await db.getDb();
+      oauthAppUser =
+        appDb && user.email ? await findAppUserByUsernameOrEmail(appDb, user.email) : undefined;
+    } catch (error) {
+      console.error("[Auth] Could not resolve app user for OAuth session:", error);
+    }
+    if (oauthAppUser && !oauthAppUser.isActive) {
+      throw ForbiddenError("User account is inactive");
+    }
+    const oauthRole: "admin" | "user" = isAdminByPolicy(
+      user.email,
+      getTrustedAdminPolicyName(user.email, oauthAppUser?.fullName),
+      oauthAppUser?.username
+    )
+      ? "admin"
+      : "user";
+
     await db.upsertUser({
       openId: user.openId,
       lastSignedIn: signedInAt,
-      role: isAdminByPolicy(user.email, user.name) ? "admin" : "user",
+      role: oauthRole,
     });
 
     return {
       ...user,
-      role: isAdminByPolicy(user.email, user.name) ? "admin" : "user",
+      role: oauthRole,
     };
   }
 }
