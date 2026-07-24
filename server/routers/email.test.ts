@@ -4,6 +4,7 @@ const {
   execFileSyncMock,
   storagePutMock,
   dbInsertValuesMock,
+  dbUpdateSetMock,
   sendMailMock,
 } = vi.hoisted(() => ({
   execFileSyncMock: vi.fn(),
@@ -12,6 +13,9 @@ const {
     url: "https://cdn.example.com/broker-docs/submissions/listing/test-file.pdf",
   }),
   dbInsertValuesMock: vi.fn().mockResolvedValue([{ insertId: 101 }]),
+  dbUpdateSetMock: vi.fn().mockReturnValue({
+    where: vi.fn().mockResolvedValue(undefined),
+  }),
   sendMailMock: vi.fn().mockResolvedValue({ messageId: "smtp-1" }),
 }));
 
@@ -35,6 +39,9 @@ function makeDbMock() {
   return {
     insert: vi.fn().mockReturnValue({
       values: dbInsertValuesMock,
+    }),
+    update: vi.fn().mockReturnValue({
+      set: dbUpdateSetMock,
     }),
     select,
   };
@@ -393,5 +400,63 @@ describe("email.sendToAdmin", () => {
     } finally {
       (envMod.ENV as any).adminEmail = original;
     }
+  });
+
+  it("records the admin queue row before sending email and skips send when insert fails", async () => {
+    const callOrder: string[] = [];
+    dbInsertValuesMock.mockImplementation(async (row: Record<string, unknown>) => {
+      if (row && "payload" in row) {
+        callOrder.push("insert");
+        throw new Error("Database unavailable. The request could not be recorded for the admin portal.");
+      }
+      return [{ insertId: 0 }];
+    });
+    execFileSyncMock.mockImplementation(() => {
+      callOrder.push("email");
+      return Buffer.from("OK");
+    });
+    sendMailMock.mockImplementation(async () => {
+      callOrder.push("smtp");
+      return { messageId: "smtp-1" };
+    });
+
+    const caller = makeCaller();
+    const result = await caller.sendToAdmin({
+      formType: "voucher",
+      brokerName: "Test Broker",
+      propertyAddress: "1 Queue First St",
+      sections: sampleSections,
+      senderEmail: "testuser@example.test",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/Database unavailable/i);
+    expect(callOrder).toEqual(["insert"]);
+    expect(execFileSyncMock).not.toHaveBeenCalled();
+    expect(sendMailMock).not.toHaveBeenCalled();
+  });
+
+  it("accepts app-stored supporting file URLs used by local/dev uploads", async () => {
+    const caller = makeCaller();
+    const result = await caller.sendToAdmin({
+      formType: "listing",
+      brokerName: "Test Broker",
+      propertyAddress: "10 Local Upload Ave",
+      sections: sampleSections,
+      senderEmail: "testuser@example.test",
+      supportingFiles: [
+        {
+          filename: "Exclusive.pdf",
+          url: "/api/files/content?key=broker-docs%2Flisting%2Fexclusive.pdf",
+          fileKey: "broker-docs/listing/exclusive.pdf",
+          category: "listing_deal_documents",
+          label: "Deal Document",
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+    const payload = JSON.parse(String(getSubmissionInsertArg().payload));
+    expect(payload.supportingFiles[0].url).toContain("/api/files/content?");
   });
 });
