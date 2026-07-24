@@ -7,7 +7,7 @@ import { ENV } from "../_core/env";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { storageGetBytes, storagePut } from "../storage";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { getSetting } from "../settings/getSetting";
 import { notifyAdminOfSubmission } from "../services/adminNotification";
 
@@ -37,9 +37,34 @@ const generatedFileSchema = z.object({
   base64Data: z.string().min(1).max(MAX_ATTACHMENT_BASE64_LEN),
 });
 
+/** Absolute https URLs plus local/dev stored-file proxy paths used by the portal. */
+function isAllowedSupportingFileUrl(url: string): boolean {
+  const value = url.trim();
+  if (!value) return false;
+  if (/^https?:\/\//i.test(value)) {
+    try {
+      // eslint-disable-next-line no-new
+      new URL(value);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  if (value.startsWith("/api/files/content?")) return true;
+  if (value.startsWith("/local-uploads/")) return true;
+  return false;
+}
+
 const supportingFileSchema = z.object({
   filename: z.string().trim().min(1).max(255),
-  url: z.string().trim().url(),
+  url: z
+    .string()
+    .trim()
+    .min(1)
+    .max(2048)
+    .refine(isAllowedSupportingFileUrl, {
+      message: "Supporting file URL must be https or an app-stored file path",
+    }),
   fileKey: z.string().trim().min(1).max(512),
   category: z.string().trim().max(128).optional(),
   label: z.string().trim().max(255).optional(),
@@ -73,7 +98,7 @@ type ArchivedSubmissionFile = {
 type DeliveryResult = {
   success: boolean;
   error?: string;
-  deliveryMethod?: "smtp" | "outlook-mcp" | "outlook-mcp-link" | "mail-client";
+  deliveryMethod?: "smtp" | "outlook-mcp" | "outlook-mcp-link" | "mail-client" | "queue-only";
   attachmentIncluded?: boolean;
 };
 
@@ -418,6 +443,30 @@ async function recordSubmissionRequest(params: {
   };
 }
 
+/**
+ * Persist only deliveryMethod/deliveryError on the existing payload JSON.
+ * Avoid rewriting the whole payload snapshot so concurrent admin edits made
+ * during slow email delivery are not clobbered.
+ */
+async function updateSubmissionDeliveryMetadata(
+  submissionId: number | null,
+  delivery: DeliveryResult
+): Promise<void> {
+  if (!submissionId) return;
+  const db = await getDb();
+  if (!db) return;
+
+  const method = delivery.deliveryMethod ?? "";
+  const deliveryError = delivery.error ?? "";
+  await db
+    .update(submissions)
+    .set({
+      payload: sql`JSON_SET(COALESCE(${submissions.payload}, JSON_OBJECT()), '$.deliveryMethod', ${method}, '$.deliveryError', ${deliveryError})`,
+      updatedAt: new Date(),
+    })
+    .where(eq(submissions.id, submissionId));
+}
+
 export const emailRouter = router({
   sendToAdmin: protectedProcedure
     .input(sendToAdminInput)
@@ -500,35 +549,28 @@ export const emailRouter = router({
         supportingFiles,
       });
 
-      // For sign requests, we record/queue the submission for the admin portal.
-      // The admin later sends to Cimarron after approval + PO assignment.
-      // When the broker's email client handles delivery, skip server-side SMTP/MCP
-      // so the admin does not receive a duplicate email.
-      // For listing/voucher, we try email delivery but always queue the submission
-      // regardless of whether email succeeds — the admin portal is the source of truth.
-      const delivery =
+      // Queue first. The admin portal row is the source of truth — never send
+      // outbound email before the submission exists, or a later DB failure
+      // orphans a delivered message with no portal record.
+      const needsServerEmail = deliveryMode === "server" && formType !== "sign";
+      const initialDelivery: DeliveryResult =
         deliveryMode === "mail-client"
           ? {
               success: true,
-              deliveryMethod: "mail-client" as const,
+              deliveryMethod: "mail-client",
               attachmentIncluded: false,
-              error: undefined as string | undefined,
             }
           : formType === "sign"
-          ? {
-              success: true,
-              deliveryMethod: "queue-only" as const,
-              // Queue-only: no email is sent, so no attachment is included in delivery.
-              attachmentIncluded: false,
-              error: undefined as string | undefined,
-            }
-          : await deliverSubmissionEmail({
-              to: [adminEmail],
-              cc: senderEmail ? [senderEmail] : [],
-              subject,
-              content,
-              attachments: generatedAttachments,
-            });
+            ? {
+                success: true,
+                deliveryMethod: "queue-only",
+                attachmentIncluded: false,
+              }
+            : {
+                success: true,
+                deliveryMethod: undefined,
+                attachmentIncluded: false,
+              };
 
       let recordedSubmission: RecordedSubmission | null = null;
       try {
@@ -542,17 +584,18 @@ export const emailRouter = router({
           excelFile: archivedExcel,
           supportingFiles,
           uploaderOpenId: ctx.user?.openId ?? null,
-          deliveryMethod: delivery.deliveryMethod,
-          deliveryError: delivery.error,
+          deliveryMethod: initialDelivery.deliveryMethod,
+          deliveryError: initialDelivery.error,
           formData,
         });
       } catch (error: unknown) {
         return {
           // If we can't record the submission at all, that IS a real failure.
+          // Do not attempt outbound email in this case.
           success: false,
           error: error instanceof Error ? error.message : String(error),
-          deliveryMethod: delivery.deliveryMethod,
-          attachmentIncluded: delivery.attachmentIncluded,
+          deliveryMethod: initialDelivery.deliveryMethod,
+          attachmentIncluded: false,
           archivedFile: archivedPdf
             ? {
                 fileKey: archivedPdf.fileKey,
@@ -574,6 +617,25 @@ export const emailRouter = router({
               }
             : null,
         };
+      }
+
+      let delivery: DeliveryResult = initialDelivery;
+      if (needsServerEmail) {
+        delivery = await deliverSubmissionEmail({
+          to: [adminEmail],
+          cc: senderEmail ? [senderEmail] : [],
+          subject,
+          content,
+          attachments: generatedAttachments,
+        });
+        try {
+          await updateSubmissionDeliveryMetadata(recordedSubmission?.id ?? null, delivery);
+        } catch (error) {
+          console.error(
+            `[email.sendToAdmin] Failed to persist delivery metadata for submission ${recordedSubmission?.id}:`,
+            error
+          );
+        }
       }
 
       // The submission is in the queue. Email delivery is best-effort — a failed email
