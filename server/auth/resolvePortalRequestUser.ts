@@ -1,11 +1,18 @@
 import type { Request } from "express";
 import { parse as parseCookieHeader } from "cookie";
 import { COOKIE_NAME } from "@shared/const";
+import { HttpError } from "@shared/_core/errors";
 import type { PlatformRole } from "./platformAuthTypes";
 import { findAppUserByUsernameOrEmail, resolvePlatformUserFromRequest } from "./platformSession";
 import { localAuth, sdk } from "../_core/sdk";
 import { getDb } from "../db";
 import { getTrustedAdminPolicyName, isAdminByPolicy } from "./isAdminByPolicy";
+
+const INACTIVE_ACCOUNT_MESSAGE = "User account is inactive";
+
+function isInactiveAccountError(error: unknown): boolean {
+  return error instanceof HttpError && error.statusCode === 403 && error.message === INACTIVE_ACCOUNT_MESSAGE;
+}
 
 function emailFromLegacyOpenId(openId: string): string | null {
   const prefix = "local:";
@@ -58,7 +65,13 @@ export async function resolvePortalRequestUser(req: Request): Promise<PortalRequ
       email: legacyUser.email ?? null,
       name: legacyUser.name ?? null,
     };
-  } catch {
+  } catch (error) {
+    // Inactive accounts must stay rejected. authenticateRequest() already checked
+    // app_users.isActive; do not fall through to raw JWT verification.
+    if (isInactiveAccountError(error)) {
+      return null;
+    }
+
     // MySQL may be down in local dev; still honor a valid legacy JWT for REST APIs.
     const raw = req.headers.cookie;
     if (!raw) return null;
