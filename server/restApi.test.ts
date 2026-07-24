@@ -27,6 +27,20 @@ vi.mock("./db", () => ({
 vi.mock("./storage", () => ({
   storagePut: vi.fn().mockResolvedValue({ url: "https://cdn.example.com/test.pdf", key: "test-key" }),
   storageGet: vi.fn().mockResolvedValue({ url: "https://cdn.example.com/test.pdf?signed=1", key: "test-key" }),
+  storageKeyFromReference: (value: string) => {
+    const raw = String(value ?? "").trim();
+    try {
+      if (raw.startsWith("http://") || raw.startsWith("https://")) {
+        const parsed = new URL(raw);
+        if (parsed.pathname === "/api/files/content") {
+          return parsed.searchParams.get("key")?.trim() || raw;
+        }
+      }
+    } catch {
+      // fall through
+    }
+    return raw.replace(/^\/+/, "");
+  },
 }));
 
 vi.mock("../drizzle/schema", () => ({
