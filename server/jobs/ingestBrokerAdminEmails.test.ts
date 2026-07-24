@@ -116,7 +116,11 @@ describe("runIngestOnce", () => {
     const updateSet = vi.fn().mockReturnValue({
       where: vi.fn().mockResolvedValue(undefined),
     });
-    const insertValues = vi.fn().mockResolvedValue([{ insertId: 55 }]);
+    const insertValues = vi.fn().mockImplementation((_row: unknown) => {
+      const promise: any = Promise.resolve([{ insertId: 55 }]);
+      promise.onDuplicateKeyUpdate = () => Promise.resolve(undefined);
+      return promise;
+    });
     let emailLogLookups = 0;
 
     const fakeDb = {
@@ -177,7 +181,7 @@ describe("runIngestOnce", () => {
     };
     vi.mocked(listSharedMailboxMessages).mockResolvedValue([message]);
 
-    const insertValues = vi.fn();
+    const submissionOrLogInserts = vi.fn();
     let emailLogLookups = 0;
     const fakeDb = {
       select: (_cols?: unknown) => ({
@@ -202,9 +206,9 @@ describe("runIngestOnce", () => {
           }),
         }),
       }),
-      insert: () => ({
-        values: (...args: unknown[]) => {
-          insertValues(...args);
+      insert: (table: unknown) => ({
+        values: (row: unknown) => {
+          if (table !== kvState) submissionOrLogInserts(row);
           const promise: any = Promise.resolve([{ insertId: 1 }]);
           promise.onDuplicateKeyUpdate = () => Promise.resolve(undefined);
           return promise;
@@ -221,6 +225,6 @@ describe("runIngestOnce", () => {
     expect(summary.skipped).toBe(1);
     expect(summary.imported).toBe(0);
     expect(summary.errors).toBe(0);
-    expect(insertValues).not.toHaveBeenCalled();
+    expect(submissionOrLogInserts).not.toHaveBeenCalled();
   });
 });
