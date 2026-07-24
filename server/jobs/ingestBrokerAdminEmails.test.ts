@@ -104,4 +104,123 @@ describe("runIngestOnce", () => {
     // newest message in the batch, so msg2 (and anything after it) gets retried.
     expect(summary.lastPoll).toBe("2026-01-01T00:00:00.000Z");
   });
+
+  it("retries a prior ingestStatus=error row instead of permanently skipping it", async () => {
+    const message = {
+      ...buildMessage("retry-me", "2026-02-01T00:00:00.000Z"),
+      internetMessageId: "<retry@example.com>",
+      body: { contentType: "text", content: "Commission voucher for 9 Retry Lane" },
+    };
+    vi.mocked(listSharedMailboxMessages).mockResolvedValue([message]);
+
+    const updateSet = vi.fn().mockReturnValue({
+      where: vi.fn().mockResolvedValue(undefined),
+    });
+    const insertValues = vi.fn().mockResolvedValue([{ insertId: 55 }]);
+    let emailLogLookups = 0;
+
+    const fakeDb = {
+      select: (_cols?: unknown) => ({
+        from: (table: unknown) => ({
+          where: (_cond: unknown) => ({
+            limit: (_n: number) => {
+              if (table === kvState) return Promise.resolve([]);
+              if (table === emailIngestLog) {
+                emailLogLookups += 1;
+                // First lookup is by messageId and finds the prior error row.
+                if (emailLogLookups === 1) {
+                  return Promise.resolve([
+                    { id: 9, ingestStatus: "error", submissionId: null },
+                  ]);
+                }
+                // Second lookup is by internetMessageId — treat as same error row path.
+                return Promise.resolve([
+                  { id: 9, messageId: "retry-me", ingestStatus: "error", submissionId: null },
+                ]);
+              }
+              // submissions.sourceEmailMessageId heal lookup
+              return Promise.resolve([]);
+            },
+          }),
+        }),
+      }),
+      insert: (table: unknown) => ({
+        values: (row: unknown) => {
+          if (table === emailIngestLog) {
+            const promise: any = Promise.resolve([{ insertId: 9 }]);
+            promise.onDuplicateKeyUpdate = () => Promise.resolve(undefined);
+            return promise;
+          }
+          return insertValues(row);
+        },
+      }),
+      update: () => ({ set: updateSet }),
+    };
+
+    vi.mocked(getDb).mockResolvedValue(fakeDb as never);
+
+    const summary = await runIngestOnce({ since: new Date("2026-01-01T00:00:00.000Z") });
+
+    expect(summary.imported).toBe(1);
+    expect(summary.skipped).toBe(0);
+    expect(summary.errors).toBe(0);
+    expect(insertValues).toHaveBeenCalled();
+    expect(updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({ ingestStatus: "imported", submissionId: 55 })
+    );
+  });
+
+  it("skips a terminal internetMessageId match without attempting a conflicting insert", async () => {
+    const message = {
+      ...buildMessage("graph-new-id", "2026-03-01T00:00:00.000Z"),
+      internetMessageId: "<already-seen@example.com>",
+    };
+    vi.mocked(listSharedMailboxMessages).mockResolvedValue([message]);
+
+    const insertValues = vi.fn();
+    let emailLogLookups = 0;
+    const fakeDb = {
+      select: (_cols?: unknown) => ({
+        from: (table: unknown) => ({
+          where: (_cond: unknown) => ({
+            limit: (_n: number) => {
+              if (table === kvState) return Promise.resolve([]);
+              if (table === emailIngestLog) {
+                emailLogLookups += 1;
+                if (emailLogLookups === 1) return Promise.resolve([]); // no messageId match
+                return Promise.resolve([
+                  {
+                    id: 3,
+                    messageId: "graph-old-id",
+                    ingestStatus: "imported",
+                    submissionId: 12,
+                  },
+                ]);
+              }
+              return Promise.resolve([]);
+            },
+          }),
+        }),
+      }),
+      insert: () => ({
+        values: (...args: unknown[]) => {
+          insertValues(...args);
+          const promise: any = Promise.resolve([{ insertId: 1 }]);
+          promise.onDuplicateKeyUpdate = () => Promise.resolve(undefined);
+          return promise;
+        },
+      }),
+      update: () => ({
+        set: () => ({ where: () => Promise.resolve(undefined) }),
+      }),
+    };
+    vi.mocked(getDb).mockResolvedValue(fakeDb as never);
+
+    const summary = await runIngestOnce({ since: new Date("2026-01-01T00:00:00.000Z") });
+
+    expect(summary.skipped).toBe(1);
+    expect(summary.imported).toBe(0);
+    expect(summary.errors).toBe(0);
+    expect(insertValues).not.toHaveBeenCalled();
+  });
 });
