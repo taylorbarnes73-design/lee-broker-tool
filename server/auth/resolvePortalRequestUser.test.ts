@@ -91,4 +91,21 @@ describe("resolvePortalRequestUser admin-policy name escalation", () => {
 
     expect(result?.role).toBe("user");
   });
+
+  it("does not fall back to raw JWT verification when the account is inactive", async () => {
+    const { ForbiddenError } = await import("@shared/_core/errors");
+    vi.mocked(sdk.authenticateRequest).mockRejectedValue(ForbiddenError("User account is inactive"));
+    fakeReq.headers = { cookie: "app_session_id=inactive.jwt.token" };
+    vi.mocked(sdk.verifySession).mockResolvedValue({
+      openId: "local:inactive@lee-associates.com",
+      appId: "lee-broker-tool",
+      name: "Inactive User",
+      email: "inactive@lee-associates.com",
+    } as never);
+
+    const result = await resolvePortalRequestUser(fakeReq);
+
+    expect(result).toBeNull();
+    expect(sdk.verifySession).not.toHaveBeenCalled();
+  });
 });
