@@ -43,9 +43,7 @@ function isAllowedSupportingFileUrl(url: string): boolean {
   if (!value) return false;
   if (/^https?:\/\//i.test(value)) {
     try {
-      // eslint-disable-next-line no-new
-      new URL(value);
-      return true;
+      return Boolean(new URL(value).href);
     } catch {
       return false;
     }
