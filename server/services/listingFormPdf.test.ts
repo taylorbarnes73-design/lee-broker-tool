@@ -74,4 +74,33 @@ describe("parseListingFormFields", () => {
     expect(patch.totalBldgSF).toBe(11452);
     expect(patch.askingPrice).toBe(3775000);
   });
+
+  it("omits undefined optional fields so a shallow merge cannot wipe existing payload keys", () => {
+    const parsed = parseListingFormFields(
+      {
+        Lease: "On",
+        Address: "100 Industrial Way",
+        City: "Irvine",
+        Zip: "92618",
+      },
+      "INDUSTRIAL LISTING ENTRY FORM"
+    );
+    const patch = listingFormPatchFromParsed(parsed);
+    expect(Object.values(patch).every(value => value !== undefined)).toBe(true);
+    expect(patch).not.toHaveProperty("listingAgentName");
+    expect(patch).not.toHaveProperty("suite");
+    expect(patch).not.toHaveProperty("leaseType");
+
+    const existing = {
+      listingAgentName: "Jane Smith",
+      suite: "200",
+      leaseType: "NNN",
+      address: "old address",
+    };
+    const merged = JSON.parse(JSON.stringify({ ...existing, ...patch })) as Record<string, unknown>;
+    expect(merged.listingAgentName).toBe("Jane Smith");
+    expect(merged.suite).toBe("200");
+    expect(merged.leaseType).toBe("NNN");
+    expect(merged.address).toBe("100 Industrial Way");
+  });
 });
