@@ -231,7 +231,7 @@ export function listingFormPatchFromParsed(parsed: ParsedListingFormPdf): Record
         .map((name, index) => ({ name, pct: index === 0 ? 100 : "", lead: index === 0 }))
     : [];
 
-  return {
+  const patch: Record<string, unknown> = {
     listingName: parsed.listingName,
     propertyType: parsed.propertyType,
     transactionType: parsed.transactionType,
@@ -263,4 +263,9 @@ export function listingFormPatchFromParsed(parsed: ParsedListingFormPdf): Record
       debug: parsed._debug ?? null,
     },
   };
+
+  // Blank optional PDF fields become `undefined`. Callers that shallow-merge
+  // this patch into an existing payload must not let JSON.stringify drop those
+  // keys and permanently erase prior values.
+  return Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined));
 }
