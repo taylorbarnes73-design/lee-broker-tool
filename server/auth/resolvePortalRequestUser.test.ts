@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Request } from "express";
+import { ForbiddenError } from "@shared/_core/errors";
 import { ENV } from "../_core/env";
 import { resolvePortalRequestUser } from "./resolvePortalRequestUser";
 
@@ -93,7 +94,6 @@ describe("resolvePortalRequestUser admin-policy name escalation", () => {
   });
 
   it("does not fall back to raw JWT verification when the account is inactive", async () => {
-    const { ForbiddenError } = await import("@shared/_core/errors");
     vi.mocked(sdk.authenticateRequest).mockRejectedValue(ForbiddenError("User account is inactive"));
     fakeReq.headers = { cookie: "app_session_id=inactive.jwt.token" };
     vi.mocked(sdk.verifySession).mockResolvedValue({
