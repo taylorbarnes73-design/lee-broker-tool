@@ -264,8 +264,10 @@ export function listingFormPatchFromParsed(parsed: ParsedListingFormPdf): Record
     },
   };
 
-  // Blank optional PDF fields become `undefined`. Callers that shallow-merge
-  // this patch into an existing payload must not let JSON.stringify drop those
-  // keys and permanently erase prior values.
-  return Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined));
+  // Blank optional PDF fields become `undefined`, `null`, or "". Callers that
+  // shallow-merge this patch into an existing payload must not let JSON.stringify
+  // drop or null out those keys and permanently erase prior values.
+  return Object.fromEntries(
+    Object.entries(patch).filter(([, value]) => value !== undefined && value !== null && value !== "")
+  );
 }

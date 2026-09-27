@@ -529,10 +529,12 @@ export function submissionPayloadPatchFromParsedVoucher(parsed: ParsedLeeVoucher
     patch.listingAgentName = parsed.brokers[0].name;
   }
 
-  // Blank optional worksheet cells become `undefined`. Callers that shallow-merge
-  // this patch into an existing payload must not let JSON.stringify drop those
-  // keys and permanently erase prior values.
-  return Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined));
+  // Blank optional worksheet cells become `undefined`, `null`, or "". Callers that
+  // shallow-merge this patch into an existing payload must not let JSON.stringify
+  // drop or null out those keys and permanently erase prior values.
+  return Object.fromEntries(
+    Object.entries(patch).filter(([, value]) => value !== undefined && value !== null && value !== "")
+  );
 }
 
 export function parseLeeVoucherExcelBuffer(buffer: Buffer): ParsedLeeVoucherExcel {
