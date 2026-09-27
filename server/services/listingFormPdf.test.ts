@@ -90,17 +90,26 @@ describe("parseListingFormFields", () => {
     expect(patch).not.toHaveProperty("listingAgentName");
     expect(patch).not.toHaveProperty("suite");
     expect(patch).not.toHaveProperty("leaseType");
+    expect(patch).not.toHaveProperty("yearBuilt");
+    expect(patch).not.toHaveProperty("askingPrice");
+    expect(patch).not.toHaveProperty("sqft");
 
     const existing = {
       listingAgentName: "Jane Smith",
       suite: "200",
       leaseType: "NNN",
+      yearBuilt: 1990,
+      askingPrice: 1000000,
+      sqft: 5000,
       address: "old address",
     };
     const merged = JSON.parse(JSON.stringify({ ...existing, ...patch })) as Record<string, unknown>;
     expect(merged.listingAgentName).toBe("Jane Smith");
     expect(merged.suite).toBe("200");
     expect(merged.leaseType).toBe("NNN");
+    expect(merged.yearBuilt).toBe(1990);
+    expect(merged.askingPrice).toBe(1000000);
+    expect(merged.sqft).toBe(5000);
     expect(merged.address).toBe("100 Industrial Way");
   });
 });

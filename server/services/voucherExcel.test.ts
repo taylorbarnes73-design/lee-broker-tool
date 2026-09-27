@@ -220,19 +220,28 @@ describe("parseLeeVoucherGrid", () => {
     expect(Object.prototype.hasOwnProperty.call(patch, "suite")).toBe(false);
     expect(Object.prototype.hasOwnProperty.call(patch, "commissionRate")).toBe(false);
     expect(Object.prototype.hasOwnProperty.call(patch, "feePercent")).toBe(false);
-    expect(Object.values(patch).every(v => v !== undefined)).toBe(true);
+    expect(Object.prototype.hasOwnProperty.call(patch, "totalBldgSF")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(patch, "landSF")).toBe(false);
+    expect(Object.values(patch).every(v => v !== undefined && v !== null && v !== "")).toBe(true);
 
     const existing = {
       suite: "200",
       commissionRate: "5",
       feePercent: 5,
+      totalBldgSF: 20000,
+      landSF: 40000,
       address: "old address",
     };
     const merged = { ...existing, ...patch };
     expect(merged.suite).toBe("200");
     expect(merged.commissionRate).toBe("5");
     expect(merged.feePercent).toBe(5);
+    expect(merged.totalBldgSF).toBe(20000);
+    expect(merged.landSF).toBe(40000);
     expect(merged.address).toBe("100 Industrial Way");
-    expect(JSON.parse(JSON.stringify(merged)).suite).toBe("200");
+    const stored = JSON.parse(JSON.stringify(merged)) as Record<string, unknown>;
+    expect(stored.suite).toBe("200");
+    expect(stored.totalBldgSF).toBe(20000);
+    expect(stored.landSF).toBe(40000);
   });
 });
