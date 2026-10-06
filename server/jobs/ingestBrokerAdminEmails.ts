@@ -12,6 +12,106 @@ import {
 
 const LAST_POLL_KEY = "brokerAdminIngest:lastPoll";
 
+/**
+ * `submissions.payload` is a MySQL TEXT column (65,535 bytes). A long mailbox
+ * thread stringifies past that limit, the insert throws, and the error row is
+ * then treated as a finished duplicate — so the message never lands in the
+ * queue. Stay under the column size and keep the Outlook link for the rest.
+ */
+export const EMAIL_INGEST_PAYLOAD_MAX_BYTES = 60_000;
+
+const BODY_TRUNCATION_NOTE =
+  "\n\n[Message body truncated to fit the submission record. Open the Outlook link for the full email.]";
+
+export type EmailIngestPayload = {
+  body: string;
+  summary: string;
+  parsedFields: {
+    formType: string;
+    propertyAddress: string | null;
+    dollarAmounts: string[];
+    contacts: string[];
+    summary: string;
+  };
+  source: {
+    kind: string;
+    messageId: string;
+    internetMessageId: string | null;
+    threadId: string | null;
+    receivedAt: string | null;
+    webLink: string | null;
+    from: string;
+    fromName: string;
+    to: string[];
+    cc: string[];
+    hasAttachments: boolean;
+  };
+};
+
+function utf8Bytes(value: string): number {
+  return Buffer.byteLength(value, "utf8");
+}
+
+function sliceChars(value: string, maxChars: number): string {
+  const sliced = value.slice(0, Math.max(0, maxChars));
+  const last = sliced.charCodeAt(sliced.length - 1);
+  if (last >= 0xd800 && last <= 0xdbff) return sliced.slice(0, -1);
+  return sliced;
+}
+
+function shrinkIngestPayload(payload: EmailIngestPayload): EmailIngestPayload {
+  return {
+    ...payload,
+    summary: payload.summary.slice(0, 500),
+    parsedFields: {
+      ...payload.parsedFields,
+      summary: payload.parsedFields.summary.slice(0, 500),
+      contacts: payload.parsedFields.contacts.slice(0, 25),
+      dollarAmounts: payload.parsedFields.dollarAmounts.slice(0, 10),
+    },
+    source: {
+      ...payload.source,
+      to: payload.source.to.slice(0, 25),
+      cc: payload.source.cc.slice(0, 25),
+    },
+  };
+}
+
+function fitPayloadBody(payload: EmailIngestPayload): string {
+  let lo = 0;
+  let hi = payload.body.length;
+  let best = "";
+  while (lo <= hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    const candidate = JSON.stringify({
+      ...payload,
+      body: sliceChars(payload.body, mid) + BODY_TRUNCATION_NOTE,
+      bodyTruncated: true,
+    });
+    if (utf8Bytes(candidate) <= EMAIL_INGEST_PAYLOAD_MAX_BYTES) {
+      best = candidate;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return best;
+}
+
+/** JSON for `submissions.payload` that is guaranteed to fit a MySQL TEXT column. */
+export function buildEmailIngestPayloadJson(payload: EmailIngestPayload): string {
+  const full = JSON.stringify(payload);
+  if (utf8Bytes(full) <= EMAIL_INGEST_PAYLOAD_MAX_BYTES) return full;
+
+  const fitted = fitPayloadBody(payload);
+  if (fitted) return fitted;
+
+  const reduced = fitPayloadBody(shrinkIngestPayload(payload));
+  if (reduced) return reduced;
+
+  throw new Error("Email ingest payload exceeds the submissions.payload column limit.");
+}
+
 export type IngestSummary = {
   imported: number;
   skipped: number;
@@ -233,7 +333,7 @@ async function ingestOneMessage(
   const [insertResult] = await db.insert(submissions).values({
     formType: parsed.formType,
     status: "pending",
-    payload: JSON.stringify(payload),
+    payload: buildEmailIngestPayloadJson(payload),
     reference: reference ? reference.slice(0, 511) : null,
     submittedBy: fromName || fromEmail || null,
     submittedByOpenId: null,
