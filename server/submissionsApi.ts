@@ -6,6 +6,12 @@ import { submissions, uploads } from "../drizzle/schema";
 import { and, asc, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { resolvePortalRequestUser } from "./auth/resolvePortalRequestUser";
 import { pushVoucherSubmissionToDealius, validateVoucherPayloadForDealiusPush } from "./services/dealiusPush";
+import {
+  SubmissionPayloadTooLargeError,
+  assertDealiusPushCanBeStored,
+  dealiusCreatedRecordLabel,
+  planDealiusPushPayload,
+} from "./services/dealiusPushPayload";
 import { pushDealEntryToDealius, pushListingEntryToDealius, validateListingEntryForDealiusPush } from "./services/dealiusEntry";
 import { parseLeeVoucherExcelBuffer, submissionPayloadPatchFromParsedVoucher } from "./services/voucherExcel";
 import { listingFormPatchFromParsed, parseListingFormPdfBuffer } from "./services/listingFormPdf";
@@ -745,6 +751,20 @@ submissionsApiRouter.post("/:id/push-dealius", async (req, res) => {
       return;
     }
 
+    try {
+      assertDealiusPushCanBeStored({
+        payload,
+        entryMode: requestedMode,
+        feePercentOverride: feePercentOverride ?? null,
+      });
+    } catch (err: unknown) {
+      if (err instanceof SubmissionPayloadTooLargeError) {
+        res.status(400).json({ success: false, error: err.message });
+        return;
+      }
+      throw err;
+    }
+
     const result =
       requestedMode === "listing"
         ? await pushListingEntryToDealius({ entry: pushPayload })
@@ -752,25 +772,50 @@ submissionsApiRouter.post("/:id/push-dealius", async (req, res) => {
           ? await pushDealEntryToDealius({ entry: pushPayload })
           : await pushVoucherSubmissionToDealius({ payload: pushPayload });
 
-    const nextPayload = {
-      ...payload,
-      dealiusPush: {
-        ...result,
-        pushedAt: new Date().toISOString(),
+    const pushedAt = new Date().toISOString();
+    let plan;
+    try {
+      plan = planDealiusPushPayload({
+        payload,
+        result,
+        submittedEntry: pushPayload && typeof pushPayload === "object" ? pushPayload : null,
+        pushedAt,
         entryMode: requestedMode,
-        submittedEntry: pushPayload,
         feePercentOverride: feePercentOverride ?? null,
-      },
-    };
+      });
+    } catch (err: unknown) {
+      if (err instanceof SubmissionPayloadTooLargeError) {
+        const label = dealiusCreatedRecordLabel(result);
+        res.status(500).json({
+          success: false,
+          error: `Dealius created ${label}, but this submission is too large to store that id. Do not push again.`,
+          data: result,
+        });
+        return;
+      }
+      throw err;
+    }
 
-    await db
-      .update(submissions)
-      .set({
-        status: "approved",
-        payload: JSON.stringify(nextPayload),
-        updatedAt: new Date(),
-      })
-      .where(eq(submissions.id, id));
+    try {
+      await db
+        .update(submissions)
+        .set({
+          status: "approved",
+          payload: plan.payloadJson,
+          updatedAt: new Date(),
+        })
+        .where(eq(submissions.id, id));
+    } catch (err: unknown) {
+      const label = dealiusCreatedRecordLabel(result);
+      const detail = err instanceof Error ? err.message : String(err);
+      console.error(`[push-dealius] Created ${label} for submission ${id} but failed to store it:`, err);
+      res.status(500).json({
+        success: false,
+        error: `Dealius created ${label}, but saving it on this submission failed (${detail}). Do not push again.`,
+        data: result,
+      });
+      return;
+    }
 
     res.json({ success: true, data: result });
   } catch (err: unknown) {

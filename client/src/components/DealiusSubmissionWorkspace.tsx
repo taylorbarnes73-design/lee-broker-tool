@@ -459,6 +459,7 @@ export default function DealiusSubmissionWorkspace({
 }) {
   const [entry, setEntry] = useState<DealiusEntry>(() => buildInitialEntry(submission));
   const [pushing, setPushing] = useState(false);
+  const [pushLocked, setPushLocked] = useState(false);
   const [pushResult, setPushResult] = useState<any>(null);
   const [pushError, setPushError] = useState<string | null>(null);
   const [docRows, setDocRows] = useState<DocRow[]>([]);
@@ -561,6 +562,19 @@ export default function DealiusSubmissionWorkspace({
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) {
+        const created = body?.data;
+        const createdId = created?.dealID ?? created?.listingID ?? created?.propertyID;
+        if (createdId) {
+          setPushResult(created);
+          setPushLocked(true);
+          const target = latestTarget(entry, submission.payload, created);
+          setDocTargetType(target.entityType);
+          setDocTargetId(target.entityId);
+          const detail = body?.error || `Dealius record ${createdId} was created. Do not push again.`;
+          setPushError(detail);
+          toast.error(detail);
+          return;
+        }
         const detail = Array.isArray(body?.errors) ? body.errors.join(" ") : body?.error;
         throw new Error(detail || "Push failed");
       }
@@ -1198,10 +1212,10 @@ export default function DealiusSubmissionWorkspace({
           variant="primary"
           size="lg"
           icon={<Send size={16} />}
-          disabled={pushing || !canPush}
+          disabled={pushing || pushLocked || !canPush}
           onClick={() => void handlePush()}
         >
-          {pushing ? "Pushing…" : entry.entryMode === "listing" ? "Push listing" : "Push deal"}
+          {pushing ? "Pushing…" : pushLocked ? "Already created" : entry.entryMode === "listing" ? "Push listing" : "Push deal"}
         </Button>
       </section>
       </div>
