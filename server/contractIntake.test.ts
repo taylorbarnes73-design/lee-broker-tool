@@ -48,6 +48,24 @@ describe("mergeVoucherFromContractExtraction", () => {
     expect((payload.aiExtract as any).contract.revisions).toHaveLength(1);
   });
 
+  it("keeps a 1% contract commission at 1 percent instead of 100", () => {
+    const payload = mergeVoucherFromContractExtraction({
+      payload: {},
+      contractType: "Lease Agreement",
+      now: baseDate,
+      contract: {
+        propAddress: "123 Main St",
+        propCity: "Newport Beach",
+        propState: "CA",
+        propZip: "92660",
+        commAmount: "1%",
+      },
+    });
+
+    expect(payload.feePercent).toBe(1);
+    expect(payload.commissionRate).toBe("1");
+  });
+
   it("replaces values that came from the previous contract revision", () => {
     const first = mergeVoucherFromContractExtraction({
       payload: {},

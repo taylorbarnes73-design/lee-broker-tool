@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { percentPointsToFraction } from "@shared/commissionPercent";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -28,22 +29,12 @@ describe("commission voucher Excel template", () => {
 });
 
 describe("voucher percent → Excel fraction", () => {
-  // Mirrors parsePct() in client/src/lib/voucherExcel.ts: values > 1 are treated
-  // as whole percents (6 → 0.06); values <= 1 are already fractions (0.75 → 0.75).
-  const parsePct = (s: string): number | null => {
-    if (!s) return null;
-    const n = Number.parseFloat(s.replace(/[$,%]/g, "").replace(/,/g, "").trim());
-    if (!Number.isFinite(n)) return null;
-    return n > 1 ? n / 100 : n;
-  };
-
-  it("converts whole percents to fractions", () => {
-    expect(parsePct("6")).toBe(0.06);
-    expect(parsePct("50")).toBe(0.5);
-  });
-
-  it("leaves existing fractions untouched", () => {
-    expect(parsePct("0.75")).toBe(0.75);
-    expect(parsePct("1")).toBe(1);
+  // Voucher % fields are percent points. Excel percent cells (M43, K53) store the fraction.
+  it("converts percent points, including 1%, into Excel fractions", () => {
+    expect(percentPointsToFraction("6")).toBe(0.06);
+    expect(percentPointsToFraction("50")).toBe(0.5);
+    expect(percentPointsToFraction("1")).toBe(0.01);
+    expect(percentPointsToFraction("0.75")).toBe(0.0075);
+    expect(percentPointsToFraction("100")).toBe(1);
   });
 });

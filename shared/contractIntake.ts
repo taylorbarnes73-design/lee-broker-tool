@@ -1,3 +1,5 @@
+import { commissionPercentPoints } from "./commissionPercent";
+
 type ContractPdfRef = {
   url?: string;
   fileKey?: string;
@@ -25,18 +27,10 @@ function str(raw: unknown): string {
   return String(raw ?? "").trim();
 }
 
-function feePercentFrom(raw: unknown): number | null {
-  if (raw === null || raw === undefined || raw === "") return null;
-  const normalized = String(raw).replace(/[$,%]/g, "").replace(/,/g, "").trim();
-  if (!normalized) return null;
-  const parsed = Number(normalized);
-  if (!Number.isFinite(parsed) || parsed <= 0) return null;
-  return parsed <= 1 ? parsed * 100 : parsed;
-}
-
 function feePercentFromCommAmount(raw: unknown): number | null {
   const match = str(raw).match(/(\d+(?:\.\d+)?)\s*%/);
-  return match ? feePercentFrom(match[1]) : null;
+  // The matched text already includes "%", so "1%" is 1 percent point, not a fraction of 1.
+  return match ? commissionPercentPoints(match[0]) : null;
 }
 
 function getCurrentContractExtraction(payload: Record<string, unknown>): Record<string, unknown> | null {

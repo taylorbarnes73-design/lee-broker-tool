@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { percentPointsToFraction } from "@shared/commissionPercent";
 import { parseQuickConvertPrefill, QUICK_CONVERT_PREFILL_STORAGE_KEY } from "@shared/quickConvert";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -200,22 +201,22 @@ export default function PortalVoucherFullForm() {
 
   const leaseCommDue = useMemo(() => {
     const tc = totalConsideration;
-    const rate = n(lCommRate);
+    const rate = percentPointsToFraction(lCommRate);
     if (tc == null || rate == null) return null;
-    const r = rate > 1 ? rate / 100 : rate;
-    return tc * r;
+    return tc * rate;
   }, [totalConsideration, lCommRate]);
 
   const totalInvoice = useMemo(() => {
-    const base = isLease ? (leaseCommDue ?? 0) : (n(sPrice) ?? 0) * ((n(sCommPct) ?? 0) > 1 ? (n(sCommPct)! / 100) : (n(sCommPct) ?? 0));
+    const saleFraction = percentPointsToFraction(sCommPct) ?? 0;
+    const base = isLease ? (leaseCommDue ?? 0) : (n(sPrice) ?? 0) * saleFraction;
     return base + (n(commBonus) ?? 0) + (n(commConsulting) ?? 0) || null;
   }, [isLease, leaseCommDue, sPrice, sCommPct, commBonus, commConsulting]);
 
   const saleCommDue = useMemo(() => {
     const p = n(sPrice);
-    const r = n(sCommPct);
-    if (p == null || r == null) return null;
-    return p * (r > 1 ? r / 100 : r);
+    const rate = percentPointsToFraction(sCommPct);
+    if (p == null || rate == null) return null;
+    return p * rate;
   }, [sPrice, sCommPct]);
 
   const salePriceSf = useMemo(() => {

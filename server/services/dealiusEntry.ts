@@ -1,3 +1,4 @@
+import { commissionPercentPoints } from "@shared/commissionPercent";
 import { DealiusClient, resolveBrokerContactId } from "./dealiusClient";
 import { authenticateConfiguredDealius } from "./dealiusAuth";
 import { getDealiusUserDirectory } from "./dealiusUserDirectory";
@@ -67,9 +68,7 @@ function parseAddressParts(raw: string): { address?: string; city?: string; stat
 }
 
 function feePercentFrom(raw: unknown): number | null {
-  const n = num(raw);
-  if (n == null || n <= 0) return null;
-  return n <= 1 ? n * 100 : n;
+  return commissionPercentPoints(raw);
 }
 
 function firstFeePercent(p: Record<string, unknown>): number | null {
@@ -933,7 +932,7 @@ export async function pushDealEntryToDealius(params: { entry: Record<string, unk
     if (link.status < 200 || link.status >= 300) log.warnings.push(`Contact ${contactID} was not linked to deal ${dealID}.`);
   }
 
-  const feeFraction = d.feePercent != null && d.feePercent > 1 ? d.feePercent / 100 : d.feePercent;
+  const feeFraction = d.feePercent != null ? d.feePercent / 100 : undefined;
   const financialPayload = omitEmpty({
     DealID: dealID,
     DealName: d.dealName,

@@ -448,6 +448,56 @@ describe("pushDealEntryToDealius — financial PUT failure reporting", () => {
 // pushListingEntryToDealius — sanity end-to-end happy path.
 // Confirms that the camelCase `data: { listingId }` wrapper resolves to a real id.
 // ──────────────────────────────────────────────────────────────────────────────
+describe("pushDealEntryToDealius — 1% fee stays 1 percent", () => {
+  it("does not turn a 1% fee into a 100% ClientRepFee", async () => {
+    currentClient.routes.push({
+      match: c => c.method === "POST" && c.path === "/properties",
+      reply: () => ({ status: 200, data: { PropertyID: 90421 } }),
+    });
+    currentClient.routes.push({
+      match: c => c.method === "POST" && /\/properties\/\d+\/spaces/.test(c.path),
+      reply: () => ({ status: 200, data: { PropertySpaceID: 4444 } }),
+    });
+    currentClient.routes.push({
+      match: c => c.method === "GET" && c.path.startsWith("/companies?"),
+      reply: () => ({ status: 200, data: { Data: [] } }),
+    });
+    currentClient.routes.push({
+      match: c => c.method === "POST" && c.path === "/companies",
+      reply: () => ({ status: 200, data: { CompanyID: 5511 } }),
+    });
+    currentClient.routes.push({
+      match: c => c.method === "POST" && c.path === "/deals",
+      reply: () => ({ status: 200, data: { DealID: 333111 } }),
+    });
+    currentClient.routes.push({
+      match: c => c.method === "PUT" && c.path === "/deals",
+      reply: () => ({ status: 200, data: { Success: true } }),
+    });
+
+    await pushDealEntryToDealius({
+      entry: {
+        dealName: "Sold: 1 Main St",
+        address: "1 Main St",
+        city: "Irvine",
+        zip: "92606",
+        transactionType: "Sale",
+        clientCo: "Seller Co",
+        sqft: 10000,
+        feePercent: 1,
+        totalConsideration: 5000000,
+      },
+    });
+
+    const createPayload = currentClient.calls.find(c => c.method === "POST" && c.path === "/deals")?.data as any;
+    expect(createPayload.ClientRepFee).toBe(1);
+    expect(createPayload.OppositeSideRepFee).toBe(1);
+
+    const financialPayload = currentClient.calls.find(c => c.method === "PUT" && c.path === "/deals")?.data as any;
+    expect(financialPayload.ClientRepFee).toBe(1);
+  });
+});
+
 describe("pushDealEntryToDealius - referral deals", () => {
   it("canonicalizes referral name and sends flat commission amount with 100% internal fee", async () => {
     currentClient.routes.push({

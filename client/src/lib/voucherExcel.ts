@@ -1,4 +1,5 @@
 import JSZip from "jszip";
+import { percentPointsToFraction } from "@shared/commissionPercent";
 
 const TEMPLATE_URL = "/templates/commission-voucher-template.xlsm";
 const MIME = "application/vnd.ms-excel.sheet.macroEnabled.12";
@@ -106,9 +107,7 @@ function parseNum(s: string): number | null {
 }
 
 function parsePct(s: string): number | null {
-  const n = parseNum(s);
-  if (n == null) return null;
-  return n > 1 ? n / 100 : n;
+  return percentPointsToFraction(s);
 }
 
 function yesNo(v: string): string {

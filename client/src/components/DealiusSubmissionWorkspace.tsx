@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ExternalLink, FileSearch, FileUp, Plus, Send, Trash2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { commissionPercentPoints } from "@shared/commissionPercent";
 import { mergeVoucherFromContractExtraction } from "@shared/contractIntake";
 import { Badge, Button, Field, Input, Select } from "../design/index.jsx";
 
@@ -258,6 +259,11 @@ function feePercentFrom(raw: unknown): string {
   return String(n <= 1 ? n * 100 : n);
 }
 
+function feePercentPoints(raw: unknown): string {
+  const n = commissionPercentPoints(raw);
+  return n == null ? "" : String(n);
+}
+
 function asRentRows(raw: unknown, fallbackMonths?: unknown, fallbackRate?: unknown, fallbackSqft?: unknown): RentRow[] {
   if (Array.isArray(raw) && raw.length) {
     return raw
@@ -354,9 +360,9 @@ function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
     compactNumber(fieldFromSections(payload, ["Building SF"]));
   const leaseRate = p.lRate || p.leaseRate || fieldFromSections(payload, ["Rate ($/SF/Mo)", "Base Rent ($/SF/Mo)"]);
   const repTypeID = str(p.repTypeID || p.repType) || (transactionType === "Sale" ? "2" : "4");
-  const voucherFee =
-    feePercentFrom(p.feePercent || p.internalFeePercent || p.commissionRate || p.lCommRate || p.sCommPct || p.saleCommPct) ||
-    feePercentFrom(fieldFromSections(payload, ["Total Commission %", "Commission (%)"]));
+  const voucherFee = feePercentPoints(
+    p.feePercent || p.internalFeePercent || p.commissionRate || p.lCommRate || p.sCommPct || p.saleCommPct
+  ) || feePercentPoints(fieldFromSections(payload, ["Total Commission %", "Commission (%)", "Sale Commission %", "Commission Rate"]));
   const fee = String(repTypeID) === "5" ? voucherFee || "100" : voucherFee;
   const clientCo = str(p.clientCo || p.lessorName || p.sellerName || p.lsCompany) || fieldFromSections(payload, ["Lessor / Seller", "Seller / Client Co."]);
   const clientContactName = str(p.clientContactName || p.clientContact || p.lsContact);

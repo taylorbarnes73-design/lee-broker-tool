@@ -13,6 +13,7 @@ import {
   formatSubmissionStatus,
   submissionStatusTone,
 } from "@/lib/format";
+import { commissionPercentPoints } from "@shared/commissionPercent";
 import { mergeVoucherFromContractExtraction } from "@shared/contractIntake";
 
 type SubmissionDetail = {
@@ -62,19 +63,8 @@ type SubmissionDocument = {
   downloadUrl?: string | null;
 };
 
-function num(raw: unknown): number | null {
-  if (raw === null || raw === undefined || raw === "") return null;
-  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
-  const normalized = String(raw).replace(/[$,%]/g, "").replace(/,/g, "").trim();
-  if (!normalized) return null;
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
 function feePercentFrom(raw: unknown): number | null {
-  const n = num(raw);
-  if (n == null || n <= 0) return null;
-  return n <= 1 ? n * 100 : n;
+  return commissionPercentPoints(raw);
 }
 
 function deriveFeePercent(payload: any): number | null {
