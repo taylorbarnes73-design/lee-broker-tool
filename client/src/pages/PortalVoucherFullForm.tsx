@@ -459,7 +459,7 @@ export default function PortalVoucherFullForm() {
       lsAddress, lbAddress, lsCity, lbCity, lsState, lbState, lsZip, lbZip, lsPhone, lbPhone,
       lStart, lEnd, lOcc, lTerm, lRate, lRateType, lAskingRate,
       sPrice, sBuyerType, sAsking, sCap, sEscrow, sEscrowCheck,
-      rentRows, commBonus, commConsulting, sCommPct,
+      rentRows, lCommRate, commBonus, commConsulting, sCommPct,
       invoiceTo, invCompany, invAddress, invInstructions, paymentRows,
       sameAgent, laName, laHouse, laAddress, laCity, laState, laZip, laPhone, laPayFee,
       paName: sameAgent ? laName : paName,

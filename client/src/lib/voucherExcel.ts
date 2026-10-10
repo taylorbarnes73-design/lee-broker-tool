@@ -59,6 +59,8 @@ export type VoucherExcelData = {
   sEscrow: string;
   sEscrowCheck: string;
   rentRows: RentRow[];
+  /** Lease commission rate in percent points (for example "6"). Blank rent-row Comm % cells use this. */
+  lCommRate: string;
   commBonus: string;
   commConsulting: string;
   sCommPct: string;
@@ -111,6 +113,18 @@ function parsePct(s: string): number | null {
   return n > 1 ? n / 100 : n;
 }
 
+/**
+ * Rent-row Comm % wins when the broker typed one. A filled rent row with a
+ * blank Comm % uses the lease commission rate, matching the on-screen invoice.
+ * The voucher template computes row commission as K * consideration and treats
+ * a blank K as zero.
+ */
+export function rentRowCommissionPct(row: RentRow, headerRate: string): string {
+  if (String(row.commPct ?? "").trim()) return row.commPct;
+  if (row.monthly == null && row.months == null) return "";
+  return String(headerRate ?? "").trim();
+}
+
 function yesNo(v: string): string {
   const l = v.toLowerCase();
   if (l === "yes" || l === "y" || l === "true") return "Y";
@@ -143,7 +157,7 @@ function resolveInvoiceTarget(d: VoucherExcelData): { company: string; address: 
   return { company: "", address: "" };
 }
 
-function buildCellOps(d: VoucherExcelData): Record<string, CellOp> {
+export function buildVoucherCellOps(d: VoucherExcelData): Record<string, CellOp> {
   const ops: Record<string, CellOp> = {};
 
   function setText(addr: string, v: string) {
@@ -229,7 +243,7 @@ function buildCellOps(d: VoucherExcelData): Record<string, CellOp> {
     const r = 53 + i;
     setNum(`A${r}`, row.monthly);
     setNum(`D${r}`, row.months);
-    setPct(`K${r}`, row.commPct);
+    setPct(`K${r}`, rentRowCommissionPct(row, d.lCommRate));
   });
 
   setNum("L70", d.commBonus);
@@ -382,7 +396,7 @@ export async function buildVoucherExcel(data: VoucherExcelData): Promise<{ blob:
   if (!sheetFile) throw new Error("Voucher template is missing its worksheet.");
 
   const sheetXml = await sheetFile.async("string");
-  const ops = buildCellOps(data);
+  const ops = buildVoucherCellOps(data);
   const modifiedXml = applyOpsToSheetXml(sheetXml, ops);
   zip.file(sheetPath, modifiedXml);
 
