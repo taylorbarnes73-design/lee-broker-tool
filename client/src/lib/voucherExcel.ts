@@ -143,7 +143,31 @@ function resolveInvoiceTarget(d: VoucherExcelData): { company: string; address: 
   return { company: "", address: "" };
 }
 
-function buildCellOps(d: VoucherExcelData): Record<string, CellOp> {
+/** Template cell whose Y/N value selects the INVOICE line (E107). */
+const INVOICE_FLAG_CELLS = {
+  lessor: "G11",
+  lessee: "N11",
+  listing_agent: "G84",
+  procuring_agent: "N84",
+} as const;
+
+export type InvoiceFlagCell = (typeof INVOICE_FLAG_CELLS)[keyof typeof INVOICE_FLAG_CELLS];
+
+/**
+ * The voucher template's INVOICE row is E107:
+ * IF(G11="y", C12, IF(N11="y", K12, IF(G84="y", C85, IF(N84="y", K85, ...)))).
+ * G109 is only "Invoice a different Company?" and is not read by that formula.
+ * Party invoices must set the matching Y/N flag so E107 resolves to the party name.
+ */
+export function invoiceFlagCell(invoiceTo: string): InvoiceFlagCell | null {
+  const key = invoiceTo.trim().toLowerCase();
+  if (key === "lessor" || key === "lessee" || key === "listing_agent" || key === "procuring_agent") {
+    return INVOICE_FLAG_CELLS[key];
+  }
+  return null;
+}
+
+export function buildCellOps(d: VoucherExcelData): Record<string, CellOp> {
   const ops: Record<string, CellOp> = {};
 
   function setText(addr: string, v: string) {
@@ -162,8 +186,6 @@ function buildCellOps(d: VoucherExcelData): Record<string, CellOp> {
     const s = dateSerial(v);
     ops[addr] = s != null ? { type: "number", value: s } : { type: "clear" };
   }
-
-  const invoiceTarget = resolveInvoiceTarget(d);
 
   setText("D4", d.txnType);
   setText("G4", d.propType);
@@ -266,8 +288,19 @@ function buildCellOps(d: VoucherExcelData): Record<string, CellOp> {
   setText("C101", firstExtra?.address ?? "");
   setNum("L100", firstExtra?.amount ?? "");
 
-  setText("G109", invoiceTarget.company);
-  setText("G110", invoiceTarget.address);
+  const invoiceFlag = invoiceFlagCell(d.invoiceTo);
+  for (const addr of ["G11", "N11", "G84", "N84"] as const) {
+    ops[addr] = invoiceFlag === addr ? { type: "text", value: "y" } : { type: "clear" };
+  }
+  if (invoiceFlag) {
+    // Party name already lives on C12/K12/C85/K85. Filling G109 would look like a second bill-to.
+    setText("G109", "");
+    setText("G110", "");
+  } else {
+    const invoiceTarget = resolveInvoiceTarget(d);
+    setText("G109", invoiceTarget.company);
+    setText("G110", invoiceTarget.address);
+  }
   setText("A113", d.invInstructions);
 
   for (const a of ["K113","L113","M113","N113","K114","L114","M114","N114"]) ops[a] = { type: "clear" };
