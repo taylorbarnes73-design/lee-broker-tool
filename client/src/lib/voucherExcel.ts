@@ -89,14 +89,20 @@ export type VoucherExcelData = {
   notes: string;
 };
 
-type CellOp = { type: "text"; value: string } | { type: "number"; value: number } | { type: "clear" };
+export type CellOp = { type: "text"; value: string } | { type: "number"; value: number } | { type: "clear" };
 
-function dateSerial(iso: string): number | null {
-  if (!iso) return null;
-  const d = new Date(iso + "T00:00:00");
-  if (Number.isNaN(d.getTime())) return null;
-  const epoch = new Date(1899, 11, 30);
-  return (d.getTime() - epoch.getTime()) / (24 * 60 * 60 * 1000);
+/** Excel 1900-system serial for a calendar date. Independent of the browser timezone. */
+export function excelDateSerial(iso: string): number | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const utc = Date.UTC(year, month - 1, day);
+  if (Number.isNaN(utc)) return null;
+  const check = new Date(utc);
+  if (check.getUTCFullYear() !== year || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) return null;
+  return (utc - Date.UTC(1899, 11, 30)) / 86_400_000;
 }
 
 function parseNum(s: string): number | null {
@@ -143,7 +149,7 @@ function resolveInvoiceTarget(d: VoucherExcelData): { company: string; address: 
   return { company: "", address: "" };
 }
 
-function buildCellOps(d: VoucherExcelData): Record<string, CellOp> {
+export function buildCellOps(d: VoucherExcelData): Record<string, CellOp> {
   const ops: Record<string, CellOp> = {};
 
   function setText(addr: string, v: string) {
@@ -159,7 +165,7 @@ function buildCellOps(d: VoucherExcelData): Record<string, CellOp> {
     ops[addr] = p != null ? { type: "number", value: p } : { type: "clear" };
   }
   function setDate(addr: string, v: string) {
-    const s = dateSerial(v);
+    const s = excelDateSerial(v);
     ops[addr] = s != null ? { type: "number", value: s } : { type: "clear" };
   }
 
