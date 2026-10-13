@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ExternalLink, FileSearch, FileUp, Plus, Send, Trash2 } from "lucide-react";
+import { portalVoucherDealFields } from "@/lib/dealiusPrefill";
 import { trpc } from "@/lib/trpc";
 import { mergeVoucherFromContractExtraction } from "@shared/contractIntake";
 import { Badge, Button, Field, Input, Select } from "../design/index.jsx";
@@ -328,17 +329,22 @@ function asBrokerRows(raw: unknown, fallbacks: unknown[]): BrokerRow[] {
     }));
 }
 
-function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
+export function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
   const payload = submission.payload ?? {};
   const voucherData = payload.voucherData && typeof payload.voucherData === "object" ? payload.voucherData : {};
   const p = { ...payload, ...voucherData };
   const formType = submission.formType.toLowerCase();
   const isListing = formType === "listing";
 
-  const address = str(p.address) || fieldFromSections(payload, ["Address", "Property Address"]) || str(payload.propertyAddress || submission.reference);
-  const city = str(p.city) || fieldFromSections(payload, ["City"]);
-  const zip = str(p.zip || p.zipCode) || fieldFromSections(payload, ["Zip", "ZIP"]);
-  const suite = str(p.suite || p.unit || fieldFromSections(payload, ["Suite", "Unit"]));
+  const portal = formType === "voucher" ? portalVoucherDealFields(payload) : null;
+  const address =
+    str(p.address) ||
+    portal?.address ||
+    fieldFromSections(payload, ["Address", "Property Address"]) ||
+    str(payload.propertyAddress || submission.reference);
+  const city = str(p.city) || fieldFromSections(payload, ["City"]) || portal?.city || "";
+  const zip = str(p.zip || p.zipCode) || fieldFromSections(payload, ["Zip", "ZIP"]) || portal?.zip || "";
+  const suite = str(p.suite || p.unit || fieldFromSections(payload, ["Suite", "Unit"])) || portal?.suite || "";
   const propertyType =
     str(p.propertyType || p.propType) ||
     fieldFromSections(payload, ["Property Type"]) ||
@@ -348,18 +354,35 @@ function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
   const listingTransaction = str(p.listingTransaction || p.transactionType || p.txnType).toLowerCase();
   const sqft =
     compactNumber(p.sqft || p.dealSF || p.lDealSF || p.sizeSF) ||
-    compactNumber(fieldFromSections(payload, ["Building SF", "Suite SF", "Deal SF", "Space SF"]));
+    compactNumber(fieldFromSections(payload, ["Building SF", "Suite SF", "Deal SF", "Space SF"])) ||
+    portal?.dealSf ||
+    "";
   const bldgSF =
     compactNumber(p.totalBldgSF || p.bldgSF || p.buildingSF) ||
     compactNumber(fieldFromSections(payload, ["Building SF"]));
-  const leaseRate = p.lRate || p.leaseRate || fieldFromSections(payload, ["Rate ($/SF/Mo)", "Base Rent ($/SF/Mo)"]);
-  const repTypeID = str(p.repTypeID || p.repType) || (transactionType === "Sale" ? "2" : "4");
+  const leaseRate = p.lRate || p.leaseRate || fieldFromSections(payload, ["Rate ($/SF/Mo)", "Base Rent ($/SF/Mo)"]) || portal?.askingRate;
+  const explicitRepTypeID = /^[1-5]$/.test(str(p.repTypeID)) ? str(p.repTypeID) : "";
+  const repTypeID = explicitRepTypeID || portal?.repTypeID || (transactionType === "Sale" ? "2" : "4");
   const voucherFee =
     feePercentFrom(p.feePercent || p.internalFeePercent || p.commissionRate || p.lCommRate || p.sCommPct || p.saleCommPct) ||
-    feePercentFrom(fieldFromSections(payload, ["Total Commission %", "Commission (%)"]));
+    portal?.feePercent ||
+    feePercentFrom(fieldFromSections(payload, ["Total Commission %", "Commission (%)", "Commission Rate", "Sale Commission %"]));
   const fee = String(repTypeID) === "5" ? voucherFee || "100" : voucherFee;
-  const clientCo = str(p.clientCo || p.lessorName || p.sellerName || p.lsCompany) || fieldFromSections(payload, ["Lessor / Seller", "Seller / Client Co."]);
+  const clientCo =
+    str(p.clientCo || p.lessorName || p.sellerName || p.lsCompany) ||
+    portal?.clientCo ||
+    fieldFromSections(payload, ["Lessor / Seller", "Seller / Client Co."]);
   const clientContactName = str(p.clientContactName || p.clientContact || p.lsContact);
+
+  const structuredRent = asRentRows(p.rentRows || p.rentSchedule);
+  const portalRent = !structuredRent.length && portal?.rentRows.length ? asRentRows(portal.rentRows) : [];
+  const rentRows = structuredRent.length
+    ? structuredRent
+    : portalRent.length
+      ? portalRent
+      : portal?.hasPortalRentSource
+        ? []
+        : asRentRows(undefined, p.lTerm || p.leaseTerm || portal?.term, leaseRate, sqft);
 
   const brokers = asBrokerRows(p.brokers || p.agents, [
     p.listingAgentName,
@@ -391,7 +414,10 @@ function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
     glDoors: compactNumber(p.glDoors || p.gl),
     numParkingSpaces: compactNumber(p.numParkingSpaces || p.parkingSpaces),
     clientCo,
-    oppositeCo: str(p.oppositeCo || p.lesseeName || p.buyerName || p.lbCompany) || fieldFromSections(payload, ["Lessee / Buyer", "Buyer / Opposite Co."]),
+    oppositeCo:
+      str(p.oppositeCo || p.lesseeName || p.buyerName || p.lbCompany) ||
+      portal?.oppositeCo ||
+      fieldFromSections(payload, ["Lessee / Buyer", "Buyer / Opposite Co."]),
     ownerCompany: str(p.ownerCompany || p.owner || p.clientCo) || fieldFromSections(payload, ["Owner Name", "Owner / Sublessor Company"]),
     clientContactName,
     clientContactEmail: str(p.clientContactEmail || p.clientEmail || p.lsEmail),
@@ -399,12 +425,14 @@ function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
     oppositeContactName: str(p.oppositeContactName || p.oppositeContact || p.lbContact),
     oppositeContactEmail: str(p.oppositeContactEmail || p.oppositeEmail || p.lbEmail),
     oppositeContactPhone: str(p.oppositeContactPhone || p.oppositePhone || p.lbPhone),
-    startDate: str(p.startDate || p.lStart || p.leaseStart || fieldFromSections(payload, ["Commencement Date"])).slice(0, 10),
-    endDate: str(p.endDate || p.lEnd || p.leaseEnd || fieldFromSections(payload, ["Expiration Date"])).slice(0, 10),
-    occupancyDate: str(p.occupancyDate || p.lOcc).slice(0, 10),
-    term: compactNumber(p.term || p.lTerm || p.leaseTerm || fieldFromSections(payload, ["Lease Term", "Lease Term (months)"])),
+    startDate: str(p.startDate || p.lStart || p.leaseStart || fieldFromSections(payload, ["Commencement Date", "Start Date"]) || portal?.startDate).slice(0, 10),
+    endDate: str(p.endDate || p.lEnd || p.leaseEnd || fieldFromSections(payload, ["Expiration Date", "End Date"]) || portal?.endDate).slice(0, 10),
+    occupancyDate: str(p.occupancyDate || p.lOcc || fieldFromSections(payload, ["Occupancy Date"]) || portal?.occupancyDate).slice(0, 10),
+    term: compactNumber(p.term || p.lTerm || p.leaseTerm || fieldFromSections(payload, ["Lease Term", "Lease Term (months)", "Term (months)"]) || portal?.term),
     askingRate: compactNumber(p.askingRate || p.lAskingRate || leaseRate),
-    totalConsideration: compactNumber(p.totalConsideration || p.sPrice || p.salePrice || fieldFromSections(payload, ["Total Consideration", "Asking Price"])),
+    totalConsideration: compactNumber(
+      p.totalConsideration || p.sPrice || p.salePrice || fieldFromSections(payload, ["Total Consideration", "Asking Price", "Sale Price"]) || portal?.salePrice,
+    ),
     feePercent: fee,
     paymentDate: str(p.paymentDate).slice(0, 10),
     paymentAmount: compactNumber(p.paymentAmount || p.commissionAmount || p.referralFee || p.totalInvoice || p.invoiceAmount),
@@ -421,7 +449,7 @@ function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
     listingStatus: str(p.listingStatus || "active"),
     listingSource: str(p.listingSource) || `Submission ${submission.id}`,
     listingNotes: str(p.listingNotes || p.notes),
-    rentRows: asRentRows(p.rentRows || p.rentSchedule, p.lTerm || p.leaseTerm, leaseRate, sqft),
+    rentRows,
     spaces: asListingSpaces(p.spaces || p.listingSpaces, suite, sqft, leaseRate),
     brokers,
   };
