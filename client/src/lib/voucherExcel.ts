@@ -143,7 +143,7 @@ function resolveInvoiceTarget(d: VoucherExcelData): { company: string; address: 
   return { company: "", address: "" };
 }
 
-function buildCellOps(d: VoucherExcelData): Record<string, CellOp> {
+export function buildCellOps(d: VoucherExcelData): Record<string, CellOp> {
   const ops: Record<string, CellOp> = {};
 
   function setText(addr: string, v: string) {
@@ -220,6 +220,18 @@ function buildCellOps(d: VoucherExcelData): Record<string, CellOp> {
   setText("M45", d.sEscrow);
   setText("N46", yesNo(d.sEscrowCheck));
 
+  // Template F53 is months × (monthly ÷ deal SF) × deal SF, and C53 is monthly ÷ deal SF.
+  // J42:J44 divide the same way for the effective rate. Deal SF is optional on the
+  // form, so a blank C23 makes those cells #DIV/0! and the invoice total (L76)
+  // follows, even though monthly × months is already known.
+  const dealSfNum = parseNum(d.dealSf);
+  const dealSfPositive = dealSfNum != null && dealSfNum > 0;
+  if (!dealSfPositive) {
+    ops.J42 = { type: "clear" };
+    ops.J43 = { type: "clear" };
+    ops.J44 = { type: "clear" };
+  }
+
   for (let r = 53; r <= 67; r++) {
     ops[`A${r}`] = { type: "clear" };
     ops[`D${r}`] = { type: "clear" };
@@ -230,6 +242,14 @@ function buildCellOps(d: VoucherExcelData): Record<string, CellOp> {
     setNum(`A${r}`, row.monthly);
     setNum(`D${r}`, row.months);
     setPct(`K${r}`, row.commPct);
+    if (!dealSfPositive && row.monthly != null && row.monthly > 0) {
+      ops[`C${r}`] = { type: "clear" };
+      if (row.months != null && row.months > 0) {
+        setNum(`F${r}`, row.monthly * row.months);
+      } else {
+        ops[`F${r}`] = { type: "clear" };
+      }
+    }
   });
 
   setNum("L70", d.commBonus);
