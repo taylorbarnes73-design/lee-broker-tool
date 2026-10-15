@@ -293,7 +293,11 @@ function parseLeeVoucherGridInternal(rows: unknown[][], ws: WorkSheet | null, la
 
   const propTypeRaw = g(rows, 3, 6) || "";
   const suite = g(rows, 21, 2);
-  const sqft = v431 ? gn(rows, 35, 2) ?? gn(rows, 22, 1) ?? gn(rows, 22, 2) : gn(rows, 22, 2);
+  // C23 is the Deal Sq Ft input. C36 is the formula `=C23`, and the shipped
+  // template caches that formula as 0. SheetJS does not recalculate, so reading
+  // C36 first turns a portal voucher (Deal SF written only to C23) into 0 sq ft.
+  // A positive C36 still wins when an Excel-saved file has no C23 value.
+  const sqft = v431 ? firstPositiveNumber([gn(rows, 22, 2), gn(rows, 35, 2)]) : gn(rows, 22, 2);
   const subType = g(rows, 22, 10) || propTypeRaw;
   const landSF = gn(rows, 22, 12);
   const totalBldgSF = v431 ? gn(rows, 23, 1) ?? gn(rows, 23, 2) : gn(rows, 23, 2);

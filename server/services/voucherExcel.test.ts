@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import XLSX from "xlsx";
 import { describe, expect, it } from "vitest";
 import {
@@ -91,6 +93,30 @@ describe("parseLeeVoucherGrid", () => {
 
     const patch = submissionPayloadPatchFromParsedVoucher(p);
     expect(patch.excelImport).toMatchObject({ parser: "lee_voucher_excel_v431" });
+  });
+
+  it("keeps Deal SF from C23 when the C36 formula cache is still 0", () => {
+    const templatePath = path.resolve("client/public/templates/commission-voucher-template.xlsm");
+    const template = fs.readFileSync(templatePath);
+    const blank = parseLeeVoucherExcelBuffer(template);
+    expect(blank.sqft).toBeNull();
+    expect(blank.dealSF).toBeNull();
+
+    const wb = XLSX.read(template, { type: "buffer", cellDates: true });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    expect(ws["C36"]?.v).toBe(0);
+    expect(ws["C36"]?.f).toBe("C23");
+    ws["C23"] = { t: "n", v: 12500 };
+    ws["B9"] = { t: "s", v: "100 Industrial Way" };
+    const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+
+    const parsed = parseLeeVoucherExcelBuffer(buf);
+    expect(parsed.sqft).toBe(12500);
+    expect(parsed.dealSF).toBe(12500);
+
+    const patch = submissionPayloadPatchFromParsedVoucher(parsed);
+    expect(patch.sqft).toBe(12500);
+    expect(patch.dealSF).toBe(12500);
   });
 
   it("uses v431 rent-row commission percent and skips the summary rent row", () => {
