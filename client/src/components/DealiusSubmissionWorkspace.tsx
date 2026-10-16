@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ExternalLink, FileSearch, FileUp, Plus, Send, Trash2 } from "lucide-react";
+import { prefillDealBrokers } from "@/lib/dealiusBrokerPrefill";
 import { trpc } from "@/lib/trpc";
 import { mergeVoucherFromContractExtraction } from "@shared/contractIntake";
 import { Badge, Button, Field, Input, Select } from "../design/index.jsx";
@@ -299,35 +300,6 @@ function asListingSpaces(raw: unknown, fallbackSuite: unknown, fallbackSqft: unk
   return [];
 }
 
-function asBrokerRows(raw: unknown, fallbacks: unknown[]): BrokerRow[] {
-  if (Array.isArray(raw) && raw.length) {
-    return raw
-      .map((row: any, index) => ({
-        name: str(row?.name || row?.brokerName || row?.fullName),
-        side: str(row?.side),
-        pct: feePercentFrom(row?.pct ?? row?.percent ?? row?.commissionPct),
-        lead: Boolean(row?.lead) || index === 0,
-      }))
-      .filter(row => row.name);
-  }
-
-  const seen = new Set<string>();
-  return fallbacks
-    .map(name => str(name))
-    .filter(Boolean)
-    .filter(name => {
-      const key = name.toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .map((name, index, list) => ({
-      name,
-      pct: list.length === 1 ? "100" : "50",
-      lead: index === 0,
-    }));
-}
-
 function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
   const payload = submission.payload ?? {};
   const voucherData = payload.voucherData && typeof payload.voucherData === "object" ? payload.voucherData : {};
@@ -361,15 +333,16 @@ function buildInitialEntry(submission: SubmissionDetail): DealiusEntry {
   const clientCo = str(p.clientCo || p.lessorName || p.sellerName || p.lsCompany) || fieldFromSections(payload, ["Lessor / Seller", "Seller / Client Co."]);
   const clientContactName = str(p.clientContactName || p.clientContact || p.lsContact);
 
-  const brokers = asBrokerRows(p.brokers || p.agents, [
-    p.listingAgentName,
-    p.procuringAgentName,
-    p.laName,
-    p.paName,
-    fieldFromSections(payload, ["Agent 1 Name", "Listing Agent"]),
-    fieldFromSections(payload, ["Agent 2 Name", "Procuring Agent"]),
-    submission.submittedBy,
-  ]);
+  const brokers = prefillDealBrokers({
+    brokers: p.brokers,
+    agents: p.agents,
+    listingAgentName: p.listingAgentName,
+    procuringAgentName: p.procuringAgentName,
+    laName: p.laName,
+    paName: p.paName,
+    sections: payload.sections,
+    submittedBy: submission.submittedBy,
+  });
 
   return {
     entryMode: isListing ? "listing" : "deal",
