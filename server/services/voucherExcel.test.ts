@@ -188,6 +188,37 @@ describe("parseLeeVoucherGrid", () => {
     expect(p._debug?.representedBothSides).toBe(true);
   });
 
+  it("does not treat sale cap rate or commission dollars as the commission percent", () => {
+    const ws: XLSX.WorkSheet = {};
+    ws["A34"] = { v: "LEASE TRANSACTION DETAILS", t: "s" };
+    ws["D4"] = { v: "Sale", t: "s" };
+    ws["B9"] = { v: "900 Sale Street", t: "s" };
+    ws["K9"] = { v: "Irvine", t: "s" };
+    ws["N9"] = { v: "92618", t: "s" };
+    ws["C12"] = { v: "Seller LLC", t: "s" };
+    ws["K12"] = { v: "Buyer LLC", t: "s" };
+    ws["M36"] = { v: 2500000, t: "n" };
+    // Cap rate is M42. Sale commission due (M44) is dollars: M43 * M36.
+    ws["M42"] = { v: 0.055, t: "n" };
+    ws["M44"] = { v: 100000, t: "n", f: "M43*M36" };
+    ws["!ref"] = "A1:P140";
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+    const blankCommission = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+
+    const missed = parseLeeVoucherExcelBuffer(blankCommission);
+    expect(missed.saleCommPct).toBeNull();
+    const missedPatch = submissionPayloadPatchFromParsedVoucher(missed);
+    expect(missedPatch.feePercent).toBeUndefined();
+    expect(missedPatch.saleCommPct).toBeNull();
+
+    ws["M43"] = { v: 4, t: "n" };
+    const withCommission = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+    const parsed = parseLeeVoucherExcelBuffer(withCommission);
+    expect(parsed.saleCommPct).toBe(4);
+    expect(submissionPayloadPatchFromParsedVoucher(parsed).feePercent).toBe(4);
+  });
+
   it("does not duplicate suite when address already contains the suite number", () => {
     const rows = emptyGrid(140, 20);
     rows[3][3] = "Lease";

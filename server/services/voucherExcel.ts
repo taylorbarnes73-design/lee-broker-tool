@@ -170,13 +170,13 @@ function txRawFrom431(ws: WorkSheet, rows: unknown[][]): string {
 }
 
 function saleCommPctFrom431(ws: WorkSheet, rows: unknown[][]): number | null {
+  // M43 (merged through N43) is "What is your Commission %".
+  // M42 is cap rate. M44 is sale commission dollars (`M43*M36`), and its cached
+  // value survives when the percent cell is blank. Neither is a percent.
   const candidates = [
     gn(rows, 42, 12),
-    gn(rows, 43, 12),
     readWorksheetCellNum(ws, "M43"),
     readWorksheetCellNum(ws, "N43"),
-    readWorksheetCellNum(ws, "M42"),
-    gn(rows, 41, 12),
   ];
   for (const n of candidates) {
     if (n != null && n > 0) return n;
