@@ -118,6 +118,14 @@ function yesNo(v: string): string {
   return "";
 }
 
+/** Portal labels that must match the voucher template's transaction-type list. */
+export function templateTransactionType(txnType: string): string {
+  const value = txnType.trim().toLowerCase();
+  if (value === "renewal" || value === "lease renewal") return "Lease Renewal";
+  if (value === "sublease" || value === "sub-lease" || value === "sub lease") return "SubLease";
+  return txnType;
+}
+
 function distSide(s: string): string {
   const v = s.toLowerCase();
   if (v === "procuring") return "Procurring"; // template uses double-r
@@ -165,7 +173,7 @@ function buildCellOps(d: VoucherExcelData): Record<string, CellOp> {
 
   const invoiceTarget = resolveInvoiceTarget(d);
 
-  setText("D4", d.txnType);
+  setText("D4", templateTransactionType(d.txnType));
   setText("G4", d.propType);
   setText("K4", yesNo(d.activeListing));
   setText("N4", yesNo(d.closeListing));

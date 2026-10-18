@@ -205,4 +205,40 @@ describe("parseLeeVoucherGrid", () => {
     const p = parseLeeVoucherGrid(rows);
     expect(p.dealName).toBe("Leased: 20201 SW Birch Street, #240");
   });
+
+  it("keeps a portal Renewal voucher as a landlord lease instead of a sale", () => {
+    const ws: XLSX.WorkSheet = {};
+    ws["A34"] = { v: "LEASE TRANSACTION DETAILS", t: "s" };
+    ws["D4"] = { v: "Renewal", t: "s" };
+    ws["B9"] = { v: "100 Renewal Way", t: "s" };
+    ws["K9"] = { v: "Irvine", t: "s" };
+    ws["N9"] = { v: "92618", t: "s" };
+    ws["C12"] = { v: "Landlord LLC", t: "s" };
+    ws["K12"] = { v: "Tenant LLC", t: "s" };
+    ws["C85"] = { v: "Lee & Associates Newport Beach", t: "s" };
+    ws["K85"] = { v: "CBRE", t: "s" };
+    ws["C36"] = { v: 12500, t: "n" };
+    ws["A53"] = { v: 18750, t: "n" };
+    ws["D53"] = { v: 60, t: "n" };
+    ws["K53"] = { v: 0.06, t: "n" };
+    ws["!ref"] = "A1:P140";
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+    const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+
+    const p = parseLeeVoucherExcelBuffer(buf);
+    expect(p.isLease).toBe(true);
+    expect(p.isSale).toBe(false);
+    expect(p.transactionType).toBe("Lease");
+    expect(p.repTypeID).toBe(4);
+    expect(p.representationType).toBe("Landlord Rep");
+    expect(p.clientCo).toBe("Landlord LLC");
+    expect(p.oppositeCo).toBe("Tenant LLC");
+    expect(p.rentRows).toEqual([{ monthly: 18750, months: 60, free: false }]);
+    expect(p.dealName).toBe("Leased: 100 Renewal Way");
+
+    const patch = submissionPayloadPatchFromParsedVoucher(p);
+    expect(patch.transactionType).toBe("Lease");
+    expect(patch.repTypeID).toBe(4);
+  });
 });

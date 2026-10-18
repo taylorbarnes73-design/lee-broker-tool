@@ -241,7 +241,12 @@ function parseLeeVoucherGridInternal(rows: unknown[][], ws: WorkSheet | null, la
 
   const txRaw = (v431 && ws ? txRawFrom431(ws, rows) : (g(rows, 3, 3) || g(rows, 4, 1) || g(rows, 3, 1) || "")).toLowerCase();
   const isReferral = txRaw.includes("referral") || txRaw.includes("referred") || txRaw.includes("referr");
-  const isLease = !isReferral && (txRaw.includes("lease") || txRaw === "");
+  // The portal writes "Renewal" for a lease renewal. That word does not contain
+  // "lease", and the official template value is "Lease Renewal". Either form is
+  // still a lease: classifying it as a sale drops the rent schedule and records
+  // the landlord and tenant as seller and buyer.
+  const isRenewal = !isReferral && txRaw.includes("renew");
+  const isLease = !isReferral && (txRaw.includes("lease") || isRenewal || txRaw === "");
   const isSale = !isReferral && (txRaw.includes("sale") || txRaw.includes("sold"));
 
   const listingHouse = (
