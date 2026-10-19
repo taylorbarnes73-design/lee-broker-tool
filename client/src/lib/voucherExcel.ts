@@ -1,4 +1,5 @@
 import JSZip from "jszip";
+import { agentHousesForVoucher } from "@shared/voucherAgentHouses";
 
 const TEMPLATE_URL = "/templates/commission-voucher-template.xlsm";
 const MIME = "application/vnd.ms-excel.sheet.macroEnabled.12";
@@ -10,6 +11,7 @@ export type PaymentRow = { date1: string; amount1: string; date2: string; amount
 
 export type VoucherExcelData = {
   txnType: string;
+  repType: string;
   propType: string;
   otherType: string;
   activeListing: string;
@@ -70,6 +72,7 @@ export type VoucherExcelData = {
   sameAgent: boolean;
   laName: string;
   laHouse: string;
+  laHouseTouched: boolean;
   laAddress: string;
   laCity: string;
   laState: string;
@@ -78,6 +81,7 @@ export type VoucherExcelData = {
   laPayFee: string;
   paName: string;
   paHouse: string;
+  paHouseTouched: boolean;
   paAddress: string;
   paCity: string;
   paState: string;
@@ -236,8 +240,16 @@ function buildCellOps(d: VoucherExcelData): Record<string, CellOp> {
   setNum("L74", d.commConsulting);
 
   setText("J80", yesNo(d.sameAgent ? "yes" : "no"));
-  setText("C85", d.laHouse);
-  setText("K85", d.paHouse);
+  const houses = agentHousesForVoucher({
+    repType: d.repType,
+    sameAgent: d.sameAgent,
+    laHouse: d.laHouse,
+    laHouseTouched: d.laHouseTouched,
+    paHouse: d.paHouse,
+    paHouseTouched: d.paHouseTouched,
+  });
+  setText("C85", houses.laHouse);
+  setText("K85", houses.paHouse);
   setText("C86", d.laName);
   setText("K86", d.paName);
   setText("C87", d.laAddress);

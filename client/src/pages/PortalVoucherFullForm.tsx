@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { parseQuickConvertPrefill, QUICK_CONVERT_PREFILL_STORAGE_KEY } from "@shared/quickConvert";
+import { agentHousesForVoucher, LEE_NEWPORT_HOUSE } from "@shared/voucherAgentHouses";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import AdminPortalShell from "@/components/AdminPortalShell";
@@ -79,7 +80,8 @@ export default function PortalVoucherFullForm() {
   // ── Agents ──────────────────────────────────────────────────────────────
   const [sameAgent, setSameAgent] = useState(false);
   const [laName, setLaName] = useState("");
-  const [laHouse, setLaHouse] = useState("Lee & Associates Newport Beach");
+  const [laHouse, setLaHouse] = useState("");
+  const [laHouseTouched, setLaHouseTouched] = useState(false);
   const [laAddress, setLaAddress] = useState("");
   const [laCity, setLaCity] = useState("");
   const [laState, setLaState] = useState("CA");
@@ -87,7 +89,8 @@ export default function PortalVoucherFullForm() {
   const [laPhone, setLaPhone] = useState("");
   const [laPayFee, setLaPayFee] = useState("no");
   const [paName, setPaName] = useState("");
-  const [paHouse, setPaHouse] = useState("Lee & Associates Newport Beach");
+  const [paHouse, setPaHouse] = useState(LEE_NEWPORT_HOUSE);
+  const [paHouseTouched, setPaHouseTouched] = useState(false);
   const [paAddress, setPaAddress] = useState("");
   const [paCity, setPaCity] = useState("");
   const [paState, setPaState] = useState("CA");
@@ -287,6 +290,16 @@ export default function PortalVoucherFullForm() {
     if (f.suite) setSuite(f.suite);
     if (f.transactionType) setTxnType(f.transactionType);
     if (f.representationType) setRepType(f.representationType);
+    const houses = agentHousesForVoucher({
+      repType: f.representationType || repType,
+      sameAgent,
+      laHouse,
+      laHouseTouched,
+      paHouse,
+      paHouseTouched,
+    });
+    setLaHouse(houses.laHouse);
+    setPaHouse(houses.paHouse);
     if (f.propertyType) setPropType(f.propertyType);
     if (f.buildingSf) setBldgSf(f.buildingSf);
     if (f.dealSf) setDealSf(f.dealSf);
@@ -453,7 +466,7 @@ export default function PortalVoucherFullForm() {
 
   function buildExcelData(): VoucherExcelData {
     return {
-      txnType, propType, otherType, activeListing, closeListing, confidential, dateFilled,
+      txnType, repType, propType, otherType, activeListing, closeListing, confidential, dateFilled,
       address, city, zip, suite, occType, dealType, priorLoc, dealSf, submarket, landSf, bldgSf, bldgClass, yearBuilt,
       lsCompany, lbCompany, lsContact, lbContact, lsEmail, lbEmail,
       lsAddress, lbAddress, lsCity, lbCity, lsState, lbState, lsZip, lbZip, lsPhone, lbPhone,
@@ -461,9 +474,10 @@ export default function PortalVoucherFullForm() {
       sPrice, sBuyerType, sAsking, sCap, sEscrow, sEscrowCheck,
       rentRows, commBonus, commConsulting, sCommPct,
       invoiceTo, invCompany, invAddress, invInstructions, paymentRows,
-      sameAgent, laName, laHouse, laAddress, laCity, laState, laZip, laPhone, laPayFee,
+      sameAgent, laName, laHouse, laHouseTouched, laAddress, laCity, laState, laZip, laPhone, laPayFee,
       paName: sameAgent ? laName : paName,
       paHouse: sameAgent ? laHouse : paHouse,
+      paHouseTouched,
       paAddress: sameAgent ? laAddress : paAddress,
       paCity: sameAgent ? laCity : paCity,
       paState: sameAgent ? laState : paState,
@@ -592,7 +606,7 @@ export default function PortalVoucherFullForm() {
   function agentFields(
     which: "la" | "pa",
     nameV: string, setName: (v: string) => void,
-    houseV: string, setHouse: (v: string) => void,
+    houseV: string, setHouse: (v: string) => void, markHouseTouched: () => void,
     phoneV: string, setPhone: (v: string) => void,
     payFeeV: string, setPayFee: (v: string) => void,
     addrV: string, setAddr: (v: string) => void,
@@ -607,7 +621,7 @@ export default function PortalVoucherFullForm() {
             <Input list="broker-roster" value={nameV} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} placeholder="Agent name" />
           </Field>
           <Field label="Company / House">
-            <Input value={houseV} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHouse(e.target.value)} placeholder="Lee & Associates Newport Beach" />
+            <Input value={houseV} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setHouse(e.target.value); markHouseTouched(); }} placeholder="Lee & Associates Newport Beach" />
           </Field>
         </div>
         <div style={grid2}>
@@ -667,7 +681,20 @@ export default function PortalVoucherFullForm() {
                 <Select value={txnType} onChange={e => setTxnType(e.target.value)} options={[...TXN_TYPES]} />
               </Field>
               <Field label="Representation">
-                <Select value={repType} onChange={e => setRepType(e.target.value)} options={[...REP_TYPES]} />
+                <Select value={repType} onChange={e => {
+                  const next = e.target.value;
+                  setRepType(next);
+                  const houses = agentHousesForVoucher({
+                    repType: next,
+                    sameAgent,
+                    laHouse,
+                    laHouseTouched,
+                    paHouse,
+                    paHouseTouched,
+                  });
+                  setLaHouse(houses.laHouse);
+                  setPaHouse(houses.paHouse);
+                }} options={[...REP_TYPES]} />
               </Field>
             </div>
             <div style={grid3}>
@@ -712,16 +739,29 @@ export default function PortalVoucherFullForm() {
           <div style={{ display: "grid", gap: 14 }}>
             <div>
               <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink-700)", marginBottom: 8 }}>Listing Agent</div>
-              {agentFields("la", laName, setLaName, laHouse, setLaHouse, laPhone, setLaPhone, laPayFee, setLaPayFee, laAddress, setLaAddress, laCity, setLaCity, laState, setLaState, laZip, setLaZip)}
+              {agentFields("la", laName, setLaName, laHouse, setLaHouse, () => setLaHouseTouched(true), laPhone, setLaPhone, laPayFee, setLaPayFee, laAddress, setLaAddress, laCity, setLaCity, laState, setLaState, laZip, setLaZip)}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0" }}>
-              <input type="checkbox" id="same-agent" checked={sameAgent} onChange={e => setSameAgent(e.target.checked)} />
+              <input type="checkbox" id="same-agent" checked={sameAgent} onChange={e => {
+                const checked = e.target.checked;
+                setSameAgent(checked);
+                const houses = agentHousesForVoucher({
+                  repType,
+                  sameAgent: checked,
+                  laHouse,
+                  laHouseTouched,
+                  paHouse,
+                  paHouseTouched,
+                });
+                setLaHouse(houses.laHouse);
+                setPaHouse(houses.paHouse);
+              }} />
               <label htmlFor="same-agent" style={{ fontSize: 13, color: "var(--ink-700)", cursor: "pointer" }}>Same agent on both sides (dual agency)</label>
             </div>
             {!sameAgent && (
               <div>
                 <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink-700)", marginBottom: 8 }}>Procuring Agent</div>
-                {agentFields("pa", paName, setPaName, paHouse, setPaHouse, paPhone, setPaPhone, paPayFee, setPaPayFee, paAddress, setPaAddress, paCity, setPaCity, paState, setPaState, paZip, setPaZip)}
+                {agentFields("pa", paName, setPaName, paHouse, setPaHouse, () => setPaHouseTouched(true), paPhone, setPaPhone, paPayFee, setPaPayFee, paAddress, setPaAddress, paCity, setPaCity, paState, setPaState, paZip, setPaZip)}
               </div>
             )}
           </div>

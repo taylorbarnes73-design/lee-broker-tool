@@ -1,5 +1,6 @@
 import XLSX from "xlsx";
 import { describe, expect, it } from "vitest";
+import { agentHousesForVoucher, LEE_NEWPORT_HOUSE } from "@shared/voucherAgentHouses";
 import {
   isLeeVoucher431Template,
   parseLeeVoucherExcelBuffer,
@@ -155,6 +156,112 @@ describe("parseLeeVoucherGrid", () => {
     expect(patch.feePercent).toBe(100);
     expect(patch.internalFeePercent).toBe(100);
     expect(patch.paymentAmount).toBe(10307.88);
+  });
+
+  function voucherBuffer(cells: Record<string, string | number>): Buffer {
+    const ws: XLSX.WorkSheet = { A34: { v: "LEASE TRANSACTION DETAILS", t: "s" } };
+    for (const [addr, value] of Object.entries(cells)) {
+      if (typeof value === "string" && value.trim() === "") continue;
+      ws[addr] = typeof value === "number" ? { v: value, t: "n" } : { v: value, t: "s" };
+    }
+    ws["!ref"] = "A1:P140";
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+    return XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+  }
+
+  it("imports an untouched tenant-rep voucher as the tenant, not the landlord", () => {
+    const houses = agentHousesForVoucher({
+      repType: "Tenant Rep",
+      sameAgent: false,
+      laHouse: LEE_NEWPORT_HOUSE,
+      laHouseTouched: false,
+      paHouse: LEE_NEWPORT_HOUSE,
+      paHouseTouched: false,
+    });
+    const bothHousesLee = parseLeeVoucherExcelBuffer(
+      voucherBuffer({
+        B5: "Lease",
+        B9: "100 Main St",
+        K9: "Irvine",
+        N9: "92618",
+        C12: "Owner LLC",
+        K12: "Tenant Co",
+        C85: LEE_NEWPORT_HOUSE,
+        K85: LEE_NEWPORT_HOUSE,
+        C86: "Jane Doe",
+        A53: 18750,
+        D53: 60,
+      })
+    );
+    expect(bothHousesLee.repTypeID).toBe(4);
+    expect(bothHousesLee.clientCo).toBe("Owner LLC");
+
+    const p = parseLeeVoucherExcelBuffer(
+      voucherBuffer({
+        B5: "Lease",
+        B9: "100 Main St",
+        K9: "Irvine",
+        N9: "92618",
+        C12: "Owner LLC",
+        K12: "Tenant Co",
+        C85: houses.laHouse,
+        K85: houses.paHouse,
+        C86: "Jane Doe",
+        A53: 18750,
+        D53: 60,
+      })
+    );
+    expect(p.repTypeID).toBe(3);
+    expect(p.representationType).toBe("Tenant Rep");
+    expect(p.clientCo).toBe("Tenant Co");
+    expect(p.oppositeCo).toBe("Owner LLC");
+    expect(submissionPayloadPatchFromParsedVoucher(p).clientCo).toBe("Tenant Co");
+  });
+
+  it("imports untouched landlord and buyer vouchers on the represented side", () => {
+    const landlord = agentHousesForVoucher({
+      repType: "Landlord Rep",
+      sameAgent: false,
+      laHouse: "",
+      laHouseTouched: false,
+      paHouse: LEE_NEWPORT_HOUSE,
+      paHouseTouched: false,
+    });
+    const landlordParsed = parseLeeVoucherExcelBuffer(
+      voucherBuffer({
+        B5: "Lease",
+        C12: "Owner LLC",
+        K12: "Tenant Co",
+        C85: landlord.laHouse,
+        K85: landlord.paHouse,
+        C86: "Jane Doe",
+      })
+    );
+    expect(landlordParsed.repTypeID).toBe(4);
+    expect(landlordParsed.clientCo).toBe("Owner LLC");
+
+    const buyer = agentHousesForVoucher({
+      repType: "Buyer Rep",
+      sameAgent: false,
+      laHouse: LEE_NEWPORT_HOUSE,
+      laHouseTouched: false,
+      paHouse: LEE_NEWPORT_HOUSE,
+      paHouseTouched: false,
+    });
+    const buyerParsed = parseLeeVoucherExcelBuffer(
+      voucherBuffer({
+        B5: "Sale",
+        C12: "Seller Co",
+        K12: "Buyer Co",
+        C85: buyer.laHouse,
+        K85: buyer.paHouse,
+        C86: "Jane Doe",
+      })
+    );
+    expect(buyerParsed.repTypeID).toBe(1);
+    expect(buyerParsed.representationType).toBe("Buyer Rep");
+    expect(buyerParsed.clientCo).toBe("Buyer Co");
   });
 
   it("enters Lee both-side lease vouchers as Landlord Rep", () => {
