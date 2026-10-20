@@ -261,6 +261,9 @@ function parseLeeVoucherGridInternal(rows: unknown[][], ws: WorkSheet | null, la
   let hasProcuringBroker = false;
   const brokerScanEnd = v431 ? 132 : 129;
   for (let r = 122; r <= brokerScanEnd; r++) {
+    // The portal leaves an untouched distribution row with side "Listing" and
+    // no agent name. A side without a name is not a broker.
+    if (!g(rows, r, 0)) continue;
     const side = g(rows, r, 3).toLowerCase();
     if (side.includes("listing")) {
       hasListingBroker = true;
@@ -272,7 +275,11 @@ function parseLeeVoucherGridInternal(rows: unknown[][], ws: WorkSheet | null, la
     }
   }
 
-  const representedBothSides = (isListing && isProcuring) || (hasListingBroker && hasProcuringBroker);
+  // House cells decide who Lee represents. A co-broke still lists both a
+  // Listing row and a Procuring row, so those rows mean dual agency only
+  // when neither house is ours.
+  const representedBothSides =
+    (isListing && isProcuring) || (!isListing && !isProcuring && hasListingBroker && hasProcuringBroker);
   const onListingSide = representedBothSides || isListing || (!isProcuring && fallbackSide === "listing");
   let repTypeID: number;
   if (isReferral) repTypeID = 5;

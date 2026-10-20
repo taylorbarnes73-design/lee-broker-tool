@@ -188,6 +188,66 @@ describe("parseLeeVoucherGrid", () => {
     expect(p._debug?.representedBothSides).toBe(true);
   });
 
+  it("keeps a tenant-rep co-broke as Tenant Rep when only the procuring house is Lee", () => {
+    const ws: XLSX.WorkSheet = {};
+    ws["A34"] = { v: "LEASE TRANSACTION DETAILS", t: "s" };
+    ws["B5"] = { v: "Lease", t: "s" };
+    ws["B9"] = { v: "100 Tenant Way", t: "s" };
+    ws["K9"] = { v: "Irvine", t: "s" };
+    ws["N9"] = { v: "92618", t: "s" };
+    ws["C12"] = { v: "Owner LLC", t: "s" };
+    ws["K12"] = { v: "Tenant Co", t: "s" };
+    ws["C85"] = { v: "CBRE", t: "s" };
+    ws["K85"] = { v: "Lee & Associates Newport Beach", t: "s" };
+    ws["A53"] = { v: 18750, t: "n" };
+    ws["D53"] = { v: 60, t: "n" };
+    ws["K53"] = { v: 0.06, t: "n" };
+    ws["A124"] = { v: "CBRE, AGENT", t: "s" };
+    ws["D124"] = { v: "Listing", t: "s" };
+    ws["E124"] = { v: 0.5, t: "n" };
+    ws["A125"] = { v: "LEE, BROKER", t: "s" };
+    ws["D125"] = { v: "Procurring", t: "s" };
+    ws["E125"] = { v: 0.5, t: "n" };
+    ws["!ref"] = "A1:P140";
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+    const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+
+    const p = parseLeeVoucherExcelBuffer(buf);
+    expect(p.repTypeID).toBe(3);
+    expect(p.representationType).toBe("Tenant Rep");
+    expect(p.clientCo).toBe("Tenant Co");
+    expect(p.oppositeCo).toBe("Owner LLC");
+    expect(p._debug?.representedBothSides).toBe(false);
+  });
+
+  it("does not treat a blank default Listing distribution row as dual agency", () => {
+    const ws: XLSX.WorkSheet = {};
+    ws["A34"] = { v: "LEASE TRANSACTION DETAILS", t: "s" };
+    ws["B5"] = { v: "Lease", t: "s" };
+    ws["B9"] = { v: "100 Tenant Way", t: "s" };
+    ws["K9"] = { v: "Irvine", t: "s" };
+    ws["N9"] = { v: "92618", t: "s" };
+    ws["C12"] = { v: "Owner LLC", t: "s" };
+    ws["K12"] = { v: "Tenant Co", t: "s" };
+    ws["C85"] = { v: "CBRE", t: "s" };
+    ws["K85"] = { v: "Lee & Associates Newport Beach", t: "s" };
+    ws["D124"] = { v: "Listing", t: "s" };
+    ws["A125"] = { v: "LEE, BROKER", t: "s" };
+    ws["D125"] = { v: "Procurring", t: "s" };
+    ws["E125"] = { v: 1, t: "n" };
+    ws["!ref"] = "A1:P140";
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+    const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+
+    const p = parseLeeVoucherExcelBuffer(buf);
+    expect(p.repTypeID).toBe(3);
+    expect(p.clientCo).toBe("Tenant Co");
+    expect(p._debug?.hasListingBroker).toBe(false);
+    expect(p._debug?.hasProcuringBroker).toBe(true);
+  });
+
   it("does not duplicate suite when address already contains the suite number", () => {
     const rows = emptyGrid(140, 20);
     rows[3][3] = "Lease";
