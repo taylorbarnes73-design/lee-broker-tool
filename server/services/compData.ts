@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, like, lte, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, like, ne, or, sql, type SQLWrapper } from "drizzle-orm";
 import {
   compImports,
   leaseComps,
@@ -95,6 +95,12 @@ function parseSalePayload(value: string): SaleCompRecord {
 
 function normalizeFilterText(value: string | undefined) {
   return value?.trim() ?? "";
+}
+
+// Importer and manual entry store YYYY-MM-DD. Older rows can still be MM/DD/YYYY.
+// Parsing only one format makes STR_TO_DATE return NULL and drops the row.
+function compTransactionDateParsed(column: SQLWrapper) {
+  return sql`COALESCE(STR_TO_DATE(${column}, '%Y-%m-%d'), STR_TO_DATE(${column}, '%m/%d/%Y'))`;
 }
 
 const FILTER_ALIASES: Record<string, string[]> = {
@@ -588,8 +594,8 @@ export async function searchCompRows(params: {
     if (propertyTypeFilter) conditions.push(propertyTypeFilter);
     if (sfMin !== undefined) conditions.push(sql`CAST(JSON_UNQUOTE(JSON_EXTRACT(${leaseComps.rawPayload}, '$.leasedSqFt')) AS SIGNED) >= ${sfMin}`);
     if (sfMax !== undefined) conditions.push(sql`CAST(JSON_UNQUOTE(JSON_EXTRACT(${leaseComps.rawPayload}, '$.leasedSqFt')) AS SIGNED) <= ${sfMax}`);
-    if (dateFrom) conditions.push(sql`STR_TO_DATE(${leaseComps.transactionDate}, '%m/%d/%Y') >= STR_TO_DATE(${dateFrom}, '%Y-%m-%d')`);
-    if (dateTo) conditions.push(sql`STR_TO_DATE(${leaseComps.transactionDate}, '%m/%d/%Y') <= STR_TO_DATE(${dateTo}, '%Y-%m-%d')`);
+    if (dateFrom) conditions.push(sql`${compTransactionDateParsed(leaseComps.transactionDate)} >= STR_TO_DATE(${dateFrom}, '%Y-%m-%d')`);
+    if (dateTo) conditions.push(sql`${compTransactionDateParsed(leaseComps.transactionDate)} <= STR_TO_DATE(${dateTo}, '%Y-%m-%d')`);
 
     const whereClause = and(...conditions);
     const countRows = await db
@@ -640,8 +646,8 @@ export async function searchCompRows(params: {
   if (propertyTypeFilter) conditions.push(propertyTypeFilter);
   if (sfMin !== undefined) conditions.push(sql`CAST(JSON_UNQUOTE(JSON_EXTRACT(${saleComps.rawPayload}, '$.buildingSqFt')) AS SIGNED) >= ${sfMin}`);
   if (sfMax !== undefined) conditions.push(sql`CAST(JSON_UNQUOTE(JSON_EXTRACT(${saleComps.rawPayload}, '$.buildingSqFt')) AS SIGNED) <= ${sfMax}`);
-  if (dateFrom) conditions.push(sql`STR_TO_DATE(${saleComps.transactionDate}, '%m/%d/%Y') >= STR_TO_DATE(${dateFrom}, '%Y-%m-%d')`);
-  if (dateTo) conditions.push(sql`STR_TO_DATE(${saleComps.transactionDate}, '%m/%d/%Y') <= STR_TO_DATE(${dateTo}, '%Y-%m-%d')`);
+  if (dateFrom) conditions.push(sql`${compTransactionDateParsed(saleComps.transactionDate)} >= STR_TO_DATE(${dateFrom}, '%Y-%m-%d')`);
+  if (dateTo) conditions.push(sql`${compTransactionDateParsed(saleComps.transactionDate)} <= STR_TO_DATE(${dateTo}, '%Y-%m-%d')`);
 
   const whereClause = and(...conditions);
   const countRows = await db
