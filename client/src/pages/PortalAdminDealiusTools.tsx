@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle2, ExternalLink, FileUp, Plus, Send, Trash2 } from "lucide-react";
+import { transactionDealNamePrefix } from "@shared/transactionKind";
 import AdminPortalShell from "@/components/AdminPortalShell";
 import { Badge, Button, Field, Input, Select } from "../design/index.jsx";
 
@@ -129,11 +130,7 @@ function propertyNameFromAddressSuite(address: unknown, suite: unknown): string 
 }
 
 function dealNamePrefixFromTransaction(raw: unknown): string {
-  const value = str(raw).toLowerCase();
-  if (value.includes("consult")) return "Consulting";
-  if (value.includes("renew")) return "Renewed";
-  if (value.includes("sale") || value.includes("sold") || value.includes("purchase")) return "Sold";
-  return "Leased";
+  return transactionDealNamePrefix(raw);
 }
 
 function canonicalDealName(transactionType: unknown, address: unknown, suite: unknown, repTypeID?: unknown): string {

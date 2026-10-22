@@ -1,5 +1,6 @@
 import type { WorkSheet } from "xlsx";
 import XLSX from "xlsx";
+import { isSaleTransaction, isSubleaseTransaction } from "../../shared/transactionKind";
 
 /**
  * Parses the Lee & Associates commission voucher Excel (.xlsm / .xlsx).
@@ -241,8 +242,8 @@ function parseLeeVoucherGridInternal(rows: unknown[][], ws: WorkSheet | null, la
 
   const txRaw = (v431 && ws ? txRawFrom431(ws, rows) : (g(rows, 3, 3) || g(rows, 4, 1) || g(rows, 3, 1) || "")).toLowerCase();
   const isReferral = txRaw.includes("referral") || txRaw.includes("referred") || txRaw.includes("referr");
-  const isLease = !isReferral && (txRaw.includes("lease") || txRaw === "");
-  const isSale = !isReferral && (txRaw.includes("sale") || txRaw.includes("sold"));
+  const isLease = !isReferral && (isSubleaseTransaction(txRaw) || txRaw.includes("lease") || txRaw === "");
+  const isSale = !isReferral && isSaleTransaction(txRaw);
 
   const listingHouse = (
     (v431 && ws ? cellStrAtRC(ws, 84, 2) : "") ||

@@ -1,3 +1,4 @@
+import { isSaleTransaction, isSubleaseTransaction } from "../../shared/transactionKind";
 import { DealiusClient, resolveBrokerContactId } from "./dealiusClient";
 import { authenticateConfiguredDealius } from "./dealiusAuth";
 import { getDealiusUserDirectory } from "./dealiusUserDirectory";
@@ -200,14 +201,15 @@ function dealTypeIdFrom(raw: unknown, params: { isSale: boolean; isReferral: boo
   const direct = positiveInt(raw);
   if (direct != null) return direct;
   const value = str(raw).toLowerCase();
-  if (value.includes("sale") || value.includes("sold") || params.isSale) return 2;
+  if (isSubleaseTransaction(value)) return 1;
+  if (isSaleTransaction(value) || params.isSale) return 2;
   if (value.includes("referr") || value.includes("other") || params.isReferral) return 3;
   return 1;
 }
 
 function isSaleLike(p: Record<string, unknown>): boolean {
-  const value = str(p.transactionType ?? p.txnType ?? p.listingTransaction ?? "").toLowerCase();
-  return value.includes("sale") || value.includes("sold");
+  const value = str(p.transactionType ?? p.txnType ?? p.listingTransaction ?? "");
+  return isSaleTransaction(value);
 }
 
 function isLeaseLike(p: Record<string, unknown>): boolean {
@@ -358,11 +360,13 @@ function propertyNameFromAddressSuite(address: unknown, suite: unknown): string 
 }
 
 function dealNamePrefixFromTransaction(entry: Record<string, unknown>, isSale: boolean): string {
-  const value = str(entry.transactionType ?? entry.txnType ?? entry.dealType ?? entry.dealName ?? "").toLowerCase();
-  if (value.includes("consult")) return "Consulting";
-  if (value.includes("renew")) return "Renewed";
-  if (value.includes("sold") || value.includes("sale") || value.includes("purchase")) return "Sold";
-  if (value.includes("lease") || value.includes("leased")) return "Leased";
+  const value = str(entry.transactionType ?? entry.txnType ?? entry.dealType ?? entry.dealName ?? "");
+  const lowered = value.toLowerCase();
+  if (lowered.includes("consult")) return "Consulting";
+  if (lowered.includes("renew")) return "Renewed";
+  if (isSubleaseTransaction(value)) return "Leased";
+  if (isSaleTransaction(value) || lowered.includes("purchase")) return "Sold";
+  if (lowered.includes("lease") || lowered.includes("leased")) return "Leased";
   return isSale ? "Sold" : "Leased";
 }
 

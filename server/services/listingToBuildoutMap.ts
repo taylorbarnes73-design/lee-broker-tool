@@ -1,3 +1,5 @@
+import { isSaleTransaction } from "../../shared/transactionKind";
+
 /**
  * Maps broker-tool "listing" tab string fields to Buildout API v1 property attributes.
  * Buildout requires integer enum IDs (property_type_id, property_subtype_id, broker_id) — those come from the caller, not the brochure.
@@ -34,8 +36,8 @@ export function mapListingFieldsToBuildoutProperty(fields: ListingTabFields): Re
   const bsf = digitsOnly(fields.buildingSf);
   if (bsf != null) out.building_size_sf = bsf;
 
-  const tx = (fields.transactionType ?? "").toLowerCase();
-  if (tx.includes("sale")) {
+  const tx = fields.transactionType ?? "";
+  if (isSaleTransaction(tx)) {
     out.sale = true;
     const sp = parseMoney(fields.askingPrice);
     if (sp != null) out.sale_price_dollars = sp;

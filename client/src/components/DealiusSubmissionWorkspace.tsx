@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { ExternalLink, FileSearch, FileUp, Plus, Send, Trash2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { mergeVoucherFromContractExtraction } from "@shared/contractIntake";
+import { inferPortalDealTransactionType, transactionDealNamePrefix } from "@shared/transactionKind";
 import { Badge, Button, Field, Input, Select } from "../design/index.jsx";
 
 type SubmissionDetail = {
@@ -127,11 +128,7 @@ function fieldFromSections(payload: any, labels: string[]): string {
 }
 
 function inferTransactionType(raw: unknown) {
-  const value = str(raw).toLowerCase();
-  if (value.includes("consult")) return "Consulting";
-  if (value.includes("renew")) return "Renewal";
-  if (value.includes("sale") || value.includes("sold")) return "Sale";
-  return "Lease";
+  return inferPortalDealTransactionType(raw);
 }
 
 function suiteLabel(raw: unknown): string {
@@ -159,11 +156,7 @@ function propertyNameFromAddressSuite(address: unknown, suite: unknown): string 
 }
 
 function dealNamePrefixFromTransaction(raw: unknown): string {
-  const value = str(raw).toLowerCase();
-  if (value.includes("consult")) return "Consulting";
-  if (value.includes("renew")) return "Renewed";
-  if (value.includes("sale") || value.includes("sold") || value.includes("purchase")) return "Sold";
-  return "Leased";
+  return transactionDealNamePrefix(raw);
 }
 
 function canonicalDealName(transactionType: unknown, address: unknown, suite: unknown, repTypeID?: unknown): string {

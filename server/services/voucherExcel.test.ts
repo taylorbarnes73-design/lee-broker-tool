@@ -46,6 +46,24 @@ describe("parseLeeVoucherGrid", () => {
     expect(patch.listingAgentName).toBe("SMITH, JANE");
   });
 
+  it("parses a sublease voucher as a lease", () => {
+    const rows = emptyGrid(130, 20);
+    rows[3][3] = "Sublease";
+    rows[8][1] = "100 Industrial Way";
+    rows[8][10] = "Irvine";
+    rows[8][13] = "92618";
+    rows[11][2] = "Landlord LLC";
+    rows[11][10] = "Tenant LLC";
+    rows[84][2] = "Lee & Associates Newport Beach";
+
+    const parsed = parseLeeVoucherGrid(rows);
+    expect(parsed.isLease).toBe(true);
+    expect(parsed.isSale).toBe(false);
+    expect(parsed.transactionType).toBe("Lease");
+    expect(parsed.dealName.startsWith("Leased:")).toBe(true);
+    expect(parsed.repTypeID).toBe(4);
+  });
+
   it("detects v431 template from A34 marker", () => {
     const rows = emptyGrid(140, 20);
     rows[33][0] = "LEASE TRANSACTION DETAILS";

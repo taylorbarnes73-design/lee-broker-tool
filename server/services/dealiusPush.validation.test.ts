@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { validateDealEntryForDealiusPush, validateListingEntryForDealiusPush } from "./dealiusEntry";
+import { __dealiusInternals, validateDealEntryForDealiusPush, validateListingEntryForDealiusPush } from "./dealiusEntry";
 import { validateVoucherPayloadForDealiusPush } from "./dealiusPush";
+
+const { normalizeDealEntry } = __dealiusInternals;
 
 describe("validateVoucherPayloadForDealiusPush", () => {
   it("passes when address, city, zip, fee, and rent rows exist for lease", () => {
@@ -41,6 +43,38 @@ describe("validateVoucherPayloadForDealiusPush", () => {
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.errors.some(e => e.includes("rent"))).toBe(true);
+  });
+
+  it("treats a sublease as a lease and requires the rent schedule", () => {
+    const missingRent = validateDealEntryForDealiusPush({
+      address: "100 Industrial Way",
+      city: "Irvine",
+      zip: "92618",
+      clientCo: "Tenant Co",
+      transactionType: "Sublease",
+      repTypeID: 3,
+      feePercent: 6,
+      rentRows: [],
+    });
+    expect(missingRent.ok).toBe(false);
+    if (!missingRent.ok) expect(missingRent.errors.some(error => error.includes("rent"))).toBe(true);
+
+    const normalized = normalizeDealEntry({
+      address: "100 Industrial Way",
+      city: "Irvine",
+      zip: "92618",
+      clientCo: "Tenant Co",
+      oppositeCo: "Landlord LLC",
+      transactionType: "Sublease",
+      repTypeID: 3,
+      feePercent: 6,
+      rentRows: [{ months: 60, monthly: 18750, free: false }],
+    });
+    expect(normalized.isSale).toBe(false);
+    expect(normalized.isLease).toBe(true);
+    expect(normalized.dealTypeID).toBe(1);
+    expect(normalized.repTypeID).toBe(3);
+    expect(normalized.dealName.startsWith("Leased:")).toBe(true);
   });
 
   it("does not require rent rows for sale-like deals", () => {

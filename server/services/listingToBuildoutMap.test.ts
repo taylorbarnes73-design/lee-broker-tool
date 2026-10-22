@@ -27,6 +27,16 @@ describe("mapListingFieldsToBuildoutProperty", () => {
     expect(out.sale_price_dollars).toBe(2500000);
   });
 
+  it("does not mark a sublease as a sale", () => {
+    const out = mapListingFieldsToBuildoutProperty({
+      transactionType: "Sublease",
+      askingPrice: "2,500,000",
+      address: "1 Loop Dr",
+    });
+    expect(out.sale).toBeUndefined();
+    expect(out.sale_price_dollars).toBeUndefined();
+  });
+
   it("merges narrative into site_description", () => {
     const out = mapListingFieldsToBuildoutProperty({
       comments: "Corner lot.",

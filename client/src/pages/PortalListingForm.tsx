@@ -13,6 +13,7 @@ import {
   parseQuickConvertPrefill,
   QUICK_CONVERT_PREFILL_STORAGE_KEY,
 } from "@shared/quickConvert";
+import { isSaleTransaction } from "@shared/transactionKind";
 import { Button, Card, Field, Input, Select, Toggle, Icons } from "../design/index.jsx";
 
 /**
@@ -324,7 +325,7 @@ export default function PortalListingForm() {
         if (v != null && String(v).trim()) next[id] = String(v);
       };
       if (f.propertyType) next["l-prop-type"] = normalizeListingPropertyType(String(f.propertyType));
-      if (f.transactionType) next["l-txn-type"] = /sale/i.test(String(f.transactionType)) ? "sale" : "lease";
+      if (f.transactionType) next["l-txn-type"] = isSaleTransaction(f.transactionType) ? "sale" : "lease";
       set("l-address", f.address);
       set("l-city", f.city);
       set("l-state", f.state);
