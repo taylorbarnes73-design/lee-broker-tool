@@ -962,7 +962,7 @@ export default function DealiusSubmissionWorkspace({
                   </Field>
                 </>
               )}
-              <Field label={entry.transactionType === "Sale" ? "Sale price" : "Asking rate"}>
+              <Field label={entry.transactionType === "Sale" ? "Sale price" : "Asking rate ($/SF/mo)"}>
                 <Input
                   type="number"
                   step="0.01"
@@ -1020,7 +1020,7 @@ export default function DealiusSubmissionWorkspace({
                 options={["active", "pending", "draft"]}
               />
             </Field>
-            <Field label="Asking rate">
+            <Field label="Asking rate ($/SF/mo)">
               <Input type="number" step="0.01" value={entry.askingRate} onChange={(e: any) => patchEntry({ askingRate: e.target.value })} />
             </Field>
             <Field label="Commission">

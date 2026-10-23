@@ -959,7 +959,8 @@ export async function pushDealEntryToDealius(params: { entry: Record<string, unk
         })
       : {}),
     LeaseAskingRatePerSf: d.askingRate ?? undefined,
-    LeaseAskingRatePerSfType: d.askingRate != null ? DEALIUS_RATE_PER_SF_YEAR : undefined,
+    // Voucher and listing forms quote this rate as $/SF/month (for example $1.15/SF/Mo).
+    LeaseAskingRatePerSfType: d.askingRate != null ? DEALIUS_RATE_PER_SF_MONTH : undefined,
     LeaseNNNPerSF: d.totalNNN ?? undefined,
     LeaseNNNPerSFType: d.totalNNN != null ? DEALIUS_RATE_PER_SF_YEAR : undefined,
     LeaseTaxes: d.propTaxes ?? undefined,
@@ -1127,7 +1128,8 @@ export async function pushListingEntryToDealius(params: { entry: Record<string, 
     PropertySpaceID: propertySpaceIDs[0] || undefined,
     TransactionType: l.transactionType,
     AskingRate: l.askingRate ?? undefined,
-    AskingRateType: l.askingRate != null ? 2 : undefined,
+    // Same monthly $/SF figure the listing form and extraction examples store (for example 1.15 from "$1.15/SF/Mo").
+    AskingRateType: l.askingRate != null ? DEALIUS_RATE_PER_SF_MONTH : undefined,
     CommissionPercent: l.commission ?? undefined,
     ListingStartDate: isoDate(l.listingStartDate),
     ListingExpiryDate: isoDate(l.listingExpiryDate),

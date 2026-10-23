@@ -362,6 +362,8 @@ describe("pushDealEntryToDealius — end-to-end happy path", () => {
         clientContactEmail: "lessor@example.com",
         oppositeContactName: "Lessee Contact",
         oppositeContactEmail: "lessee@example.com",
+        askingRate: 1.25,
+        totalNNN: 4.8,
         rentRows: [{ months: 12, monthly: 12500, free: false }],
         brokers: [{ name: "Tim Arguello", pct: 0.5, lead: true }],
       },
@@ -391,6 +393,14 @@ describe("pushDealEntryToDealius — end-to-end happy path", () => {
 
     const rentPayload = currentClient.calls.find(c => c.method === "POST" && c.path === "/deals/rents")?.data as any;
     expect(rentPayload.RentPerSfType).toBe(1);
+
+    // askingRate is $/SF/month (voucher "Rate/SF/Mo", listing "$1.15/SF/Mo").
+    // NNN stays annual because that field is entered as $/SF/yr.
+    const financialPayload = currentClient.calls.find(c => c.method === "PUT" && c.path === "/deals")?.data as any;
+    expect(financialPayload.LeaseAskingRatePerSf).toBe(1.25);
+    expect(financialPayload.LeaseAskingRatePerSfType).toBe(1);
+    expect(financialPayload.LeaseNNNPerSF).toBe(4.8);
+    expect(financialPayload.LeaseNNNPerSFType).toBe(2);
   });
 });
 
@@ -558,6 +568,7 @@ describe("pushListingEntryToDealius — end-to-end happy path", () => {
         zip: "92618",
         propertyType: "Office",
         sqft: 2400,
+        askingRate: 1.15,
         ownerCompany: "Acme Holdings",
         brokers: [{ name: "Taylor Barnes", pct: 6, lead: true }],
       },
@@ -567,5 +578,9 @@ describe("pushListingEntryToDealius — end-to-end happy path", () => {
     expect(result.listingID).toBe(12345);
     expect(result.propertyID).toBe(91000);
     expect(result.propertySpaceIDs).toContain(4501);
+
+    const listingPayload = currentClient.calls.find(c => c.method === "POST" && c.path === "/listings")?.data as any;
+    expect(listingPayload.AskingRate).toBe(1.15);
+    expect(listingPayload.AskingRateType).toBe(1);
   });
 });
