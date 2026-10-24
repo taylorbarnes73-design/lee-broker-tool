@@ -52,6 +52,13 @@ export type VoucherExcelData = {
   lRate: string;
   lRateType: string;
   lAskingRate: string;
+  lTaxes?: string;
+  lInsurance?: string;
+  lMisc?: string;
+  lTiSf?: string;
+  lEscPct?: string;
+  lEscalations?: string;
+  lOptions?: string;
   sPrice: string;
   sBuyerType: string;
   sAsking: string;
@@ -109,6 +116,57 @@ function parsePct(s: string): number | null {
   const n = parseNum(s);
   if (n == null) return null;
   return n > 1 ? n / 100 : n;
+}
+
+export type LeaseDetailInput = {
+  lAskingRate?: string;
+  lTaxes?: string;
+  lInsurance?: string;
+  lMisc?: string;
+  lTiSf?: string;
+  dealSf?: string;
+  lEscPct?: string;
+  lEscalations?: string;
+  lOptions?: string;
+};
+
+/**
+ * Lease-detail inputs on the rev 3/4/25 voucher template.
+ * C42 asking rate, F40/F41/F42 tax/insurance/misc, J40 TI per SF (J41 dollars),
+ * C44 escalation percent, C46 options. H40 sits inside the TI label merge.
+ */
+export function leaseDetailCellOps(d: LeaseDetailInput): Record<string, CellOp> {
+  const ops: Record<string, CellOp> = {};
+
+  function putNum(addr: string, v: string | number | null | undefined) {
+    if (v == null || v === "") return;
+    const n = typeof v === "number" ? v : parseNum(String(v));
+    if (n == null) return;
+    ops[addr] = { type: "number", value: n };
+  }
+
+  putNum("C42", d.lAskingRate);
+  putNum("F40", d.lTaxes);
+  putNum("F41", d.lInsurance);
+  putNum("F42", d.lMisc);
+  putNum("J40", d.lTiSf);
+
+  const ti = d.lTiSf != null && d.lTiSf !== "" ? parseNum(String(d.lTiSf)) : null;
+  const sf = d.dealSf != null && d.dealSf !== "" ? parseNum(String(d.dealSf)) : null;
+  if (ti != null && sf != null && sf > 0) {
+    ops.J41 = { type: "number", value: ti * sf };
+  }
+
+  const escalationSource = (d.lEscPct ?? "").trim() || (d.lEscalations ?? "");
+  const escalationPoints = parseNum(escalationSource);
+  if (escalationPoints != null) {
+    ops.C44 = { type: "number", value: escalationPoints / 100 };
+  }
+
+  const options = String(d.lOptions ?? "").trim();
+  if (options) ops.C46 = { type: "text", value: options };
+
+  return ops;
 }
 
 function yesNo(v: string): string {
@@ -300,6 +358,8 @@ function buildCellOps(d: VoucherExcelData): Record<string, CellOp> {
   if (overflowPayments.length) notes.push("Additional Payments: " + overflowPayments.map(r => [r.date1 ? `${r.date1}/$${r.amount1}` : "", r.date2 ? `${r.date2}/$${r.amount2}` : ""].filter(Boolean).join("; ")).join(" | "));
   if (overflowRent.length) notes.push("Additional Rent Rows: " + overflowRent.map(r => `$${r.monthly} × ${r.months}mo`).join(" | "));
   setText("A133", notes.join("\n"));
+
+  Object.assign(ops, leaseDetailCellOps(d));
 
   return ops;
 }

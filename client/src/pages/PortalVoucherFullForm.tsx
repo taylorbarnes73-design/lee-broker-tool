@@ -398,8 +398,12 @@ export default function PortalVoucherFullForm() {
               { label: "Occupancy Date", value: lOcc },
               { label: "Term (months)", value: lTerm },
               { label: "Rate/SF/Mo", value: lRate ? `$${lRate}` : "" },
+              { label: "Asking rate / SF / Mo", value: lAskingRate ? `$${lAskingRate}` : "" },
               { label: "Rate Type", value: lRateType },
               { label: "Total Consideration", value: totalConsideration ? fmtCurrency(totalConsideration) : "" },
+              { label: "NNN Taxes / SF / Mo", value: lTaxes },
+              { label: "NNN Insurance / SF / Mo", value: lInsurance },
+              { label: "NNN Misc / SF / Mo", value: lMisc },
               { label: "NNN/Mo/SF", value: nnnTotal ? fmt(nnnTotal) : "" },
               { label: "TI/SF", value: lTiSf },
               { label: "Escalations", value: lEscalations },
@@ -458,6 +462,7 @@ export default function PortalVoucherFullForm() {
       lsCompany, lbCompany, lsContact, lbContact, lsEmail, lbEmail,
       lsAddress, lbAddress, lsCity, lbCity, lsState, lbState, lsZip, lbZip, lsPhone, lbPhone,
       lStart, lEnd, lOcc, lTerm, lRate, lRateType, lAskingRate,
+      lTaxes, lInsurance, lMisc, lTiSf, lEscPct, lEscalations, lOptions,
       sPrice, sBuyerType, sAsking, sCap, sEscrow, sEscrowCheck,
       rentRows, commBonus, commConsulting, sCommPct,
       invoiceTo, invCompany, invAddress, invInstructions, paymentRows,
@@ -536,7 +541,9 @@ export default function PortalVoucherFullForm() {
         formData: {
           txnType, repType, propType, address, suite, city, state, zip: zip,
           dealSf, laName, paName: sameAgent ? laName : paName,
-          lsCompany, lbCompany, lStart, lEnd, lTerm, lRate, lRateType, sPrice, sCommPct,
+          lsCompany, lbCompany, lStart, lEnd, lTerm, lRate, lRateType, lAskingRate,
+          lTaxes, lInsurance, lMisc, lTiSf, lEscPct, lEscalations, lOptions,
+          sPrice, sCommPct,
         },
       });
 
