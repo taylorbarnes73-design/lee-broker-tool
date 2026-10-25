@@ -77,6 +77,27 @@ function normalizePropertyType(raw: string): string {
   return "Industrial";
 }
 
+/** K23 labels that are property types, not building subtypes such as "Low Rise" or "Multi Ind". */
+const V431_PROPERTY_TYPE_LABELS = new Set([
+  "industrial",
+  "office",
+  "retail",
+  "land",
+  "multi-family",
+  "multifamily",
+  "multi family",
+  "medical",
+  "hospitality",
+  "self storage",
+  "investment",
+]);
+
+function v431PropertyTypeSource(propTypeRaw: string, subType: string): string {
+  if (propTypeRaw.trim()) return propTypeRaw;
+  const sub = subType.trim().toLowerCase();
+  return V431_PROPERTY_TYPE_LABELS.has(sub) ? subType : "";
+}
+
 function suiteLabel(raw: unknown): string {
   const value = String(raw ?? "").trim().replace(/\s+/g, " ");
   if (!value) return "";
@@ -294,7 +315,11 @@ function parseLeeVoucherGridInternal(rows: unknown[][], ws: WorkSheet | null, la
   const propTypeRaw = g(rows, 3, 6) || "";
   const suite = g(rows, 21, 2);
   const sqft = v431 ? gn(rows, 35, 2) ?? gn(rows, 22, 1) ?? gn(rows, 22, 2) : gn(rows, 22, 2);
-  const subType = g(rows, 22, 10) || propTypeRaw;
+  // Rev 3/4/25: G4 is Prop Type. K23 is Sub-type (Low Rise, Showroom, Multi Ind).
+  // Those subtype labels are not property types; "Low Rise" otherwise falls through
+  // to industrial, and "Multi Ind" matches "multi" and becomes multi-family.
+  const subType = g(rows, 22, 10) || "";
+  const propertyTypeSource = v431 ? v431PropertyTypeSource(propTypeRaw, subType) : subType || propTypeRaw;
   const landSF = gn(rows, 22, 12);
   const totalBldgSF = v431 ? gn(rows, 23, 1) ?? gn(rows, 23, 2) : gn(rows, 23, 2);
   const indSF = gn(rows, 23, 4);
@@ -418,7 +443,7 @@ function parseLeeVoucherGridInternal(rows: unknown[][], ws: WorkSheet | null, la
     city,
     zip,
     suite: suite || undefined,
-    propertyType: normalizePropertyType(subType || propTypeRaw),
+    propertyType: normalizePropertyType(propertyTypeSource),
     sqft,
     dealSF: sqft,
     totalBldgSF,

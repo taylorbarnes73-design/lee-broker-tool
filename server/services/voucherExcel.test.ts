@@ -205,4 +205,40 @@ describe("parseLeeVoucherGrid", () => {
     const p = parseLeeVoucherGrid(rows);
     expect(p.dealName).toBe("Leased: 20201 SW Birch Street, #240");
   });
+
+  it("uses the v431 property-type cell instead of the building subtype", () => {
+    function workbook(cells: Record<string, string | number>): Buffer {
+      const ws: XLSX.WorkSheet = {};
+      ws["A34"] = { v: "LEASE TRANSACTION DETAILS", t: "s" };
+      ws["D4"] = { v: "Lease", t: "s" };
+      ws["B9"] = { v: "100 Spectrum Center", t: "s" };
+      ws["K9"] = { v: "Irvine", t: "s" };
+      ws["N9"] = { v: "92618", t: "s" };
+      for (const [addr, value] of Object.entries(cells)) {
+        ws[addr] = typeof value === "number" ? { v: value, t: "n" } : { v: value, t: "s" };
+      }
+      ws["!ref"] = "A1:P140";
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+      return XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+    }
+
+    // Official rev 3/4/25 voucher: G4 is Prop Type, K23 is Sub-type (Low Rise / Showroom / …).
+    const office = parseLeeVoucherExcelBuffer(workbook({ G4: "Office", K23: "Low Rise" }));
+    expect(office.propertyType).toBe("Office");
+
+    const retail = parseLeeVoucherExcelBuffer(workbook({ G4: "Retail", K23: "Showroom" }));
+    expect(retail.propertyType).toBe("Retail");
+
+    const industrial = parseLeeVoucherExcelBuffer(workbook({ G4: "Industrial", K23: "Multi Ind" }));
+    expect(industrial.propertyType).toBe("Industrial");
+
+    // A building subtype must not become the property type when Prop Type is blank.
+    const blank = parseLeeVoucherExcelBuffer(workbook({ K23: "Low Rise" }));
+    expect(blank.propertyType).toBe("Industrial");
+
+    // A property type stored only in K23 (older portal writes) still counts.
+    const fromSubTypeCell = parseLeeVoucherExcelBuffer(workbook({ K23: "Office" }));
+    expect(fromSubTypeCell.propertyType).toBe("Office");
+  });
 });

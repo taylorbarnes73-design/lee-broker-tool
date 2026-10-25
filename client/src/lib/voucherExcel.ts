@@ -200,7 +200,7 @@ function buildCellOps(d: VoucherExcelData): Record<string, CellOp> {
   setText("L22", d.priorLoc);
   setNum("C23", d.dealSf);
   setText("E23", d.submarket);
-  setText("K23", d.propType);
+  // K23 is Sub-type (Low Rise, Whse/Dist, …). Prop Type is G4, written above.
   setNum("M23", d.landSf);
   setNum("C24", d.bldgSf);
   setText("C25", d.bldgClass);
