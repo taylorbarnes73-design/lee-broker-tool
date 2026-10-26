@@ -6,6 +6,7 @@ import AdminPortalShell from "@/components/AdminPortalShell";
 import LinkButton from "@/components/ui/LinkButton";
 import AddressAutocompleteInput from "@/components/AddressAutocompleteInput";
 import { trpc } from "@/lib/trpc";
+import { buildCompSubmissionRecord, compSalePricePerSf } from "@/lib/compFormRecord";
 import { buildSectionedPdf, type PdfSection } from "@/lib/formPdf";
 import { Button, Card, Field, Input, Select, Icons } from "../design/index.jsx";
 
@@ -219,101 +220,17 @@ export default function PortalCompForm() {
     }
   }
 
-  function brokerLine(prefix: string): string {
-    return [vals[`${prefix}-brokerage`], vals[`${prefix}-agent1`], vals[`${prefix}-agent2`]]
-      .map(v => (v || "").trim())
-      .filter(Boolean)
-      .join(" - ");
-  }
-
-  /** Mirror of the legacy collectCompReportPayload — keys the server normalizes. */
   function buildRecord(): Record<string, unknown> {
-    const v = (id: string) => (vals[id] || "").trim();
-    const common: Record<string, unknown> = {
-      office: "Lee & Associates Newport Beach",
-      address: v("c-address"),
-      city: v("c-city"),
-      state: "CA",
-      market: v("c-market"),
-      subMarket: v("c-submarket"),
-      projectName: v("c-project"),
-      propertyType: v("c-prop-type") || "Industrial",
-      propertySubType: v("c-subtype"),
-      buildingClass: v("c-bldg-class"),
-      constructionType: v("c-const-type"),
-      dhDoors: v("c-dh"),
-      glDoors: v("c-gl"),
-      clearHeight: v("c-clearance"),
-      amperage: v("c-amps"),
-      sprinklers: v("c-sprinklers"),
-      rail: v("c-rail"),
-      yard: v("c-yard"),
-      source: v("c-source") || user?.name || "Broker Submission",
-      verifiedBy: v("c-source") || user?.name || "Broker Submission",
-      lastUpdated: v("c-date") || todayISO(),
-      comments: v("c-comments"),
-      ...(photo?.url ? { photo: photo.url } : {}),
-    };
-    if (isSale) {
-      return {
-        ...common,
-        sourceSheet: "Broker-Comp-Input-Sale",
-        yearBuilt: v("cs-year-built"),
-        parkingRatio: v("cs-parking"),
-        multiTenant: v("cs-multi-ten"),
-        listBroker: brokerLine("cs-list"),
-        procBroker: brokerLine("cs-proc"),
-        monthsOnMarket: v("cs-mkt-months"),
-        transactionDate: v("cs-txn-date") || v("c-date"),
-        buildingSqFt: v("cs-bldg-sf"),
-        landSqFt: v("cs-land-sf"),
-        officeSqFt: v("cs-office-sf"),
-        salePrice: v("cs-sell-price"),
-        salePricePerSqFt: salePsf(),
-        capRate: v("cs-cap-rate"),
-        transactionType: v("cs-txn-type"),
-        buyer: v("cs-buyer"),
-        seller: v("cs-seller"),
-        askingPrice: v("cs-sell-price"),
-      };
-    }
-    return {
-      ...common,
-      sourceSheet: "Broker-Comp-Input-Lease",
-      yearBuilt: v("c-year-built"),
-      parkingRatio: v("c-parking"),
-      spaceType: v("c-space-type"),
-      multiTenant: v("c-multi-tenant"),
-      pol: v("c-pol"),
-      listBroker: brokerLine("c-list"),
-      procBroker: brokerLine("c-proc"),
-      monthsOnMarket: v("c-mkt-months"),
-      transactionDate: v("c-exec-date") || v("c-date"),
-      occupancyDate: v("c-occ-date"),
-      expirationDate: v("c-expire-date"),
-      leasedSqFt: v("c-leased-sf"),
-      rentPerSqFt: v("c-rent-sf"),
-      rentType: v("c-rent-type"),
-      termInMonths: v("c-term"),
-      effectiveRent: v("c-eff-rent"),
-      freeRentMonths: v("c-free-rent"),
-      rentAdjustments: v("c-escalations"),
-      options: v("c-options"),
-      tia: v("c-ti"),
-      lessee: v("c-lessee"),
-      lessor: v("c-lessor"),
-      buildingSqFt: v("c-bldg-sf"),
-      officeSqFt: v("c-office-sf"),
-      nnnCharges: v("c-nnn"),
-      landSqFt: v("c-land-sf"),
-    };
+    return buildCompSubmissionRecord({
+      vals,
+      isSale,
+      sourceFallback: user?.name || "Broker Submission",
+      photoUrl: photo?.url,
+    });
   }
 
   function salePsf(): string {
-    const price = parseFloat((vals["cs-sell-price"] || "").replace(/[^0-9.]/g, ""));
-    const sf = parseFloat((vals["cs-bldg-sf"] || "").replace(/[^0-9.]/g, ""));
-    if (!price || !sf) return "";
-    return (price / sf).toFixed(2);
+    return compSalePricePerSf(vals["cs-sell-price"], vals["cs-bldg-sf"]);
   }
 
   function buildSections(): PdfSection[] {
