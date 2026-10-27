@@ -56,7 +56,7 @@ describe("quickConvert PDF-derived fixtures", () => {
     expect(diff.wrong, JSON.stringify(diff.wrong)).toEqual([]);
     expect(diff.missing, JSON.stringify(diff.missing)).toEqual([]);
     expect(diff.correct.length).toBe(Object.keys(expected).length);
-    expect(mapped.state).toBeUndefined();
-    expect(mapped.zip).toBeUndefined();
+    expect(mapped.state).toBe("CA");
+    expect(mapped.zip).toBe("92618");
   });
 });

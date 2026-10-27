@@ -130,6 +130,18 @@ describe("quickConvert shared", () => {
     });
     expect(fields.propertyAddress).toBe("16520 Bake Pkwy, Suite 115");
     expect(fields.city).toBe("Irvine");
+    expect(fields.state).toBe("CA");
+    expect(fields.zip).toBe("92618");
+  });
+
+  it("keeps an out-of-state sign address instead of dropping it", () => {
+    const fields = normalizeSignExtractFields({
+      propertyAddress: "1 E Washington St, Phoenix, AZ 85004",
+    });
+    expect(fields.propertyAddress).toBe("1 E Washington St");
+    expect(fields.city).toBe("Phoenix");
+    expect(fields.state).toBe("AZ");
+    expect(fields.zip).toBe("85004");
   });
 
   it("normalizes exclusive-right sign extract fields for broker tool", () => {
@@ -150,8 +162,8 @@ describe("quickConvert shared", () => {
     expect(fields.requestedBy).toBe("Jane Broker");
     expect(fields.nameRider).toBe("Jane Broker");
     expect(fields.specialInstructions).toBe("Install on corner lot");
-    expect(fields.state).toBeUndefined();
-    expect(fields.zip).toBeUndefined();
+    expect(fields.state).toBe("CA");
+    expect(fields.zip).toBe("92618");
     expect(fields.signType).toBeUndefined();
     expect((fields as Record<string, string>).bogusField).toBeUndefined();
   });

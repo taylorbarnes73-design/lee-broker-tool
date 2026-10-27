@@ -6,7 +6,8 @@ import AdminPortalShell from "@/components/AdminPortalShell";
 import LinkButton from "@/components/ui/LinkButton";
 import AddressAutocompleteInput from "@/components/AddressAutocompleteInput";
 import { trpc } from "@/lib/trpc";
-import { buildSignRequestPdf, type SignPdfSection } from "@/lib/signPdf";
+import { buildSignRequestPdf } from "@/lib/signPdf";
+import { buildSignOrderFormData, buildSignOrderSections, signOrderPropertyAddress } from "@/lib/signSubmission";
 import {
   normalizeSignExtractFields,
   parseQuickConvertPrefill,
@@ -17,9 +18,9 @@ import { Button, Card, Field, Input, Select, Toggle, Icons } from "../design/ind
 /**
  * Native React Sign Orders form — the first tool migrated off the legacy
  * iframe (broker_tool.html `tab-sign`). Submits through the same
- * `email.sendToAdmin` procedure with the identical `formData` / `sections`
- * payload the legacy tool produced, so the admin Cimarron (PO #) flow keeps
- * working unchanged. See docs/FRAMEWORK_MIGRATION.md.
+ * `email.sendToAdmin` procedure. Location fields (state, zip, maps pin) are
+ * stored with the sections and formData so the installer PDF keeps them.
+ * See docs/FRAMEWORK_MIGRATION.md.
  */
 
 type SignFields = {
@@ -81,27 +82,15 @@ const ORDER_TYPE_OPTIONS = [
   { value: "removal", label: "Removal" },
   { value: "maintenance", label: "Maintenance" },
 ];
-const ORDER_TYPE_LABELS: Record<string, string> = {
-  installation: "Installation",
-  removal: "Removal",
-  maintenance: "Maintenance",
-};
 const ACCESS_OPTIONS = [
   { value: "no", label: "No" },
   { value: "yes", label: "Yes" },
 ];
-const ACCESS_LABELS: Record<string, string> = { no: "No", yes: "Yes" };
 const SUPPORT_OPTIONS = [
   { value: "sf", title: "Single Face", sub: "S/F" },
   { value: "df", title: "Double Face", sub: "D/F" },
   { value: "vshape", title: "V-Shape", sub: "V" },
 ];
-const SUPPORT_LABELS: Record<string, string> = {
-  sf: "Single Face (S/F)",
-  df: "Double Face (D/F)",
-  vshape: "V-Shape",
-};
-
 const BROCHURE_ACCEPT = ".pdf,.jpg,.jpeg,.png,.webp";
 
 const textareaStyle: CSSProperties = {
@@ -257,95 +246,11 @@ export default function PortalSignForm() {
     }
   }
 
-  function buildSections(): SignPdfSection[] {
-    return [
-      {
-        title: "Sign Order Details",
-        fields: [
-          { label: "Date", value: fields.date },
-          { label: "Order Type", value: ORDER_TYPE_LABELS[fields.orderType] ?? fields.orderType },
-          { label: "Property Address", value: fields.address },
-          { label: "City", value: fields.city },
-          { label: "Cross Streets / Building Name", value: fields.cross },
-        ],
-      },
-      {
-        title: "Sign Quantities",
-        fields: [
-          { label: "4x8 Signs", value: fields.qty4x8 },
-          { label: "6x8 Signs", value: fields.qty6x8 },
-          { label: "Other Size", value: fields.otherSize },
-          { label: "Other Qty", value: fields.otherQty },
-          { label: "Banner Size", value: fields.bannerSize },
-          { label: "Banner Qty", value: fields.bannerQty },
-        ],
-      },
-      {
-        title: "Rider & Placement",
-        fields: [
-          { label: "Name Rider", value: fields.riderToggle ? "Yes" : "No" },
-          { label: "Rider Text", value: fields.rider },
-          { label: "Custom Placement", value: fields.placementToggle ? "Yes" : "No" },
-        ],
-      },
-      {
-        title: "Contact & Access",
-        fields: [
-          { label: "Requested By", value: fields.requestedBy },
-          { label: "Access Necessary", value: ACCESS_LABELS[fields.access] ?? fields.access },
-          { label: "Access Contact", value: fields.accessContact },
-          { label: "Comments", value: fields.comments },
-        ],
-      },
-    ];
-  }
-
-  /** Machine-readable payload — keys mirror the legacy collectSignFormData(). */
-  function buildFormData(): Record<string, unknown> {
-    return {
-      "s-date": fields.date,
-      "s-order-type": fields.orderType,
-      "s-address": fields.address,
-      "s-city": fields.city,
-      "s-cross": fields.cross,
-      "s-4x8-qty": fields.qty4x8,
-      "s-6x8-qty": fields.qty6x8,
-      "s-other-size": fields.otherSize,
-      "s-other-qty": fields.otherQty,
-      "s-banner-size": fields.bannerSize,
-      "s-banner-qty": fields.bannerQty,
-      "s-rider": fields.rider,
-      "s-access": fields.access,
-      "s-access-contact": fields.accessContact,
-      "s-comments": fields.comments,
-      "s-rider-toggle": fields.riderToggle,
-      "s-placement-toggle": fields.placementToggle,
-      "s-support": fields.support,
-      "s-requested-by": fields.requestedBy,
-      signAgents: agents
-        .filter(a => a.name.trim() || a.pct.trim())
-        .map(a => ({ name: a.name, pct: a.pct })),
-    };
-  }
-
-  function pdfSections(): SignPdfSection[] {
-    const sections = buildSections();
-    if (fields.support) {
-      sections[0] = {
-        ...sections[0],
-        fields: [
-          ...sections[0].fields,
-          { label: "Sign Configuration", value: SUPPORT_LABELS[fields.support] ?? fields.support },
-        ],
-      };
-    }
-    return sections;
-  }
-
   async function onDownloadPdf() {
-    const propertyAddress = [fields.address.trim(), fields.city.trim()].filter(Boolean).join(", ");
+    const propertyAddress = signOrderPropertyAddress(fields);
+    const sections = buildSignOrderSections(fields);
     try {
-      const pdf = await buildSignRequestPdf({ sections: pdfSections(), agents, propertyAddress });
+      const pdf = await buildSignRequestPdf({ sections, agents, propertyAddress });
       downloadBlob(pdf.blob, pdf.filename);
     } catch (e) {
       toast.error(humanError(e));
@@ -358,11 +263,11 @@ export default function PortalSignForm() {
       setError("Property address is required before sending.");
       return;
     }
-    const propertyAddress = [fields.address.trim(), fields.city.trim()].filter(Boolean).join(", ");
-    const sections = buildSections();
+    const propertyAddress = signOrderPropertyAddress(fields);
+    const sections = buildSignOrderSections(fields);
     const senderEmail = user?.email && /.+@.+\..+/.test(user.email) ? user.email : undefined;
     try {
-      const pdf = await buildSignRequestPdf({ sections: pdfSections(), agents, propertyAddress });
+      const pdf = await buildSignRequestPdf({ sections, agents, propertyAddress });
       const result = await sendMut.mutateAsync({
         formType: "sign",
         brokerName: (user?.name || fields.requestedBy || "").trim(),
@@ -375,7 +280,7 @@ export default function PortalSignForm() {
           base64Data: pdf.base64Data,
         },
         supportingFiles: [],
-        formData: buildFormData(),
+        formData: buildSignOrderFormData(fields, agents),
       });
       if (!result.success) {
         throw new Error(result.error || "The sign request could not be submitted.");

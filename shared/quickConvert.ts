@@ -364,7 +364,7 @@ export function mapContractExtractionToVoucherFields(
   return out;
 }
 
-/** Keep only sign-tab AI keys and parse a combined propertyAddress when city is missing. */
+/** Keep sign-tab AI keys, including state and zip, and split a combined street address. */
 export function normalizeSignExtractFields(
   fields: Record<string, unknown>
 ): Record<string, string> {
@@ -375,18 +375,17 @@ export function normalizeSignExtractFields(
     if (cleaned) out[key] = cleaned;
   });
 
-  if (out.propertyAddress && !out.city && out.propertyAddress.includes(",")) {
+  if (out.propertyAddress?.includes(",")) {
     const parsed = parseStreetAddressParts(out.propertyAddress);
-    if (parsed.address) {
+    if (!out.city && parsed.city && parsed.address) {
       const suiteSuffix = parsed.suite ? `, Suite ${parsed.suite}` : "";
       out.propertyAddress = `${parsed.address}${suiteSuffix}`;
+      out.city = parsed.city;
     }
-    if (parsed.city) out.city = parsed.city;
+    if (!out.state && parsed.state) out.state = parsed.state;
+    if (!out.zip && parsed.zip) out.zip = parsed.zip;
   }
 
-  // Sign form has no state/zip inputs — drop so applyAiFields does not target missing elements.
-  delete out.state;
-  delete out.zip;
   delete out.signType;
   delete out.signSize;
   delete out.quantity;
